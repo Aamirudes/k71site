@@ -1,6 +1,6 @@
 <?php
 /**
- * One-Click Web Artisan Deployment Runner for Hostinger
+ * One-Click Web Artisan Deployment Runner & Diagnostics for Hostinger
  * Usage: Visit https://marblemandi.org/deploy.php?token=marblemandi2026
  */
 
@@ -11,7 +11,9 @@ if (($_GET['token'] ?? '') !== $secretToken) {
     die('<h2 style="font-family:sans-serif;color:red;text-align:center;margin-top:50px;">Access Denied. Pass the correct ?token= to run.</h2>');
 }
 
-// Allow script to run
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 ini_set('max_execution_time', 300);
 ini_set('memory_limit', '256M');
 
@@ -20,67 +22,141 @@ header('Content-Type: text/html; charset=utf-8');
 <!DOCTYPE html>
 <html>
 <head>
-    <title>K71 Live Deployment Runner</title>
+    <title>K71 Live Deployment Runner & Diagnostics</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; margin: 0; }
-        .card { max-width: 800px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
+        .card { max-width: 900px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
         h1 { margin-top: 0; font-size: 22px; color: #38bdf8; display: flex; align-items: center; gap: 10px; }
-        pre { background: #020617; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; color: #4ade80; font-size: 13px; overflow-x: auto; line-height: 1.5; }
+        pre { background: #020617; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; color: #4ade80; font-size: 13px; overflow-x: auto; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
         .step { margin-bottom: 20px; }
         .step-title { font-weight: bold; font-size: 14px; color: #cbd5e1; margin-bottom: 6px; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: bold; background: #059669; color: white; margin-bottom: 15px; }
-        .btn-delete { background: #ef4444; color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 15px; }
+        .btn { text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 15px; margin-right: 10px; }
+        .btn-blue { background: #0284c7; color: white; }
+        .btn-red { background: #ef4444; color: white; }
+        .error { color: #f87171 !important; font-weight: bold; }
+        .success { color: #4ade80 !important; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="card">
-    <h1>🚀 K71 Live Setup & Database Migration</h1>
+    <h1>🚀 K71 Live Setup & Auto-Diagnostics</h1>
     <span class="badge">HOSTINGER AUTO-DEPLOYMENT</span>
 <?php
 
 $baseDir = dirname(__DIR__);
 if (!file_exists($baseDir . '/vendor/autoload.php')) {
-    echo '<div style="color:#f87171;">Error: vendor/autoload.php not found. Composer dependencies may still be installing.</div>';
+    echo '<div class="error">Error: vendor/autoload.php not found. Composer dependencies may still be installing.</div>';
     echo '</div></body></html>';
     exit;
 }
 
+// 1. Remove stale cached configs first so fresh .env is loaded
+$staleCacheFiles = [
+    $baseDir . '/bootstrap/cache/config.php',
+    $baseDir . '/bootstrap/cache/routes-v7.php',
+    $baseDir . '/bootstrap/cache/services.php',
+    $baseDir . '/bootstrap/cache/packages.php',
+];
+foreach ($staleCacheFiles as $f) {
+    if (file_exists($f)) {
+        @unlink($f);
+    }
+}
+
+// 2. Ensure storage directories exist and are writable
+$storageDirs = [
+    $baseDir . '/storage/framework/views',
+    $baseDir . '/storage/framework/sessions',
+    $baseDir . '/storage/framework/cache',
+    $baseDir . '/storage/framework/cache/data',
+    $baseDir . '/storage/logs',
+    $baseDir . '/storage/app/public',
+    $baseDir . '/bootstrap/cache',
+];
+foreach ($storageDirs as $dir) {
+    if (!file_exists($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+    @chmod($dir, 0775);
+}
+
+// 3. Fallback pure PHP symlink for storage
+$target = $baseDir . '/storage/app/public';
+$link = $baseDir . '/public/storage';
+if (!file_exists($link)) {
+    @symlink($target, $link);
+}
+
+// 4. Bootstrap Laravel cleanly
 require $baseDir . '/vendor/autoload.php';
 $app = require_once $baseDir . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 
-$commands = [
-    'Key Generate' => ['command' => 'key:generate', 'params' => ['--force' => true]],
-    'Database Migration (Creates All Tables)' => ['command' => 'migrate', 'params' => ['--force' => true]],
-    'Storage Link' => ['command' => 'storage:link', 'params' => []],
-    'Optimize & Cache Configuration' => ['command' => 'config:cache', 'params' => []],
-    'Cache Routes' => ['command' => 'route:cache', 'params' => []],
-    'Cache Blade Views' => ['command' => 'view:cache', 'params' => []],
+// Diagnostic: Check APP_KEY
+$appKey = config('app.key');
+echo "<div class='step'><div class='step-title'>🔑 Application Encryption Key:</div>";
+if (empty($appKey)) {
+    echo "<pre class='error'>APP_KEY is currently empty! Generating now...</pre>";
+    Artisan::call('key:generate', ['--force' => true]);
+    echo "<pre class='success'>" . htmlspecialchars(Artisan::output()) . "</pre>";
+} else {
+    echo "<pre class='success'>APP_KEY is present: " . htmlspecialchars(substr($appKey, 0, 15)) . "...</pre>";
+}
+echo "</div>";
+
+// Diagnostic: Check Database Connection
+echo "<div class='step'><div class='step-title'>🗄️ Database Connection Status:</div>";
+try {
+    DB::connection()->getPdo();
+    $dbName = DB::connection()->getDatabaseName();
+    echo "<pre class='success'>Connected to database: " . htmlspecialchars($dbName) . "</pre>";
+} catch (\Throwable $e) {
+    echo "<pre class='error'>Database Error: " . htmlspecialchars($e->getMessage()) . "</pre>";
+}
+echo "</div>";
+
+// Run Migrations & Seeders
+$tasks = [
+    'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
+    'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 
-foreach ($commands as $label => $task) {
-    echo "<div class='step'>";
-    echo "<div class='step-title'>⏳ Running: {$label}...</div>";
+foreach ($tasks as $label => $task) {
+    echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";
     try {
-        Artisan::call($task['command'], $task['params']);
-        $output = Artisan::output();
-        echo "<pre>" . htmlspecialchars(trim($output) ?: 'Command completed successfully with 0 output.') . "</pre>";
+        Artisan::call($task['cmd'], $task['args']);
+        echo "<pre class='success'>" . htmlspecialchars(trim(Artisan::output()) ?: 'OK') . "</pre>";
     } catch (\Throwable $e) {
-        echo "<pre style='color:#f87171;'>ERROR: " . htmlspecialchars($e->getMessage()) . "</pre>";
+        echo "<pre class='error'>ERROR: " . htmlspecialchars($e->getMessage()) . "</pre>";
     }
     echo "</div>";
 }
 
+// Diagnostic: Show Last 30 Lines of Laravel Log (to catch the exact 500 error cause!)
+echo "<div class='step'><div class='step-title'>📋 Latest Laravel Errors from storage/logs/laravel.log:</div>";
+$logFile = $baseDir . '/storage/logs/laravel.log';
+if (file_exists($logFile)) {
+    $lines = file($logFile);
+    $lastLines = array_slice($lines, -40);
+    echo "<pre style='color:#f8fafc;font-size:12px;max-height:300px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+} else {
+    echo "<pre class='success'>No log file created yet (no fatal errors logged).</pre>";
+}
+echo "</div>";
+
 if (isset($_GET['self_delete'])) {
     @unlink(__FILE__);
-    echo "<p style='color:#4ade80;font-weight:bold;'>✅ deploy.php has been permanently deleted for security.</p>";
+    echo "<p class='success'>✅ deploy.php has been permanently deleted for security.</p>";
 } else {
-    echo "<p style='color:#38bdf8;'>Setup complete! You can now visit your website:</p>";
-    echo "<a href='/' style='color:#38bdf8;font-weight:bold;margin-right:20px;'>Visit Homepage &rarr;</a>";
-    echo "<a href='?token={$secretToken}&self_delete=1' class='btn-delete'>Delete This Setup File (Recommended)</a>";
+    echo "<div style='margin-top:20px;'>";
+    echo "<a href='/' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
+    echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red'>🗑️ Delete This Setup File</a>";
+    echo "</div>";
 }
 ?>
 </div>
