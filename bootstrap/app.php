@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'storefront' => \App\Http\Middleware\ResolveStorefront::class,
             'vendor.own' => \App\Http\Middleware\EnsureVendorOwnership::class,
