@@ -294,6 +294,18 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+if (isset($_GET['read_log'])) {
+    header('Content-Type: text/plain');
+    $logFile = $baseDir . '/storage/logs/laravel.log';
+    if (file_exists($logFile)) {
+        $lines = file($logFile);
+        echo implode("", array_slice($lines, -50));
+    } else {
+        echo "Log file does not exist\n";
+    }
+    exit;
+}
+
 if (isset($_GET['diag'])) {
     echo "<h1>Live Diagnostics</h1><pre>";
     $rawHost = $_SERVER['HTTP_HOST'] ?? 'unknown';
