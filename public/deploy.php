@@ -51,7 +51,7 @@ $baseDir = dirname(__DIR__);
 $syncRequested = isset($_GET['sync']) || isset($_GET['pull']);
 if ($syncRequested) {
     echo "<div class='step'><div class='step-title'>🔄 Synchronizing Code Directly from GitHub (k71site)...</div>";
-    $zipUrl = 'https://github.com/hashron4b-tech/k71site/archive/refs/heads/main.zip';
+    $zipUrl = 'https://github.com/Aamirudes/k71site/archive/refs/heads/main.zip';
     $tempZip = $baseDir . '/storage/github_latest.zip';
     
     // Download using curl
@@ -96,7 +96,8 @@ if ($syncRequested) {
             @unlink($tempZip);
             
             // Move folders: app, config, database, resources, routes, public (except storage and .env)
-            $sourceDir = $extractDir . '/k71site-main';
+            $subdirs = glob($extractDir . '/*', GLOB_ONLYDIR);
+            $sourceDir = !empty($subdirs) ? $subdirs[0] : ($extractDir . '/k71site-main');
             if (file_exists($sourceDir)) {
                 $copyDirs = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'public'];
                 foreach ($copyDirs as $d) {
