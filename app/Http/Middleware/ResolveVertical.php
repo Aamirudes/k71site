@@ -29,7 +29,7 @@ class ResolveVertical
             }
         }
 
-        $useSubdomains = config('marketplace.use_subdomains', true);
+        $useSubdomains = config('marketplace.use_subdomains', false);
 
         // If subdomains are disabled, detect vertical directly from the request path
         if (!$useSubdomains && $detectedKey === 'main') {
@@ -39,6 +39,20 @@ class ResolveVertical
                     break;
                 }
             }
+        }
+
+        // If subdomains are disabled, redirect incoming subdomain requests to live path routes (food.marblemandi.org -> marblemandi.org/food)
+        if (!$useSubdomains && $detectedKey !== 'main' && !empty($subdomain) && !filter_var($host, FILTER_VALIDATE_IP) && app()->environment('production')) {
+            $rootDomain = k71_root_domain($host);
+            $port = $request->getPort();
+            $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
+            $scheme = (app()->environment('production') || $request->secure()) ? 'https' : 'http';
+            $remaining = ltrim($request->path(), '/');
+            $targetUrl = "{$scheme}://{$rootDomain}{$portSuffix}/{$detectedKey}" . ($remaining ? '/' . $remaining : '');
+            if ($request->getQueryString()) {
+                $targetUrl .= '?' . $request->getQueryString();
+            }
+            return redirect()->away($targetUrl, 301);
         }
 
         // Canonical 301 redirect on production root domain: Redirect folder routes to pure subdomains ONLY if subdomains are enabled

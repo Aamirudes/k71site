@@ -56,7 +56,7 @@ if (!function_exists('k71_root_domain')) {
     {
         $host = strtolower(trim($host ?? request()->getHost()));
         if (empty($host) || filter_var($host, FILTER_VALIDATE_IP)) {
-            return config('k71.root_domain', 'k71.in');
+            return config('k71.root_domain', 'marblemandi.org');
         }
 
         $sub = k71_extract_subdomain($host);
@@ -71,8 +71,7 @@ if (!function_exists('k71_root_domain')) {
 if (!function_exists('k71_vertical_url')) {
     /**
      * Return canonical URL for a specific vertical.
-     * Generates pure subdomains (e.g. food.mysite.in, food.k71.in, food.localhost)
-     * and query params fallback in local IP / LAN testing (e.g. 192.168.1.20:8000).
+     * Defaults to path routes (e.g. marblemandi.org/food) unless subdomains are explicitly enabled.
      */
     function k71_vertical_url(string $vertical = 'main', string $path = ''): string
     {
@@ -83,7 +82,7 @@ if (!function_exists('k71_vertical_url')) {
         $port = request()->getPort();
         $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
 
-        $useSubdomains = config('marketplace.use_subdomains', true);
+        $useSubdomains = config('marketplace.use_subdomains', false);
 
         // Local LAN IP fallback (e.g. 192.168.1.20:8000 or 127.0.0.1:8000) for testing on mobile phone
         if ($isIp) {
@@ -99,7 +98,7 @@ if (!function_exists('k71_vertical_url')) {
 
         $rootDomain = k71_root_domain($host);
 
-        // Subdirectory mode when subdomains are turned off
+        // Subdirectory mode (standard production for marblemandi.org)
         if (!$useSubdomains) {
             if ($vertical === 'main') {
                 return "{$scheme}://{$rootDomain}{$portSuffix}" . ($cleanPath ? '/' . $cleanPath : '');
@@ -108,7 +107,7 @@ if (!function_exists('k71_vertical_url')) {
             return "{$scheme}://{$rootDomain}{$portSuffix}/" . $subPath;
         }
 
-        // Wildcard Subdomains on ANY domain: food.mysite.in, food.k71.in, food.localhost
+        // Wildcard Subdomains mode (if explicitly configured)
         if ($vertical === 'main') {
             return "{$scheme}://{$rootDomain}{$portSuffix}" . ($cleanPath ? '/' . $cleanPath : '');
         }
@@ -118,7 +117,7 @@ if (!function_exists('k71_vertical_url')) {
 
 if (!function_exists('k71_vendor_url')) {
     /**
-     * Return vendor portal URL on wildcard subdomain (vendor.mysite.in, vendor.k71.in).
+     * Return vendor portal URL. Uses path /vendor unless subdomains are explicitly enabled.
      */
     function k71_vendor_url(string $path = ''): string
     {
@@ -128,9 +127,12 @@ if (!function_exists('k71_vendor_url')) {
         $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
         $port = request()->getPort();
         $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
+        $useSubdomains = config('marketplace.use_subdomains', false);
 
-        if ($isIp) {
-            return url('/vendor' . ($cleanPath ? '/' . $cleanPath : ''));
+        if (!$useSubdomains || $isIp) {
+            $rootDomain = k71_root_domain($host);
+            $subPath = $cleanPath ? 'vendor/' . $cleanPath : 'vendor';
+            return "{$scheme}://{$rootDomain}{$portSuffix}/" . $subPath;
         }
 
         $rootDomain = k71_root_domain($host);

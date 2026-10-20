@@ -18,7 +18,7 @@ class SitemapController extends Controller
         $host = request()->getHost();
         $isLocal = in_array($host, ['localhost', '127.0.0.1', '']) || app()->environment('local');
         
-        $rootDomain = config('k71.root_domain', 'k71.in');
+        $rootDomain = config('k71.root_domain', 'marblemandi.org');
         $domain = (!$isLocal && $host) ? $host : (config('marketplace.domain') !== 'localhost' ? config('marketplace.domain') : $rootDomain);
         $scheme = (app()->environment('production') || request()->secure() || !str_contains($domain, 'localhost')) ? 'https' : 'http';
         
@@ -160,7 +160,7 @@ class SitemapController extends Controller
 
             foreach ($vendors as $vendor) {
                 if (config('marketplace.use_subdomains')) {
-                    $domain = (config('marketplace.domain') && config('marketplace.domain') !== 'localhost') ? config('marketplace.domain') : 'k71.in';
+                    $domain = (config('marketplace.domain') && config('marketplace.domain') !== 'localhost') ? config('marketplace.domain') : 'marblemandi.org';
                     $scheme = (app()->environment('production') || !str_contains($domain, 'localhost')) ? 'https' : 'http';
                     $loc = $scheme . '://' . $vendor->slug . '.' . $domain;
                 } else {

@@ -1,11 +1,7 @@
 @php
     $currentRoute = request()->route() ? request()->route()->getName() : '';
     $wishlistCount = count(\App\Models\Wishlist::getUserWishlistIds());
-    $rootDomain = config('k71.root_domain', 'k71.in');
-    $shortsUrl = request()->getScheme() . '://shorts.' . $rootDomain;
-    if (app()->environment('local', 'testing')) {
-        $shortsUrl = route('home', ['vertical' => 'shorts']);
-    }
+    $shortsUrl = k71_vertical_url('shorts');
 @endphp
 
 <div class="fixed bottom-0 inset-x-0 z-40 bg-white/80 backdrop-blur-xl border-t border-zinc-200/60 md:hidden shadow-[0_-2px_12px_rgba(0,0,0,0.03)]"

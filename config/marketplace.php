@@ -20,7 +20,7 @@ return [
     | Subdomain / Path Tenancy
     |--------------------------------------------------------------------------
     */
-    'use_subdomains' => env('MARKETPLACE_USE_SUBDOMAINS', true),
+    'use_subdomains' => env('MARKETPLACE_USE_SUBDOMAINS', false),
     'storefront_path_prefix' => 's', // used when subdomains are off: /s/{shop-slug}
 
     /*

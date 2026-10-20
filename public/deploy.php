@@ -64,7 +64,7 @@ foreach ($staleCacheFiles as $f) {
     }
 }
 
-// 1b. Ensure .env has a valid APP_KEY
+// 1b. Ensure .env has a valid APP_KEY and MARKETPLACE_USE_SUBDOMAINS=false
 $envPath = $baseDir . '/.env';
 if (file_exists($envPath)) {
     $envContent = file_get_contents($envPath);
@@ -74,8 +74,14 @@ if (file_exists($envPath)) {
         } else {
             $envContent .= "\nAPP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=\n";
         }
-        @file_put_contents($envPath, $envContent);
     }
+    // Enforce path-based routing on Hostinger so no subdomains/folders are required
+    if (str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=true')) {
+        $envContent = str_replace('MARKETPLACE_USE_SUBDOMAINS=true', 'MARKETPLACE_USE_SUBDOMAINS=false', $envContent);
+    } elseif (!str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=')) {
+        $envContent .= "\nMARKETPLACE_USE_SUBDOMAINS=false\n";
+    }
+    @file_put_contents($envPath, $envContent);
 }
 
 // 2. Ensure storage directories exist and are writable
