@@ -14,15 +14,15 @@ if (($_GET['token'] ?? '') !== $secretToken) {
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-ini_set('max_execution_time', 300);
-ini_set('memory_limit', '256M');
+ini_set('max_execution_time', 600);
+ini_set('memory_limit', '512M');
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>K71 Live Deployment Runner & Diagnostics</title>
+    <title>MarbleMandi Live Setup & Auto-Diagnostics</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; margin: 0; }
         .card { max-width: 900px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
@@ -33,6 +33,7 @@ header('Content-Type: text/html; charset=utf-8');
         .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: bold; background: #059669; color: white; margin-bottom: 15px; }
         .btn { text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; display: inline-block; margin-top: 15px; margin-right: 10px; }
         .btn-blue { background: #0284c7; color: white; }
+        .btn-purple { background: #8b5cf6; color: white; }
         .btn-red { background: #ef4444; color: white; }
         .error { color: #f87171 !important; font-weight: bold; }
         .success { color: #4ade80 !important; font-weight: bold; }
@@ -40,18 +41,114 @@ header('Content-Type: text/html; charset=utf-8');
 </head>
 <body>
 <div class="card">
-    <h1>🚀 K71 Live Setup & Auto-Diagnostics</h1>
-    <span class="badge">HOSTINGER AUTO-DEPLOYMENT</span>
+    <h1>🚀 MarbleMandi Live Setup & Auto-Diagnostics</h1>
+    <span class="badge">HOSTINGER AUTO-DEPLOYMENT & REPAIR</span>
 <?php
 
 $baseDir = dirname(__DIR__);
-if (!file_exists($baseDir . '/vendor/autoload.php')) {
-    echo '<div class="error">Error: vendor/autoload.php not found. Composer dependencies may still be installing.</div>';
-    echo '</div></body></html>';
-    exit;
+
+// 0. Auto-Pull from GitHub via Zip if requested or via shell if available
+$syncRequested = isset($_GET['sync']) || isset($_GET['pull']);
+if ($syncRequested) {
+    echo "<div class='step'><div class='step-title'>🔄 Synchronizing Code Directly from GitHub (k71site)...</div>";
+    $zipUrl = 'https://github.com/hashron4b-tech/k71site/archive/refs/heads/main.zip';
+    $tempZip = $baseDir . '/storage/github_latest.zip';
+    
+    // Download using curl
+    $downloadSuccess = false;
+    if (function_exists('curl_init')) {
+        $fp = fopen($tempZip, 'w+');
+        $ch = curl_init($zipUrl);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'MarbleMandi-Deployer');
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        fclose($fp);
+        if ($httpCode === 200 && filesize($tempZip) > 1000) {
+            $downloadSuccess = true;
+        }
+    }
+    
+    if (!$downloadSuccess) {
+        $zipData = @file_get_contents($zipUrl, false, stream_context_create([
+            'http' => ['header' => "User-Agent: MarbleMandi-Deployer\r\n", 'follow_location' => 1, 'timeout' => 120],
+            'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+        ]));
+        if ($zipData && strlen($zipData) > 1000) {
+            file_put_contents($tempZip, $zipData);
+            $downloadSuccess = true;
+        }
+    }
+    
+    if ($downloadSuccess && class_exists('ZipArchive')) {
+        $zip = new ZipArchive;
+        if ($zip->open($tempZip) === TRUE) {
+            $extractDir = $baseDir . '/storage/github_extract';
+            if (!file_exists($extractDir)) {
+                @mkdir($extractDir, 0775, true);
+            }
+            $zip->extractTo($extractDir);
+            $zip->close();
+            @unlink($tempZip);
+            
+            // Move folders: app, config, database, resources, routes, public (except storage and .env)
+            $sourceDir = $extractDir . '/k71site-main';
+            if (file_exists($sourceDir)) {
+                $copyDirs = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'public'];
+                foreach ($copyDirs as $d) {
+                    $src = $sourceDir . '/' . $d;
+                    $dst = $baseDir . '/' . $d;
+                    if (file_exists($src)) {
+                        $iterator = new RecursiveIteratorIterator(
+                            new RecursiveDirectoryIterator($src, RecursiveDirectoryIterator::SKIP_DOTS),
+                            RecursiveIteratorIterator::SELF_FIRST
+                        );
+                        foreach ($iterator as $item) {
+                            $subPath = $iterator->getSubPathName();
+                            $targetPath = $dst . DIRECTORY_SEPARATOR . $subPath;
+                            if ($item->isDir()) {
+                                if (!file_exists($targetPath)) {
+                                    @mkdir($targetPath, 0775, true);
+                                }
+                            } else {
+                                // Do not overwrite .env or public/storage
+                                if ($subPath === '.env' || str_starts_with($subPath, 'storage')) {
+                                    continue;
+                                }
+                                @copy($item, $targetPath);
+                            }
+                        }
+                    }
+                }
+                
+                // Copy root index.php and .htaccess if present
+                if (file_exists($sourceDir . '/index.php')) {
+                    @copy($sourceDir . '/index.php', $baseDir . '/index.php');
+                }
+                if (file_exists($sourceDir . '/deploy.php')) {
+                    @copy($sourceDir . '/deploy.php', $baseDir . '/deploy.php');
+                }
+                
+                echo "<pre class='success'>✅ Successfully updated all application code from GitHub main branch!</pre>";
+            } else {
+                echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";
+            }
+        } else {
+            echo "<pre class='error'>Error opening downloaded zip archive.</pre>";
+        }
+    } elseif ($downloadSuccess) {
+        echo "<pre class='error'>ZipArchive extension not available on this PHP installation.</pre>";
+    } else {
+        echo "<pre class='error'>Failed to download GitHub code archive.</pre>";
+    }
+    echo "</div>";
 }
 
-// 1. Remove stale cached configs first so fresh .env is loaded
+// 1. Remove stale cached bootstrap configs
 $staleCacheFiles = [
     $baseDir . '/bootstrap/cache/config.php',
     $baseDir . '/bootstrap/cache/routes-v7.php',
@@ -64,7 +161,51 @@ foreach ($staleCacheFiles as $f) {
     }
 }
 
-// 1b. Ensure .env has a valid APP_KEY and MARKETPLACE_USE_SUBDOMAINS=false
+// 2. Ensure root index.php forwards cleanly to public/index.php
+$rootIndex = $baseDir . '/index.php';
+$rootIndexContent = "<?php\n\n/**\n * Laravel - Shared Hosting Gateway\n */\nif (!defined('LARAVEL_START')) {\n    define('LARAVEL_START', microtime(true));\n}\nrequire_once __DIR__ . '/public/index.php';\n";
+@file_put_contents($rootIndex, $rootIndexContent);
+
+// 3. Ensure root .htaccess routes everything to public/
+$rootHtaccess = $baseDir . '/.htaccess';
+$rootHtaccessContent = <<<HTACCESS
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    Options -Indexes
+
+    # Block access to hidden and sensitive files
+    RewriteRule ^(\.env|\.git|composer\.(json|lock)|package\.(json|lock)|artisan) - [F,L,NC]
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/app|storage/logs|tests|vendor) - [F,L,NC]
+
+    # Direct access for existing root files (like deploy.php)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Rewrite all traffic to public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+HTACCESS;
+@file_put_contents($rootHtaccess, $rootHtaccessContent);
+
+// 4. Clean up any leftover WordPress files in public_html
+$staleWpFiles = [
+    $baseDir . '/wp-blog-header.php',
+    $baseDir . '/wp-config.php',
+    $baseDir . '/wp-load.php',
+    $baseDir . '/wp-settings.php',
+    $baseDir . '/wp-cron.php',
+    $baseDir . '/license.txt',
+    $baseDir . '/readme.html',
+    $baseDir . '/xmlrpc.php',
+];
+foreach ($staleWpFiles as $wpf) {
+    if (file_exists($wpf)) {
+        @unlink($wpf);
+    }
+}
+
+// 5. Ensure .env has valid settings
 $envPath = $baseDir . '/.env';
 if (file_exists($envPath)) {
     $envContent = file_get_contents($envPath);
@@ -75,7 +216,6 @@ if (file_exists($envPath)) {
             $envContent .= "\nAPP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=\n";
         }
     }
-    // Ensure subdomains are enabled
     if (str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=false')) {
         $envContent = str_replace('MARKETPLACE_USE_SUBDOMAINS=false', 'MARKETPLACE_USE_SUBDOMAINS=true', $envContent);
     } elseif (!str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=')) {
@@ -84,7 +224,7 @@ if (file_exists($envPath)) {
     @file_put_contents($envPath, $envContent);
 }
 
-// 2. Ensure storage directories exist and are writable
+// 6. Ensure storage directories exist
 $storageDirs = [
     $baseDir . '/storage/framework/views',
     $baseDir . '/storage/framework/sessions',
@@ -101,7 +241,7 @@ foreach ($storageDirs as $dir) {
     @chmod($dir, 0775);
 }
 
-// 3. Fallback pure PHP symlink for storage (if host allows symlink)
+// 7. Symlink storage
 $target = $baseDir . '/storage/app/public';
 $link = $baseDir . '/public/storage';
 if (!file_exists($link) && function_exists('symlink')) {
@@ -110,7 +250,12 @@ if (!file_exists($link) && function_exists('symlink')) {
     } catch (\Throwable $e) {}
 }
 
-// 4. Bootstrap Laravel cleanly
+// 8. Bootstrap Laravel
+if (!file_exists($baseDir . '/vendor/autoload.php')) {
+    echo '<div class="error">Error: vendor/autoload.php not found. Composer dependencies missing.</div></div></body></html>';
+    exit;
+}
+
 require $baseDir . '/vendor/autoload.php';
 $app = require_once $baseDir . '/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
@@ -123,7 +268,7 @@ use Illuminate\Support\Facades\DB;
 $appKey = config('app.key');
 echo "<div class='step'><div class='step-title'>🔑 Application Encryption Key:</div>";
 if (empty($appKey)) {
-    echo "<pre class='error'>APP_KEY is currently empty! Generating now...</pre>";
+    echo "<pre class='error'>APP_KEY is empty! Generating now...</pre>";
     Artisan::call('key:generate', ['--force' => true]);
     echo "<pre class='success'>" . htmlspecialchars(Artisan::output()) . "</pre>";
 } else {
@@ -142,15 +287,18 @@ try {
 }
 echo "</div>";
 
-// Optional: Auto git pull if git repo exists
-if (file_exists($baseDir . '/.git') && function_exists('shell_exec')) {
-    $pullOutput = @shell_exec("cd " . escapeshellarg($baseDir) . " && git pull origin main 2>&1");
-    if ($pullOutput) {
-        echo "<div class='step'><div class='step-title'>🔄 Git Pull Status:</div><pre class='success'>" . htmlspecialchars(trim($pullOutput)) . "</pre></div>";
-    }
+// 9. Harden Database Schema Directly (Expands SEO columns to avoid MySQL String Truncation 1406 errors)
+try {
+    DB::statement("ALTER TABLE `categories` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
+    DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
+    DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
+    DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns in categories, products, vendors, and pages expanded to VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+} catch (\Throwable $e) {
+    // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
-// Run Migrations & Seeders
+// 10. Run Migrations & Seeders
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
     'Seed Database with Live Products, Real Stores & Categories' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
@@ -161,32 +309,34 @@ foreach ($tasks as $label => $task) {
     echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";
     try {
         Artisan::call($task['cmd'], $task['args']);
-        echo "<pre class='success'>" . htmlspecialchars(trim(Artisan::output()) ?: 'OK') . "</pre>";
+        echo "<pre class='success'>" . htmlspecialchars(trim(Artisan::output()) ?: 'DONE') . "</pre>";
     } catch (\Throwable $e) {
         echo "<pre class='error'>ERROR: " . htmlspecialchars($e->getMessage()) . "</pre>";
     }
     echo "</div>";
 }
 
-// Diagnostic: Show Last 30 Lines of Laravel Log (to catch the exact 500 error cause!)
-echo "<div class='step'><div class='step-title'>📋 Latest Laravel Errors from storage/logs/laravel.log:</div>";
+// Diagnostic: Show Last 30 Lines of Laravel Log if there are errors
 $logFile = $baseDir . '/storage/logs/laravel.log';
 if (file_exists($logFile)) {
     $lines = file($logFile);
-    $lastLines = array_slice($lines, -40);
-    echo "<pre style='color:#f8fafc;font-size:12px;max-height:300px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
-} else {
-    echo "<pre class='success'>No log file created yet (no fatal errors logged).</pre>";
+    $lastLines = array_slice($lines, -35);
+    echo "<div class='step'><div class='step-title'>📋 Latest Laravel Log Entries:</div>";
+    echo "<pre style='color:#cbd5e1;font-size:12px;max-height:250px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+    echo "</div>";
 }
-echo "</div>";
 
 if (isset($_GET['self_delete'])) {
     @unlink(__FILE__);
+    if (file_exists($baseDir . '/deploy.php')) {
+        @unlink($baseDir . '/deploy.php');
+    }
     echo "<p class='success'>✅ deploy.php has been permanently deleted for security.</p>";
 } else {
-    echo "<div style='margin-top:20px;'>";
-    echo "<a href='/' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
-    echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red'>🗑️ Delete This Setup File</a>";
+    echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
+    echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
+    echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";
 }
 ?>

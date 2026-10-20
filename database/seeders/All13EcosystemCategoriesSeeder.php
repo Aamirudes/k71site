@@ -237,8 +237,8 @@ class All13EcosystemCategoriesSeeder extends Seeder
                     'description' => $s['description'],
                     'sort_order' => $sortOrder++,
                     'is_active' => true,
-                    'seo_title' => Str::limit($s['name'] . ' — MarbleMandi', 65, ''),
-                    'seo_description' => Str::limit($s['description'], 155, ''),
+                    'seo_title' => Str::limit($s['name'] . ' — MarbleMandi', 60, ''),
+                    'seo_description' => Str::limit($s['description'], 150, ''),
                 ]
             );
 
@@ -255,8 +255,8 @@ class All13EcosystemCategoriesSeeder extends Seeder
                         'description' => $subDesc,
                         'sort_order' => $subOrder++,
                         'is_active' => true,
-                        'seo_title' => Str::limit($subName . ' — ' . $parent->name, 65, ''),
-                        'seo_description' => Str::limit($subDesc, 155, ''),
+                        'seo_title' => Str::limit($subName . ' — ' . $parent->name, 60, ''),
+                        'seo_description' => Str::limit($subDesc, 150, ''),
                     ]
                 );
             }
