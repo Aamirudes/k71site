@@ -179,7 +179,8 @@ $rootHtaccessContent = <<<HTACCESS
 
     # Block access to hidden and sensitive files
     RewriteRule ^(\.env|\.git|composer\.(json|lock)|package\.(json|lock)|artisan) - [F,L,NC]
-    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/app|storage/logs|tests|vendor) - [F,L,NC]
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/app|storage/logs|tests|docs|legacy)(/.*)?$ - [F,L,NC]
+    RewriteRule ^vendor/(autoload\.php|composer/|bin/|.*\.json|.*\.lock|.*\.md) - [F,L,NC]
 
     # Direct access for existing root files (like deploy.php)
     RewriteCond %{REQUEST_FILENAME} -f

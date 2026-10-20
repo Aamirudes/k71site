@@ -190,6 +190,28 @@ class Vendor extends Model
         return $this->hasMany(Product::class)->where('vertical', 'food')->where('status', 'active');
     }
 
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (empty($this->logo)) {
+            return null;
+        }
+        if (str_starts_with($this->logo, 'http://') || str_starts_with($this->logo, 'https://')) {
+            return $this->logo;
+        }
+        return asset('storage/' . ltrim($this->logo, '/'));
+    }
+
+    public function getBannerUrlAttribute(): ?string
+    {
+        if (empty($this->banner)) {
+            return null;
+        }
+        if (str_starts_with($this->banner, 'http://') || str_starts_with($this->banner, 'https://')) {
+            return $this->banner;
+        }
+        return asset('storage/' . ltrim($this->banner, '/'));
+    }
+
     public function getCityAttribute($value): ?string
     {
         return $value ?: ($this->pickup_address['city'] ?? null);

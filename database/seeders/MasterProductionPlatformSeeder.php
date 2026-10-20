@@ -26,7 +26,17 @@ class MasterProductionPlatformSeeder extends Seeder
         $vendorRole = Role::firstOrCreate(['name' => 'vendor']);
         $customerRole = Role::firstOrCreate(['name' => 'customer']);
 
-        // 2. Master Admin Enforced
+        // 2. Resolve conflicting usernames on existing accounts
+        $conflictHashir = User::where('username', 'hashir')->where('email', '!=', 'crab.hashir@gmail.com')->first();
+        if ($conflictHashir) {
+            $conflictHashir->update(['username' => 'user_' . $conflictHashir->id]);
+        }
+        $conflictBuyer = User::where('username', 'k71buyer')->where('email', '!=', 'buyer@k71.in')->first();
+        if ($conflictBuyer) {
+            $conflictBuyer->update(['username' => 'user_' . $conflictBuyer->id]);
+        }
+
+        // Master Admin Enforced
         $admin = User::firstOrCreate(
             ['email' => 'crab.hashir@gmail.com'],
             [
@@ -249,6 +259,10 @@ class MasterProductionPlatformSeeder extends Seeder
 
         $vendorMap = [];
         foreach ($vendorsData as $v) {
+            $conflictVendorUser = User::where('username', $v['username'])->where('email', '!=', $v['email'])->first();
+            if ($conflictVendorUser) {
+                $conflictVendorUser->update(['username' => 'user_' . $conflictVendorUser->id]);
+            }
             $user = User::where('email', $v['email'])->orWhere('username', $v['username'])->first();
             if (!$user) {
                 $user = User::create([

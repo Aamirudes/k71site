@@ -75,8 +75,8 @@
             <!-- Bottom meta -->
             <div class="absolute bottom-0 inset-x-0 p-3">
                 <div class="flex items-center gap-1.5 mb-1.5">
-                    @if($short->vendor && $short->vendor->logo)
-                    <img src="{{ asset('storage/' . $short->vendor->logo) }}" class="w-5 h-5 rounded-full object-cover ring-1 ring-white/50" alt="{{ $short->vendor->shop_name }}">
+                    @if($short->vendor && $short->vendor->logo_url)
+                    <img src="{{ $short->vendor->logo_url }}" class="w-5 h-5 rounded-full object-cover ring-1 ring-white/50" alt="{{ $short->vendor->shop_name }}">
                     @else
                     <div class="w-5 h-5 rounded-full bg-white/20 text-white text-[9px] font-bold flex items-center justify-center ring-1 ring-white/30">
                         {{ strtoupper(substr($short->vendor?->shop_name ?? 'K', 0, 1)) }}

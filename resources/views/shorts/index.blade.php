@@ -174,7 +174,7 @@
                         <div class="zsu-card-info">
                             @if($s->vendor)
                             <div class="zsu-card-vendor">
-                                <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo ? asset('storage/'.$s->vendor->logo) : asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
+                                <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo_url ?: asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
                                 <span class="zsu-card-vendor-name">{{ $s->vendor->shop_name }}</span>
                             </div>
                             @endif
@@ -222,7 +222,7 @@
                         <div class="zsu-card-info">
                             @if($s->vendor)
                             <div class="zsu-card-vendor">
-                                <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo ? asset('storage/'.$s->vendor->logo) : asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
+                                <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo_url ?: asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
                                 <span class="zsu-card-vendor-name">{{ $s->vendor->shop_name }}</span>
                             </div>
                             @endif

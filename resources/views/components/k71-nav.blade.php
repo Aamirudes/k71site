@@ -77,8 +77,8 @@
                 <div class="flex items-center gap-2">
                     @if($currentVendor)
                         <div class="flex items-center gap-2">
-                            @if($currentVendor->logo)
-                                <img src="{{ asset('storage/' . $currentVendor->logo) }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700">
+                            @if($currentVendor->logo_url)
+                                <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700">
                             @endif
                             <a href="{{ route('home') }}" class="font-sans text-lg sm:text-xl font-bold tracking-tight text-zinc-900 dark:text-white leading-none">
                                 {{ $currentVendor->shop_name }}

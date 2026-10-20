@@ -143,8 +143,8 @@
                 <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full border border-stone-700 bg-stone-800 flex items-center justify-center overflow-hidden shrink-0">
-                            @if(!empty($footerVendor->logo))
-                                <img src="{{ asset('storage/' . $footerVendor->logo) }}" alt="Logo" class="w-full h-full object-cover">
+                            @if(!empty($footerVendor->logo_url))
+                                <img src="{{ $footerVendor->logo_url }}" alt="Logo" class="w-full h-full object-cover">
                             @else
                                 <span class="font-serif font-bold text-amber-200 text-base">{{ strtoupper(substr($footerVendor->shop_name, 0, 1)) }}</span>
                             @endif
