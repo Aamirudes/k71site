@@ -177,6 +177,7 @@ Route::delete('/cart/{item}', [\App\Http\Controllers\CartController::class, 'rem
 // Checkout and Orders
 Route::middleware('auth')->group(function () {
     Route::get('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.vendor');
+    Route::get('/checkout', fn() => redirect()->route('cart.index'))->name('checkout.index');
     Route::post('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
     Route::post('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'applyCoupon'])->name('checkout.coupon.apply');
     Route::delete('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');

@@ -281,7 +281,7 @@ class CartController extends Controller
                 'line_total' => $lineTotal,
                 'line_total_formatted' => '₹' . number_format($lineTotal / 100, 2),
                 'image_url' => $imageUrl,
-                'checkout_url' => $item->vendor ? route('checkout.index', $item->vendor) : route('cart.index'),
+                'checkout_url' => $item->vendor ? (Route::has('checkout.vendor') ? route('checkout.vendor', $item->vendor) : route('cart.index')) : route('cart.index'),
             ];
         });
 
