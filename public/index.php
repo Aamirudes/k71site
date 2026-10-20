@@ -17,11 +17,4 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-$request = Request::capture();
-file_put_contents(
-    __DIR__ . '/../storage/logs/request_debug.log',
-    date('Y-m-d H:i:s') . " | HOST: " . $request->getHost() . " | SERVER_HTTP_HOST: " . ($_SERVER['HTTP_HOST'] ?? '') . " | URI: " . $request->getRequestUri() . " | IP: " . $request->ip() . "\n",
-    FILE_APPEND
-);
-
-$app->handleRequest($request);
+$app->handleRequest(Request::capture());

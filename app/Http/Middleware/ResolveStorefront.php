@@ -66,8 +66,20 @@ class ResolveStorefront
         }
 
         if ($slug) {
+            $lowerSlug = strtolower($slug);
+
+            // 1. Allow vertical platform hubs through without treating as vendor stores
+            if (array_key_exists($lowerSlug, config('k71.verticals', []))) {
+                return $next($request);
+            }
+
+            // 2. Allow vendor / seller portal routes through
+            if (in_array($lowerSlug, ['vendor', 'vendors', 'seller', 'sellers', 'admin'])) {
+                return $next($request);
+            }
+
             // Check if this slug is reserved
-            if (in_array(strtolower($slug), config('marketplace.reserved_subdomains'))) {
+            if (in_array($lowerSlug, config('marketplace.reserved_subdomains'))) {
                 abort(404, 'Store not found.');
             }
 

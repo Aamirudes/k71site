@@ -146,6 +146,18 @@ Route::middleware('auth')->group(function () {
 
 // Public Catalog & Products Route
 Route::get('/products', function() { return redirect()->route('catalog.index'); })->name('products.index');
+// Vertical Storefront Proxies (handles subdomains routed via Cloudflare/Hostinger proxying as /s/{vertical})
+Route::get('/s/food', [FoodController::class, 'index'])->name('storefront.food');
+Route::get('/s/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('storefront.food.restaurant');
+
+Route::get('/s/services', [\App\Http\Controllers\ServicesController::class, 'index'])->name('storefront.services');
+Route::get('/s/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('storefront.services.provider');
+
+Route::get('/s/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('storefront.used');
+Route::get('/s/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('storefront.enquiry');
+Route::get('/s/shorts', [ShortsController::class, 'index'])->name('storefront.shorts');
+Route::get('/s/vendor', fn() => redirect()->route('vendor.register'))->name('storefront.vendor');
+
 // Public Vendor Storefronts
 Route::get('/s/{slug}', [\App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.show');
 

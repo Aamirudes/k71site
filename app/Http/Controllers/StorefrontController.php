@@ -10,6 +10,31 @@ class StorefrontController extends Controller
 {
     public function show(Request $request, $slug)
     {
+        $cleanSlug = strtolower(trim($slug));
+
+        // Seamless dispatch if accessed via /s/{vertical} proxy routing
+        if ($cleanSlug === 'food') {
+            return app(\App\Http\Controllers\FoodController::class)->index($request);
+        }
+        if ($cleanSlug === 'services') {
+            return app(\App\Http\Controllers\ServicesController::class)->index($request);
+        }
+        if ($cleanSlug === 'used') {
+            return app(\App\Http\Controllers\UsedController::class)->index($request);
+        }
+        if ($cleanSlug === 'enquiry') {
+            return app(\App\Http\Controllers\EnquiryController::class)->index($request);
+        }
+        if ($cleanSlug === 'shorts') {
+            return app(\App\Http\Controllers\ShortsController::class)->index($request);
+        }
+        if (in_array($cleanSlug, ['vendor', 'vendors', 'seller', 'sellers'])) {
+            return redirect()->route('vendor.register');
+        }
+        if ($cleanSlug === 'admin') {
+            return redirect()->route('filament.admin.auth.login');
+        }
+
         $vendor = Vendor::with('settings')->where('slug', $slug)->firstOrFail();
         app()->instance('current_vendor', $vendor);
         
