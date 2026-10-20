@@ -99,7 +99,7 @@ if ($syncRequested) {
             $subdirs = glob($extractDir . '/*', GLOB_ONLYDIR);
             $sourceDir = !empty($subdirs) ? $subdirs[0] : ($extractDir . '/k71site-main');
             if (file_exists($sourceDir)) {
-                $copyDirs = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'public'];
+                $copyDirs = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'public', 'api', 'includes', 'sql'];
                 foreach ($copyDirs as $d) {
                     $src = $sourceDir . '/' . $d;
                     $dst = $baseDir . '/' . $d;
@@ -126,15 +126,18 @@ if ($syncRequested) {
                     }
                 }
                 
-                // Copy root index.php and .htaccess if present
-                if (file_exists($sourceDir . '/index.php')) {
-                    @copy($sourceDir . '/index.php', $baseDir . '/index.php');
-                }
-                if (file_exists($sourceDir . '/deploy.php')) {
-                    @copy($sourceDir . '/deploy.php', $baseDir . '/deploy.php');
+                // Copy root standalone files if present
+                $standaloneFiles = ['index.php', 'deploy.php', 'messages.php', 'db.php'];
+                foreach ($standaloneFiles as $sf) {
+                    if (file_exists($sourceDir . '/' . $sf)) {
+                        @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
+                        if (file_exists($baseDir . '/public')) {
+                            @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
+                        }
+                    }
                 }
                 
-                echo "<pre class='success'>✅ Successfully updated all application code from GitHub main branch!</pre>";
+                echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";
             }

@@ -101,6 +101,8 @@ Route::post('/auctions/{product}/bid', [\App\Http\Controllers\AuctionController:
 
 // Customer Direct Messaging & Notifications Routes (Phase 9)
 Route::middleware('auth')->group(function () {
+    Route::get('/direct', function() { require base_path('messages.php'); })->name('messages.instagram_direct');
+    Route::get('/dm', function() { require base_path('messages.php'); })->name('messages.dm');
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');

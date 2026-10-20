@@ -16,6 +16,7 @@ database/*.sqlite-shm
 database/*.sqlite-wal
 *.sql
 !database/sql/*.sql
+!sql/*.sql
 *.sqlite
 
 # Dependencies & Build Artefacts
