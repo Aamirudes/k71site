@@ -142,6 +142,14 @@ try {
 }
 echo "</div>";
 
+// Optional: Auto git pull if git repo exists
+if (file_exists($baseDir . '/.git') && function_exists('shell_exec')) {
+    $pullOutput = @shell_exec("cd " . escapeshellarg($baseDir) . " && git pull origin main 2>&1");
+    if ($pullOutput) {
+        echo "<div class='step'><div class='step-title'>🔄 Git Pull Status:</div><pre class='success'>" . htmlspecialchars(trim($pullOutput)) . "</pre></div>";
+    }
+}
+
 // Run Migrations & Seeders
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
