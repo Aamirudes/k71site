@@ -64,6 +64,20 @@ foreach ($staleCacheFiles as $f) {
     }
 }
 
+// 1b. Ensure .env has a valid APP_KEY
+$envPath = $baseDir . '/.env';
+if (file_exists($envPath)) {
+    $envContent = file_get_contents($envPath);
+    if (!str_contains($envContent, 'APP_KEY=base64:') || preg_match('/APP_KEY=\s*$/m', $envContent)) {
+        if (preg_match('/^APP_KEY=.*$/m', $envContent)) {
+            $envContent = preg_replace('/^APP_KEY=.*$/m', 'APP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=', $envContent);
+        } else {
+            $envContent .= "\nAPP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=\n";
+        }
+        @file_put_contents($envPath, $envContent);
+    }
+}
+
 // 2. Ensure storage directories exist and are writable
 $storageDirs = [
     $baseDir . '/storage/framework/views',
