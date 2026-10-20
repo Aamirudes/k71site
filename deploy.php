@@ -314,6 +314,26 @@ if (isset($_GET['diag'])) {
     exit;
 }
 
+if (isset($_GET['test_run'])) {
+    echo "<h1>Live Request Simulator</h1><pre>";
+    $targetPath = $_GET['path'] ?? '/';
+    echo "Testing path: {$targetPath}\n\n";
+    try {
+        $httpKernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+        $simReq = Illuminate\Http\Request::create($targetPath, 'GET');
+        $simRes = $httpKernel->handle($simReq);
+        echo "HTTP Status: " . $simRes->getStatusCode() . "\n";
+        echo "Headers: " . print_r($simRes->headers->all(), true) . "\n";
+        echo "Content preview (first 1000 chars):\n" . htmlspecialchars(substr($simRes->getContent(), 0, 1000)) . "\n";
+    } catch (\Throwable $e) {
+        echo "EXCEPTION CAUGHT:\n" . $e->getMessage() . "\n\n";
+        echo "In " . $e->getFile() . " on line " . $e->getLine() . "\n\n";
+        echo "Stack Trace:\n" . $e->getTraceAsString() . "\n";
+    }
+    echo "</pre>";
+    exit;
+}
+
 // Diagnostic: Check APP_KEY
 $appKey = config('app.key');
 echo "<div class='step'><div class='step-title'>🔑 Application Encryption Key:</div>";
