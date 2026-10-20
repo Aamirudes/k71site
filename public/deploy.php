@@ -75,11 +75,11 @@ if (file_exists($envPath)) {
             $envContent .= "\nAPP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=\n";
         }
     }
-    // Enforce path-based routing on Hostinger so no subdomains/folders are required
-    if (str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=true')) {
-        $envContent = str_replace('MARKETPLACE_USE_SUBDOMAINS=true', 'MARKETPLACE_USE_SUBDOMAINS=false', $envContent);
+    // Ensure subdomains are enabled
+    if (str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=false')) {
+        $envContent = str_replace('MARKETPLACE_USE_SUBDOMAINS=false', 'MARKETPLACE_USE_SUBDOMAINS=true', $envContent);
     } elseif (!str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=')) {
-        $envContent .= "\nMARKETPLACE_USE_SUBDOMAINS=false\n";
+        $envContent .= "\nMARKETPLACE_USE_SUBDOMAINS=true\n";
     }
     @file_put_contents($envPath, $envContent);
 }

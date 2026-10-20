@@ -16,7 +16,7 @@ class ResolveStorefront
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $useSubdomains = config('marketplace.use_subdomains', false);
+        $useSubdomains = config('marketplace.use_subdomains', true);
         $host = strtolower($request->getHost());
         $extractedSlug = k71_extract_subdomain($host);
         $slug = null;
@@ -55,30 +55,13 @@ class ResolveStorefront
             if ($extractedSlug !== 'www') {
                 $slug = $extractedSlug;
             }
-        } else {
-            // Path-based tenancy /s/{shop-slug}
+        }
+
+        // Support path-based tenancy as fallback (/s/{shop-slug})
+        if (!$slug) {
             $prefix = config('marketplace.storefront_path_prefix', 's');
             if ($request->is("$prefix/*")) {
                 $slug = $request->segment(2); // /s/shop1 -> segment 2 is shop1
-            }
-
-            // Automatic 301 redirect from accidental subdomains to live path routes on production apex domain
-            if ($extractedSlug && $extractedSlug !== 'www' && app()->environment('production')) {
-                $rootDomain = k71_root_domain($host);
-                $port = $request->getPort();
-                $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
-                $scheme = (app()->environment('production') || $request->secure()) ? 'https' : 'http';
-
-                if ($extractedSlug === 'admin') {
-                    return redirect()->away("{$scheme}://{$rootDomain}{$portSuffix}/admin", 301);
-                }
-                if (in_array($extractedSlug, ['vendor', 'vendors', 'seller', 'sellers'])) {
-                    return redirect()->away("{$scheme}://{$rootDomain}{$portSuffix}/vendor/dashboard", 301);
-                }
-                if (array_key_exists($extractedSlug, config('k71.verticals', []))) {
-                    return redirect()->away("{$scheme}://{$rootDomain}{$portSuffix}/{$extractedSlug}", 301);
-                }
-                return redirect()->away("{$scheme}://{$rootDomain}{$portSuffix}/s/{$extractedSlug}", 301);
             }
         }
 

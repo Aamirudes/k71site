@@ -82,7 +82,7 @@ if (!function_exists('k71_vertical_url')) {
         $port = request()->getPort();
         $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
 
-        $useSubdomains = config('marketplace.use_subdomains', false);
+        $useSubdomains = config('marketplace.use_subdomains', true);
 
         // Local LAN IP fallback (e.g. 192.168.1.20:8000 or 127.0.0.1:8000) for testing on mobile phone
         if ($isIp) {
@@ -127,7 +127,7 @@ if (!function_exists('k71_vendor_url')) {
         $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
         $port = request()->getPort();
         $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
-        $useSubdomains = config('marketplace.use_subdomains', false);
+        $useSubdomains = config('marketplace.use_subdomains', true);
 
         if (!$useSubdomains || $isIp) {
             $rootDomain = k71_root_domain($host);

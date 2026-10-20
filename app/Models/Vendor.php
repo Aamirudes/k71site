@@ -200,7 +200,7 @@ class Vendor extends Model
         $requestHost = request()->getHost();
         $isIp = in_array($requestHost, ['127.0.0.1', '::1']) || filter_var($requestHost, FILTER_VALIDATE_IP);
 
-        if (config('marketplace.use_subdomains', false) && !$isIp) {
+        if (config('marketplace.use_subdomains', true) && !$isIp) {
             $rootDomain = k71_root_domain($requestHost);
             $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
             $port = request()->getPort();
