@@ -45,31 +45,37 @@ header('Content-Type: text/html; charset=utf-8');
     <span class="badge">HOSTINGER AUTO-DEPLOYMENT & REPAIR</span>
 <?php
 
-$baseDir = dirname(__DIR__);
+$baseDir = file_exists(__DIR__ . '/artisan') ? __DIR__ : (file_exists(dirname(__DIR__) . '/artisan') ? dirname(__DIR__) : __DIR__);
 
 // 0. Auto-Pull from GitHub via Zip if requested or via shell if available
 $syncRequested = isset($_GET['sync']) || isset($_GET['pull']);
 if ($syncRequested) {
     echo "<div class='step'><div class='step-title'>🔄 Synchronizing Code Directly from GitHub (k71site)...</div>";
     $zipUrl = 'https://github.com/Aamirudes/k71site/archive/refs/heads/main.zip';
-    $tempZip = $baseDir . '/storage/github_latest.zip';
+    $storageDir = $baseDir . '/storage';
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0775, true);
+    }
+    $tempZip = $storageDir . '/github_latest.zip';
     
     // Download using curl
     $downloadSuccess = false;
     if (function_exists('curl_init')) {
-        $fp = fopen($tempZip, 'w+');
-        $ch = curl_init($zipUrl);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'MarbleMandi-Deployer');
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        fclose($fp);
-        if ($httpCode === 200 && filesize($tempZip) > 1000) {
-            $downloadSuccess = true;
+        $fp = @fopen($tempZip, 'w+');
+        if ($fp) {
+            $ch = curl_init($zipUrl);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'MarbleMandi-Deployer');
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            fclose($fp);
+            if ($httpCode === 200 && file_exists($tempZip) && filesize($tempZip) > 1000) {
+                $downloadSuccess = true;
+            }
         }
     }
     
