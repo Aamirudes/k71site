@@ -363,7 +363,6 @@ try {
     $admin->last_name = 'Admin';
     $admin->username = 'masteradmin';
     $admin->password = \Illuminate\Support\Facades\Hash::make('Hashir1284@0');
-    $admin->role = 'admin';
     $admin->is_blocked = 0;
     $admin->blocked_reason = null;
     $admin->email_verified_at = $admin->email_verified_at ?: now();

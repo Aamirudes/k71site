@@ -11,9 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('cart_items', function (Blueprint $table) {
-            $table->dropUnique('cart_items_cart_id_variant_id_unique');
-        });
+        try {
+            Schema::table('cart_items', function (Blueprint $table) {
+                $table->dropUnique('cart_items_cart_id_variant_id_unique');
+            });
+        } catch (\Throwable $e) {
+            // Index already dropped or required by foreign key
+        }
     }
 
     /**
