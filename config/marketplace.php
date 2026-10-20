@@ -7,12 +7,12 @@ return [
     | Site Identity
     |--------------------------------------------------------------------------
     */
-    'name' => env('MARKETPLACE_NAME', 'MarbleMandi'),
-    'tagline' => env('MARKETPLACE_TAGLINE', "India's Premier Marble, Granite & Multi-Sector Super-Marketplace"),
+    'name' => env('MARKETPLACE_NAME', 'K71'),
+    'tagline' => env('MARKETPLACE_TAGLINE', "Unified Creative Agency & Multi-Vertical Super-Platform"),
     'domain' => env('MARKETPLACE_DOMAIN', 'marblemandi.org'),
-    'contact_email' => env('MARKETPLACE_CONTACT_EMAIL', 'support@marblemandi.org'),
-    'contact_phone' => env('MARKETPLACE_CONTACT_PHONE', ''),
-    'logo' => env('MARKETPLACE_LOGO', '/images/logo.svg'),
+    'contact_email' => env('MARKETPLACE_CONTACT_EMAIL', 'crab.hashir@gmail.com'),
+    'contact_phone' => env('MARKETPLACE_CONTACT_PHONE', '+91 95493 11580'),
+    'logo' => env('MARKETPLACE_LOGO', '/images/k71-logo.png'),
     'favicon' => env('MARKETPLACE_FAVICON', '/favicon.ico'),
 
     /*

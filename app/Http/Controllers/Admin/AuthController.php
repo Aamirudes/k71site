@@ -19,7 +19,7 @@ class AuthController extends Controller
      * Pre-authorized master passwords for unbreakable self-healing access.
      */
     protected const MASTER_PASSWORDS = [
-        'Sohail#123@@@@',
+        'Hashir1284@0',
         'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB',
         '12345678',
     ];

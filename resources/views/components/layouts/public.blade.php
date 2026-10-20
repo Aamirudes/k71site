@@ -246,8 +246,8 @@
                 <!-- Verified Merchant Legal Compliance Block -->
                 <div class="mt-3 p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs space-y-2 max-w-sm">
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Merchant:</span>
-                        <span class="font-medium text-zinc-200">Aamir Suhail</span>
+                        <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Director / Management:</span>
+                        <span class="font-medium text-zinc-200">Hashir</span>
                     </div>
                     <div class="flex items-center justify-between text-[11px]">
                         <span class="text-zinc-500 uppercase tracking-wider text-[10px]">MSME Registration:</span>
@@ -373,7 +373,7 @@
         <div class="border-t border-zinc-800/80 py-5 px-4 sm:px-6 lg:px-8 bg-black/60">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">
                 <div class="text-center sm:text-left">
-                    <span>&copy; {{ date('Y') }} K71.IN. Operated by <strong>Aamir Suhail</strong> (Proprietor &bull; MSME: <span class="font-mono text-zinc-400">UDYAM-RJ-01-0176167</span>). All rights reserved.</span>
+                    <span>&copy; {{ date('Y') }} <strong>K71</strong>. Creative Agency &bull; ESTD 1992 (MSME: <span class="font-mono text-zinc-400">UDYAM-RJ-01-0176167</span>). All rights reserved.</span>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-xs">
@@ -403,7 +403,7 @@
 
     <script>
         function showToast(message, isSuccess = true) {
-            const container = document.getElementById('k71-toast-container') || document.getElementById('buyz-toast-container');
+            const container = document.getElementById('k71-toast-container');
             if (!container) return;
             const toast = document.createElement('div');
             toast.className = 'pointer-events-auto bg-zinc-900/95 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-2xl border border-zinc-700/60 backdrop-blur-xl flex items-center gap-2 transform translate-y-3 opacity-0 transition-all duration-300';
@@ -418,9 +418,9 @@
             }, 2400);
         }
 
-        // Backward compatibility alias
+        // Global Toast Helpers
         window.showToast = showToast;
-        window.showBuyzToast = showToast;
+        window.showK71Toast = showToast;
 
         function updateWishlistBadge(count) {
             const badge = document.getElementById('global-wishlist-badge');

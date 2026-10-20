@@ -67,13 +67,13 @@
                 
                 <div class="space-y-4 text-xs font-sans text-zinc-600">
                     <div>
-                        <span class="text-[11px] font-mono uppercase text-zinc-400 font-bold block">Proprietor / Bank Account Holder</span>
-                        <span class="text-sm font-bold text-zinc-900">Aamir Suhail</span>
+                        <span class="text-[11px] font-mono uppercase text-zinc-400 font-bold block">Platform Executive / Director</span>
+                        <span class="text-sm font-bold text-zinc-900">Hashir</span>
                     </div>
 
                     <div>
                         <span class="text-[11px] font-mono uppercase text-zinc-400 font-bold block">Enterprise Trade Name</span>
-                        <span class="text-sm font-bold text-zinc-900">K71</span>
+                        <span class="text-sm font-bold text-zinc-900">K71 (Creative Agency • ESTD 1992)</span>
                     </div>
 
                     <div>
@@ -85,7 +85,7 @@
 
                     <div>
                         <span class="text-[11px] font-mono uppercase text-zinc-400 font-bold block">Business Classification</span>
-                        <span class="font-medium text-zinc-800">E-Commerce Retail Platform (NIC 47912)</span>
+                        <span class="font-medium text-zinc-800">Creative Agency, E-Commerce &amp; Multi-Sector Marketplace (NIC 47912)</span>
                     </div>
 
                     <div>
@@ -104,7 +104,7 @@
                 In accordance with the Information Technology Act 2000 and the Consumer Protection (E-Commerce) Rules 2020, the contact details of the Grievance Officer for K71 are provided below:
             </p>
             <p class="font-mono text-zinc-800 pt-1">
-                <strong>Officer:</strong> Aamir Suhail (Proprietor &amp; Nodal Officer)<br>
+                <strong>Officer:</strong> Hashir (Platform Director &amp; Nodal Officer)<br>
                 <strong>Email:</strong> <a href="mailto:crab.hashir@gmail.com" class="text-zinc-900 underline font-semibold">crab.hashir@gmail.com</a><br>
                 <strong>Phone:</strong> +91 95493 11580<br>
                 <strong>Resolution SLA:</strong> Acknowledgment within 48 hours; resolution within 1 month.

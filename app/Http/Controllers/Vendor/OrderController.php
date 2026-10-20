@@ -520,7 +520,7 @@ class OrderController extends Controller
 
         $settlementService->markSettled($order, null, 'vendor_simulator');
 
-        return back()->with('success', "⚡ Bank Settlement Simulation Complete! Funds credited to Buyz Current Account. Order is now UNLOCKED for Acceptance & Instant Payout!");
+        return back()->with('success', "⚡ Bank Settlement Simulation Complete! Funds credited to K71 Platform Settlement Account. Order is now UNLOCKED for Acceptance & Instant Payout!");
     }
 }
 

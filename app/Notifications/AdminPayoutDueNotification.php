@@ -48,7 +48,7 @@ class AdminPayoutDueNotification extends Notification
 
         return (new MailMessage)
             ->subject("🔔 [Action Required] Payout Due: ₹{$amountRupees} for Order #{$this->order->order_number}")
-            ->greeting("Hello Aamir,")
+            ->greeting("Hello Admin,")
             ->line("Vendor **{$vendorName}** has accepted Order **#{$this->order->order_number}** and is packing the items for courier dispatch.")
             ->line("---")
             ->line("**💰 Payout Transfer Details:**")

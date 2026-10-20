@@ -53,7 +53,7 @@ class ShiprocketWebhookController extends Controller
             return response()->json(['message' => 'Associated order not found'], 200);
         }
 
-        // Map Shiprocket courier statuses to Buyz platform states
+        // Map Shiprocket courier statuses to K71 platform states
         $mappedShipmentStatus = match ($rawStatus) {
             'PICKED UP', 'IN TRANSIT', 'REACHED AT DESTINATION HUB', 'OUT FOR PICKUP' => 'in_transit',
             'OUT FOR DELIVERY' => 'out_for_delivery',

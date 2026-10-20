@@ -1126,19 +1126,19 @@
     @if($showPillars)
         <section class="relative py-12 sm:py-16 px-6 sm:px-10 rounded-3xl overflow-hidden mb-14 sm:mb-20 text-center border border-zinc-200/80 dark:border-zinc-800 bg-zinc-950 text-white">
             <div class="relative z-10 max-w-4xl mx-auto">
-                <span class="inline-block px-3.5 py-1 rounded-full bg-violet-500/20 text-violet-300 text-xs font-semibold tracking-wider uppercase mb-3 border border-violet-500/30">
+                <span class="inline-block px-3.5 py-1 rounded-full bg-blue-600/20 text-blue-300 text-xs font-semibold tracking-wider uppercase mb-3 border border-blue-500/30">
                     The K71 Unified Architecture
                 </span>
                 <h2 class="text-2xl sm:text-4xl font-black text-white mb-3">
                     Engineered for Multi-Tenancy &amp; Security
                 </h2>
                 <p class="text-zinc-400 text-xs sm:text-sm max-w-xl mx-auto mb-10 leading-relaxed">
-                    Designed to run seamlessly on marblemandi.org with unified multi-category vertical routing and independent storefronts.
+                    Designed by K71 Creative Agency with unified multi-category vertical routing, verified sellers, and autonomous storefronts.
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
                     <div class="bg-white/5 border border-white/10 p-5 rounded-2xl">
-                        <div class="w-10 h-10 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center mb-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3">
                             <svg width="20" height="20" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         </div>
                         <h4 class="font-bold text-sm text-white mb-1">Escrow Protection</h4>

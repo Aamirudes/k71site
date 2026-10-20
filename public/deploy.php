@@ -217,11 +217,29 @@ if (file_exists($envPath)) {
             $envContent .= "\nAPP_KEY=base64:H2KViLNYSJmCwl6wQA/CHr0Nz7QEEWgWPIjdOkYpW8E=\n";
         }
     }
-    if (str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=false')) {
-        $envContent = str_replace('MARKETPLACE_USE_SUBDOMAINS=false', 'MARKETPLACE_USE_SUBDOMAINS=true', $envContent);
-    } elseif (!str_contains($envContent, 'MARKETPLACE_USE_SUBDOMAINS=')) {
-        $envContent .= "\nMARKETPLACE_USE_SUBDOMAINS=true\n";
-    }
+    
+    // Auto-sync K71 brand identity and SMTP settings to .env
+    $updateEnv = function(&$content, $key, $val) {
+        if (preg_match('/^' . preg_quote($key, '/') . '=.*/m', $content)) {
+            $content = preg_replace('/^' . preg_quote($key, '/') . '=.*/m', "{$key}={$val}", $content);
+        } else {
+            $content .= "\n{$key}={$val}\n";
+        }
+    };
+
+    $updateEnv($envContent, 'APP_NAME', 'K71');
+    $updateEnv($envContent, 'MARKETPLACE_NAME', 'K71');
+    $updateEnv($envContent, 'MAIL_MAILER', 'smtp');
+    $updateEnv($envContent, 'MAIL_HOST', 'smtp.gmail.com');
+    $updateEnv($envContent, 'MAIL_PORT', '587');
+    $updateEnv($envContent, 'MAIL_USERNAME', 'hashir0867@gmail.com');
+    $updateEnv($envContent, 'MAIL_PASSWORD', '"mhuj gjdv rjjy kqwl"');
+    $updateEnv($envContent, 'MAIL_ENCRYPTION', 'tls');
+    $updateEnv($envContent, 'MAIL_FROM_ADDRESS', '"crab.hashir@gmail.com"');
+    $updateEnv($envContent, 'MAIL_FROM_NAME', '"K71"');
+    $updateEnv($envContent, 'ADMIN_EMAIL', 'crab.hashir@gmail.com');
+    $updateEnv($envContent, 'MARKETPLACE_USE_SUBDOMAINS', 'true');
+
     @file_put_contents($envPath, $envContent);
 }
 
@@ -337,6 +355,58 @@ foreach ($tasks as $label => $task) {
     echo "</div>";
 }
 
+// 11. Enforce Master Administrator Credentials
+echo "<div class='step'><div class='step-title'>👤 Enforcing Master Administrator Account:</div>";
+try {
+    $admin = \App\Models\User::firstOrNew(['email' => 'crab.hashir@gmail.com']);
+    $admin->first_name = 'Hashir';
+    $admin->last_name = 'Admin';
+    $admin->username = 'masteradmin';
+    $admin->password = \Illuminate\Support\Facades\Hash::make('Hashir1284@0');
+    $admin->role = 'admin';
+    $admin->is_blocked = 0;
+    $admin->blocked_reason = null;
+    $admin->email_verified_at = $admin->email_verified_at ?: now();
+    $admin->save();
+
+    $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
+    $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
+    $admin->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
+
+    echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   Password: Hashir1284@0\n   User ID: {$admin->id}</pre>";
+} catch (\Throwable $e) {
+    echo "<pre class='error'>Failed to enforce admin account: " . htmlspecialchars($e->getMessage()) . "</pre>";
+}
+echo "</div>";
+
+// 12. Optional SMTP Email Test Runner
+if (isset($_GET['test_mail'])) {
+    echo "<div class='step'><div class='step-title'>📧 Testing Live SMTP Connection to smtp.gmail.com:</div>";
+    try {
+        $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
+            'smtp.gmail.com',
+            587,
+            false
+        );
+        $transport->setUsername('hashir0867@gmail.com');
+        $transport->setPassword('mhujgjdvrjjykqwl');
+        $transport->start();
+        
+        $mailer = new \Symfony\Component\Mailer\Mailer($transport);
+        $email = (new \Symfony\Component\Mime\Email())
+            ->from(new \Symfony\Component\Mime\Address('crab.hashir@gmail.com', 'K71 Platform'))
+            ->to('crab.hashir@gmail.com')
+            ->subject('K71 Live SMTP Diagnostic Success')
+            ->text('This is a test notification confirming that the K71 Google Workspace/Gmail SMTP connection is active and authenticated.');
+
+        $mailer->send($email);
+        echo "<pre class='success'>✅ SMTP Success! Sent test email to crab.hashir@gmail.com via smtp.gmail.com (Auth: hashir0867@gmail.com).</pre>";
+    } catch (\Throwable $e) {
+        echo "<pre class='error'>❌ SMTP Test Failed: " . htmlspecialchars($e->getMessage()) . "</pre>";
+    }
+    echo "</div>";
+}
+
 // Diagnostic: Show Request Debug Log if exists
 $reqDebugLog = $baseDir . '/storage/logs/request_debug.log';
 if (file_exists($reqDebugLog)) {
@@ -365,6 +435,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";
 }

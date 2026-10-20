@@ -30,17 +30,19 @@ class DatabaseSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'crab.hashir@gmail.com'],
             [
-                'first_name' => 'Master',
+                'first_name' => 'Hashir',
                 'last_name' => 'Admin',
                 'username' => 'masteradmin',
-                'password' => Hash::make('Sohail#123@@@@'),
+                'password' => Hash::make('Hashir1284@0'),
                 'email_verified_at' => now(),
                 'terms_accepted_at' => now(),
             ]
         );
 
         $admin->update([
-            'password' => Hash::make('Sohail#123@@@@'),
+            'first_name' => 'Hashir',
+            'last_name' => 'Admin',
+            'password' => Hash::make('Hashir1284@0'),
             'is_blocked' => 0,
             'blocked_reason' => null,
             'email_verified_at' => $admin->email_verified_at ?: now(),

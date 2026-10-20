@@ -8,9 +8,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'name' => env('K71_NAME', 'K71'),
-    'tagline' => env('K71_TAGLINE', 'Multi-Category Marketplace & Video Commerce'),
+    'tagline' => env('K71_TAGLINE', 'Creative Agency & Unified Multi-Vertical Super-Platform'),
     'root_domain' => env('K71_ROOT_DOMAIN', 'marblemandi.org'),
-    'contact_email' => env('K71_CONTACT_EMAIL', 'support@marblemandi.org'),
+    'contact_email' => env('K71_CONTACT_EMAIL', 'crab.hashir@gmail.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -22,10 +22,10 @@ return [
             'key' => 'main',
             'name' => 'Marketplace',
             'subdomain' => null,
-            'title' => 'K71 — Multi-Vendor Marketplace',
+            'title' => 'K71 — Creative Agency & Super-Marketplace',
             'description' => 'Discover, buy, and explore premium products across thousands of verified stores.',
-            'badge' => 'Shop',
-            'theme_color' => '#111827',
+            'badge' => 'K71',
+            'theme_color' => '#0600c2',
         ],
         'food' => [
             'key' => 'food',

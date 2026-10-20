@@ -9,14 +9,18 @@
 }
 
 @theme {
-  --color-brand-background: #FAF7F2;
-  --color-brand-surface: #F1EBE2;
+  --color-brand-background: #FAFAFA;
+  --color-brand-surface: #FFFFFF;
   --color-brand-text: #09090B;
-  --color-brand-muted: #71717A;
-  --color-brand-sage: #8FA396;
-  --color-brand-rose: #D9B8B0;
-  --color-brand-gold: #C9A97C;
+  --color-brand-muted: #64748B;
+  --color-brand-sage: #0600c2;
+  --color-brand-rose: #0600c2;
+  --color-brand-gold: #0600c2;
   --color-brand-error: #EF4444;
+  --color-brand-primary: #0600c2;
+  --color-brand-primary-hover: #0500a8;
+  --color-brand-royal: #0600c2;
+  --color-brand-cobalt: #0600c2;
 
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-serif: 'Outfit', sans-serif;
@@ -31,7 +35,7 @@
     }
 
     body {
-        background-color: #FAF7F2;
+        background-color: #FAFAFA;
         color: #09090B;
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
@@ -51,22 +55,22 @@
     }
 
     /* ==========================================================================
-       LUXURY DARK MODE MASTER SYSTEM (Fixes all visibility & contrast problems)
+       LUXURY DARK MODE MASTER SYSTEM (K71 Obsidian & Royal Cobalt Palette)
        ========================================================================== */
     html.dark {
         color-scheme: dark;
-        --color-brand-background: #090D16;
-        --color-brand-surface: #111827;
+        --color-brand-background: #060A17;
+        --color-brand-surface: #0E172A;
         --color-brand-text: #F8FAFC;
         --color-brand-muted: #94A3B8;
-        --color-brand-sage: #34D399;
+        --color-brand-sage: #38BDF8;
     }
 
     html.dark body {
-        background-color: #090D16 !important;
+        background-color: #060A17 !important;
         background-image: 
-            radial-gradient(at 15% 15%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
-            radial-gradient(at 85% 85%, rgba(99, 102, 241, 0.06) 0px, transparent 50%) !important;
+            radial-gradient(at 15% 15%, rgba(6, 0, 194, 0.12) 0px, transparent 50%),
+            radial-gradient(at 85% 85%, rgba(59, 130, 246, 0.08) 0px, transparent 50%) !important;
         background-attachment: fixed !important;
         color: #F8FAFC !important;
     }
@@ -190,10 +194,10 @@
     html.dark button.bg-zinc-950,
     html.dark a.bg-zinc-950,
     html.dark .btn-dark-invert {
-        background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
-        color: #04130C !important;
-        font-weight: 800 !important;
-        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35) !important;
+        background: #0600c2 !important;
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        box-shadow: 0 4px 20px rgba(6, 0, 194, 0.4) !important;
         border: none !important;
     }
     html.dark button.bg-brand-text:hover,
@@ -201,15 +205,15 @@
     html.dark a.bg-stone-900:hover,
     html.dark button.bg-zinc-950:hover,
     html.dark a.bg-zinc-950:hover {
-        background: linear-gradient(135deg, #34D399 0%, #10B981 100%) !important;
-        box-shadow: 0 8px 30px rgba(16, 185, 129, 0.5) !important;
+        background: #1812df !important;
+        box-shadow: 0 8px 30px rgba(6, 0, 194, 0.55) !important;
     }
 
     /* Form Controls Dark Mode High Contrast */
     html.dark input:not([type="checkbox"]):not([type="radio"]),
     html.dark textarea,
     html.dark select {
-        background-color: #131D2E !important;
+        background-color: #0E172A !important;
         color: #FFFFFF !important;
         border-color: rgba(255, 255, 255, 0.14) !important;
     }
@@ -217,8 +221,8 @@
     html.dark input:focus,
     html.dark textarea:focus,
     html.dark select:focus {
-        border-color: #10B981 !important;
-        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+        border-color: #0600c2 !important;
+        box-shadow: 0 0 0 2px rgba(6, 0, 194, 0.35) !important;
     }
 
     html.dark input::placeholder,
@@ -227,7 +231,7 @@
     }
 
     html.dark select option {
-        background-color: #131D2E !important;
+        background-color: #0E172A !important;
         color: #FFFFFF !important;
     }
 }
@@ -235,16 +239,16 @@
 @layer components {
     /* Glassmorphism Luxury Panel */
     .glass-panel {
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(0, 0, 0, 0.06);
         box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
         border-radius: 1.5rem;
     }
     
     html.dark .glass-panel {
-        background: rgba(17, 24, 39, 0.85) !important;
+        background: rgba(14, 23, 42, 0.88) !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     }
@@ -256,26 +260,26 @@
     }
     .luxury-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.12);
-        border-color: rgba(16, 185, 129, 0.4);
+        box-shadow: 0 20px 40px -15px rgba(6, 0, 194, 0.12);
+        border-color: rgba(6, 0, 194, 0.35);
     }
     html.dark .luxury-card {
-        background-color: #111827;
+        background-color: #0E172A;
         border-color: rgba(255, 255, 255, 0.08);
         box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
     }
     html.dark .luxury-card:hover {
-        border-color: rgba(16, 185, 129, 0.5) !important;
-        box-shadow: 0 20px 50px -10px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(6, 0, 194, 0.55) !important;
+        box-shadow: 0 20px 50px -10px rgba(6, 0, 194, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
     }
 
     /* Primary Button */
     .btn-primary {
-        background-color: #18181B;
+        background-color: #0600c2;
         color: #FFFFFF;
         padding: 0.75rem 1.75rem;
         border-radius: 9999px;
-        font-weight: 800;
+        font-weight: 700;
         font-size: 0.875rem;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         display: inline-flex;
@@ -283,20 +287,21 @@
         justify-content: center;
         gap: 0.5rem;
         letter-spacing: -0.01em;
+        box-shadow: 0 4px 14px rgba(6, 0, 194, 0.25);
     }
     .btn-primary:hover {
-        background-color: #27272A;
+        background-color: #0500a8;
         transform: translateY(-1px);
-        box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 10px 25px -4px rgba(6, 0, 194, 0.4);
     }
     html.dark .btn-primary {
-        background-color: #10B981 !important;
-        color: #090D16 !important;
-        box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+        background-color: #0600c2 !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 20px rgba(6, 0, 194, 0.4);
     }
     html.dark .btn-primary:hover {
-        background-color: #34D399 !important;
-        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
+        background-color: #1812df !important;
+        box-shadow: 0 10px 30px rgba(6, 0, 194, 0.6);
     }
 
     /* Standard Product Aspect Ratio (3:4) */

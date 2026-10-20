@@ -30,16 +30,19 @@ class MasterProductionPlatformSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'crab.hashir@gmail.com'],
             [
-                'first_name' => 'Master',
+                'first_name' => 'Hashir',
                 'last_name' => 'Admin',
-                'username' => 'masteradmin',
-                'password' => Hash::make('Sohail#123@@@@'),
+                'username' => 'hashir',
+                'password' => Hash::make('Hashir1284@0'),
                 'email_verified_at' => now(),
                 'terms_accepted_at' => now(),
             ]
         );
         $admin->update([
-            'password' => Hash::make('Sohail#123@@@@'),
+            'first_name' => 'Hashir',
+            'last_name' => 'Admin',
+            'username' => 'hashir',
+            'password' => Hash::make('Hashir1284@0'),
             'is_blocked' => 0,
             'blocked_reason' => null,
             'email_verified_at' => $admin->email_verified_at ?: now(),
@@ -48,12 +51,12 @@ class MasterProductionPlatformSeeder extends Seeder
 
         // Demo Buyer Account
         $buyer = User::firstOrCreate(
-            ['email' => 'buyer@marblemandi.org'],
+            ['email' => 'buyer@k71.in'],
             [
-                'first_name' => 'Aamir',
-                'last_name' => 'Khan',
-                'username' => 'aamirkhan',
-                'password' => Hash::make('Password@123'),
+                'first_name' => 'K71',
+                'last_name' => 'Buyer',
+                'username' => 'k71buyer',
+                'password' => Hash::make('Hashir1284@0'),
                 'email_verified_at' => now(),
                 'terms_accepted_at' => now(),
             ]

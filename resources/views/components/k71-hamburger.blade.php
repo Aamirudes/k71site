@@ -270,7 +270,7 @@
 
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 flex items-center justify-between text-xs text-zinc-500">
-            <span>&copy; {{ date('Y') }} MarbleMandi.org</span>
+            <span>&copy; {{ date('Y') }} K71 Creative Agency</span>
             @auth
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

@@ -225,10 +225,10 @@
 
                 <div class="flex items-center gap-2.5 pl-3 border-l border-slate-200">
                     <div class="w-8 h-8 rounded-full bg-slate-900 text-amber-300 flex items-center justify-center font-bold text-xs shadow-xs">
-                        SA
+                        {{ strtoupper(substr(auth()->user()?->name ?? 'HA', 0, 2)) }}
                     </div>
                     <div class="hidden md:block text-left">
-                        <p class="text-xs font-bold text-slate-800 leading-none">Sohail Admin</p>
+                        <p class="text-xs font-bold text-slate-800 leading-none">{{ auth()->user()?->name ?? 'Hashir Admin' }}</p>
                         <p class="text-[10px] text-slate-400 font-mono mt-0.5">Superuser</p>
                     </div>
                 </div>

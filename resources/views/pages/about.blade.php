@@ -52,8 +52,8 @@
                         <span class="font-mono font-bold text-zinc-900 text-sm">UDYAM-RJ-01-0176167</span>
                     </div>
                     <div class="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-1">
-                        <span class="text-zinc-500 uppercase tracking-wider text-[10px] block font-medium">Proprietor / Bank Account Holder</span>
-                        <span class="font-bold text-zinc-900 text-sm">Aamir Suhail</span>
+                        <span class="text-zinc-500 uppercase tracking-wider text-[10px] block font-medium">Platform Founder &amp; Director</span>
+                        <span class="font-bold text-zinc-900 text-sm">Hashir</span>
                     </div>
                 </div>
             </div>

@@ -85,16 +85,18 @@
                             </a>
                         </div>
                     @else
-                        <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="MarbleMandi Homepage">
-                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-sky-500 flex items-center justify-center text-white text-base font-black shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
-                                M
+                        <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="K71 Homepage">
+                            <div class="h-9 w-9 rounded-xl overflow-hidden bg-[#0600c2] p-1 flex items-center justify-center shadow-md shadow-blue-900/20 group-hover:scale-105 transition-transform shrink-0 border border-blue-900/30">
+                                <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                             </div>
-                            <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-white">
-                                Marble<span class="text-emerald-500 dark:text-emerald-400 font-bold">Mandi</span>
-                            </span>
+                            <div class="flex flex-col leading-none">
+                                <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-white flex items-center gap-1.5">
+                                    K71<span class="text-[9px] font-mono font-bold tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-200/50 dark:border-blue-800/50">AGENCY</span>
+                                </span>
+                            </div>
                             @if($currentKey !== 'main')
-                                <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                                    {{ $activeVertical['badge'] ?? 'Vertical' }}
+                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
+                                    {{ $activeVertical['name'] ?? 'Hub' }}
                                 </span>
                             @endif
                         </a>
@@ -154,7 +156,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
                     </svg>
                     <span id="global-wishlist-badge" 
-                          class="absolute top-1 right-1 bg-violet-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
+                          class="absolute top-1 right-1 bg-[#0600c2] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
                         {{ $navWishlistCount }}
                     </span>
                 </a>
@@ -170,21 +172,21 @@
                     <!-- Counter Badge -->
                     <span x-show="cartBadgeCount > 0"
                           x-text="cartBadgeCount"
-                          class="absolute top-1 right-1 bg-violet-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
+                          class="absolute top-1 right-1 bg-[#0600c2] text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
                 </button>
 
                 <!-- Desktop User Menu -->
                 <div class="hidden sm:block relative ml-1">
                     @guest
                         <a href="{{ route('login') }}" 
-                           class="px-4 py-2 rounded-full bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold hover:bg-black dark:hover:bg-zinc-200 transition-all duration-200 shadow-xs">
+                           class="px-4 py-2 rounded-full bg-[#0600c2] text-white text-xs font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm shadow-blue-900/20">
                             Sign In
                         </a>
                     @else
                         <div class="relative">
                             <button @click="userMenuOpen = !userMenuOpen" 
                                     @click.away="userMenuOpen = false" 
-                                    class="w-8 h-8 rounded-full bg-violet-600 text-white font-medium flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-violet-700 transition-colors">
+                                    class="w-8 h-8 rounded-full bg-[#0600c2] text-white font-medium flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-blue-700 transition-colors">
                                 {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
                             </button>
 
