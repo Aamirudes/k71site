@@ -18,10 +18,11 @@ class ProductViewController extends Controller
         // High-CTR SEO Data (Google SERP optimized)
         $priceRupees = number_format($product->base_price / 100, 0);
         $brandName = $product->brand ?: $product->vendor->shop_name;
-        $defaultSeoTitle = "Buy {$product->title} Online at ₹{$priceRupees} | {$brandName} - K71 India";
+        $appName = config('marketplace.name', 'MarbleMandi');
+        $defaultSeoTitle = "Buy {$product->title} Online at ₹{$priceRupees} | {$brandName} - {$appName}";
         $seoTitle = $product->seo_title ?: $defaultSeoTitle;
 
-        $defaultSeoDesc = "Shop authentic {$product->title} by {$brandName} on K71 at ₹{$priceRupees}. Verified quality, 100% genuine seller, pan-India express doorstep delivery.";
+        $defaultSeoDesc = "Shop authentic {$product->title} by {$brandName} on {$appName} at ₹{$priceRupees}. Verified quality, 100% genuine seller, pan-India express doorstep delivery.";
         $seoDescription = $product->seo_description ?: ($product->short_description ?: $defaultSeoDesc);
         $ogImage = $product->og_image ?? ($product->images->first()->path ?? null);
 
