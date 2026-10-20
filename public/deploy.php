@@ -461,9 +461,9 @@ if (file_exists($reqDebugLog)) {
 $logFile = $baseDir . '/storage/logs/laravel.log';
 if (file_exists($logFile)) {
     $lines = file($logFile);
-    $lastLines = array_slice($lines, -35);
+    $lastLines = array_slice($lines, -120);
     echo "<div class='step'><div class='step-title'>📋 Latest Laravel Log Entries:</div>";
-    echo "<pre style='color:#cbd5e1;font-size:12px;max-height:250px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+    echo "<pre style='color:#cbd5e1;font-size:12px;max-height:400px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
     echo "</div>";
 }
 
