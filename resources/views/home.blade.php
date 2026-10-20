@@ -347,258 +347,469 @@
     :schemaJson="(!isset($seo['seo_schema_enabled']) || $seo['seo_schema_enabled']) ? $schemaData : null"
 >
     <!-- ======================================================== -->
-    <!-- ZEPTO SUPER APP HERO & QUICK COMMERCE (Exact Image 5 Style) -->
+    <!-- FLIPKART & AMAZON VIBRANT BLUE & YELLOW FESTIVAL HERO      -->
     <!-- ======================================================== -->
-    <section class="mb-12">
-        <!-- 1. Top Location Bar & Quick Brand Tabs (Zepto Bar) -->
-        <div class="mb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 text-white rounded-3xl shadow-lg">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5 text-white animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                </div>
-                <div class="cursor-pointer">
-                    <div class="text-[10px] uppercase font-bold tracking-wider text-blue-200">Delivery Address</div>
-                    <div class="flex items-center gap-1 text-xs sm:text-sm font-black text-white">
-                        <span>1st Phase, J. P. Nagar, Bengaluru, KA 560078</span>
-                        <svg class="w-3.5 h-3.5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sub-brand Quick Tabs (Zepto Style) -->
-            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar w-full md:w-auto">
-                <a href="{{ route('catalog.index') }}" class="px-4 py-2 rounded-2xl bg-white text-blue-800 text-xs font-black shadow-md flex items-center gap-1.5 shrink-0">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>k71 core</span>
-                </a>
-                <a href="{{ route('catalog.index', ['sort' => 'discount']) }}" class="px-3.5 py-2 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-xs font-black border border-white/20 backdrop-blur-md shrink-0 flex items-center gap-1">
-                    <span>50% OFF ZONE</span>
-                    <span>🔥</span>
-                </a>
-                <a href="{{ k71_vertical_url('food') }}" class="px-3.5 py-2 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-xs font-black border border-white/20 backdrop-blur-md shrink-0 flex items-center gap-1">
-                    <span>Super Mall</span>
-                    <span>🛍️</span>
-                </a>
-                <a href="{{ k71_vertical_url('food') }}" class="px-3.5 py-2 rounded-2xl bg-emerald-500/80 hover:bg-emerald-500 text-white text-xs font-black border border-emerald-400/30 backdrop-blur-md shrink-0 flex items-center gap-1">
-                    <span>Fresh</span>
-                    <span>🥬</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- 2. Big Prominent Search Bar (Zepto Style) -->
-        <div class="mb-5">
-            <form action="{{ route('catalog.index') }}" method="GET" class="relative">
-                <div class="absolute left-4 top-3.5 text-blue-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-                <input type="text" name="q" placeholder='Search for "Festive Vibes", Mobiles, Earphones, Dresses, Biryani, CNC Lathes...' 
-                       class="w-full pl-12 pr-32 py-4 rounded-3xl bg-white dark:bg-zinc-900 border border-blue-100 dark:border-zinc-800 text-sm font-medium focus:ring-2 focus:ring-blue-600 focus:outline-none transition shadow-sm text-zinc-900 dark:text-white">
-                <button type="submit" class="absolute right-2.5 top-2 px-6 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black tracking-wide transition shadow-sm active:scale-95">
-                    Search
-                </button>
-            </form>
-        </div>
-
-        <!-- 3. Category Row with 3D Badges (Zepto Style) -->
-        <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar pb-3 mb-6">
-            <a href="{{ route('catalog.index') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-800 dark:to-zinc-900 border border-blue-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🛍️
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">All</span>
-            </a>
-            <a href="{{ route('catalog.index', ['category' => 'clothing-fashion-accessories']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-zinc-800 dark:to-zinc-900 border border-amber-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🌙
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Festive</span>
-            </a>
-            <a href="{{ route('catalog.index', ['category' => 'clothing-fashion-accessories']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 dark:from-zinc-800 dark:to-zinc-900 border border-rose-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    👕
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Fashion</span>
-            </a>
-            <a href="{{ route('catalog.index', ['category' => 'electronics-appliances-it']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-zinc-800 dark:to-zinc-900 border border-blue-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🎧
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Electronics</span>
-            </a>
-            <a href="{{ route('catalog.index', ['category' => 'beauty-personal-care-health-wellness']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-pink-50 to-purple-50 dark:from-zinc-800 dark:to-zinc-900 border border-pink-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    💄
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Beauty</span>
-            </a>
-            <a href="{{ k71_vertical_url('food') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-zinc-800 dark:to-zinc-900 border border-emerald-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🥗
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Food Hub</span>
-            </a>
-            <a href="{{ k71_vertical_url('services') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-purple-50 to-violet-50 dark:from-zinc-800 dark:to-zinc-900 border border-purple-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🛠️
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Services</span>
-            </a>
-            <a href="{{ k71_vertical_url('used') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🤝
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">Pre-Owned</span>
-            </a>
-            <a href="{{ k71_vertical_url('enquiry') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer">
-                <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-zinc-800 dark:to-zinc-900 border border-amber-200 dark:border-zinc-700 flex items-center justify-center text-2xl group-hover:scale-105 transition shadow-xs">
-                    🏭
-                </div>
-                <span class="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-1.5 group-hover:text-blue-600">B2B RFQ</span>
-            </a>
-        </div>
-
-        <!-- 4. SUPERSONIC SALE HERO BANNER (Exact Image 5) -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 p-6 sm:p-10 text-white shadow-2xl mb-6">
-            <!-- Background Radial Glow -->
-            <div class="absolute -top-12 -right-12 w-96 h-96 bg-cyan-400/20 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                <!-- Left 3D Headphone Graphic -->
-                <div class="hidden lg:block w-32 h-32 shrink-0">
-                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=300&q=80" 
-                         alt="Wireless Headphones" class="w-full h-full object-contain drop-shadow-2xl -rotate-12 animate-pulse">
-                </div>
-
-                <!-- Center Metallic Headline -->
-                <div class="text-center flex-1">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-black uppercase tracking-widest mb-3">
-                        <span>⚡ LIVE MEGA EVENT ⚡</span>
-                    </div>
-
-                    <h2 class="text-4xl sm:text-6xl font-black italic tracking-tighter uppercase leading-none drop-shadow-md">
-                        SUPERSONIC
-                    </h2>
-                    <div class="text-2xl sm:text-4xl font-black text-cyan-200 tracking-wider mt-1 mb-2">
-                        ⚡ SALE ⚡
-                    </div>
-                    <div class="inline-block px-5 py-1.5 rounded-full bg-white text-blue-900 text-xs sm:text-sm font-black uppercase tracking-wider shadow-lg">
-                        UP TO 90% OFF
-                    </div>
-                </div>
-
-                <!-- Right Smartwatch Graphic -->
-                <div class="hidden lg:block w-32 h-32 shrink-0">
-                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=300&q=80" 
-                         alt="Smartwatch" class="w-full h-full object-contain drop-shadow-2xl rotate-12">
-                </div>
-            </div>
-
-            <!-- ₹0 FEES TRUST STRIP (Exact Image 5 Strip) -->
-            <div class="mt-8 pt-4 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl font-black tracking-tight text-white">₹0 FEES</span>
-                    <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-blue-100">
-                        <span class="flex items-center gap-1">✓ ₹0 Handling Fee</span>
-                        <span class="flex items-center gap-1">✓ ₹0 Delivery Fee*</span>
-                        <span class="flex items-center gap-1">✓ ₹0 Rain &amp; Surge Fee</span>
-                    </div>
-                </div>
-                <div class="text-[11px] text-blue-100 font-bold shrink-0">
-                    Powered by <strong class="text-white">NOISE</strong> • Co-Powered by <strong class="text-white">boAt</strong>
-                </div>
-            </div>
-        </div>
-
-        <!-- 5. HIGH-DENSITY VISUAL CATEGORY TILES (Image 5 2x3 Grid) -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
-            <!-- Tile 1: Charging Needs -->
-            <a href="{{ route('catalog.index', ['q' => 'charger']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Charging Needs</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">UP TO 80% OFF</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=200&q=80" alt="Charger" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-
-            <!-- Tile 2: Earphones & Headphones -->
-            <a href="{{ route('catalog.index', ['q' => 'earphones']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Earphones &amp; Audio</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">STARTING @ ₹69</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=200&q=80" alt="Earphones" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-
-            <!-- Tile 3: Home & Kitchen Appliances -->
-            <a href="{{ route('catalog.index', ['q' => 'appliances']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Home Appliances</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">STARTING @ ₹399</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=200&q=80" alt="Appliance" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-
-            <!-- Tile 4: Mobiles & Smartphones -->
-            <a href="{{ route('catalog.index', ['q' => 'mobile']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Flagship Mobiles</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">NEW LAUNCHES</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=200&q=80" alt="Mobile" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-
-            <!-- Tile 5: Grooming & Massagers -->
-            <a href="{{ route('catalog.index', ['q' => 'trimmer']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Grooming Gear</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">STARTING @ ₹349</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=200&q=80" alt="Grooming" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-
-            <!-- Tile 6: Speakers & Smart watches -->
-            <a href="{{ route('catalog.index', ['q' => 'smartwatch']) }}" 
-               class="group p-4 rounded-3xl bg-gradient-to-b from-blue-50 to-white dark:from-zinc-900 dark:to-zinc-950 border border-blue-200 dark:border-zinc-800 flex flex-col justify-between items-center text-center shadow-xs hover:border-blue-500 transition duration-300">
-                <div class="w-full">
-                    <h4 class="text-xs font-black text-zinc-900 dark:text-white leading-tight">Smart Watches</h4>
-                    <span class="inline-block mt-1 px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase">STARTING @ ₹499</span>
-                </div>
-                <div class="w-20 h-20 sm:w-24 sm:h-24 my-2 flex items-center justify-center">
-                    <img src="https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=200&q=80" alt="Smartwatch" class="max-h-full object-contain group-hover:scale-105 transition duration-300">
-                </div>
-            </a>
-        </div>
-
-        <!-- 6. Bottom Sticky Free Delivery Pill (Exact Image 5 Bottom Pill) -->
-        <div class="p-3.5 rounded-2xl bg-zinc-900 dark:bg-zinc-800 text-white flex items-center justify-between shadow-xl">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-base">
-                    🛵
+    <section class="mb-12 font-sans" x-data="{
+        heroSlide: 0,
+        totalSlides: 3,
+        countdown: { h: '08', m: '42', s: '19' },
+        timer: null,
+        init() {
+            this.timer = setInterval(() => {
+                let sec = parseInt(this.countdown.s) - 1;
+                let min = parseInt(this.countdown.m);
+                let hr = parseInt(this.countdown.h);
+                if (sec < 0) { sec = 59; min--; }
+                if (min < 0) { min = 59; hr--; }
+                if (hr < 0) { hr = 12; min = 59; sec = 59; }
+                this.countdown.s = sec < 10 ? '0' + sec : String(sec);
+                this.countdown.m = min < 10 ? '0' + min : String(min);
+                this.countdown.h = hr < 10 ? '0' + hr : String(hr);
+            }, 1000);
+            setInterval(() => {
+                this.heroSlide = (this.heroSlide + 1) % this.totalSlides;
+            }, 6000);
+        }
+    }">
+        <!-- 1. Flipkart Signature Catchy Blue Mega Announcement & Delivery Header -->
+        <div class="mb-4 rounded-2xl bg-gradient-to-r from-[#1e5bc6] via-[#2874f0] to-[#1256c4] text-white p-3.5 shadow-lg border border-blue-400/30 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="w-10 h-10 rounded-xl bg-[#ffe500] text-[#2874f0] flex items-center justify-center font-black text-xl shrink-0 shadow-md">
+                    ⚡
                 </div>
                 <div>
-                    <h5 class="text-xs font-black">Unlock free delivery</h5>
-                    <p class="text-[10px] text-zinc-400">Add items worth ₹99 to waive delivery charges completely.</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black uppercase tracking-wider text-[#ffe500] bg-black/30 px-2 py-0.5 rounded-md">LIVE MEGA FESTIVAL</span>
+                        <span class="text-[11px] text-blue-100 hidden sm:inline">Delivering Across 19,000+ Pincodes</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-white mt-0.5">
+                        <span class="text-[#ffe500]">📍 Select Location:</span>
+                        <span class="underline decoration-dotted cursor-pointer hover:text-[#ffe500] transition">India / All Pincodes • Next Day Delivery</span>
+                    </div>
                 </div>
             </div>
-            <a href="{{ route('catalog.index') }}" class="px-4 py-1.5 rounded-xl bg-white text-zinc-950 text-xs font-black hover:bg-zinc-200 transition">
-                Shop Deals
-            </a>
+
+            <!-- Flipkart Assured / Live Sale Countdown Pill -->
+            <div class="flex items-center gap-2.5 bg-black/25 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/15 shrink-0 self-stretch sm:self-auto justify-between sm:justify-start">
+                <div class="flex items-center gap-1 text-[11px] font-bold text-white uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Deals End In:</span>
+                </div>
+                <div class="flex items-center gap-1 font-mono font-black text-xs text-[#ffe500]">
+                    <span class="bg-black/40 px-1.5 py-0.5 rounded" x-text="countdown.h"></span>:
+                    <span class="bg-black/40 px-1.5 py-0.5 rounded" x-text="countdown.m"></span>:
+                    <span class="bg-black/40 px-1.5 py-0.5 rounded" x-text="countdown.s"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Flipkart Top Category Quick-Rail with Circular Icons -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-3 sm:p-4 mb-4 shadow-sm border border-slate-200/80 dark:border-zinc-800">
+            <div class="flex items-center justify-between gap-4 sm:gap-6 overflow-x-auto no-scrollbar py-1">
+                <!-- Mobiles -->
+                <a href="{{ route('catalog.index', ['q' => 'mobile']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#f1f5f9] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-[#2874f0] flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=150&q=80" alt="Mobiles" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1.5 group-hover:text-[#2874f0] transition-colors">Mobiles</span>
+                </a>
+
+                <!-- Fashion -->
+                <a href="{{ route('catalog.index', ['category' => 'clothing-fashion-accessories']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#f1f5f9] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-[#2874f0] flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=150&q=80" alt="Fashion" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1.5 group-hover:text-[#2874f0] transition-colors">Fashion</span>
+                </a>
+
+                <!-- Electronics -->
+                <a href="{{ route('catalog.index', ['category' => 'electronics-appliances-it']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#f1f5f9] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-[#2874f0] flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=150&q=80" alt="Electronics" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1.5 group-hover:text-[#2874f0] transition-colors">Electronics</span>
+                </a>
+
+                <!-- Home & Kitchen -->
+                <a href="{{ route('catalog.index', ['q' => 'home']) }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#f1f5f9] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-[#2874f0] flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=150&q=80" alt="Home" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 mt-1.5 group-hover:text-[#2874f0] transition-colors">Home &amp; Decor</span>
+                </a>
+
+                <!-- Food Hub -->
+                <a href="{{ k71_vertical_url('food') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#fff7ed] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-orange-500 flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=150&q=80" alt="Food" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-orange-600 dark:text-orange-400 mt-1.5">Food Hub 🍲</span>
+                </a>
+
+                <!-- Pro Services -->
+                <a href="{{ k71_vertical_url('services') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#faf5ff] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-purple-600 flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=150&q=80" alt="Services" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1.5">Services 🛠️</span>
+                </a>
+
+                <!-- Pre-Owned -->
+                <a href="{{ k71_vertical_url('used') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#fef2f2] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-rose-600 flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=150&q=80" alt="Pre-Owned" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-rose-600 dark:text-rose-400 mt-1.5">Pre-Owned 🏷️</span>
+                </a>
+
+                <!-- Heavy Machinery B2B -->
+                <a href="{{ k71_vertical_url('enquiry') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#fefce8] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-amber-500 flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=150&q=80" alt="Machinery" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-amber-600 dark:text-amber-400 mt-1.5">B2B RFQ ⚙️</span>
+                </a>
+
+                <!-- Shoppable Shorts -->
+                <a href="{{ k71_vertical_url('shorts') }}" class="flex flex-col items-center shrink-0 group text-center cursor-pointer min-w-[70px]">
+                    <div class="w-14 h-14 rounded-full bg-[#fdf2f8] dark:bg-zinc-800 p-1 group-hover:scale-110 group-hover:shadow-md transition-all duration-300 border-2 border-transparent group-hover:border-pink-600 flex items-center justify-center overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=150&q=80" alt="Shorts" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <span class="text-xs font-bold text-pink-600 dark:text-pink-400 mt-1.5">Shorts 🎥</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. Amazon-Style Mega Interactive Hero Banner Slider -->
+        <div class="relative overflow-hidden rounded-2xl bg-[#0f172a] shadow-xl mb-6 min-h-[280px] sm:min-h-[360px]">
+            <!-- Slide 1: Flipkart Blue Big Billion Festival -->
+            <div x-show="heroSlide === 0" 
+                 x-transition:enter="transition ease-out duration-500" 
+                 x-transition:enter-start="opacity-0 translate-x-12" 
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 -translate-x-12"
+                 class="w-full h-full p-6 sm:p-10 bg-gradient-to-r from-[#1746a2] via-[#2874f0] to-[#518cf5] text-white flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                
+                <div class="max-w-xl z-10 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffe500] text-[#1746a2] font-black text-xs uppercase tracking-wider mb-3 shadow-md">
+                        <span>⚡ THE BIG FESTIVAL SALE ⚡</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-md">
+                        MOBILES, LAPTOPS &amp; SMART TECH
+                    </h2>
+                    <p class="text-sm sm:text-base text-blue-100 mt-2 font-medium">
+                        Instant 10% Bank Discount • No-Cost EMI up to 12 Months • Top Rated Assured Sellers
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                        <a href="{{ route('catalog.index', ['category' => 'electronics-appliances-it']) }}" 
+                           class="px-6 py-3 rounded-xl bg-[#ffe500] hover:bg-yellow-400 text-[#1746a2] font-black text-sm uppercase tracking-wide shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                            <span>Shop The Tech Deals</span>
+                            <span>&rarr;</span>
+                        </a>
+                        <span class="text-xs font-bold text-white bg-white/20 px-3 py-2 rounded-xl backdrop-blur-md">UP TO 80% OFF</span>
+                    </div>
+                </div>
+
+                <div class="w-56 h-56 sm:w-72 sm:h-72 shrink-0 z-10 flex items-center justify-center">
+                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80" 
+                         alt="Electronics" class="max-h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500">
+                </div>
+            </div>
+
+            <!-- Slide 2: Vibrant Fashion Mega Dhamaka -->
+            <div x-show="heroSlide === 1" 
+                 x-transition:enter="transition ease-out duration-500" 
+                 x-transition:enter-start="opacity-0 translate-x-12" 
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 -translate-x-12"
+                 class="w-full h-full p-6 sm:p-10 bg-gradient-to-r from-[#4c1d95] via-[#7c3aed] to-[#db2777] text-white flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                
+                <div class="max-w-xl z-10 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffe500] text-purple-950 font-black text-xs uppercase tracking-wider mb-3 shadow-md">
+                        <span>✨ ETHNIC &amp; WESTERN ATELIER ✨</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-md">
+                        GRAND FASHION BONANZA
+                    </h2>
+                    <p class="text-sm sm:text-base text-purple-100 mt-2 font-medium">
+                        Bridal Sarees, Kurtas, Designer Sneakers &amp; Fine Gold Jewelry at Direct Atelier Prices.
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                        <a href="{{ route('catalog.index', ['category' => 'clothing-fashion-accessories']) }}" 
+                           class="px-6 py-3 rounded-xl bg-[#ffe500] hover:bg-yellow-400 text-purple-950 font-black text-sm uppercase tracking-wide shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                            <span>Explore Fashion Wardrobe</span>
+                            <span>&rarr;</span>
+                        </a>
+                        <span class="text-xs font-bold text-white bg-white/20 px-3 py-2 rounded-xl backdrop-blur-md">MIN 60% OFF</span>
+                    </div>
+                </div>
+
+                <div class="w-56 h-56 sm:w-72 sm:h-72 shrink-0 z-10 flex items-center justify-center">
+                    <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=500&q=80" 
+                         alt="Fashion" class="max-h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500">
+                </div>
+            </div>
+
+            <!-- Slide 3: Industrial Machinery & B2B Expo -->
+            <div x-show="heroSlide === 2" 
+                 x-transition:enter="transition ease-out duration-500" 
+                 x-transition:enter-start="opacity-0 translate-x-12" 
+                 x-transition:enter-end="opacity-100 translate-x-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 translate-x-0"
+                 x-transition:leave-end="opacity-0 -translate-x-12"
+                 class="w-full h-full p-6 sm:p-10 bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#b45309] text-white flex flex-col md:flex-row items-center justify-between gap-6 relative">
+                
+                <div class="max-w-xl z-10 text-center md:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ffe500] text-slate-950 font-black text-xs uppercase tracking-wider mb-3 shadow-md">
+                        <span>🏭 B2B WHOLESALE &amp; EXPORTS</span>
+                    </div>
+                    <h2 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight uppercase drop-shadow-md">
+                        HEAVY MACHINERY &amp; FACTORY RFQ
+                    </h2>
+                    <p class="text-sm sm:text-base text-slate-200 mt-2 font-medium">
+                        Marble Gang Saws, CNC Lasers, Heavy Excavators &amp; Raw Polymers directly from manufacturers.
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                        <a href="{{ k71_vertical_url('enquiry') }}" 
+                           class="px-6 py-3 rounded-xl bg-[#ffe500] hover:bg-yellow-400 text-slate-950 font-black text-sm uppercase tracking-wide shadow-lg transition-transform active:scale-95 flex items-center gap-2">
+                            <span>Submit Bulk RFQ</span>
+                            <span>&rarr;</span>
+                        </a>
+                        <span class="text-xs font-bold text-white bg-white/20 px-3 py-2 rounded-xl backdrop-blur-md">SAVE UP TO ₹5 LAKHS</span>
+                    </div>
+                </div>
+
+                <div class="w-56 h-56 sm:w-72 sm:h-72 shrink-0 z-10 flex items-center justify-center">
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80" 
+                         alt="Machinery" class="max-h-full object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500">
+                </div>
+            </div>
+
+            <!-- Slide Navigation Dots -->
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                <button type="button" @click="heroSlide = 0" :class="heroSlide === 0 ? 'w-8 bg-[#ffe500]' : 'w-2 bg-white/50'" class="h-2 rounded-full transition-all duration-300"></button>
+                <button type="button" @click="heroSlide = 1" :class="heroSlide === 1 ? 'w-8 bg-[#ffe500]' : 'w-2 bg-white/50'" class="h-2 rounded-full transition-all duration-300"></button>
+                <button type="button" @click="heroSlide = 2" :class="heroSlide === 2 ? 'w-8 bg-[#ffe500]' : 'w-2 bg-white/50'" class="h-2 rounded-full transition-all duration-300"></button>
+            </div>
+        </div>
+
+        <!-- 4. AMAZON-STYLE 4-IN-1 QUAD CARDS (Signature Amazon.in Feature) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <!-- Quad 1: Styles for Men & Women -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-zinc-800 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                        Styles for Men &amp; Women | Min. 60% Off
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2.5 my-3">
+                        <a href="{{ route('catalog.index', ['q' => 'kurta']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=250&q=80" alt="Ethnic" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Ethnic Wear</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'shoes']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=250&q=80" alt="Footwear" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Footwear</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'watch']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=250&q=80" alt="Watches" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Watches</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'bag']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=250&q=80" alt="Bags" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Bags &amp; Luggage</span>
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ route('catalog.index', ['category' => 'clothing-fashion-accessories']) }}" class="text-xs font-bold text-[#2874f0] hover:underline flex items-center gap-1 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                    <span>See all fashion offers</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <!-- Quad 2: Revamp Your Home & Living -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-zinc-800 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                        Revamp Your Home | Up to 70% Off
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2.5 my-3">
+                        <a href="{{ route('catalog.index', ['q' => 'bedsheet']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=250&q=80" alt="Bedsheet" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Bedding Sets</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'lighting']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=250&q=80" alt="Lighting" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Lamps &amp; Lights</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'cookware']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=250&q=80" alt="Cookware" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Cookware Sets</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'decor']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=250&q=80" alt="Decor" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Wall Art &amp; Clocks</span>
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ route('catalog.index', ['q' => 'home']) }}" class="text-xs font-bold text-[#2874f0] hover:underline flex items-center gap-1 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                    <span>Explore home decor</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <!-- Quad 3: Top Deals on Audio & Gadgets -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-zinc-800 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                        Audio &amp; Gadgets | No-Cost EMI
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2.5 my-3">
+                        <a href="{{ route('catalog.index', ['q' => 'earphones']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=250&q=80" alt="TWS" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">True Wireless</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'smartwatch']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?auto=format&fit=crop&w=250&q=80" alt="Watch" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Smartwatches</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'speaker']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=250&q=80" alt="Speaker" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">BT Speakers</span>
+                        </a>
+                        <a href="{{ route('catalog.index', ['q' => 'powerbank']) }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1609592424109-dd9892f1b177?auto=format&fit=crop&w=250&q=80" alt="Powerbank" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Power Banks</span>
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ route('catalog.index', ['category' => 'electronics-appliances-it']) }}" class="text-xs font-bold text-[#2874f0] hover:underline flex items-center gap-1 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                    <span>Discover tech deals</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <!-- Quad 4: Factory Sourcing & IndiaMART B2B -->
+            <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 dark:border-zinc-800 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+                        Factory Sourcing | Direct B2B Quotes
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2.5 my-3">
+                        <a href="{{ k71_vertical_url('enquiry') }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=250&q=80" alt="Machinery" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Granite Cutters</span>
+                        </a>
+                        <a href="{{ k71_vertical_url('enquiry') }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=250&q=80" alt="CNC" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">CNC Lathes</span>
+                        </a>
+                        <a href="{{ k71_vertical_url('enquiry') }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=250&q=80" alt="Transformers" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Transformers</span>
+                        </a>
+                        <a href="{{ k71_vertical_url('enquiry') }}" class="group block text-center">
+                            <div class="aspect-square bg-slate-100 dark:bg-zinc-800 rounded-xl overflow-hidden p-1">
+                                <img src="https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=250&q=80" alt="Hardware" class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition">
+                            </div>
+                            <span class="text-[11px] font-bold text-slate-700 dark:text-zinc-300 block mt-1 truncate">Industrial Tools</span>
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ k71_vertical_url('enquiry') }}" class="text-xs font-bold text-amber-600 hover:underline flex items-center gap-1 pt-2 border-t border-slate-100 dark:border-zinc-800">
+                    <span>Post custom RFQ lead</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 5. FLIPKART "DEALS OF THE DAY" HORIZONTAL CONTINUOUS RAIL -->
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-6 mb-8 shadow-sm border border-slate-200/80 dark:border-zinc-800">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🔥</span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Deals of the Day</h3>
+                            <span class="px-2 py-0.5 rounded bg-red-100 text-red-600 font-black text-[10px] uppercase">Special Price</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">Limited inventory at unrepeatable price points</p>
+                    </div>
+                </div>
+                <a href="{{ route('catalog.index', ['featured' => 1]) }}" class="px-4 py-2 rounded-xl bg-[#2874f0] hover:bg-blue-600 text-white font-bold text-xs uppercase tracking-wider self-start sm:self-auto transition shadow-xs flex items-center gap-1">
+                    <span>View All Deals</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
+
+            <!-- Scrollable Products Rail -->
+            <div class="flex items-stretch gap-4 overflow-x-auto no-scrollbar py-2">
+                @foreach($featuredProducts->take(6) as $fp)
+                    <div class="w-48 sm:w-56 shrink-0 bg-slate-50/70 dark:bg-zinc-800/60 rounded-xl p-3 border border-slate-200/60 dark:border-zinc-700 hover:shadow-md hover:border-[#2874f0] transition-all flex flex-col justify-between group">
+                        <div>
+                            <div class="aspect-square bg-white dark:bg-zinc-900 rounded-lg overflow-hidden p-2 relative mb-2.5">
+                                @if($fp->images->first())
+                                    <img src="{{ \App\Services\ImageService::url($fp->images->first()->path, 300) }}" alt="{{ $fp->title }}" class="w-full h-full object-contain group-hover:scale-105 transition duration-300">
+                                @else
+                                    <img src="{{ asset('images/product-placeholder.svg') }}" alt="{{ $fp->title }}" class="w-full h-full object-contain">
+                                @endif
+                                <span class="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-emerald-600 text-white text-[9px] font-black uppercase">
+                                    MIN 50% OFF
+                                </span>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{{ $fp->vendor?->shop_name ?? 'K71 Assured' }}</span>
+                            <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-100 line-clamp-2 mt-0.5 group-hover:text-[#2874f0] transition-colors leading-snug">
+                                {{ $fp->title }}
+                            </h4>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-slate-200/50 dark:border-zinc-700 flex items-center justify-between">
+                            <div>
+                                <span class="text-xs font-black text-slate-900 dark:text-white">₹{{ number_format($fp->base_price / 100) }}</span>
+                                @if($fp->compare_at_price)
+                                    <span class="text-[10px] text-slate-400 line-through ml-1">₹{{ number_format($fp->compare_at_price / 100) }}</span>
+                                @endif
+                            </div>
+                            <a href="{{ route('product.show', $fp->slug) }}" class="px-2 py-1 rounded bg-[#ffe500] hover:bg-yellow-400 text-[#1746a2] text-[10px] font-black uppercase transition shadow-2xs">
+                                Buy Now
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </section>
 
