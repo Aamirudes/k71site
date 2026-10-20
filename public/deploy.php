@@ -265,6 +265,37 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+if (isset($_GET['diag'])) {
+    echo "<h1>Live Diagnostics</h1><pre>";
+    $rawHost = $_SERVER['HTTP_HOST'] ?? 'unknown';
+    echo "Raw HTTP_HOST: " . $rawHost . "\n";
+    echo "SERVER_NAME: " . ($_SERVER['SERVER_NAME'] ?? 'unknown') . "\n";
+    echo "HTTP_X_FORWARDED_HOST: " . ($_SERVER['HTTP_X_FORWARDED_HOST'] ?? 'none') . "\n";
+    
+    $extracted = k71_extract_subdomain($rawHost);
+    echo "k71_extract_subdomain: " . ($extracted ?? 'NULL') . "\n";
+    echo "k71_root_domain: " . k71_root_domain($rawHost) . "\n";
+    
+    $verticals = config('k71.verticals', []);
+    echo "config('k71.verticals') keys: " . implode(', ', array_keys($verticals)) . "\n";
+    echo "config('marketplace.use_subdomains'): " . var_export(config('marketplace.use_subdomains'), true) . "\n";
+    echo "config('marketplace.reserved_subdomains') count: " . count(config('marketplace.reserved_subdomains', [])) . "\n";
+    
+    // Simulate request inside this exact runtime
+    $httpKernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+    $req = \Illuminate\Http\Request::create('https://' . $rawHost . '/', 'GET');
+    $res = $httpKernel->handle($req);
+    echo "\nSimulated GET https://" . $rawHost . "/ -> HTTP " . $res->getStatusCode() . "\n";
+    if ($res->isRedirection()) {
+        echo "Redirect target: " . $res->headers->get('Location') . "\n";
+    }
+    if ($res->getStatusCode() === 404) {
+        echo "404 Content (first 500 chars):\n" . htmlspecialchars(substr($res->getContent(), 0, 500)) . "\n";
+    }
+    echo "</pre>";
+    exit;
+}
+
 // Diagnostic: Check APP_KEY
 $appKey = config('app.key');
 echo "<div class='step'><div class='step-title'>🔑 Application Encryption Key:</div>";
