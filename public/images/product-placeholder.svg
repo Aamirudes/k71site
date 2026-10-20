@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="phGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fafafa"/>
+      <stop offset="100%" stop-color="#f4f4f5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="800" fill="url(#phGrad)"/>
+
+  <!-- Minimal Hairline Border -->
+  <rect x="20" y="20" width="560" height="760" rx="16" fill="none" stroke="#e4e4e7" stroke-width="1.5"/>
+
+  <!-- Center Minimal Camera/Image Icon -->
+  <g transform="translate(300, 370)">
+    <circle r="44" fill="#ffffff" stroke="#e4e4e7" stroke-width="1.5"/>
+    <!-- Minimal Image Outline Icon -->
+    <g transform="translate(-16, -16)" stroke="#71717a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <rect x="3" y="3" width="26" height="26" rx="4"/>
+      <circle cx="11" cy="11" r="2.5"/>
+      <path d="M29 21 L22 14 L8 28"/>
+    </g>
+
+    <text y="75" text-anchor="middle" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="16" font-weight="800" letter-spacing="1" fill="#18181b">K71</text>
+    <text y="95" text-anchor="middle" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="11" font-weight="500" letter-spacing="1.5" fill="#a1a1aa">PRODUCT PREVIEW</text>
+  </g>
+</svg>

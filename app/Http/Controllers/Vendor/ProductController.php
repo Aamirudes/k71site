@@ -1,0 +1,584 @@
+<?php
+
+namespace App\Http\Controllers\Vendor;
+
+use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\CategoryField;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class ProductController extends Controller
+{
+    protected function getVerticalsData(): array
+    {
+        return [
+            'marketplace' => [
+                'name' => 'Marketplace (Physical Products)',
+                'icon' => '🛍️',
+                'description' => 'Clothes, footwear, electronics, accessories with cart & delivery',
+                'default_listing' => 'purchase',
+            ],
+            'food' => [
+                'name' => 'Food & Restaurants',
+                'icon' => '🍽️',
+                'description' => 'Restaurant dishes, bakery, snacks with dietary tags',
+                'default_listing' => 'purchase',
+            ],
+            'services' => [
+                'name' => 'Professional Services',
+                'icon' => '🔧',
+                'description' => 'Home repairs, grooming, tailoring, bookings, consultations',
+                'default_listing' => 'booking',
+            ],
+            'used' => [
+                'name' => 'Used & Pre-Owned Items',
+                'icon' => '♻️',
+                'description' => 'Second-hand electronics, furniture, vehicles, classifieds',
+                'default_listing' => 'contact_seller',
+            ],
+            'enquiry' => [
+                'name' => 'Enquiry / Bulk Sourcing',
+                'icon' => '📋',
+                'description' => 'Wholesale fabrics, tiles, marble, industrial bulk quotes',
+                'default_listing' => 'enquiry',
+            ],
+        ];
+    }
+
+    protected function getListingTypesData(): array
+    {
+        return [
+            'purchase' => [
+                'title' => 'Purchase',
+                'badge' => 'Cart & Checkout',
+                'description' => 'Customers can add to cart, pay online/COD, and track shipment.',
+            ],
+            'enquiry' => [
+                'title' => 'Enquiry Only',
+                'badge' => 'Quote Request',
+                'description' => 'Customers send requirements and request custom quotes.',
+            ],
+            'booking' => [
+                'title' => 'Booking / Slot',
+                'badge' => 'Appointment',
+                'description' => 'Customers select appointment dates and booking slots.',
+            ],
+            'auction' => [
+                'title' => 'Auction / Bidding',
+                'badge' => 'Live Bids',
+                'description' => 'Customers place competitive bids until time expires.',
+            ],
+            'contact_seller' => [
+                'title' => 'Contact Seller',
+                'badge' => 'WhatsApp / Direct',
+                'description' => 'Direct communication and negotiation with buyer, no checkout.',
+            ],
+        ];
+    }
+
+    public function index()
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $targetVertical = $vendor->getVerticalKey();
+        $products = Product::where('vendor_id', $vendor->id)->with('category')->latest()->paginate(15);
+        return view('vendor.products.index', compact('products', 'vendor', 'targetVertical'));
+    }
+
+    public function create()
+    {
+        $vendor = auth()->user()->vendor;
+        $targetVertical = $vendor ? $vendor->getVerticalKey() : 'marketplace';
+
+        $categories = Category::with('parent')
+            ->where('is_active', true)
+            ->when($vendor, fn($q) => $q->where('vertical', $targetVertical))
+            ->get()
+            ->sortBy(function($cat) {
+                $parentName = $cat->parent ? $cat->parent->name : $cat->name;
+                return $parentName . ' - ' . $cat->name;
+            })
+            ->values();
+
+        $verticals = $this->getVerticalsData();
+        $listingTypes = $this->getListingTypesData();
+        $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
+
+        return view('vendor.products.create', compact('vendor', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields'));
+    }
+
+    public function store(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        $targetVertical = $vendor ? $vendor->getVerticalKey() : 'marketplace';
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,food,services,used,enquiry'],
+            'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
+            'custom_fields' => ['nullable', 'array'],
+            'base_price' => ['required', 'numeric', 'min:0'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'gst_rate' => ['required', 'numeric', 'in:0,5,12,18,28'],
+            'hsn_code' => ['nullable', 'string', 'max:8'],
+            'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'country_of_origin' => ['nullable', 'string', 'max:50'],
+            'is_returnable' => ['nullable', 'boolean'],
+            'return_window_days' => ['nullable', 'integer', 'min:0'],
+            'brand' => ['nullable', 'string', 'max:100'],
+            'material' => ['nullable', 'string', 'max:200'],
+            'care_instructions' => ['nullable', 'string'],
+            'size_chart' => ['nullable'],
+            'tags' => ['nullable', 'string'],
+            'gender' => ['nullable', 'string', 'max:20'],
+            'age_group' => ['nullable', 'string', 'max:20'],
+            'description' => ['required', 'string'],
+            'sku' => ['nullable', 'string', 'max:50'],
+            'total_stock' => ['required', 'integer', 'min:0'],
+            'status' => ['required', 'in:draft,active,archived'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.name' => ['required', 'string', 'max:255'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.stock' => ['required', 'integer', 'min:0'],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        // Enforce strict vertical isolation from vendor profile with request input
+        $targetVertical = $request->input('vertical') ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
+        $validated['vertical'] = $targetVertical;
+
+        if ($targetVertical === 'services') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'booking';
+        } elseif ($targetVertical === 'used') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'contact_seller';
+        } else {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
+        }
+        if ($request->has('custom_fields') && is_array($request->custom_fields)) {
+            $validated['custom_fields'] = $request->custom_fields;
+        }
+
+        $baseSlug = Str::slug($validated['title']);
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter++;
+        }
+
+        $validated['slug'] = $slug;
+        $validated['base_price'] = (int) ($validated['base_price'] * 100); // convert to paise
+        if (isset($validated['compare_at_price'])) {
+            $validated['compare_at_price'] = (int) ($validated['compare_at_price'] * 100);
+        }
+        
+        if (isset($validated['tags']) && !empty($validated['tags'])) {
+            $tagsArray = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = json_encode($tagsArray);
+        }
+
+        $validated['is_returnable'] = $request->has('is_returnable');
+
+        if ($request->filled('size_chart')) {
+            $sc = $request->input('size_chart');
+            $validated['size_chart'] = is_string($sc) ? json_decode($sc, true) : $sc;
+        } else {
+            $validated['size_chart'] = null;
+        }
+
+        if ($validated['status'] === 'active') {
+            $validated['published_at'] = now();
+        }
+
+        // Accurately calculate total_stock from variants sum if variants provided
+        if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
+            $sumStock = 0;
+            foreach ($request->variants as $v) {
+                $sumStock += (int) ($v['stock'] ?? 0);
+            }
+            $validated['total_stock'] = $sumStock;
+        }
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated) {
+            $product = Product::create($validated);
+
+            // Process variants (matrix combinations)
+            if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
+                foreach ($request->variants as $index => $variantData) {
+                    $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
+                    
+                    $priceOverride = null;
+                    if (!empty($variantData['price'])) {
+                        $priceOverride = (int) ($variantData['price'] * 100);
+                    }
+
+                    $product->variants()->create([
+                        'sku' => $sku,
+                        'price_override' => $priceOverride,
+                        'stock' => (int) ($variantData['stock'] ?? 0),
+                        'is_active' => true,
+                        'sort_order' => $index + 1,
+                    ]);
+                }
+            } else {
+                // Default single variant if they didn't generate any matrix
+                $product->variants()->create([
+                    'sku' => 'Default',
+                    'stock' => $validated['total_stock'],
+                    'is_active' => true,
+                    'sort_order' => 1,
+                ]);
+            }
+
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    $path = $image->store('products', 'public');
+                    $target = public_path('storage/' . $path);
+                    @mkdir(dirname($target), 0755, true);
+                    @copy(storage_path('app/public/' . $path), $target);
+                    $product->images()->create([
+                        'path' => $path,
+                        'alt_text' => $product->title,
+                        'sort_order' => $index,
+                    ]);
+                }
+            }
+
+            return redirect()->route('vendor.products.index')->with('success', 'Product created successfully.');
+        });
+    }
+
+    public function edit(Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        $targetVertical = $vendor->getVerticalKey();
+
+        $categories = Category::with('parent')
+            ->where('is_active', true)
+            ->where('vertical', $targetVertical)
+            ->get()
+            ->sortBy(function($cat) {
+                $parentName = $cat->parent ? $cat->parent->name : $cat->name;
+                return $parentName . ' - ' . $cat->name;
+            })
+            ->values();
+        $product->load(['variants', 'images']);
+
+        $existingVariants = $product->variants->map(function ($v) {
+            return [
+                'name' => $v->sku ?: 'Default',
+                'price' => $v->price_override ? $v->price_override / 100 : '',
+                'stock' => (int) $v->stock,
+                'sku' => $v->sku ?: '',
+            ];
+        })->values()->toArray();
+
+        $verticals = $this->getVerticalsData();
+        $listingTypes = $this->getListingTypesData();
+        $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
+
+        return view('vendor.products.edit', compact('vendor', 'targetVertical', 'product', 'categories', 'existingVariants', 'verticals', 'listingTypes', 'categoryFields'));
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,food,services,used,enquiry'],
+            'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
+            'custom_fields' => ['nullable', 'array'],
+            'base_price' => ['required', 'numeric', 'min:0'],
+            'compare_at_price' => ['nullable', 'numeric', 'min:0'],
+            'gst_rate' => ['required', 'numeric', 'in:0,5,12,18,28'],
+            'hsn_code' => ['nullable', 'string', 'max:8'],
+            'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'country_of_origin' => ['nullable', 'string', 'max:50'],
+            'is_returnable' => ['nullable', 'boolean'],
+            'return_window_days' => ['nullable', 'integer', 'min:0'],
+            'brand' => ['nullable', 'string', 'max:100'],
+            'material' => ['nullable', 'string', 'max:200'],
+            'care_instructions' => ['nullable', 'string'],
+            'size_chart' => ['nullable'],
+            'tags' => ['nullable', 'string'],
+            'gender' => ['nullable', 'string', 'max:20'],
+            'age_group' => ['nullable', 'string', 'max:20'],
+            'description' => ['required', 'string'],
+            'sku' => ['nullable', 'string', 'max:50'],
+            'total_stock' => ['required', 'integer', 'min:0'],
+            'status' => ['required', 'in:draft,active,archived'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.name' => ['required', 'string', 'max:255'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.stock' => ['required', 'integer', 'min:0'],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+        ]);
+
+        // Enforce strict vertical isolation from vendor profile with request input
+        $targetVertical = $request->input('vertical') ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
+        $validated['vertical'] = $targetVertical;
+
+        if ($targetVertical === 'services') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'booking';
+        } elseif ($targetVertical === 'used') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'contact_seller';
+        } else {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
+        }
+        if ($request->has('custom_fields')) {
+            $validated['custom_fields'] = is_array($request->custom_fields) ? $request->custom_fields : [];
+        }
+
+        $validated['base_price'] = (int) ($validated['base_price'] * 100);
+        if (isset($validated['compare_at_price'])) {
+            $validated['compare_at_price'] = (int) ($validated['compare_at_price'] * 100);
+        }
+
+        if (isset($validated['tags']) && !empty($validated['tags'])) {
+            $tagsArray = array_map('trim', explode(',', $validated['tags']));
+            $validated['tags'] = json_encode($tagsArray);
+        }
+
+        $validated['is_returnable'] = $request->has('is_returnable');
+
+        if ($request->has('size_chart')) {
+            $sc = $request->input('size_chart');
+            $validated['size_chart'] = is_string($sc) ? json_decode($sc, true) : $sc;
+        }
+
+        if ($validated['status'] === 'active' && !$product->published_at) {
+            $validated['published_at'] = now();
+        }
+
+        // Accurately calculate total_stock from variants sum if variants provided
+        if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
+            $sumStock = 0;
+            foreach ($request->variants as $v) {
+                $sumStock += (int) ($v['stock'] ?? 0);
+            }
+            $validated['total_stock'] = $sumStock;
+        }
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $product) {
+            $product->update($validated);
+
+            // Process variants (smart sync preserving existing IDs to avoid orphaned carts/orders)
+            if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
+                $existingVariants = $product->variants()->withTrashed()->get()->keyBy('sku');
+                $activeSkus = [];
+
+                foreach ($request->variants as $index => $variantData) {
+                    $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
+                    $activeSkus[] = $sku;
+                    
+                    $priceOverride = null;
+                    if (!empty($variantData['price'])) {
+                        $priceOverride = (int) ($variantData['price'] * 100);
+                    }
+
+                    if (isset($existingVariants[$sku])) {
+                        $variant = $existingVariants[$sku];
+                        if ($variant->trashed()) {
+                            $variant->restore();
+                        }
+                        $variant->update([
+                            'price_override' => $priceOverride,
+                            'stock' => (int) ($variantData['stock'] ?? 0),
+                            'is_active' => true,
+                            'sort_order' => $index + 1,
+                        ]);
+                    } else {
+                        $product->variants()->create([
+                            'sku' => $sku,
+                            'price_override' => $priceOverride,
+                            'stock' => (int) ($variantData['stock'] ?? 0),
+                            'is_active' => true,
+                            'sort_order' => $index + 1,
+                        ]);
+                    }
+                }
+
+                $product->variants()->whereNotIn('sku', $activeSkus)->delete();
+            } else {
+                // Default single variant
+                $existingDefault = $product->variants()->withTrashed()->where('sku', 'Default')->first();
+                if ($existingDefault) {
+                    if ($existingDefault->trashed()) {
+                        $existingDefault->restore();
+                    }
+                    $existingDefault->update([
+                        'stock' => $validated['total_stock'],
+                        'price_override' => null,
+                        'is_active' => true,
+                        'sort_order' => 1,
+                    ]);
+                    $product->variants()->where('id', '!=', $existingDefault->id)->delete();
+                } else {
+                    $product->variants()->delete();
+                    $product->variants()->create([
+                        'sku' => 'Default',
+                        'stock' => $validated['total_stock'],
+                        'is_active' => true,
+                        'sort_order' => 1,
+                    ]);
+                }
+            }
+
+            // 1. Delete removed existing images
+            if ($request->filled('deleted_image_ids') && is_array($request->deleted_image_ids)) {
+                $toDelete = $product->images()->whereIn('id', $request->deleted_image_ids)->get();
+                foreach ($toDelete as $img) {
+                    @unlink(storage_path('app/public/' . $img->path));
+                    @unlink(public_path('storage/' . $img->path));
+                    $img->delete();
+                }
+            }
+
+            // 2. Upload new images
+            $newImagesMap = [];
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $index => $image) {
+                    $path = $image->store('products', 'public');
+                    $target = public_path('storage/' . $path);
+                    @mkdir(dirname($target), 0755, true);
+                    @copy(storage_path('app/public/' . $path), $target);
+                    $createdImg = $product->images()->create([
+                        'path' => $path,
+                        'alt_text' => $product->title,
+                        'sort_order' => 999 + $index,
+                    ]);
+                    $newImagesMap[$index] = $createdImg->id;
+                }
+            }
+
+            // 3. Apply custom reordered sequence (from vendor's drag / move / cover actions)
+            if ($request->filled('overall_image_order') && is_array($request->overall_image_order)) {
+                foreach ($request->overall_image_order as $sortIdx => $token) {
+                    if (str_starts_with($token, 'existing:')) {
+                        $imgId = (int) str_replace('existing:', '', $token);
+                        $product->images()->where('id', $imgId)->update(['sort_order' => $sortIdx]);
+                    } elseif (str_starts_with($token, 'new:')) {
+                        $newIdx = (int) str_replace('new:', '', $token);
+                        if (isset($newImagesMap[$newIdx])) {
+                            $product->images()->where('id', $newImagesMap[$newIdx])->update(['sort_order' => $sortIdx]);
+                        }
+                    }
+                }
+            }
+
+            return redirect()->route('vendor.products.index')->with('success', 'Product updated successfully.');
+        });
+    }
+
+    public function destroy(Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        $product->delete();
+        return redirect()->route('vendor.products.index')->with('success', 'Product deleted successfully.');
+    }
+
+    public function toggleStatus(Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        $newStatus = $product->status === 'active' ? 'draft' : 'active';
+        $product->update([
+            'status' => $newStatus,
+            'published_at' => $newStatus === 'active' ? ($product->published_at ?? now()) : $product->published_at,
+        ]);
+
+        $label = $newStatus === 'active' ? 'Published live' : 'Moved to draft (Hidden from store)';
+        return back()->with('success', "Product status changed: {$label}.");
+    }
+
+    public function duplicate(Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        // Replicate product model
+        $clone = $product->replicate([
+            'slug',
+            'created_at',
+            'updated_at',
+        ]);
+
+        $clone->title = $product->title . ' (Copy)';
+        
+        $baseSlug = Str::slug($clone->title);
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter++;
+        }
+        $clone->slug = $slug;
+        $clone->status = 'draft';
+        $clone->published_at = null;
+        $clone->save();
+
+        // Replicate variants
+        foreach ($product->variants as $variant) {
+            $variantClone = $variant->replicate([
+                'product_id',
+                'created_at',
+                'updated_at',
+            ]);
+            $variantClone->product_id = $clone->id;
+            if ($variantClone->sku) {
+                $variantClone->sku = $variantClone->sku . '-COPY';
+            }
+            $variantClone->save();
+        }
+
+        // Replicate images (pointing to same storage path)
+        foreach ($product->images as $img) {
+            $imgClone = $img->replicate([
+                'product_id',
+                'created_at',
+                'updated_at',
+            ]);
+            $imgClone->product_id = $clone->id;
+            $imgClone->save();
+        }
+
+        return redirect()->route('vendor.products.edit', $clone)
+            ->with('success', "Product '{$product->title}' duplicated successfully as Draft! You can now update images or details and publish.");
+    }
+
+    /**
+     * AJAX endpoint to retrieve dynamic category fields for selected vertical/category.
+     */
+    public function getCategoryFields(Request $request)
+    {
+        $vertical = $request->input('vertical', 'marketplace');
+        $categoryId = $request->has('category_id') ? (int) $request->input('category_id') : null;
+        $fields = CategoryField::getFieldsFor($vertical, $categoryId);
+        return response()->json([
+            'success' => true,
+            'fields' => $fields,
+        ]);
+    }
+}

@@ -1,0 +1,135 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Category;
+use App\Models\Setting;
+use App\Models\Short;
+use App\Models\SpinPrize;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class ShortsController extends Controller
+{
+    /**
+     * Display the main Shorts feed or handle AJAX action.
+     */
+    public function index(Request $request)
+    {
+        if ($request->has('action')) {
+            return app(ShortsAjaxController::class)->dispatch($request);
+        }
+
+        $openId = (int) $request->query('v', 0);
+        $openCat = $request->query('cat', '');
+
+        return $this->renderShortsView($openId, $openCat);
+    }
+
+    /**
+     * Deep-link view for a single short.
+     */
+    public function show(Request $request, $id)
+    {
+        return $this->renderShortsView((int) $id, '');
+    }
+
+    /**
+     * Category view for shorts.
+     */
+    public function category(Request $request, $slug)
+    {
+        return $this->renderShortsView(0, (string) $slug);
+    }
+
+    /**
+     * Render the unified Shorts Blade view with localized ZSU configuration.
+     */
+    protected function renderShortsView(int $openId = 0, string $openCat = ''): View
+    {
+        $categories = Category::select('id', 'name', 'slug')->get()->map(fn($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'slug' => $c->slug,
+        ])->toArray();
+
+        // Spin prizes from database (Decision D8)
+        $spinPrizes = SpinPrize::with('coupon')
+            ->where('is_active', true)
+            ->get()
+            ->map(fn($p) => [
+                'label' => $p->label,
+                'color' => $p->color,
+                'type' => $p->type,
+                'value' => $p->value,
+            ])->toArray();
+
+        // Build ZSU config matching legacy plugin expectations
+        $zsuConfig = [
+            'ajax_url' => route('shorts.ajax'),
+            'nonce' => csrf_token(),
+            'logged_in' => auth()->check() ? 1 : 0,
+            'user_id' => auth()->id() ?? 0,
+            'autoplay' => (int) (Setting::get('zsu_autoplay', 1)),
+            'muted_start' => (int) (Setting::get('zsu_muted_start', 1)),
+            'loop' => (int) (Setting::get('zsu_loop', 1)),
+            'lazy_load' => 1,
+            'preload_next' => 1,
+            'per_page' => (int) (Setting::get('zsu_videos_per_page', 24)),
+            'grid_cols' => (int) (Setting::get('zsu_grid_columns', 2)),
+            'show_follow' => 1,
+            'show_share' => 1,
+            'show_like' => 1,
+            'show_featured' => (int) (Setting::get('zsu_show_featured', 1)),
+            'show_comments' => 1,
+            'particle_bg' => 1,
+            'tilt_cards' => 1,
+            'confetti_like' => 1,
+            'neon_glow' => 1,
+            'glassmorphism' => 1,
+            'animation_level' => 'ultra',
+            'heatmap' => 0,
+            'ab_testing' => 0,
+            'enable_comments' => 1,
+            'enable_ratings' => 0,
+            'enable_wishlists' => 1,
+            'categories' => $categories,
+            'home_url' => url('/'),
+            'shorts_url' => route('shorts.index'),
+            'open_id' => $openId,
+            'open_cat' => $openCat,
+            'primary_color' => Setting::get('zsu_primary_color', '#7c3aed'),
+            'accent_color' => Setting::get('zsu_accent_color', '#f59e0b'),
+            'spin_wheel_enabled' => (int) (Setting::get('zsu_spin_wheel_enabled', 1)),
+            'spin_wheel_prizes' => $spinPrizes,
+        ];
+
+        // Fetch SEO short if openId is provided
+        $seoShort = $openId > 0 ? Short::with('vendor')->find($openId) : null;
+
+        $featuredShorts = Short::with(['vendor', 'category', 'products'])
+            ->where('status', 'published')
+            ->where('is_featured', true)
+            ->orderByDesc('is_boosted')
+            ->orderByDesc('id')
+            ->take(8)
+            ->get();
+
+        $initialShorts = Short::with(['vendor', 'category', 'products'])
+            ->where('status', 'published')
+            ->orderByDesc('id')
+            ->take(24)
+            ->get();
+
+        return view('shorts.index', [
+            'zsuConfig' => $zsuConfig,
+            'openId' => $openId,
+            'openCat' => $openCat,
+            'seoShort' => $seoShort,
+            'categories' => $categories,
+            'spinPrizes' => $spinPrizes,
+            'featuredShorts' => $featuredShorts,
+            'initialShorts' => $initialShorts,
+        ]);
+    }
+}

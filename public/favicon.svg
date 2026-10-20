@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+    <defs>
+        <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1F2A26"/>
+            <stop offset="100%" stop-color="#0E1513"/>
+        </linearGradient>
+        <linearGradient id="favGold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F2E3CD"/>
+            <stop offset="50%" stop-color="#D4B382"/>
+            <stop offset="100%" stop-color="#A68352"/>
+        </linearGradient>
+        <linearGradient id="favSage" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#B2C2B8"/>
+            <stop offset="100%" stop-color="#8FA396"/>
+        </linearGradient>
+    </defs>
+    <!-- Background rounded squircle -->
+    <rect width="64" height="64" rx="16" fill="url(#favBg)"/>
+    <rect x="2" y="2" width="60" height="60" rx="14" fill="none" stroke="url(#favGold)" stroke-width="1.2" stroke-opacity="0.8"/>
+    <!-- B Monogram -->
+    <path d="M22 17 H28 C29.5 17 30.5 18 30.5 19.5 V44.5 C30.5 46 29.5 47 28 47 H22 C20.5 47 19.5 46 19.5 44.5 V19.5 C19.5 18 20.5 17 22 17 Z" fill="url(#favGold)"/>
+    <path d="M28 17 C37 17 44 20 44 27 C44 32.5 39.5 35.5 33 36 C40 36 43 32.5 43 27 C43 21.5 37 18.5 28 18.5 Z" fill="url(#favGold)"/>
+    <path d="M28 35.5 C39 35.5 47 39 47 46.5 C47 54 39 55 28 55 C38 54 45 53 45 46.5 C45 40.5 38 37 28 37 Z" fill="url(#favGold)"/>
+    <!-- Sage ribbon accents -->
+    <path d="M27 25 C31.5 25 35 26.5 35 30 C35 33.5 31.5 34.5 27 34.5 V25 Z" fill="none" stroke="url(#favSage)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M27 37 C33 37 38 38.5 38 43.5 C38 48.5 33 49.5 27 49.5 V37 Z" fill="none" stroke="url(#favSage)" stroke-width="2" stroke-linecap="round"/>
+    <!-- Sparkle accent -->
+    <path d="M50 17 Q50 21 47 21 Q50 21 50 25 Q50 21 53 21 Q50 21 50 17 Z" fill="url(#favGold)"/>
+</svg>

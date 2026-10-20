@@ -1,0 +1,1633 @@
+/* ═══════════════════════════════════════════════════════════════
+   ZSU ADMIN CSS  v11 — Real file at assets/css/zsu-admin.css
+   Enqueued with wp_enqueue_style('zsu-admin', ZSU_ASSETS_URL.'css/zsu-admin.css')
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── CSS Custom Properties ────────────────────────────────────── */
+:root {
+  --zsu-primary:     #7c3aed;
+  --zsu-primary-d:   #5b21b6;
+  --zsu-accent:      #f59e0b;
+  --zsu-success:     #10b981;
+  --zsu-danger:      #ef4444;
+  --zsu-warning:     #f59e0b;
+  --zsu-cyan:        #06b6d4;
+  --zsu-purple:      #8b5cf6;
+  --zsu-bg:          #0f1117;
+  --zsu-bg2:         #1a1d2e;
+  --zsu-bg3:         #252840;
+  --zsu-surface:     rgba(255,255,255,0.04);
+  --zsu-border:      rgba(255,255,255,0.08);
+  --zsu-text:        #e2e8f0;
+  --zsu-text-muted:  #64748b;
+  --zsu-radius:      12px;
+  --zsu-radius-lg:   20px;
+  --zsu-shadow:      0 4px 24px rgba(0,0,0,0.4);
+  --zsu-shadow-glow: 0 0 30px rgba(124,58,237,0.3);
+  --zsu-trans:       all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Base Wrap ─────────────────────────────────────────────────── */
+#wpwrap { background: var(--zsu-bg); }
+
+.zsu-admin-wrap {
+  background: var(--zsu-bg);
+  min-height: 100vh;
+  padding: 0 0 60px;
+  color: var(--zsu-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Admin Header ─────────────────────────────────────────────── */
+.zsu-admin-header {
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a0030 100%);
+  border-bottom: 1px solid var(--zsu-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 60px;
+  position: sticky;
+  top: 32px;
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+
+.zsu-admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.zsu-logo-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 0 8px var(--zsu-primary));
+}
+
+.zsu-logo-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.zsu-version {
+  font-size: 11px;
+  background: var(--zsu-primary);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 99px;
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+.zsu-admin-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.zsu-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--zsu-text-muted);
+  text-decoration: none;
+  transition: var(--zsu-trans);
+  white-space: nowrap;
+}
+
+.zsu-nav-item:hover {
+  background: var(--zsu-surface);
+  color: #fff;
+}
+
+.zsu-nav-item.active {
+  background: var(--zsu-primary);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(124,58,237,0.5);
+}
+
+/* ── Page Title ────────────────────────────────────────────────── */
+.zsu-page-title {
+  padding: 24px 24px 4px;
+}
+
+.zsu-page-title h1 {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* ── Stat Grid ─────────────────────────────────────────────────── */
+.zsu-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.zsu-stat-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1400px) {
+  .zsu-stat-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .zsu-stat-grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .zsu-stat-grid, .zsu-stat-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .zsu-admin-nav { display: none; }
+}
+
+.zsu-stat-card {
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: var(--zsu-radius);
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-decoration: none;
+  color: var(--zsu-text);
+  position: relative;
+  overflow: hidden;
+  transition: var(--zsu-trans);
+  cursor: pointer;
+}
+
+.zsu-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--card-color, var(--zsu-primary));
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px rgba(var(--card-color), 0.15);
+  color: #fff;
+}
+
+.zsu-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, var(--card-color, var(--zsu-primary)) 0%, transparent 70%);
+  opacity: 0.12;
+  border-radius: 50%;
+  transform: translate(20%, -20%);
+}
+
+.zsu-stat-icon {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px var(--card-color, var(--zsu-primary)));
+}
+
+.zsu-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.zsu-stat-label {
+  font-size: 12px;
+  color: var(--zsu-text-muted);
+  margin-top: 3px;
+}
+
+.zsu-stat-glow {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-color, var(--zsu-primary));
+  opacity: 0;
+  transition: var(--zsu-trans);
+}
+
+.zsu-stat-card:hover .zsu-stat-glow { opacity: 1; }
+
+/* ── Sections ──────────────────────────────────────────────────── */
+.zsu-section {
+  margin: 20px 24px;
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: var(--zsu-radius-lg);
+  padding: 24px;
+}
+
+.zsu-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.zsu-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 16px;
+}
+
+.zsu-section-header .zsu-section-title { margin: 0; }
+
+.zsu-section-desc {
+  margin: 8px 24px 0;
+  font-size: 13px;
+  color: var(--zsu-text-muted);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.zsu-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--zsu-trans);
+  border: none;
+  outline: none;
+  white-space: nowrap;
+}
+
+.zsu-btn-sm { padding: 6px 12px; font-size: 12px; }
+.zsu-btn-lg { padding: 12px 28px; font-size: 15px; }
+
+.zsu-btn-primary  { background: var(--zsu-primary);  color: #fff; }
+.zsu-btn-success  { background: var(--zsu-success);  color: #fff; }
+.zsu-btn-danger   { background: var(--zsu-danger);   color: #fff; }
+.zsu-btn-warning  { background: var(--zsu-warning);  color: #000; }
+.zsu-btn-purple   { background: var(--zsu-purple);   color: #fff; }
+.zsu-btn-cyan     { background: var(--zsu-cyan);     color: #000; }
+.zsu-btn-ghost    { background: var(--zsu-surface);  color: var(--zsu-text); border: 1px solid var(--zsu-border); }
+
+.zsu-btn:hover { opacity: 0.88; transform: translateY(-1px); box-shadow: var(--zsu-shadow); }
+.zsu-btn:active { transform: translateY(0); }
+
+.zsu-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* ── Chart ─────────────────────────────────────────────────────── */
+.zsu-chart-card {
+  background: var(--zsu-bg3);
+  border-radius: var(--zsu-radius);
+  padding: 20px;
+  position: relative;
+  border: 1px solid var(--zsu-border);
+}
+
+.zsu-chart-range-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.zsu-tab {
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--zsu-border);
+  background: transparent;
+  color: var(--zsu-text-muted);
+  transition: var(--zsu-trans);
+}
+
+.zsu-tab:hover { background: var(--zsu-surface); color: #fff; }
+.zsu-tab.active { background: var(--zsu-primary); color: #fff; border-color: var(--zsu-primary); }
+
+.zsu-chart-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15,17,23,0.7);
+  border-radius: var(--zsu-radius);
+}
+
+/* ── Tables ────────────────────────────────────────────────────── */
+.zsu-table-wrap { overflow-x: auto; }
+
+.zsu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.zsu-table th {
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--zsu-text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--zsu-border);
+  background: var(--zsu-bg3);
+  white-space: nowrap;
+}
+
+.zsu-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--zsu-border);
+  color: var(--zsu-text);
+  vertical-align: middle;
+}
+
+.zsu-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.zsu-table-thumb {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--zsu-bg3);
+}
+
+/* ── Status Badges ─────────────────────────────────────────────── */
+.zsu-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  gap: 4px;
+}
+
+.zsu-badge-publish  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.zsu-badge-pending  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.zsu-badge-draft    { background: rgba(100,116,139,0.15);color: #64748b; border: 1px solid rgba(100,116,139,0.3); }
+.zsu-badge-active   { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+.zsu-badge-expired  { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.zsu-badge-standard { background: rgba(99,102,241,0.12); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+.zsu-badge-pro      { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.zsu-badge-ultra    { background: rgba(139,92,246,0.12); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+.zsu-badge-mega     { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+/* ── Filter Bar ────────────────────────────────────────────────── */
+.zsu-filter-bar {
+  margin: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.zsu-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.zsu-search-box {
+  display: flex;
+  align-items: center;
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.zsu-search-icon { color: var(--zsu-text-muted); }
+
+.zsu-search-input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--zsu-text);
+  font-size: 13px;
+  padding: 8px;
+  width: 100%;
+}
+
+.zsu-search-input::placeholder { color: var(--zsu-text-muted); }
+
+.zsu-select {
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: 8px;
+  color: var(--zsu-text);
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: var(--zsu-trans);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+}
+
+.zsu-select:focus { border-color: var(--zsu-primary); }
+.zsu-select option { background: var(--zsu-bg2); }
+
+/* ── Bulk Action Bar ───────────────────────────────────────────── */
+.zsu-bulk-bar {
+  margin: 0 24px 12px;
+  background: rgba(124,58,237,0.1);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 8px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.zsu-bulk-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--zsu-primary);
+  margin-right: 8px;
+}
+
+/* ── Admin Shorts Grid ─────────────────────────────────────────── */
+.zsu-shorts-admin-grid {
+  margin: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .zsu-shorts-admin-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+}
+
+.zsu-admin-short-card {
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: var(--zsu-radius);
+  overflow: hidden;
+  position: relative;
+  transition: var(--zsu-trans);
+  cursor: pointer;
+}
+
+.zsu-admin-short-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--zsu-primary);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(124,58,237,0.15);
+}
+
+.zsu-admin-short-thumb-wrap {
+  position: relative;
+  aspect-ratio: 9 / 16;
+  background: var(--zsu-bg3);
+  overflow: hidden;
+}
+
+.zsu-admin-short-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.zsu-admin-short-card:hover .zsu-admin-short-thumb { transform: scale(1.05); }
+
+.zsu-admin-short-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%);
+  opacity: 0;
+  transition: var(--zsu-trans);
+  display: flex;
+  align-items: flex-end;
+  padding: 12px;
+  gap: 6px;
+}
+
+.zsu-admin-short-card:hover .zsu-admin-short-overlay { opacity: 1; }
+
+.zsu-admin-short-status {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.zsu-admin-short-featured {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(245,158,11,0.9);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.zsu-admin-short-boosted {
+  position: absolute;
+  top: 28px;
+  right: 8px;
+  background: rgba(139,92,246,0.9);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.zsu-admin-short-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--zsu-primary);
+}
+
+.zsu-admin-short-body {
+  padding: 10px 12px;
+}
+
+.zsu-admin-short-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+
+.zsu-admin-short-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--zsu-text-muted);
+}
+
+.zsu-admin-short-stat { display: flex; align-items: center; gap: 3px; }
+
+/* ── Pending Cards ─────────────────────────────────────────────── */
+.zsu-pending-grid {
+  margin: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.zsu-pending-card {
+  background: var(--zsu-bg2);
+  border: 1px solid var(--zsu-border);
+  border-radius: var(--zsu-radius);
+  overflow: hidden;
+  transition: var(--zsu-trans);
+}
+
+.zsu-pending-card:hover {
+  border-color: var(--zsu-warning);
+  box-shadow: 0 0 20px rgba(245,158,11,0.1);
+}
+
+.zsu-pending-thumb-wrap {
+  aspect-ratio: 16 / 9;
+  background: var(--zsu-bg3);
+  overflow: hidden;
+  position: relative;
+}
+
+.zsu-pending-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.zsu-pending-body {
+  padding: 14px 16px;
+}
+
+.zsu-pending-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.zsu-pending-meta {
+  font-size: 11px;
+  color: var(--zsu-text-muted);
+  margin-bottom: 12px;
+}
+
+.zsu-pending-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Boost Tier Cards ──────────────────────────────────────────── */
+.zsu-boost-tiers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) { .zsu-boost-tiers { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .zsu-boost-tiers { grid-template-columns: 1fr; } }
+
+.zsu-boost-tier-card {
+  background: var(--zsu-bg3);
+  border: 1px solid var(--tier-color, var(--zsu-primary));
+  border-radius: var(--zsu-radius);
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: var(--zsu-trans);
+}
+
+.zsu-boost-tier-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4), 0 0 20px var(--tier-color);
+}
+
+.zsu-boost-tier-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, var(--tier-color) 0%, transparent 60%);
+  opacity: 0.08;
+}
+
+.zsu-tier-icon { font-size: 36px; margin-bottom: 8px; }
+
+.zsu-tier-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.zsu-tier-price {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--tier-color);
+  margin-bottom: 6px;
+}
+
+.zsu-tier-price span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--zsu-text-muted);
+}
+
+.zsu-tier-desc {
+  font-size: 11px;
+  color: var(--zsu-text-muted);
+  line-height: 1.4;
+}
+
+/* ── Pagination ────────────────────────────────────────────────── */
+.zsu-pagination {
+  margin: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.zsu-page-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--zsu-border);
+  background: var(--zsu-bg2);
+  color: var(--zsu-text-muted);
+  transition: var(--zsu-trans);
+}
+
+.zsu-page-btn:hover { background: var(--zsu-surface); color: #fff; }
+.zsu-page-btn.active { background: var(--zsu-primary); color: #fff; border-color: var(--zsu-primary); }
+.zsu-page-btn.disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Spinner ───────────────────────────────────────────────────── */
+.zsu-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--zsu-border);
+  border-top-color: var(--zsu-primary);
+  border-radius: 50%;
+  animation: zsuSpin 0.8s linear infinite;
+}
+
+@keyframes zsuSpin { to { transform: rotate(360deg); } }
+
+.zsu-spinner-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  width: 100%;
+}
+
+/* ── Toast ─────────────────────────────────────────────────────── */
+.zsu-toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 99999;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  max-width: 320px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  animation: zsuToastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+@keyframes zsuToastIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.zsu-toast.success { background: linear-gradient(135deg,#064e3b,#065f46); border-left: 4px solid #10b981; }
+.zsu-toast.error   { background: linear-gradient(135deg,#450a0a,#7f1d1d); border-left: 4px solid #ef4444; }
+.zsu-toast.info    { background: linear-gradient(135deg,#1e1b4b,#312e81); border-left: 4px solid #818cf8; }
+.zsu-toast.warning { background: linear-gradient(135deg,#451a03,#78350f); border-left: 4px solid #f59e0b; }
+
+/* ── Empty State ───────────────────────────────────────────────── */
+.zsu-empty-state {
+  text-align: center;
+  padding: 60px 24px;
+}
+
+.zsu-empty-icon { font-size: 60px; margin-bottom: 16px; }
+.zsu-empty-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.zsu-empty-desc { font-size: 14px; color: var(--zsu-text-muted); }
+
+/* ── Coin Delta Colors ─────────────────────────────────────────── */
+.zsu-coin-positive { color: #10b981; font-weight: 700; }
+.zsu-coin-negative { color: #ef4444; font-weight: 700; }
+
+/* ── Responsive Fixes ──────────────────────────────────────────── */
+@media (max-width: 782px) {
+  .zsu-admin-header { flex-direction: column; height: auto; padding: 12px; gap: 8px; top: 46px; }
+  .zsu-section { margin: 10px 12px; padding: 16px; }
+  .zsu-stat-grid { padding: 10px 12px; }
+  .zsu-filter-bar { margin: 10px 12px; }
+  .zsu-shorts-admin-grid { margin: 0 12px; }
+  .zsu-pending-grid { margin: 0 12px; }
+  .zsu-boost-tiers { grid-template-columns: repeat(2, 1fr); margin: 0 12px; }
+}
+
+
+/* ── WordPress Admin Override Fixes ─────────────────────────── */
+body.wp-admin .zsu-admin-wrap,
+.wp-admin .zsu-admin-wrap {
+  background: var(--zsu-bg) !important;
+  color: var(--zsu-text) !important;
+}
+
+body.wp-admin #wpwrap,
+body.wp-admin #wpcontent,
+body.wp-admin #wpbody,
+body.wp-admin #wpbody-content {
+  background: var(--zsu-bg) !important;
+}
+
+body.wp-admin .zsu-stat-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 16px !important;
+  padding: 20px 24px !important;
+}
+
+body.wp-admin .zsu-stat-grid-4 {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+body.wp-admin .zsu-stat-card {
+  background: var(--zsu-bg2) !important;
+  border: 1px solid var(--zsu-border) !important;
+  border-radius: var(--zsu-radius) !important;
+  padding: 20px !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 14px !important;
+  text-decoration: none !important;
+  color: var(--zsu-text) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+body.wp-admin .zsu-stat-value {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: -1px !important;
+  line-height: 1.1 !important;
+}
+
+body.wp-admin .zsu-stat-label {
+  font-size: 12px !important;
+  color: var(--zsu-text-muted) !important;
+  margin-top: 3px !important;
+}
+
+body.wp-admin .zsu-stat-icon {
+  font-size: 28px !important;
+  line-height: 1 !important;
+}
+
+body.wp-admin .zsu-section {
+  background: var(--zsu-bg2) !important;
+  border: 1px solid var(--zsu-border) !important;
+  border-radius: var(--zsu-radius-lg) !important;
+  padding: 20px 24px !important;
+  margin: 20px 24px !important;
+}
+
+body.wp-admin .zsu-section-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  margin: 0 0 16px !important;
+}
+
+body.wp-admin .zsu-admin-header {
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a0030 100%) !important;
+  border-bottom: 1px solid var(--zsu-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 24px !important;
+  height: 60px !important;
+  position: sticky !important;
+  top: 32px !important;
+  z-index: 100 !important;
+}
+
+body.wp-admin .zsu-admin-nav {
+  display: flex !important;
+  gap: 2px !important;
+}
+
+body.wp-admin .zsu-nav-item {
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #94a3b8 !important;
+  text-decoration: none !important;
+  transition: all 0.2s !important;
+}
+
+body.wp-admin .zsu-nav-item.active,
+body.wp-admin .zsu-nav-item:hover {
+  background: rgba(124,58,237,0.15) !important;
+  color: #a78bfa !important;
+}
+
+body.wp-admin .zsu-page-title h1 {
+  color: #fff !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  padding: 20px 24px 4px !important;
+  margin: 0 !important;
+}
+
+body.wp-admin .zsu-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  border: none !important;
+  text-decoration: none !important;
+  transition: all 0.2s !important;
+  line-height: 1.4 !important;
+}
+
+body.wp-admin .zsu-btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-btn-ghost {
+  background: rgba(255,255,255,0.06) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+body.wp-admin .zsu-btn-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-btn-success {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-btn-purple {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-btn-cyan {
+  background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+  color: #fff !important;
+}
+
+body.wp-admin .zsu-filter-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+  padding: 16px 24px !important;
+  background: var(--zsu-bg2) !important;
+  border-bottom: 1px solid var(--zsu-border) !important;
+  margin: 0 24px 0 !important;
+  border-radius: var(--zsu-radius) !important;
+}
+
+body.wp-admin .zsu-select {
+  background: var(--zsu-bg3) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  padding: 7px 12px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  outline: none !important;
+}
+
+body.wp-admin .zsu-search-input {
+  background: var(--zsu-bg3) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  padding: 7px 12px !important;
+  font-size: 13px !important;
+  outline: none !important;
+}
+
+body.wp-admin .zsu-settings-panel {
+  display: none !important;
+}
+
+body.wp-admin .zsu-settings-panel.active {
+  display: block !important;
+}
+
+body.wp-admin .zsu-settings-layout {
+  display: flex !important;
+  gap: 0 !important;
+  padding: 0 24px 40px !important;
+  align-items: flex-start !important;
+}
+
+body.wp-admin .zsu-settings-sidebar {
+  width: 200px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  padding-right: 16px !important;
+}
+
+body.wp-admin .zsu-settings-tab-btn {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  padding: 10px 14px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  text-align: left !important;
+}
+
+body.wp-admin .zsu-settings-tab-btn.active {
+  background: rgba(124,58,237,0.15) !important;
+  color: #a78bfa !important;
+  font-weight: 700 !important;
+}
+
+body.wp-admin .zsu-settings-panels {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+body.wp-admin .zsu-settings-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 20px !important;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+body.wp-admin .zsu-settings-key {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #e2e8f0 !important;
+  margin-bottom: 3px !important;
+}
+
+body.wp-admin .zsu-settings-hint {
+  display: block !important;
+  font-size: 11px !important;
+  color: #475569 !important;
+}
+
+body.wp-admin .zsu-settings-input {
+  background: #252840 !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  color: #e2e8f0 !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  outline: none !important;
+}
+
+body.wp-admin .zsu-toggle {
+  position: relative !important;
+  display: inline-block !important;
+  width: 46px !important;
+  height: 26px !important;
+}
+
+body.wp-admin .zsu-toggle input { display: none !important; }
+
+body.wp-admin .zsu-toggle-slider {
+  position: absolute !important;
+  inset: 0 !important;
+  background: #334155 !important;
+  border-radius: 99px !important;
+  cursor: pointer !important;
+  transition: 0.3s !important;
+}
+
+body.wp-admin .zsu-toggle-slider::before {
+  content: '' !important;
+  position: absolute !important;
+  width: 20px !important; height: 20px !important;
+  left: 3px !important; bottom: 3px !important;
+  background: #fff !important;
+  border-radius: 50% !important;
+  transition: 0.3s !important;
+}
+
+body.wp-admin .zsu-toggle input:checked + .zsu-toggle-slider {
+  background: #7c3aed !important;
+}
+
+body.wp-admin .zsu-toggle input:checked + .zsu-toggle-slider::before {
+  transform: translateX(20px) !important;
+}
+
+body.wp-admin .zsu-chart-card {
+  background: var(--zsu-bg3) !important;
+  border-radius: var(--zsu-radius) !important;
+  padding: 20px !important;
+  position: relative !important;
+}
+
+body.wp-admin .zsu-spinner {
+  width: 32px !important;
+  height: 32px !important;
+  border: 3px solid rgba(124,58,237,0.2) !important;
+  border-top-color: var(--zsu-primary) !important;
+  border-radius: 50% !important;
+  animation: zsuSpin 0.8s linear infinite !important;
+}
+
+body.wp-admin .zsu-spinner-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 40px !important;
+}
+
+body.wp-admin .zsu-table-wrap {
+  overflow-x: auto !important;
+}
+
+body.wp-admin .zsu-table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 13px !important;
+}
+
+body.wp-admin .zsu-table th {
+  text-align: left !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--zsu-border) !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  background: transparent !important;
+}
+
+body.wp-admin .zsu-table td {
+  padding: 12px 14px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  color: var(--zsu-text) !important;
+  vertical-align: middle !important;
+  background: transparent !important;
+}
+
+body.wp-admin .zsu-logo-text {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: -0.3px !important;
+}
+
+body.wp-admin .zsu-version {
+  font-size: 10px !important;
+  background: rgba(124,58,237,0.3) !important;
+  color: #a78bfa !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  margin-left: 4px !important;
+}
+
+body.wp-admin .zsu-quick-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+
+body.wp-admin .zsu-pending-grid,
+body.wp-admin .zsu-shorts-admin-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 16px !important;
+  padding: 20px 24px !important;
+}
+
+body.wp-admin .zsu-boost-tiers {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 16px !important;
+  padding: 0 0 16px !important;
+}
+
+body.wp-admin .zsu-boost-tier-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid var(--tier-color, var(--zsu-border)) !important;
+  border-radius: var(--zsu-radius) !important;
+  padding: 20px !important;
+  text-align: center !important;
+}
+
+body.wp-admin .zsu-presets-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  gap: 20px !important;
+  padding: 0 24px 20px !important;
+}
+
+body.wp-admin .zsu-settings-save-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  padding: 20px 0 !important;
+}
+
+body.wp-admin .zsu-toast {
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+  padding: 12px 20px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  z-index: 99999 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+body.wp-admin .zsu-toast.success { background: #10b981 !important; }
+body.wp-admin .zsu-toast.error   { background: #ef4444 !important; }
+body.wp-admin .zsu-toast.info    { background: #3b82f6 !important; }
+body.wp-admin .zsu-toast.warning { background: #f59e0b !important; }
+
+
+
+/* ── Inline page styles (moved to external CSS for performance) ── */
+.zsu-analytics-row {
+            display: flex;
+            gap: 0;
+            flex-wrap: wrap;
+            margin: 0 24px;
+        }
+        .zsu-analytics-row .zsu-section {
+            margin: 20px 8px;
+        }
+        .zsu-donut-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+            justify-content: center;
+        }
+        .zsu-donut-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .zsu-donut-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .zsu-vendor-rank-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .zsu-vendor-rank-row:last-child { border-bottom: none; }
+        .zsu-vendor-rank-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--zsu-primary);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+.zsu-presets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            padding: 0 24px 20px;
+        }
+
+        .zsu-preset-card {
+            background: var(--zsu-bg2);
+            border: 2px solid var(--zsu-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer;
+        }
+        .zsu-preset-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--p1, var(--zsu-primary));
+            box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 25px var(--p1, #7c3aed44);
+        }
+        .zsu-preset-card.active {
+            border-color: var(--p1, var(--zsu-primary));
+            box-shadow: 0 0 0 1px var(--p1, var(--zsu-primary)), 0 0 25px var(--p1, #7c3aed)44;
+        }
+
+        .zsu-preset-preview {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .zsu-preset-phone {
+            width: 80px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .zsu-preset-phone-screen {
+            padding: 8px;
+            min-height: 120px;
+        }
+
+        .zsu-preset-fake-card {
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .zsu-preset-pill {
+            font-size: 8px;
+            font-weight: 600;
+            padding: 2px 5px;
+            border-radius: 4px;
+            border: 1px solid;
+            color: #fff;
+            display: inline-block;
+        }
+
+        .zsu-preset-active-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(16,185,129,0.9);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .zsu-preset-info {
+            padding: 14px 14px 16px;
+        }
+
+        .zsu-preset-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .zsu-preset-desc {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .zsu-preset-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .zsu-preset-swatches {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .zsu-swatch {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.15);
+            cursor: default;
+            transition: transform 0.2s;
+        }
+        .zsu-swatch:hover { transform: scale(1.2); }
+
+        .zsu-btn-disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .zsu-color-overrides-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .zsu-color-override-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .zsu-field-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+.zsu-settings-layout {
+            display: flex;
+            gap: 0;
+            padding: 0 24px 40px;
+            align-items: flex-start;
+        }
+
+        .zsu-settings-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 110px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding-right: 16px;
+        }
+
+        .zsu-settings-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .zsu-settings-tab-btn:hover { background: rgba(255,255,255,0.05); color: #e2e8f0; }
+        .zsu-settings-tab-btn.active { background: rgba(124,58,237,0.15); color: #a78bfa; font-weight: 700; }
+
+        .zsu-settings-panels {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .zsu-settings-panel {
+            display: none;
+            background: #1a1d2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .zsu-settings-panel.active { display: block; }
+
+        .zsu-settings-panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .zsu-settings-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .zsu-settings-row:last-of-type { border-bottom: none; }
+
+        .zsu-settings-label {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .zsu-settings-key {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 3px;
+        }
+
+        .zsu-settings-hint {
+            display: block;
+            font-size: 11px;
+            color: #475569;
+            line-height: 1.4;
+        }
+
+        .zsu-settings-control {
+            flex-shrink: 0;
+            min-width: 220px;
+        }
+
+        .zsu-settings-input {
+            background: #252840;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            font-size: 13px;
+            width: 100%;
+            max-width: 280px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .zsu-settings-input:focus { border-color: #7c3aed; }
+
+        .zsu-settings-select {
+            background: #252840;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #e2e8f0;
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            max-width: 280px;
+            width: 100%;
+        }
+
+        /* Toggle switch */
+        .zsu-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .zsu-toggle {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 26px;
+        }
+
+        .zsu-toggle input { display: none; }
+
+        .zsu-toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #334155;
+            border-radius: 99px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .zsu-toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        .zsu-toggle input:checked + .zsu-toggle-slider { background: #7c3aed; }
+        .zsu-toggle input:checked + .zsu-toggle-slider::before { transform: translateX(20px); }
+
+        .zsu-toggle-label { font-size: 12px; color: #64748b; }
+
+        .zsu-settings-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 16px 0;
+        }
+
+        .zsu-settings-save-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 0;
+        }
+
+        @media (max-width: 900px) {
+            .zsu-settings-layout { flex-direction: column; padding: 0 12px 40px; }
+            .zsu-settings-sidebar { width: 100%; position: static; flex-direction: row; flex-wrap: wrap; padding-right: 0; }
+            .zsu-settings-tab-btn { width: auto; flex: 0 0 auto; }
+        }
+

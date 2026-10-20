@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+    <defs>
+        <linearGradient id="k71IconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#18181b"/>
+            <stop offset="100%" stop-color="#09090b"/>
+        </linearGradient>
+        <filter id="k71Glow" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
+        </filter>
+    </defs>
+
+    <!-- Base Squircle with Soft Rim -->
+    <rect x="6" y="6" width="108" height="108" rx="28" fill="url(#k71IconGrad)" stroke="#27272a" stroke-width="1.5" filter="url(#k71Glow)"/>
+    <rect x="7" y="7" width="106" height="106" rx="27" fill="none" stroke="#ffffff" stroke-width="0.75" stroke-opacity="0.08"/>
+
+    <!-- Geometric K71 Monogram Mark -->
+    <g transform="translate(60, 60)" text-anchor="middle" dominant-baseline="central">
+        <text font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="40" font-weight="900" letter-spacing="-1.5" fill="#ffffff">
+            K<tspan fill="#a1a1aa">71</tspan>
+        </text>
+    </g>
+</svg>

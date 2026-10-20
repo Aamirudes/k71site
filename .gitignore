@@ -1,0 +1,54 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+.env.backup
+.env.production
+/auth.json
+*.pem
+*.key
+/storage/*.key
+
+# Databases
+database/*.sqlite
+database/*.sqlite-journal
+database/*.sqlite-shm
+database/*.sqlite-wal
+*.sql
+*.sqlite
+
+# Dependencies & Build Artefacts
+/node_modules
+/vendor
+composer.phar
+/public/hot
+/public/storage
+/storage/pail
+dash_output.html
+
+# Storage & Cache
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+*.log
+
+# Testing & IDEs
+.phpunit.result.cache
+/.phpunit.cache
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+Homestead.json
+Homestead.yaml
+
+# OS files
+.DS_Store
+Thumbs.db

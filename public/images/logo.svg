@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" fill="none">
+    <!-- Icon Mark (Left) -->
+    <g transform="translate(6, 12)">
+        <rect width="56" height="56" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1.2"/>
+        <text x="28" y="37" text-anchor="middle" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="22" font-weight="900" letter-spacing="-0.5" fill="#ffffff">
+            K<tspan fill="#a1a1aa">71</tspan>
+        </text>
+    </g>
+
+    <!-- Wordmark -->
+    <text x="76" y="47" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="34" font-weight="900" letter-spacing="-1" fill="#09090b">
+        K71<tspan font-size="16" font-weight="700" fill="#71717a" letter-spacing="0">.IN</tspan>
+    </text>
+
+    <!-- Subtitle -->
+    <text x="78" y="63" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="8.5" font-weight="600" letter-spacing="3.5" fill="#71717a">
+        CURATED MARKETPLACE
+    </text>
+</svg>
