@@ -76,6 +76,8 @@ Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->na
 
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
+Route::post('/used/post-ad', [\App\Http\Controllers\UsedController::class, 'storeAd'])->name('used.post-ad');
+Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('used.show');
 Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
 Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');
 
@@ -154,6 +156,7 @@ Route::get('/s/services', [\App\Http\Controllers\ServicesController::class, 'ind
 Route::get('/s/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('storefront.services.provider');
 
 Route::get('/s/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('storefront.used');
+Route::get('/s/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('storefront.used.show');
 Route::get('/s/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('storefront.enquiry');
 Route::get('/s/shorts', [ShortsController::class, 'index'])->name('storefront.shorts');
 Route::get('/s/vendor', fn() => redirect()->route('vendor.register'))->name('storefront.vendor');

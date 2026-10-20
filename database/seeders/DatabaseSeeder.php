@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             All13EcosystemCategoriesSeeder::class,
             MasterProductionPlatformSeeder::class,
             NavigationSeeder::class,
+            UsedMarketplaceOlxSeeder::class,
         ]);
 
         // Seed or Enforce Master Administrator Account

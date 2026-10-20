@@ -238,6 +238,7 @@ if (file_exists($envPath)) {
     $updateEnv($envContent, 'MAIL_FROM_ADDRESS', '"crab.hashir@gmail.com"');
     $updateEnv($envContent, 'MAIL_FROM_NAME', '"K71"');
     $updateEnv($envContent, 'ADMIN_EMAIL', 'crab.hashir@gmail.com');
+    $updateEnv($envContent, 'QUEUE_CONNECTION', 'sync');
     $updateEnv($envContent, 'MARKETPLACE_USE_SUBDOMAINS', 'true');
 
     @file_put_contents($envPath, $envContent);
