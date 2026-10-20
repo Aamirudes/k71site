@@ -46,6 +46,7 @@
     ];
 
     $currentKey = $k71_vertical_key ?? 'main';
+    $customDrawerItems = \App\Models\NavigationItem::getMobileDrawerItems();
 @endphp
 
 <div x-data="{ menuOpen: false }" 
@@ -78,11 +79,14 @@
         <!-- Drawer Header -->
         <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
             <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 via-teal-500 to-sky-500 flex items-center justify-center text-white text-xs font-black shadow-sm shrink-0">
+                    M
+                </div>
                 <span class="font-sans text-xl font-black tracking-tight text-zinc-950 dark:text-white">
-                    K71<span class="text-violet-600 dark:text-violet-400 font-medium">.IN</span>
+                    Marble<span class="text-emerald-500 dark:text-emerald-400 font-bold">Mandi</span>
                 </span>
-                <span class="text-[9px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
-                    Platform
+                <span class="text-[9px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                    Ecosystem
                 </span>
             </div>
             <button @click="menuOpen = false" 
@@ -168,6 +172,49 @@
                 </div>
             </div>
 
+            @if($customDrawerItems->isNotEmpty())
+                <!-- Dynamic Admin Configured Panel Shortcuts -->
+                <div>
+                    <h5 class="text-xs uppercase font-semibold tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Featured Highlights</h5>
+                    <div class="space-y-1.5">
+                        @foreach($customDrawerItems as $cItem)
+                            <a href="{{ $cItem->url }}" target="{{ $cItem->target ?? '_self' }}"
+                               class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 hover:border-emerald-500/50 transition">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg bg-white dark:bg-zinc-800 flex items-center justify-center text-xs shadow-xs shrink-0 overflow-hidden">
+                                        @if($cItem->icon_type === 'image' && $cItem->image_url)
+                                            <img src="{{ $cItem->image_url }}" alt="{{ $cItem->title }}" class="w-5 h-5 object-contain">
+                                        @elseif($cItem->icon_type === 'emoji' && $cItem->icon)
+                                            <span>{{ $cItem->icon }}</span>
+                                        @elseif($cItem->icon)
+                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {!! $cItem->icon !!}
+                                            </svg>
+                                        @else
+                                            <span class="text-zinc-500">★</span>
+                                        @endif
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-xs font-bold text-zinc-900 dark:text-white">{{ $cItem->title }}</span>
+                                            @if($cItem->badge)
+                                                <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-{{ $cItem->badge_color ?? 'emerald' }}-500 text-white">
+                                                    {{ $cItem->badge }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if($cItem->subtitle)
+                                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400">{{ $cItem->subtitle }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- Navigation Links -->
             <div>
                 <h5 class="text-xs uppercase font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">Explore</h5>
@@ -223,7 +270,7 @@
 
         <!-- Drawer Footer -->
         <div class="p-4 border-t border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 flex items-center justify-between text-xs text-zinc-500">
-            <span>&copy; {{ date('Y') }} K71.IN</span>
+            <span>&copy; {{ date('Y') }} MarbleMandi.org</span>
             @auth
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

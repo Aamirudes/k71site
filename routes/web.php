@@ -216,6 +216,14 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/promotions', [\App\Http\Controllers\AdminController::class, 'storePromotion'])->name('promotions.store');
     Route::post('/promotions/{promotion}/toggle', [\App\Http\Controllers\AdminController::class, 'togglePromotion'])->name('promotions.toggle');
     Route::get('/audit-logs', [\App\Http\Controllers\AdminController::class, 'auditLogs'])->name('audit_logs.index');
+
+    // Navigation & Mobile App Drawer Studio
+    Route::get('/navigation', [\App\Http\Controllers\Admin\NavigationController::class, 'index'])->name('navigation.index');
+    Route::post('/navigation', [\App\Http\Controllers\Admin\NavigationController::class, 'store'])->name('navigation.store');
+    Route::put('/navigation/{item}', [\App\Http\Controllers\Admin\NavigationController::class, 'update'])->name('navigation.update');
+    Route::delete('/navigation/{item}', [\App\Http\Controllers\Admin\NavigationController::class, 'destroy'])->name('navigation.destroy');
+    Route::post('/navigation/reorder', [\App\Http\Controllers\Admin\NavigationController::class, 'reorder'])->name('navigation.reorder');
+    Route::post('/navigation/reset-defaults', [\App\Http\Controllers\Admin\NavigationController::class, 'resetDefaults'])->name('navigation.reset');
 });
 
 // PhonePe Gateway Callback & S2S Webhook

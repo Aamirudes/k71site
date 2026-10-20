@@ -92,6 +92,12 @@
                             <span>Homepage &amp; SEO Studio</span>
                             <span class="ml-auto text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.homepage*') ? 'bg-slate-900 text-amber-300' : 'bg-amber-500/20 text-amber-300' }}">Live</span>
                         </a>
+
+                        <a href="{{ route('admin.navigation.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.navigation*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Mobile Panel &amp; Nav</span>
+                            <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.navigation*') ? 'bg-slate-900 text-amber-300' : 'bg-emerald-500/20 text-emerald-300' }}">Power</span>
+                        </a>
                     </div>
                 </div>
 

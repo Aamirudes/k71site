@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             All13EcosystemCategoriesSeeder::class,
             MasterProductionPlatformSeeder::class,
+            NavigationSeeder::class,
         ]);
 
         // Seed or Enforce Master Administrator Account

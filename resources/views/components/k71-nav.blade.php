@@ -85,12 +85,15 @@
                             </a>
                         </div>
                     @else
-                        <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
+                        <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="MarbleMandi Homepage">
+                            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-sky-500 flex items-center justify-center text-white text-base font-black shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform shrink-0">
+                                M
+                            </div>
                             <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-zinc-950 dark:text-white">
-                                K71<span class="text-violet-600 dark:text-violet-400 font-medium">.IN</span>
+                                Marble<span class="text-emerald-500 dark:text-emerald-400 font-bold">Mandi</span>
                             </span>
                             @if($currentKey !== 'main')
-                                <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
                                     {{ $activeVertical['badge'] ?? 'Vertical' }}
                                 </span>
                             @endif

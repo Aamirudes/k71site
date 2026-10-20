@@ -38,7 +38,7 @@
         ]
     ];
 
-    // Master 13 Ecosystem Sectors Specification
+    // Master 13 Ecosystem Sectors Specification with High-Resolution Curated Imagery
     $ecosystemSectors = [
         [
             'num' => '01',
@@ -50,6 +50,7 @@
             'flow_key' => 'video',
             'flow_badge' => '🎥 Shoppable Video Tag',
             'flow_color' => 'rose',
+            'image' => 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
             'description' => 'Interactive shoppable discovery feed operating across all physical goods, cloud menus, and services with tap-to-buy video tags.',
             'url' => k71_vertical_url('shorts'),
             'cta' => 'Watch Shorts Feed',
@@ -74,6 +75,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ Instant Buy (B2C/D2C)',
             'flow_color' => 'pink',
+            'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=600&q=80',
             'description' => 'Curated wardrobe collections, designer ethnic atelier, bridal lehengas, bespoke suits, luxury footwear, and fine gold jewelry.',
             'url' => route('catalog.index', ['category' => 'clothing-fashion-accessories']),
             'cta' => 'Shop Fashion Catalog',
@@ -97,6 +99,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ Instant Buy & Bulk B2B',
             'flow_color' => 'blue',
+            'image' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
             'description' => 'Certified smartphones, high-performance computing rigs, smart home audio, 4K digital signage, and commercial appliances.',
             'url' => route('catalog.index', ['category' => 'electronics-appliances-it']),
             'cta' => 'Browse Electronics',
@@ -119,6 +122,7 @@
             'flow_key' => 'rfq',
             'flow_badge' => '📋 Request for Quote (RFQ)',
             'flow_color' => 'amber',
+            'image' => 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80',
             'description' => 'Direct B2B sourcing engine for marble gang saws, CNC lasers, hydraulic presses, excavators, transformers, and industrial steel.',
             'url' => k71_vertical_url('enquiry'),
             'cta' => 'Request Machinery RFQ',
@@ -141,6 +145,7 @@
             'flow_key' => 'lead',
             'flow_badge' => '🚗 Lead / Direct Buy',
             'flow_color' => 'red',
+            'image' => 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=600&q=80',
             'description' => 'Verified four-wheelers, EV scooters, commercial logistics trucks, original engine components, and mobile vehicle inspection.',
             'url' => route('catalog.index', ['category' => 'automotive-vehicles-transport']),
             'cta' => 'Explore Vehicles & Parts',
@@ -162,6 +167,7 @@
             'flow_key' => 'gig',
             'flow_badge' => '💼 Service Milestone Gig',
             'flow_color' => 'violet',
+            'image' => 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80',
             'description' => 'Tiered freelance milestone booking for full-stack engineering, AI/ML models, 3D product motion, SEO, and legal consulting.',
             'url' => k71_vertical_url('services'),
             'cta' => 'Hire Verified Freelancers',
@@ -184,6 +190,7 @@
             'flow_key' => 'booking',
             'flow_badge' => '⏱️ Time-Slot Booking',
             'flow_color' => 'indigo',
+            'image' => 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=80',
             'description' => 'Background-checked technicians and doorstep wellness: Electricians, AC master mechanics, deep home sanitize, and salon experts.',
             'url' => k71_vertical_url('services'),
             'cta' => 'Book Local Technicians',
@@ -205,6 +212,7 @@
             'flow_key' => 'p2p',
             'flow_badge' => '🤝 Peer-to-Peer Offer',
             'flow_color' => 'emerald',
+            'image' => 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=600&q=80',
             'description' => 'Verified direct buyer-seller marketplace with condition inspection grades, real-time counter offers, and secure escrow settlement.',
             'url' => k71_vertical_url('used'),
             'cta' => 'Browse Pre-Owned Deals',
@@ -227,6 +235,7 @@
             'flow_key' => 'lead',
             'flow_badge' => '🏡 High-Ticket Lead Enquiry',
             'flow_color' => 'purple',
+            'image' => 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=600&q=80',
             'description' => 'Direct developer listings & high-yield commercial hubs: Luxury villas, Grade-A office floors, industrial sheds, and plots.',
             'url' => k71_vertical_url('enquiry'),
             'cta' => 'Inquire Property Deals',
@@ -247,6 +256,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ Instant Buy & RFQ',
             'flow_color' => 'teal',
+            'image' => 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80',
             'description' => 'Solid teak dining tables, ergonomic workstations, designer ambient lighting, sanitary faucets, and imported marble slabs.',
             'url' => route('catalog.index', ['category' => 'home-living-furniture-hardware']),
             'cta' => 'Shop Home & Living',
@@ -267,6 +277,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ Instant Buy',
             'flow_color' => 'fuchsia',
+            'image' => 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80',
             'description' => 'Clinical dermatological formulations, clean organic cosmetics, luxury attar, precision trimmers, and certified whey nutrition.',
             'url' => route('catalog.index', ['category' => 'beauty-personal-care-health-wellness']),
             'cta' => 'Explore Beauty & Care',
@@ -288,6 +299,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ 30-Min Rapid Delivery',
             'flow_color' => 'orange',
+            'image' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80',
             'description' => 'Farm-fresh hydroponic greens, cold-pressed artisanal oils, hot chef biryanis, gourmet pantry coffee, and eco household cleaners.',
             'url' => k71_vertical_url('food'),
             'cta' => 'Order Food & Essentials',
@@ -309,6 +321,7 @@
             'flow_key' => 'instant',
             'flow_badge' => '⚡ Instant Buy',
             'flow_color' => 'cyan',
+            'image' => 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=600&q=80',
             'description' => 'Certified infant gear, STEM robotics kits, competitive academic textbooks, professional sports racquets, and camping tents.',
             'url' => route('catalog.index', ['category' => 'baby-toys-hobbies-books-sports']),
             'cta' => 'Browse Hobbies & Sports',
@@ -1017,65 +1030,92 @@
         </div>
 
         <!-- 13 Ecosystem Cards Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <!-- 13 Ecosystem Cards Grid (Luxury Visual Showcase) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             @foreach($ecosystemSectors as $sector)
                 <div x-show="matches('{{ $sector['flow_key'] }}')"
-                     x-transition:enter="transition ease-out duration-250"
-                     x-transition:enter-start="opacity-0 translate-y-3"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     class="group relative rounded-3xl p-6 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 hover:border-violet-500/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-                    <div>
-                        <!-- Top Badges Row -->
-                        <div class="flex items-center justify-between gap-2 mb-4">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-xl shadow-xs group-hover:scale-110 transition-transform">
+                     class="luxury-card group relative rounded-3xl overflow-hidden bg-white dark:bg-[#111827] border border-zinc-200/80 dark:border-white/10 shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col justify-between">
+                    
+                    <!-- Sector Visual Image Header Stage -->
+                    <div class="relative w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800" style="aspect-ratio: 16 / 9;">
+                        @if(!empty($sector['image']))
+                            <img src="{{ $sector['image'] }}" 
+                                 alt="{{ $sector['title'] }}" 
+                                 loading="lazy" 
+                                 decoding="async"
+                                 class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108">
+                        @else
+                            <div class="w-full h-full bg-gradient-to-tr from-violet-600 to-indigo-600"></div>
+                        @endif
+
+                        <!-- Dark Scrim Gradient for Ultimate Contrast -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10"></div>
+
+                        <!-- Top Floating Badges -->
+                        <div class="absolute top-3 inset-x-3 flex items-center justify-between z-10">
+                            <div class="flex items-center gap-2">
+                                <span class="w-9 h-9 rounded-2xl bg-white/90 dark:bg-zinc-950/80 backdrop-blur-md flex items-center justify-center text-lg shadow-md border border-white/30">
                                     {{ $sector['icon'] }}
                                 </span>
-                                <span class="text-xs font-mono font-bold text-zinc-400 dark:text-zinc-500">#{{ $sector['num'] }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider bg-black/60 text-white backdrop-blur-md border border-white/20">
+                                    #{{ $sector['num'] }}
+                                </span>
                             </div>
-                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60">
+
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-white/90 dark:bg-zinc-900/90 text-zinc-950 dark:text-white backdrop-blur-md shadow-md border border-white/30">
                                 {{ $sector['model'] }}
                             </span>
                         </div>
 
-                        <!-- Title -->
-                        <h3 class="text-base sm:text-lg font-bold text-zinc-950 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors leading-snug">
-                            {{ $sector['title'] }}
-                        </h3>
-
-                        <!-- Transaction Flow Pill Tag -->
-                        <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[10px] font-bold tracking-wide uppercase bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/50">
-                            {{ $sector['flow_badge'] }}
-                        </div>
-
-                        <!-- Description -->
-                        <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
-                            {{ $sector['description'] }}
-                        </p>
-
-                        <!-- Subcategories Pills List -->
-                        <div class="mt-4 pt-3.5 border-t border-zinc-100 dark:border-zinc-800/80">
-                            <span class="text-[9.5px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500 block mb-2">Key Categories:</span>
-                            <div class="flex flex-wrap gap-1.5">
-                                @foreach($sector['subcategories'] as $subName => $subDetail)
-                                    <a href="{{ route('catalog.index', ['q' => $subName]) }}" 
-                                       class="px-2.5 py-1 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-violet-50 hover:text-violet-700 dark:hover:bg-violet-900/30 dark:hover:text-violet-300 transition-colors"
-                                       title="{{ $subDetail }}">
-                                        {{ $subName }}
-                                    </a>
-                                @endforeach
-                            </div>
+                        <!-- Bottom Title Floating on Image -->
+                        <div class="absolute bottom-3 inset-x-3.5 z-10">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full text-[9.5px] font-black uppercase tracking-wider bg-{{ $sector['flow_color'] ?? 'emerald' }}-500 text-white shadow-md mb-1.5">
+                                {{ $sector['flow_badge'] }}
+                            </span>
+                            <h3 class="text-base sm:text-lg font-black text-white leading-tight drop-shadow-md group-hover:text-emerald-300 transition-colors">
+                                {{ $sector['title'] }}
+                            </h3>
                         </div>
                     </div>
 
-                    <!-- Direct Action Link Button -->
-                    <div class="mt-6 pt-3.5 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                        <a href="{{ $sector['url'] }}" 
-                           class="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors flex items-center gap-1.5">
-                            <span>{{ $sector['cta'] }}</span>
-                            <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
-                        </a>
-                        <span class="text-[10px] font-mono text-zinc-400 dark:text-zinc-500">Verified Platform</span>
+                    <!-- Card Body Content -->
+                    <div class="p-5 flex-1 flex flex-col justify-between">
+                        <div>
+                            <!-- Description -->
+                            <p class="text-xs text-zinc-600 dark:text-zinc-300 leading-relaxed">
+                                {{ $sector['description'] }}
+                            </p>
+
+                            <!-- Subcategories Pills List -->
+                            <div class="mt-4 pt-3.5 border-t border-zinc-100 dark:border-white/10">
+                                <span class="text-[9.5px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-400 block mb-2">Key Categories:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach($sector['subcategories'] as $subName => $subDetail)
+                                        <a href="{{ route('catalog.index', ['q' => $subName]) }}" 
+                                           class="px-2.5 py-1 rounded-xl bg-zinc-100 dark:bg-[#1E293B] text-zinc-700 dark:text-zinc-200 text-[11px] font-medium hover:bg-emerald-500 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-zinc-950 transition-all duration-200 border border-zinc-200/60 dark:border-white/5"
+                                           title="{{ $subDetail }}">
+                                            {{ $subName }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Direct Action Link Button -->
+                        <div class="mt-6 pt-3.5 border-t border-zinc-100 dark:border-white/10 flex items-center justify-between">
+                            <a href="{{ $sector['url'] }}" 
+                               class="text-xs font-black text-zinc-900 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors flex items-center gap-1.5">
+                                <span>{{ $sector['cta'] }}</span>
+                                <span class="group-hover:translate-x-1.5 transition-transform duration-200">&rarr;</span>
+                            </a>
+                            <span class="text-[10px] font-mono font-bold text-zinc-400 dark:text-zinc-400 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span>Verified</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             @endforeach

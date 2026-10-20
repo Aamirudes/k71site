@@ -18,7 +18,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <!-- SEO Meta Tags -->
     <title>{{ $title ? (str_contains($title, config('k71.name', 'K71')) ? $title : $title . ' | ' . config('k71.name', 'K71')) : config('k71.name', 'K71') . ' - Multi-Vendor Marketplace & Video Commerce' }}</title>
     @if($metaDescription)
         <meta name="description" content="{{ $metaDescription }}">
