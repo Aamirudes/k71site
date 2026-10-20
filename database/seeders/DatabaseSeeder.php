@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             ReservedSlugSeeder::class,
             CategorySeeder::class,
+            All13EcosystemCategoriesSeeder::class,
+            MasterProductionPlatformSeeder::class,
         ]);
 
         // Seed or Enforce Master Administrator Account

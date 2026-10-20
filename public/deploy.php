@@ -145,6 +145,7 @@ echo "</div>";
 // Run Migrations & Seeders
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
+    'Seed Database with Live Products, Real Stores & Categories' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
     'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 

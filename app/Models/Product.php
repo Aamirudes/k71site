@@ -285,4 +285,16 @@ class Product extends Model
     {
         return $this->morphMany(Report::class, 'reportable');
     }
+
+    /**
+     * Get primary image URL
+     */
+    public function getPrimaryImageUrlAttribute(): string
+    {
+        $first = $this->images->first();
+        if ($first) {
+            return $first->url;
+        }
+        return asset('images/product-placeholder.svg');
+    }
 }

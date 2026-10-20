@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class CategorySeeder extends Seeder
@@ -19,23 +19,23 @@ class CategorySeeder extends Seeder
         ];
 
         foreach ($categories as $parentName => $children) {
-            $parentId = DB::table('categories')->insertGetId([
-                'name' => $parentName,
-                'slug' => Str::slug($parentName),
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $parent = Category::firstOrCreate(
+                ['slug' => Str::slug($parentName)],
+                [
+                    'name' => $parentName,
+                    'is_active' => true,
+                ]
+            );
 
             foreach ($children as $childName) {
-                DB::table('categories')->insert([
-                    'parent_id' => $parentId,
-                    'name' => $childName,
-                    'slug' => Str::slug($parentName . '-' . $childName),
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                Category::firstOrCreate(
+                    ['slug' => Str::slug($parentName . '-' . $childName)],
+                    [
+                        'parent_id' => $parent->id,
+                        'name' => $childName,
+                        'is_active' => true,
+                    ]
+                );
             }
         }
     }

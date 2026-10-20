@@ -23,7 +23,7 @@
         $sc = $product->size_chart;
         $hasCustomChart = $sc && !empty($sc['columns']) && !empty($sc['rows']) && ($sc['type'] ?? '') !== 'none';
         
-        $imageUrls = $product->images->map(fn($img) => asset('storage/' . $img->path))->values();
+        $imageUrls = $product->images->map(fn($img) => $img->url)->values();
         if ($imageUrls->isEmpty()) {
             $imageUrls = collect([asset('images/product-placeholder.svg')]);
         }
@@ -1197,7 +1197,7 @@
             <div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
                 <div class="flex items-center gap-2.5 min-w-0">
                     @if($product->images->count() > 0)
-                        <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
+                        <img src="{{ $product->images->first()->url }}" 
                              alt="{{ $product->title }}" 
                              class="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0 border border-stone-200">
                     @endif

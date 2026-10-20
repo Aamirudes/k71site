@@ -7,8 +7,8 @@ return [
     | Site Identity
     |--------------------------------------------------------------------------
     */
-    'name' => env('MARKETPLACE_NAME', 'K71'),
-    'tagline' => env('MARKETPLACE_TAGLINE', 'Multi-Category Marketplace & Video Commerce'),
+    'name' => env('MARKETPLACE_NAME', 'MarbleMandi'),
+    'tagline' => env('MARKETPLACE_TAGLINE', "India's Premier Marble, Granite & Multi-Sector Super-Marketplace"),
     'domain' => env('MARKETPLACE_DOMAIN', 'marblemandi.org'),
     'contact_email' => env('MARKETPLACE_CONTACT_EMAIL', 'support@marblemandi.org'),
     'contact_phone' => env('MARKETPLACE_CONTACT_PHONE', ''),
