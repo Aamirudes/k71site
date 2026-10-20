@@ -10,15 +10,13 @@
     # Block direct access to internal Laravel directories
     RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/app|storage/logs|tests|vendor|docs|legacy) - [F,L,NC]
 
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
+    # Allow direct access if the file exists in root (e.g. deploy.php)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
 
-    # Handle Front Controller through index.php
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
+    # Rewrite everything else to the public directory
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
 <IfModule mod_security.c>
