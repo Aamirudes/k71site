@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Product;
+use App\Models\ProductGigPackage;
+use App\Models\ProductModifier;
 use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +21,7 @@ class CartController extends Controller
         if (!$cart) {
             $items = collect();
         } else {
-            $items = $cart->items()->with(['variant.product', 'vendor'])->get();
+            $items = $cart->items()->with(['variant.product.images', 'product.images', 'gigPackage', 'vendor'])->get();
         }
 
         // Group by vendor because checkout generates separate orders
@@ -30,51 +33,143 @@ class CartController extends Controller
     public function add(Request $request)
     {
         $validated = $request->validate([
-            'variant_id' => 'required|exists:product_variants,id',
-            'quantity' => 'required|integer|min:1'
+            'product_id' => 'nullable|integer|exists:products,id',
+            'variant_id' => 'nullable|integer|exists:product_variants,id',
+            'gig_package_id' => 'nullable|integer|exists:product_gig_packages,id',
+            'quantity' => 'required|integer|min:1',
+            'selected_modifiers' => 'nullable|array',
+            'selected_modifiers.*' => 'integer|exists:product_modifiers,id',
+            'booking_date_time' => 'nullable|date',
         ]);
 
-        // When adding via PDP, VendorScope is not active for the public, so we must query without it if necessary, 
-        // or just rely on the variant's product.
-        $variant = ProductVariant::withoutGlobalScopes()->with('product')->findOrFail($validated['variant_id']);
+        // Resolve Product and Variant
+        $product = null;
+        $variant = null;
+        $gigPackage = null;
+
+        if (!empty($validated['variant_id'])) {
+            $variant = ProductVariant::withoutGlobalScopes()->with('product.vendor')->findOrFail($validated['variant_id']);
+            $product = $variant->product;
+        } elseif (!empty($validated['product_id'])) {
+            $product = Product::withoutGlobalScopes()->with(['variants', 'gigPackages', 'vendor'])->findOrFail($validated['product_id']);
+            $variant = $product->variants->first();
+        } else {
+            return response()->json(['success' => false, 'message' => 'Product or variant selection required.'], 422);
+        }
+
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Product not found.'], 404);
+        }
+
+        // Gig Package resolution
+        if (!empty($validated['gig_package_id'])) {
+            $gigPackage = ProductGigPackage::where('product_id', $product->id)->findOrFail($validated['gig_package_id']);
+        }
 
         // Listing type enforcement (Decision D9 & Spec Sec 14)
-        if ($variant->product && !$variant->product->isPurchase()) {
-            $typeLabel = ucfirst(str_replace('_', ' ', $variant->product->listing_type));
+        if (!$gigPackage && !$product->isPurchase()) {
+            $typeLabel = ucfirst(str_replace('_', ' ', $product->listing_type));
             return response()->json([
                 'success' => false,
                 'message' => "This is an {$typeLabel} listing and cannot be added to the shopping cart for direct purchase."
             ], 422);
         }
 
-        if ($variant->stock <= 0) {
-            return response()->json(['success' => false, 'message' => 'This size/variant is completely out of stock.'], 400);
+        // Physical inventory check (Gig packages are digital milestone services with virtual availability)
+        if (!$gigPackage && $variant) {
+            if ($variant->stock <= 0) {
+                return response()->json(['success' => false, 'message' => 'This variant is completely out of stock.'], 400);
+            }
+
+            if ($variant->stock < $validated['quantity']) {
+                return response()->json(['success' => false, 'message' => "Only {$variant->stock} pieces available in stock."], 400);
+            }
         }
 
-        if ($variant->stock < $validated['quantity']) {
-            return response()->json(['success' => false, 'message' => "Only {$variant->stock} pieces available in stock."], 400);
+        // Secure Server-Side Price Calculation (Prices sent by the client are never trusted!)
+        if ($gigPackage) {
+            $unitPricePaise = (int) round(((float) $gigPackage->price) * 100);
+        } else {
+            $unitPricePaise = $variant?->price_override 
+                ?? (int) round(((float) ($variant?->price ?? 0)) * 100) 
+                ?: $product->base_price;
+
+            // B2B tiered MOQ volume discount pricing calculation
+            if (!empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
+                $tiers = collect($product->b2b_tiers_json)->sortByDesc(fn($t) => (int)($t['min_qty'] ?? 1));
+                foreach ($tiers as $tier) {
+                    if ($validated['quantity'] >= (int)($tier['min_qty'] ?? 1)) {
+                        if (!empty($tier['price'])) {
+                            $unitPricePaise = (int) round(((float) $tier['price']) * 100);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Food & Customization Modifiers calculation
+            $modifiersSnapshot = null;
+            if (!empty($validated['selected_modifiers'])) {
+                $validModifiers = ProductModifier::where('product_id', $product->id)
+                    ->whereIn('id', $validated['selected_modifiers'])
+                    ->get();
+
+                $modSumRupees = (float) $validModifiers->sum('price_delta');
+                $unitPricePaise += (int) round($modSumRupees * 100);
+
+                $modifiersSnapshot = $validModifiers->map(fn($m) => [
+                    'id' => $m->id,
+                    'name' => $m->modifier_name,
+                    'group' => $m->group_name,
+                    'price_delta' => (float) $m->price_delta,
+                ])->values()->toArray();
+            }
         }
 
         $cart = $this->getOrCreateCart();
 
-        $cartItem = $cart->items()->where('variant_id', $variant->id)->first();
+        // Match existing item in cart
+        $cartItem = null;
+        if ($gigPackage) {
+            $cartItem = $cart->items()->where('gig_package_id', $gigPackage->id)->first();
+        } else {
+            $existingVariantItems = $cart->items()->where('variant_id', $variant?->id)->get();
+            $incomingIds = !empty($validated['selected_modifiers']) ? collect($validated['selected_modifiers'])->sort()->values()->all() : [];
+
+            foreach ($existingVariantItems as $existing) {
+                $existingIds = !empty($existing->selected_modifiers_json) 
+                    ? collect($existing->selected_modifiers_json)->pluck('id')->sort()->values()->all() 
+                    : [];
+                if ($incomingIds === $existingIds) {
+                    $cartItem = $existing;
+                    break;
+                }
+            }
+        }
 
         if ($cartItem) {
-            if ($cartItem->quantity + $validated['quantity'] > $variant->stock) {
+            if (!$gigPackage && $variant && ($cartItem->quantity + $validated['quantity'] > $variant->stock)) {
                 return response()->json(['success' => false, 'message' => 'Cannot add more than available stock.'], 400);
             }
             $cartItem->increment('quantity', $validated['quantity']);
         } else {
             $cart->items()->create([
-                'variant_id' => $variant->id,
-                'product_id' => $variant->product_id,
-                'vendor_id' => $variant->product->vendor_id,
+                'product_id' => $product->id,
+                'variant_id' => $variant?->id,
+                'vendor_id' => $product->vendor_id,
+                'gig_package_id' => $gigPackage?->id,
+                'selected_modifiers_json' => $modifiersSnapshot ?? null,
+                'booking_date_time' => !empty($validated['booking_date_time']) ? $validated['booking_date_time'] : null,
                 'quantity' => $validated['quantity'],
-                'price_at_add' => $variant->price_override ?? $variant->product->base_price,
+                'price_at_add' => $unitPricePaise,
             ]);
         }
 
-        return response()->json(['success' => true, 'message' => 'Added to cart.', 'cart_count' => $cart->items()->sum('quantity')]);
+        return response()->json([
+            'success' => true, 
+            'message' => 'Added to cart.', 
+            'cart_count' => $cart->items()->sum('quantity')
+        ]);
     }
 
     public function remove(Request $request, CartItem $item)
@@ -102,6 +197,14 @@ class CartController extends Controller
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1'
         ]);
+
+        if ($item->gig_package_id) {
+            $item->update(['quantity' => $validated['quantity']]);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return $this->data();
+            }
+            return back()->with('success', 'Cart updated.');
+        }
 
         $variant = ProductVariant::withoutGlobalScopes()->findOrFail($item->variant_id);
         
@@ -140,7 +243,7 @@ class CartController extends Controller
             ]);
         }
 
-        $items = $cart->items()->with(['variant.product.images', 'variant', 'vendor'])->get();
+        $items = $cart->items()->with(['variant.product.images', 'product.images', 'variant', 'gigPackage', 'vendor'])->get();
 
         $subtotal = 0;
         $mappedItems = $items->map(function ($item) use (&$subtotal) {
@@ -148,14 +251,28 @@ class CartController extends Controller
             $lineTotal = $price * $item->quantity;
             $subtotal += $lineTotal;
 
-            $product = $item->variant?->product;
+            $product = $item->product ?? $item->variant?->product;
             $image = $product?->images?->first();
             $imageUrl = $image ? asset('storage/' . $image->path) : null;
+
+            $variantLabel = 'Standard';
+            if ($item->gigPackage) {
+                $variantLabel = ucfirst($item->gigPackage->tier) . ' Package (' . $item->gigPackage->delivery_days . 'd Delivery)';
+            } elseif ($item->variant) {
+                $variantLabel = $item->variant->name ?? ($item->variant->sku ?? ($item->variant->size ?? 'Standard'));
+            }
+
+            if (!empty($item->selected_modifiers_json) && is_array($item->selected_modifiers_json)) {
+                $modNames = array_column($item->selected_modifiers_json, 'name');
+                if (!empty($modNames)) {
+                    $variantLabel .= ' + ' . implode(', ', $modNames);
+                }
+            }
 
             return [
                 'id' => $item->id,
                 'product_title' => $product?->title ?? 'Product',
-                'variant_label' => $item->variant?->name ?? ($item->variant?->size ?? 'Standard'),
+                'variant_label' => $variantLabel,
                 'vendor_name' => $item->vendor?->shop_name ?? 'K71 Store',
                 'vendor_id' => $item->vendor_id,
                 'quantity' => $item->quantity,

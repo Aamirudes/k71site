@@ -52,6 +52,10 @@ class Product extends Model
         'country_of_origin',
         'is_negotiable',
         'is_sold',
+        'has_variants',
+        'specifications_json',
+        'b2b_tiers_json',
+        'service_config_json',
         'reserve_price',
         'bid_increment',
         'auction_starts_at',
@@ -63,6 +67,10 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'has_variants' => 'boolean',
+        'specifications_json' => 'array',
+        'b2b_tiers_json' => 'array',
+        'service_config_json' => 'array',
         'tags' => 'json',
         'size_chart' => 'array',
         'custom_fields' => 'array',
@@ -151,6 +159,69 @@ class Product extends Model
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function modifiers(): HasMany
+    {
+        return $this->hasMany(ProductModifier::class);
+    }
+
+    public function gigPackages(): HasMany
+    {
+        return $this->hasMany(ProductGigPackage::class);
+    }
+
+    /**
+     * Resolve the active vertical type for this product
+     */
+    public function getVerticalTypeAttribute(): string
+    {
+        if ($this->category && !empty($this->category->vertical_type)) {
+            return $this->category->vertical_type;
+        }
+
+        return match ($this->vertical) {
+            'food' => 'food_portion',
+            'services' => ($this->listing_type === 'gig' ? 'digital_gig' : 'service_booking'),
+            'enquiry' => 'b2b_machinery',
+            'used' => 'classified_asset',
+            default => 'fashion_matrix',
+        };
+    }
+
+    public function isFashionMatrix(): bool
+    {
+        return $this->vertical_type === 'fashion_matrix';
+    }
+
+    public function isFoodPortion(): bool
+    {
+        return $this->vertical_type === 'food_portion';
+    }
+
+    public function isServiceBooking(): bool
+    {
+        return $this->vertical_type === 'service_booking';
+    }
+
+    public function isB2bMachinery(): bool
+    {
+        return $this->vertical_type === 'b2b_machinery';
+    }
+
+    public function isDigitalGig(): bool
+    {
+        return $this->vertical_type === 'digital_gig';
+    }
+
+    public function isClassifiedAsset(): bool
+    {
+        return $this->vertical_type === 'classified_asset';
+    }
+
+    public function isStandardRetail(): bool
+    {
+        return $this->vertical_type === 'standard_retail';
     }
 
     public function images(): HasMany

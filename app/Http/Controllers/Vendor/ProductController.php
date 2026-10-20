@@ -141,10 +141,21 @@ class ProductController extends Controller
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
-            'variants.*.name' => ['required', 'string', 'max:255'],
+            'variants.*.name' => ['required_with:variants', 'string', 'max:255'],
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.stock' => ['required', 'integer', 'min:0'],
+            'variants.*.stock' => ['nullable', 'integer', 'min:0'],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.color' => ['nullable', 'string', 'max:100'],
+            'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
+            'variants.*.size' => ['nullable', 'string', 'max:50'],
+            'variants.*.image_url' => ['nullable', 'string', 'max:500'],
+            'food_portions' => ['nullable', 'array'],
+            'modifiers' => ['nullable', 'array'],
+            'gig_packages' => ['nullable', 'array'],
+            'b2b_tiers' => ['nullable', 'array'],
+            'service_config' => ['nullable', 'array'],
+            'specifications' => ['nullable', 'array'],
+            'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
 
@@ -159,8 +170,29 @@ class ProductController extends Controller
         } else {
             $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
         }
+
+        if ($request->has('enable_rfq') && $request->boolean('enable_rfq')) {
+            $validated['listing_type'] = 'enquiry';
+        }
+
+        if ($request->has('is_negotiable')) {
+            $validated['is_negotiable'] = $request->boolean('is_negotiable');
+        }
+
         if ($request->has('custom_fields') && is_array($request->custom_fields)) {
             $validated['custom_fields'] = $request->custom_fields;
+        }
+
+        if ($request->has('specifications') && is_array($request->specifications)) {
+            $validated['specifications_json'] = $request->specifications;
+        }
+
+        if ($request->has('b2b_tiers') && is_array($request->b2b_tiers)) {
+            $validated['b2b_tiers_json'] = array_values(array_filter($request->b2b_tiers, fn($t) => !empty($t['min_qty'])));
+        }
+
+        if ($request->has('service_config') && is_array($request->service_config)) {
+            $validated['service_config_json'] = $request->service_config;
         }
 
         $baseSlug = Str::slug($validated['title']);
@@ -201,26 +233,58 @@ class ProductController extends Controller
                 $sumStock += (int) ($v['stock'] ?? 0);
             }
             $validated['total_stock'] = $sumStock;
+        } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+            $sumStock = 0;
+            foreach ($request->food_portions as $fp) {
+                $sumStock += (int) ($fp['stock'] ?? 50);
+            }
+            $validated['total_stock'] = $sumStock;
         }
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated) {
             $product = Product::create($validated);
 
-            // Process variants (matrix combinations)
+            // 1. Process standard / fashion matrix variants
             if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
                 foreach ($request->variants as $index => $variantData) {
                     $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
                     
-                    $priceOverride = null;
-                    if (!empty($variantData['price'])) {
-                        $priceOverride = (int) ($variantData['price'] * 100);
-                    }
+                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : null;
+                    $priceOverride = $priceDecimal ? (int) ($priceDecimal * 100) : null;
+
+                    $attributesHash = [];
+                    if (!empty($variantData['color'])) $attributesHash['color'] = $variantData['color'];
+                    if (!empty($variantData['color_hex'])) $attributesHash['color_hex'] = $variantData['color_hex'];
+                    if (!empty($variantData['size'])) $attributesHash['size'] = $variantData['size'];
+                    if (empty($attributesHash)) $attributesHash['name'] = $variantData['name'];
 
                     $product->variants()->create([
                         'sku' => $sku,
                         'price_override' => $priceOverride,
+                        'price' => $priceDecimal,
                         'stock' => (int) ($variantData['stock'] ?? 0),
+                        'stock_quantity' => (int) ($variantData['stock'] ?? 0),
+                        'attributes_hash' => $attributesHash,
+                        'image_url' => $variantData['image_url'] ?? null,
                         'is_active' => true,
+                        'status' => 'active',
+                        'sort_order' => $index + 1,
+                    ]);
+                }
+            } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+                // 2. Food Portions as variants
+                foreach ($request->food_portions as $index => $portion) {
+                    if (empty($portion['name'])) continue;
+                    $priceDecimal = !empty($portion['price']) ? (float)$portion['price'] : ($validated['base_price'] / 100);
+                    $product->variants()->create([
+                        'sku' => $portion['name'],
+                        'price_override' => (int) ($priceDecimal * 100),
+                        'price' => $priceDecimal,
+                        'stock' => (int) ($portion['stock'] ?? 50),
+                        'stock_quantity' => (int) ($portion['stock'] ?? 50),
+                        'attributes_hash' => ['portion' => $portion['name']],
+                        'is_active' => true,
+                        'status' => 'active',
                         'sort_order' => $index + 1,
                     ]);
                 }
@@ -228,11 +292,55 @@ class ProductController extends Controller
                 // Default single variant if they didn't generate any matrix
                 $product->variants()->create([
                     'sku' => 'Default',
+                    'price' => round($validated['base_price'] / 100, 2),
+                    'price_override' => $validated['base_price'],
                     'stock' => $validated['total_stock'],
+                    'stock_quantity' => $validated['total_stock'],
+                    'attributes_hash' => ['type' => 'Standard'],
                     'is_active' => true,
+                    'status' => 'active',
                     'sort_order' => 1,
                 ]);
             }
+
+            // 3. Process Food Add-ons / Modifiers
+            if ($request->has('modifiers') && is_array($request->modifiers)) {
+                foreach ($request->modifiers as $mod) {
+                    if (!empty($mod['modifier_name'])) {
+                        $product->modifiers()->create([
+                            'group_name' => $mod['group_name'] ?? 'Add-ons',
+                            'modifier_name' => $mod['modifier_name'],
+                            'price_delta' => (float)($mod['price_delta'] ?? 0),
+                            'is_required' => !empty($mod['is_required']),
+                        ]);
+                    }
+                }
+            }
+
+            // 4. Process Digital Gig 3-tier Packages (Fiverr Model)
+            if ($request->has('gig_packages') && is_array($request->gig_packages)) {
+                foreach (['basic', 'standard', 'premium'] as $tier) {
+                    if (isset($request->gig_packages[$tier]) && !empty($request->gig_packages[$tier]['title'])) {
+                        $pkg = $request->gig_packages[$tier];
+                        $product->gigPackages()->create([
+                            'tier' => $tier,
+                            'title' => $pkg['title'],
+                            'description' => $pkg['description'] ?? '',
+                            'delivery_days' => (int)($pkg['delivery_days'] ?? 3),
+                            'revisions' => (int)($pkg['revisions'] ?? 1),
+                            'price' => (float)($pkg['price'] ?? ($tier === 'basic' ? 499 : ($tier === 'standard' ? 1499 : 3499))),
+                            'features_json' => $pkg['features'] ?? [],
+                        ]);
+                    }
+                }
+            }
+
+            // Update has_variants flag
+            $hasMultiple = ($product->variants()->count() > 1 && $product->variants()->first()?->sku !== 'Default')
+                || $product->modifiers()->exists()
+                || $product->gigPackages()->exists();
+
+            $product->update(['has_variants' => $hasMultiple]);
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $image) {
@@ -270,22 +378,56 @@ class ProductController extends Controller
                 return $parentName . ' - ' . $cat->name;
             })
             ->values();
-        $product->load(['variants', 'images']);
+
+        $product->load(['variants', 'images', 'modifiers', 'gigPackages', 'category']);
 
         $existingVariants = $product->variants->map(function ($v) {
             return [
                 'name' => $v->sku ?: 'Default',
-                'price' => $v->price_override ? $v->price_override / 100 : '',
-                'stock' => (int) $v->stock,
+                'price' => $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : ''),
+                'stock' => (int) ($v->stock_quantity ?: $v->stock),
                 'sku' => $v->sku ?: '',
+                'color' => $v->attributes_hash['color'] ?? '',
+                'color_hex' => $v->attributes_hash['color_hex'] ?? '#000000',
+                'size' => $v->attributes_hash['size'] ?? '',
+                'image_url' => $v->image_url ?? '',
+                'attributes_hash' => $v->attributes_hash,
             ];
         })->values()->toArray();
+
+        $existingModifiers = $product->modifiers->map(fn($m) => [
+            'group_name' => $m->group_name,
+            'modifier_name' => $m->modifier_name,
+            'price_delta' => (float)$m->price_delta,
+            'is_required' => (bool)$m->is_required,
+        ])->toArray();
+
+        $existingGigPackages = [];
+        foreach ($product->gigPackages as $pkg) {
+            $existingGigPackages[$pkg->tier] = [
+                'tier' => $pkg->tier,
+                'title' => $pkg->title,
+                'description' => $pkg->description,
+                'delivery_days' => $pkg->delivery_days,
+                'revisions' => $pkg->revisions,
+                'price' => (float)$pkg->price,
+                'features' => $pkg->features_json ?? [],
+            ];
+        }
+
+        $existingB2bTiers = $product->b2b_tiers_json ?: [];
+        $existingServiceConfig = $product->service_config_json ?: [];
+        $existingSpecs = $product->specifications_json ?: [];
 
         $verticals = $this->getVerticalsData();
         $listingTypes = $this->getListingTypesData();
         $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
 
-        return view('vendor.products.edit', compact('vendor', 'targetVertical', 'product', 'categories', 'existingVariants', 'verticals', 'listingTypes', 'categoryFields'));
+        return view('vendor.products.edit', compact(
+            'vendor', 'targetVertical', 'product', 'categories', 'existingVariants',
+            'existingModifiers', 'existingGigPackages', 'existingB2bTiers',
+            'existingServiceConfig', 'existingSpecs', 'verticals', 'listingTypes', 'categoryFields'
+        ));
     }
 
     public function update(Request $request, Product $product)
@@ -321,10 +463,21 @@ class ProductController extends Controller
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
-            'variants.*.name' => ['required', 'string', 'max:255'],
+            'variants.*.name' => ['required_with:variants', 'string', 'max:255'],
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
-            'variants.*.stock' => ['required', 'integer', 'min:0'],
+            'variants.*.stock' => ['nullable', 'integer', 'min:0'],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.color' => ['nullable', 'string', 'max:100'],
+            'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
+            'variants.*.size' => ['nullable', 'string', 'max:50'],
+            'variants.*.image_url' => ['nullable', 'string', 'max:500'],
+            'food_portions' => ['nullable', 'array'],
+            'modifiers' => ['nullable', 'array'],
+            'gig_packages' => ['nullable', 'array'],
+            'b2b_tiers' => ['nullable', 'array'],
+            'service_config' => ['nullable', 'array'],
+            'specifications' => ['nullable', 'array'],
+            'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
 
@@ -339,8 +492,29 @@ class ProductController extends Controller
         } else {
             $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
         }
+
+        if ($request->has('enable_rfq') && $request->boolean('enable_rfq')) {
+            $validated['listing_type'] = 'enquiry';
+        }
+
+        if ($request->has('is_negotiable')) {
+            $validated['is_negotiable'] = $request->boolean('is_negotiable');
+        }
+
         if ($request->has('custom_fields')) {
             $validated['custom_fields'] = is_array($request->custom_fields) ? $request->custom_fields : [];
+        }
+
+        if ($request->has('specifications') && is_array($request->specifications)) {
+            $validated['specifications_json'] = $request->specifications;
+        }
+
+        if ($request->has('b2b_tiers') && is_array($request->b2b_tiers)) {
+            $validated['b2b_tiers_json'] = array_values(array_filter($request->b2b_tiers, fn($t) => !empty($t['min_qty'])));
+        }
+
+        if ($request->has('service_config') && is_array($request->service_config)) {
+            $validated['service_config_json'] = $request->service_config;
         }
 
         $validated['base_price'] = (int) ($validated['base_price'] * 100);
@@ -371,12 +545,18 @@ class ProductController extends Controller
                 $sumStock += (int) ($v['stock'] ?? 0);
             }
             $validated['total_stock'] = $sumStock;
+        } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+            $sumStock = 0;
+            foreach ($request->food_portions as $fp) {
+                $sumStock += (int) ($fp['stock'] ?? 50);
+            }
+            $validated['total_stock'] = $sumStock;
         }
 
         return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $product) {
             $product->update($validated);
 
-            // Process variants (smart sync preserving existing IDs to avoid orphaned carts/orders)
+            // 1. Process standard / fashion matrix variants
             if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
                 $existingVariants = $product->variants()->withTrashed()->get()->keyBy('sku');
                 $activeSkus = [];
@@ -385,10 +565,14 @@ class ProductController extends Controller
                     $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
                     $activeSkus[] = $sku;
                     
-                    $priceOverride = null;
-                    if (!empty($variantData['price'])) {
-                        $priceOverride = (int) ($variantData['price'] * 100);
-                    }
+                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : null;
+                    $priceOverride = $priceDecimal ? (int) ($priceDecimal * 100) : null;
+
+                    $attributesHash = [];
+                    if (!empty($variantData['color'])) $attributesHash['color'] = $variantData['color'];
+                    if (!empty($variantData['color_hex'])) $attributesHash['color_hex'] = $variantData['color_hex'];
+                    if (!empty($variantData['size'])) $attributesHash['size'] = $variantData['size'];
+                    if (empty($attributesHash)) $attributesHash['name'] = $variantData['name'];
 
                     if (isset($existingVariants[$sku])) {
                         $variant = $existingVariants[$sku];
@@ -396,17 +580,67 @@ class ProductController extends Controller
                             $variant->restore();
                         }
                         $variant->update([
+                            'price' => $priceDecimal,
                             'price_override' => $priceOverride,
                             'stock' => (int) ($variantData['stock'] ?? 0),
+                            'stock_quantity' => (int) ($variantData['stock'] ?? 0),
+                            'attributes_hash' => $attributesHash,
+                            'image_url' => $variantData['image_url'] ?? null,
                             'is_active' => true,
+                            'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
                     } else {
                         $product->variants()->create([
                             'sku' => $sku,
+                            'price' => $priceDecimal,
                             'price_override' => $priceOverride,
                             'stock' => (int) ($variantData['stock'] ?? 0),
+                            'stock_quantity' => (int) ($variantData['stock'] ?? 0),
+                            'attributes_hash' => $attributesHash,
+                            'image_url' => $variantData['image_url'] ?? null,
                             'is_active' => true,
+                            'status' => 'active',
+                            'sort_order' => $index + 1,
+                        ]);
+                    }
+                }
+
+                $product->variants()->whereNotIn('sku', $activeSkus)->delete();
+            } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+                // 2. Food Portions
+                $existingVariants = $product->variants()->withTrashed()->get()->keyBy('sku');
+                $activeSkus = [];
+
+                foreach ($request->food_portions as $index => $portion) {
+                    if (empty($portion['name'])) continue;
+                    $sku = $portion['name'];
+                    $activeSkus[] = $sku;
+                    $priceDecimal = !empty($portion['price']) ? (float)$portion['price'] : ($validated['base_price'] / 100);
+
+                    if (isset($existingVariants[$sku])) {
+                        $variant = $existingVariants[$sku];
+                        if ($variant->trashed()) $variant->restore();
+                        $variant->update([
+                            'price' => $priceDecimal,
+                            'price_override' => (int) ($priceDecimal * 100),
+                            'stock' => (int) ($portion['stock'] ?? 50),
+                            'stock_quantity' => (int) ($portion['stock'] ?? 50),
+                            'attributes_hash' => ['portion' => $portion['name']],
+                            'is_active' => true,
+                            'status' => 'active',
+                            'sort_order' => $index + 1,
+                        ]);
+                    } else {
+                        $product->variants()->create([
+                            'sku' => $sku,
+                            'price' => $priceDecimal,
+                            'price_override' => (int) ($priceDecimal * 100),
+                            'stock' => (int) ($portion['stock'] ?? 50),
+                            'stock_quantity' => (int) ($portion['stock'] ?? 50),
+                            'attributes_hash' => ['portion' => $portion['name']],
+                            'is_active' => true,
+                            'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
                     }
@@ -422,8 +656,12 @@ class ProductController extends Controller
                     }
                     $existingDefault->update([
                         'stock' => $validated['total_stock'],
+                        'stock_quantity' => $validated['total_stock'],
+                        'price' => round($validated['base_price'] / 100, 2),
                         'price_override' => null,
+                        'attributes_hash' => ['type' => 'Standard'],
                         'is_active' => true,
+                        'status' => 'active',
                         'sort_order' => 1,
                     ]);
                     $product->variants()->where('id', '!=', $existingDefault->id)->delete();
@@ -431,12 +669,59 @@ class ProductController extends Controller
                     $product->variants()->delete();
                     $product->variants()->create([
                         'sku' => 'Default',
+                        'price' => round($validated['base_price'] / 100, 2),
+                        'price_override' => $validated['base_price'],
                         'stock' => $validated['total_stock'],
+                        'stock_quantity' => $validated['total_stock'],
+                        'attributes_hash' => ['type' => 'Standard'],
                         'is_active' => true,
+                        'status' => 'active',
                         'sort_order' => 1,
                     ]);
                 }
             }
+
+            // 3. Process Modifiers
+            if ($request->has('modifiers') && is_array($request->modifiers)) {
+                $product->modifiers()->delete();
+                foreach ($request->modifiers as $mod) {
+                    if (!empty($mod['modifier_name'])) {
+                        $product->modifiers()->create([
+                            'group_name' => $mod['group_name'] ?? 'Add-ons',
+                            'modifier_name' => $mod['modifier_name'],
+                            'price_delta' => (float)($mod['price_delta'] ?? 0),
+                            'is_required' => !empty($mod['is_required']),
+                        ]);
+                    }
+                }
+            }
+
+            // 4. Process Digital Gig 3-tier Packages
+            if ($request->has('gig_packages') && is_array($request->gig_packages)) {
+                foreach (['basic', 'standard', 'premium'] as $tier) {
+                    if (isset($request->gig_packages[$tier]) && !empty($request->gig_packages[$tier]['title'])) {
+                        $pkg = $request->gig_packages[$tier];
+                        $product->gigPackages()->updateOrCreate(
+                            ['tier' => $tier],
+                            [
+                                'title' => $pkg['title'],
+                                'description' => $pkg['description'] ?? '',
+                                'delivery_days' => (int)($pkg['delivery_days'] ?? 3),
+                                'revisions' => (int)($pkg['revisions'] ?? 1),
+                                'price' => (float)($pkg['price'] ?? ($tier === 'basic' ? 499 : ($tier === 'standard' ? 1499 : 3499))),
+                                'features_json' => $pkg['features'] ?? [],
+                            ]
+                        );
+                    }
+                }
+            }
+
+            // Update has_variants flag
+            $hasMultiple = ($product->variants()->count() > 1 && $product->variants()->first()?->sku !== 'Default')
+                || $product->modifiers()->exists()
+                || $product->gigPackages()->exists();
+
+            $product->update(['has_variants' => $hasMultiple]);
 
             // 1. Delete removed existing images
             if ($request->filled('deleted_image_ids') && is_array($request->deleted_image_ids)) {

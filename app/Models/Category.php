@@ -14,6 +14,7 @@ class Category extends Model
     protected $fillable = [
         'parent_id',
         'vertical',
+        'vertical_type',
         'name',
         'slug',
         'description',
@@ -26,9 +27,18 @@ class Category extends Model
         'is_active',
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
     public function fields(): HasMany
     {
         return $this->hasMany(CategoryField::class)->orderBy('sort_order');
+    }
+
+    public function attributes(): HasMany
+    {
+        return $this->hasMany(CategoryAttribute::class)->orderBy('sort_order');
     }
 
     public function scopeForVertical($query, string $vertical)
@@ -36,9 +46,10 @@ class Category extends Model
         return $query->where('vertical', $vertical);
     }
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
+    public function scopeForVerticalType($query, string $verticalType)
+    {
+        return $query->where('vertical_type', $verticalType);
+    }
 
     public function parent(): BelongsTo
     {

@@ -77,6 +77,7 @@ Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->na
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
 Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
+Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');
 
 // Services Vertical & Bookings Routes (Phase 7)
 Route::get('/services', [\App\Http\Controllers\ServicesController::class, 'index'])->name('services.index');
@@ -88,6 +89,7 @@ Route::get('/bookings/{booking_number}', [\App\Http\Controllers\BookingControlle
 Route::get('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('enquiry.index');
 Route::get('/enquiry/create', [\App\Http\Controllers\EnquiryController::class, 'create'])->name('enquiry.create');
 Route::post('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'store'])->name('enquiry.store');
+Route::post('/rfq/submit/{product}', [\App\Http\Controllers\EnquiryController::class, 'submitRfq'])->name('rfq.submit');
 Route::get('/enquiry/{enquiry_number}', [\App\Http\Controllers\EnquiryController::class, 'show'])->name('enquiry.show');
 Route::post('/quotes/{quote}/accept', [\App\Http\Controllers\EnquiryController::class, 'acceptQuote'])->name('quotes.accept');
 
@@ -229,6 +231,10 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
 // PhonePe Gateway Callback & S2S Webhook
 Route::match(['get', 'post'], '/payment/phonepe/callback/{order}', [\App\Http\Controllers\PaymentController::class, 'callback'])->name('payment.phonepe.callback');
 Route::post('/webhooks/phonepe', [\App\Http\Controllers\Webhook\PhonePeWebhookController::class, 'handle'])->name('webhook.phonepe');
+
+// Dynamic Category Attributes & Vertical Blueprints API
+Route::get('/api/vendor/category-attributes', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'show']);
+Route::get('/api/vendor/category-attributes.php', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'show']);
 
 // Logistics Tracking Webhook (clean URL without prohibited keywords)
 Route::post('/delivery-status', [\App\Http\Controllers\Webhook\ShiprocketWebhookController::class, 'handle'])->name('delivery.status');

@@ -184,24 +184,34 @@
                     
                     <ul class="divide-y divide-gray-100 mb-6 max-h-64 overflow-y-auto no-scrollbar">
                         @foreach($items as $item)
+                            @php
+                                $product = $item->product ?? $item->variant?->product;
+                                $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
+                            @endphp
                             <li class="py-4 flex gap-4">
                                 <div class="w-16 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 relative">
-                                    @if($item->variant->product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $item->variant->product->images->first()->path) }}" 
-                                             alt="{{ $item->variant->product->title }}"
+                                    @if($product && $product->images->count() > 0)
+                                        <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
+                                             alt="{{ $product->title }}"
                                              class="w-full h-full object-cover"
                                              onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                     @else
                                         <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                             alt="{{ $item->variant->product->title }}"
+                                             alt="{{ $product?->title ?? 'Product' }}" 
                                              class="w-full h-full object-cover">
                                     @endif
                                 </div>
                                 <div class="flex-1 text-sm min-w-0">
-                                    <h4 class="font-medium text-brand-text truncate">{{ $item->variant->product->title }}</h4>
-                                    <p class="text-gray-500 mt-1">Size: {{ $item->variant->sku }} | Qty: {{ $item->quantity }}</p>
-                                    @php $price = $item->variant->price_override ?? $item->variant->product->base_price; @endphp
-                                    <p class="font-medium mt-1">₹{{ number_format(($price * $item->quantity) / 100, 2) }}</p>
+                                    <h4 class="font-medium text-brand-text truncate">{{ $product?->title ?? 'Item' }}</h4>
+                                    @if($item->gigPackage)
+                                        <p class="text-xs font-semibold text-indigo-700 mt-0.5">{{ ucfirst($item->gigPackage->tier) }} Tier • {{ $item->gigPackage->delivery_days }}d Delivery | Qty: {{ $item->quantity }}</p>
+                                    @else
+                                        <p class="text-gray-500 mt-0.5">Option: {{ $item->variant?->name ?? ($item->variant?->sku ?? 'Standard') }} | Qty: {{ $item->quantity }}</p>
+                                    @endif
+                                    @if(!empty($item->selected_modifiers_json))
+                                        <p class="text-[11px] text-amber-700 mt-0.5 font-medium">+ {{ implode(', ', array_column($item->selected_modifiers_json, 'name')) }}</p>
+                                    @endif
+                                    <p class="font-medium mt-1 text-brand-text">₹{{ number_format(($price * $item->quantity) / 100, 2) }}</p>
                                 </div>
                             </li>
                         @endforeach

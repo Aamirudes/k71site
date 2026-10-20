@@ -15,6 +15,7 @@ database/*.sqlite-journal
 database/*.sqlite-shm
 database/*.sqlite-wal
 *.sql
+!database/sql/*.sql
 *.sqlite
 
 # Dependencies & Build Artefacts

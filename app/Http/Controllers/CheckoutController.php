@@ -26,7 +26,7 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        $items = $cart->items()->where('vendor_id', $vendor->id)->with('variant.product')->get();
+        $items = $cart->items()->where('vendor_id', $vendor->id)->with(['variant.product.images', 'product.images', 'gigPackage'])->get();
         
         if ($items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'No items from this vendor in your cart.');
@@ -34,19 +34,22 @@ class CheckoutController extends Controller
 
         // Verify that all items are in stock and support direct purchase
         foreach ($items as $item) {
-            if ($item->variant?->product && !$item->variant->product->isPurchase()) {
-                $title = $item->variant->product->title;
+            $product = $item->product ?? $item->variant?->product;
+            if ($product && !$item->gig_package_id && !$product->isPurchase()) {
+                $title = $product->title;
                 return redirect()->route('cart.index')->with('error', "{$title} is an enquiry or booking item and cannot be purchased directly through checkout.");
             }
-            if (!$item->variant || $item->variant->stock <= 0) {
-                $title = $item->variant?->product?->title ?? 'Item';
-                $sku = $item->variant?->sku ?? 'Size';
-                return redirect()->route('cart.index')->with('error', "{$title} ({$sku}) has run out of stock. Please remove it from your cart before proceeding.");
-            }
-            if ($item->variant->stock < $item->quantity) {
-                $title = $item->variant->product->title;
-                $sku = $item->variant->sku;
-                return redirect()->route('cart.index')->with('error', "Only {$item->variant->stock} pieces available for {$title} ({$sku}). Please adjust your cart quantity.");
+            if (!$item->gig_package_id) {
+                if (!$item->variant || $item->variant->stock <= 0) {
+                    $title = $product?->title ?? 'Item';
+                    $sku = $item->variant?->sku ?? 'Size';
+                    return redirect()->route('cart.index')->with('error', "{$title} ({$sku}) has run out of stock. Please remove it from your cart before proceeding.");
+                }
+                if ($item->variant->stock < $item->quantity) {
+                    $title = $product?->title ?? 'Item';
+                    $sku = $item->variant?->sku ?? 'Size';
+                    return redirect()->route('cart.index')->with('error', "Only {$item->variant->stock} pieces available for {$title} ({$sku}). Please adjust your cart quantity.");
+                }
             }
         }
 
@@ -56,19 +59,20 @@ class CheckoutController extends Controller
         $totalGst = 0;
         
         foreach ($items as $item) {
-            $price = $item->variant->price_override ?? $item->variant->product->base_price;
+            $product = $item->product ?? $item->variant?->product;
+            $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
             $itemTotal = $price * $item->quantity;
             $subtotal += $itemTotal;
             
             // Calculate GST amount for this item
-            $gstRate = $item->variant->product->gst_rate;
+            $gstRate = $product?->gst_rate ?? 0;
             // Assuming price is inclusive of GST as per Indian norms for B2C
             // Tax = Price - (Price / (1 + (Rate/100)))
             $taxAmount = $itemTotal - ($itemTotal / (1 + ($gstRate / 100)));
             $totalGst += $taxAmount;
         }
 
-        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => ($it->variant?->product?->vertical ?? '') === 'food');
+        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => (($it->product?->vertical ?? '') === 'food' || ($it->variant?->product?->vertical ?? '') === 'food'));
 
         $shipping = 0;
         $cachedShipping = session("checkout_shipping_{$vendor->id}");
@@ -186,26 +190,27 @@ class CheckoutController extends Controller
         ]);
 
         $cart = Cart::where('user_id', Auth::id())->firstOrFail();
-        $items = $cart->items()->where('vendor_id', $vendor->id)->with('variant.product')->get();
+        $items = $cart->items()->where('vendor_id', $vendor->id)->with(['variant.product.images', 'product.images', 'gigPackage'])->get();
         
         if ($items->isEmpty()) {
             return redirect()->route('cart.index');
         }
 
-        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => ($it->variant?->product?->vertical ?? '') === 'food');
+        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => (($it->product?->vertical ?? '') === 'food' || ($it->variant?->product?->vertical ?? '') === 'food'));
         $orderType = $isFoodOrder ? ($validated['order_type'] ?? 'food_delivery') : 'standard';
 
         // Server-side listing_type check
         foreach ($items as $item) {
-            if ($item->variant?->product && !$item->variant->product->isPurchase()) {
-                return redirect()->route('cart.index')->with('error', "{$item->variant->product->title} is an enquiry/booking listing and cannot be checked out.");
+            $product = $item->product ?? $item->variant?->product;
+            if ($product && !$item->gig_package_id && !$product->isPurchase()) {
+                return redirect()->route('cart.index')->with('error', "{$product->title} is an enquiry/booking listing and cannot be checked out.");
             }
         }
 
         // Server-side COD threshold check
         if ($validated['payment_method'] === 'cod') {
             $estSubtotal = $items->sum(function($item) {
-                $price = $item->variant?->price_override ?? $item->variant?->product?->base_price ?? 0;
+                $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($item->product?->base_price ?? 0));
                 return $price * $item->quantity;
             });
             if ($estSubtotal > $codMaxAmount) {
@@ -226,60 +231,93 @@ class CheckoutController extends Controller
             $orderItems = [];
 
             foreach ($items as $item) {
-                // Pessimistic locking on the variant row to eliminate race conditions
-                $lockedVariant = \App\Models\ProductVariant::withoutGlobalScopes()
-                    ->where('id', $item->variant_id)
-                    ->lockForUpdate()
-                    ->first();
+                $product = $item->product ?? $item->variant?->product;
+                $lockedVariant = null;
 
-                if (!$lockedVariant || $lockedVariant->stock <= 0) {
-                    $prodTitle = $item->variant?->product?->title ?? 'Selected item';
-                    $sku = $item->variant?->sku ?? 'Size';
-                    throw new \Exception("Product '{$prodTitle}' ({$sku}) has just run out of stock. Please adjust your cart.");
+                if (!$item->gig_package_id && $item->variant_id) {
+                    // Pessimistic locking on the variant row to eliminate race conditions
+                    $lockedVariant = \App\Models\ProductVariant::withoutGlobalScopes()
+                        ->where('id', $item->variant_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$lockedVariant || $lockedVariant->stock <= 0) {
+                        $prodTitle = $product?->title ?? 'Selected item';
+                        $sku = $lockedVariant?->sku ?? 'Size';
+                        throw new \Exception("Product '{$prodTitle}' ({$sku}) has just run out of stock. Please adjust your cart.");
+                    }
+
+                    if ($lockedVariant->stock < $item->quantity) {
+                        $prodTitle = $product?->title ?? 'Selected item';
+                        $sku = $lockedVariant?->sku ?? 'Size';
+                        throw new \Exception("Only {$lockedVariant->stock} pieces left in stock for '{$prodTitle}' ({$sku}). Please adjust your quantity.");
+                    }
+
+                    // Deduct variant stock
+                    $lockedVariant->decrement('stock', $item->quantity);
+
+                    // Sync and decrement product total_stock
+                    $parentProduct = \App\Models\Product::withoutGlobalScopes()->where('id', $lockedVariant->product_id)->first();
+                    if ($parentProduct) {
+                        $parentProduct->decrement('total_stock', $item->quantity);
+                        if ($parentProduct->total_stock < 0) {
+                            $parentProduct->update(['total_stock' => 0]);
+                        }
+                    }
                 }
 
-                if ($lockedVariant->stock < $item->quantity) {
-                    $prodTitle = $item->variant?->product?->title ?? 'Selected item';
-                    $sku = $item->variant?->sku ?? 'Size';
-                    throw new \Exception("Only {$lockedVariant->stock} pieces left in stock for '{$prodTitle}' ({$sku}). Please adjust your quantity.");
-                }
-
-                $price = $lockedVariant->price_override ?? $item->variant->product->base_price;
+                $price = $item->price_at_add ?? ($lockedVariant?->price_override ?? ($product?->base_price ?? 0));
                 $itemTotal = $price * $item->quantity;
                 $subtotal += $itemTotal;
                 $itemCount += $item->quantity;
                 
-                $gstRate = $item->variant->product->gst_rate;
+                $gstRate = $product?->gst_rate ?? 0;
                 $taxAmount = $itemTotal - ($itemTotal / (1 + ($gstRate / 100)));
                 $totalGst += $taxAmount;
 
+                $metaJson = [
+                    'vertical' => $product?->vertical_type ?? $product?->vertical ?? 'standard_retail',
+                    'gig_package' => $item->gigPackage ? [
+                        'id' => $item->gigPackage->id,
+                        'tier' => $item->gigPackage->tier,
+                        'title' => $item->gigPackage->title,
+                        'delivery_days' => $item->gigPackage->delivery_days,
+                        'revisions' => $item->gigPackage->revisions,
+                    ] : null,
+                    'modifiers' => $item->selected_modifiers_json ?? null,
+                    'booking_date_time' => $item->booking_date_time?->toIso8601String(),
+                ];
+
+                $variantLabel = $item->gigPackage 
+                    ? (ucfirst($item->gigPackage->tier) . ' Package') 
+                    : ($lockedVariant?->sku ?? 'Standard');
+
+                if (!empty($item->selected_modifiers_json) && is_array($item->selected_modifiers_json)) {
+                    $modNames = array_column($item->selected_modifiers_json, 'name');
+                    if (!empty($modNames)) {
+                        $variantLabel .= ' + ' . implode(', ', $modNames);
+                    }
+                }
+
                 $orderItems[] = [
-                    'product_id' => $item->variant->product_id,
-                    'variant_id' => $item->variant_id,
+                    'product_id' => $product?->id ?? $lockedVariant?->product_id,
+                    'variant_id' => $lockedVariant?->id ?? $item->variant_id,
+                    'gig_package_id' => $item->gig_package_id,
+                    'selected_modifiers_json' => $item->selected_modifiers_json,
+                    'booking_date_time' => $item->booking_date_time,
                     'quantity' => $item->quantity,
                     'unit_price' => $price,
                     'total_price' => $itemTotal,
                     'tax_amount' => $taxAmount,
                     'gst_rate' => $gstRate,
-                    'hsn_code' => $item->variant->product->hsn_code ?? '0000',
+                    'hsn_code' => $product?->hsn_code ?? '0000',
                     'snapshot' => [
-                        'title' => $item->variant->product->title,
-                        'variant_sku' => $lockedVariant->sku,
-                        'image' => $item->variant->product->images->first()->path ?? null,
+                        'title' => $product?->title ?? 'Item',
+                        'variant_sku' => $variantLabel,
+                        'image' => $product?->images->first()->path ?? null,
                     ],
+                    'meta_json' => $metaJson,
                 ];
-
-                // Deduct variant stock
-                $lockedVariant->decrement('stock', $item->quantity);
-
-                // Sync and decrement product total_stock
-                $parentProduct = \App\Models\Product::withoutGlobalScopes()->where('id', $lockedVariant->product_id)->first();
-                if ($parentProduct) {
-                    $parentProduct->decrement('total_stock', $item->quantity);
-                    if ($parentProduct->total_stock < 0) {
-                        $parentProduct->update(['total_stock' => 0]);
-                    }
-                }
             }
 
             $shipping = 0;

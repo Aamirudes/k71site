@@ -291,4 +291,54 @@ class EnquiryController extends Controller
 
         return back()->with('success', "You have accepted the quotation from {$quote->vendor->shop_name}. You can now coordinate final fulfillment via WhatsApp or direct call.");
     }
+
+    /**
+     * Submit a commercial RFQ inquiry directly from a B2B product page.
+     */
+    public function submitRfq(Request $request, Product $product): RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'quantity' => 'required|string|max:100',
+            'destination' => 'required|string|max:150',
+            'company_name' => 'required|string|max:120',
+            'phone' => 'required|string|max:20',
+            'requirements' => 'nullable|string|max:2000',
+        ]);
+
+        $enquiryNumber = 'RFQ-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+
+        $enquiry = Enquiry::create([
+            'enquiry_number' => $enquiryNumber,
+            'user_id' => auth()->id(),
+            'vendor_id' => $product->vendor_id,
+            'category_id' => $product->category_id,
+            'product_id' => $product->id,
+            'title' => 'Commercial RFQ: ' . $product->title . ' (' . $validated['quantity'] . ' units)',
+            'description' => "Commercial RFQ for {$product->title}\nQuantity: {$validated['quantity']}\nDestination: {$validated['destination']}\n" . ($validated['requirements'] ? "Requirements: {$validated['requirements']}" : ""),
+            'quantity' => (string) $validated['quantity'],
+            'target_budget' => null,
+            'city' => $validated['destination'],
+            'pincode' => is_numeric($validated['destination']) ? $validated['destination'] : null,
+            'urgency' => 'immediate',
+            'buyer_name' => $validated['company_name'],
+            'buyer_phone' => $validated['phone'],
+            'buyer_email' => auth()->user()?->email,
+            'status' => 'open',
+            'quotes_count' => 0,
+        ]);
+
+        $msg = "Your commercial RFQ ({$enquiryNumber}) for {$product->title} has been submitted to the seller!";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'enquiry_number' => $enquiryNumber,
+                'enquiry_id' => $enquiry->id,
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
 }
+

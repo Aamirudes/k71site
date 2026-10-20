@@ -192,6 +192,22 @@
                                             </span>
                                         @endif
                                     </div>
+                                    @if(!empty($item->selected_modifiers_json))
+                                        <div class="flex flex-wrap gap-1 mt-1.5">
+                                            @foreach($item->selected_modifiers_json as $mod)
+                                                <span class="text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-semibold">
+                                                    + {{ $mod['name'] }} (+₹{{ number_format($mod['price_delta'], 2) }})
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    @if($item->gigPackage)
+                                        <div class="mt-1.5">
+                                            <span class="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 font-bold px-2 py-0.5 rounded">
+                                                {{ ucfirst($item->gigPackage->tier) }} Milestone Deliverable • {{ $item->gigPackage->delivery_days }} Days Turnaround
+                                            </span>
+                                        </div>
+                                    @endif
                                     <div class="flex justify-between items-center mt-2">
                                         <p class="text-sm text-gray-900 font-medium">₹{{ number_format($item->unit_price / 100, 2) }} x {{ $item->quantity }}</p>
                                         <p class="text-sm font-bold text-gray-900">₹{{ number_format($item->total_price / 100, 2) }}</p>

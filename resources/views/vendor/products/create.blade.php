@@ -701,171 +701,9 @@
                         </div>
                     </div>
 
-                    @error('images.*') <p class="text-xs text-red-600 mt-2">{{ $message }}</p> @enderror
-                </div>
+                <!-- 3. Universal Dynamic Variant & Attribute Engine -->
+                @include('vendor.products.partials.dynamic_variant_engine')
 
-                <!-- 3. Smart Variant Engine -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-bold text-gray-900">
-                                    @if($targetVertical === 'food')
-                                        Portions, Combos & Variations
-                                    @elseif($targetVertical === 'services')
-                                        Service Tiers & Property Sizes
-                                    @elseif($targetVertical === 'used')
-                                        Storage & Condition Variants
-                                    @else
-                                        Variants (Sizes, Colors)
-                                    @endif
-                                </h2>
-                                <p class="text-xs text-gray-500">Manage different portions, choices or versions</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Templates -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            @if($targetVertical === 'food')
-                                <button type="button" @click="addTemplate('food_portions')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Portions (500g/1kg)</button>
-                                <button type="button" @click="addTemplate('food_plates')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Half / Full Plate</button>
-                                <button type="button" @click="addTemplate('food_combos')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Meal Combos</button>
-                                <button type="button" @click="addTemplate('food_spice')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Spice Choices</button>
-                            @elseif($targetVertical === 'services')
-                                <button type="button" @click="addTemplate('service_bhk')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ 1/2/3 BHK</button>
-                                <button type="button" @click="addTemplate('service_tier')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Standard / Deep Clean</button>
-                            @elseif($targetVertical === 'used')
-                                <button type="button" @click="addTemplate('storage_sizes')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Storage (128/256/512GB)</button>
-                            @else
-                                <button type="button" @click="addTemplate('adult_sizes')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Adult Sizes</button>
-                                <button type="button" @click="addTemplate('kids_sizes')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Kids Sizes</button>
-                                <button type="button" @click="addTemplate('colors')" class="text-[10px] sm:text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition">+ Colors</button>
-                            @endif
-                        </div>
-                    </div>
-
-                    @if($targetVertical === 'marketplace')
-                    <!-- 1-Tap Quick Size Selector -->
-                    <template x-if="availableSizes && availableSizes.length > 0">
-                        <div class="mb-6 p-4 bg-amber-50/70 rounded-xl border border-amber-200/80">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-sm">🏷️</span>
-                                    <span class="text-xs font-bold text-amber-950 uppercase tracking-wider">1-Tap Size Inventory Selection</span>
-                                </div>
-                                <span class="text-[11px] text-amber-800">Tap sizes to include/exclude in stock</span>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <template x-for="sz in availableSizes" :key="sz">
-                                    <button type="button" 
-                                            @click="toggleSize(sz)"
-                                            :class="selectedSizes.includes(sz) 
-                                                ? 'bg-brand-sage text-white font-bold shadow-xs scale-105 ring-2 ring-emerald-600/30' 
-                                                : 'bg-white text-stone-700 hover:bg-stone-50 border border-stone-200'"
-                                            class="px-3.5 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer">
-                                        <span x-text="sz"></span>
-                                        <span x-show="selectedSizes.includes(sz)" class="text-[10px] font-black">✓</span>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-                    @endif
-
-                    <!-- Options Builder -->
-                    <div class="space-y-4 mb-6">
-                        <template x-for="(option, index) in options" :key="index">
-                            <div class="flex items-start gap-4 p-4 bg-gray-50/80 rounded-xl border border-gray-100 relative group">
-                                <button type="button" @click="removeOption(index)" class="absolute -right-2 -top-2 w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                                
-                                <div class="w-1/3">
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Option Name</label>
-                                    <input type="text" x-model="option.name" placeholder="e.g. Size" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm py-2 px-3">
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Option Values (Comma separated)</label>
-                                    <input type="text" x-model="option.valuesString" @input="updateValues(index)" placeholder="e.g. S, M, L, XL" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm py-2 px-3">
-                                </div>
-                            </div>
-                        </template>
-                        
-                        <div class="flex items-center justify-between pt-2">
-                            <button type="button" @click="addOption" class="text-sm font-semibold text-brand-sage flex items-center gap-1 hover:text-brand-sage/80" x-show="options.length < 3">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                                Add Option
-                            </button>
-                            <button type="button" @click="generateVariants" class="px-5 py-2 text-sm font-bold bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition shadow-sm ml-auto">
-                                Generate Combinations
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Variants Bulk Actions & Table -->
-                    <div x-show="variants.length > 0" class="mt-8 border-t border-gray-100 pt-6">
-                        
-                        <div class="bg-brand-sage/10 rounded-lg p-3 mb-4 flex flex-wrap items-center gap-3">
-                            <span class="text-xs font-bold uppercase tracking-wider text-brand-sage">Bulk Apply Overrides:</span>
-                            <div class="flex items-center gap-2">
-                                <input type="number" x-model="bulkPrice" placeholder="Price Override ₹" class="w-32 text-sm rounded-md border-gray-200 py-1.5 px-2">
-                                <input type="number" x-model="bulkStock" placeholder="Stock" class="w-20 text-sm rounded-md border-gray-200 py-1.5 px-2">
-                                <button type="button" @click="applyBulk" class="text-xs font-bold bg-white text-gray-800 border border-gray-200 px-3 py-1.5 rounded-md hover:bg-gray-50 shadow-sm">Apply to All</button>
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Variant</th>
-                                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price (₹) <span class="font-normal normal-case text-gray-400">(Optional)</span></th>
-                                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
-                                        <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">SKU</th>
-                                        <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-100">
-                                    <template x-for="(variant, index) in variants" :key="index">
-                                        <tr class="hover:bg-gray-50/50 transition-colors">
-                                            <td class="px-4 py-3 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <div class="w-8 h-8 rounded border border-gray-200 bg-gray-50 flex items-center justify-center mr-3 text-gray-400 cursor-pointer hover:border-brand-sage" title="Link an image (Coming soon)">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                                    </div>
-                                                    <div>
-                                                        <input type="hidden" :name="`variants[${index}][name]`" :value="variant.name">
-                                                        <span class="text-sm font-semibold text-gray-900" x-text="variant.name"></span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 whitespace-nowrap">
-                                                <input type="number" step="0.01" min="0" :name="`variants[${index}][price]`" x-model="variant.price" class="block w-24 rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm" :placeholder="basePrice ? basePrice : 'Base'">
-                                            </td>
-                                            <td class="px-4 py-3 whitespace-nowrap">
-                                                <input type="number" min="0" :name="`variants[${index}][stock]`" x-model="variant.stock" class="block w-20 rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
-                                            </td>
-                                            <td class="px-4 py-3 whitespace-nowrap">
-                                                <input type="text" :name="`variants[${index}][sku]`" x-model="variant.sku" placeholder="Auto-generated" class="block w-32 rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
-                                            </td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-right">
-                                                <button type="button" @click="removeVariant(index)" class="text-gray-400 hover:text-red-600 transition-colors">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div x-show="variants.length === 0" class="mt-4 p-4 bg-gray-50 rounded-lg text-center border border-gray-100">
-                        <p class="text-sm text-gray-500">No variants generated. The product will be sold as a single default item.</p>
-                    </div>
-                </div>
 
                 @if($targetVertical === 'marketplace')
                 <!-- 4. Garment Fit & Size Guide Builder -->
@@ -1274,6 +1112,119 @@
                 variants: [],
                 bulkPrice: '',
                 bulkStock: '',
+
+                // Dynamic Blueprint Engine State
+                verticalType: @json(old('vertical_type', $targetVertical === 'marketplace' ? 'fashion_matrix' : ($targetVertical === 'food' ? 'food_portion' : ($targetVertical === 'services' ? 'service_booking' : ($targetVertical === 'used' ? 'classified_asset' : 'standard_retail'))))),
+                isLoadingSchema: false,
+                availableColors: [
+                    { name: 'Jet Black', hex: '#111827' },
+                    { name: 'Pure White', hex: '#FFFFFF' },
+                    { name: 'Navy Blue', hex: '#1E3A8A' },
+                    { name: 'Ruby Crimson', hex: '#DC2626' },
+                    { name: 'Forest Green', hex: '#15803D' },
+                    { name: 'Maroon / Wine', hex: '#831843' },
+                    { name: 'Mustard Yellow', hex: '#CA8A04' },
+                    { name: 'Soft Blush Pink', hex: '#F472B6' },
+                    { name: 'Slate Gray', hex: '#64748B' },
+                    { name: 'Earthy Olive', hex: '#65A30D' }
+                ],
+                selectedColors: [
+                    { name: 'Jet Black', hex: '#111827' },
+                    { name: 'Navy Blue', hex: '#1E3A8A' }
+                ],
+                customColorName: '',
+                customColorHex: '#4F46E5',
+                availableSizesList: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'],
+                selectedSizes: ['M', 'L', 'XL'],
+                customSizeName: '',
+                fashionMatrixRows: [],
+                foodPortions: [
+                    { name: '1 Plate (Standard)', price: '', stock: 50 },
+                    { name: '2 Plates (Family Pack)', price: '', stock: 30 }
+                ],
+                foodModifiers: [
+                    { group_name: 'Add-ons', modifier_name: 'Extra Portion', price_delta: '40.00', is_required: false }
+                ],
+                gigPackages: {
+                    basic: {
+                        tier: 'basic',
+                        title: 'Starter Concept',
+                        description: 'Core starter deliverable with basic asset package and essential setup.',
+                        delivery_days: 3,
+                        revisions: 1,
+                        features: { source_file: false, commercial_rights: false, high_resolution: true },
+                        price: ''
+                    },
+                    standard: {
+                        tier: 'standard',
+                        title: 'Standard Commercial',
+                        description: 'Recommended comprehensive deliverable with source files and standard revisions.',
+                        delivery_days: 5,
+                        revisions: 3,
+                        features: { source_file: true, commercial_rights: true, high_resolution: true },
+                        price: ''
+                    },
+                    premium: {
+                        tier: 'premium',
+                        title: 'Complete VIP Enterprise',
+                        description: 'Turnkey enterprise package with unlimited revisions, priority support, and full source assets.',
+                        delivery_days: 7,
+                        revisions: 99,
+                        features: { source_file: true, commercial_rights: true, high_resolution: true },
+                        price: ''
+                    }
+                },
+                enableRfq: true,
+                specs: {
+                    motor_hp: '',
+                    cutting_thickness: '',
+                    voltage: '415V Three Phase',
+                    rpm: '',
+                    automation_grade: 'Automatic / CNC',
+                    weight_kg: '',
+                    condition: 'Like New (Mint 10/10 Condition)',
+                    purchase_year: '2023',
+                    usage: '',
+                    warranty: 'Active Brand Warranty'
+                },
+                b2bTiers: [
+                    { min_qty: 1, max_qty: 5, unit_price: '' },
+                    { min_qty: 6, max_qty: 25, unit_price: '' },
+                    { min_qty: 26, max_qty: 100, unit_price: '' }
+                ],
+                serviceConfig: {
+                    duration_minutes: '60',
+                    daily_slot_capacity: 6,
+                    inclusions: ['Complete on-site inspection & diagnostic check', 'Standard service execution & clean handover'],
+                    exclusions: ['Replacement hardware or consumable spares billed at actuals']
+                },
+                isNegotiable: true,
+
+                get verticalTypeLabel() {
+                    const labels = {
+                        fashion_matrix: 'Fashion Matrix (Color × Size)',
+                        food_portion: 'Food & Portion Pricing',
+                        digital_gig: '3-Tier Digital Gig Packages',
+                        b2b_machinery: 'B2B Machinery & Tiered RFQ',
+                        service_booking: 'On-Demand Service Booking',
+                        classified_asset: 'Pre-Owned & Condition Rating',
+                        standard_retail: 'Standard Catalog Inventory'
+                    };
+                    return labels[this.verticalType] || 'Standard Inventory';
+                },
+
+                get verticalTypeDescription() {
+                    const descs = {
+                        fashion_matrix: 'Cartesian multi-axis matrix with zero-reload color hot-swapping and child SKUs.',
+                        food_portion: 'Mutually exclusive portion sizes with optional customize add-on modifiers.',
+                        digital_gig: 'Milestone tier breakdown (Basic, Standard, Premium) with turnaround timers.',
+                        b2b_machinery: 'Tiered volume discount slabs (MOQ) and direct enterprise RFQ inquiry modal.',
+                        service_booking: 'Transparent work inclusions, exclusions, duration, and daily customer slots.',
+                        classified_asset: 'Strict single-unit inventory disclosure with buyer counter-offer negotiation.',
+                        standard_retail: 'Standard SKU, inventory quantity, and default retail attributes.'
+                    };
+                    return descs[this.verticalType] || 'Standard product inventory and catalog attributes.';
+                },
 
                 get filteredPresets() {
                     if (this.presetTab === 'all') {
@@ -3423,7 +3374,183 @@ ${care}`;
                         if (this.bulkPrice) v.price = this.bulkPrice;
                         if (this.bulkStock) v.stock = this.bulkStock;
                     });
-                    // flash visual feedback could be added here
+                },
+
+                init() {
+                    if (this.selectedColors.length > 0 && this.selectedSizes.length > 0) {
+                        this.generateFashionMatrix();
+                    }
+                    this.$watch('categoryId', val => {
+                        if (val) this.fetchCategoryBlueprint(val);
+                    });
+                    if (this.categoryId) {
+                        this.fetchCategoryBlueprint(this.categoryId);
+                    }
+                },
+
+                async fetchCategoryBlueprint(catId) {
+                    if (!catId) return;
+                    this.isLoadingSchema = true;
+                    try {
+                        const res = await fetch(`/api/vendor/category-attributes?category_id=${catId}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.vertical_type) {
+                                this.verticalType = data.vertical_type;
+                            }
+                            if (data.default_packages && (!this.gigPackages.basic.price || this.gigPackages.basic.price === '')) {
+                                this.gigPackages = data.default_packages;
+                            }
+                            if (data.default_modifiers && this.foodModifiers.length <= 1) {
+                                this.foodModifiers = data.default_modifiers;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error fetching category blueprint:', e);
+                    } finally {
+                        this.isLoadingSchema = false;
+                    }
+                },
+
+                toggleColor(col) {
+                    const idx = this.selectedColors.findIndex(c => c.name.toLowerCase() === col.name.toLowerCase());
+                    if (idx > -1) {
+                        this.selectedColors.splice(idx, 1);
+                    } else {
+                        this.selectedColors.push({ name: col.name, hex: col.hex });
+                    }
+                    this.generateFashionMatrix();
+                },
+
+                isColorSelected(name) {
+                    return this.selectedColors.some(c => c.name.toLowerCase() === name.toLowerCase());
+                },
+
+                addCustomColor() {
+                    if (!this.customColorName || !this.customColorName.trim()) return;
+                    const name = this.customColorName.trim();
+                    const hex = this.customColorHex || '#111827';
+                    if (!this.availableColors.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                        this.availableColors.push({ name, hex });
+                    }
+                    if (!this.isColorSelected(name)) {
+                        this.selectedColors.push({ name, hex });
+                    }
+                    this.customColorName = '';
+                    this.generateFashionMatrix();
+                },
+
+                toggleSize(sz) {
+                    const idx = this.selectedSizes.indexOf(sz);
+                    if (idx > -1) {
+                        this.selectedSizes.splice(idx, 1);
+                    } else {
+                        this.selectedSizes.push(sz);
+                    }
+                    this.generateFashionMatrix();
+                },
+
+                addCustomSize() {
+                    if (!this.customSizeName || !this.customSizeName.trim()) return;
+                    const sz = this.customSizeName.trim();
+                    if (!this.availableSizesList.includes(sz)) {
+                        this.availableSizesList.push(sz);
+                    }
+                    if (!this.selectedSizes.includes(sz)) {
+                        this.selectedSizes.push(sz);
+                    }
+                    this.customSizeName = '';
+                    this.generateFashionMatrix();
+                },
+
+                generateFashionMatrix() {
+                    if (this.selectedColors.length === 0 || this.selectedSizes.length === 0) {
+                        this.fashionMatrixRows = [];
+                        return;
+                    }
+
+                    const rows = [];
+                    const prefix = (this.title ? this.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'PRD') || 'PRD';
+
+                    this.selectedColors.forEach(col => {
+                        this.selectedSizes.forEach(sz => {
+                            const cleanCol = col.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+                            const cleanSz = sz.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                            const sku = `${prefix}-${cleanCol}-${cleanSz}`;
+
+                            const existing = this.fashionMatrixRows.find(r => r.color === col.name && r.size === sz);
+                            rows.push(existing || {
+                                color: col.name,
+                                color_hex: col.hex,
+                                size: sz,
+                                sku: sku,
+                                price: this.basePrice || '',
+                                stock: 10,
+                                image_url: ''
+                            });
+                        });
+                    });
+
+                    this.fashionMatrixRows = rows;
+                },
+
+                applyFashionBulk() {
+                    this.fashionMatrixRows.forEach(r => {
+                        if (this.bulkPrice) r.price = this.bulkPrice;
+                        if (this.bulkStock !== '') r.stock = this.bulkStock;
+                    });
+                    this.notify('⚡ Applied bulk price & stock to all variant rows!');
+                },
+
+                removeFashionRow(idx) {
+                    this.fashionMatrixRows.splice(idx, 1);
+                },
+
+                addFoodPortion() {
+                    this.foodPortions.push({ name: '', price: '', stock: 50 });
+                },
+
+                removeFoodPortion(idx) {
+                    if (this.foodPortions.length > 1) {
+                        this.foodPortions.splice(idx, 1);
+                    }
+                },
+
+                addFoodModifier() {
+                    this.foodModifiers.push({ group_name: 'Add-ons', modifier_name: '', price_delta: '', is_required: false });
+                },
+
+                removeFoodModifier(idx) {
+                    this.foodModifiers.splice(idx, 1);
+                },
+
+                addB2bTier() {
+                    const last = this.b2bTiers[this.b2bTiers.length - 1];
+                    const min = last ? (parseInt(last.max_qty) || 1) + 1 : 1;
+                    const max = min + 50;
+                    this.b2bTiers.push({ min_qty: min, max_qty: max, unit_price: '' });
+                },
+
+                removeB2bTier(idx) {
+                    if (this.b2bTiers.length > 1) {
+                        this.b2bTiers.splice(idx, 1);
+                    }
+                },
+
+                addInclusion() {
+                    this.serviceConfig.inclusions.push('');
+                },
+
+                removeInclusion(idx) {
+                    this.serviceConfig.inclusions.splice(idx, 1);
+                },
+
+                addExclusion() {
+                    this.serviceConfig.exclusions.push('');
+                },
+
+                removeExclusion(idx) {
+                    this.serviceConfig.exclusions.splice(idx, 1);
                 }
             }
         }

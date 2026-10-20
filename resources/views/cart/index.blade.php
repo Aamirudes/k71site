@@ -68,23 +68,24 @@
                         <ul class="divide-y divide-gray-100">
                             @foreach($items as $item)
                                 @php 
-                                    $price = $item->variant->price_override ?? $item->variant->product->base_price ?? $item->price_at_add;
+                                    $product = $item->product ?? $item->variant?->product;
+                                    $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
                                     $itemTotal = $price * $item->quantity;
                                     $subtotal += $itemTotal;
-                                    $isItemOutOfStock = !$item->variant || $item->variant->stock <= 0;
-                                    $hasInsufficientStock = $item->variant && $item->variant->stock < $item->quantity;
+                                    $isItemOutOfStock = !$item->gig_package_id && (!$item->variant || $item->variant->stock <= 0);
+                                    $hasInsufficientStock = !$item->gig_package_id && ($item->variant && $item->variant->stock < $item->quantity);
                                 @endphp
                                 <li class="py-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start {{ $isItemOutOfStock ? 'opacity-75 bg-rose-50/30 rounded-2xl p-4' : '' }}">
                                     <!-- Image -->
                                     <div class="flex-shrink-0 w-32 sm:w-36 aspect-square bg-[#F1EBE2]/40 rounded-2xl overflow-hidden relative border border-gray-50 group">
-                                        @if($item->variant && $item->variant->product && $item->variant->product->images->count() > 0)
-                                            <img src="{{ asset('storage/' . $item->variant->product->images->first()->path) }}" 
-                                                 alt="{{ $item->variant->product->title }}"
+                                        @if($product && $product->images->count() > 0)
+                                            <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
+                                                 alt="{{ $product->title }}"
                                                  class="absolute inset-0 w-full h-full object-contain mix-blend-multiply transition-transform duration-700 group-hover:scale-105 p-3"
                                                  onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                         @else
                                             <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                                 alt="{{ $item->variant?->product?->title ?? 'Product' }}" 
+                                                 alt="{{ $product?->title ?? 'Product' }}" 
                                                  class="absolute inset-0 w-full h-full object-contain p-3">
                                         @endif
 
@@ -100,16 +101,32 @@
                                         <div class="flex justify-between items-start">
                                             <div>
                                                 <h3 class="text-lg font-serif font-bold text-brand-text hover:text-brand-sage transition-colors leading-tight">
-                                                    @if($item->variant?->product)
-                                                        <a href="{{ route('product.show', $item->variant->product->slug) }}">{{ $item->variant->product->title }}</a>
+                                                    @if($product)
+                                                        <a href="{{ route('product.show', $product->slug) }}">{{ $product->title }}</a>
                                                     @else
                                                         <span>Product Item</span>
                                                     @endif
                                                 </h3>
                                                 <div class="flex flex-wrap items-center gap-2 mt-2">
-                                                    <p class="text-sm text-gray-500 bg-gray-50 inline-block px-3 py-1 rounded-full border border-gray-100">
-                                                        Variant: <strong class="text-brand-text">{{ $item->variant?->sku ?? 'Standard' }}</strong>
-                                                    </p>
+                                                    @if($item->gigPackage)
+                                                        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-800 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full">
+                                                            <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                            <span>{{ ucfirst($item->gigPackage->tier) }} Package ({{ $item->gigPackage->delivery_days }}d Delivery)</span>
+                                                        </span>
+                                                    @else
+                                                        <p class="text-sm text-gray-500 bg-gray-50 inline-block px-3 py-1 rounded-full border border-gray-100">
+                                                            Option: <strong class="text-brand-text">{{ $item->variant?->name ?? ($item->variant?->sku ?? 'Standard') }}</strong>
+                                                        </p>
+                                                    @endif
+
+                                                    @if(!empty($item->selected_modifiers_json))
+                                                        @foreach($item->selected_modifiers_json as $mod)
+                                                            <span class="inline-flex items-center text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                                                                + {{ $mod['name'] }} (+₹{{ number_format($mod['price_delta'], 2) }})
+                                                            </span>
+                                                        @endforeach
+                                                    @endif
+
                                                     @if($isItemOutOfStock)
                                                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -141,8 +158,8 @@
                                                     <button type="submit" @click="qty = Math.max(1, qty - 1)" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
                                                     </button>
-                                                    <input type="number" name="quantity" min="1" max="{{ $item->variant->stock }}" x-model="qty" class="w-12 text-center bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-text p-0" onchange="this.form.submit()">
-                                                    <button type="submit" @click="qty++" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors" {{ $item->quantity >= $item->variant->stock ? 'disabled' : '' }}>
+                                                    <input type="number" name="quantity" min="1" max="{{ $item->gig_package_id ? 99 : ($item->variant?->stock ?? 10) }}" x-model="qty" class="w-12 text-center bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-text p-0" onchange="this.form.submit()">
+                                                    <button type="submit" @click="qty++" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors" {{ (!$item->gig_package_id && $item->variant && $item->quantity >= $item->variant->stock) ? 'disabled' : '' }}>
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                                     </button>
                                                 </form>

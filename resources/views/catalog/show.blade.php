@@ -48,6 +48,24 @@
         $productPreset = $product->vendor->product_preset ?? 'gallery';
     @endphp
 
+    <!-- Universal Blueprint Variants JSON Repository -->
+    <script type="application/json" id="product-variants-data">
+        {!! json_encode($product->variants->map(function($v) use ($product) { 
+            return [
+                'id' => $v->id, 
+                'sku' => $v->sku ?: 'Default',
+                'name' => $v->sku ?: 'Default',
+                'color' => $v->attributes_hash['color'] ?? ($v->color ?? ''),
+                'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
+                'size' => $v->attributes_hash['size'] ?? ($v->size ?? $v->sku),
+                'stock' => (int) ($v->stock_quantity ?: $v->stock),
+                'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
+                'image_url' => $v->image_url,
+                'attributes_hash' => $v->attributes_hash ?: []
+            ]; 
+        })) !!}
+    </script>
+
     <div x-data="{ 
         quantity: 1, 
         selectedVariant: {{ $hasMultipleVariants ? 'null' : ($firstInStockVariant?->id ?? $product->variants->first()?->id ?? 'null') }}, 
@@ -65,15 +83,24 @@
         touchStartX: 0,
         touchEndX: 0,
         isEntirelyOutOfStock: {{ $isEntirelyOutOfStock ? 'true' : 'false' }},
+        customPriceOverride: null,
+        selectedFoodModifiers: [],
         variants: {{ $product->variants->map(function($v) use ($product) { 
             return [
                 'id' => $v->id, 
-                'sku' => $v->sku,
-                'stock' => (int) $v->stock,
-                'price' => $v->price_override ? number_format($v->price_override / 100, 2) : number_format($product->base_price / 100, 2)
+                'sku' => $v->sku ?: 'Default',
+                'name' => $v->sku ?: 'Default',
+                'color' => $v->attributes_hash['color'] ?? ($v->color ?? ''),
+                'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
+                'size' => $v->attributes_hash['size'] ?? ($v->size ?? $v->sku),
+                'stock' => (int) ($v->stock_quantity ?: $v->stock),
+                'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
+                'image_url' => $v->image_url,
+                'attributes_hash' => $v->attributes_hash ?: []
             ]; 
         })->toJson() }},
         get currentPrice() { 
+            if(this.customPriceOverride !== null) return this.customPriceOverride;
             if(!this.selectedVariant) return '{{ number_format($product->base_price / 100, 2) }}'; 
             const v = this.variants.find(x => x.id == this.selectedVariant); 
             return v ? v.price : '{{ number_format($product->base_price / 100, 2) }}'; 
@@ -173,6 +200,12 @@
             }
             this.adding = true;
             this.message = '';
+            const payload = {
+                product_id: {{ $product->id }},
+                variant_id: this.selectedVariant,
+                quantity: this.quantity,
+                selected_modifiers: this.selectedFoodModifiers.map(m => m.id)
+            };
             fetch('/cart/add', {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -182,7 +215,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({ variant_id: this.selectedVariant, quantity: this.quantity })
+                body: JSON.stringify(payload)
             }).then(r => r.json()).then(data => {
                 this.adding = false;
                 if(data.success) {
@@ -201,6 +234,41 @@
             });
         },
         init() {
+            window.addEventListener('variant-selected', (e) => {
+                if (e.detail) {
+                    this.selectedVariant = e.detail.id;
+                    if (e.detail.price) {
+                        this.customPriceOverride = e.detail.price;
+                    }
+                }
+            });
+
+            window.addEventListener('food-selection-updated', (e) => {
+                if (e.detail) {
+                    if (e.detail.portion) {
+                        this.selectedVariant = e.detail.portion.id;
+                    }
+                    this.selectedFoodModifiers = e.detail.modifiers || [];
+                    this.customPriceOverride = e.detail.totalPrice;
+                }
+            });
+
+            window.addEventListener('swap-product-image', (e) => {
+                if (e.detail && e.detail.url) {
+                    const idx = this.images.indexOf(e.detail.url);
+                    if (idx > -1) {
+                        this.activeImgIndex = idx;
+                    } else {
+                        this.images.unshift(e.detail.url);
+                        this.activeImgIndex = 0;
+                    }
+                }
+            });
+
+            window.addEventListener('open-size-guide', () => {
+                this.showSizeGuide = true;
+            });
+
             if ('IntersectionObserver' in window && this.$refs.mainBuyBtn) {
                 const observer = new IntersectionObserver(([entry]) => {
                     this.isScrolledPastCTA = !entry.isIntersecting;
@@ -457,96 +525,95 @@
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
 
-                        <!-- Variant / Size Selection Area -->
-                        <div x-ref="sizeSelector" class="mb-5">
-                            @if($hasMultipleVariants)
-                                <div class="flex justify-between items-center mb-2.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <h3 class="text-xs font-bold uppercase tracking-wider text-brand-text">Select Size</h3>
-                                        <span class="text-[11px] text-gray-400 font-normal">(Required)</span>
-                                    </div>
-                                    @if($hasSizeGuide)
-                                        <button type="button" @click="showSizeGuide = true" class="text-xs text-brand-text hover:text-brand-sage flex items-center gap-1.5 font-bold transition-colors">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2zM7 7v4M11 7v2M15 7v4M19 7v2"/>
-                                            </svg>
-                                            <span class="underline decoration-1 underline-offset-2">Size &amp; Fit Guide</span>
-                                        </button>
-                                    @endif
-                                </div>
-                                
-                                <div class="flex flex-wrap gap-2.5">
-                                    @foreach($product->variants as $variant)
-                                        <label class="relative cursor-pointer">
-                                            <input type="radio" 
-                                                   name="variant_id" 
-                                                   value="{{ $variant->id }}" 
-                                                   x-model="selectedVariant" 
-                                                   class="peer sr-only" 
-                                                   {{ $variant->stock <= 0 ? 'disabled' : '' }}>
-                                            
-                                            <div class="min-w-[56px] px-3.5 py-2 rounded-xl text-xs font-semibold text-center border transition-all duration-150 relative
-                                                peer-checked:border-brand-text peer-checked:bg-brand-text peer-checked:text-white peer-checked:shadow-sm
-                                                {{ $variant->stock <= 0 ? 'opacity-40 cursor-not-allowed border-dashed border-stone-300 bg-stone-100 text-stone-400 line-through' : 'border-stone-300 bg-white text-brand-text hover:border-brand-text' }}">
-                                                <span>{{ $variant->sku }}</span>
-                                                @if($variant->stock <= 0)
-                                                    <span class="block text-[8px] uppercase font-bold text-rose-600 no-underline leading-none mt-0.5">Sold Out</span>
-                                                @elseif($variant->stock <= 3)
-                                                    <span class="block text-[8px] font-bold text-amber-600 leading-none mt-0.5">{{ $variant->stock }} left</span>
-                                                @endif
-                                            </div>
-                                        </label>
-                                    @endforeach
-                                </div>
+                        @php $verticalType = $product->vertical_type; @endphp
+
+                        <!-- Universal Dynamic Vertical Buying Interface -->
+                        <div class="mb-5">
+                            @if($verticalType === 'fashion_matrix')
+                                @include('catalog.partials.variant_fashion')
+                            @elseif($verticalType === 'food_portion')
+                                @include('catalog.partials.variant_food')
+                            @elseif($verticalType === 'digital_gig')
+                                @include('catalog.partials.variant_gig')
+                            @elseif($verticalType === 'b2b_machinery')
+                                @include('catalog.partials.variant_b2b')
+                            @elseif($verticalType === 'service_booking')
+                                @include('catalog.partials.variant_service')
+                            @elseif($verticalType === 'classified_asset')
+                                @include('catalog.partials.variant_used')
                             @else
-                                <input type="hidden" name="variant_id" value="{{ $product->variants->first()?->id ?? '' }}">
-                                @if($hasSizeGuide)
-                                    <div class="flex items-center justify-between p-3 rounded-xl bg-stone-50 border border-stone-200/60 mb-2">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-xs font-bold text-brand-text">Fit & Sizing:</span>
-                                            <span class="text-xs text-stone-600">Free Size Silhouette</span>
-                                        </div>
-                                        <button type="button" @click="showSizeGuide = true" class="text-xs text-brand-text hover:text-brand-sage flex items-center gap-1.5 font-bold underline decoration-1 underline-offset-2">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2zM7 7v4M11 7v2M15 7v4M19 7v2"/>
-                                            </svg>
-                                            <span>Size Chart</span>
-                                        </button>
-                                    </div>
-                                @endif
+                                @include('catalog.partials.variant_fashion')
                             @endif
                         </div>
 
+                        <!-- Vertical Context Action CTAs -->
                         @if($product->isPurchase())
-                            <!-- Quantity Stepper & Main Add To Cart Row -->
-                            <div class="flex items-center gap-3">
-                                <!-- Stepper -->
-                                <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs {{ $isEntirelyOutOfStock ? 'opacity-40 pointer-events-none' : '' }}">
-                                    <button type="button" @click="if(quantity > 1) quantity--" 
-                                            class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30" 
-                                            :disabled="quantity <= 1">-</button>
-                                    <span x-text="quantity" class="w-8 text-center text-xs font-bold text-brand-text">1</span>
-                                    <button type="button" @click="if(quantity < selectedStock) quantity++" 
-                                            class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30"
-                                            :disabled="quantity >= selectedStock">+</button>
+                            @if($verticalType === 'food_portion')
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs">
+                                        <button type="button" @click="if(quantity > 1) quantity--" 
+                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30" 
+                                                :disabled="quantity <= 1">-</button>
+                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-stone-900">1</span>
+                                        <button type="button" @click="quantity++" 
+                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm">+</button>
+                                    </div>
+                                    <button type="submit" 
+                                            x-ref="mainBuyBtn"
+                                            :disabled="adding || !selectedVariant" 
+                                            class="flex-1 py-3.5 px-6 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                        <span x-text="adding ? 'Adding to Order...' : `🍲 Add to Feast (₹${(parseFloat(currentPrice) * quantity).toFixed(2)})`"></span>
+                                    </button>
                                 </div>
+                            @elseif($verticalType === 'classified_asset')
+                                <div class="flex items-center gap-3">
+                                    <button type="submit" 
+                                            x-ref="mainBuyBtn"
+                                            :disabled="adding || isEntirelyOutOfStock" 
+                                            class="flex-1 py-3.5 px-6 rounded-full bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                        <span>🔒 Buy Verified Asset Now (₹{{ number_format($product->base_price / 100, 2) }})</span>
+                                    </button>
+                                </div>
+                            @elseif($verticalType === 'b2b_machinery')
+                                <div class="flex items-center gap-3 pt-2">
+                                    <button type="submit" 
+                                            x-ref="mainBuyBtn"
+                                            :disabled="adding || isEntirelyOutOfStock" 
+                                            class="flex-1 py-3 px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
+                                        <span>🛒 Buy Single Sample Machine</span>
+                                    </button>
+                                </div>
+                            @elseif($verticalType !== 'digital_gig' && $verticalType !== 'service_booking')
+                                <!-- Quantity Stepper & Main Add To Cart Row -->
+                                <div class="flex items-center gap-3">
+                                    <!-- Stepper -->
+                                    <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs {{ $isEntirelyOutOfStock ? 'opacity-40 pointer-events-none' : '' }}">
+                                        <button type="button" @click="if(quantity > 1) quantity--" 
+                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30" 
+                                                :disabled="quantity <= 1">-</button>
+                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-brand-text">1</span>
+                                        <button type="button" @click="if(quantity < selectedStock) quantity++" 
+                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30"
+                                                :disabled="quantity >= selectedStock">+</button>
+                                    </div>
 
-                                <!-- Primary Add to Cart CTA -->
-                                <button type="submit" 
-                                        x-ref="mainBuyBtn"
-                                        :disabled="adding || isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0" 
-                                        class="flex-1 py-3.5 px-6 rounded-full bg-brand-text hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
-                                        :class="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? '!bg-stone-300 !text-stone-600' : ''">
-                                    <svg x-show="!adding && !isEntirelyOutOfStock && (!selectedVariant || !isCurrentVariantOutOfStock) && selectedStock > 0" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                                    </svg>
-                                    <svg x-show="adding" class="animate-spin h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span x-text="adding ? 'Adding to Bag...' : (isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Sold Out' : 'Add to Bag')"></span>
-                                </button>
-                            </div>
+                                    <!-- Primary Add to Cart CTA -->
+                                    <button type="submit" 
+                                            x-ref="mainBuyBtn"
+                                            :disabled="adding || isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0" 
+                                            class="flex-1 py-3.5 px-6 rounded-full bg-brand-text hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+                                            :class="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? '!bg-stone-300 !text-stone-600' : ''">
+                                        <svg x-show="!adding && !isEntirelyOutOfStock && (!selectedVariant || !isCurrentVariantOutOfStock) && selectedStock > 0" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                                        </svg>
+                                        <svg x-show="adding" class="animate-spin h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-text="adding ? 'Adding to Bag...' : (isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Sold Out' : 'Add to Bag')"></span>
+                                    </button>
+                                </div>
+                            @endif
                         @elseif($product->isEnquiry())
                             <div class="space-y-2">
                                 <a href="https://wa.me/{{ $sellerPhone ?? '' }}?text={{ rawurlencode('Hello! I would like to enquire about bulk/wholesale order for: ' . $product->title . ' on K71') }}" target="_blank"

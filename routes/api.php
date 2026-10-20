@@ -18,4 +18,6 @@ Route::post('/webhook/shiprocket', [\App\Http\Controllers\Webhook\ShiprocketWebh
 
 // PhonePe Payment & Settlement Webhook
 Route::post('/webhooks/phonepe', [\App\Http\Controllers\Webhook\PhonePeWebhookController::class, 'handle'])->name('api.webhook.phonepe');
-
+// Dynamic Category Attributes & Vertical Blueprints API
+Route::get('/vendor/category-attributes', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'show'])->name('api.vendor.category_attributes');
+Route::get('/vendor/category-attributes.php', [\App\Http\Controllers\Api\CategoryAttributeController::class, 'show']);

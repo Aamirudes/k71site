@@ -151,10 +151,19 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <h4 class="font-bold text-sm sm:text-base text-brand-text truncate">{{ $item->product->title ?? $item->snapshot['title'] ?? 'Product' }}</h4>
-                            <div class="flex items-center gap-2 mt-1">
+                            <div class="flex flex-wrap items-center gap-2 mt-1">
                                 <span class="bg-stone-100 text-stone-700 px-2 py-0.5 rounded text-xs font-medium">{{ $item->variant->sku ?? $item->snapshot['variant_sku'] ?? 'Standard' }}</span>
                                 <span class="text-xs text-gray-500 font-medium">Qty: {{ $item->quantity }}</span>
                             </div>
+                            @if(!empty($item->selected_modifiers_json))
+                                <div class="flex flex-wrap gap-1 mt-1.5">
+                                    @foreach($item->selected_modifiers_json as $mod)
+                                        <span class="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                                            + {{ $mod['name'] }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                         <div class="text-right shrink-0">
                             <p class="text-sm sm:text-base font-bold text-brand-text">₹{{ number_format($item->total_price / 100, 2) }}</p>

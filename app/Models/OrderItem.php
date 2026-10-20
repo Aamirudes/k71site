@@ -11,6 +11,9 @@ class OrderItem extends Model
         'order_id',
         'product_id',
         'variant_id',
+        'gig_package_id',
+        'selected_modifiers_json',
+        'booking_date_time',
         'quantity',
         'unit_price',
         'total_price',
@@ -18,10 +21,14 @@ class OrderItem extends Model
         'gst_rate',
         'hsn_code',
         'snapshot',
+        'meta_json',
     ];
 
     protected $casts = [
         'snapshot' => 'json',
+        'meta_json' => 'json',
+        'selected_modifiers_json' => 'array',
+        'booking_date_time' => 'datetime',
     ];
 
     public function order(): BelongsTo
@@ -37,5 +44,10 @@ class OrderItem extends Model
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id')->withTrashed();
+    }
+
+    public function gigPackage(): BelongsTo
+    {
+        return $this->belongsTo(ProductGigPackage::class, 'gig_package_id');
     }
 }
