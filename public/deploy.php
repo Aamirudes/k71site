@@ -337,6 +337,14 @@ foreach ($tasks as $label => $task) {
     echo "</div>";
 }
 
+// Diagnostic: Show Request Debug Log if exists
+$reqDebugLog = $baseDir . '/storage/logs/request_debug.log';
+if (file_exists($reqDebugLog)) {
+    echo "<div class='step'><div class='step-title'>🌐 Request Debug Log:</div>";
+    echo "<pre style='color:#38bdf8;font-size:12px;max-height:200px;overflow-y:auto;'>" . htmlspecialchars(file_get_contents($reqDebugLog)) . "</pre>";
+    echo "</div>";
+}
+
 // Diagnostic: Show Last 30 Lines of Laravel Log if there are errors
 $logFile = $baseDir . '/storage/logs/laravel.log';
 if (file_exists($logFile)) {
