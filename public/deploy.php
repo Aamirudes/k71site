@@ -81,11 +81,13 @@ foreach ($storageDirs as $dir) {
     @chmod($dir, 0775);
 }
 
-// 3. Fallback pure PHP symlink for storage
+// 3. Fallback pure PHP symlink for storage (if host allows symlink)
 $target = $baseDir . '/storage/app/public';
 $link = $baseDir . '/public/storage';
-if (!file_exists($link)) {
-    @symlink($target, $link);
+if (!file_exists($link) && function_exists('symlink')) {
+    try {
+        @symlink($target, $link);
+    } catch (\Throwable $e) {}
 }
 
 // 4. Bootstrap Laravel cleanly
