@@ -83,6 +83,8 @@ if (!function_exists('k71_vertical_url')) {
         $port = request()->getPort();
         $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
 
+        $useSubdomains = config('marketplace.use_subdomains', true);
+
         // Local LAN IP fallback (e.g. 192.168.1.20:8000 or 127.0.0.1:8000) for testing on mobile phone
         if ($isIp) {
             if ($vertical === 'main') {
@@ -95,8 +97,18 @@ if (!function_exists('k71_vertical_url')) {
             return url('/?' . $query);
         }
 
-        // Wildcard Subdomains on ANY domain: food.mysite.in, food.k71.in, food.localhost
         $rootDomain = k71_root_domain($host);
+
+        // Subdirectory mode when subdomains are turned off
+        if (!$useSubdomains) {
+            if ($vertical === 'main') {
+                return "{$scheme}://{$rootDomain}{$portSuffix}" . ($cleanPath ? '/' . $cleanPath : '');
+            }
+            $subPath = $cleanPath ? $vertical . '/' . $cleanPath : $vertical;
+            return "{$scheme}://{$rootDomain}{$portSuffix}/" . $subPath;
+        }
+
+        // Wildcard Subdomains on ANY domain: food.mysite.in, food.k71.in, food.localhost
         if ($vertical === 'main') {
             return "{$scheme}://{$rootDomain}{$portSuffix}" . ($cleanPath ? '/' . $cleanPath : '');
         }

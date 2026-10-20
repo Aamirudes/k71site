@@ -29,8 +29,20 @@ class ResolveVertical
             }
         }
 
-        // Canonical 301 redirect on production root domain: Redirect folder routes to pure subdomains
-        if ($detectedKey === 'main' && !filter_var($host, FILTER_VALIDATE_IP) && app()->environment('production')) {
+        $useSubdomains = config('marketplace.use_subdomains', true);
+
+        // If subdomains are disabled, detect vertical directly from the request path
+        if (!$useSubdomains && $detectedKey === 'main') {
+            foreach (['shorts', 'food', 'services', 'used', 'enquiry'] as $vPrefix) {
+                if ($request->is($vPrefix . '*')) {
+                    $detectedKey = $vPrefix;
+                    break;
+                }
+            }
+        }
+
+        // Canonical 301 redirect on production root domain: Redirect folder routes to pure subdomains ONLY if subdomains are enabled
+        if ($useSubdomains && $detectedKey === 'main' && !filter_var($host, FILTER_VALIDATE_IP) && app()->environment('production')) {
             $rootDomain = k71_root_domain($host);
             foreach (['shorts', 'food', 'services', 'used', 'enquiry'] as $vPrefix) {
                 if ($request->is($vPrefix . '*')) {
