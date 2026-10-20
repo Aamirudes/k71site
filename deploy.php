@@ -188,13 +188,17 @@ $rootHtaccessContent = <<<HTACCESS
     RewriteRule ^(app|bootstrap|config|database|resources|routes|storage/app|storage/logs|tests|docs|legacy)(/.*)?$ - [F,L,NC]
     RewriteRule ^vendor/(autoload\.php|composer/|bin/|.*\.json|.*\.lock|.*\.md) - [F,L,NC]
 
-    # Direct access for existing root files (like deploy.php)
+    # Direct access for existing root files (like deploy.php, messages.php)
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # Rewrite all traffic to public/
-    RewriteCond %{REQUEST_URI} !^/public/
+    # Serve static assets directly from public/ if the file exists there
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f
     RewriteRule ^(.*)$ public/$1 [L]
+
+    # Send all application routes cleanly to root index.php without subrequest looping
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
 </IfModule>
 HTACCESS;
 @file_put_contents($rootHtaccess, $rootHtaccessContent);

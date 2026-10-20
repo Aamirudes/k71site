@@ -13,13 +13,17 @@
     # Block direct access to composer vendor sensitive files without blocking Laravel /vendor/ routes
     RewriteRule ^vendor/(autoload\.php|composer/|bin/|.*\.json|.*\.lock|.*\.md) - [F,L,NC]
 
-    # Allow direct access if the file exists in root (e.g. deploy.php)
+    # Allow direct access if the file exists in root (e.g. deploy.php, messages.php)
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # Rewrite everything else to the public directory
-    RewriteCond %{REQUEST_URI} !^/public/
+    # Serve static assets directly from public/ if the file exists there
+    RewriteCond %{DOCUMENT_ROOT}/public/$1 -f
     RewriteRule ^(.*)$ public/$1 [L]
+
+    # Send all application routes cleanly to root index.php without subrequest looping
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
 </IfModule>
 
 <IfModule mod_security.c>
