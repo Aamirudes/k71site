@@ -167,38 +167,38 @@
         <div class="relative z-10 pt-4 sm:pt-10 pb-8 text-center max-w-4xl mx-auto px-4">
             
             <!-- Quality Badge Pill -->
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 backdrop-blur-md border border-slate-200 text-slate-800 text-xs font-bold shadow-xs mb-6">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-300 text-slate-900 text-xs font-black shadow-sm mb-6">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Verified Direct Marketplace</span>
                 <span class="text-slate-300">•</span>
-                <span class="text-indigo-600 font-extrabold">Instant Checkout &amp; Secure Escrow</span>
+                <span class="text-indigo-600 font-black">Instant Checkout &amp; Secure Escrow</span>
             </div>
 
             <!-- Main Headline -->
-            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12] mb-5">
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-950 tracking-tight leading-[1.12] mb-5">
                 Discover India's Premier <br class="hidden sm:inline">
                 <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">Multi-Sector Marketplace</span>
             </h1>
 
-            <p class="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed mb-8">
+            <p class="text-sm sm:text-base text-slate-700 font-medium max-w-2xl mx-auto leading-relaxed mb-8">
                 Connect directly with verified brand distributors, boutique ateliers, certified automotive suppliers, and industrial suppliers nationwide.
             </p>
 
             <!-- Floating Liquid Glass Search Bar -->
             <div class="max-w-2xl mx-auto mb-6">
-                <form action="{{ route('catalog.index') }}" method="GET" class="p-2 sm:p-2.5 rounded-2xl bg-white/95 backdrop-blur-2xl border border-slate-200 shadow-xl shadow-slate-200/50 flex items-center gap-2 transition-all focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100">
-                    <div class="pl-3 text-slate-400">
-                        <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <form action="{{ route('catalog.index') }}" method="GET" class="p-2 sm:p-2.5 rounded-2xl bg-white border-2 border-slate-200 shadow-xl shadow-slate-200/50 flex items-center gap-2 transition-all focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-100">
+                    <div class="pl-3 text-indigo-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                     <input 
                         type="text" 
                         name="q" 
                         placeholder="Search products, brands, model numbers, spare parts, fabrics..." 
-                        class="w-full bg-transparent border-none text-slate-900 text-xs sm:text-sm placeholder-slate-400 focus:ring-0 focus:outline-none font-medium px-2"
+                        class="w-full bg-transparent border-none text-slate-950 text-xs sm:text-sm placeholder-slate-400 focus:ring-0 focus:outline-none font-semibold px-2"
                     >
                     <button 
                         type="submit" 
-                        class="px-5 sm:px-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white font-bold text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
+                        class="px-5 sm:px-7 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-700 hover:to-cyan-700 text-white font-black text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                     >
                         Search
                     </button>
@@ -207,35 +207,35 @@
 
             <!-- Trending Quick Tags -->
             <div class="flex flex-wrap items-center justify-center gap-2 text-xs">
-                <span class="text-slate-400 font-semibold text-[11px] uppercase tracking-wider">Popular Searches:</span>
-                <a href="{{ route('catalog.index', ['q' => 'phone']) }}" class="px-3 py-1 rounded-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-medium transition-colors shadow-2xs">📱 5G Smartphones</a>
-                <a href="{{ route('catalog.index', ['q' => 'tshirt']) }}" class="px-3 py-1 rounded-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-medium transition-colors shadow-2xs">👕 Cotton T-Shirts</a>
-                <a href="{{ route('catalog.index', ['q' => 'brake']) }}" class="px-3 py-1 rounded-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-medium transition-colors shadow-2xs">🛑 Brake Pads</a>
-                <a href="{{ route('catalog.index', ['q' => 'laptop']) }}" class="px-3 py-1 rounded-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-medium transition-colors shadow-2xs">💻 Laptops</a>
-                <a href="{{ k71_vertical_url('food') }}" class="px-3 py-1 rounded-full bg-white/80 hover:bg-white text-slate-700 border border-slate-200 font-medium transition-colors shadow-2xs">🍽️ Cloud Menus</a>
+                <span class="text-slate-700 font-extrabold text-xs uppercase tracking-wider">Popular Searches:</span>
+                <a href="{{ route('catalog.index', ['q' => 'phone']) }}" class="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold transition-all shadow-xs">📱 5G Smartphones</a>
+                <a href="{{ route('catalog.index', ['q' => 'tshirt']) }}" class="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold transition-all shadow-xs">👕 Cotton T-Shirts</a>
+                <a href="{{ route('catalog.index', ['q' => 'brake']) }}" class="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold transition-all shadow-xs">🛑 Brake Pads</a>
+                <a href="{{ route('catalog.index', ['q' => 'laptop']) }}" class="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold transition-all shadow-xs">💻 Laptops</a>
+                <a href="{{ k71_vertical_url('food') }}" class="px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold transition-all shadow-xs">🍽️ Cloud Menus</a>
             </div>
 
             <!-- Platform Value Assurance Strip -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10 pt-8 border-t border-slate-200/80 max-w-4xl mx-auto">
-                <div class="p-3.5 rounded-2xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-2xs text-center">
-                    <span class="text-xl block mb-1">🛡️</span>
-                    <h4 class="text-xs font-bold text-slate-900">Verified Sellers</h4>
-                    <p class="text-[10px] text-slate-500 mt-0.5">GST &amp; Aadhaar Verified</p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10 pt-8 border-t border-slate-200/90 max-w-4xl mx-auto">
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs text-center">
+                    <span class="text-2xl block mb-1">🛡️</span>
+                    <h4 class="text-xs font-black text-slate-950">Verified Sellers</h4>
+                    <p class="text-[11px] text-slate-600 font-medium mt-0.5">GST &amp; Aadhaar Verified</p>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-2xs text-center">
-                    <span class="text-xl block mb-1">⚡</span>
-                    <h4 class="text-xs font-bold text-slate-900">Instant PhonePe</h4>
-                    <p class="text-[10px] text-slate-500 mt-0.5">UPI, Cards &amp; NetBanking</p>
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs text-center">
+                    <span class="text-2xl block mb-1">⚡</span>
+                    <h4 class="text-xs font-black text-slate-950">Instant PhonePe</h4>
+                    <p class="text-[11px] text-slate-600 font-medium mt-0.5">UPI, Cards &amp; NetBanking</p>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-2xs text-center">
-                    <span class="text-xl block mb-1">📦</span>
-                    <h4 class="text-xs font-bold text-slate-900">Tracked Logistics</h4>
-                    <p class="text-[10px] text-slate-500 mt-0.5">Shiprocket Express Courier</p>
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs text-center">
+                    <span class="text-2xl block mb-1">📦</span>
+                    <h4 class="text-xs font-black text-slate-950">Tracked Logistics</h4>
+                    <p class="text-[11px] text-slate-600 font-medium mt-0.5">Shiprocket Express Courier</p>
                 </div>
-                <div class="p-3.5 rounded-2xl bg-white/70 backdrop-blur-md border border-slate-100 shadow-2xs text-center">
-                    <span class="text-xl block mb-1">🔄</span>
-                    <h4 class="text-xs font-bold text-slate-900">Buyer Protection</h4>
-                    <p class="text-[10px] text-slate-500 mt-0.5">7-Day Easy Returns</p>
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs text-center">
+                    <span class="text-2xl block mb-1">🔄</span>
+                    <h4 class="text-xs font-black text-slate-950">Buyer Protection</h4>
+                    <p class="text-[11px] text-slate-600 font-medium mt-0.5">7-Day Easy Returns</p>
                 </div>
             </div>
 

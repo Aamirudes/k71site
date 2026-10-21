@@ -175,40 +175,41 @@
             @if($customDrawerItems->isNotEmpty())
                 <!-- Dynamic Admin Configured Panel Shortcuts -->
                 <div>
-                    <h5 class="text-xs uppercase font-semibold tracking-wider text-emerald-600 dark:text-emerald-400 mb-2">Featured Highlights</h5>
-                    <div class="space-y-1.5">
+                    <h5 class="text-xs uppercase font-bold tracking-wider text-indigo-600 mb-2">Featured Highlights</h5>
+                    <div class="space-y-2">
                         @foreach($customDrawerItems as $cItem)
                             <a href="{{ $cItem->url }}" target="{{ $cItem->target ?? '_self' }}"
-                               class="flex items-center justify-between p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80 hover:border-emerald-500/50 transition">
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-7 h-7 rounded-lg bg-white dark:bg-zinc-800 flex items-center justify-center text-xs shadow-xs shrink-0 overflow-hidden">
+                               class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-500/50 hover:bg-slate-100/80 transition group shadow-2xs">
+                                <div class="flex items-center gap-3">
+                                    <!-- 4x Large HD Icon Box -->
+                                    <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-1.5 shadow-xs shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
                                         @if($cItem->icon_type === 'image' && $cItem->image_url)
-                                            <img src="{{ $cItem->image_url }}" alt="{{ $cItem->title }}" class="w-5 h-5 object-contain">
+                                            <img src="{{ $cItem->image_url }}" alt="{{ $cItem->title }}" class="w-full h-full object-contain drop-shadow">
                                         @elseif($cItem->icon_type === 'emoji' && $cItem->icon)
-                                            <span>{{ $cItem->icon }}</span>
+                                            <span class="text-2xl">{{ $cItem->icon }}</span>
                                         @elseif($cItem->icon)
-                                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 {!! $cItem->icon !!}
                                             </svg>
                                         @else
-                                            <span class="text-zinc-500">★</span>
+                                            <span class="text-slate-500 font-bold">★</span>
                                         @endif
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <span class="text-xs font-bold text-zinc-900 dark:text-white">{{ $cItem->title }}</span>
+                                            <span class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $cItem->title }}</span>
                                             @if($cItem->badge)
-                                                <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-{{ $cItem->badge_color ?? 'emerald' }}-500 text-white">
+                                                <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-{{ $cItem->badge_color ?? 'indigo' }}-600 text-white shadow-2xs">
                                                     {{ $cItem->badge }}
                                                 </span>
                                             @endif
                                         </div>
                                         @if($cItem->subtitle)
-                                            <p class="text-[10px] text-zinc-500 dark:text-zinc-400">{{ $cItem->subtitle }}</p>
+                                            <p class="text-[11px] text-slate-500 mt-0.5">{{ $cItem->subtitle }}</p>
                                         @endif
                                     </div>
                                 </div>
-                                <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                                <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
                             </a>
                         @endforeach
                     </div>

@@ -5,9 +5,13 @@
         editingItem: null,
         activeTab: 'mobile_bottom',
         previewItems: {{ Js::from($bottomItems) }},
+        newImagePreview: null,
+        editImagePreview: null,
+        newImageUrl: '',
         
         openEdit(item) {
             this.editingItem = JSON.parse(JSON.stringify(item));
+            this.editImagePreview = item.image_url || null;
             this.editModalOpen = true;
         },
 
@@ -125,14 +129,14 @@
                                             </button>
                                         </div>
 
-                                        <!-- Icon / Image Preview -->
-                                        <div class="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
+                                        <!-- Icon / Image Preview (4x Large HD Size) -->
+                                        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-900 border-2 border-slate-700/80 flex items-center justify-center shrink-0 overflow-hidden shadow-inner p-2.5 group-hover:border-amber-400/50 transition-colors">
                                             @if($item->icon_type === 'image' && $item->image_url)
-                                                <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-7 h-7 object-contain rounded-lg">
+                                                <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-full h-full object-contain rounded-xl drop-shadow">
                                             @elseif($item->icon_type === 'emoji' && $item->icon)
-                                                <span class="text-xl">{{ $item->icon }}</span>
+                                                <span class="text-4xl sm:text-5xl leading-none">{{ $item->icon }}</span>
                                             @elseif($item->icon)
-                                                <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="w-10 h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     {!! $item->icon !!}
                                                 </svg>
                                             @else
@@ -245,15 +249,15 @@
                                         <div class="flex flex-col items-center justify-center py-0.5 cursor-pointer group">
                                             <div class="relative">
                                                 @if($item->icon_type === 'image' && $item->image_url)
-                                                    <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-4 h-4 object-contain">
+                                                    <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-8 h-8 object-contain drop-shadow">
                                                 @elseif($item->icon_type === 'emoji' && $item->icon)
-                                                    <span class="text-sm leading-none">{{ $item->icon }}</span>
+                                                    <span class="text-base leading-none">{{ $item->icon }}</span>
                                                 @elseif($item->icon)
-                                                    <svg class="w-4 h-4 text-zinc-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg class="w-5 h-5 text-zinc-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         {!! $item->icon !!}
                                                     </svg>
                                                 @else
-                                                    <div class="w-4 h-4 rounded-full bg-zinc-800 text-zinc-400 text-[8px] flex items-center justify-center">★</div>
+                                                    <div class="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 text-[10px] flex items-center justify-center">★</div>
                                                 @endif
 
                                                 @if($item->badge)
@@ -346,13 +350,31 @@
                             <p class="text-[10px] text-slate-400">Paste standard Heroicons or Feather SVG inner path.</p>
                         </div>
 
-                        <!-- Image Upload Option -->
-                        <div x-show="iconType === 'image'" class="space-y-2">
-                            <input type="file" name="image_file" accept="image/*" 
-                                   class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700">
-                            <div class="text-[11px] text-slate-400">Or paste direct Image URL:</div>
-                            <input type="text" name="image_url" placeholder="https://example.com/icon.png" 
-                                   class="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs">
+                        <!-- Image Upload Option (4x Large HD Preview) -->
+                        <div x-show="iconType === 'image'" class="space-y-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                            <div class="flex flex-col sm:flex-row items-center gap-4">
+                                <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl bg-slate-950 border-2 border-dashed border-amber-500/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xl p-3 relative group">
+                                    <template x-if="newImagePreview">
+                                        <img :src="newImagePreview" class="w-full h-full object-contain rounded-xl drop-shadow-lg">
+                                    </template>
+                                    <template x-if="!newImagePreview">
+                                        <div class="text-center text-slate-500 p-2">
+                                            <span class="text-4xl block mb-1">🖼️</span>
+                                            <span class="text-xs font-black text-amber-400 block">4x Large Icon</span>
+                                            <span class="text-[10px] text-slate-400 mt-0.5 block">Select image to preview</span>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="space-y-2 flex-1 w-full">
+                                    <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block">Upload 4x Nav Icon Image</span>
+                                    <input type="file" name="image_file" accept="image/*" 
+                                           @change="const f = $event.target.files[0]; if (f) { const r = new FileReader(); r.onload = (e) => newImagePreview = e.target.result; r.readAsDataURL(f); }"
+                                           class="w-full text-xs text-slate-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
+                                    <div class="text-[11px] text-slate-400">Or paste direct Image URL:</div>
+                                    <input type="text" name="image_url" x-model="newImageUrl" @input="newImagePreview = newImageUrl" placeholder="https://example.com/icon.png" 
+                                           class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400 focus:outline-none">
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Emoji Option -->
@@ -453,11 +475,31 @@
                                           class="w-full px-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white font-mono text-xs focus:border-amber-400 focus:outline-none"></textarea>
                             </div>
 
-                            <div x-show="editingItem.icon_type === 'image'" class="space-y-2">
-                                <input type="file" name="image_file" accept="image/*" 
-                                       class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200">
-                                <input type="text" name="image_url" x-model="editingItem.image_url" placeholder="https://..." 
-                                       class="w-full px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs">
+                            <!-- Image Upload Option (4x Large HD Preview) -->
+                            <div x-show="editingItem.icon_type === 'image'" class="space-y-3 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                                <div class="flex flex-col sm:flex-row items-center gap-4">
+                                    <div class="w-36 h-36 sm:w-44 sm:h-44 rounded-2xl bg-slate-950 border-2 border-dashed border-amber-500/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xl p-3 relative group">
+                                        <template x-if="editImagePreview || editingItem.image_url">
+                                            <img :src="editImagePreview || editingItem.image_url" class="w-full h-full object-contain rounded-xl drop-shadow-lg">
+                                        </template>
+                                        <template x-if="!editImagePreview && !editingItem.image_url">
+                                            <div class="text-center text-slate-500 p-2">
+                                                <span class="text-4xl block mb-1">🖼️</span>
+                                                <span class="text-xs font-black text-amber-400 block">4x Large Icon</span>
+                                                <span class="text-[10px] text-slate-400 mt-0.5 block">Select image to preview</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="space-y-2 flex-1 w-full">
+                                        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block">4x Nav Icon Image</span>
+                                        <input type="file" name="image_file" accept="image/*" 
+                                               @change="const f = $event.target.files[0]; if (f) { const r = new FileReader(); r.onload = (e) => editImagePreview = e.target.result; r.readAsDataURL(f); }"
+                                               class="w-full text-xs text-slate-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
+                                        <div class="text-[11px] text-slate-400">Or change Image URL:</div>
+                                        <input type="text" name="image_url" x-model="editingItem.image_url" @input="editImagePreview = editingItem.image_url" placeholder="https://..." 
+                                               class="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400 focus:outline-none">
+                                    </div>
+                                </div>
                             </div>
 
                             <div x-show="editingItem.icon_type === 'emoji'" class="space-y-1">
