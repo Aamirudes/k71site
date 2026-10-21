@@ -34,7 +34,7 @@
                         <h2 class="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">1-Tap {{ ucfirst($targetVertical) }} Presets</h2>
                         <span class="text-[9px] bg-stone-100 text-stone-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-stone-200">Fast Track</span>
                     </div>
-                    <p class="text-[10px] sm:text-xs text-gray-500 leading-tight">Instant pre-fills tailored exclusively for your {{ $verticals[$targetVertical]['name'] ?? $targetVertical }} store catalog.</p>
+                    <p class="text-[10px] sm:text-xs text-gray-500 leading-tight">Instant pre-fills tailored exclusively for your {{ (isset($verticals) && isset($verticals[$targetVertical]['name'])) ? $verticals[$targetVertical]['name'] : ucfirst($targetVertical ?? 'Store') }} catalog.</p>
                 </div>
             </div>
             <template x-if="activePreset">

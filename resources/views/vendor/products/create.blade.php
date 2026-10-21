@@ -895,9 +895,9 @@
                 vertical: @json(old('vertical', $targetVertical)),
                 listingType: @json(old('listing_type', $targetVertical === 'services' ? 'booking' : ($targetVertical === 'used' ? 'contact_seller' : 'purchase'))),
                 customFields: @json(old('custom_fields', (object)[])),
-                verticalsList: @json($verticals),
-                listingTypesList: @json($listingTypes),
-                allCategoryFields: @json($categoryFields),
+                verticalsList: @json($verticals ?? []),
+                listingTypesList: @json($listingTypes ?? []),
+                allCategoryFields: @json($categoryFields ?? []),
 
                 get currentFields() {
                     return this.allCategoryFields[this.vertical] || [];

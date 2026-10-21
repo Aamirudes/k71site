@@ -1,4 +1,15 @@
 <x-layouts.vendor title="Manage Orders">
+@php
+    $search = $search ?? request('search', '');
+    $status = $status ?? request('status', 'all');
+    $counts = array_merge([
+        'all' => 0,
+        'to_pack' => 0,
+        'shipped' => 0,
+        'delivered' => 0,
+        'cancelled' => 0,
+    ], is_array($counts ?? null) ? $counts : []);
+@endphp
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
@@ -13,23 +24,23 @@
         <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             <a href="{{ route('vendor.orders.index', ['status' => 'all', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'all' ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/70' }}">
-                All Orders ({{ $counts['all'] }})
+                All Orders ({{ $counts['all'] ?? 0 }})
             </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'to_pack', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'to_pack' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200/70' }}">
-                ⚡ To Pack ({{ $counts['to_pack'] }})
+                ⚡ To Pack ({{ $counts['to_pack'] ?? 0 }})
             </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'shipped', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'shipped' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200/70' }}">
-                🚚 In Transit ({{ $counts['shipped'] }})
+                🚚 In Transit ({{ $counts['shipped'] ?? 0 }})
             </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'delivered', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'delivered' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-200/70' }}">
-                ✓ Delivered ({{ $counts['delivered'] }})
+                ✓ Delivered ({{ $counts['delivered'] ?? 0 }})
             </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'cancelled', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'cancelled' ? 'bg-rose-600 text-white shadow-xs' : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200/70' }}">
-                ✕ Cancelled ({{ $counts['cancelled'] }})
+                ✕ Cancelled ({{ $counts['cancelled'] ?? 0 }})
             </a>
         </div>
 

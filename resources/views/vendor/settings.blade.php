@@ -1,4 +1,13 @@
 <x-layouts.vendor title="Operations Settings">
+@php
+    $settings = $settings ?? ($vendor?->setting ?? new \App\Models\VendorSetting([
+        'shipping_type' => 'flat',
+        'shipping_flat_rate' => 5000,
+        'processing_days' => 3,
+        'return_window_days' => 7,
+    ]));
+    $errors = $errors ?? new \Illuminate\Support\ViewErrorBag();
+@endphp
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Operations & Payments</h1>

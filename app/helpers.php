@@ -139,3 +139,21 @@ if (!function_exists('k71_vendor_url')) {
         return "{$scheme}://vendor.{$rootDomain}{$portSuffix}" . ($cleanPath ? '/' . $cleanPath : '');
     }
 }
+
+if (!function_exists('format_user_avatar')) {
+    /**
+     * Return user profile avatar or high-resolution UI avatar fallback.
+     */
+    function format_user_avatar(?string $avatar, ?string $name = 'User'): string
+    {
+        if (!empty($avatar)) {
+            if (str_starts_with($avatar, 'http://') || str_starts_with($avatar, 'https://') || str_starts_with($avatar, '/')) {
+                return $avatar;
+            }
+            return '/storage/' . ltrim($avatar, '/');
+        }
+        $name = trim($name ?? 'User');
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name ?: 'User') . '&background=0095F6&color=ffffff&size=200&bold=true&format=svg';
+    }
+}
+

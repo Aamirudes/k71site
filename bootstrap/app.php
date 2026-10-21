@@ -45,13 +45,14 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
-            if ($request->expectsJson()) {
+            if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
-                    'message' => 'Your security session has expired. Please refresh the page and try again.',
+                    'message' => 'Your security session was refreshed. Please re-submit.',
+                    'csrf_token' => csrf_token(),
                 ], 419);
             }
-            return redirect()->back()
+            return redirect()->back(fallback: url('/'))
                 ->withInput($request->except('_token', 'password', 'password_confirmation'))
-                ->with('error', 'Security token refreshed. Please click Save again.');
+                ->with('info', 'Your session token was automatically refreshed. Please click submit again.');
         });
     })->create();

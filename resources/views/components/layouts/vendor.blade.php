@@ -226,7 +226,7 @@
                 </div>
                 <div class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Subdomain Wildcard Engine Active
+                    Store Active
                 </div>
             </div>
 
@@ -289,9 +289,8 @@
     <!-- CSRF Auto-Refresh & Session Heartbeat (Prevents 419 Page Expired forever) -->
     <script>
         (function() {
-            // Heartbeat every 4 minutes to keep session active while editing
-            setInterval(function() {
-                fetch('/api/heartbeat', {
+            function refreshCsrfToken() {
+                return fetch('/api/heartbeat', {
                     method: 'GET',
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
@@ -304,9 +303,13 @@
                             inp.value = data.csrf_token;
                         });
                     }
+                    return data?.csrf_token;
                 })
-                .catch(() => {});
-            }, 240000);
+                .catch(() => null);
+            }
+
+            // Heartbeat every 60 seconds to keep session active while editing
+            setInterval(refreshCsrfToken, 60000);
 
             // Ensure form submission uses the latest csrf-token meta
             document.addEventListener('submit', function(e) {

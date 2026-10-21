@@ -1,5 +1,6 @@
 <x-layouts.vendor title="Storefront Customization Studio">
     @php
+        $errors = $errors ?? new \Illuminate\Support\ViewErrorBag();
         $social = is_array($vendor->social_links) ? $vendor->social_links : (is_string($vendor->social_links) ? (json_decode($vendor->social_links, true) ?: []) : []);
         $currentPalette = old('colour_palette', $vendor->colour_palette ?? 'sage');
         if ($currentPalette === 'default') { $currentPalette = 'sage'; }

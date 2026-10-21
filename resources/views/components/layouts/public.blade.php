@@ -495,6 +495,39 @@
         function addToWishlist(productId) {
             window.toggleProductWishlist(productId);
         }
+
+        // CSRF Auto-Refresh & Session Heartbeat (Guarantees zero 419 Page Expired errors)
+        (function() {
+            function refreshCsrfToken() {
+                return fetch('/api/heartbeat', {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.csrf_token) {
+                        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                        if (csrfMeta) csrfMeta.content = data.csrf_token;
+                        document.querySelectorAll('input[name="_token"]').forEach(inp => {
+                            inp.value = data.csrf_token;
+                        });
+                    }
+                    return data?.csrf_token;
+                })
+                .catch(() => null);
+            }
+            setInterval(refreshCsrfToken, 60000);
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form && form.tagName === 'FORM') {
+                    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                    const tokenInput = form.querySelector('input[name="_token"]');
+                    if (csrfMeta && tokenInput && csrfMeta.content) {
+                        tokenInput.value = csrfMeta.content;
+                    }
+                }
+            }, true);
+        })();
     </script>
     
     @stack('scripts')

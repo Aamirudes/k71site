@@ -842,9 +842,9 @@
                 vertical: @json(old('vertical', $product->vertical ?: 'marketplace')),
                 listingType: @json(old('listing_type', $product->listing_type ?: 'purchase')),
                 customFields: @json(old('custom_fields', $product->custom_fields ?: (object)[])),
-                verticalsList: @json($verticals),
-                listingTypesList: @json($listingTypes),
-                allCategoryFields: @json($categoryFields),
+                verticalsList: @json($verticals ?? []),
+                listingTypesList: @json($listingTypes ?? []),
+                allCategoryFields: @json($categoryFields ?? []),
 
                 get currentFields() {
                     return this.allCategoryFields[this.vertical] || [];

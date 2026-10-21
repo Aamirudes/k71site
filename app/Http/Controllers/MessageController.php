@@ -23,7 +23,7 @@ class MessageController extends Controller
                 @session_start();
             }
             $_SESSION['user_id'] = $user->id;
-            $_SESSION['username'] = $user->username;
+            $_SESSION['username'] = $user->username ?? ($user->first_name ?? 'User');
         }
         return view('messages.index', compact('user'));
     }
