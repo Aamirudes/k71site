@@ -336,7 +336,12 @@ if (isset($_GET['test_run'])) {
     echo "Testing path: {$targetPath}\n\n";
     try {
         $httpKernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-        $simReq = Illuminate\Http\Request::create($targetPath, 'GET');
+        $simReq = Illuminate\Http\Request::create($targetPath, 'GET', [], [], [], [
+            'HTTP_HOST' => 'marblemandi.org',
+            'SERVER_NAME' => 'marblemandi.org',
+            'HTTPS' => 'on',
+            'SERVER_PORT' => '443',
+        ]);
         $simRes = $httpKernel->handle($simReq);
         echo "HTTP Status: " . $simRes->getStatusCode() . "\n";
         echo "Headers: " . print_r($simRes->headers->all(), true) . "\n";
