@@ -426,6 +426,69 @@
                     inset 0 1px 1px 0 rgba(255, 255, 255, 0.16) !important;
     }
 
+    /* ==========================================================================
+       FIGMA LIQUID GLASS TILES (Optical Fluid Glassmorphism Spec)
+       ========================================================================== */
+    .liquid-glass-tile {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 100%) !important;
+        backdrop-filter: blur(28px) saturate(190%) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        box-shadow: 0 16px 45px -10px rgba(15, 23, 42, 0.08),
+                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.85),
+                    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.02) !important;
+        border-radius: 24px;
+        transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html.dark .liquid-glass-tile {
+        background: linear-gradient(135deg, rgba(25, 34, 56, 0.72) 0%, rgba(15, 23, 42, 0.78) 100%) !important;
+        backdrop-filter: blur(32px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.6),
+                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18),
+                    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4) !important;
+    }
+
+    .liquid-glass-tile:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 24px 55px -10px rgba(79, 70, 229, 0.18),
+                    inset 0 1px 2px 0 rgba(255, 255, 255, 0.9) !important;
+        border-color: rgba(99, 102, 241, 0.4) !important;
+    }
+
+    html.dark .liquid-glass-tile:hover {
+        box-shadow: 0 24px 55px -10px rgba(99, 102, 241, 0.25),
+                    inset 0 1px 2px 0 rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(129, 140, 248, 0.3) !important;
+    }
+
+    /* Floating Liquid Quick-Action Capsule / Orb */
+    .liquid-glass-launcher {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.6) 100%) !important;
+        backdrop-filter: blur(28px) saturate(200%) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.75) !important;
+        box-shadow: 0 16px 40px -8px rgba(79, 70, 229, 0.35),
+                    0 2px 6px rgba(0, 0, 0, 0.05),
+                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9) !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    html.dark .liquid-glass-launcher {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        box-shadow: 0 20px 48px -8px rgba(99, 102, 241, 0.45),
+                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22) !important;
+    }
+
+    .liquid-glass-launcher:hover {
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 22px 50px -8px rgba(79, 70, 229, 0.5),
+                    inset 0 1px 2px 0 rgba(255, 255, 255, 1) !important;
+    }
+
     .specular-border {
         position: relative;
     }

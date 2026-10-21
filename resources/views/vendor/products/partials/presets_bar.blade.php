@@ -1,3 +1,6 @@
+@php
+    $targetVertical = $targetVertical ?? ($vendorType ?? (auth()->user()?->vendor?->vendor_type ?? 'clothing'));
+@endphp
 <!-- ⚡ 1-Tap Category Master Presets Bar -->
 <style>
     .preset-cards-grid {
@@ -31,10 +34,10 @@
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <h2 class="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">1-Tap {{ ucfirst($targetVertical) }} Presets</h2>
+                        <h2 class="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">1-Tap {{ $sectorConfig['label'] ?? ucfirst($targetVertical) }} Presets</h2>
                         <span class="text-[9px] bg-stone-100 text-stone-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-stone-200">Fast Track</span>
                     </div>
-                    <p class="text-[10px] sm:text-xs text-gray-500 leading-tight">Instant pre-fills tailored exclusively for your {{ (isset($verticals) && isset($verticals[$targetVertical]['name'])) ? $verticals[$targetVertical]['name'] : ucfirst($targetVertical ?? 'Store') }} catalog.</p>
+                    <p class="text-[10px] sm:text-xs text-gray-500 leading-tight">Instant pre-fills tailored exclusively for your {{ $sectorConfig['catalog_name'] ?? 'Store' }} catalog.</p>
                 </div>
             </div>
             <template x-if="activePreset">
@@ -48,7 +51,101 @@
         </div>
 
         <!-- Variety Filter Tabs -->
-        @if($targetVertical === 'food')
+        @if($targetVertical === 'electronics' || ($vendorType ?? '') === 'electronics')
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
+                <button type="button" @click="presetTab = 'all'"
+                        :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    ✨ All Tech (6)
+                </button>
+                <button type="button" @click="presetTab = 'smartphones'"
+                        :class="presetTab === 'smartphones' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    📱 5G Smartphones
+                </button>
+                <button type="button" @click="presetTab = 'laptops'"
+                        :class="presetTab === 'laptops' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    💻 Laptops & IT
+                </button>
+                <button type="button" @click="presetTab = 'audio'"
+                        :class="presetTab === 'audio' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🎧 TWS & Audio
+                </button>
+                <button type="button" @click="presetTab = 'wearables'"
+                        :class="presetTab === 'wearables' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    ⌚ Smartwatches
+                </button>
+                <button type="button" @click="presetTab = 'accessories'"
+                        :class="presetTab === 'accessories' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🔌 GaN Fast Chargers
+                </button>
+                <button type="button" @click="presetTab = 'displays'"
+                        :class="presetTab === 'displays' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🖥️ 4K Monitors
+                </button>
+            </div>
+        @elseif($targetVertical === 'automotive' || ($vendorType ?? '') === 'automotive')
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
+                <button type="button" @click="presetTab = 'all'"
+                        :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    ✨ All Spares (5)
+                </button>
+                <button type="button" @click="presetTab = 'oils'"
+                        :class="presetTab === 'oils' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🛢️ Synthetic Oils
+                </button>
+                <button type="button" @click="presetTab = 'tyres'"
+                        :class="presetTab === 'tyres' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🛞 Tyres & Wheels
+                </button>
+                <button type="button" @click="presetTab = 'helmets'"
+                        :class="presetTab === 'helmets' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🪖 Riding Helmets
+                </button>
+                <button type="button" @click="presetTab = 'brakes'"
+                        :class="presetTab === 'brakes' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🛑 Brakes & Pads
+                </button>
+            </div>
+        @elseif($targetVertical === 'beauty' || ($vendorType ?? '') === 'beauty')
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
+                <button type="button" @click="presetTab = 'all'"
+                        :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    ✨ All Beauty (5)
+                </button>
+                <button type="button" @click="presetTab = 'skincare'"
+                        :class="presetTab === 'skincare' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🧴 Skincare Serums
+                </button>
+                <button type="button" @click="presetTab = 'makeup'"
+                        :class="presetTab === 'makeup' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    💄 Matte Lipsticks
+                </button>
+                <button type="button" @click="presetTab = 'perfumes'"
+                        :class="presetTab === 'perfumes' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🌸 Luxury Perfumes
+                </button>
+                <button type="button" @click="presetTab = 'haircare'"
+                        :class="presetTab === 'haircare' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
+                        class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
+                    🌿 Organic Hair Oils
+                </button>
+            </div>
+        @elseif($targetVertical === 'food')
             <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
                 <button type="button" @click="presetTab = 'all'"
                         :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"

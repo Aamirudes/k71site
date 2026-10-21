@@ -1,91 +1,51 @@
-<x-layouts.vendor :title="($targetVertical ?? '') === 'food' ? 'Digital Menu' : (($targetVertical ?? '') === 'services' ? 'Services' : (($targetVertical ?? '') === 'used' ? 'Pre-Owned Inventory' : 'Products'))">
+@php
+    $curVendor = auth()->user()?->vendor;
+    $sec = $curVendor ? $curVendor->getSectorConfig() : [
+        'name' => 'Marketplace Catalog',
+        'catalog_name' => 'Products & Catalog',
+        'item_singular' => 'Product',
+        'icon' => '📦',
+        'badge' => 'Verified Merchant'
+    ];
+@endphp
+
+<x-layouts.vendor :title="$sec['catalog_name']">
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-serif font-bold text-gray-900 tracking-tight">
-                @if(($targetVertical ?? '') === 'food')
-                    🍽️ Digital Menu & Dishes
-                @elseif(($targetVertical ?? '') === 'services')
-                    🛠️ Service Packages & Tiers
-                @elseif(($targetVertical ?? '') === 'used')
-                    ♻️ Pre-Owned & Refurbished Inventory
-                @else
-                    Products & Apparel Catalog
-                @endif
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/50 mb-2">
+                <span>{{ $sec['icon'] }}</span>
+                <span>{{ $sec['badge'] }}</span>
+            </div>
+            <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span>{{ $sec['icon'] }}</span>
+                <span>{{ $sec['catalog_name'] }}</span>
             </h1>
-            <p class="mt-2 text-sm text-gray-500 font-medium">
-                @if(($targetVertical ?? '') === 'food')
-                    Live kitchen digital menu, recipe portions, pricing, and tamper-proof dispatch availability.
-                @elseif(($targetVertical ?? '') === 'services')
-                    Doorstep service packages, pricing tiers, and appointment bookings.
-                @elseif(($targetVertical ?? '') === 'used')
-                    Tested second-hand inventory, cosmetic conditions, and buyer testing warranty statuses.
-                @else
-                    A list of all the products in your store including their name, price, stock and status.
-                @endif
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                Manage live {{ strtolower($sec['catalog_name']) }}, track inventory stock, set trade pricing, and configure warranty or specifications.
             </p>
         </div>
         <div class="mt-4 sm:mt-0">
             <a href="{{ route('vendor.products.create') }}" class="btn-primary inline-flex items-center justify-center text-sm shadow-sm hover:shadow transition-all">
                 <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                @if(($targetVertical ?? '') === 'food')
-                    Add New Dish
-                @elseif(($targetVertical ?? '') === 'services')
-                    Add Service Offering
-                @elseif(($targetVertical ?? '') === 'used')
-                    List Pre-Owned Item
-                @else
-                    Add Product
-                @endif
+                <span>Add {{ $sec['item_singular'] }}</span>
             </a>
         </div>
     </div>
 
     @if($products->isEmpty())
-        <div class="bg-white/60 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-sm p-12 text-center">
-            <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                @if(($targetVertical ?? '') === 'food')
-                    🍲
-                @elseif(($targetVertical ?? '') === 'services')
-                    🧰
-                @elseif(($targetVertical ?? '') === 'used')
-                    📦
-                @else
-                    <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                @endif
+        <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-sm p-12 text-center">
+            <div class="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                <span>{{ $sec['icon'] }}</span>
             </div>
-            <h3 class="text-lg font-bold text-gray-900 mb-1">
-                @if(($targetVertical ?? '') === 'food')
-                    No Dishes On Your Menu Yet
-                @elseif(($targetVertical ?? '') === 'services')
-                    No Services Listed Yet
-                @elseif(($targetVertical ?? '') === 'used')
-                    No Pre-Owned Items Yet
-                @else
-                    No Products Yet
-                @endif
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                No {{ $sec['catalog_name'] }} Listed Yet
             </h3>
-            <p class="text-gray-500 text-sm max-w-sm mx-auto mb-6">
-                @if(($targetVertical ?? '') === 'food')
-                    Start building your digital food menu by adding your first signature recipe or dish.
-                @elseif(($targetVertical ?? '') === 'services')
-                    Start listing your on-demand home or commercial service packages.
-                @elseif(($targetVertical ?? '') === 'used')
-                    Start listing your tested second-hand gadgets, electronics, or goods.
-                @else
-                    Start building your catalog by adding your first product.
-                @endif
+            <p class="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto mb-6">
+                Start building your {{ $sec['name'] }} store by adding your first {{ strtolower($sec['item_singular']) }}.
             </p>
             <a href="{{ route('vendor.products.create') }}" class="btn-primary inline-flex items-center justify-center text-sm px-6 py-2">
-                @if(($targetVertical ?? '') === 'food')
-                    Add Your First Dish
-                @elseif(($targetVertical ?? '') === 'services')
-                    Add Your First Service
-                @elseif(($targetVertical ?? '') === 'used')
-                    List Your First Item
-                @else
-                    Add Your First Product
-                @endif
+                <span>Add Your First {{ $sec['item_singular'] }}</span>
             </a>
         </div>
     @else

@@ -57,18 +57,24 @@
           }
       }">
 
+    <!-- Ambient Optical Liquid Glow Refraction Orbs (Figma Depth Spec) -->
+    <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+        <div class="absolute -top-[20%] right-[15%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-600/12 via-purple-600/8 to-transparent blur-3xl"></div>
+        <div class="absolute bottom-[10%] -left-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-blue-600/10 via-cyan-500/8 to-transparent blur-3xl"></div>
+    </div>
+
     @php
         $curVendor = auth()->user()?->vendor;
-        $vType = $curVendor?->vendor_type ?? 'clothing';
-        
-        $vConfigs = [
-            'clothing' => ['icon' => '👗', 'label' => 'Fashion & Apparel', 'color' => 'from-rose-500 to-pink-600', 'badge' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'],
-            'food' => ['icon' => '🍽️', 'label' => 'Cloud Kitchen & Menu', 'color' => 'from-amber-500 to-orange-600', 'badge' => 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20'],
-            'services' => ['icon' => '🛠️', 'label' => 'Doorstep & Pro Services', 'color' => 'from-blue-500 to-indigo-600', 'badge' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20'],
-            'used' => ['icon' => '📱', 'label' => 'Pre-Owned & Refurbished', 'color' => 'from-emerald-500 to-teal-600', 'badge' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'],
-            'b2b' => ['icon' => '🏭', 'label' => 'Heavy Industrial & RFQ', 'color' => 'from-purple-500 to-violet-600', 'badge' => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'],
+        $currentVInfo = $curVendor ? $curVendor->getSectorConfig() : [
+            'key' => 'clothing',
+            'icon' => '🏪',
+            'label' => 'Merchant Portal',
+            'color' => 'from-indigo-600 to-purple-600',
+            'badge' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+            'item_singular' => 'Product',
+            'add_btn' => 'Add Product',
         ];
-        $currentVInfo = $vConfigs[$vType] ?? $vConfigs['clothing'];
+        $vType = $curVendor?->vendor_type ?? 'clothing';
     @endphp
 
     <!-- Mobile sidebar backdrop -->
@@ -248,7 +254,7 @@
                 <!-- Quick Action New Product -->
                 <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-purple-600/20 active:scale-95 transition-all">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <span class="hidden sm:inline">Add {{ $vType === 'food' ? 'Dish' : ($vType === 'services' ? 'Service' : 'Product') }}</span>
+                    <span class="hidden sm:inline">{{ $currentVInfo['add_btn'] ?? 'Add Product' }}</span>
                     <span class="sm:hidden">Add</span>
                 </a>
 
@@ -324,5 +330,8 @@
             }, true);
         })();
     </script>
+
+    <!-- Universal Floating Quick-Chat Launcher -->
+    <x-k71-floating-chat />
 </body>
 </html>

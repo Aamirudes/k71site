@@ -1,6 +1,7 @@
 @php
     $curVendor = auth()->user()?->vendor;
     $vType = $curVendor?->vendor_type ?? 'clothing';
+    $sec = $curVendor ? $curVendor->getSectorConfig() : null;
 @endphp
 
 <div class="space-y-6">
@@ -24,39 +25,25 @@
             <a href="{{ route('vendor.products.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.products.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
-                    @if($vType === 'food')
-                        <span class="text-base">🍽️</span>
-                        <span>Digital Menu & Dishes</span>
-                    @elseif($vType === 'services')
-                        <span class="text-base">💼</span>
-                        <span>Service Packages & Gigs</span>
-                    @elseif($vType === 'used')
-                        <span class="text-base">📱</span>
-                        <span>Pre-Owned Inventory</span>
-                    @elseif($vType === 'b2b')
-                        <span class="text-base">🏭</span>
-                        <span>Industrial Catalog</span>
-                    @else
-                        <span class="text-base">👗</span>
-                        <span>Product Catalog</span>
-                    @endif
+                    <span class="text-base">{{ $sec['icon'] ?? '🛍️' }}</span>
+                    <span>{{ $sec['catalog_name'] ?? 'Product Catalog' }}</span>
                 </span>
                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('vendor.products.*') ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-zinc-400' }}">
                     Items
                 </span>
             </a>
 
-            @if($vType !== 'services')
+            @if(!in_array($vType, ['services', 'digital_services', 'real_estate']))
             <a href="{{ route('vendor.orders.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.orders.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
-                    <span class="text-base">{{ $vType === 'food' ? '🛵' : '📦' }}</span>
-                    <span>{{ $vType === 'food' ? 'Kitchen Orders' : 'Customer Orders' }}</span>
+                    <span class="text-base">{{ $vType === 'food' ? '🛵' : ($vType === 'electronics' ? '📦' : ($vType === 'automotive' ? '🏎️' : '📦')) }}</span>
+                    <span>{{ $vType === 'food' ? 'Kitchen Orders' : ($vType === 'electronics' ? 'Customer Orders & Shipments' : 'Customer Orders') }}</span>
                 </span>
             </a>
             @endif
 
-            @if($vType === 'services')
+            @if(in_array($vType, ['services']))
             <a href="{{ route('vendor.bookings.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.bookings.*') ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
@@ -76,12 +63,12 @@
             </a>
             @endif
 
-            @if($vType === 'b2b')
+            @if(in_array($vType, ['b2b', 'machinery', 'real_estate', 'digital_services']))
             <a href="{{ route('vendor.enquiries.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.enquiries.*') ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">📋</span>
-                    <span>RFQ Enquiries</span>
+                    <span>{{ $vType === 'real_estate' ? 'Property Enquiries' : ($vType === 'digital_services' ? 'Client Project Briefs' : 'RFQ Enquiries') }}</span>
                 </span>
             </a>
             @endif

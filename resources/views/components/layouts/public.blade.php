@@ -85,6 +85,13 @@
 </head>
 <body class="bg-brand-background text-brand-text dark:bg-zinc-950 dark:text-zinc-100 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-violet-500 selection:text-white transition-colors duration-200">
     
+    <!-- Ambient Optical Liquid Glass Backdrop Refraction Spheres (Figma Fluid Spec) -->
+    <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+        <div class="absolute -top-[15%] left-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-violet-600/15 via-indigo-500/10 to-transparent blur-3xl transform -translate-x-1/2"></div>
+        <div class="absolute top-[35%] -right-[10%] w-[650px] h-[650px] rounded-full bg-gradient-to-br from-blue-500/12 via-cyan-400/8 to-transparent blur-3xl"></div>
+        <div class="absolute bottom-[10%] left-[5%] w-[480px] h-[480px] rounded-full bg-gradient-to-tr from-purple-600/10 via-pink-500/8 to-transparent blur-3xl"></div>
+    </div>
+    
     <!-- K71 Top Navigation Header -->
     <x-k71-nav />
 
@@ -530,6 +537,9 @@
         })();
     </script>
     
+    <!-- Universal Liquid Glass Quick-Chat Launcher -->
+    <x-k71-floating-chat />
+
     @stack('scripts')
 </body>
 </html>

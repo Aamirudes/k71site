@@ -9,12 +9,26 @@
         'delivered' => 0,
         'cancelled' => 0,
     ], is_array($counts ?? null) ? $counts : []);
+    $curVendor = auth()->user()?->vendor;
+    $sec = $curVendor ? $curVendor->getSectorConfig() : [
+        'name' => 'Marketplace',
+        'orders_name' => 'Customer Orders & Shipments',
+        'icon' => '📦',
+        'badge' => 'Orders'
+    ];
 @endphp
     <!-- Header -->
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
-            <h1 class="text-3xl font-serif font-bold text-gray-900 tracking-tight">Orders</h1>
-            <p class="mt-1 text-sm text-gray-500 font-medium">Manage, fulfill shipments, and track orders for your store.</p>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/50 mb-2">
+                <span>{{ $sec['icon'] }}</span>
+                <span>{{ $sec['name'] }} Pipeline</span>
+            </div>
+            <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                <span>{{ $sec['icon'] }}</span>
+                <span>{{ $sec['orders_name'] }}</span>
+            </h1>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 font-medium">Manage, fulfill shipments, dispatch tracking, and settlement history for your {{ strtolower($sec['name']) }} store.</p>
         </div>
     </div>
 

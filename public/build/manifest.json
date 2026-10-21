@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-Bf9f_Is7.css",
+    "file": "assets/app-Bwt3Grgr.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -12,21 +12,6 @@
     "file": "assets/app-DMsN-rLE.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true
-  },
-  "../k71/resources/css/app.css": {
-    "file": "assets/app-Bf9f_Is7.css",
-    "src": "../k71/resources/css/app.css",
-    "isEntry": true,
-    "name": "app",
-    "names": [
-      "app.css"
-    ]
-  },
-  "../k71/resources/js/app.js": {
-    "file": "assets/app-DMsN-rLE.js",
-    "name": "app",
-    "src": "../k71/resources/js/app.js",
     "isEntry": true
   }
 }

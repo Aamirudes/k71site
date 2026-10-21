@@ -91,12 +91,59 @@ class ProductController extends Controller
     public function create()
     {
         $vendor = auth()->user()->vendor;
+        $vendorType = $vendor?->vendor_type ?? 'clothing';
+        $sectorConfig = $vendor ? $vendor->getSectorConfig() : [];
         $targetVertical = $vendor ? $vendor->getVerticalKey() : 'marketplace';
 
-        $categories = Category::with('parent')
-            ->where('is_active', true)
-            ->when($vendor, fn($q) => $q->where('vertical', $targetVertical))
-            ->get();
+        // Smart Category Resolution tailored specifically to vendor's trade sector
+        $categoriesQuery = Category::with('parent')->where('is_active', true);
+
+        if ($vendorType === 'electronics') {
+            $categories = (clone $categoriesQuery)->where(function($q) {
+                $q->where('slug', 'LIKE', '%electronic%')
+                  ->orWhere('slug', 'LIKE', '%mobile%')
+                  ->orWhere('slug', 'LIKE', '%computer%')
+                  ->orWhere('name', 'LIKE', '%Electronic%')
+                  ->orWhere('name', 'LIKE', '%Mobile%')
+                  ->orWhere('name', 'LIKE', '%Computer%');
+            })->get();
+        } elseif ($vendorType === 'automotive') {
+            $categories = (clone $categoriesQuery)->where(function($q) {
+                $q->where('slug', 'LIKE', '%automotive%')
+                  ->orWhere('slug', 'LIKE', '%car%')
+                  ->orWhere('slug', 'LIKE', '%bike%')
+                  ->orWhere('slug', 'LIKE', '%spare%')
+                  ->orWhere('name', 'LIKE', '%Automotive%')
+                  ->orWhere('name', 'LIKE', '%Vehicle%');
+            })->get();
+        } elseif ($vendorType === 'beauty') {
+            $categories = (clone $categoriesQuery)->where(function($q) {
+                $q->where('slug', 'LIKE', '%beauty%')
+                  ->orWhere('slug', 'LIKE', '%skin%')
+                  ->orWhere('slug', 'LIKE', '%cosmetic%')
+                  ->orWhere('name', 'LIKE', '%Beauty%')
+                  ->orWhere('name', 'LIKE', '%Personal Care%');
+            })->get();
+        } elseif ($vendorType === 'home_living') {
+            $categories = (clone $categoriesQuery)->where(function($q) {
+                $q->where('slug', 'LIKE', '%home%')
+                  ->orWhere('slug', 'LIKE', '%furniture%')
+                  ->orWhere('name', 'LIKE', '%Home%')
+                  ->orWhere('name', 'LIKE', '%Furniture%');
+            })->get();
+        } elseif ($vendorType === 'toys_sports') {
+            $categories = (clone $categoriesQuery)->where(function($q) {
+                $q->where('slug', 'LIKE', '%toy%')
+                  ->orWhere('slug', 'LIKE', '%book%')
+                  ->orWhere('slug', 'LIKE', '%sport%')
+                  ->orWhere('name', 'LIKE', '%Toys%')
+                  ->orWhere('name', 'LIKE', '%Sports%');
+            })->get();
+        } elseif (in_array($targetVertical, ['food', 'services', 'used', 'enquiry'])) {
+            $categories = (clone $categoriesQuery)->where('vertical', $targetVertical)->get();
+        } else {
+            $categories = (clone $categoriesQuery)->where('vertical', 'marketplace')->get();
+        }
 
         if ($categories->isEmpty()) {
             $categories = Category::with('parent')->where('is_active', true)->get();
@@ -112,7 +159,7 @@ class ProductController extends Controller
         $listingTypes = $this->getListingTypesData();
         $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
 
-        return view('vendor.products.create', compact('vendor', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields'));
+        return view('vendor.products.create', compact('vendor', 'vendorType', 'sectorConfig', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields'));
     }
 
     public function store(Request $request)
@@ -123,7 +170,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
-            'vertical' => ['nullable', 'string', 'in:marketplace,food,services,used,enquiry'],
+            'vertical' => ['nullable', 'string'],
             'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
             'custom_fields' => ['nullable', 'array'],
             'base_price' => ['required', 'numeric', 'min:0'],

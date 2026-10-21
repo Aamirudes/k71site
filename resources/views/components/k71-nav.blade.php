@@ -37,6 +37,17 @@
         $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
     $navWishlistCount = count(\App\Models\Wishlist::getUserWishlistIds());
+    $navUnreadMessagesCount = 0;
+    if (auth()->check()) {
+        try {
+            $navUnreadMessagesCount = \App\Models\Message::where('recipient_id', auth()->id())->whereNull('read_at')->count();
+            if ($navUnreadMessagesCount === 0 && \Illuminate\Support\Facades\Schema::hasTable('chat_messages')) {
+                $navUnreadMessagesCount = \Illuminate\Support\Facades\DB::table('chat_messages')->where('recipient_id', auth()->id())->where('is_read', 0)->count();
+            }
+        } catch (\Throwable $e) {
+            $navUnreadMessagesCount = 0;
+        }
+    }
 @endphp
 
 <header x-data="{ 
@@ -147,6 +158,21 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
                     </svg>
                 </button>
+
+                <!-- Direct Messages Quick Access (Header) -->
+                <a href="{{ route('messages.index') }}" 
+                   class="p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-all duration-200 relative"
+                   title="Direct Messages"
+                   aria-label="Direct Messages">
+                    <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                    </svg>
+                    @if($navUnreadMessagesCount > 0)
+                        <span class="absolute top-1 right-1 bg-violet-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs animate-pulse">
+                            {{ $navUnreadMessagesCount > 99 ? '99+' : $navUnreadMessagesCount }}
+                        </span>
+                    @endif
+                </a>
 
                 <!-- Wishlist (Desktop) -->
                 <a href="{{ route('wishlist.index') }}" 

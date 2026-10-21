@@ -4,14 +4,21 @@
         $periodLabel = $periodLabel ?? 'Lifetime';
         $vKey = $vendor ? $vendor->getVerticalKey() : 'marketplace';
         
-        $vMeta = [
-            'food' => ['icon' => '🍽️', 'badge' => 'Cloud Kitchen & Restaurant', 'action' => 'Add Dish', 'catalog' => 'Menu Dishes', 'orders' => 'Kitchen Orders'],
-            'services' => ['icon' => '🛠️', 'badge' => 'Services Studio', 'action' => 'New Service', 'catalog' => 'Service Tiers', 'orders' => 'Bookings'],
-            'used' => ['icon' => '📱', 'badge' => 'Certified Pre-Owned', 'action' => 'List Item', 'catalog' => 'Inventory', 'orders' => 'Deals'],
-            'enquiry' => ['icon' => '🏭', 'badge' => 'Industrial RFQ', 'action' => 'Post RFQ', 'catalog' => 'Catalog', 'orders' => 'Quotes'],
-            'marketplace' => ['icon' => '🛍️', 'badge' => 'Curated Retail', 'action' => 'New Product', 'catalog' => 'Catalog Items', 'orders' => 'Orders'],
+        $sec = $vendor ? $vendor->getSectorConfig() : [
+            'name' => 'Marketplace Store',
+            'catalog_name' => 'Catalog Items',
+            'item_singular' => 'Product',
+            'icon' => '🛍️',
+            'badge' => 'Curated Retail',
+            'orders_name' => 'Orders'
         ];
-        $currV = $vMeta[$vKey] ?? $vMeta['marketplace'];
+        $currV = [
+            'icon' => $sec['icon'] ?? '🛍️',
+            'badge' => $sec['badge'] ?? 'Merchant Store',
+            'action' => 'Add ' . ($sec['item_singular'] ?? 'Item'),
+            'catalog' => $sec['catalog_name'] ?? 'Catalog Items',
+            'orders' => $sec['orders_name'] ?? 'Orders',
+        ];
         
         $shopName = $vendor->shop_name ?? $vendor->store_name ?? 'Vendor Store';
         $actionableCount = is_numeric($actionableOrders) ? (int)$actionableOrders : (is_countable($actionableOrders) ? count($actionableOrders) : 0);
