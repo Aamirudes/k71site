@@ -105,21 +105,48 @@ function get_current_user_id(): ?int
         }
     }
 
-    // Fallback: Check Laravel file session if present in cookie
-    global $basePath;
-    $cookieName = 'k71-session';
-    if (!empty($_COOKIE[$cookieName])) {
+    // Fallback: Check Laravel file & database session from cookie
+    global $basePath, $pdo;
+    
+    // Detect session cookie value from any candidate cookie
+    $cookieVal = null;
+    foreach ($_COOKIE as $k => $v) {
+        if ($k === 'k71-session' || $k === 'laravel-session' || str_contains($k, 'session')) {
+            if (!empty($v) && is_string($v)) {
+                $cookieVal = $v;
+                break;
+            }
+        }
+    }
+
+    if ($cookieVal) {
+        $cleanSessionId = preg_replace('/[^a-zA-Z0-9_-]/', '', $cookieVal);
+
+        // 1. Try file session driver
         $sessionDir = $basePath . '/storage/framework/sessions';
         if (!is_dir($sessionDir) && is_dir(dirname($basePath) . '/storage/framework/sessions')) {
             $sessionDir = dirname($basePath) . '/storage/framework/sessions';
         }
+
         if (is_dir($sessionDir)) {
+            // Check direct file matching session ID
+            $directFile = $sessionDir . '/' . $cleanSessionId;
+            if (file_exists($directFile)) {
+                $content = @file_get_contents($directFile);
+                if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
+                    $uid = (int) $matches[1];
+                    $_SESSION['user_id'] = $uid;
+                    return $uid;
+                }
+            }
+
+            // Fallback: Check most recent files
             $files = glob($sessionDir . '/*');
             if ($files) {
                 usort($files, function ($a, $b) {
                     return filemtime($b) <=> filemtime($a);
                 });
-                foreach (array_slice($files, 0, 5) as $f) {
+                foreach (array_slice($files, 0, 10) as $f) {
                     $content = @file_get_contents($f);
                     if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
                         $uid = (int) $matches[1];
@@ -127,6 +154,22 @@ function get_current_user_id(): ?int
                         return $uid;
                     }
                 }
+            }
+        }
+
+        // 2. Try database session driver if PDO available
+        if ($pdo) {
+            try {
+                $stmtDb = $pdo->prepare("SELECT user_id FROM sessions WHERE id = ? AND user_id IS NOT NULL LIMIT 1");
+                $stmtDb->execute([$cleanSessionId]);
+                $dbUid = $stmtDb->fetchColumn();
+                if ($dbUid) {
+                    $uid = (int) $dbUid;
+                    $_SESSION['user_id'] = $uid;
+                    return $uid;
+                }
+            } catch (\Throwable $t) {
+                // Ignore if sessions table does not exist
             }
         }
     }

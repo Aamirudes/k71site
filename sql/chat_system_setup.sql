@@ -19,10 +19,14 @@ CREATE TABLE IF NOT EXISTS `chat_conversations` (
   `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
   `user_one_id` INT NOT NULL,
   `user_two_id` INT NOT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'accepted',
+  `requested_by` INT NULL,
   `last_message_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `idx_conversation_pair` (`user_one_id`, `user_two_id`),
   INDEX `idx_user_one` (`user_one_id`),
   INDEX `idx_user_two` (`user_two_id`),
+  INDEX `idx_chat_status` (`status`),
+  INDEX `idx_chat_requested_by` (`requested_by`),
   INDEX `idx_last_message` (`last_message_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

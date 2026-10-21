@@ -18,12 +18,14 @@ class MessageController extends Controller
     public function index(Request $request): View
     {
         $user = auth()->user();
-        $conversations = $user->conversations()
-            ->with(['vendor', 'latestMessage', 'product'])
-            ->orderByDesc('last_message_at')
-            ->paginate(15);
-
-        return view('messages.index', compact('conversations'));
+        if ($user) {
+            if (session_status() === PHP_SESSION_NONE) {
+                @session_start();
+            }
+            $_SESSION['user_id'] = $user->id;
+            $_SESSION['username'] = $user->username;
+        }
+        return view('messages.index', compact('user'));
     }
 
     /**

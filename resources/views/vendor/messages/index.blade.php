@@ -4,6 +4,10 @@
             <h1 class="text-2xl font-serif font-bold text-gray-900">Customer Messages & Inquiries</h1>
             <p class="text-sm text-gray-500 mt-1">Direct inquiries, auction discussions, and customer support threads.</p>
         </div>
+        <a href="/messages" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-600 to-purple-600 text-white text-xs font-bold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all">
+            <span>✨ Open Realtime Direct Chat</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+        </a>
     </div>
 
     @if(session('success'))

@@ -96,8 +96,13 @@ class ProductController extends Controller
         $categories = Category::with('parent')
             ->where('is_active', true)
             ->when($vendor, fn($q) => $q->where('vertical', $targetVertical))
-            ->get()
-            ->sortBy(function($cat) {
+            ->get();
+
+        if ($categories->isEmpty()) {
+            $categories = Category::with('parent')->where('is_active', true)->get();
+        }
+
+        $categories = $categories->sortBy(function($cat) {
                 $parentName = $cat->parent ? $cat->parent->name : $cat->name;
                 return $parentName . ' - ' . $cat->name;
             })
@@ -367,13 +372,18 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
-        $targetVertical = $vendor->getVerticalKey();
+        $targetVertical = $product->vertical ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
 
         $categories = Category::with('parent')
             ->where('is_active', true)
             ->where('vertical', $targetVertical)
-            ->get()
-            ->sortBy(function($cat) {
+            ->get();
+
+        if ($categories->isEmpty()) {
+            $categories = Category::with('parent')->where('is_active', true)->get();
+        }
+
+        $categories = $categories->sortBy(function($cat) {
                 $parentName = $cat->parent ? $cat->parent->name : $cat->name;
                 return $parentName . ' - ' . $cat->name;
             })

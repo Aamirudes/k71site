@@ -19,186 +19,7 @@
             </div>
         </div>
 
-        <!-- ⚡ 1-Tap Category Master Presets Bar -->
-        <style>
-            .preset-cards-grid {
-                display: grid !important;
-                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-            }
-            @media (min-width: 768px) {
-                .preset-cards-grid {
-                    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-                    gap: 6px !important;
-                }
-            }
-            @media (min-width: 1024px) {
-                .preset-cards-grid {
-                    grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
-                    gap: 8px !important;
-                }
-            }
-            .preset-tab-btn {
-                white-space: nowrap;
-                transition: all 0.15s ease-in-out;
-            }
-        </style>
-        <div class="max-w-6xl mx-auto mb-5 sm:mb-6">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-5 transition-all">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 sm:pb-3 border-b border-gray-100 mb-2.5 sm:mb-3">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center text-sm sm:text-base font-bold shrink-0">
-                            ⚡
-                        </div>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h2 class="text-xs sm:text-sm font-bold text-gray-900 tracking-tight">1-Tap {{ ucfirst($targetVertical) }} Presets</h2>
-                                <span class="text-[9px] bg-stone-100 text-stone-700 font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider border border-stone-200">Fast Track</span>
-                            </div>
-                            <p class="text-[10px] sm:text-xs text-gray-500 leading-tight">Instant pre-fills tailored exclusively for your {{ $verticals[$targetVertical]['name'] ?? $targetVertical }} store catalog.</p>
-                        </div>
-                    </div>
-                    <template x-if="activePreset">
-                        <div class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200 w-fit shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Applied:</span>
-                            <span class="font-extrabold" x-text="categoryPresets[activePreset]?.name"></span>
-                            <button type="button" @click="activePreset = null" class="text-emerald-600 hover:text-emerald-900 ml-1 font-bold text-xs cursor-pointer" title="Clear selection">✕</button>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Variety Filter Tabs -->
-                @if($targetVertical === 'food')
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
-                        <button type="button" @click="presetTab = 'all'"
-                                :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ✨ All Dishes (8)
-                        </button>
-                        <button type="button" @click="presetTab = 'biryani'"
-                                :class="presetTab === 'biryani' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🍲 Biryani & Rice
-                        </button>
-                        <button type="button" @click="presetTab = 'fast_food'"
-                                :class="presetTab === 'fast_food' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🍕 Fast Food & Grills
-                        </button>
-                        <button type="button" @click="presetTab = 'meals'"
-                                :class="presetTab === 'meals' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🍛 Royal Thalis
-                        </button>
-                        <button type="button" @click="presetTab = 'desserts'"
-                                :class="presetTab === 'desserts' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🍮 Sweets & Coolers
-                        </button>
-                    </div>
-                @elseif($targetVertical === 'services')
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
-                        <button type="button" @click="presetTab = 'all'"
-                                :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ✨ All Services (5)
-                        </button>
-                        <button type="button" @click="presetTab = 'repairs'"
-                                :class="presetTab === 'repairs' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🔧 Appliance & Electrician
-                        </button>
-                        <button type="button" @click="presetTab = 'cleaning'"
-                                :class="presetTab === 'cleaning' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🧹 Deep Cleaning
-                        </button>
-                        <button type="button" @click="presetTab = 'tailoring'"
-                                :class="presetTab === 'tailoring' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ✂️ Tailoring & Salon
-                        </button>
-                    </div>
-                @elseif($targetVertical === 'used')
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
-                        <button type="button" @click="presetTab = 'all'"
-                                :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ✨ All Pre-Owned (5)
-                        </button>
-                        <button type="button" @click="presetTab = 'phones'"
-                                :class="presetTab === 'phones' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            📱 Phones & Mobiles
-                        </button>
-                        <button type="button" @click="presetTab = 'laptops'"
-                                :class="presetTab === 'laptops' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            💻 Laptops & Cameras
-                        </button>
-                        <button type="button" @click="presetTab = 'luxury'"
-                                :class="presetTab === 'luxury' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ⌚ Watches & Bikes
-                        </button>
-                    </div>
-                @else
-                    <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2.5 no-scrollbar" style="-webkit-overflow-scrolling: touch;">
-                        <button type="button" @click="presetTab = 'all'"
-                                :class="presetTab === 'all' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            ✨ All Varieties (30)
-                        </button>
-                        <button type="button" @click="presetTab = 'footwear'"
-                                :class="presetTab === 'footwear' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            👟 Footwear (11)
-                        </button>
-                        <button type="button" @click="presetTab = 'women_ethnic'"
-                                :class="presetTab === 'women_ethnic' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            🥻 Women Ethnic (8)
-                        </button>
-                        <button type="button" @click="presetTab = 'western'"
-                                :class="presetTab === 'western' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            👗 Western & Casual (4)
-                        </button>
-                        <button type="button" @click="presetTab = 'men'"
-                                :class="presetTab === 'men' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            👔 Men's Fashion (5)
-                        </button>
-                        <button type="button" @click="presetTab = 'kids_acc'"
-                                :class="presetTab === 'kids_acc' ? 'bg-stone-900 text-white shadow-2xs font-bold' : 'bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium'"
-                                class="preset-tab-btn text-[11px] sm:text-xs px-2.5 py-1 rounded-lg shrink-0 cursor-pointer">
-                            👶 Kids & Bags (2)
-                        </button>
-                    </div>
-                @endif
-
-                <!-- Presets Grid -->
-                <div class="preset-cards-grid" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px;">
-                    <template x-for="(p, key) in filteredPresets" :key="key">
-                        <button type="button" 
-                                @click="applyCategoryPreset(key)"
-                                :class="activePreset === key 
-                                    ? 'bg-stone-900 text-white border-stone-900 shadow-sm ring-2 ring-stone-900/10' 
-                                    : 'bg-stone-50 hover:bg-stone-100 text-gray-800 border border-gray-200/80 hover:border-gray-300 hover:shadow-2xs'"
-                                class="flex flex-col items-center justify-center py-2 px-1 rounded-xl transition-all duration-150 text-center group cursor-pointer active:scale-95"
-                                style="min-width: 0; width: 100%; box-sizing: border-box;">
-                            <span class="text-lg sm:text-2xl mb-1 group-hover:scale-110 transition-transform" x-text="p.icon"></span>
-                            <span class="text-[10px] sm:text-xs font-bold leading-tight truncate w-full text-center px-0.5" :class="activePreset === key ? 'text-white' : 'text-gray-900'" x-text="p.shortName"></span>
-                            <span class="text-[8px] sm:text-[9px] mt-0.5 leading-none truncate w-full text-center font-medium opacity-75" :class="activePreset === key ? 'text-stone-300' : 'text-gray-500'" x-text="p.badge"></span>
-                            <template x-if="activePreset === key">
-                                <span class="mt-1 text-[7px] sm:text-[8px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-1 py-0.2 rounded-full leading-none">✓ On</span>
-                            </template>
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
+        @include('vendor.products.partials.presets_bar')
 
 
         <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 pb-24">
@@ -456,7 +277,17 @@
                                         <span class="text-[10px] text-amber-800 font-semibold hidden sm:inline">• Automated Keyword Synthesis</span>
                                     </div>
                                     <div class="text-xs sm:text-sm font-black text-stone-900 mt-1 leading-snug break-words" x-text="smartTitleSuggestion"></div>
-                                    <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from your audience, craft fabric & footwear/apparel style.</p>
+                                    @if($targetVertical === 'food')
+                                        <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from your culinary specialty, ingredients & meal style.</p>
+                                    @elseif($targetVertical === 'services')
+                                        <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from your service specialty, tools & scope.</p>
+                                    @elseif($targetVertical === 'used')
+                                        <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from item model, condition & hardware inspection.</p>
+                                    @elseif($targetVertical === 'enquiry')
+                                        <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from material grade, industrial specs & wholesale volume.</p>
+                                    @else
+                                        <p class="text-[10px] text-stone-500 mt-0.5">Synthesized from your audience, craft fabric & footwear/apparel style.</p>
+                                    @endif
                                 </div>
                             </div>
                             <button type="button" @click="applySmartTitle()" class="shrink-0 px-3.5 py-2 bg-stone-900 hover:bg-black text-amber-300 text-xs font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 group">
@@ -1728,6 +1559,88 @@
                         sizeGuidePreset: 'none',
                         availableSizes: ['Standard Stock Setup'],
                         selectedSizes: ['Standard Stock Setup']
+                    },
+                    @elseif($targetVertical === 'enquiry')
+                    makrana_marble: {
+                        name: "Makrana Pure White Marble Slabs (Premium Cut)",
+                        shortName: 'White Marble Slabs',
+                        tab: 'stone',
+                        icon: '🏛️',
+                        badge: 'Export Grade • MOQ 500 Sq.Ft',
+                        categorySlug: 'enquiry-marble-granite',
+                        categoryId: 41,
+                        basePrice: '280',
+                        compareAtPrice: '380',
+                        totalStock: 5000,
+                        skuPrefix: 'MRB',
+                        title: 'Makrana Pure White Albeta Marble Slabs - 16mm Mirror Polished Export Grade (Lot #MK-2026)',
+                        description: `Direct quarry sourced Makrana Pure White Marble slabs with natural grey feather veining. Diamond gang-saw cut with uniform 16mm calibrated thickness, vacuum epoxy treated for microscopic pores, and finished with high-gloss mirror polish. Ideal for luxury residential villas, grand temple sanctums, and presidential suites. Full block photos and slab-by-slab layout inspection available on video call.`,
+                        material: 'Natural Calcite Calcium Carbonate Crystal (>98% CaCO3), Mirror Polished Epoxy Finish',
+                        fabricPills: ['98%+ Pure Calcite', 'Zero Chemical Bleaching', 'Diamond Gang-Saw Calibrated 16mm', 'Reinforced Mesh Backing'],
+                        careInstructions: 'Clean with neutral pH stone cleanser. Seal periodically with nano-fluoropolymer impregnating sealer.',
+                        carePills: ['Direct quarry pricing', 'Third-party lab tested', 'Safe wooden A-frame crate packing', 'Transit insurance included'],
+                        weightGrams: 42000,
+                        hsnCode: '6802',
+                        gstRate: '18',
+                        tags: 'marble, makrana marble, white marble, granite, natural stone, slabs, tiles, architecture, b2b',
+                        status: 'active',
+                        sizeGuidePreset: 'none',
+                        availableSizes: ['Sample Tile (1x1 Ft)', 'Cut-to-Size Flooring Lot (500 Sq.Ft)', 'Full Slab Gang-Saw Lot (2000+ Sq.Ft)'],
+                        selectedSizes: ['Cut-to-Size Flooring Lot (500 Sq.Ft)', 'Full Slab Gang-Saw Lot (2000+ Sq.Ft)']
+                    },
+                    bridge_saw_machine: {
+                        name: "5-Axis CNC Bridge Cutting Machine",
+                        shortName: 'CNC Bridge Saw',
+                        tab: 'machinery',
+                        icon: '⚙️',
+                        badge: 'Italian ESA CNC • 18.5kW',
+                        categorySlug: 'heavy-industrial-machinery-construction-stone-marble-machinery',
+                        categoryId: 103,
+                        basePrice: '850000',
+                        compareAtPrice: '1200000',
+                        totalStock: 5,
+                        skuPrefix: 'MCH',
+                        title: 'Heavy Duty 5-Axis CNC Bridge Cutting Saw for Granite, Marble & Quartz with Monoblock Steel Frame',
+                        description: `Industrial-grade 5-axis interpolated CNC bridge cutting saw engineered for precision profiling, slab cutting, sink cut-outs, and 3D stone carving. Powered by an 18.5kW inverter spindle with automatic blade tilt (0-90°) and head rotation (0-360°). Monoblock structural steel foundation eliminates the need for concrete side walls and enables rapid 2-day installation.`,
+                        material: 'High-Tensile Cast Monoblock Steel, Linear Guide Rails, Italian ESA CNC Controller',
+                        fabricPills: ['18.5kW High-Torque Spindle', 'Italian ESA CNC System', 'Monoblock Quick Install', '1-Year On-Site AMC'],
+                        careInstructions: 'Daily blade coolant lubrication inspection. Scheduled grease lubrication on all 5 guide axes.',
+                        carePills: ['12-Month full warranty', 'Pan-India technician dispatch', 'Free operator training included'],
+                        weightGrams: 50000,
+                        hsnCode: '8464',
+                        gstRate: '18',
+                        tags: 'bridge cutting machine, cnc machine, stone cutter, marble saw, granite machine, industrial machinery, b2b',
+                        status: 'active',
+                        sizeGuidePreset: 'none',
+                        availableSizes: ['Standard Monoblock Setup (18.5kW)', 'Heavy Production Line (Dual Table)'],
+                        selectedSizes: ['Standard Monoblock Setup (18.5kW)']
+                    },
+                    corrugated_boxes: {
+                        name: "5-Ply Heavy Duty Corrugated Shipping Boxes",
+                        shortName: 'Corrugated Boxes',
+                        tab: 'packaging',
+                        icon: '📦',
+                        badge: 'MOQ 1000 Pcs • Kraft',
+                        categorySlug: 'enquiry-packaging-materials',
+                        categoryId: 27,
+                        basePrice: '28',
+                        compareAtPrice: '45',
+                        totalStock: 10000,
+                        skuPrefix: 'BOX',
+                        title: 'Custom Branded 5-Ply Heavy-Duty Kraft Corrugated Shipping Cartons (Bursting Strength 14+ kg/cm²)',
+                        description: `High bursting strength 5-ply corrugated shipping cartons manufactured with virgin kraft paper liners and high-compression fluting. Designed for heavy ecommerce packaging, garment export containers, industrial components, and warehouse stacking up to 8 layers high. Available with custom 2-color flexographic company logo branding.`,
+                        material: '180 GSM Virgin Kraft Top Liner, 150 GSM Fluting Medium, 140 GSM Inner Liner',
+                        fabricPills: ['14+ kg/cm² Burst Factor', '100% Recyclable Virgin Kraft', 'Zero Moisture Absorption', 'Custom Logo Flexo Print'],
+                        careInstructions: 'Store in dry indoor warehouse elevated on wooden pallets.',
+                        carePills: ['FSC Certified paper', 'Drop-test certified', 'Dispatched bundled in 25s'],
+                        weightGrams: 350,
+                        hsnCode: '4819',
+                        gstRate: '12',
+                        tags: 'corrugated boxes, carton boxes, packaging material, shipping boxes, kraft paper, packaging, wholesale',
+                        status: 'active',
+                        sizeGuidePreset: 'none',
+                        availableSizes: ['Medium Box (12x10x8 inch)', 'Large Master Carton (18x14x12 inch)', 'Jumbo Export Box (24x18x16 inch)'],
+                        selectedSizes: ['Large Master Carton (18x14x12 inch)', 'Jumbo Export Box (24x18x16 inch)']
                     },
                     @else
                     suit_stitched: {

@@ -1,7 +1,8 @@
 <?php
 /**
- * API: Send Message with Security Verification & Timestamp Update
+ * API: Send Message with Instant Instagram DM Request & Reply Auto-Accept
  * File: api/chat/send_message.php
+ * K71 Realtime Direct Messaging Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -28,19 +29,11 @@ $rawInput = file_get_contents('php://input');
 $jsonData = json_decode($rawInput, true);
 
 $conversationId = isset($jsonData['conversation_id']) ? (int) $jsonData['conversation_id'] : (int) ($_POST['conversation_id'] ?? 0);
+$targetUserId = isset($jsonData['target_user_id']) ? (int) $jsonData['target_user_id'] : (int) ($_POST['target_user_id'] ?? 0);
 $rawMessage = $jsonData['message'] ?? ($_POST['message'] ?? ($jsonData['body'] ?? ($_POST['body'] ?? '')));
 
 // Trim and sanitize message
 $cleanBody = htmlspecialchars(trim((string) $rawMessage), ENT_QUOTES, 'UTF-8');
-
-if ($conversationId <= 0) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Valid conversation_id is required.'
-    ]);
-    exit;
-}
 
 if ($cleanBody === '') {
     http_response_code(400);
@@ -52,9 +45,44 @@ if ($cleanBody === '') {
 }
 
 try {
-    // 1. Verify user is a participant of the conversation
+    // 1. If conversation_id is not given, find or create one with target_user_id
+    if ($conversationId <= 0 && $targetUserId > 0 && $targetUserId !== $currentUserId) {
+        $stmtFind = $pdo->prepare("
+            SELECT id, user_one_id, user_two_id, status, requested_by 
+            FROM chat_conversations 
+            WHERE (user_one_id = :u1 AND user_two_id = :u2) 
+               OR (user_one_id = :u2 AND user_two_id = :u1) 
+            LIMIT 1
+        ");
+        $stmtFind->execute([':u1' => $currentUserId, ':u2' => $targetUserId]);
+        $conv = $stmtFind->fetch();
+
+        if ($conv) {
+            $conversationId = (int)$conv['id'];
+        } else {
+            $u1 = min($currentUserId, $targetUserId);
+            $u2 = max($currentUserId, $targetUserId);
+            $stmtNew = $pdo->prepare("
+                INSERT INTO chat_conversations (user_one_id, user_two_id, status, requested_by, last_message_at) 
+                VALUES (?, ?, 'pending', ?, CURRENT_TIMESTAMP)
+            ");
+            $stmtNew->execute([$u1, $u2, $currentUserId]);
+            $conversationId = (int)$pdo->lastInsertId();
+        }
+    }
+
+    if ($conversationId <= 0) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Valid conversation_id or target_user_id is required.'
+        ]);
+        exit;
+    }
+
+    // 2. Fetch conversation and verify participation
     $stmtConv = $pdo->prepare("
-        SELECT id, user_one_id, user_two_id 
+        SELECT id, user_one_id, user_two_id, status, requested_by 
         FROM chat_conversations 
         WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) 
         LIMIT 1
@@ -71,31 +99,34 @@ try {
         exit;
     }
 
+    $convStatus = $conv['status'] ?? 'accepted';
+    $requestedBy = isset($conv['requested_by']) ? (int)$conv['requested_by'] : null;
     $recipientId = ((int) $conv['user_one_id'] === $currentUserId) 
         ? (int) $conv['user_two_id'] 
         : (int) $conv['user_one_id'];
 
-    // 2. SECURITY CHECK: Verify mutual 'accepted' follow status
-    $stmtFollow = $pdo->prepare("
-        SELECT status 
-        FROM user_follows 
-        WHERE ((follower_id = :me AND following_id = :target) OR (follower_id = :target AND following_id = :me))
-          AND status = 'accepted'
-        LIMIT 1
-    ");
-    $stmtFollow->execute([':me' => $currentUserId, ':target' => $recipientId]);
-    $isAccepted = $stmtFollow->fetchColumn();
+    // 3. Instagram Auto-Accept on Reply:
+    // If conversation is pending and the RECIPIENT of the request replies, automatically accept!
+    if ($convStatus === 'pending' && $requestedBy !== null && $requestedBy !== $currentUserId) {
+        $convStatus = 'accepted';
+        $stmtPromote = $pdo->prepare("UPDATE chat_conversations SET status = 'accepted' WHERE id = ?");
+        $stmtPromote->execute([$conversationId]);
 
-    if (!$isAccepted) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Follow request must be accepted to send messages.'
-        ]);
-        exit;
+        // Establish mutual follow records
+        try {
+            $stmtFollow = $pdo->prepare("
+                INSERT INTO user_follows (follower_id, following_id, status, created_at, updated_at) 
+                VALUES (?, ?, 'accepted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                ON DUPLICATE KEY UPDATE status = 'accepted', updated_at = CURRENT_TIMESTAMP
+            ");
+            $stmtFollow->execute([$currentUserId, $recipientId]);
+            $stmtFollow->execute([$recipientId, $currentUserId]);
+        } catch (\Throwable $t) {
+            // Silently handle if table structure differs
+        }
     }
 
-    // 3. Insert new message
+    // 4. Insert message
     $now = date('Y-m-d H:i:s');
     $stmtInsert = $pdo->prepare("
         INSERT INTO chat_messages (conversation_id, sender_id, body, is_read, created_at) 
@@ -104,7 +135,7 @@ try {
     $stmtInsert->execute([$conversationId, $currentUserId, $cleanBody, $now]);
     $messageId = (int) $pdo->lastInsertId();
 
-    // 4. Update last_message_at on conversation
+    // 5. Update last_message_at on conversation
     $stmtUpdateConv = $pdo->prepare("
         UPDATE chat_conversations 
         SET last_message_at = ? 
@@ -114,15 +145,16 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => [
+        'conversation_id' => $conversationId,
+        'conversation_status' => $convStatus,
+        'data' => [
             'id' => $messageId,
             'conversation_id' => $conversationId,
-            'body' => $cleanBody,
             'sender_id' => $currentUserId,
-            'is_mine' => true,
+            'body' => $cleanBody,
             'is_read' => false,
             'created_at' => $now,
-            'time_formatted' => date('g:i A', strtotime($now))
+            'time_formatted' => date('g:i A', strtotime($now)),
         ]
     ]);
 

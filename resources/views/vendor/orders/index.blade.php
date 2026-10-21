@@ -3,7 +3,7 @@
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
             <h1 class="text-3xl font-serif font-bold text-gray-900 tracking-tight">Orders</h1>
-            <p class="mt-1 text-sm text-gray-500 font-medium">Manage, fulfill shipments, and print box dispatch labels for your clothing store.</p>
+            <p class="mt-1 text-sm text-gray-500 font-medium">Manage, fulfill shipments, and track orders for your store.</p>
         </div>
     </div>
 

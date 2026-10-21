@@ -1,8 +1,8 @@
 <?php
 /**
- * Instagram Direct (DM) Clone — Complete Frontend
+ * Direct Messages (Instagram Direct Clone) — Standalone Script
  * File: messages.php
- * K71 Creative Agency & Marketplace
+ * K71 Liquid Glass Realtime Direct Messaging
  */
 
 // 1. Detect and use existing database connection & session bridge
@@ -36,196 +36,325 @@ if ($headerFile) {
 }
 ?>
 
-<!-- =======================================================================
-     INSTAGRAM DIRECT (DM) SCOPED STYLES
-     Self-contained inside #instagram-direct wrapper to prevent style conflicts
-     ======================================================================= -->
 <style>
-#instagram-direct {
-    --ig-bg: #FAFAFA;
-    --ig-card-bg: #FFFFFF;
-    --ig-border: #DBDBDB;
-    --ig-primary: #0095F6;
-    --ig-primary-hover: #1877F2;
-    --ig-text-primary: #262626;
-    --ig-text-secondary: #8E8E8E;
-    --ig-bubble-received: #EFEFEF;
-    --ig-bubble-received-text: #262626;
-    --ig-bubble-sent: #3797F0;
-    --ig-bubble-sent-grad: linear-gradient(135deg, #405DE6, #833AB4);
-    --ig-unread: #0095F6;
-    
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ig-text-primary);
-    background-color: var(--ig-bg);
-    width: 100%;
-    max-width: 1100px;
-    margin: 16px auto;
-    padding: 0 16px;
-    box-sizing: border-box;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+/* ======================================================================
+   META / APPLE LIQUID GLASS DIRECT MESSAGING DESIGN SYSTEM
+   ====================================================================== */
+:root {
+    --glass-bg: rgba(255, 255, 255, 0.76);
+    --glass-surface: rgba(255, 255, 255, 0.65);
+    --glass-card: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-specular: rgba(255, 255, 255, 0.9);
+    --glass-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.09);
+    --glass-glow: rgba(6, 0, 194, 0.15);
+    --color-text-main: #0F172A;
+    --color-text-muted: #64748B;
+    --color-bubble-received: rgba(241, 245, 249, 0.85);
+    --color-bubble-received-text: #0F172A;
+    --color-bubble-sent-grad: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%);
+    --color-active-item: rgba(6, 0, 194, 0.06);
 }
 
-#instagram-direct .ig-container {
-    background: var(--ig-card-bg);
-    border: 1px solid var(--ig-border);
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    display: flex;
-    height: calc(100vh - 130px);
-    min-height: 580px;
-    overflow: hidden;
-    position: relative;
+.dark {
+    --glass-bg: rgba(15, 23, 42, 0.78);
+    --glass-surface: rgba(30, 41, 59, 0.65);
+    --glass-card: rgba(15, 23, 42, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-specular: rgba(255, 255, 255, 0.18);
+    --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.55);
+    --glass-glow: rgba(99, 102, 241, 0.25);
+    --color-text-main: #F8FAFC;
+    --color-text-muted: #94A3B8;
+    --color-bubble-received: rgba(30, 41, 59, 0.85);
+    --color-bubble-received-text: #F8FAFC;
+    --color-bubble-sent-grad: linear-gradient(135deg, #0600c2 0%, #4f46e5 60%, #7c3aed 100%);
+    --color-active-item: rgba(99, 102, 241, 0.14);
 }
 
-/* ---------------- LEFT SIDEBAR (Inbox) ---------------- */
-#instagram-direct .ig-sidebar {
-    width: 360px;
-    min-width: 320px;
-    border-right: 1px solid var(--ig-border);
-    display: flex;
-    flex-direction: column;
-    background: #FFFFFF;
-    transition: transform 0.25s ease;
-}
-
-#instagram-direct .ig-sidebar-header {
-    height: 60px;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--ig-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-#instagram-direct .ig-sidebar-user {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--ig-text-primary);
-    text-decoration: none;
-    cursor: pointer;
-}
-
-#instagram-direct .ig-sidebar-user svg {
-    width: 14px;
-    height: 14px;
-    fill: currentColor;
-}
-
-#instagram-direct .ig-new-chat-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
+#k71-chat-wrapper {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: calc(100vh - 72px);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ig-text-primary);
-    transition: background 0.15s ease;
+    padding: 16px;
+    box-sizing: border-box;
+    background-color: transparent;
 }
 
-#instagram-direct .ig-new-chat-btn:hover {
-    background: #F0F0F0;
+.glass-chat-frame {
+    width: 100%;
+    max-width: 1140px;
+    height: calc(100vh - 105px);
+    min-height: 600px;
+    max-height: 860px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
+    border: 1px solid var(--glass-border);
+    border-radius: 28px;
+    box-shadow: var(--glass-shadow), inset 0 1px 2px var(--glass-specular);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
-#instagram-direct .ig-sidebar-search {
+.glass-sidebar {
+    width: 360px;
+    min-width: 310px;
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    background: var(--glass-surface);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 10;
+}
+
+.glass-sidebar-header {
+    height: 68px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.glass-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    min-width: 0;
+}
+
+.glass-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.glass-user-name {
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+
+.glass-icon-btn {
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--color-text-main);
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    flex-shrink: 0;
+}
+
+.dark .glass-icon-btn {
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.glass-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--glass-glow);
+}
+
+.dark .glass-icon-btn:hover {
+    background: rgba(51, 65, 85, 0.85);
+}
+
+.glass-tabs-bar {
+    display: flex;
+    padding: 8px 16px;
+    gap: 6px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.25);
+}
+.dark .glass-tabs-bar {
+    background: rgba(15, 23, 42, 0.35);
+}
+
+.glass-tab-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-tab-btn.active {
+    background: var(--glass-card);
+    color: var(--color-text-main);
+    border-color: var(--glass-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 1px 1px var(--glass-specular);
+}
+
+.glass-tab-badge {
+    background: #EF4444;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 9999px;
+    letter-spacing: 0;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    animation: pulse-badge 2s infinite ease-in-out;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.glass-search-wrap {
     padding: 10px 16px;
-    border-bottom: 1px solid #F0F0F0;
+    border-bottom: 1px solid var(--glass-border);
 }
 
-#instagram-direct .ig-search-box {
+.glass-search-box {
     position: relative;
     display: flex;
     align-items: center;
 }
 
-#instagram-direct .ig-search-box svg {
+.glass-search-box svg {
     position: absolute;
-    left: 12px;
-    width: 14px;
-    height: 14px;
-    color: var(--ig-text-secondary);
+    left: 14px;
+    width: 15px;
+    height: 15px;
+    color: var(--color-text-muted);
     pointer-events: none;
 }
 
-#instagram-direct .ig-search-input {
+.glass-search-input {
     width: 100%;
-    padding: 8px 12px 8px 34px;
-    border-radius: 8px;
-    border: 1px solid var(--ig-border);
-    background: #FAFAFA;
+    padding: 9px 14px 9px 38px;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     font-size: 13px;
-    color: var(--ig-text-primary);
+    font-weight: 500;
+    color: var(--color-text-main);
     outline: none;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-#instagram-direct .ig-search-input:focus {
-    background: #FFFFFF;
-    border-color: #A8A8A8;
+.dark .glass-search-input {
+    background: rgba(30, 41, 59, 0.4);
 }
 
-#instagram-direct .ig-conversations-list {
+.glass-search-input:focus {
+    background: var(--glass-card);
+    border-color: #0600c2;
+    box-shadow: 0 0 0 3px var(--glass-glow);
+}
+
+.glass-conv-list {
     flex: 1;
     overflow-y: auto;
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-#instagram-direct .ig-conv-item {
+.glass-conv-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 18px;
+    padding: 10px 14px;
+    border-radius: 16px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid transparent;
     text-decoration: none;
     color: inherit;
+}
+
+.glass-conv-item:hover {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: var(--glass-border);
+}
+
+.dark .glass-conv-item:hover {
+    background: rgba(30, 41, 59, 0.4);
+}
+
+.glass-conv-item.active {
+    background: var(--color-active-item);
+    border-color: var(--glass-border);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03), inset 0 1px 1px var(--glass-specular);
+}
+
+.glass-avatar-wrap {
     position: relative;
-}
-
-#instagram-direct .ig-conv-item:hover {
-    background: #FAFAFA;
-}
-
-#instagram-direct .ig-conv-item.active {
-    background: #EFEFEF;
-}
-
-#instagram-direct .ig-avatar-wrap {
-    position: relative;
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
 }
 
-#instagram-direct .ig-avatar-img {
+.glass-conv-avatar {
     width: 100%;
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-#instagram-direct .ig-unread-badge {
+.glass-unread-dot {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 11px;
-    height: 11px;
-    background: var(--ig-unread);
+    bottom: 1px;
+    right: 1px;
+    width: 12px;
+    height: 12px;
+    background: #0600c2;
     border: 2px solid #FFFFFF;
     border-radius: 50%;
+    box-shadow: 0 0 8px #0600c2;
 }
 
-#instagram-direct .ig-conv-details {
+.dark .glass-unread-dot {
+    background: #38BDF8;
+    border-color: #0E172A;
+    box-shadow: 0 0 8px #38BDF8;
+}
+
+.glass-conv-details {
     flex: 1;
     min-width: 0;
     display: flex;
@@ -233,455 +362,603 @@ if ($headerFile) {
     gap: 2px;
 }
 
-#instagram-direct .ig-conv-username {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ig-text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#instagram-direct .ig-conv-last-msg {
-    font-size: 12.5px;
-    color: var(--ig-text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#instagram-direct .ig-conv-last-msg.unread-bold {
-    font-weight: 700;
-    color: var(--ig-text-primary);
-}
-
-#instagram-direct .ig-conv-last-msg .text-span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-#instagram-direct .ig-conv-last-msg .bullet {
-    font-size: 10px;
-}
-
-/* ---------------- RIGHT CHAT PANE ---------------- */
-#instagram-direct .ig-chat-pane {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #FFFFFF;
-    position: relative;
-}
-
-/* Empty State */
-#instagram-direct .ig-empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px;
-}
-
-#instagram-direct .ig-empty-circle {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    border: 2px solid var(--ig-text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 16px;
-}
-
-#instagram-direct .ig-empty-circle svg {
-    width: 48px;
-    height: 48px;
-    stroke: var(--ig-text-primary);
-}
-
-#instagram-direct .ig-empty-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0 0 6px 0;
-}
-
-#instagram-direct .ig-empty-subtitle {
-    font-size: 13.5px;
-    color: var(--ig-text-secondary);
-    margin: 0 0 18px 0;
-}
-
-#instagram-direct .ig-btn-primary {
-    background: var(--ig-primary);
-    color: #FFFFFF;
-    border: none;
-    border-radius: 8px;
-    padding: 9px 18px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.15s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-#instagram-direct .ig-btn-primary:hover {
-    background: var(--ig-primary-hover);
-}
-
-/* Active Chat Header */
-#instagram-direct .ig-chat-header {
-    height: 60px;
-    padding: 0 18px;
-    border-bottom: 1px solid var(--ig-border);
+.glass-conv-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #FFFFFF;
-    z-index: 10;
+    gap: 6px;
 }
 
-#instagram-direct .ig-chat-header-user {
+.glass-conv-username {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.glass-conv-time {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.glass-conv-last-msg {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.35;
+}
+
+.glass-conv-last-msg.unread-bold {
+    font-weight: 700;
+    color: var(--color-text-main);
+}
+
+.glass-chat-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+    background: var(--glass-card);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+}
+
+.glass-empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+}
+
+.glass-empty-circle {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(6, 0, 194, 0.12), rgba(99, 102, 241, 0.08));
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 12px 28px rgba(6, 0, 194, 0.08), inset 0 1px 2px var(--glass-specular);
+}
+
+.glass-empty-circle svg {
+    width: 40px;
+    height: 40px;
+    color: #0600c2;
+    transform: translate(2px, -1px);
+}
+
+.dark .glass-empty-circle svg {
+    color: #38BDF8;
+}
+
+.glass-empty-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--color-text-main);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+}
+
+.glass-empty-desc {
+    font-size: 13.5px;
+    color: var(--color-text-muted);
+    max-width: 320px;
+    margin: 0 0 20px;
+    line-height: 1.45;
+}
+
+.glass-btn-primary {
+    background: linear-gradient(135deg, #0600c2 0%, #4338ca 100%);
+    color: #FFFFFF;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    box-shadow: 0 8px 24px var(--glass-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.glass-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px var(--glass-glow);
+}
+
+.glass-chat-header {
+    height: 68px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--glass-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.glass-chat-header-user {
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
 }
 
-#instagram-direct .ig-back-btn {
+.glass-back-btn {
     display: none;
     background: none;
     border: none;
+    color: var(--color-text-main);
     padding: 6px;
     cursor: pointer;
-    color: var(--ig-text-primary);
-    border-radius: 50%;
+    border-radius: 10px;
 }
 
-#instagram-direct .ig-chat-header-avatar {
-    width: 36px;
-    height: 36px;
+.glass-chat-header-avatar {
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1.5px solid var(--glass-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
 }
 
-#instagram-direct .ig-chat-header-info {
+.glass-chat-header-info {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
-#instagram-direct .ig-chat-header-username {
+.glass-chat-header-username {
     font-size: 14.5px;
-    font-weight: 700;
-    color: var(--ig-text-primary);
-    text-decoration: none;
+    font-weight: 800;
+    color: var(--color-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-#instagram-direct .ig-chat-header-status {
+.glass-chat-header-status {
     font-size: 11.5px;
-    color: var(--ig-text-secondary);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
-#instagram-direct .ig-chat-header-actions {
+.glass-online-indicator {
+    width: 6.5px;
+    height: 6.5px;
+    border-radius: 50%;
+    background: #10B981;
+    display: inline-block;
+    box-shadow: 0 0 6px #10B981;
+}
+
+/* ⚡ INSTAGRAM DIRECT REQUEST ACTION BANNER */
+.glass-request-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+    border-bottom: 1px solid rgba(245, 158, 11, 0.25);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    animation: slide-down 0.25s ease;
+    flex-shrink: 0;
+}
+
+@keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.glass-request-banner-header {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-#instagram-direct .ig-header-icon-btn {
-    background: none;
-    border: none;
-    padding: 8px;
-    cursor: pointer;
+.glass-request-badge-icon {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    color: var(--ig-text-primary);
+    background: rgba(245, 158, 11, 0.2);
+    color: #D97706;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    flex-shrink: 0;
 }
 
-#instagram-direct .ig-header-icon-btn:hover {
-    background: #F0F0F0;
+.glass-request-banner-text {
+    flex: 1;
+    min-width: 0;
 }
 
-/* Message Feed */
-#instagram-direct .ig-chat-feed {
+.glass-request-banner-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
+}
+
+.glass-request-banner-sub {
+    font-size: 11.5px;
+    color: var(--color-text-muted);
+    margin-top: 1px;
+    line-height: 1.35;
+}
+
+.glass-request-banner-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.glass-btn-decline {
+    padding: 6px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.4);
+    color: #EF4444;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.dark .glass-btn-decline {
+    background: rgba(30, 41, 59, 0.4);
+}
+.glass-btn-decline:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.glass-btn-accept {
+    padding: 6px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    transition: all 0.15s ease;
+}
+.glass-btn-accept:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.glass-chat-feed {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 20px;
+    padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    background: #FFFFFF;
+    gap: 8px;
 }
 
-#instagram-direct .ig-date-divider {
+.glass-date-divider {
     text-align: center;
-    margin: 12px 0;
+    margin: 14px 0;
     position: relative;
 }
 
-#instagram-direct .ig-date-divider span {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--ig-text-secondary);
-    background: #FFFFFF;
-    padding: 0 12px;
+.glass-date-divider span {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    background: var(--glass-surface);
+    padding: 3px 12px;
+    border-radius: 9999px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
-#instagram-direct .ig-msg-row {
+.glass-msg-row {
     display: flex;
     align-items: flex-end;
     gap: 8px;
     max-width: 72%;
 }
 
-#instagram-direct .ig-msg-row.sent {
+.glass-msg-row.sent {
     align-self: flex-end;
     flex-direction: row-reverse;
 }
 
-#instagram-direct .ig-msg-row.received {
+.glass-msg-row.received {
     align-self: flex-start;
 }
 
-#instagram-direct .ig-msg-sender-avatar {
+.glass-msg-avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
+    border: 1px solid var(--glass-border);
     flex-shrink: 0;
     margin-bottom: 2px;
 }
 
-#instagram-direct .ig-bubble {
-    padding: 9px 15px;
+.glass-msg-bubble {
+    padding: 10px 16px;
     border-radius: 20px;
     font-size: 13.5px;
     line-height: 1.45;
     word-break: break-word;
     position: relative;
     max-width: 100%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
-#instagram-direct .ig-msg-row.sent .ig-bubble {
-    background: var(--ig-bubble-sent-grad);
+.glass-msg-row.sent .glass-msg-bubble {
+    background: var(--color-bubble-sent-grad);
     color: #FFFFFF;
-    border-bottom-right-radius: 4px;
+    border-bottom-right-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 18px var(--glass-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
 }
 
-#instagram-direct .ig-msg-row.received .ig-bubble {
-    background: var(--ig-bubble-received);
-    color: var(--ig-bubble-received-text);
-    border-bottom-left-radius: 4px;
+.glass-msg-row.received .glass-msg-bubble {
+    background: var(--color-bubble-received);
+    color: var(--color-bubble-received-text);
+    border-bottom-left-radius: 5px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 1px var(--glass-specular);
 }
 
-#instagram-direct .ig-bubble.optimistic {
-    opacity: 0.65;
+.glass-msg-bubble.optimistic {
+    opacity: 0.7;
 }
 
-#instagram-direct .ig-msg-meta {
+.glass-msg-meta {
     font-size: 10px;
-    color: var(--ig-text-secondary);
-    margin-top: 2px;
+    color: var(--color-text-muted);
+    margin-top: 3px;
     padding: 0 4px;
     display: none;
 }
 
-#instagram-direct .ig-msg-row:hover .ig-msg-meta {
+.glass-msg-row:hover .glass-msg-meta {
     display: block;
 }
 
-/* Chat Input Bar */
-#instagram-direct .ig-chat-input-bar {
-    padding: 12px 18px;
-    background: #FFFFFF;
-    border-top: 1px solid var(--ig-border);
+.glass-emoji-drawer {
+    display: none;
+    padding: 8px 16px;
+    gap: 8px;
+    background: var(--glass-surface);
+    border-top: 1px solid var(--glass-border);
+    overflow-x: auto;
 }
 
-#instagram-direct .ig-input-pill {
+.glass-emoji-drawer.open {
+    display: flex;
+}
+
+.glass-emoji-chip {
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 4px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.12s ease;
+}
+.dark .glass-emoji-chip {
+    background: rgba(30, 41, 59, 0.45);
+}
+.glass-emoji-chip:hover {
+    transform: scale(1.2);
+}
+
+.glass-composer-bar {
+    padding: 14px 20px;
+    background: var(--glass-surface);
+    border-top: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex-shrink: 0;
+}
+
+.glass-composer-pill {
     display: flex;
     align-items: center;
-    gap: 8px;
-    border: 1px solid var(--ig-border);
-    border-radius: 24px;
-    padding: 6px 14px;
-    background: #FFFFFF;
-    transition: border-color 0.15s ease;
+    gap: 10px;
+    background: var(--glass-card);
+    border: 1px solid var(--glass-border);
+    border-radius: 26px;
+    padding: 6px 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), inset 0 1px 1px var(--glass-specular);
+    transition: all 0.2s ease;
 }
 
-#instagram-direct .ig-input-pill:focus-within {
-    border-color: #A8A8A8;
+.glass-composer-pill:focus-within {
+    border-color: #0600c2;
+    box-shadow: 0 0 0 3px var(--glass-glow), inset 0 1px 1px var(--glass-specular);
 }
 
-#instagram-direct .ig-emoji-btn {
+.glass-composer-emoji-btn {
     background: none;
     border: none;
-    padding: 4px;
+    padding: 2px;
+    font-size: 19px;
     cursor: pointer;
-    font-size: 18px;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--ig-text-primary);
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+.glass-composer-emoji-btn:hover {
+    opacity: 1;
 }
 
-#instagram-direct .ig-message-input {
+.glass-composer-textarea {
     flex: 1;
     border: none;
     outline: none;
     font-size: 13.5px;
     font-family: inherit;
-    color: var(--ig-text-primary);
+    color: var(--color-text-main);
     background: transparent;
     max-height: 100px;
     resize: none;
-    padding: 4px 0;
+    padding: 6px 0;
+    line-height: 1.4;
 }
 
-#instagram-direct .ig-send-btn {
+.glass-composer-textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+.glass-composer-send-btn {
     background: none;
     border: none;
+    color: #0600c2;
     font-size: 13.5px;
-    font-weight: 700;
-    color: var(--ig-primary);
+    font-weight: 800;
     cursor: pointer;
     padding: 4px 8px;
     opacity: 0.35;
     pointer-events: none;
-    transition: opacity 0.15s ease;
+    transition: all 0.15s ease;
 }
 
-#instagram-direct .ig-send-btn.active {
+.dark .glass-composer-send-btn {
+    color: #38BDF8;
+}
+
+.glass-composer-send-btn.active {
     opacity: 1;
     pointer-events: auto;
 }
 
-#instagram-direct .ig-send-btn.active:hover {
-    color: var(--ig-primary-hover);
+.glass-composer-send-btn.active:hover {
+    transform: scale(1.05);
 }
 
-/* Quick Emoji Bar */
-#instagram-direct .ig-quick-emojis {
-    display: none;
-    gap: 8px;
-    padding: 6px 14px;
-    border-bottom: 1px solid #F0F0F0;
-    background: #FAFAFA;
-}
-
-#instagram-direct .ig-quick-emojis.open {
-    display: flex;
-}
-
-#instagram-direct .ig-emoji-chip {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 2px 6px;
-    border-radius: 6px;
-    transition: background 0.1s ease;
-}
-
-#instagram-direct .ig-emoji-chip:hover {
-    background: #EFEFEF;
-}
-
-/* ---------------- SEARCH & FOLLOW MODAL ---------------- */
-#instagram-direct .ig-modal-overlay {
+.glass-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    z-index: 1000;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 100;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 16px;
 }
 
-#instagram-direct .ig-modal-overlay.open {
+.glass-modal-backdrop.open {
     display: flex;
 }
 
-#instagram-direct .ig-modal-card {
-    background: #FFFFFF;
-    border-radius: 16px;
+.glass-modal-card {
     width: 100%;
     max-width: 440px;
-    height: 500px;
+    max-height: 540px;
+    background: var(--glass-card);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.2), inset 0 1px 2px var(--glass-specular);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-    animation: igModalFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: modal-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes igModalFade {
-    from { opacity: 0; transform: scale(0.96); }
+@keyframes modal-pop {
+    from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
 }
 
-#instagram-direct .ig-modal-header {
-    height: 48px;
-    padding: 0 16px;
-    border-bottom: 1px solid var(--ig-border);
+.glass-modal-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-#instagram-direct .ig-modal-title {
+.glass-modal-title {
     font-size: 15px;
-    font-weight: 700;
-    text-align: center;
-    flex: 1;
+    font-weight: 800;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
 }
 
-#instagram-direct .ig-modal-close {
+.glass-modal-close {
     background: none;
     border: none;
+    font-size: 20px;
+    color: var(--color-text-muted);
     cursor: pointer;
-    padding: 6px;
-    font-size: 18px;
-    color: var(--ig-text-primary);
+    padding: 4px;
+    line-height: 1;
+}
+
+.glass-modal-search {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 10px;
 }
 
-#instagram-direct .ig-modal-search {
-    padding: 10px 16px;
-    border-bottom: 1px solid #F0F0F0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.glass-modal-search-label {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--color-text-main);
 }
 
-#instagram-direct .ig-modal-search-label {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ig-text-primary);
-}
-
-#instagram-direct .ig-modal-search-input {
+.glass-modal-search-input {
     flex: 1;
     border: none;
     outline: none;
-    font-size: 14px;
+    font-size: 13.5px;
     font-family: inherit;
-    color: var(--ig-text-primary);
+    color: var(--color-text-main);
+    background: transparent;
 }
 
-#instagram-direct .ig-modal-user-list {
+.glass-modal-user-list {
     flex: 1;
     overflow-y: auto;
     padding: 8px 0;
@@ -689,19 +966,23 @@ if ($headerFile) {
     margin: 0;
 }
 
-#instagram-direct .ig-modal-user-item {
+.glass-modal-user-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 10px 20px;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
-#instagram-direct .ig-modal-user-item:hover {
-    background: #FAFAFA;
+.glass-modal-user-item:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+.dark .glass-modal-user-item:hover {
+    background: rgba(30, 41, 59, 0.4);
 }
 
-#instagram-direct .ig-modal-user-meta {
+.glass-modal-user-meta {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -709,211 +990,191 @@ if ($headerFile) {
     flex: 1;
 }
 
-#instagram-direct .ig-modal-user-avatar {
+.glass-modal-user-avatar {
     width: 44px;
     height: 44px;
     border-radius: 50%;
     object-fit: cover;
+    border: 1px solid var(--glass-border);
     flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-#instagram-direct .ig-modal-user-info {
+.glass-modal-user-info {
     display: flex;
     flex-direction: column;
     min-width: 0;
 }
 
-#instagram-direct .ig-modal-username {
+.glass-modal-username {
     font-size: 13.5px;
     font-weight: 700;
+    color: var(--color-text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-#instagram-direct .ig-modal-fullname {
-    font-size: 12.5px;
-    color: var(--ig-text-secondary);
+.glass-modal-fullname {
+    font-size: 12px;
+    color: var(--color-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Modal Action Buttons */
-#instagram-direct .ig-action-btn-follow {
-    background: var(--ig-primary);
+.glass-modal-msg-btn {
+    background: #0600c2;
     color: #FFFFFF;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 6px 14px;
-    font-size: 12.5px;
+    font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 12px var(--glass-glow);
 }
 
-#instagram-direct .ig-action-btn-follow:hover {
-    background: var(--ig-primary-hover);
+.dark .glass-modal-msg-btn {
+    background: #38BDF8;
+    color: #060A17;
 }
 
-#instagram-direct .ig-action-btn-requested {
-    background: #EFEFEF;
-    color: var(--ig-text-primary);
-    border: none;
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
+.glass-modal-msg-btn:hover {
+    transform: translateY(-1px);
 }
 
-#instagram-direct .ig-action-btn-requested:hover {
-    background: #DBDBDB;
-}
-
-#instagram-direct .ig-action-btn-message {
-    background: transparent;
-    color: var(--ig-text-primary);
-    border: 1px solid var(--ig-border);
-    border-radius: 8px;
-    padding: 6px 14px;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-#instagram-direct .ig-action-btn-message:hover {
-    background: #FAFAFA;
-    border-color: #A8A8A8;
-}
-
-#instagram-direct .ig-action-group {
-    display: flex;
-    gap: 6px;
-}
-
-/* ---------------- RESPONSIVE BREAKPOINT ---------------- */
 @media (max-width: 768px) {
-    #instagram-direct {
-        margin: 0;
+    #k71-chat-wrapper {
         padding: 0;
-        height: calc(100vh - 60px);
     }
-    #instagram-direct .ig-container {
-        border: none;
+    .glass-chat-frame {
         border-radius: 0;
-        height: 100%;
-        box-shadow: none;
+        border: none;
+        height: calc(100vh - 64px);
+        max-height: 100vh;
     }
-    #instagram-direct .ig-sidebar {
+    .glass-sidebar {
         width: 100%;
         min-width: 100%;
         border-right: none;
     }
-    #instagram-direct .ig-chat-pane {
+    .glass-chat-pane {
         display: none;
         position: absolute;
         inset: 0;
         z-index: 20;
     }
-    #instagram-direct .ig-container.chat-active .ig-sidebar {
+    .glass-chat-frame.chat-active .glass-sidebar {
         display: none;
     }
-    #instagram-direct .ig-container.chat-active .ig-chat-pane {
+    .glass-chat-frame.chat-active .glass-chat-pane {
         display: flex;
     }
-    #instagram-direct .ig-back-btn {
+    .glass-back-btn {
         display: flex;
     }
 }
 </style>
 
-<div id="instagram-direct">
-    <div class="ig-container" id="igMainContainer">
+<div id="k71-chat-wrapper">
+    <div class="glass-chat-frame" id="glassMainContainer">
         
         <!-- ==============================================================
-             LEFT SIDEBAR: CONVERSATION LIST
+             LEFT SIDEBAR: INBOX CONVERSATIONS & DUAL TABS
              ============================================================== -->
-        <aside class="ig-sidebar" id="igSidebar">
-            <!-- Header: Username + New Chat Pencil Icon -->
-            <div class="ig-sidebar-header">
-                <div class="ig-sidebar-user">
-                    <span>@<?= htmlspecialchars($currentUser['username'], ENT_QUOTES, 'UTF-8') ?></span>
-                    <svg viewBox="0 0 24 24"><path d="M12 15l-5-5h10z"/></svg>
+        <aside class="glass-sidebar" id="glassSidebar">
+            <!-- Header: Current User + New Chat Button -->
+            <div class="glass-sidebar-header">
+                <div class="glass-user-profile">
+                    <img src="<?= htmlspecialchars(format_user_avatar($currentUser['avatar'] ?? null, $currentUser['name'] ?? $currentUser['username']), ENT_QUOTES, 'UTF-8') ?>" 
+                         alt="<?= htmlspecialchars($currentUser['username'], ENT_QUOTES, 'UTF-8') ?>" 
+                         class="glass-user-avatar">
+                    <span class="glass-user-name">&#64;<?= htmlspecialchars($currentUser['username'], ENT_QUOTES, 'UTF-8') ?></span>
                 </div>
-                <button type="button" class="ig-new-chat-btn" id="igNewChatBtn" title="New Message">
-                    <!-- Instagram Pencil / Edit Icon -->
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <button type="button" class="glass-icon-btn" id="glassNewChatBtn" title="Search user or start message">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                     </svg>
                 </button>
             </div>
 
-            <!-- In-Chat Search Bar -->
-            <div class="ig-sidebar-search">
-                <div class="ig-search-box">
+            <!-- Instagram Dual Inbox Segmented Tabs (Primary vs Requests) -->
+            <div class="glass-tabs-bar">
+                <button type="button" class="glass-tab-btn active" id="tabPrimaryBtn" data-tab="primary">
+                    <span>Primary</span>
+                </button>
+                <button type="button" class="glass-tab-btn" id="tabRequestsBtn" data-tab="requests">
+                    <span>Requests</span>
+                    <span class="glass-tab-badge" id="requestsCountBadge" style="display: none;">0</span>
+                </button>
+            </div>
+
+            <!-- In-Chat Search / Filter Input -->
+            <div class="glass-search-wrap">
+                <div class="glass-search-box">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" id="igFilterConvInput" class="ig-search-input" placeholder="Search conversations...">
+                    <input type="text" id="glassFilterInput" class="glass-search-input" placeholder="Search conversations...">
                 </div>
             </div>
 
             <!-- Scrollable Conversations Stream -->
-            <ul class="ig-conversations-list" id="igConversationsList">
-                <li style="padding: 32px 20px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
+            <ul class="glass-conv-list" id="glassConversationsList">
+                <li style="padding: 36px 20px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
                     Loading your direct messages...
                 </li>
             </ul>
         </aside>
 
         <!-- ==============================================================
-             RIGHT CHAT PANE: EMPTY STATE & ACTIVE CONVERSATION
+             RIGHT CHAT PANE: EMPTY STATE & ACTIVE CHAT
              ============================================================== -->
-        <main class="ig-chat-pane" id="igChatPane">
+        <main class="glass-chat-pane" id="glassChatPane">
             
-            <!-- 1. EMPTY STATE (When no conversation is selected) -->
-            <div class="ig-empty-state" id="igEmptyState">
-                <div class="ig-empty-circle">
-                    <!-- Instagram Paper Plane Icon -->
+            <!-- 1. EMPTY STATE -->
+            <div class="glass-empty-state" id="glassEmptyState">
+                <div class="glass-empty-circle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                     </svg>
                 </div>
-                <h2 class="ig-empty-title">Your Messages</h2>
-                <p class="ig-empty-subtitle">Send private photos and messages to a friend or creator.</p>
-                <button type="button" class="ig-btn-primary" id="igEmptySendBtn">
+                <h2 class="glass-empty-title">Your Messages</h2>
+                <p class="glass-empty-desc">Send private messages and requests to any user, buyer, or creator across K71.</p>
+                <button type="button" class="glass-btn-primary" id="glassEmptySendBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
                     <span>Send Message</span>
                 </button>
             </div>
 
             <!-- 2. ACTIVE CHAT STATE -->
-            <div id="igActiveChat" style="display: none; height: 100%; flex-direction: column;">
-                <!-- Active Chat Header -->
-                <div class="ig-chat-header">
-                    <div class="ig-chat-header-user">
-                        <!-- Mobile Back Arrow Button -->
-                        <button type="button" class="ig-back-btn" id="igBackToInboxBtn" title="Back to Inbox">
+            <div id="glassActiveChat" style="display: none; height: 100%; flex-direction: column;">
+                
+                <!-- Chat Header -->
+                <div class="glass-chat-header">
+                    <div class="glass-chat-header-user">
+                        <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polyline points="15 18 9 12 15 6"></polyline>
                             </svg>
                         </button>
                         
-                        <img src="" alt="" class="ig-chat-header-avatar" id="igHeaderAvatar">
-                        <div class="ig-chat-header-info">
-                            <span class="ig-chat-header-username" id="igHeaderUsername"></span>
-                            <span class="ig-chat-header-status" id="igHeaderStatus">Active now</span>
+                        <img src="" alt="" class="glass-chat-header-avatar" id="headerAvatar">
+                        <div class="glass-chat-header-info">
+                            <span class="glass-chat-header-username" id="headerUsername">&#64;username</span>
+                            <span class="glass-chat-header-status" id="headerStatus">
+                                <span class="glass-online-indicator"></span> Active now
+                            </span>
                         </div>
                     </div>
 
-                    <div class="ig-chat-header-actions">
-                        <button type="button" class="ig-header-icon-btn" title="Conversation Info">
-                            <!-- Info Icon -->
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <div>
+                        <button type="button" class="glass-icon-btn" id="headerInfoBtn" title="Conversation Details">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -922,35 +1183,50 @@ if ($headerFile) {
                     </div>
                 </div>
 
+                <!-- ⚡ INSTAGRAM DIRECT REQUEST ACTION BANNER -->
+                <div class="glass-request-banner" id="glassRequestBanner" style="display: none;">
+                    <div class="glass-request-banner-header">
+                        <div class="glass-request-badge-icon">⚡</div>
+                        <div class="glass-request-banner-text">
+                            <div class="glass-request-banner-title" id="requestBannerTitle">Message Request</div>
+                            <div class="glass-request-banner-sub">They want to send you a message. Choose whether to accept or decline.</div>
+                        </div>
+                    </div>
+                    <div class="glass-request-banner-actions">
+                        <button type="button" class="glass-btn-decline" id="btnDeclineRequest">Decline</button>
+                        <button type="button" class="glass-btn-accept" id="btnAcceptRequest">Accept Request</button>
+                    </div>
+                </div>
+
                 <!-- Scrollable Messages Feed -->
-                <div class="ig-chat-feed" id="igChatFeed">
-                    <!-- Dynamic Messages Appended Here -->
+                <div class="glass-chat-feed" id="glassChatFeed">
+                    <!-- Messages dynamically appended here -->
                 </div>
 
                 <!-- Quick Emojis Drawer -->
-                <div class="ig-quick-emojis" id="igQuickEmojis">
-                    <button type="button" class="ig-emoji-chip" data-emoji="❤️">❤️</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="😂">😂</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="🔥">🔥</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="👍">👍</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="😍">😍</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="🙌">🙌</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="🎉">🎉</button>
-                    <button type="button" class="ig-emoji-chip" data-emoji="✨">✨</button>
+                <div class="glass-emoji-drawer" id="glassEmojiDrawer">
+                    <button type="button" class="glass-emoji-chip" data-emoji="❤️">❤️</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="😂">😂</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="🔥">🔥</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="👍">👍</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="😍">😍</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="🙌">🙌</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="🎉">🎉</button>
+                    <button type="button" class="glass-emoji-chip" data-emoji="✨">✨</button>
                 </div>
 
-                <!-- Sticky Bottom Input Bar -->
-                <div class="ig-chat-input-bar">
-                    <div class="ig-input-pill">
-                        <button type="button" class="ig-emoji-btn" id="igToggleEmojiBtn" title="Insert Emoji">
+                <!-- Sticky Bottom Input Composer -->
+                <div class="glass-composer-bar">
+                    <div class="glass-composer-pill">
+                        <button type="button" class="glass-composer-emoji-btn" id="glassEmojiToggleBtn" title="Insert Emoji">
                             😊
                         </button>
-                        <textarea id="igMessageInput" 
-                                  class="ig-message-input" 
+                        <textarea id="glassMessageInput" 
+                                  class="glass-composer-textarea" 
                                   rows="1" 
                                   placeholder="Message..." 
                                   autocomplete="off"></textarea>
-                        <button type="button" class="ig-send-btn" id="igSendBtn">
+                        <button type="button" class="glass-composer-send-btn" id="glassSendBtn">
                             Send
                         </button>
                     </div>
@@ -960,41 +1236,38 @@ if ($headerFile) {
         </main>
     </div>
 
-    <!-- ==============================================================
-         SEARCH & FOLLOW MODAL (Exact Instagram Behavior)
-         ============================================================== -->
-    <div class="ig-modal-overlay" id="igSearchModal">
-        <div class="ig-modal-card">
-            <div class="ig-modal-header">
-                <div style="width: 24px;"></div>
-                <div class="ig-modal-title">New Message</div>
-                <button type="button" class="ig-modal-close" id="igCloseModalBtn">&times;</button>
+    <!-- SEARCH ANY USER MODAL -->
+    <div class="glass-modal-backdrop" id="glassSearchModal">
+        <div class="glass-modal-card">
+            <div class="glass-modal-header">
+                <div style="width: 20px;"></div>
+                <div class="glass-modal-title">New Message</div>
+                <button type="button" class="glass-modal-close" id="glassCloseModalBtn">&times;</button>
             </div>
             
-            <div class="ig-modal-search">
-                <span class="ig-modal-search-label">To:</span>
-                <input type="text" id="igUserSearchInput" class="ig-modal-search-input" placeholder="Search people..." autocomplete="off">
+            <div class="glass-modal-search">
+                <span class="glass-modal-search-label">To:</span>
+                <input type="text" id="glassUserSearchInput" class="glass-modal-search-input" placeholder="Search any username or name..." autocomplete="off">
             </div>
 
-            <ul class="ig-modal-user-list" id="igModalUserList">
-                <li style="padding: 30px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
-                    Search for users on K71 to follow and start direct messaging.
+            <ul class="glass-modal-user-list" id="glassModalUserList">
+                <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                    Type a username to find any buyer, customer, or seller across K71.
                 </li>
             </ul>
         </div>
     </div>
 </div>
 
-<!-- =======================================================================
-     REAL-TIME CLIENT ENGINE (Embedded Vanilla JavaScript)
-     ======================================================================= -->
 <script>
 (function() {
     'use strict';
 
-    // State Variables
+    const CURRENT_USER_ID = <?= (int)$currentUserId ?>;
+    let currentTab = 'primary';
     let currentConversationId = null;
     let activeRecipientId = null;
+    let activeConversationStatus = 'accepted';
     let conversationsCache = [];
     let messagesCache = [];
     let isPollingActive = true;
@@ -1002,33 +1275,52 @@ if ($headerFile) {
     let messagePollTimer = null;
     let inboxPollTimer = null;
 
-    // DOM Elements
-    const mainContainer = document.getElementById('igMainContainer');
-    const conversationsList = document.getElementById('igConversationsList');
-    const filterConvInput = document.getElementById('igFilterConvInput');
-    const emptyState = document.getElementById('igEmptyState');
-    const activeChat = document.getElementById('igActiveChat');
-    const chatFeed = document.getElementById('igChatFeed');
-    const headerAvatar = document.getElementById('igHeaderAvatar');
-    const headerUsername = document.getElementById('igHeaderUsername');
-    const headerStatus = document.getElementById('igHeaderStatus');
-    const messageInput = document.getElementById('igMessageInput');
-    const sendBtn = document.getElementById('igSendBtn');
-    const backToInboxBtn = document.getElementById('igBackToInboxBtn');
-    const newChatBtn = document.getElementById('igNewChatBtn');
-    const emptySendBtn = document.getElementById('igEmptySendBtn');
-    const searchModal = document.getElementById('igSearchModal');
-    const closeModalBtn = document.getElementById('igCloseModalBtn');
-    const userSearchInput = document.getElementById('igUserSearchInput');
-    const modalUserList = document.getElementById('igModalUserList');
-    const toggleEmojiBtn = document.getElementById('igToggleEmojiBtn');
-    const quickEmojis = document.getElementById('igQuickEmojis');
+    // DOM References
+    const mainContainer = document.getElementById('glassMainContainer');
+    const conversationsList = document.getElementById('glassConversationsList');
+    const filterInput = document.getElementById('glassFilterInput');
+    const emptyState = document.getElementById('glassEmptyState');
+    const activeChat = document.getElementById('glassActiveChat');
+    const chatFeed = document.getElementById('glassChatFeed');
+    const headerAvatar = document.getElementById('headerAvatar');
+    const headerUsername = document.getElementById('headerUsername');
+    const headerStatus = document.getElementById('headerStatus');
+    const messageInput = document.getElementById('glassMessageInput');
+    const sendBtn = document.getElementById('glassSendBtn');
+    const backBtn = document.getElementById('glassBackBtn');
+    const newChatBtn = document.getElementById('glassNewChatBtn');
+    const emptySendBtn = document.getElementById('glassEmptySendBtn');
+    const searchModal = document.getElementById('glassSearchModal');
+    const closeModalBtn = document.getElementById('glassCloseModalBtn');
+    const userSearchInput = document.getElementById('glassUserSearchInput');
+    const modalUserList = document.getElementById('glassModalUserList');
+    const emojiToggleBtn = document.getElementById('glassEmojiToggleBtn');
+    const emojiDrawer = document.getElementById('glassEmojiDrawer');
+    const tabPrimaryBtn = document.getElementById('tabPrimaryBtn');
+    const tabRequestsBtn = document.getElementById('tabRequestsBtn');
+    const requestsCountBadge = document.getElementById('requestsCountBadge');
+    const requestBanner = document.getElementById('glassRequestBanner');
+    const requestBannerTitle = document.getElementById('requestBannerTitle');
+    const btnAcceptRequest = document.getElementById('btnAcceptRequest');
+    const btnDeclineRequest = document.getElementById('btnDeclineRequest');
 
-    // -------------------------------------------------------------------------
-    // 1. INBOX CONVERSATIONS ENGINE
-    // -------------------------------------------------------------------------
+    function switchTab(tab) {
+        currentTab = tab;
+        if (tab === 'requests') {
+            tabRequestsBtn.classList.add('active');
+            tabPrimaryBtn.classList.remove('active');
+        } else {
+            tabPrimaryBtn.classList.add('active');
+            tabRequestsBtn.classList.remove('active');
+        }
+        fetchConversations(false);
+    }
+
+    tabPrimaryBtn.addEventListener('click', () => switchTab('primary'));
+    tabRequestsBtn.addEventListener('click', () => switchTab('requests'));
+
     function fetchConversations(silent = false) {
-        fetch('/api/chat/get_conversations.php', {
+        fetch(`/api/chat/get_conversations.php?tab=${currentTab}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         })
@@ -1036,18 +1328,25 @@ if ($headerFile) {
         .then(result => {
             if (result.success && Array.isArray(result.data)) {
                 conversationsCache = result.data;
-                renderConversations(filterConvInput.value.trim());
+
+                const reqCount = parseInt(result.requests_count, 10) || 0;
+                if (reqCount > 0) {
+                    requestsCountBadge.textContent = reqCount;
+                    requestsCountBadge.style.display = 'inline-block';
+                } else {
+                    requestsCountBadge.style.display = 'none';
+                }
+
+                renderConversations(filterInput.value.trim());
             } else if (!silent) {
                 conversationsList.innerHTML = `
-                    <li style="padding: 30px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
-                        ${result.error || 'No conversations yet.'}
+                    <li style="padding: 30px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                        ${result.error || 'No conversations found.'}
                     </li>`;
             }
         })
         .catch(err => {
-            if (!silent) {
-                console.error('Error fetching conversations:', err);
-            }
+            if (!silent) console.error('Error fetching conversations:', err);
         });
     }
 
@@ -1060,9 +1359,12 @@ if ($headerFile) {
         });
 
         if (filtered.length === 0) {
+            const emptyMsg = currentTab === 'requests' 
+                ? 'No incoming message requests.' 
+                : (query ? 'No matching conversations.' : 'No messages yet.<br>Click the pencil icon above to start a chat!');
             conversationsList.innerHTML = `
-                <li style="padding: 30px 20px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
-                    ${query ? 'No matching conversations.' : 'No messages yet.<br>Click the pencil icon above to start a chat!'}
+                <li style="padding: 36px 20px; text-align: center; color: var(--color-text-muted); font-size: 13px; line-height: 1.5;">
+                    ${emptyMsg}
                 </li>`;
             return;
         }
@@ -1072,25 +1374,25 @@ if ($headerFile) {
             const isUnread = (c.unread_count > 0);
             const prefix = c.last_message.is_sent_by_me ? 'You: ' : '';
             return `
-                <li class="ig-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${c.recipient.id}">
-                    <div class="ig-avatar-wrap">
-                        <img src="${escapeHtml(c.recipient.profile_pic)}" alt="${escapeHtml(c.recipient.name)}" class="ig-avatar-img">
-                        ${isUnread ? '<div class="ig-unread-badge"></div>' : ''}
+                <li class="glass-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${c.recipient.id}">
+                    <div class="glass-avatar-wrap">
+                        <img src="${escapeHtml(c.recipient.profile_pic)}" alt="${escapeHtml(c.recipient.name)}" class="glass-conv-avatar">
+                        ${isUnread ? '<div class="glass-unread-dot"></div>' : ''}
                     </div>
-                    <div class="ig-conv-details">
-                        <div class="ig-conv-username">@${escapeHtml(c.recipient.username)}</div>
-                        <div class="ig-conv-last-msg ${isUnread ? 'unread-bold' : ''}">
-                            <span class="text-span">${escapeHtml(prefix + c.last_message.body)}</span>
-                            <span class="bullet">•</span>
-                            <span>${escapeHtml(c.last_message.time_formatted)}</span>
+                    <div class="glass-conv-details">
+                        <div class="glass-conv-top">
+                            <div class="glass-conv-username">&#64;${escapeHtml(c.recipient.username)}</div>
+                            <div class="glass-conv-time">${escapeHtml(c.last_message.time_formatted || '')}</div>
+                        </div>
+                        <div class="glass-conv-last-msg ${isUnread ? 'unread-bold' : ''}">
+                            <span>${escapeHtml(prefix + c.last_message.body)}</span>
                         </div>
                     </div>
                 </li>
             `;
         }).join('');
 
-        // Attach Click Handlers
-        conversationsList.querySelectorAll('.ig-conv-item').forEach(item => {
+        conversationsList.querySelectorAll('.glass-conv-item').forEach(item => {
             item.addEventListener('click', () => {
                 const convId = parseInt(item.getAttribute('data-conv-id'), 10);
                 const recId = parseInt(item.getAttribute('data-recipient-id'), 10);
@@ -1099,27 +1401,22 @@ if ($headerFile) {
         });
     }
 
-    filterConvInput.addEventListener('input', (e) => {
+    filterInput.addEventListener('input', (e) => {
         renderConversations(e.target.value.trim());
     });
 
-    // -------------------------------------------------------------------------
-    // 2. ACTIVE CONVERSATION & MESSAGES ENGINE
-    // -------------------------------------------------------------------------
     function loadConversation(convId, recipientId) {
         currentConversationId = convId;
         activeRecipientId = recipientId;
 
-        // Toggle UI Panes
         mainContainer.classList.add('chat-active');
         emptyState.style.display = 'none';
         activeChat.style.display = 'flex';
 
-        // Highlight selected thread in sidebar
-        renderConversations(filterConvInput.value.trim());
+        renderConversations(filterInput.value.trim());
 
         chatFeed.innerHTML = `
-            <div style="padding: 40px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
+            <div style="padding: 40px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
                 Loading messages...
             </div>`;
 
@@ -1135,18 +1432,24 @@ if ($headerFile) {
         })
         .then(res => res.json())
         .then(result => {
-            if (result.success && result.data) {
-                const data = result.data;
-                const recipient = data.recipient;
+            if (result.success && result.recipient) {
+                const recipient = result.recipient;
+                const convInfo = result.conversation || {};
+                activeConversationStatus = convInfo.status || 'accepted';
 
-                // Update Header
                 headerAvatar.src = recipient.profile_pic;
                 headerAvatar.alt = recipient.name;
                 headerUsername.textContent = '@' + recipient.username;
-                headerStatus.textContent = recipient.name;
+                headerStatus.innerHTML = `<span class="glass-online-indicator"></span> ${escapeHtml(recipient.name)}`;
 
-                // Check if new messages arrived
-                const newMessages = data.messages || [];
+                if (convInfo.is_incoming_request) {
+                    requestBannerTitle.textContent = `Message Request from @${recipient.username}`;
+                    requestBanner.style.display = 'flex';
+                } else {
+                    requestBanner.style.display = 'none';
+                }
+
+                const newMessages = result.messages || [];
                 const wasNearBottom = isUserNearBottom();
 
                 if (JSON.stringify(newMessages) !== JSON.stringify(messagesCache)) {
@@ -1158,7 +1461,7 @@ if ($headerFile) {
                 }
             } else if (result.error) {
                 chatFeed.innerHTML = `
-                    <div style="padding: 40px; text-align: center; color: #ED4956; font-size: 13.5px; font-weight: 600;">
+                    <div style="padding: 40px; text-align: center; color: #EF4444; font-size: 13.5px; font-weight: 700;">
                         ${escapeHtml(result.error)}
                     </div>`;
             }
@@ -1171,13 +1474,13 @@ if ($headerFile) {
     function renderMessages(messages, recipient) {
         if (messages.length === 0) {
             chatFeed.innerHTML = `
-                <div style="padding: 60px 20px; text-align: center; color: var(--ig-text-secondary);">
-                    <div style="width: 64px; height: 64px; margin: 0 auto 12px; border-radius: 50%; overflow: hidden; border: 1px solid var(--ig-border);">
+                <div style="padding: 60px 20px; text-align: center; color: var(--color-text-muted);">
+                    <div style="width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--glass-border);">
                         <img src="${escapeHtml(recipient.profile_pic)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
-                    <h3 style="margin: 0; font-size: 16px; color: var(--ig-text-primary); font-weight: 700;">@${escapeHtml(recipient.username)}</h3>
-                    <p style="margin: 4px 0 16px; font-size: 12.5px;">${escapeHtml(recipient.name)} • Instagram Direct</p>
-                    <p style="font-size: 13px; color: var(--ig-text-secondary);">Say hello to start the conversation!</p>
+                    <h3 style="margin: 0; font-size: 16px; color: var(--color-text-main); font-weight: 800;">&#64;${escapeHtml(recipient.username)}</h3>
+                    <p style="margin: 4px 0 16px; font-size: 12.5px;">${escapeHtml(recipient.name)} • Direct Messages</p>
+                    <p style="font-size: 13px; color: var(--color-text-muted);">Say hello to start the conversation!</p>
                 </div>`;
             return;
         }
@@ -1186,21 +1489,20 @@ if ($headerFile) {
         let html = '';
 
         messages.forEach(msg => {
-            // Render Date Divider if date changed
             if (msg.date_header && msg.date_header !== lastDate) {
                 lastDate = msg.date_header;
-                html += `<div class="ig-date-divider"><span>${escapeHtml(lastDate)}</span></div>`;
+                html += `<div class="glass-date-divider"><span>${escapeHtml(lastDate)}</span></div>`;
             }
 
             const isSent = msg.is_mine;
             html += `
-                <div class="ig-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}">
-                    ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="ig-msg-sender-avatar">` : ''}
+                <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}">
+                    ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="glass-msg-avatar">` : ''}
                     <div>
-                        <div class="ig-bubble ${msg.is_optimistic ? 'optimistic' : ''}">
+                        <div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">
                             ${escapeHtml(msg.body).replace(/\n/g, '<br>')}
                         </div>
-                        <div class="ig-msg-meta">${escapeHtml(msg.time_formatted || '')}</div>
+                        <div class="glass-msg-meta">${escapeHtml(msg.time_formatted || '')}</div>
                     </div>
                 </div>
             `;
@@ -1210,8 +1512,7 @@ if ($headerFile) {
     }
 
     function isUserNearBottom() {
-        const threshold = 120;
-        return (chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight) <= threshold;
+        return (chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight) <= 120;
     }
 
     function scrollFeedToBottom(smooth = false) {
@@ -1222,23 +1523,18 @@ if ($headerFile) {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // 3. SEND MESSAGE & OPTIMISTIC UI
-    // -------------------------------------------------------------------------
     function sendMessage() {
         const text = messageInput.value.trim();
         if (!text || !currentConversationId) return;
 
-        // Clear input and reset button state
         messageInput.value = '';
         updateSendButtonState();
         messageInput.style.height = 'auto';
 
-        // Optimistic UI Append
         const optimisticMsg = {
             id: 'opt_' + Date.now(),
             body: text,
-            sender_id: window.CURRENT_USER_ID || 0,
+            sender_id: CURRENT_USER_ID,
             is_mine: true,
             is_optimistic: true,
             created_at: new Date().toISOString(),
@@ -1253,7 +1549,6 @@ if ($headerFile) {
         });
         scrollFeedToBottom(true);
 
-        // API Request
         fetch('/api/chat/send_message.php', {
             method: 'POST',
             headers: {
@@ -1267,17 +1562,22 @@ if ($headerFile) {
         })
         .then(res => res.json())
         .then(result => {
-            if (result.success && result.message) {
-                // Replace optimistic message with verified message
+            if (result.success && result.data) {
                 const index = messagesCache.findIndex(m => m.id === optimisticMsg.id);
                 if (index !== -1) {
-                    messagesCache[index] = result.message;
+                    messagesCache[index] = result.data;
                 }
                 renderMessages(messagesCache, {
                     username: headerUsername.textContent.replace('@', ''),
                     name: headerStatus.textContent,
                     profile_pic: headerAvatar.src
                 });
+                
+                if (result.conversation_status === 'accepted') {
+                    requestBanner.style.display = 'none';
+                    activeConversationStatus = 'accepted';
+                }
+
                 fetchConversations(true);
             } else {
                 alert(result.error || 'Failed to send message.');
@@ -1303,10 +1603,8 @@ if ($headerFile) {
         }
     }
 
-    // Input events
     messageInput.addEventListener('input', () => {
         updateSendButtonState();
-        // Auto-expand textarea
         messageInput.style.height = 'auto';
         messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
     });
@@ -1323,34 +1621,103 @@ if ($headerFile) {
         sendMessage();
     });
 
-    // Mobile Back to Inbox Button
-    backToInboxBtn.addEventListener('click', () => {
+    backBtn.addEventListener('click', () => {
         mainContainer.classList.remove('chat-active');
     });
 
-    // Emoji Bar Toggle
-    toggleEmojiBtn.addEventListener('click', () => {
-        quickEmojis.classList.toggle('open');
+    emojiToggleBtn.addEventListener('click', () => {
+        emojiDrawer.classList.toggle('open');
     });
 
-    quickEmojis.querySelectorAll('.ig-emoji-chip').forEach(chip => {
+    emojiDrawer.querySelectorAll('.glass-emoji-chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            const emoji = chip.getAttribute('data-emoji');
-            messageInput.value += emoji;
+            messageInput.value += chip.getAttribute('data-emoji');
             updateSendButtonState();
             messageInput.focus();
         });
     });
 
-    // -------------------------------------------------------------------------
-    // 4. USER SEARCH & FOLLOW MODAL
-    // -------------------------------------------------------------------------
+    btnAcceptRequest.addEventListener('click', () => {
+        if (!currentConversationId) return;
+        btnAcceptRequest.disabled = true;
+        btnAcceptRequest.textContent = 'Accepting...';
+
+        fetch('/api/chat/request_action.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                conversation_id: currentConversationId,
+                action: 'accept'
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            btnAcceptRequest.disabled = false;
+            btnAcceptRequest.textContent = 'Accept Request';
+            if (result.success) {
+                requestBanner.style.display = 'none';
+                activeConversationStatus = 'accepted';
+                switchTab('primary');
+                fetchConversations(true);
+            } else {
+                alert(result.error || 'Failed to accept request.');
+            }
+        })
+        .catch(err => {
+            btnAcceptRequest.disabled = false;
+            btnAcceptRequest.textContent = 'Accept Request';
+            console.error('Accept request error:', err);
+        });
+    });
+
+    btnDeclineRequest.addEventListener('click', () => {
+        if (!currentConversationId) return;
+        if (!confirm('Are you sure you want to decline this message request?')) return;
+
+        btnDeclineRequest.disabled = true;
+        btnDeclineRequest.textContent = 'Declining...';
+
+        fetch('/api/chat/request_action.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                conversation_id: currentConversationId,
+                action: 'decline'
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            btnDeclineRequest.disabled = false;
+            btnDeclineRequest.textContent = 'Decline';
+            if (result.success) {
+                currentConversationId = null;
+                mainContainer.classList.remove('chat-active');
+                activeChat.style.display = 'none';
+                emptyState.style.display = 'flex';
+                fetchConversations(false);
+            } else {
+                alert(result.error || 'Failed to decline request.');
+            }
+        })
+        .catch(err => {
+            btnDeclineRequest.disabled = false;
+            btnDeclineRequest.textContent = 'Decline';
+            console.error('Decline request error:', err);
+        });
+    });
+
     function openModal() {
         searchModal.classList.add('open');
         userSearchInput.value = '';
         modalUserList.innerHTML = `
-            <li style="padding: 30px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
-                Type a username to find people and start messaging.
+            <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                Type a username to find any buyer, customer, or seller across K71.
             </li>`;
         setTimeout(() => userSearchInput.focus(), 100);
     }
@@ -1373,8 +1740,8 @@ if ($headerFile) {
 
         if (query.length < 1) {
             modalUserList.innerHTML = `
-                <li style="padding: 30px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
-                    Type a username to find people and start messaging.
+                <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                    Type a username to find any buyer, customer, or seller across K71.
                 </li>`;
             return;
         }
@@ -1390,146 +1757,82 @@ if ($headerFile) {
                     renderSearchResults(result.data);
                 }
             })
-            .catch(err => {
-                console.error('Search error:', err);
-            });
-        }, 300);
+            .catch(err => console.error('Search error:', err));
+        }, 250);
     });
 
     function renderSearchResults(users) {
         if (users.length === 0) {
             modalUserList.innerHTML = `
-                <li style="padding: 30px; text-align: center; color: var(--ig-text-secondary); font-size: 13px;">
+                <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
                     No accounts found matching your query.
                 </li>`;
             return;
         }
 
-        modalUserList.innerHTML = users.map(u => {
-            let actionBtnHtml = '';
-
-            if (u.follow_status === 'none') {
-                actionBtnHtml = `<button type="button" class="ig-action-btn-follow" data-user-id="${u.id}" data-action="follow">Follow</button>`;
-            } else if (u.follow_status === 'pending_outgoing') {
-                actionBtnHtml = `<button type="button" class="ig-action-btn-requested" data-user-id="${u.id}" data-action="cancel">Requested</button>`;
-            } else if (u.follow_status === 'pending_incoming') {
-                actionBtnHtml = `
-                    <div class="ig-action-group">
-                        <button type="button" class="ig-action-btn-follow" data-user-id="${u.id}" data-action="accept">Confirm</button>
-                        <button type="button" class="ig-action-btn-requested" data-user-id="${u.id}" data-action="decline">Delete</button>
-                    </div>`;
-            } else if (u.follow_status === 'accepted') {
-                actionBtnHtml = `<button type="button" class="ig-action-btn-message" data-user-id="${u.id}" data-action="open_chat">Message</button>`;
-            }
-
-            return `
-                <li class="ig-modal-user-item" data-user-id="${u.id}">
-                    <div class="ig-modal-user-meta">
-                        <img src="${escapeHtml(u.profile_pic)}" alt="${escapeHtml(u.name)}" class="ig-modal-user-avatar">
-                        <div class="ig-modal-user-info">
-                            <span class="ig-modal-username">@${escapeHtml(u.username)}</span>
-                            <span class="ig-modal-fullname">${escapeHtml(u.name)}</span>
-                        </div>
+        modalUserList.innerHTML = users.map(u => `
+            <li class="glass-modal-user-item" data-user-id="${u.id}">
+                <div class="glass-modal-user-meta">
+                    <img src="${escapeHtml(u.profile_pic)}" alt="${escapeHtml(u.name)}" class="glass-modal-user-avatar">
+                    <div class="glass-modal-user-info">
+                        <span class="glass-modal-username">&#64;${escapeHtml(u.username)}</span>
+                        <span class="glass-modal-fullname">${escapeHtml(u.name)}</span>
                     </div>
-                    <div class="ig-modal-user-action">
-                        ${actionBtnHtml}
-                    </div>
-                </li>
-            `;
-        }).join('');
+                </div>
+                <div>
+                    <button type="button" class="glass-modal-msg-btn" data-user-id="${u.id}">
+                        Message
+                    </button>
+                </div>
+            </li>
+        `).join('');
 
-        // Attach action handlers to buttons inside modal
-        modalUserList.querySelectorAll('button[data-action]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const targetId = parseInt(btn.getAttribute('data-user-id'), 10);
-                const action = btn.getAttribute('data-action');
+        modalUserList.querySelectorAll('.glass-modal-user-item, .glass-modal-msg-btn').forEach(el => {
+            el.addEventListener('click', (e) => {
+                const targetId = parseInt(el.getAttribute('data-user-id'), 10);
+                if (!targetId) return;
 
-                if (action === 'open_chat') {
-                    // Open existing conversation
-                    closeModal();
-                    // Find if conversation exists in cache
-                    const existing = conversationsCache.find(c => c.recipient.id === targetId);
-                    if (existing) {
-                        loadConversation(existing.id, targetId);
+                fetch('/api/chat/search_users.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'start_or_find',
+                        target_user_id: targetId
+                    })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success && result.conversation_id) {
+                        closeModal();
+                        loadConversation(result.conversation_id, targetId);
+                        fetchConversations(true);
+                        setTimeout(() => messageInput.focus(), 200);
                     } else {
-                        // Trigger accept endpoint to guarantee conversation row creation
-                        triggerFollowAction(targetId, 'accept', btn);
+                        alert(result.error || 'Failed to start conversation.');
                     }
-                } else {
-                    triggerFollowAction(targetId, action, btn);
-                }
+                })
+                .catch(err => console.error('Start chat error:', err));
             });
         });
     }
 
-    function triggerFollowAction(targetId, action, buttonEl) {
-        const originalText = buttonEl.textContent;
-        buttonEl.disabled = true;
-        buttonEl.style.opacity = '0.6';
-
-        fetch('/api/chat/follow_actions.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                target_id: targetId,
-                action: action
-            })
-        })
-        .then(res => res.json())
-        .then(result => {
-            buttonEl.disabled = false;
-            buttonEl.style.opacity = '1';
-
-            if (result.success) {
-                if (action === 'accept' && result.conversation_id) {
-                    closeModal();
-                    fetchConversations();
-                    loadConversation(result.conversation_id, targetId);
-                } else {
-                    // Refresh search list to update button state
-                    const query = userSearchInput.value.trim();
-                    if (query) {
-                        userSearchInput.dispatchEvent(new Event('input'));
-                    }
-                    fetchConversations(true);
-                }
-            } else {
-                alert(result.error || 'Failed to perform follow action.');
-                buttonEl.textContent = originalText;
-            }
-        })
-        .catch(err => {
-            console.error('Follow action error:', err);
-            buttonEl.disabled = false;
-            buttonEl.style.opacity = '1';
-            buttonEl.textContent = originalText;
-        });
-    }
-
-    // -------------------------------------------------------------------------
-    // 5. REAL-TIME POLLING ENGINES
-    // -------------------------------------------------------------------------
     function startPolling() {
-        // Message polling every 2.5 seconds
         messagePollTimer = setInterval(() => {
             if (isPollingActive && currentConversationId) {
                 fetchMessages(false);
             }
         }, 2500);
 
-        // Inbox conversations polling every 6 seconds
         inboxPollTimer = setInterval(() => {
             if (isPollingActive) {
                 fetchConversations(true);
             }
-        }, 6000);
+        }, 5000);
     }
 
-    // Handle tab focus / blur to save resources
     document.addEventListener('visibilitychange', () => {
         isPollingActive = !document.hidden;
         if (isPollingActive) {
@@ -1538,7 +1841,6 @@ if ($headerFile) {
         }
     });
 
-    // Helper: HTML escaping for XSS prevention
     function escapeHtml(text) {
         if (!text) return '';
         const map = {
@@ -1551,9 +1853,6 @@ if ($headerFile) {
         return String(text).replace(/[&<>"']/g, m => map[m]);
     }
 
-    // -------------------------------------------------------------------------
-    // 6. INITIALIZATION
-    // -------------------------------------------------------------------------
     fetchConversations();
     startPolling();
 
@@ -1561,11 +1860,7 @@ if ($headerFile) {
 </script>
 
 <?php
-// Wrap with existing layout footer
-$footerFile = file_exists(__DIR__ . '/includes/footer.php') 
-    ? __DIR__ . '/includes/footer.php' 
-    : null;
-if ($footerFile) {
-    require_once $footerFile;
+if (file_exists(__DIR__ . '/includes/footer.php')) {
+    require_once __DIR__ . '/includes/footer.php';
 }
 ?>

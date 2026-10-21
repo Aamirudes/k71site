@@ -285,5 +285,41 @@
             {{ $slot }}
         </main>
     </div>
+
+    <!-- CSRF Auto-Refresh & Session Heartbeat (Prevents 419 Page Expired forever) -->
+    <script>
+        (function() {
+            // Heartbeat every 4 minutes to keep session active while editing
+            setInterval(function() {
+                fetch('/api/heartbeat', {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.csrf_token) {
+                        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                        if (csrfMeta) csrfMeta.content = data.csrf_token;
+                        document.querySelectorAll('input[name="_token"]').forEach(inp => {
+                            inp.value = data.csrf_token;
+                        });
+                    }
+                })
+                .catch(() => {});
+            }, 240000);
+
+            // Ensure form submission uses the latest csrf-token meta
+            document.addEventListener('submit', function(e) {
+                const form = e.target;
+                if (form && form.tagName === 'FORM') {
+                    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+                    const tokenInput = form.querySelector('input[name="_token"]');
+                    if (csrfMeta && tokenInput && csrfMeta.content) {
+                        tokenInput.value = csrfMeta.content;
+                    }
+                }
+            }, true);
+        })();
+    </script>
 </body>
 </html>

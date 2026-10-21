@@ -2,15 +2,15 @@
     @php
         $period = $period ?? request('period', 'all');
         $periodLabel = $periodLabel ?? 'Lifetime Overview';
-        $vType = $vendor->vendor_type ?? 'clothing';
+        $vKey = $vendor ? $vendor->getVerticalKey() : 'marketplace';
         $vBadges = [
-            'clothing' => ['icon' => '👗', 'name' => 'Fashion & Apparel Atelier', 'catalogLabel' => 'Catalog Items', 'action' => 'New Product'],
-            'food' => ['icon' => '🍽️', 'name' => 'Cloud Kitchen & Menu', 'catalogLabel' => 'Menu Dishes', 'action' => 'Add Dish'],
-            'services' => ['icon' => '🛠️', 'name' => 'On-Demand Service Studio', 'catalogLabel' => 'Service Tiers', 'action' => 'New Service'],
-            'used' => ['icon' => '📱', 'name' => 'Certified Pre-Owned Hub', 'catalogLabel' => 'Pre-Loved Items', 'action' => 'List Item'],
-            'b2b' => ['icon' => '🏭', 'name' => 'Industrial Manufacturing & RFQ', 'catalogLabel' => 'Bulk Products', 'action' => 'Post RFQ'],
+            'food' => ['icon' => '🍽️', 'name' => 'Cloud Kitchen & Restaurant', 'catalogLabel' => 'Menu Dishes', 'action' => 'Add Dish', 'orderLabel' => 'Kitchen Orders', 'itemsLabel' => 'Dishes'],
+            'services' => ['icon' => '🛠️', 'name' => 'On-Demand Service Studio', 'catalogLabel' => 'Service Tiers', 'action' => 'New Service', 'orderLabel' => 'Client Bookings', 'itemsLabel' => 'Services'],
+            'used' => ['icon' => '📱', 'name' => 'Certified Pre-Owned Hub', 'catalogLabel' => 'Pre-Loved Items', 'action' => 'List Item', 'orderLabel' => 'Buyer Deals', 'itemsLabel' => 'Items'],
+            'enquiry' => ['icon' => '🏭', 'name' => 'Industrial Manufacturing & RFQ', 'catalogLabel' => 'Bulk Products', 'action' => 'Post RFQ', 'orderLabel' => 'Quote Enquiries', 'itemsLabel' => 'Quotes'],
+            'marketplace' => ['icon' => '🛍️', 'name' => 'Fashion & Retail Atelier', 'catalogLabel' => 'Catalog Items', 'action' => 'New Product', 'orderLabel' => 'Customer Orders', 'itemsLabel' => 'Products'],
         ];
-        $currV = $vBadges[$vType] ?? $vBadges['clothing'];
+        $currV = $vBadges[$vKey] ?? $vBadges['marketplace'];
         $shopName = $vendor->shop_name ?? $vendor->store_name ?? 'Vendor Store';
         $totalRevenue = $totalRevenue ?? ($metrics['total_revenue'] ?? 0);
         $netPayout = $netPayout ?? ($metrics['net_payout'] ?? ($totalRevenue * 0.95));

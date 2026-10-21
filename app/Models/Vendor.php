@@ -131,38 +131,55 @@ class Vendor extends Model
      */
     public function isClothing(): bool
     {
-        return empty($this->vendor_type) || $this->vendor_type === 'clothing';
+        return empty($this->vendor_type) || in_array($this->vendor_type, ['clothing', 'footwear']);
     }
 
     public function isFood(): bool
     {
-        return $this->vendor_type === 'food';
+        return in_array($this->vendor_type, ['food', 'groceries']);
     }
 
     public function isServices(): bool
     {
-        return $this->vendor_type === 'services';
+        return in_array($this->vendor_type, ['services', 'digital_services', 'local_services']);
     }
 
     public function isUsed(): bool
     {
-        return $this->vendor_type === 'used';
+        return in_array($this->vendor_type, ['used', 'automotive']);
     }
 
     public function isB2B(): bool
     {
-        return $this->vendor_type === 'b2b';
+        return in_array($this->vendor_type, ['b2b', 'machinery']);
+    }
+
+    public function isElectronics(): bool
+    {
+        return $this->vendor_type === 'electronics';
+    }
+
+    public function isBeauty(): bool
+    {
+        return $this->vendor_type === 'beauty';
     }
 
     public function getVerticalKey(): string
     {
-        return match($this->vendor_type) {
-            'food' => 'food',
-            'services' => 'services',
-            'used' => 'used',
-            'b2b' => 'enquiry',
-            default => 'marketplace',
-        };
+        if ($this->vendor_type) {
+            return match($this->vendor_type) {
+                'food', 'groceries' => 'food',
+                'services', 'digital_services', 'local_services' => 'services',
+                'used', 'automotive' => 'used',
+                'machinery', 'b2b', 'real_estate' => 'enquiry',
+                'clothing', 'footwear', 'electronics', 'beauty', 'home_living', 'toys_sports' => 'marketplace',
+                default => 'marketplace',
+            };
+        }
+        if ($this->isRestaurant()) {
+            return 'food';
+        }
+        return 'marketplace';
     }
 
     /**

@@ -1,7 +1,8 @@
 <?php
 /**
- * API: Get Messages for Conversation with Security & Read Status Sync
+ * API: Get Messages for Conversation with Dynamic Request Status
  * File: api/chat/get_messages.php
+ * K71 Realtime Direct Messaging Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -28,7 +29,7 @@ if ($conversationId <= 0) {
 try {
     // 1. Verify user is a participant of the conversation
     $stmtConv = $pdo->prepare("
-        SELECT id, user_one_id, user_two_id, last_message_at 
+        SELECT id, user_one_id, user_two_id, status, requested_by, last_message_at 
         FROM chat_conversations 
         WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) 
         LIMIT 1
@@ -45,31 +46,15 @@ try {
         exit;
     }
 
+    $convStatus = $conv['status'] ?? 'accepted';
+    $requestedBy = isset($conv['requested_by']) ? (int)$conv['requested_by'] : null;
+    $isIncomingRequest = ($convStatus === 'pending' && $requestedBy !== null && $requestedBy !== $currentUserId);
+
     $recipientId = ((int) $conv['user_one_id'] === $currentUserId) 
         ? (int) $conv['user_two_id'] 
         : (int) $conv['user_one_id'];
 
-    // 2. SECURITY CHECK: Verify mutual follow relation is 'accepted'
-    $stmtFollow = $pdo->prepare("
-        SELECT status 
-        FROM user_follows 
-        WHERE ((follower_id = :me AND following_id = :target) OR (follower_id = :target AND following_id = :me))
-          AND status = 'accepted'
-        LIMIT 1
-    ");
-    $stmtFollow->execute([':me' => $currentUserId, ':target' => $recipientId]);
-    $isAccepted = $stmtFollow->fetchColumn();
-
-    if (!$isAccepted) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Follow request must be accepted to chat.'
-        ]);
-        exit;
-    }
-
-    // 3. Mark incoming unread messages as read
+    // 2. Mark incoming unread messages as read
     $stmtMarkRead = $pdo->prepare("
         UPDATE chat_messages 
         SET is_read = 1 
@@ -77,7 +62,7 @@ try {
     ");
     $stmtMarkRead->execute([$conversationId, $currentUserId]);
 
-    // 4. Fetch all messages in ascending order
+    // 3. Fetch all messages in ascending order
     $stmtMessages = $pdo->prepare("
         SELECT id, conversation_id, sender_id, body, is_read, created_at 
         FROM chat_messages 
@@ -103,19 +88,19 @@ try {
         ];
     }
 
-    // 5. Fetch recipient profile
+    // 4. Fetch recipient profile
     $recipientInfo = get_chat_user_info($pdo, $recipientId);
 
     echo json_encode([
         'success' => true,
-        'data' => [
-            'conversation' => [
-                'id' => $conversationId,
-                'last_message_at' => $conv['last_message_at'],
-            ],
-            'recipient' => $recipientInfo,
-            'messages' => $formattedMessages
-        ]
+        'conversation' => [
+            'id' => $conversationId,
+            'status' => $convStatus,
+            'requested_by' => $requestedBy,
+            'is_incoming_request' => $isIncomingRequest,
+        ],
+        'recipient' => $recipientInfo,
+        'messages' => $formattedMessages
     ]);
 
 } catch (\Throwable $e) {

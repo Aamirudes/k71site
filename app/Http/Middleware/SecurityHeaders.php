@@ -21,6 +21,13 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self)');
 
+        if (auth()->check() || $request->is('vendor*', 'admin*', 'cart*', 'checkout*', 'login*', 'register*', 'sell*', 'messages*', 'direct*', 'dm*', 'api*')) {
+            $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, private');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', 'Sat, 01 Jan 2000 00:00:00 GMT');
+            $response->headers->set('X-LiteSpeed-Cache-Control', 'no-cache');
+        }
+
         return $response;
     }
 }

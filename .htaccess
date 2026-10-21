@@ -33,3 +33,11 @@
 <IfModule mod_security2.c>
     SecRuleEngine Off
 </IfModule>
+
+<IfModule LiteSpeed>
+    CacheLookup on
+    RewriteEngine on
+    RewriteCond %{REQUEST_METHOD} ^(POST|PUT|DELETE|PATCH)$ [OR]
+    RewriteCond %{REQUEST_URI} ^/(vendor|admin|cart|checkout|login|register|sell|messages|api|direct|dm)
+    RewriteRule .* - [E=Cache-Control:no-cache]
+</IfModule>

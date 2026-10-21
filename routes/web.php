@@ -49,6 +49,15 @@ Route::get('/robots.txt', function () {
     return response($robots, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
 });
 
+// Session Heartbeat & CSRF Token Refresher (Guarantees Zero 419 Page Expired)
+Route::get('/api/heartbeat', function() {
+    return response()->json([
+        'status' => 'ok',
+        'csrf_token' => csrf_token(),
+        'authenticated' => auth()->check(),
+    ]);
+})->name('api.heartbeat');
+
 // Mandatory Legal, Compliance & Information Pages (PhonePe & Banking Audited)
 Route::get('/about-us', [\App\Http\Controllers\PageController::class, 'about'])->name('pages.about');
 Route::get('/contact', [\App\Http\Controllers\PageController::class, 'contact'])->name('pages.contact');
@@ -101,8 +110,8 @@ Route::post('/auctions/{product}/bid', [\App\Http\Controllers\AuctionController:
 
 // Customer Direct Messaging & Notifications Routes (Phase 9)
 Route::middleware('auth')->group(function () {
-    Route::get('/direct', function() { require base_path('messages.php'); })->name('messages.instagram_direct');
-    Route::get('/dm', function() { require base_path('messages.php'); })->name('messages.dm');
+    Route::get('/direct', fn() => redirect()->route('messages.index'))->name('messages.instagram_direct');
+    Route::get('/dm', fn() => redirect()->route('messages.index'))->name('messages.dm');
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
