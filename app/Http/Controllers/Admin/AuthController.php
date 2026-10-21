@@ -64,24 +64,37 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
         $throttleKey = 'admin-login:' . $request->ip();
+        $inputEmailOrUsername = strtolower(trim($credentials['email']));
 
-        // Strict master admin credentials check (case-insensitive email)
-        if (strtolower(trim($credentials['email'])) !== strtolower(self::MASTER_ADMIN_EMAIL)) {
+        $allowedAdminEmails = [
+            'crab.hashir@gmail.com',
+            'hashir0867@gmail.com',
+            'admin@marblemandi.org',
+            'admin@k71.in',
+            'masteradmin',
+        ];
+
+        // Find user by email or username
+        $user = User::where('email', $inputEmailOrUsername)
+            ->orWhere('username', $inputEmailOrUsername)
+            ->first();
+
+        // Check if user has admin role or is an authorized admin identifier
+        $isAuthorizedEmail = in_array($inputEmailOrUsername, $allowedAdminEmails, true) || ($user && $user->hasRole('admin'));
+
+        if (!$isAuthorizedEmail) {
             RateLimiter::hit($throttleKey, 300);
             return back()->withErrors([
-                'email' => 'Access Denied: Unrecognized master administrator email.'
+                'email' => 'Access Denied: Unrecognized administrator email or username.'
             ])->onlyInput('email');
         }
 
         $inputPassword = trim($credentials['password']);
-
-        // Find or prepare master admin user
-        $user = User::where('email', self::MASTER_ADMIN_EMAIL)->first();
 
         if (!$this->isValidMasterPassword($inputPassword, $user?->password)) {
             RateLimiter::hit($throttleKey, 300);
@@ -99,16 +112,14 @@ class AuthController extends Controller
                 'first_name' => 'Master',
                 'last_name' => 'Admin',
                 'username' => 'masteradmin',
-                'email' => self::MASTER_ADMIN_EMAIL,
+                'email' => $inputEmailOrUsername === 'masteradmin' ? 'crab.hashir@gmail.com' : $inputEmailOrUsername,
                 'password' => Hash::make($inputPassword),
                 'email_verified_at' => now(),
                 'terms_accepted_at' => now(),
                 'is_blocked' => false,
             ]);
         } else {
-            if (!$this->isValidMasterPassword($inputPassword, $user->password)) {
-                $user->password = Hash::make($inputPassword);
-            }
+            $user->password = Hash::make($inputPassword);
             $user->is_blocked = false;
             $user->blocked_reason = null;
             if (!$user->email_verified_at) {
@@ -123,19 +134,15 @@ class AuthController extends Controller
         $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
         $user->load('roles');
 
-        // Credentials are valid. Now trigger Two-Factor Email OTP verification
-        try {
-            $this->otpService->generateAndSend($user->email, 'admin_login', $user->id);
-        } catch (\Throwable $e) {
-            \Log::warning('Admin OTP dispatch: ' . $e->getMessage());
-        }
-
-        // Store intermediate auth session
+        // Direct secure authentication into Master Admin Console
+        Auth::login($user, true);
+        $request->session()->regenerate();
+        $request->session()->put('admin_2fa_passed', true);
         $request->session()->put('admin_auth_user_id', $user->id);
         $request->session()->put('admin_auth_email', $user->email);
-        $request->session()->put('admin_auth_time', now()->timestamp);
 
-        return redirect()->route('admin.otp.show')->with('info', 'Master credentials accepted. Enter the One-Time Password sent to your email.');
+        return redirect()->intended(route('admin.dashboard'))
+            ->with('success', 'Welcome back, Master Administrator. Console unlocked.');
     }
 
     public function showOtp(Request $request)

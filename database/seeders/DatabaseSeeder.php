@@ -22,9 +22,7 @@ class DatabaseSeeder extends Seeder
             ReservedSlugSeeder::class,
             CategorySeeder::class,
             All13EcosystemCategoriesSeeder::class,
-            MasterProductionPlatformSeeder::class,
             NavigationSeeder::class,
-            UsedMarketplaceOlxSeeder::class,
         ]);
 
         // Seed or Enforce Master Administrator Account

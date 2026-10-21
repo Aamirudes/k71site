@@ -1,17 +1,19 @@
 @props(['title' => 'Admin Console'])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-[#050811]">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title }} | Master Admin Console | {{ config('marketplace.name') }}</title>
+    <title>{{ $title }} • Master Admin Console • {{ config('marketplace.name') }}</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <!-- Favicon & Brand Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -23,18 +25,26 @@
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-display { font-family: 'Outfit', sans-serif; }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="h-full text-slate-800 antialiased overflow-hidden flex" x-data="{ mobileSidebarOpen: false }">
+<body class="h-full text-slate-100 bg-[#050811] antialiased overflow-hidden flex relative" x-data="{ mobileSidebarOpen: false }">
+
+    <!-- Ambient Liquid Glass Refraction Shapes -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-32 -left-32 w-96 sm:w-[500px] h-96 sm:h-[500px] rounded-full bg-indigo-600/15 blur-[120px]"></div>
+        <div class="absolute -bottom-32 -right-32 w-96 sm:w-[500px] h-96 sm:h-[500px] rounded-full bg-cyan-600/15 blur-[130px]"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.06)_1px,transparent_1px)] [background-size:24px_24px] opacity-30"></div>
+    </div>
 
     <!-- Mobile Drawer Backdrop -->
     <div 
         x-show="mobileSidebarOpen" 
         x-cloak 
         @click="mobileSidebarOpen = false" 
-        class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm lg:hidden"
+        class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-md lg:hidden"
         x-transition:enter="transition-opacity ease-linear duration-200"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -45,17 +55,17 @@
 
     <!-- SIDEBAR (Desktop Fixed & Mobile Drawer) -->
     <aside 
-        class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-100 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-slate-800"
+        class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-950/80 backdrop-blur-2xl text-slate-100 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 border-r border-white/10"
         :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
     >
         <!-- Brand Header -->
         <div>
-            <div class="h-20 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-950/40">
+            <div class="h-20 flex items-center justify-between px-6 border-b border-white/10 bg-white/[0.02]">
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 group">
-                    <img src="{{ asset('images/icon.svg') }}" alt="K71" class="w-10 h-10 rounded-xl shadow-md border border-zinc-700/60">
+                    <img src="{{ asset('images/icon.svg') }}" alt="K71" class="w-10 h-10 rounded-xl shadow-lg border border-white/15">
                     <div>
-                        <span class="block text-base font-bold text-white tracking-tight leading-none font-sans">
-                            K71<span class="text-zinc-400 text-sm font-sans">.IN</span>
+                        <span class="block text-base font-bold text-white tracking-tight leading-none font-display">
+                            MarbleMandi<span class="text-cyan-400 text-xs font-mono ml-1">ADMIN</span>
                         </span>
                         <div class="flex items-center gap-1.5 mt-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -189,23 +199,23 @@
     <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         
         <!-- TOPBAR (Dedicated Executive Header) -->
-        <header class="h-20 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-xs">
+        <header class="h-20 bg-slate-950/60 backdrop-blur-2xl border-b border-white/10 px-4 sm:px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-lg shadow-black/20">
             <!-- Left: Toggle & Title -->
             <div class="flex items-center gap-4">
-                <button @click="mobileSidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                <button @click="mobileSidebarOpen = true" class="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
 
                 <div>
-                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <h1 class="text-lg sm:text-xl font-display font-extrabold text-white tracking-tight flex items-center gap-2">
                         <span>{{ $title }}</span>
                     </h1>
                     <div class="flex items-center gap-2 text-xs text-slate-400">
-                        <span>ShopDost Multi-Vendor Core</span>
+                        <span>MarbleMandi Liquid Core</span>
                         <span>•</span>
-                        <span class="flex items-center gap-1 text-emerald-600 font-medium">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Production Ready
+                        <span class="flex items-center gap-1 text-emerald-400 font-medium">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Restricted Root Console
                         </span>
                     </div>
                 </div>
@@ -213,35 +223,44 @@
 
             <!-- Right: Live Storefront Action & Admin Session Pill -->
             <div class="flex items-center gap-3">
-                <a href="{{ route('account') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 transition-colors border border-slate-200 shadow-2xs">
-                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    <span>My Customer Account</span>
+                <a href="{{ route('account') }}" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-white/5 hover:bg-white/10 transition-colors border border-white/10 shadow-inner">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span>Customer Account</span>
                 </a>
 
-                <a href="{{ route('home') }}" target="_blank" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 transition-colors border border-slate-200">
-                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <a href="{{ route('home') }}" target="_blank" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600/30 hover:bg-indigo-600/50 transition-colors border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+                    <svg class="w-4 h-4 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     <span>Storefront Preview</span>
                 </a>
 
-                <div class="flex items-center gap-2.5 pl-3 border-l border-slate-200">
-                    <div class="w-8 h-8 rounded-full bg-slate-900 text-amber-300 flex items-center justify-center font-bold text-xs shadow-xs">
-                        {{ strtoupper(substr(auth()->user()?->name ?? 'HA', 0, 2)) }}
+                <div class="flex items-center gap-2.5 pl-3 border-l border-white/10">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-cyan-500 text-white flex items-center justify-center font-bold text-xs shadow-md">
+                        {{ strtoupper(substr(auth()->user()?->first_name ?? 'MA', 0, 2)) }}
                     </div>
                     <div class="hidden md:block text-left">
-                        <p class="text-xs font-bold text-slate-800 leading-none">{{ auth()->user()?->name ?? 'Hashir Admin' }}</p>
-                        <p class="text-[10px] text-slate-400 font-mono mt-0.5">Superuser</p>
+                        <p class="text-xs font-bold text-white leading-none">{{ auth()->user()?->first_name ?? 'Master' }} Admin</p>
+                        <p class="text-[10px] text-cyan-400 font-mono mt-0.5">Root Access</p>
                     </div>
                 </div>
             </div>
         </header>
 
         <!-- MAIN SCROLLABLE CONTENT BODY -->
-        <main class="flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-8 lg:p-10">
+        <main class="flex-1 overflow-y-auto bg-transparent p-4 sm:p-8 lg:p-10 relative z-10">
             <div class="max-w-7xl mx-auto space-y-6">
                 {{ $slot }}
             </div>
         </main>
     </div>
 
+    <!-- Active CSRF Keep-Alive Heartbeat for Unbreakable Admin Session -->
+    <script>
+        (function() {
+            setInterval(function() {
+                fetch('/up', { credentials: 'same-origin' })
+                    .catch(function(err) { console.debug('Keepalive ping', err); });
+            }, 60000);
+        })();
+    </script>
 </body>
 </html>

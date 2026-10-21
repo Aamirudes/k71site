@@ -423,10 +423,58 @@ try {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
+// 9.5 Optional Fresh Reset & Data Purge (Removes all dummy vendors, products, and non-admin users)
+if (isset($_GET['purge_fresh']) || isset($_GET['purge_data'])) {
+    echo "<div class='step'><div class='step-title'>🧹 Purging All Test Vendors, Products, Orders & Non-Admin Users...</div>";
+    try {
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+        } elseif ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF');
+        }
+
+        $tables = [
+            'products', 'product_variants', 'product_images', 'product_attributes', 'product_attribute_values',
+            'product_views', 'product_likes', 'reviews', 'ratings', 'vendors', 'vendor_profiles',
+            'vendor_banks', 'vendor_documents', 'vendor_payouts', 'vendor_commissions', 'vendor_onboarding_steps',
+            'orders', 'order_items', 'vendor_orders', 'order_status_histories', 'cart_items', 'carts',
+            'wishlists', 'coupons', 'conversations', 'messages', 'support_tickets', 'notifications'
+        ];
+        foreach ($tables as $t) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($t)) {
+                DB::table($t)->delete();
+                echo "<div style='color:#cbd5e1;font-size:12px;'>Purged: {$t}</div>";
+            }
+        }
+
+        $adminUsers = \App\Models\User::whereIn('email', ['crab.hashir@gmail.com', 'hashir0867@gmail.com'])
+            ->orWhere('id', 1)
+            ->pluck('id')->toArray();
+
+        $del = DB::table('users')->whereNotIn('id', $adminUsers)->delete();
+        echo "<div style='color:#4ade80;font-size:12px;'>Deleted {$del} non-admin users.</div>";
+
+        if (\Illuminate\Support\Facades\Schema::hasTable('role_user')) {
+            DB::table('role_user')->whereNotIn('user_id', $adminUsers)->delete();
+        }
+
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+        } elseif ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        }
+        echo "<pre class='success'>✅ Fresh State Restored! All dummy vendors, products, and non-admin users purged.</pre>";
+    } catch (\Throwable $e) {
+        echo "<pre class='error'>Purge error: " . htmlspecialchars($e->getMessage()) . "</pre>";
+    }
+    echo "</div>";
+}
+
 // 10. Run Migrations & Seeders
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
-    'Seed Database with Live Products, Real Stores & Categories' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
+    'Seed Database with Roles & Fresh Categories' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
     'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 
@@ -520,6 +568,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&purge_fresh=1' class='btn btn-red' onclick='return confirm(\"Are you sure? This will delete all test vendors, dummy products, and non-admin users.\");'>🧹 Purge Data (Make Fresh & Admin Only)</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";
