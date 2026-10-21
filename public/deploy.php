@@ -141,11 +141,12 @@ if ($syncRequested) {
                 }
                 $standaloneFiles = ['deploy.php', 'messages.php', 'db.php'];
                 foreach ($standaloneFiles as $sf) {
-                    if (file_exists($sourceDir . '/' . $sf)) {
+                    if (file_exists($sourceDir . '/public/' . $sf)) {
+                        @copy($sourceDir . '/public/' . $sf, $baseDir . '/' . $sf);
+                        @copy($sourceDir . '/public/' . $sf, $baseDir . '/public/' . $sf);
+                    } elseif (file_exists($sourceDir . '/' . $sf)) {
                         @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
-                        if (file_exists($baseDir . '/public')) {
-                            @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
-                        }
+                        @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
                     }
                 }
                 
