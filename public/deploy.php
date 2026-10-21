@@ -133,11 +133,11 @@ if ($syncRequested) {
                 }
                 
                 // Copy root standalone files if present
-                $standaloneFiles = ['index.php', 'deploy.php', 'messages.php', 'db.php'];
+                $standaloneFiles = ['index.php', 'deploy.php', 'messages.php', 'db.php', '.htaccess'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
                         @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
-                        if (file_exists($baseDir . '/public')) {
+                        if ($sf !== '.htaccess' && file_exists($baseDir . '/public')) {
                             @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
                         }
                     }
