@@ -132,12 +132,18 @@ if ($syncRequested) {
                     }
                 }
                 
-                // Copy root standalone files if present
-                $standaloneFiles = ['index.php', 'deploy.php', 'messages.php', 'db.php', '.htaccess'];
+                // Copy root standalone files if present (never copy root index.php into public/)
+                if (file_exists($sourceDir . '/index.php')) {
+                    @copy($sourceDir . '/index.php', $baseDir . '/index.php');
+                }
+                if (file_exists($sourceDir . '/public/index.php')) {
+                    @copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php');
+                }
+                $standaloneFiles = ['deploy.php', 'messages.php', 'db.php'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
                         @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
-                        if ($sf !== '.htaccess' && file_exists($baseDir . '/public')) {
+                        if (file_exists($baseDir . '/public')) {
                             @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
                         }
                     }
@@ -175,6 +181,34 @@ foreach ($staleCacheFiles as $f) {
 $rootIndex = $baseDir . '/index.php';
 $rootIndexContent = "<?php\n\n/**\n * Laravel - Shared Hosting Gateway\n */\nif (!defined('LARAVEL_START')) {\n    define('LARAVEL_START', microtime(true));\n}\nrequire_once __DIR__ . '/public/index.php';\n";
 @file_put_contents($rootIndex, $rootIndexContent);
+
+// 2b. Ensure public/index.php is the true Laravel bootstrap front controller (never recursive)
+$publicIndex = $baseDir . '/public/index.php';
+$publicIndexContent = <<<'PHP'
+<?php
+
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
+
+if (!defined('LARAVEL_START')) {
+    define('LARAVEL_START', microtime(true));
+}
+
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
+
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$app->handleRequest(Request::capture());
+PHP;
+@file_put_contents($publicIndex, $publicIndexContent);
 
 // 3. Ensure root .htaccess routes everything to public/
 $rootHtaccess = $baseDir . '/.htaccess';
