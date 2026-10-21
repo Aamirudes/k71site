@@ -156,13 +156,7 @@ return [
     |
     */
 
-    'domain' => env('SESSION_DOMAIN', (function() {
-        $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
-        if (str_contains($host, 'marblemandi.org')) {
-            return '.marblemandi.org';
-        }
-        return null;
-    })()),
+    'domain' => env('SESSION_DOMAIN', '.marblemandi.org'),
 
     /*
     |--------------------------------------------------------------------------
