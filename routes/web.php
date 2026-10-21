@@ -18,6 +18,7 @@ use App\Http\Controllers\ShortsSpinController;
 use App\Http\Controllers\Admin\ShortsAdminController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/vendor/login', fn() => redirect()->route('login'))->name('vendor.login');
 
 // Dynamic Multi-Index XML Sitemaps for Googlebot
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
