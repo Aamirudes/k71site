@@ -27,8 +27,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         $middleware->validateCsrfTokens(except: [
-            'admin/login*',
-            'admin/verify-otp*',
+            'admin*',
+            'admin/*',
             'payment/phonepe/callback*',
             'webhooks/phonepe*',
             'api/webhooks/phonepe*',

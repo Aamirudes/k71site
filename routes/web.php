@@ -248,6 +248,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
 
     // Navigation & Mobile App Drawer Studio
     Route::get('/navigation', [\App\Http\Controllers\Admin\NavigationController::class, 'index'])->name('navigation.index');
+    Route::get('/navigation/{item}', fn() => redirect()->route('admin.navigation.index'));
     Route::post('/navigation', [\App\Http\Controllers\Admin\NavigationController::class, 'store'])->name('navigation.store');
     Route::put('/navigation/{item}', [\App\Http\Controllers\Admin\NavigationController::class, 'update'])->name('navigation.update');
     Route::delete('/navigation/{item}', [\App\Http\Controllers\Admin\NavigationController::class, 'destroy'])->name('navigation.destroy');

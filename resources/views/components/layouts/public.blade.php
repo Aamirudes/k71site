@@ -12,7 +12,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,19 +71,15 @@
             });
         }
     </script>
-    <!-- Anti-FOUC Dark Mode Detection -->
+    <!-- Enforce Pure Clean Light Mode on Marketplace -->
     <script>
         (function() {
-            var theme = localStorage.getItem('theme');
-            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
         })();
     </script>
 </head>
-<body class="bg-brand-background text-brand-text dark:bg-zinc-950 dark:text-zinc-100 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-violet-500 selection:text-white transition-colors duration-200">
+<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
     
     <!-- Ambient Optical Liquid Glass Backdrop Refraction Spheres (Figma Fluid Spec) -->
     <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">

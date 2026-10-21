@@ -21,15 +21,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
-    <!-- Anti-FOUC Theme Initializer -->
+    <!-- Enforce Pure Clean Light Mode on Marketplace -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('k71_theme');
-            if (savedTheme === 'light') {
-                document.documentElement.classList.remove('dark');
-            } else {
-                document.documentElement.classList.add('dark');
-            }
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('k71_theme', 'light');
+            localStorage.setItem('theme', 'light');
         })();
     </script>
 
@@ -41,20 +38,9 @@
         .font-display { font-family: 'Space Grotesk', sans-serif; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-[#07080d] text-slate-900 dark:text-slate-100 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden transition-colors duration-300"
+<body class="bg-[#f8fafc] text-slate-900 antialiased flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden transition-colors duration-300"
       x-data="{
-          sidebarOpen: false,
-          darkMode: document.documentElement.classList.contains('dark'),
-          toggleTheme() {
-              this.darkMode = !this.darkMode;
-              if (this.darkMode) {
-                  document.documentElement.classList.add('dark');
-                  localStorage.setItem('k71_theme', 'dark');
-              } else {
-                  document.documentElement.classList.remove('dark');
-                  localStorage.setItem('k71_theme', 'light');
-              }
-          }
+          sidebarOpen: false
       }">
 
     <!-- Ambient Optical Liquid Glow Refraction Orbs (Figma Depth Spec) -->
@@ -125,14 +111,6 @@
 
         <!-- Mobile Sidebar Footer -->
         <div class="p-4 border-t border-slate-200 dark:border-white/10 space-y-2.5 bg-slate-50/50 dark:bg-white/[0.02]">
-            <button type="button" @click="toggleTheme()" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-                <span class="flex items-center gap-2">
-                    <span x-show="!darkMode">☀️ Light Mode</span>
-                    <span x-show="darkMode">🌙 Dark Mode</span>
-                </span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300">Toggle</span>
-            </button>
-
             <a href="{{ route('account') }}" class="flex items-center px-3 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                 <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 Customer Account
@@ -236,21 +214,8 @@
                 </div>
             </div>
 
-            <!-- Right Controls: Theme Toggle, Quick Action, Live Store -->
+            <!-- Right Controls: Quick Action, Live Store -->
             <div class="flex items-center gap-3">
-                <!-- Theme Toggle Button -->
-                <button type="button" 
-                        @click="toggleTheme()" 
-                        class="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-slate-600 dark:text-slate-300 hover:border-purple-500/40 hover:text-purple-600 dark:hover:text-purple-400 shadow-xs transition-all active:scale-95"
-                        :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-                    <span x-show="!darkMode" class="flex items-center gap-1 text-xs font-bold">
-                        <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" /></svg>
-                    </span>
-                    <span x-show="darkMode" class="flex items-center gap-1 text-xs font-bold">
-                        <svg class="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /></svg>
-                    </span>
-                </button>
-
                 <!-- Quick Action New Product -->
                 <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-purple-600/20 active:scale-95 transition-all">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>

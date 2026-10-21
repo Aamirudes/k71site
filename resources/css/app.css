@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@custom-variant dark (&:where(.dark, .dark *));
 
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
@@ -9,9 +8,9 @@
 }
 
 @theme {
-  --color-brand-background: #FAFAFA;
+  --color-brand-background: #F8FAFC;
   --color-brand-surface: #FFFFFF;
-  --color-brand-text: #09090B;
+  --color-brand-text: #0F172A;
   --color-brand-muted: #64748B;
   --color-brand-sage: #0600c2;
   --color-brand-rose: #0600c2;
@@ -32,207 +31,35 @@
         font-family: var(--font-sans);
         scroll-behavior: smooth;
         -webkit-tap-highlight-color: transparent;
+        color-scheme: light;
     }
 
     body {
-        background-color: #FAFAFA;
-        color: #09090B;
+        background-color: #F8FAFC;
+        color: #0F172A;
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Modern, crisp sans-serif headings with tight tracking */
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-sans);
-        color: #09090B;
+        color: #0F172A;
         letter-spacing: -0.025em;
         font-weight: 800;
     }
 
     p {
-        color: #52525B;
+        color: #475569;
     }
 
-    /* ==========================================================================
-       LUXURY DARK MODE MASTER SYSTEM (K71 Obsidian & Royal Cobalt Palette)
-       ========================================================================== */
-    html.dark {
-        color-scheme: dark;
-        --color-brand-background: #060A17;
-        --color-brand-surface: #0E172A;
-        --color-brand-text: #F8FAFC;
-        --color-brand-muted: #94A3B8;
-        --color-brand-sage: #38BDF8;
-    }
-
-    html.dark body {
-        background-color: #060A17 !important;
-        background-image: 
-            radial-gradient(at 15% 15%, rgba(6, 0, 194, 0.12) 0px, transparent 50%),
-            radial-gradient(at 85% 85%, rgba(59, 130, 246, 0.08) 0px, transparent 50%) !important;
-        background-attachment: fixed !important;
-        color: #F8FAFC !important;
-    }
-
-    /* Automatic Card & Container Surface Inversion in Dark Mode */
-    html.dark .bg-white {
-        background-color: #111827 !important;
-        border-color: rgba(255, 255, 255, 0.08) !important;
-    }
-    
-    html.dark .bg-white\/80,
-    html.dark .bg-white\/90,
-    html.dark .bg-white\/95,
-    html.dark .bg-white\/70,
-    html.dark .bg-white\/60 {
-        background-color: rgba(17, 24, 39, 0.92) !important;
-        border-color: rgba(255, 255, 255, 0.08) !important;
-    }
-
-    html.dark .bg-zinc-50, 
-    html.dark .bg-slate-50, 
-    html.dark .bg-gray-50,
-    html.dark .bg-stone-50,
-    html.dark .bg-neutral-50,
-    html.dark .bg-\[\#FAF8F5\],
-    html.dark .bg-\[\#FAF7F2\],
-    html.dark .bg-\[\#FAF8F5\]\/60,
-    html.dark .bg-\[\#F1EBE2\]\/40 {
-        background-color: #0D1322 !important;
-    }
-
-    html.dark .bg-zinc-100, 
-    html.dark .bg-slate-100, 
-    html.dark .bg-gray-100,
-    html.dark .bg-stone-100,
-    html.dark .bg-neutral-100 {
-        background-color: #162032 !important;
-    }
-
-    html.dark .bg-zinc-200, 
-    html.dark .bg-slate-200, 
-    html.dark .bg-gray-200,
-    html.dark .bg-stone-200 {
-        background-color: #223046 !important;
-    }
-
-    /* Brand Variables Inversion */
-    html.dark .text-brand-text {
-        color: #F8FAFC !important;
-    }
-    html.dark .text-brand-muted {
-        color: #94A3B8 !important;
-    }
-    html.dark .bg-brand-surface {
-        background-color: #162032 !important;
-        color: #F8FAFC !important;
-    }
-    html.dark .bg-brand-background {
-        background-color: #090D16 !important;
-    }
-
-    /* Universal Dark Borders */
-    html.dark .border-zinc-200, 
-    html.dark .border-slate-200, 
-    html.dark .border-gray-200, 
-    html.dark .border-zinc-100,
-    html.dark .border-slate-100,
-    html.dark .border-gray-100,
-    html.dark .border-stone-100,
-    html.dark .border-stone-200,
-    html.dark .border-stone-300,
-    html.dark .border-stone-200\/60,
-    html.dark .border-stone-200\/70,
-    html.dark .border-stone-200\/80 {
-        border-color: rgba(255, 255, 255, 0.08) !important;
-    }
-
-    /* High-Contrast Luminous Text Hierarchy (Prevents invisible text) */
-    :is(.dark h1), :is(.dark h2), :is(.dark h3), :is(.dark h4), :is(.dark h5), :is(.dark h6),
-    html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6,
-    html.dark .text-zinc-900, html.dark .text-zinc-950, html.dark .text-slate-900, html.dark .text-gray-900, html.dark .text-black,
-    html.dark .text-stone-900, html.dark .text-stone-950, html.dark .text-stone-800 {
-        color: #FFFFFF !important;
-        font-family: var(--font-sans) !important;
-    }
-
-    :is(.dark p), html.dark p,
-    html.dark .text-zinc-700, html.dark .text-slate-700, html.dark .text-gray-700, 
-    html.dark .text-zinc-600, html.dark .text-slate-600, html.dark .text-gray-600,
-    html.dark .text-stone-700, html.dark .text-stone-600 {
-        color: #CBD5E1 !important;
-    }
-
-    html.dark .text-zinc-500, html.dark .text-slate-500, html.dark .text-gray-500,
-    html.dark .text-zinc-400, html.dark .text-slate-400, html.dark .text-gray-400,
-    html.dark .text-stone-500, html.dark .text-stone-400 {
-        color: #94A3B8 !important;
-    }
-
-    /* Colored Alert & Badge Text High-Contrast in Dark Mode */
-    html.dark .text-amber-950, html.dark .text-amber-900, html.dark .text-amber-800 {
-        color: #FDE68A !important;
-    }
-    html.dark .text-rose-950, html.dark .text-rose-900, html.dark .text-rose-800 {
-        color: #FECDD3 !important;
-    }
-    html.dark .text-emerald-950, html.dark .text-emerald-900, html.dark .text-emerald-800 {
-        color: #A7F3D0 !important;
-    }
-    html.dark .text-indigo-950, html.dark .text-indigo-900, html.dark .text-indigo-800 {
-        color: #C7D2FE !important;
-    }
-    html.dark .text-blue-950, html.dark .text-blue-900, html.dark .text-blue-800 {
-        color: #BAE6FD !important;
-    }
-
-    /* High-Contrast Action Buttons in Dark Mode */
-    html.dark button.bg-brand-text,
-    html.dark button.bg-stone-900,
-    html.dark a.bg-stone-900,
-    html.dark button.bg-zinc-950,
-    html.dark a.bg-zinc-950,
-    html.dark .btn-dark-invert {
-        background: #0600c2 !important;
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 20px rgba(6, 0, 194, 0.4) !important;
-        border: none !important;
-    }
-    html.dark button.bg-brand-text:hover,
-    html.dark button.bg-stone-900:hover,
-    html.dark a.bg-stone-900:hover,
-    html.dark button.bg-zinc-950:hover,
-    html.dark a.bg-zinc-950:hover {
-        background: #1812df !important;
-        box-shadow: 0 8px 30px rgba(6, 0, 194, 0.55) !important;
-    }
-
-    /* Form Controls Dark Mode High Contrast */
-    html.dark input:not([type="checkbox"]):not([type="radio"]),
-    html.dark textarea,
-    html.dark select {
-        background-color: #0E172A !important;
-        color: #FFFFFF !important;
-        border-color: rgba(255, 255, 255, 0.14) !important;
-    }
-
-    html.dark input:focus,
-    html.dark textarea:focus,
-    html.dark select:focus {
-        border-color: #0600c2 !important;
-        box-shadow: 0 0 0 2px rgba(6, 0, 194, 0.35) !important;
-    }
-
-    html.dark input::placeholder,
-    html.dark textarea::placeholder {
-        color: #64748B !important;
-    }
-
-    html.dark select option {
-        background-color: #0E172A !important;
-        color: #FFFFFF !important;
+    :root {
+        color-scheme: light;
+        --color-brand-background: #F8FAFC;
+        --color-brand-surface: #FFFFFF;
+        --color-brand-text: #0F172A;
+        --color-brand-muted: #64748B;
+        --color-brand-sage: #4F46E5;
     }
 }
 
@@ -246,12 +73,6 @@
         box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
         border-radius: 1.5rem;
     }
-    
-    html.dark .glass-panel {
-        background: rgba(14, 23, 42, 0.88) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-    }
 
     /* Luxury Hover Cards */
     .luxury-card {
@@ -262,15 +83,6 @@
         transform: translateY(-4px);
         box-shadow: 0 20px 40px -15px rgba(6, 0, 194, 0.12);
         border-color: rgba(6, 0, 194, 0.35);
-    }
-    html.dark .luxury-card {
-        background-color: #0E172A;
-        border-color: rgba(255, 255, 255, 0.08);
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    }
-    html.dark .luxury-card:hover {
-        border-color: rgba(6, 0, 194, 0.55) !important;
-        box-shadow: 0 20px 50px -10px rgba(6, 0, 194, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
     }
 
     /* Primary Button */
@@ -293,15 +105,6 @@
         background-color: #0500a8;
         transform: translateY(-1px);
         box-shadow: 0 10px 25px -4px rgba(6, 0, 194, 0.4);
-    }
-    html.dark .btn-primary {
-        background-color: #0600c2 !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 4px 20px rgba(6, 0, 194, 0.4);
-    }
-    html.dark .btn-primary:hover {
-        background-color: #1812df !important;
-        box-shadow: 0 10px 30px rgba(6, 0, 194, 0.6);
     }
 
     /* Standard Product Aspect Ratio (3:4) */
@@ -381,31 +184,16 @@
                     inset 0 -1px 2px 0 rgba(0, 0, 0, 0.04) !important;
     }
 
-    html.dark .liquid-glass {
-        background: rgba(15, 23, 42, 0.75) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.45), 
-                    inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
-                    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4) !important;
-    }
-
     .liquid-glass-card {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.62) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.65) 100%) !important;
         backdrop-filter: blur(32px) saturate(200%) !important;
         -webkit-backdrop-filter: blur(32px) saturate(200%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.65) !important;
+        border: 1px solid rgba(255, 255, 255, 0.7) !important;
         border-radius: 20px !important;
         box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.07),
                     0 1px 2px 0 rgba(0, 0, 0, 0.03),
                     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9) !important;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    }
-
-    html.dark .liquid-glass-card {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.78) 0%, rgba(15, 23, 42, 0.72) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.5),
-                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18) !important;
     }
 
     .liquid-glass-pill {
@@ -419,21 +207,14 @@
         transition: all 0.2s ease !important;
     }
 
-    html.dark .liquid-glass-pill {
-        background: rgba(30, 41, 59, 0.65) !important;
-        border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.3),
-                    inset 0 1px 1px 0 rgba(255, 255, 255, 0.16) !important;
-    }
-
     /* ==========================================================================
        FIGMA LIQUID GLASS TILES (Optical Fluid Glassmorphism Spec)
        ========================================================================== */
     .liquid-glass-tile {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.35) 100%) !important;
         backdrop-filter: blur(28px) saturate(190%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+        border: 1px solid rgba(255, 255, 255, 0.6) !important;
         box-shadow: 0 16px 45px -10px rgba(15, 23, 42, 0.08),
                     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.85),
                     inset 0 -1px 2px 0 rgba(0, 0, 0, 0.02) !important;
@@ -441,27 +222,11 @@
         transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    html.dark .liquid-glass-tile {
-        background: linear-gradient(135deg, rgba(25, 34, 56, 0.72) 0%, rgba(15, 23, 42, 0.78) 100%) !important;
-        backdrop-filter: blur(32px) saturate(180%) !important;
-        -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.6),
-                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18),
-                    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.4) !important;
-    }
-
     .liquid-glass-tile:hover {
         transform: translateY(-2px);
         box-shadow: 0 24px 55px -10px rgba(79, 70, 229, 0.18),
                     inset 0 1px 2px 0 rgba(255, 255, 255, 0.9) !important;
         border-color: rgba(99, 102, 241, 0.4) !important;
-    }
-
-    html.dark .liquid-glass-tile:hover {
-        box-shadow: 0 24px 55px -10px rgba(99, 102, 241, 0.25),
-                    inset 0 1px 2px 0 rgba(255, 255, 255, 0.25) !important;
-        border-color: rgba(129, 140, 248, 0.3) !important;
     }
 
     /* Floating Liquid Quick-Action Capsule / Orb */
@@ -474,13 +239,6 @@
                     0 2px 6px rgba(0, 0, 0, 0.05),
                     inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.9) !important;
         transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    }
-
-    html.dark .liquid-glass-launcher {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
-        box-shadow: 0 20px 48px -8px rgba(99, 102, 241, 0.45),
-                    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22) !important;
     }
 
     .liquid-glass-launcher:hover {
@@ -517,13 +275,7 @@
         background: rgba(0, 0, 0, 0.18);
         border-radius: 9999px;
     }
-    html.dark ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.16);
-    }
     ::-webkit-scrollbar-thumb:hover {
         background: rgba(0, 0, 0, 0.35);
-    }
-    html.dark ::-webkit-scrollbar-thumb:hover {
-        background: rgba(255, 255, 255, 0.32);
     }
 }

@@ -53,22 +53,10 @@
 <header x-data="{ 
             searchOpen: false, 
             userMenuOpen: false, 
-            cartBadgeCount: {{ $cartCount }},
-            isDark: document.documentElement.classList.contains('dark'),
-            toggleTheme() {
-                this.isDark = !this.isDark;
-                if (this.isDark) {
-                    document.documentElement.classList.add('dark');
-                    localStorage.setItem('theme', 'dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', 'light');
-                }
-                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { dark: this.isDark } }));
-            }
+            cartBadgeCount: {{ $cartCount }}
         }" 
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
-        class="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-200/60 dark:border-zinc-800/80 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-colors duration-200">
+        class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 sm:h-18">
             
@@ -131,24 +119,8 @@
                 @endforeach
             </nav>
 
-            <!-- Right Actions: Theme Toggle + Search + Wishlist + Cart + Account -->
+            <!-- Right Actions: Search + Messages + Wishlist + Cart + Account -->
             <div class="flex items-center gap-1 sm:gap-2">
-                
-                <!-- Theme Mode Toggle (Sun/Moon) -->
-                <button @click="toggleTheme()" 
-                        type="button"
-                        class="p-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white hover:bg-zinc-100/70 dark:hover:bg-zinc-800/70 transition-all duration-200 focus:outline-none"
-                        :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-                        aria-label="Toggle Theme Mode">
-                    <!-- Sun (Visible in dark mode) -->
-                    <svg x-show="isDark" class="w-5 h-5 text-amber-400 transition-transform duration-300 hover:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                    </svg>
-                    <!-- Moon (Visible in light mode) -->
-                    <svg x-show="!isDark" class="w-5 h-5 text-zinc-700 dark:text-zinc-300 transition-transform duration-300 hover:-rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                    </svg>
-                </button>
 
                 <!-- Search Button -->
                 <button @click="searchOpen = !searchOpen" 
