@@ -128,57 +128,30 @@
             </div>
         </div>
 
-        <!-- FLASH DEALS WITH COUNTDOWN TIMER (Exact Image 4 Screen 3 Section) -->
-        <div class="mb-8">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                <div class="flex items-center gap-3">
-                    <h3 class="text-sm font-black uppercase tracking-wider text-zinc-900 dark:text-white flex items-center gap-1.5">
-                        <span>Hot deals</span>
-                        <span class="text-red-500">🔥</span>
+        <!-- B2B WHOLESALE VALUE PILLARS & DISCOVERY -->
+        <div class="mb-10 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-full border border-red-200/60 inline-block mb-2">
+                        Factory-Direct Sourcing
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-black text-zinc-950 dark:text-white tracking-tight mb-1">
+                        Looking for Bulk Materials or Custom Manufacturing?
                     </h3>
-                    <div class="flex items-center gap-1.5 text-xs text-zinc-500 font-bold">
-                        <span>Deals end in</span>
-                        <span class="px-2 py-0.5 rounded-md bg-zinc-950 text-white font-mono text-[11px]" x-text="countdownHours">05</span>:
-                        <span class="px-2 py-0.5 rounded-md bg-zinc-950 text-white font-mono text-[11px]" x-text="countdownMins">42</span>:
-                        <span class="px-2 py-0.5 rounded-md bg-zinc-950 text-white font-mono text-[11px]" x-text="countdownSecs">18</span>
-                    </div>
+                    <p class="text-xs sm:text-sm text-zinc-500 max-w-xl leading-relaxed">
+                        Skip middlemen and traders. Post your exact quantity, target price per unit, and delivery destination. Verified manufacturers will quote directly.
+                    </p>
                 </div>
-                <span class="text-xs text-red-600 dark:text-red-400 font-bold cursor-pointer">View All Volume Deals</span>
-            </div>
-
-            <!-- Volume Slabs Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                @php
-                    $sampleDeals = [
-                        ['title' => 'Coca-Cola Soft Drinks (Pack of 24)', 'unit' => '₹45 / can', 'mrp' => '₹60', 'tier' => 'Min 10 Crates', 'img' => 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=300&q=80'],
-                        ['title' => 'Sponge Towels Ultra 6 Rolls', 'unit' => '₹89 / roll', 'mrp' => '₹140', 'tier' => 'Min 50 Packs', 'img' => 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&w=300&q=80'],
-                        ['title' => 'Ditaliano Premium Sliced Bread', 'unit' => '₹28 / pack', 'mrp' => '₹45', 'tier' => 'Daily Morning Delivery', 'img' => 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=300&q=80'],
-                        ['title' => 'Maxwell House Coffee Beans 925g', 'unit' => '₹380 / tin', 'mrp' => '₹550', 'tier' => 'Min 20 Tins', 'img' => 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=300&q=80'],
-                        ['title' => 'Natural Milk Powder Bulk 25kg', 'unit' => '₹240 / kg', 'mrp' => '₹320', 'tier' => 'Factory Direct Bag', 'img' => 'https://images.unsplash.com/photo-1528750997573-59b89d56f4f7?auto=format&fit=crop&w=300&q=80'],
-                    ];
-                @endphp
-                @foreach($sampleDeals as $deal)
-                    <div class="group rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 flex flex-col justify-between hover:border-red-400 transition shadow-xs">
-                        <div class="aspect-square rounded-2xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden mb-2 relative">
-                            <img src="{{ $deal['img'] }}" alt="{{ $deal['title'] }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                            <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-red-600 text-white text-[9px] font-black uppercase">Wholesale</span>
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-zinc-400 font-semibold">{{ $deal['tier'] }}</span>
-                            <h4 class="text-xs font-bold text-zinc-900 dark:text-white line-clamp-2 mt-0.5">{{ $deal['title'] }}</h4>
-                        </div>
-                        <div class="flex items-center justify-between pt-2 mt-2 border-t border-zinc-100 dark:border-zinc-800">
-                            <div>
-                                <span class="text-xs font-black text-zinc-950 dark:text-white">{{ $deal['unit'] }}</span>
-                                <span class="text-[10px] text-zinc-400 line-through block">{{ $deal['mrp'] }}</span>
-                            </div>
-                            <button type="button" @click="openRfq('{{ addslashes($deal['title']) }}')" 
-                                    class="w-8 h-8 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-sm flex items-center justify-center shadow-xs cursor-pointer">
-                                +
-                            </button>
-                        </div>
-                    </div>
-                @endforeach
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="openRfq()" 
+                            class="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-600/20 active:scale-95 transition cursor-pointer">
+                        Post Requirement Now &rarr;
+                    </button>
+                    <a href="{{ route('vendor.register') }}" 
+                       class="px-5 py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-800 dark:text-zinc-200 font-bold text-xs transition">
+                        Register as Supplier
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -368,10 +341,10 @@
                     <div class="flex items-center gap-2">✓ <strong>Free Third-Party Inspection</strong> on 1st container</div>
                 </div>
 
-                <button type="button" @click="alert('K71 Enterprise Membership Activated!'); membershipModal = false;" 
-                        class="w-full py-3 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black text-xs uppercase tracking-wider transition">
-                    Activate Gold Benefits
-                </button>
+                <a href="{{ route('vendor.register') }}" 
+                   class="w-full py-3 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black text-xs uppercase tracking-wider transition block text-center">
+                    Join Verified B2B Network &rarr;
+                </a>
             </div>
         </div>
 

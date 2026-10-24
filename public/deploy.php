@@ -423,10 +423,11 @@ try {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
-// 10. Run Migrations & Seeders
+// 10. Run Migrations, Seeders & Clean Database
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
-    'Seed Database with Live Products, Real Stores & Categories' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
+    'Seed Categories & Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
+    'Purge All Dummy Vendors & Test Products' => ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]],
     'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 

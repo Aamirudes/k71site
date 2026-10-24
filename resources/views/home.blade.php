@@ -112,144 +112,6 @@
         ],
     ];
 
-    // Curated stores showcase for when real stores are newly onboarding
-    $curatedStores = [
-        [
-            'name' => 'Apex Digital Ateliers',
-            'category' => 'Electronics & Flagships',
-            'verified' => true,
-            'rating' => '4.9',
-            'products_count' => '140+ Items',
-            'badge' => 'Premier Store',
-            'logo' => 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80',
-            'cover' => 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80',
-            'url' => route('catalog.index', ['q' => 'electronics']),
-        ],
-        [
-            'name' => 'K71 Luxury Wardrobe',
-            'category' => 'Apparel & Designer Wear',
-            'verified' => true,
-            'rating' => '4.8',
-            'products_count' => '95+ Styles',
-            'badge' => 'Official Atelier',
-            'logo' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-            'cover' => 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=600&q=80',
-            'url' => route('catalog.index', ['q' => 'fashion']),
-        ],
-        [
-            'name' => 'Veloce OEM Automotive',
-            'category' => 'Vehicle Spares & Oils',
-            'verified' => true,
-            'rating' => '5.0',
-            'products_count' => '320+ Parts',
-            'badge' => 'Verified Distributor',
-            'logo' => 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=120&q=80',
-            'cover' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=600&q=80',
-            'url' => route('catalog.index', ['q' => 'brake']),
-        ],
-        [
-            'name' => 'Artisan Living Co.',
-            'category' => 'Home, Decor & Furniture',
-            'verified' => true,
-            'rating' => '4.9',
-            'products_count' => '80+ Pieces',
-            'badge' => 'Handcrafted',
-            'logo' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-            'cover' => 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=600&q=80',
-            'url' => route('catalog.index', ['q' => 'home']),
-        ],
-    ];
-
-    // Curated catalog products showcase for instant browsing & discovery
-    $curatedProducts = [
-        [
-            'title' => 'Ultra-Slim 5G Flagship Smartphone 256GB',
-            'category' => 'Electronics & IT',
-            'store' => 'Apex Digital Ateliers',
-            'price' => '₹42,999',
-            'original_price' => '₹49,999',
-            'discount' => '14% OFF',
-            'rating' => '4.9',
-            'image' => 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'phone']),
-        ],
-        [
-            'title' => 'Premium Noise-Cancelling Wireless Headphones',
-            'category' => 'Audio & Gadgets',
-            'store' => 'Apex Digital Ateliers',
-            'price' => '₹14,499',
-            'original_price' => '₹19,999',
-            'discount' => '27% OFF',
-            'rating' => '4.8',
-            'image' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'headphone']),
-        ],
-        [
-            'title' => 'Heavy-Duty Ceramic Brake Pads Set (OEM Certified)',
-            'category' => 'Automotive & Spares',
-            'store' => 'Veloce OEM Automotive',
-            'price' => '₹3,250',
-            'original_price' => '₹4,500',
-            'discount' => '28% OFF',
-            'rating' => '5.0',
-            'image' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'brake']),
-        ],
-        [
-            'title' => 'Tailored Italian Linen Oversized Casual Shirt',
-            'category' => 'Fashion & Apparel',
-            'store' => 'K71 Luxury Wardrobe',
-            'price' => '₹2,899',
-            'original_price' => '₹3,999',
-            'discount' => '27% OFF',
-            'rating' => '4.9',
-            'image' => 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'shirt']),
-        ],
-        [
-            'title' => 'Handcrafted Walnut Wood Minimalist Coffee Table',
-            'category' => 'Home & Living',
-            'store' => 'Artisan Living Co.',
-            'price' => '₹18,500',
-            'original_price' => '₹24,000',
-            'discount' => '23% OFF',
-            'rating' => '4.9',
-            'image' => 'https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'furniture']),
-        ],
-        [
-            'title' => 'Pro Mechanical Gaming Keyboard RGB Hot-Swap',
-            'category' => 'Electronics & IT',
-            'store' => 'Apex Digital Ateliers',
-            'price' => '₹5,499',
-            'original_price' => '₹7,999',
-            'discount' => '31% OFF',
-            'rating' => '4.8',
-            'image' => 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'keyboard']),
-        ],
-        [
-            'title' => 'Genuine Leather Minimalist Travel Backpack',
-            'category' => 'Fashion & Accessories',
-            'store' => 'K71 Luxury Wardrobe',
-            'price' => '₹4,799',
-            'original_price' => '₹6,499',
-            'discount' => '26% OFF',
-            'rating' => '4.9',
-            'image' => 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'backpack']),
-        ],
-        [
-            'title' => 'Full Synthetic Engine Oil 5W-40 (4 Litres)',
-            'category' => 'Automotive & Spares',
-            'store' => 'Veloce OEM Automotive',
-            'price' => '₹2,699',
-            'original_price' => '₹3,400',
-            'discount' => '20% OFF',
-            'rating' => '5.0',
-            'image' => 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=500&q=80',
-            'url' => route('catalog.index', ['q' => 'oil']),
-        ],
     ];
 @endphp
 
@@ -391,51 +253,30 @@
                 @endforeach
             </div>
         @else
-            <!-- Curated Stores Showcase Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                @foreach($curatedStores as $st)
-                    <div class="group bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-400 transition-all flex flex-col justify-between">
-                        <!-- Store Cover Image with Gradient -->
-                        <div class="relative h-28 overflow-hidden bg-slate-900">
-                            <img src="{{ $st['cover'] }}" alt="{{ $st['name'] }}" class="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-300">
-                            <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/95 text-slate-900 shadow-xs">
-                                {{ $st['badge'] }}
-                            </span>
-                            <div class="absolute -bottom-5 left-4">
-                                <div class="w-12 h-12 rounded-2xl bg-white p-1 border-2 border-white shadow-md overflow-hidden">
-                                    <img src="{{ $st['logo'] }}" alt="{{ $st['name'] }}" class="w-full h-full object-cover rounded-xl">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Store Details -->
-                        <div class="p-4 pt-7 flex-1 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center gap-1.5">
-                                    <h3 class="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-                                        {{ $st['name'] }}
-                                    </h3>
-                                    <span class="text-emerald-500 text-xs shrink-0" title="Verified Store">✓</span>
-                                </div>
-                                <p class="text-[11px] text-slate-500 mt-0.5">
-                                    {{ $st['category'] }}
-                                </p>
-                                <div class="flex items-center gap-2 mt-2.5 text-[10px] font-semibold text-slate-600">
-                                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
-                                        {{ $st['products_count'] }}
-                                    </span>
-                                    <span class="text-amber-500 font-bold">★ {{ $st['rating'] }}</span>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-3 border-t border-slate-100">
-                                <a href="{{ $st['url'] }}" class="w-full py-2 rounded-xl bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-800 text-xs font-bold text-center block transition-all">
-                                    Explore Store &rarr;
-                                </a>
-                            </div>
-                        </div>
+            <!-- Clean Seller Storefront Onboarding State -->
+            <div class="p-8 sm:p-12 rounded-[2.5rem] bg-gradient-to-br from-white via-indigo-50/40 to-slate-50 border border-slate-200/90 shadow-2xs text-center relative overflow-hidden">
+                <div class="max-w-xl mx-auto">
+                    <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-indigo-600/25">
+                        🏪
                     </div>
-                @endforeach
+                    <span class="text-[11px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200/60 inline-block mb-2">
+                        Zero Listing Fee Seller Onboarding
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mb-2">
+                        Launch Your Branded Store on K71
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+                        Open your digital storefront with sector-tailored specifications, automated courier logistics, and direct PhonePe payouts.
+                    </p>
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <a href="{{ route('vendor.register') }}" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md active:scale-95 transition-all">
+                            Register Your Store &rarr;
+                        </a>
+                        <a href="{{ route('vendor.login') }}" class="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm border border-slate-200 shadow-2xs transition-all">
+                            Vendor Sign In
+                        </a>
+                    </div>
+                </div>
             </div>
         @endif
     </section>
@@ -520,52 +361,30 @@
                 @endforeach
             </div>
         @else
-            <!-- Curated Products Showcase Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
-                @foreach($curatedProducts as $prod)
-                    <div class="group bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-400 transition-all flex flex-col justify-between">
-                        <!-- Product Image with Discount Ribbon -->
-                        <a href="{{ $prod['url'] }}" class="block relative aspect-square bg-slate-100 overflow-hidden">
-                            <img src="{{ $prod['image'] }}" alt="{{ $prod['title'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-rose-600 text-white font-black text-[10px] uppercase shadow-md">
-                                {{ $prod['discount'] }}
-                            </span>
-                            <span class="absolute top-2.5 right-2.5 px-1.5 py-0.5 rounded-md bg-white/90 text-slate-800 text-[10px] font-bold shadow-xs">
-                                ★ {{ $prod['rating'] }}
-                            </span>
-                        </a>
-
-                        <!-- Product Content -->
-                        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-                            <div>
-                                <span class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 block truncate">
-                                    {{ $prod['category'] }}
-                                </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-indigo-600 line-clamp-2 mt-0.5 transition-colors">
-                                    <a href="{{ $prod['url'] }}">{{ $prod['title'] }}</a>
-                                </h3>
-                                <p class="text-[10.5px] text-slate-500 mt-1 flex items-center gap-1 truncate">
-                                    <span>by</span>
-                                    <span class="font-semibold text-slate-700 truncate">{{ $prod['store'] }}</span>
-                                </p>
-                            </div>
-
-                            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                <div>
-                                    <span class="text-sm sm:text-base font-black text-slate-900 font-mono">
-                                        {{ $prod['price'] }}
-                                    </span>
-                                    <span class="text-[11px] text-slate-400 line-through font-mono ml-1">
-                                        {{ $prod['original_price'] }}
-                                    </span>
-                                </div>
-                                <a href="{{ $prod['url'] }}" class="p-2 rounded-xl bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-700 transition-colors" title="View Product">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                                </a>
-                            </div>
-                        </div>
+            <!-- Clean Catalog Primed State -->
+            <div class="p-8 sm:p-12 rounded-[2.5rem] bg-gradient-to-br from-white via-slate-50 to-indigo-50/30 border border-slate-200/90 shadow-2xs text-center relative overflow-hidden">
+                <div class="max-w-xl mx-auto">
+                    <div class="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-rose-500/25">
+                        📦
                     </div>
-                @endforeach
+                    <span class="text-[11px] font-black uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200/60 inline-block mb-2">
+                        Production Marketplace Ready
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mb-2">
+                        The Catalog is Primed for Real Product Listings
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
+                        All dummy products have been removed. Verified vendors can upload real listings with tailored sector attributes and inventory management.
+                    </p>
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <a href="{{ route('vendor.products.create') }}" class="px-6 py-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm shadow-md active:scale-95 transition-all">
+                            Upload First Listing &rarr;
+                        </a>
+                        <a href="{{ route('catalog.index') }}" class="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm border border-slate-200 shadow-2xs transition-all">
+                            Explore All Categories
+                        </a>
+                    </div>
+                </div>
             </div>
         @endif
     </section>

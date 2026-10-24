@@ -198,47 +198,67 @@
                 <div class="zsu-grid-result-count text-xs text-slate-400" id="zsuGridCount">{{ $initialShorts->count() }} shorts</div>
             </div>
 
-            <!-- Shorts grid -->
-            <div class="zsu-grid" id="zsuGrid" style="--cols:2;" role="list" aria-label="Shorts grid">
-                @foreach($initialShorts as $s)
-                <div class="zsu-short-card{{ $s->is_featured ? ' featured' : '' }}{{ $s->is_boosted ? ' boosted' : '' }}" data-id="{{ $s->id }}" role="listitem" tabindex="0">
-                    <div class="zsu-card-thumb-wrap">
-                        <img class="zsu-card-thumb" src="{{ $s->thumb_url ?: asset('images/product-placeholder.svg') }}" alt="{{ $s->title }}" loading="lazy" decoding="async">
-                        <div class="zsu-card-overlay"></div>
-                        <div class="zsu-card-badges">
-                            @if($s->is_featured && !$s->is_boosted)
-                            <span class="zsu-card-badge zsu-badge-featured">⭐ Featured</span>
-                            @endif
-                            @if($s->trending_score > 100)
-                            <span class="zsu-card-badge zsu-badge-trending">🔥</span>
-                            @endif
+                @if($initialShorts->isEmpty())
+                    <div style="grid-column: 1 / -1;" class="py-16 px-4 text-center max-w-lg mx-auto">
+                        <div class="w-16 h-16 rounded-3xl bg-white/10 text-rose-500 text-3xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+                            🎬
                         </div>
-                        @if($s->duration)
-                        <div class="zsu-card-duration">{{ gmdate('i:s', $s->duration) }}</div>
-                        @endif
-                        <div class="zsu-card-play">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="white" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span class="text-[11px] font-black uppercase tracking-wider text-rose-400 bg-rose-500/20 px-3 py-1 rounded-full border border-rose-500/30 inline-block mb-2">
+                            Live Video Commerce Ready
+                        </span>
+                        <h3 class="text-xl font-black text-white mb-2">Short Video Shopping Feed</h3>
+                        <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+                            All test demo videos have been cleared. Verified sellers can now upload short shoppable reels and video reviews directly linked to their products.
+                        </p>
+                        <div class="flex items-center justify-center gap-3">
+                            <a href="{{ route('vendor.login') }}" class="px-6 py-2.5 rounded-full bg-gradient-to-r from-rose-600 to-pink-600 text-white text-xs font-black shadow-lg shadow-rose-600/30 hover:brightness-110 transition">
+                                Upload Shoppable Reel &rarr;
+                            </a>
+                            <a href="{{ route('catalog.index') }}" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition">
+                                Browse Products
+                            </a>
                         </div>
-                        <div class="zsu-card-info">
-                            @if($s->vendor)
-                            <div class="zsu-card-vendor">
-                                <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo_url ?: asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
-                                <span class="zsu-card-vendor-name">{{ $s->vendor->shop_name }}</span>
-                            </div>
-                            @endif
-                            <div class="zsu-card-title">{{ $s->title }}</div>
-                            @if($s->products->count())
-                            <div class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-rose-300">
-                                <span>🛍️</span> Shop {{ $s->products->count() }} {{ Str::plural('item', $s->products->count()) }}
-                            </div>
-                            @endif
-                        </div>
-                        <div class="zsu-card-shine"></div>
-                        <button class="zsu-card-quick-like" data-id="{{ $s->id }}" aria-label="Like" title="Like">🤍</button>
                     </div>
-                </div>
-                @endforeach
-            </div>
+                @else
+                    @foreach($initialShorts as $s)
+                    <div class="zsu-short-card{{ $s->is_featured ? ' featured' : '' }}{{ $s->is_boosted ? ' boosted' : '' }}" data-id="{{ $s->id }}" role="listitem" tabindex="0">
+                        <div class="zsu-card-thumb-wrap">
+                            <img class="zsu-card-thumb" src="{{ $s->thumb_url ?: asset('images/product-placeholder.svg') }}" alt="{{ $s->title }}" loading="lazy" decoding="async">
+                            <div class="zsu-card-overlay"></div>
+                            <div class="zsu-card-badges">
+                                @if($s->is_featured && !$s->is_boosted)
+                                <span class="zsu-card-badge zsu-badge-featured">⭐ Featured</span>
+                                @endif
+                                @if($s->trending_score > 100)
+                                <span class="zsu-card-badge zsu-badge-trending">🔥</span>
+                                @endif
+                            </div>
+                            @if($s->duration)
+                            <div class="zsu-card-duration">{{ gmdate('i:s', $s->duration) }}</div>
+                            @endif
+                            <div class="zsu-card-play">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="white" style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.4));"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </div>
+                            <div class="zsu-card-info">
+                                @if($s->vendor)
+                                <div class="zsu-card-vendor">
+                                    <img class="zsu-card-vendor-avatar" src="{{ $s->vendor->logo_url ?: asset('images/default-avatar.png') }}" alt="{{ $s->vendor->shop_name }}" loading="lazy">
+                                    <span class="zsu-card-vendor-name">{{ $s->vendor->shop_name }}</span>
+                                </div>
+                                @endif
+                                <div class="zsu-card-title">{{ $s->title }}</div>
+                                @if($s->products->count())
+                                <div class="mt-1 flex items-center gap-1.5 text-[11px] font-semibold text-rose-300">
+                                    <span>🛍️</span> Shop {{ $s->products->count() }} {{ Str::plural('item', $s->products->count()) }}
+                                </div>
+                                @endif
+                            </div>
+                            <div class="zsu-card-shine"></div>
+                            <button class="zsu-card-quick-like" data-id="{{ $s->id }}" aria-label="Like" title="Like">🤍</button>
+                        </div>
+                    </div>
+                    @endforeach
+                @endif
 
             <!-- Infinite scroll sentinel -->
             <div class="zsu-load-more-sentinel py-8 text-center" id="zsuSentinel" aria-hidden="true">

@@ -19,7 +19,7 @@
         activeFilterSort: 'recommended',
         activeDietary: 'all',
         locationModal: false,
-        selectedLocation: 'Indiranagar, Bengaluru (12th Main)',
+        selectedLocation: 'Local Delivery Hub (Express)',
 
         openDishModal(dish) {
             this.selectedDish = dish;
@@ -30,22 +30,44 @@
         addToCart(dish) {
             const target = dish || this.selectedDish;
             if (!target) return;
-            const price = parseFloat(target.base_price || target.price || 199);
+            const price = parseFloat(target.base_price ? target.base_price : (target.price || 199));
+            const qty = this.dishQty || 1;
+
+            // 1. Sync with Laravel Backend Cart
+            fetch('{{ route('cart.add') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    product_id: target.id,
+                    quantity: qty
+                })
+            }).then(r => r.json()).then(data => {
+                if (data.cart_count) {
+                    this.cartCount = data.cart_count;
+                }
+            }).catch(e => console.error('Cart sync error:', e));
+
+            // 2. Local reactive state for instant drawer feedback
             const existing = this.cartItems.find(i => i.id === target.id);
             if (existing) {
-                existing.qty += 1;
+                existing.qty += qty;
             } else {
                 this.cartItems.push({
                     id: target.id,
                     title: target.title,
                     price: price,
-                    qty: 1,
+                    qty: qty,
                     image: target.thumbnail_url || (target.images && target.images[0] ? '/storage/' + target.images[0].path : '')
                 });
             }
-            this.cartCount += 1;
-            this.cartTotal += price;
+            this.cartCount += qty;
+            this.cartTotal += (price * qty);
             this.activeDishModal = false;
+            this.cartDrawer = true;
         },
         updateCartQty(id, delta) {
             const item = this.cartItems.find(i => i.id === id);
@@ -294,13 +316,20 @@
                 </div>
 
                 @if($dishes->isEmpty())
-                    <div class="bg-white rounded-3xl p-12 text-center border border-stone-200/80 space-y-3">
-                        <span class="text-5xl">🍲</span>
-                        <h3 class="text-base font-bold text-stone-800">No dishes found matching your selection</h3>
-                        <p class="text-xs text-stone-500 max-w-sm mx-auto">Try clearing search filters or browse other cuisines to explore fresh meals.</p>
-                        <a href="{{ route('food.index') }}" class="inline-block px-5 py-2 rounded-xl bg-[#ff5200] text-white text-xs font-black">
-                            Clear Filters
-                        </a>
+                    <div class="bg-white rounded-3xl p-10 text-center border border-stone-200/80 space-y-3 max-w-lg mx-auto">
+                        <span class="text-4xl block">🍲</span>
+                        <h3 class="text-base font-black text-stone-900">No Food Menus in this Zone Yet</h3>
+                        <p class="text-xs text-stone-500 leading-relaxed">
+                            We have freshly primed the food ecosystem. Are you a cloud kitchen, baker, or gourmet restaurant? Open your verified food storefront on K71 Food.
+                        </p>
+                        <div class="flex items-center justify-center gap-2 pt-2">
+                            <a href="{{ route('vendor.register') }}" class="px-5 py-2.5 rounded-xl bg-[#ff5200] hover:bg-[#e04800] text-white text-xs font-black shadow-md transition">
+                                Register Cloud Kitchen &rarr;
+                            </a>
+                            <a href="{{ route('catalog.index') }}" class="px-5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition">
+                                Explore All Categories
+                            </a>
+                        </div>
                     </div>
                 @else
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

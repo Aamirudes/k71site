@@ -17,12 +17,29 @@
             this.bookingModal = true;
         },
         confirmBooking() {
-            this.bookingSuccess = true;
-            setTimeout(() => {
-                this.bookingModal = false;
-                this.activeTab = 'bookings';
-                this.bookingsTab = 'upcoming';
-            }, 1200);
+            if (!this.activeService) return;
+            const targetId = this.activeService.id;
+            
+            fetch('{{ route('cart.add') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    product_id: targetId,
+                    quantity: 1
+                })
+            }).then(r => r.json()).then(data => {
+                if (data.success !== false) {
+                    window.location.href = '{{ route('cart.index') }}';
+                } else {
+                    window.location.href = '/product/' + targetId;
+                }
+            }).catch(e => {
+                window.location.href = '/product/' + targetId;
+            });
         }
     }" class="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors duration-300 pb-16">
 
@@ -33,9 +50,9 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 </div>
                 <div>
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Services.K71 • Verified Service Area</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Services.K71 • Verified Service Network</div>
                     <div class="flex items-center gap-1 font-black text-xs sm:text-sm text-zinc-950 dark:text-white cursor-pointer">
-                        <span>New York, NY / Local Metropolitan Hub</span>
+                        <span>{{ $city ?: 'All-India Verified Service Hub' }}</span>
                         <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </div>
                 </div>
@@ -162,15 +179,25 @@
             </div>
 
             @if($services->isEmpty())
-                <div class="text-center py-16 px-4 bg-purple-50/50 dark:bg-zinc-900/50 rounded-3xl border border-purple-100 dark:border-zinc-800 max-w-md mx-auto my-8">
+                <div class="text-center py-12 px-6 bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-purple-100 dark:border-zinc-800 max-w-lg mx-auto my-8 shadow-xs">
                     <div class="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-900/40 text-purple-600 flex items-center justify-center mx-auto mb-3 text-2xl">
-                        🔧
+                        🛠️
                     </div>
-                    <h3 class="text-base font-bold text-zinc-900 dark:text-white mb-1">No services found</h3>
-                    <p class="text-xs text-zinc-500 mb-4">Try clearing filters or search for cleaning, plumber, or painting.</p>
-                    <a href="{{ route('services.index') }}" class="px-5 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold">
-                        Browse All Services
-                    </a>
+                    <span class="text-[11px] font-black uppercase tracking-wider text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-3 py-1 rounded-full border border-purple-200/60 inline-block mb-2">
+                        Services Marketplace Ready
+                    </span>
+                    <h3 class="text-lg font-black text-zinc-900 dark:text-white mb-1">List Your Professional Services on K71</h3>
+                    <p class="text-xs text-zinc-500 mb-6 leading-relaxed">
+                        All test data has been cleared. Are you a certified electrician, plumber, cleaner, or home specialist? Register as a verified service partner to receive direct customer bookings.
+                    </p>
+                    <div class="flex items-center justify-center gap-3">
+                        <a href="{{ route('vendor.register') }}" class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-md transition">
+                            Register as Pro &rarr;
+                        </a>
+                        <a href="{{ route('catalog.index') }}" class="px-5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 text-xs font-bold transition">
+                            Explore Categories
+                        </a>
+                    </div>
                 </div>
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-10">
@@ -276,102 +303,34 @@
         <!-- ========================================== -->
         <!-- TAB 2: MY BOOKINGS (Image 2 Screen 14-15) -->
         <!-- ========================================== -->
-        <div x-show="activeTab === 'bookings'" x-cloak class="max-w-2xl mx-auto py-4">
-            <!-- Segmented Control: Upcoming vs Completed -->
-            <div class="flex p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-purple-100 dark:border-zinc-700 mb-6">
-                <button type="button" @click="bookingsTab = 'upcoming'" 
-                        :class="bookingsTab === 'upcoming' ? 'bg-purple-600 text-white shadow-xs' : 'text-zinc-600 dark:text-zinc-400'"
-                        class="flex-1 py-2.5 text-xs font-bold rounded-xl transition cursor-pointer">
-                    Upcoming Bookings (2)
-                </button>
-                <button type="button" @click="bookingsTab = 'completed'" 
-                        :class="bookingsTab === 'completed' ? 'bg-purple-600 text-white shadow-xs' : 'text-zinc-600 dark:text-zinc-400'"
-                        class="flex-1 py-2.5 text-xs font-bold rounded-xl transition cursor-pointer">
-                    Completed (8)
-                </button>
-            </div>
-
-            <!-- Upcoming Bookings List -->
-            <div x-show="bookingsTab === 'upcoming'" class="space-y-4">
-                <!-- Booking 1 -->
-                <div class="p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-purple-100 dark:border-zinc-800 shadow-xs">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 text-2xl flex items-center justify-center">
-                                🧹
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-black text-zinc-950 dark:text-white">House Deep Cleaning</h4>
-                                <div class="text-xs text-zinc-500">Pro: Jenny Wilson • ₹499/hr</div>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 text-[10px] font-black uppercase">Confirmed</span>
+        <div x-show="activeTab === 'bookings'" x-cloak class="max-w-2xl mx-auto py-8 text-center">
+            @auth
+                <div class="p-8 sm:p-12 rounded-3xl bg-white dark:bg-zinc-900 border border-purple-100 dark:border-zinc-800 shadow-xs">
+                    <div class="w-16 h-16 rounded-3xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center text-3xl mx-auto mb-4">
+                        📅
                     </div>
-
-                    <!-- Map / Location Box (Exact Image 2 Style) -->
-                    <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-300 mb-3">
-                        <div class="flex items-center gap-2">
-                            <span>📍 61480 Sunbrook Park, PC 5679</span>
-                        </div>
-                        <span class="font-bold text-purple-600 dark:text-purple-400">Tomorrow • 10:00 AM</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button type="button" @click="alert('Booking rescheduled notification sent to provider.')" 
-                                class="flex-1 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-bold hover:bg-zinc-200 transition">
-                            Reschedule
-                        </button>
-                        <button type="button" @click="alert('Booking cancelled. Any prepaid deposit has been refunded to your Escrow wallet.')" 
-                                class="px-4 py-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition">
-                            Cancel
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Booking 2 -->
-                <div class="p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-purple-100 dark:border-zinc-800 shadow-xs">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 text-2xl flex items-center justify-center">
-                                🔧
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-black text-zinc-950 dark:text-white">Car AC Servicing &amp; Gas Refill</h4>
-                                <div class="text-xs text-zinc-500">Pro: David Miller • ₹750</div>
-                            </div>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-[10px] font-black uppercase">On The Way</span>
-                    </div>
-
-                    <div class="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-300 mb-3">
-                        <div class="flex items-center gap-2">
-                            <span>📍 Garage / Driveway Slot</span>
-                        </div>
-                        <span class="font-bold text-emerald-600">Arriving in 15 mins</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Completed Bookings List -->
-            <div x-show="bookingsTab === 'completed'" x-cloak class="space-y-4">
-                <div class="p-4 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-2xl flex items-center justify-center">
-                                🎨
-                            </div>
-                            <div>
-                                <h4 class="text-sm font-black text-zinc-950 dark:text-white">Painting House Walls</h4>
-                                <div class="text-xs text-zinc-500">Completed on Dec 14 • 5.0 Rating Given</div>
-                            </div>
-                        </div>
-                        <span class="text-xs font-black text-purple-600">₹2,400</span>
-                    </div>
-                    <button type="button" class="w-full py-2 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 text-xs font-bold">
-                        Book Again
+                    <h3 class="text-lg font-black text-zinc-950 dark:text-white mb-1">Your Service Appointments</h3>
+                    <p class="text-xs text-zinc-500 max-w-sm mx-auto mb-6">
+                        You have no scheduled service visits at this moment. Choose a verified specialist from the hub to book your doorstep technician.
+                    </p>
+                    <button type="button" @click="activeTab = 'services'" class="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase tracking-wider transition shadow-sm">
+                        Explore Services Hub &rarr;
                     </button>
                 </div>
-            </div>
+            @else
+                <div class="p-8 sm:p-12 rounded-3xl bg-white dark:bg-zinc-900 border border-purple-100 dark:border-zinc-800 shadow-xs">
+                    <div class="w-16 h-16 rounded-3xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center text-3xl mx-auto mb-4">
+                        🔒
+                    </div>
+                    <h3 class="text-lg font-black text-zinc-950 dark:text-white mb-1">Sign In to View Appointments</h3>
+                    <p class="text-xs text-zinc-500 max-w-sm mx-auto mb-6">
+                        Log into your K71 account to view your confirmed time slots, provider phone numbers, and service history.
+                    </p>
+                    <a href="{{ route('login') }}" class="inline-block px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase tracking-wider shadow-md transition">
+                        Sign In / Register &rarr;
+                    </a>
+                </div>
+            @endauth
         </div>
 
         <!-- ======================================================== -->
