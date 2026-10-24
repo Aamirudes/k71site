@@ -15,6 +15,11 @@ class ProductViewController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        // Strict vertical isolation: Used / second-hand classified listings must never be rendered as a regular retail product
+        if ($product->vertical === 'used' || $product->listing_type === 'classified') {
+            return redirect()->route('used.show', $product->slug);
+        }
+
         // High-CTR SEO Data (Google SERP optimized)
         $priceRupees = number_format($product->base_price / 100, 0);
         $brandName = $product->brand ?: $product->vendor->shop_name;
@@ -135,11 +140,12 @@ class ProductViewController extends Controller
             ],
         ];
 
-        // More products from same vendor
+        // More products from same vendor (strictly exclude used/classifieds)
         $vendorProducts = Product::with(['vendor', 'images'])
             ->where('vendor_id', $product->vendor_id)
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
+            ->excludeUsed()
             ->take(4)
             ->get();
 

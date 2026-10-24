@@ -12,7 +12,8 @@ class CatalogController extends Controller
     public function index(Request $request)
     {
         $query = Product::with(['images', 'vendor', 'category'])
-            ->where('status', 'active');
+            ->where('status', 'active')
+            ->excludeUsed();
 
         $activeFilters = [];
         $appName = config('marketplace.name', 'K71');
@@ -316,6 +317,7 @@ class CatalogController extends Controller
         // Recommended / Trending Masterpieces Carousel
         $recommendedProducts = Product::with(['images', 'vendor'])
             ->where('status', 'active')
+            ->excludeUsed()
             ->where('is_featured', true)
             ->inRandomOrder()
             ->take(8)
@@ -324,6 +326,7 @@ class CatalogController extends Controller
         if ($recommendedProducts->count() < 4) {
             $recommendedProducts = Product::with(['images', 'vendor'])
                 ->where('status', 'active')
+                ->excludeUsed()
                 ->orderBy('published_at', 'desc')
                 ->take(8)
                 ->get();
@@ -499,11 +502,15 @@ class CatalogController extends Controller
         $results = $products->map(function($p) {
             $img = $p->images->first();
             $thumb = $img ? (str_starts_with($img->path, 'http') ? $img->path : asset('storage/' . $img->path)) : asset('images/product-placeholder.svg');
+            $url = ($p->vertical === 'used' || $p->listing_type === 'classified')
+                ? route('used.show', $p->slug)
+                : route('product.show', $p->slug);
+
             return [
                 'id' => $p->id,
                 'title' => $p->title,
                 'slug' => $p->slug,
-                'url' => route('product.show', $p->slug),
+                'url' => $url,
                 'price' => '₹' . number_format($p->base_price / 100, 2),
                 'vertical' => $p->vertical ?: 'goods',
                 'thumb' => $thumb,

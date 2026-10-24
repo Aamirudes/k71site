@@ -138,6 +138,10 @@ class StorefrontController extends Controller
             ->where('vendor_id', $vendor->id)
             ->where('status', 'active');
 
+        if ($vendor->vendor_type !== 'used') {
+            $query->excludeUsed();
+        }
+
         // In-store Search
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -180,38 +184,48 @@ class StorefrontController extends Controller
         // Vendor's unique categories with item count and sample image for Story Bubbles
         $vendorCategories = \App\Models\Category::whereHas('products', function($q) use ($vendor) {
             $q->where('vendor_id', $vendor->id)->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $q->excludeUsed();
+            }
         })
         ->withCount(['products' => function($q) use ($vendor) {
             $q->where('vendor_id', $vendor->id)->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $q->excludeUsed();
+            }
         }])
         ->get();
 
         foreach ($vendorCategories as $cat) {
-            $sampleProduct = Product::where('vendor_id', $vendor->id)
+            $sampleQuery = Product::where('vendor_id', $vendor->id)
                 ->where('category_id', $cat->id)
-                ->where('status', 'active')
-                ->with('images')
-                ->latest()
-                ->first();
+                ->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $sampleQuery->excludeUsed();
+            }
+            $sampleProduct = $sampleQuery->with('images')->latest()->first();
             $cat->sample_image = $sampleProduct?->images->first()?->path ?? null;
         }
 
         // Featured products for boutique spotlight (up to 6 for horizontal rail)
-        $featuredProducts = Product::with(['images', 'variants'])
+        $featuredQuery = Product::with(['images', 'variants'])
             ->where('vendor_id', $vendor->id)
             ->where('status', 'active')
-            ->where('is_featured', true)
-            ->take(6)
-            ->get();
+            ->where('is_featured', true);
+        if ($vendor->vendor_type !== 'used') {
+            $featuredQuery->excludeUsed();
+        }
+        $featuredProducts = $featuredQuery->take(6)->get();
 
         // If no featured products explicitly flagged, use newest products for Spotlight
         if ($featuredProducts->isEmpty()) {
-            $featuredProducts = Product::with(['images', 'variants'])
+            $latestQuery = Product::with(['images', 'variants'])
                 ->where('vendor_id', $vendor->id)
-                ->where('status', 'active')
-                ->latest()
-                ->take(6)
-                ->get();
+                ->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $latestQuery->excludeUsed();
+            }
+            $featuredProducts = $latestQuery->latest()->take(6)->get();
         }
 
         // Vendor's published shorts for in-store video commerce tab

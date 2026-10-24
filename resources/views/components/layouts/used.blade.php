@@ -50,7 +50,7 @@
     </script>
 </head>
 
-<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen selection:bg-blue-600 selection:text-white"
+<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen overflow-x-hidden selection:bg-blue-600 selection:text-white"
       x-data="k71UsedGlobalState()"
       @open-offer-modal.window="openOfferModal($event.detail)"
       @open-post-ad.window="postAdModalOpen = true"
@@ -59,21 +59,21 @@
     <!-- ===================================================================
          1. TOP HEADER & NAVIGATION (CLEAN OLX-INSPIRED BLUE & WHITE)
          =================================================================== -->
-    <header class="sticky top-0 z-40 bg-white border-b border-slate-200/90 shadow-xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200/90 shadow-xs w-full overflow-hidden">
+        <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 w-full">
             
             <!-- Desktop & Mobile Header Row -->
-            <div class="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
+            <div class="flex items-center justify-between h-14 sm:h-20 gap-1.5 sm:gap-6 min-w-0 w-full">
                 
                 <!-- Left: Logo & Location Capsule -->
-                <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-4 shrink min-w-0">
                     <!-- Brand Mark -->
-                    <a href="{{ route('used.index') }}" class="flex items-center gap-2 group shrink-0" aria-label="K71 Used Home">
-                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-blue-600/25 group-hover:bg-blue-700 transition">
+                    <a href="{{ route('used.index') }}" class="flex items-center gap-1.5 sm:gap-2 group shrink-0" aria-label="K71 Used Home">
+                        <div class="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-sm sm:text-xl shadow-md shadow-blue-600/25 group-hover:bg-blue-700 transition">
                             🔄
                         </div>
                         <div class="flex flex-col leading-none">
-                            <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
+                            <span class="text-lg sm:text-2xl font-black tracking-tight text-slate-950">
                                 K71<span class="text-blue-600">USED</span>
                             </span>
                             <span class="text-[9px] font-black uppercase tracking-widest text-blue-700 font-mono hidden sm:block">
@@ -88,11 +88,11 @@
                     <!-- Location Selector Capsule -->
                     <button type="button" 
                             @click="locationModalOpen = true"
-                            class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200 text-xs font-bold text-slate-800 transition cursor-pointer max-w-[130px] sm:max-w-[190px] truncate"
+                            class="flex items-center gap-1 px-1.5 py-1 sm:px-3 sm:py-2 rounded-xl bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200 text-[11px] sm:text-xs font-bold text-slate-800 transition cursor-pointer max-w-[80px] xs:max-w-[110px] sm:max-w-[190px] truncate shrink min-w-0"
                             title="Change City">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                        <span class="truncate" x-text="currentLocation">Kishangarh, Rajasthan</span>
-                        <svg class="w-3 h-3 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="truncate" x-text="currentLocation.split(',')[0]">Kishangarh</span>
+                        <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                 </div>
 
@@ -113,11 +113,11 @@
                 </div>
 
                 <!-- Right: Favorites, Chats, User & "+ SELL" Button -->
-                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
                     
-                    <!-- Saved Favorites Icon -->
+                    <!-- Saved Favorites Icon (Desktop only; on mobile accessible via bottom bar) -->
                     <a href="{{ route('used.index') }}#favorites" 
-                       class="relative p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition" 
+                       class="hidden sm:inline-flex relative p-2 rounded-xl text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition" 
                        title="Saved Favorites">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                         <span x-show="wishlist.length > 0" x-text="wishlist.length" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center"></span>
@@ -125,7 +125,7 @@
 
                     <!-- Chats Link -->
                     <a href="{{ route('messages.index') }}" 
-                       class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 transition">
+                       class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 transition">
                         <span>💬</span>
                         <span>Chats</span>
                     </a>
@@ -135,8 +135,9 @@
                         <div class="relative" x-data="{ userMenu: false }">
                             <button @click="userMenu = !userMenu" 
                                     type="button" 
-                                    class="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer">
-                                <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                                    class="flex items-center gap-1 p-1 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer"
+                                    aria-label="User Account">
+                                <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
                                     {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                                 </div>
                                 <span class="hidden md:inline text-xs font-bold max-w-[90px] truncate">{{ auth()->user()->first_name ?? auth()->user()->name }}</span>
@@ -169,16 +170,17 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition">
+                        <a href="{{ route('login') }}" class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] sm:text-xs font-bold transition shrink-0">
                             Sign In
                         </a>
                     @endauth
 
-                    <!-- Prominent "+ SELL" Button (OLX Style) -->
+                    <!-- Prominent "+ SELL" Button (Always guaranteed inside boundary) -->
                     <button type="button" 
                             @click="postAdModalOpen = true"
-                            class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:brightness-110 text-white text-xs sm:text-sm font-black tracking-wider transition shadow-md shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer active:scale-95">
-                        <span class="text-base font-black leading-none">+</span>
+                            class="px-3 sm:px-6 py-1.5 sm:py-2.5 rounded-full bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:brightness-110 text-white text-xs sm:text-sm font-black tracking-wider transition shadow-md shadow-blue-600/30 flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0 border border-blue-400/40"
+                            aria-label="Sell Item">
+                        <span class="text-sm sm:text-base font-black leading-none">+</span>
                         <span>SELL</span>
                     </button>
 
@@ -186,16 +188,16 @@
             </div>
 
             <!-- Mobile Search Bar Strip (Visible on mobile/tablet) -->
-            <div class="md:hidden pb-3 pt-1">
-                <form action="{{ route('used.index') }}" method="GET" class="w-full flex items-center bg-slate-100 border border-slate-200 rounded-2xl p-1.5">
+            <div class="md:hidden pb-2.5 pt-0.5">
+                <form action="{{ route('used.index') }}" method="GET" class="w-full flex items-center bg-slate-100 border border-slate-200 rounded-2xl p-1">
                     <div class="pl-2.5 text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                     <input type="text" name="search" 
                            placeholder="Search cars, phones, furniture..." 
                            value="{{ request('search') }}"
-                           class="w-full px-2.5 py-1 text-xs text-slate-900 bg-transparent placeholder:text-slate-400 focus:outline-none font-medium">
-                    <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs">
+                           class="w-full px-2 py-1 text-xs text-slate-900 bg-transparent placeholder:text-slate-400 focus:outline-none font-medium min-w-0">
+                    <button type="submit" class="px-3 py-1 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs shrink-0">
                         Search
                     </button>
                 </form>

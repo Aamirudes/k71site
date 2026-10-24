@@ -43,6 +43,7 @@ Route::get('/api/search/suggest', [CatalogController::class, 'suggest'])->name('
 Route::get('/category/{slug}', [CatalogController::class, 'category'])->name('category.show');
 Route::get('/product/{slug}', [ProductViewController::class, 'show'])->name('product.show');
 Route::get('/catalog/product/{slug}', [ProductViewController::class, 'show'])->name('catalog.product');
+Route::get('/products/{slug}', fn($slug) => redirect()->route('product.show', $slug));
 
 // Robots.txt Handler
 Route::get('/robots.txt', function () {

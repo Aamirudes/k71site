@@ -395,4 +395,82 @@ class UsedItemsAndOffersTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_used_listings_are_excluded_from_homepage_and_catalog(): void
+    {
+        $retailProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->usedCategory->id,
+            'title' => 'Brand New Wireless Mechanical Keyboard',
+            'slug' => 'brand-new-wireless-keyboard',
+            'description' => 'Original box sealed retail piece.',
+            'vertical' => 'marketplace',
+            'listing_type' => 'purchase',
+            'base_price' => 450000,
+            'gst_rate' => 18,
+            'total_stock' => 10,
+            'status' => 'active',
+            'is_featured' => true,
+        ]);
+
+        $usedProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->usedCategory->id,
+            'title' => 'Second Hand iPhone 12 Mini Blue',
+            'slug' => 'second-hand-iphone-12-mini-blue',
+            'description' => 'Used for 1 year with bill and charger.',
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'base_price' => 2200000,
+            'gst_rate' => 0,
+            'total_stock' => 1,
+            'status' => 'active',
+            'is_featured' => true,
+        ]);
+
+        // 1. Check Homepage
+        $homeResponse = $this->get('/');
+        $homeResponse->assertStatus(200);
+        $homeResponse->assertSee('Brand New Wireless Mechanical Keyboard');
+        $homeResponse->assertDontSee('Second Hand iPhone 12 Mini Blue');
+
+        // 2. Check Catalog
+        $catalogResponse = $this->get('/catalog');
+        $catalogResponse->assertStatus(200);
+        $catalogResponse->assertSee('Brand New Wireless Mechanical Keyboard');
+        $catalogResponse->assertDontSee('Second Hand iPhone 12 Mini Blue');
+    }
+
+    public function test_accessing_used_listing_via_products_slug_redirects_to_used_show(): void
+    {
+        $usedProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->usedCategory->id,
+            'title' => 'Pre-Owned Sony WH-1000XM4 Headphones',
+            'slug' => 'pre-owned-sony-wh-1000xm4',
+            'description' => 'Mint condition active noise cancelling headphones.',
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'base_price' => 1400000,
+            'gst_rate' => 0,
+            'total_stock' => 1,
+            'status' => 'active',
+        ]);
+
+        // Access via regular e-commerce product view
+        $response = $this->get('/product/' . $usedProduct->slug);
+        $response->assertRedirect(route('used.show', $usedProduct->slug));
+
+        // Follow redirect to dedicated second-hand view
+        $followedResponse = $this->followRedirects($response);
+        $followedResponse->assertStatus(200);
+        $followedResponse->assertSee('Pre-Owned Sony WH-1000XM4 Headphones');
+        $followedResponse->assertSee('Make Offer');
+
+        // Also verify plural alias /products/{slug}
+        $pluralResponse = $this->get('/products/' . $usedProduct->slug);
+        $pluralFollowed = $this->followRedirects($pluralResponse);
+        $pluralFollowed->assertStatus(200);
+        $pluralFollowed->assertSee('Pre-Owned Sony WH-1000XM4 Headphones');
+    }
 }

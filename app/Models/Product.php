@@ -92,8 +92,12 @@ class Product extends Model
      */
     public function isPurchase(): bool
     {
+        if ($this->vertical === 'used' || $this->listing_type === 'classified') {
+            return false;
+        }
+
         return empty($this->listing_type) 
-            || in_array($this->listing_type, ['purchase', 'food', 'grocery', 'service', 'booking', 'classified']);
+            || in_array($this->listing_type, ['purchase', 'food', 'grocery', 'service', 'booking']);
     }
 
     /**
@@ -150,6 +154,20 @@ class Product extends Model
     public function scopeListingType($query, string $type)
     {
         return $query->where('listing_type', $type);
+    }
+
+    /**
+     * Scope query to exclude used / classifieds listings from standard retail and home displays.
+     */
+    public function scopeExcludeUsed($query)
+    {
+        return $query->where(function($q) {
+            $q->whereNull('vertical')
+              ->orWhere('vertical', '!=', 'used');
+        })->where(function($q) {
+            $q->whereNull('listing_type')
+              ->orWhere('listing_type', '!=', 'classified');
+        });
     }
 
     public function category(): BelongsTo

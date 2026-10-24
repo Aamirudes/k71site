@@ -66,7 +66,7 @@
                 alert('Listing link copied to clipboard!');
             }
         }
-    }" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-28 md:pb-12">
+    }" class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-28 md:pb-12 w-full overflow-hidden">
 
         <!-- ===================================================================
              1. BREADCRUMBS

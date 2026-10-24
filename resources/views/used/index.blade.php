@@ -51,7 +51,7 @@
             }
             window.location.href = url.toString();
         }
-    }" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
+    }" class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-3 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white w-full overflow-hidden">
 
         <!-- ===================================================================
              1. CATEGORY PILLS BAR (OLX STYLE HORIZONTAL SCROLL)
@@ -69,7 +69,7 @@
             ];
         @endphp
 
-        <div class="mb-5 pb-2 overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+        <div class="mb-4 pb-1 overflow-x-auto no-scrollbar -mx-2.5 px-2.5 sm:mx-0 sm:px-0">
             <div class="flex items-center gap-2 min-w-max">
                 @foreach($catFilters as $catKey => $catData)
                     @php
