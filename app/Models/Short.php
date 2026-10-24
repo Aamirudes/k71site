@@ -94,7 +94,7 @@ class Short extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'published');
+        return $query->whereIn('status', ['published', 'approved', 'active']);
     }
 
     public function scopeFeatured($query)

@@ -108,7 +108,7 @@ class ShortsController extends Controller
         $seoShort = $openId > 0 ? Short::with('vendor')->find($openId) : null;
 
         $featuredShorts = Short::with(['vendor', 'category', 'products'])
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'approved', 'active'])
             ->where('is_featured', true)
             ->orderByDesc('is_boosted')
             ->orderByDesc('id')
@@ -116,7 +116,7 @@ class ShortsController extends Controller
             ->get();
 
         $initialShorts = Short::with(['vendor', 'category', 'products'])
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'approved', 'active'])
             ->orderByDesc('id')
             ->take(24)
             ->get();

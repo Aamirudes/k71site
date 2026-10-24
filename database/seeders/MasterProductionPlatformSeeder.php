@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Category;
+use App\Models\Enquiry;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
@@ -1069,7 +1070,7 @@ class MasterProductionPlatformSeeder extends Seeder
                     'description' => $s['description'],
                     'video_url' => $s['video_url'],
                     'thumb_url' => $s['thumb_url'],
-                    'status' => 'approved',
+                    'status' => 'published',
                     'is_featured' => true,
                     'is_boosted' => true,
                     'views' => $s['views'],
@@ -1160,5 +1161,95 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+
+        // 9. Seed Authentic Active Buyer RFQs & Leads (B2B Marketplace)
+        $rfqsData = [
+            [
+                'enquiry_number' => 'RFQ-2026-0081',
+                'category_id' => $catMarble->id,
+                'title' => 'Bulk Sourcing: 25,000 Sq.Ft Premium Makrana White Slabs for 5-Star Hotel Project',
+                'description' => 'Requirement for pure white crystalline Makrana marble slabs (18mm thickness, book-matched). Delivery needed on site in Jaipur within 45 days. Vendor must be GST registered with mining gate passes.',
+                'quantity' => '25,000 Sq. Ft.',
+                'target_budget' => 2000000.00,
+                'city' => 'Jaipur',
+                'pincode' => '302001',
+                'urgency' => 'immediate',
+                'buyer_name' => 'Rajputana Grand Hospitality Ltd',
+                'buyer_phone' => '+91 98290 11223',
+                'buyer_email' => 'procurement@rajputanagrand.com',
+                'status' => 'open',
+                'quotes_count' => 3,
+            ],
+            [
+                'enquiry_number' => 'RFQ-2026-0082',
+                'category_id' => $catTools->id,
+                'title' => 'Supply of 500 MT Fe-550D TMT Rebars (8mm to 32mm) for Residential High-Rise',
+                'description' => 'Looking for primary steel plant rolling (Tata/JSW/Jindal equivalent test certs mandatory). Staggered 100 MT monthly deliveries to site near Hinjewadi Phase 3, Pune.',
+                'quantity' => '500 Metric Tons',
+                'target_budget' => 32500000.00,
+                'city' => 'Pune',
+                'pincode' => '411057',
+                'urgency' => 'within_month',
+                'buyer_name' => 'Skyline Heights Infra Ventures',
+                'buyer_phone' => '+91 94220 55667',
+                'buyer_email' => 'purchase@skylineheights.in',
+                'status' => 'open',
+                'quotes_count' => 2,
+            ],
+            [
+                'enquiry_number' => 'RFQ-2026-0083',
+                'category_id' => $catAuto->id,
+                'title' => 'Urgent: 2,500 Sets Heavy Duty Ventilated Brake Discs & Semi-Metallic Pads OEM Spec',
+                'description' => 'Required for fleet overhaul. Must meet ISO/TS 16949 automotive manufacturing standards. Sample inspection required before full lot dispatch.',
+                'quantity' => '2,500 Sets',
+                'target_budget' => 1250000.00,
+                'city' => 'Gurugram',
+                'pincode' => '122016',
+                'urgency' => 'immediate',
+                'buyer_name' => 'SwiftWheels Logistics Fleet',
+                'buyer_phone' => '+91 98110 33445',
+                'buyer_email' => 'spares@swiftwheelsfleet.com',
+                'status' => 'open',
+                'quotes_count' => 4,
+            ],
+            [
+                'enquiry_number' => 'RFQ-2026-0084',
+                'category_id' => $catTools->id,
+                'title' => 'Industrial Diamond Gang Saw Blades & Segmented Polishing Frankfurts (60 Sets)',
+                'description' => 'Seeking direct manufacturer pricing for heavy marble block cutting blades. High concentration cobalt bond suitable for hard crystalline marble.',
+                'quantity' => '60 Sets',
+                'target_budget' => 480000.00,
+                'city' => 'Kishangarh',
+                'pincode' => '305801',
+                'urgency' => 'flexible',
+                'buyer_name' => 'Marwar Stone Processors Association',
+                'buyer_phone' => '+91 97840 88990',
+                'buyer_email' => 'tenders@marwarstone.org',
+                'status' => 'open',
+                'quotes_count' => 1,
+            ],
+        ];
+
+        foreach ($rfqsData as $rfq) {
+            Enquiry::updateOrCreate(
+                ['enquiry_number' => $rfq['enquiry_number']],
+                [
+                    'user_id' => $buyer->id,
+                    'category_id' => $rfq['category_id'],
+                    'title' => $rfq['title'],
+                    'description' => $rfq['description'],
+                    'quantity' => $rfq['quantity'],
+                    'target_budget' => $rfq['target_budget'],
+                    'city' => $rfq['city'],
+                    'pincode' => $rfq['pincode'],
+                    'urgency' => $rfq['urgency'],
+                    'buyer_name' => $rfq['buyer_name'],
+                    'buyer_phone' => $rfq['buyer_phone'],
+                    'buyer_email' => $rfq['buyer_email'],
+                    'status' => $rfq['status'],
+                    'quotes_count' => $rfq['quotes_count'],
+                ]
+            );
+        }
     }
 }

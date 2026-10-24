@@ -18,7 +18,7 @@ class ProductViewController extends Controller
         // High-CTR SEO Data (Google SERP optimized)
         $priceRupees = number_format($product->base_price / 100, 0);
         $brandName = $product->brand ?: $product->vendor->shop_name;
-        $appName = config('marketplace.name', 'MarbleMandi');
+        $appName = config('marketplace.name', 'K71');
         $defaultSeoTitle = "Buy {$product->title} Online at ₹{$priceRupees} | {$brandName} - {$appName}";
         $seoTitle = $product->seo_title ?: $defaultSeoTitle;
 

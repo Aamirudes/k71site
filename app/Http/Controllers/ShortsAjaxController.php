@@ -62,7 +62,7 @@ class ShortsAjaxController extends Controller
         $exclude = (array) $request->input('exclude', []);
 
         $query = Short::with(['vendor', 'category'])
-            ->where('status', 'published');
+            ->whereIn('status', ['published', 'approved', 'active']);
 
         if (!empty($exclude)) {
             $query->whereNotIn('id', array_filter(array_map('intval', $exclude)));
@@ -105,7 +105,7 @@ class ShortsAjaxController extends Controller
         // Promote boosted / manual-boosted shorts on page 1 for non-latest feeds
         if ($page === 1 && $filter !== 'latest' && $filter !== 'featured') {
             $promoted = Short::with(['vendor', 'category'])
-                ->where('status', 'published')
+                ->whereIn('status', ['published', 'approved', 'active'])
                 ->where(function ($q) {
                     $q->where('is_manual_boost', true)
                       ->orWhere('is_boosted', true);
@@ -153,7 +153,7 @@ class ShortsAjaxController extends Controller
         $count = (int) $request->input('count', 8);
 
         $shorts = Short::with(['vendor', 'category'])
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'approved', 'active'])
             ->where(function ($q) {
                 $q->where('is_boosted', true)
                   ->orWhere('is_featured', true);
@@ -179,7 +179,7 @@ class ShortsAjaxController extends Controller
         $limit = (int) $request->input('limit', 10);
 
         $query = Short::with(['vendor', 'category'])
-            ->where('status', 'published');
+            ->whereIn('status', ['published', 'approved', 'active']);
 
         if ($catSlug) {
             $cat = Category::where('slug', $catSlug)->first();
@@ -638,7 +638,7 @@ class ShortsAjaxController extends Controller
         }
 
         $shorts = Short::with(['vendor', 'category'])
-            ->where('status', 'published')
+            ->whereIn('status', ['published', 'approved', 'active'])
             ->where(function ($q) use ($term) {
                 $q->where('title', 'like', "%{$term}%")
                   ->orWhere('description', 'like', "%{$term}%");
