@@ -119,15 +119,14 @@
     <!-- Details Area (No background, sits cleanly on page) -->
     <div class="flex flex-col flex-1 px-1">
         
-        <!-- Boutique / Store Badge -->
+        <!-- Verified Seller Badge -->
         @if($product->vendor)
             <div class="flex items-center gap-1 mb-1">
-                <a href="{{ route('catalog.index', ['store' => $product->vendor->slug]) }}" 
-                   class="text-[9.5px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition flex items-center gap-1 font-medium truncate"
-                   title="{{ $product->vendor->shop_name }}">
-                    <span class="truncate">{{ $product->vendor->shop_name }}</span>
+                <span class="text-[9.5px] tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium truncate"
+                   title="Sold by {{ $product->vendor->shop_name }}">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 text-[7px] font-bold" title="Verified Seller">✓</span>
-                </a>
+                    <span class="truncate">Sold by {{ $product->vendor->shop_name }}</span>
+                </span>
             </div>
         @endif
 
@@ -151,11 +150,32 @@
                 <span class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
                     Sold Out
                 </span>
+            @elseif($product->isEnquiry())
+                <a href="{{ route('product.show', $product->slug) }}" 
+                   class="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 transition-colors inline-flex items-center gap-1" 
+                   title="Request Quotation / View Details">
+                    <span>Request Quote</span>
+                    <span class="text-[12px] leading-none">&rarr;</span>
+                </a>
+            @elseif($product->isBooking())
+                <a href="{{ route('product.show', $product->slug) }}" 
+                   class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 transition-colors inline-flex items-center gap-1" 
+                   title="Book Service">
+                    <span>Book Service</span>
+                    <span class="text-[12px] leading-none">&rarr;</span>
+                </a>
+            @elseif(!$product->isPurchase())
+                <a href="{{ route('product.show', $product->slug) }}" 
+                   class="text-[11px] font-semibold text-zinc-900 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors underline decoration-1 underline-offset-2 inline-flex items-center gap-1" 
+                   title="View Listing">
+                    <span>View Listing</span>
+                    <span class="text-[12px] leading-none">&rarr;</span>
+                </a>
             @elseif($hasMultipleVariants)
                 <a href="{{ route('product.show', $product->slug) }}" 
                    class="text-[11px] font-semibold text-zinc-900 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors underline decoration-1 underline-offset-2 inline-flex items-center gap-1" 
-                   title="Select size to purchase">
-                    <span>Select Size</span>
+                   title="Select options">
+                    <span>Select Options</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @else
@@ -172,6 +192,7 @@
                                 'Accept': 'application/json'
                             },
                             body: JSON.stringify({ 
+                                product_id: {{ $product->id }},
                                 variant_id: {{ $firstInStockVariant?->id ?? 'null' }}, 
                                 quantity: 1 
                             })

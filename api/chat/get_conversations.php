@@ -1,8 +1,8 @@
 <?php
 /**
- * API: Get Conversations List with Primary vs Requests Tab Support
+ * API: Get Conversations List with Unread Counts & Fast Load
  * File: api/chat/get_conversations.php
- * K71 Instagram Direct Dual-Inbox Architecture
+ * K71 Universal DM Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -15,68 +15,22 @@ require_once $dbPath;
 
 $currentUserId = require_auth();
 
-$tab = isset($_GET['tab']) && in_array(strtolower(trim($_GET['tab'])), ['requests', 'primary'], true) 
-    ? strtolower(trim($_GET['tab'])) 
-    : 'primary';
-
 try {
-    // 1. Calculate incoming requests count across all conversations
-    $stmtReqCount = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM chat_conversations 
-        WHERE (user_one_id = :me OR user_two_id = :me) 
-          AND status = 'pending' 
-          AND (requested_by IS NULL OR requested_by != :me)
+    // 1. Fetch conversations for current user
+    $stmt = $pdo->prepare("
+        SELECT 
+            c.id AS conversation_id,
+            c.user_one_id,
+            c.user_two_id,
+            c.last_message_at,
+            CASE 
+                WHEN c.user_one_id = :me THEN c.user_two_id 
+                ELSE c.user_one_id 
+            END AS recipient_id
+        FROM chat_conversations c
+        WHERE c.user_one_id = :me OR c.user_two_id = :me
+        ORDER BY c.last_message_at DESC
     ");
-    $stmtReqCount->execute([':me' => $currentUserId]);
-    $requestsCount = (int) $stmtReqCount->fetchColumn();
-
-    // 2. Fetch conversations based on active tab
-    if ($tab === 'requests') {
-        // Incoming message requests waiting for recipient approval
-        $stmt = $pdo->prepare("
-            SELECT 
-                c.id AS conversation_id,
-                c.user_one_id,
-                c.user_two_id,
-                c.status,
-                c.requested_by,
-                c.last_message_at,
-                CASE 
-                    WHEN c.user_one_id = :me THEN c.user_two_id 
-                    ELSE c.user_one_id 
-                END AS recipient_id
-            FROM chat_conversations c
-            WHERE (c.user_one_id = :me OR c.user_two_id = :me)
-              AND c.status = 'pending'
-              AND (c.requested_by IS NULL OR c.requested_by != :me)
-            ORDER BY c.last_message_at DESC
-        ");
-    } else {
-        // Primary tab: accepted conversations OR pending conversations initiated by me
-        $stmt = $pdo->prepare("
-            SELECT 
-                c.id AS conversation_id,
-                c.user_one_id,
-                c.user_two_id,
-                c.status,
-                c.requested_by,
-                c.last_message_at,
-                CASE 
-                    WHEN c.user_one_id = :me THEN c.user_two_id 
-                    ELSE c.user_one_id 
-                END AS recipient_id
-            FROM chat_conversations c
-            WHERE (c.user_one_id = :me OR c.user_two_id = :me)
-              AND (
-                  c.status = 'accepted' 
-                  OR (c.status = 'pending' AND c.requested_by = :me)
-                  OR c.status IS NULL
-              )
-            ORDER BY c.last_message_at DESC
-        ");
-    }
-
     $stmt->execute([':me' => $currentUserId]);
     $rawConversations = $stmt->fetchAll();
 
@@ -84,9 +38,16 @@ try {
 
     // Prepared statements for details
     $stmtUser = $pdo->prepare("
-        SELECT id, username, first_name, last_name, avatar 
-        FROM users 
-        WHERE id = ? AND deleted_at IS NULL 
+        SELECT 
+            u.id, 
+            u.username, 
+            u.first_name, 
+            u.last_name, 
+            u.avatar,
+            v.shop_name
+        FROM users u 
+        LEFT JOIN vendors v ON v.user_id = u.id
+        WHERE u.id = ? AND u.deleted_at IS NULL 
         LIMIT 1
     ");
 
@@ -107,9 +68,6 @@ try {
     foreach ($rawConversations as $conv) {
         $recipientId = (int) $conv['recipient_id'];
         $convId = (int) $conv['conversation_id'];
-        $cStatus = $conv['status'] ?? 'accepted';
-        $cRequestedBy = isset($conv['requested_by']) ? (int)$conv['requested_by'] : null;
-        $isIncomingRequest = ($cStatus === 'pending' && $cRequestedBy !== null && $cRequestedBy !== $currentUserId);
 
         // Fetch recipient user details
         $stmtUser->execute([$recipientId]);
@@ -118,9 +76,14 @@ try {
             continue;
         }
 
-        $fullName = trim(($recipientUser['first_name'] ?? '') . ' ' . ($recipientUser['last_name'] ?? ''));
-        if ($fullName === '') {
-            $fullName = $recipientUser['username'] ?? ('user_' . $recipientId);
+        $personName = trim(($recipientUser['first_name'] ?? '') . ' ' . ($recipientUser['last_name'] ?? ''));
+        if ($personName === '') {
+            $personName = $recipientUser['username'] ?? ('User #' . $recipientId);
+        }
+
+        $displayName = $personName;
+        if (!empty($recipientUser['shop_name'])) {
+            $displayName = $recipientUser['shop_name'] . ' (' . $personName . ')';
         }
 
         // Fetch latest message
@@ -131,7 +94,7 @@ try {
         $stmtUnread->execute([$convId, $currentUserId]);
         $unreadCount = (int) $stmtUnread->fetchColumn();
 
-        $previewText = ($cStatus === 'pending' && $cRequestedBy === $currentUserId) ? 'Request sent • Waiting for acceptance' : 'No messages yet';
+        $previewText = 'No messages yet';
         $messageTime = $conv['last_message_at'];
         $isSentByMe = false;
 
@@ -143,14 +106,12 @@ try {
 
         $conversations[] = [
             'id' => $convId,
-            'status' => $cStatus,
-            'requested_by' => $cRequestedBy,
-            'is_incoming_request' => $isIncomingRequest,
             'recipient' => [
                 'id' => $recipientId,
                 'username' => $recipientUser['username'] ?? ('user_' . $recipientId),
-                'name' => $fullName,
-                'profile_pic' => format_user_avatar($recipientUser['avatar'] ?? null, $fullName),
+                'name' => $displayName,
+                'shop_name' => $recipientUser['shop_name'] ?? null,
+                'profile_pic' => format_user_avatar($recipientUser['avatar'] ?? null, $displayName),
             ],
             'last_message' => [
                 'body' => $previewText,
@@ -159,13 +120,12 @@ try {
                 'time_formatted' => format_chat_time_ago($messageTime),
             ],
             'unread_count' => $unreadCount,
+            'last_message_at' => $conv['last_message_at'],
         ];
     }
 
     echo json_encode([
         'success' => true,
-        'tab' => $tab,
-        'requests_count' => $requestsCount,
         'data' => $conversations
     ]);
 

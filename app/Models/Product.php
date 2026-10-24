@@ -92,23 +92,24 @@ class Product extends Model
      */
     public function isPurchase(): bool
     {
-        return empty($this->listing_type) || $this->listing_type === 'purchase';
+        return empty($this->listing_type) 
+            || in_array($this->listing_type, ['purchase', 'food', 'grocery', 'service', 'booking', 'classified']);
     }
 
     /**
-     * Check if product is an enquiry-only listing.
+     * Check if product is an enquiry-only listing (e.g. Real Estate, High-ticket, B2B wholesale quotes).
      */
     public function isEnquiry(): bool
     {
-        return $this->listing_type === 'enquiry';
+        return in_array($this->listing_type, ['enquiry', 'quote_only', 'contact_seller']);
     }
 
     /**
-     * Check if product is a booking listing.
+     * Check if product is a booking listing (e.g. doorstep services).
      */
     public function isBooking(): bool
     {
-        return $this->listing_type === 'booking';
+        return in_array($this->listing_type, ['booking', 'service']);
     }
 
     /**
@@ -124,7 +125,7 @@ class Product extends Model
      */
     public function isContactSeller(): bool
     {
-        return $this->listing_type === 'contact_seller';
+        return in_array($this->listing_type, ['contact_seller', 'quote_only', 'enquiry']);
     }
 
     /**

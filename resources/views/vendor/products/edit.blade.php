@@ -1,6 +1,13 @@
 <x-layouts.vendor title="Edit Product">
     @php
         $sec = $sectorConfig ?? ($vendor ? $vendor->getSectorConfig() : []);
+        $resolvedVerticalType = old('vertical_type', $product->category?->vertical_type ?? match ($targetVertical) {
+            'marketplace' => 'fashion_matrix',
+            'food' => 'food_portion',
+            'services' => 'service_booking',
+            'used' => 'classified_asset',
+            default => 'standard_retail',
+        });
     @endphp
     <form action="{{ route('vendor.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="relative" x-data="variantEngine()">
         @csrf
@@ -859,8 +866,7 @@
                 bulkPrice: '',
                 bulkStock: '',
 
-                // Dynamic Blueprint Engine State
-                verticalType: @json(old('vertical_type', $product->category->vertical_type ?? ($targetVertical === 'marketplace' ? 'fashion_matrix' : ($targetVertical === 'food' ? 'food_portion' : ($targetVertical === 'services' ? 'service_booking' : ($targetVertical === 'used' ? 'classified_asset' : 'standard_retail'))))),
+                verticalType: @json($resolvedVerticalType),
                 isLoadingSchema: false,
                 availableColors: [
                     { name: 'Jet Black', hex: '#111827' },
@@ -964,29 +970,25 @@
 
 
                 sizeGuide: (initialSizeGuide && initialSizeGuide.type) ? initialSizeGuide : (
-                    @if($targetVertical === 'marketplace')
-                    {
-                        type: 'shirt',
-                        title: 'Shirt, Kurta & Top Size Guide',
-                        tip: 'Measure around the fullest part of your chest. Length is measured from the shoulder point downwards.',
-                        columns: ['Size', 'Chest (in)', 'Length (in)', 'Shoulder (in)', 'Sleeve (in)'],
-                        rows: [
-                            { 'Size': 'S (38)', 'Chest (in)': '38', 'Length (in)': '28', 'Shoulder (in)': '17.5', 'Sleeve (in)': '24.5' },
-                            { 'Size': 'M (40)', 'Chest (in)': '40', 'Length (in)': '29', 'Shoulder (in)': '18.0', 'Sleeve (in)': '25.0' },
-                            { 'Size': 'L (42)', 'Chest (in)': '42', 'Length (in)': '30', 'Shoulder (in)': '18.5', 'Sleeve (in)': '25.5' },
-                            { 'Size': 'XL (44)', 'Chest (in)': '44', 'Length (in)': '31', 'Shoulder (in)': '19.0', 'Sleeve (in)': '26.0' },
-                            { 'Size': 'XXL (46)', 'Chest (in)': '46', 'Length (in)': '31.5', 'Shoulder (in)': '19.5', 'Sleeve (in)': '26.5' }
+                    {!! json_encode($targetVertical === 'marketplace' ? [
+                        'type' => 'shirt',
+                        'title' => 'Shirt, Kurta & Top Size Guide',
+                        'tip' => 'Measure around the fullest part of your chest. Length is measured from the shoulder point downwards.',
+                        'columns' => ['Size', 'Chest (in)', 'Length (in)', 'Shoulder (in)', 'Sleeve (in)'],
+                        'rows' => [
+                            ['Size' => 'S (38)', 'Chest (in)' => '38', 'Length (in)' => '28', 'Shoulder (in)' => '17.5', 'Sleeve (in)' => '24.5'],
+                            ['Size' => 'M (40)', 'Chest (in)' => '40', 'Length (in)' => '29', 'Shoulder (in)' => '18.0', 'Sleeve (in)' => '25.0'],
+                            ['Size' => 'L (42)', 'Chest (in)' => '42', 'Length (in)' => '30', 'Shoulder (in)' => '18.5', 'Sleeve (in)' => '25.5'],
+                            ['Size' => 'XL (44)', 'Chest (in)' => '44', 'Length (in)' => '31', 'Shoulder (in)' => '19.0', 'Sleeve (in)' => '26.0'],
+                            ['Size' => 'XXL (46)', 'Chest (in)' => '46', 'Length (in)' => '31.5', 'Shoulder (in)' => '19.5', 'Sleeve (in)' => '26.5']
                         ]
-                    }
-                    @else
-                    {
-                        type: 'none',
-                        title: '',
-                        tip: '',
-                        columns: [],
-                        rows: []
-                    }
-                    @endif
+                    ] : [
+                        'type' => 'none',
+                        'title' => '',
+                        'tip' => '',
+                        'columns' => [],
+                        'rows' => []
+                    ]) !!}
                 ),
 
                 presets: {

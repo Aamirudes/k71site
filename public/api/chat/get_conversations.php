@@ -1,7 +1,8 @@
 <?php
 /**
- * API: Get Conversations List with Mutual Follow Check & Unread Counts
+ * API: Get Conversations List with Unread Counts & Fast Load
  * File: api/chat/get_conversations.php
+ * K71 Universal DM Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -37,17 +38,16 @@ try {
 
     // Prepared statements for details
     $stmtUser = $pdo->prepare("
-        SELECT id, username, first_name, last_name, avatar 
-        FROM users 
-        WHERE id = ? AND deleted_at IS NULL 
-        LIMIT 1
-    ");
-
-    $stmtFollow = $pdo->prepare("
-        SELECT status 
-        FROM user_follows 
-        WHERE ((follower_id = :me AND following_id = :target) OR (follower_id = :target AND following_id = :me))
-          AND status = 'accepted'
+        SELECT 
+            u.id, 
+            u.username, 
+            u.first_name, 
+            u.last_name, 
+            u.avatar,
+            v.shop_name
+        FROM users u 
+        LEFT JOIN vendors v ON v.user_id = u.id
+        WHERE u.id = ? AND u.deleted_at IS NULL 
         LIMIT 1
     ");
 
@@ -69,12 +69,6 @@ try {
         $recipientId = (int) $conv['recipient_id'];
         $convId = (int) $conv['conversation_id'];
 
-        // Verify mutual follow connection
-        $stmtFollow->execute([':me' => $currentUserId, ':target' => $recipientId]);
-        if (!$stmtFollow->fetchColumn()) {
-            continue; // Skip conversations without accepted follow
-        }
-
         // Fetch recipient user details
         $stmtUser->execute([$recipientId]);
         $recipientUser = $stmtUser->fetch();
@@ -82,9 +76,14 @@ try {
             continue;
         }
 
-        $fullName = trim(($recipientUser['first_name'] ?? '') . ' ' . ($recipientUser['last_name'] ?? ''));
-        if ($fullName === '') {
-            $fullName = $recipientUser['username'] ?? ('user_' . $recipientId);
+        $personName = trim(($recipientUser['first_name'] ?? '') . ' ' . ($recipientUser['last_name'] ?? ''));
+        if ($personName === '') {
+            $personName = $recipientUser['username'] ?? ('User #' . $recipientId);
+        }
+
+        $displayName = $personName;
+        if (!empty($recipientUser['shop_name'])) {
+            $displayName = $recipientUser['shop_name'] . ' (' . $personName . ')';
         }
 
         // Fetch latest message
@@ -110,8 +109,9 @@ try {
             'recipient' => [
                 'id' => $recipientId,
                 'username' => $recipientUser['username'] ?? ('user_' . $recipientId),
-                'name' => $fullName,
-                'profile_pic' => format_user_avatar($recipientUser['avatar'] ?? null, $fullName),
+                'name' => $displayName,
+                'shop_name' => $recipientUser['shop_name'] ?? null,
+                'profile_pic' => format_user_avatar($recipientUser['avatar'] ?? null, $displayName),
             ],
             'last_message' => [
                 'body' => $previewText,

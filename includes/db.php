@@ -83,6 +83,7 @@ $conn = $pdo;
 $db = $pdo;
 
 // 3. User Session Resolution (Bridges $_SESSION and Laravel Session)
+if (!function_exists('get_current_user_id')) {
 function get_current_user_id(): ?int
 {
     // Check direct PHP session variables first
@@ -176,8 +177,10 @@ function get_current_user_id(): ?int
 
     return null;
 }
+}
 
 // 4. Authentication Guard for APIs
+if (!function_exists('require_auth')) {
 function require_auth(): int
 {
     $userId = get_current_user_id();
@@ -192,8 +195,10 @@ function require_auth(): int
     }
     return $userId;
 }
+}
 
 // 5. User Helper
+if (!function_exists('format_user_avatar')) {
 function format_user_avatar(?string $avatar, string $name): string
 {
     if (!empty($avatar)) {
@@ -205,13 +210,23 @@ function format_user_avatar(?string $avatar, string $name): string
     // High-resolution UI Avatar fallback
     return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=0095F6&color=ffffff&size=200&bold=true&format=svg';
 }
+}
 
+if (!function_exists('get_chat_user_info')) {
 function get_chat_user_info(\PDO $pdo, int $userId): ?array
 {
     $stmt = $pdo->prepare("
-        SELECT id, username, first_name, last_name, avatar, email 
-        FROM users 
-        WHERE id = ? AND deleted_at IS NULL 
+        SELECT 
+            u.id, 
+            u.username, 
+            u.first_name, 
+            u.last_name, 
+            u.avatar, 
+            u.email,
+            v.shop_name
+        FROM users u
+        LEFT JOIN vendors v ON v.user_id = u.id
+        WHERE u.id = ? AND u.deleted_at IS NULL 
         LIMIT 1
     ");
     $stmt->execute([$userId]);
@@ -220,21 +235,29 @@ function get_chat_user_info(\PDO $pdo, int $userId): ?array
         return null;
     }
 
-    $fullName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
-    if ($fullName === '') {
-        $fullName = $row['username'] ?? 'User';
+    $personName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    if ($personName === '') {
+        $personName = $row['username'] ?? 'User';
+    }
+
+    $displayName = $personName;
+    if (!empty($row['shop_name'])) {
+        $displayName = $row['shop_name'] . ' (' . $personName . ')';
     }
 
     return [
         'id' => (int) $row['id'],
         'username' => $row['username'] ?? ('user_' . $row['id']),
-        'name' => $fullName,
-        'profile_pic' => format_user_avatar($row['avatar'] ?? null, $fullName),
+        'name' => $displayName,
+        'shop_name' => $row['shop_name'] ?? null,
+        'profile_pic' => format_user_avatar($row['avatar'] ?? null, $displayName),
         'email' => $row['email'] ?? '',
     ];
 }
+}
 
 // 6. Time ago formatter (e.g. 5m, 2h, 1d, 3w)
+if (!function_exists('format_chat_time_ago')) {
 function format_chat_time_ago(string $datetime): string
 {
     $time = strtotime($datetime);
@@ -255,4 +278,5 @@ function format_chat_time_ago(string $datetime): string
         return floor($diff / 86400) . 'd';
     }
     return floor($diff / 604800) . 'w';
+}
 }

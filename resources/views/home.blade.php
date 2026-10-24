@@ -308,7 +308,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
                 @foreach($newArrivals as $prod)
                     @php
-                        $cover = $prod->images->first()?->path ? asset('storage/' . $prod->images->first()->path) : 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=400&q=80';
+                        $cover = $prod->primary_image_url;
                         $pricePaise = $prod->base_price;
                         $comparePaise = $prod->compare_at_price;
                     @endphp
@@ -332,9 +332,10 @@
                                     <a href="{{ route('product.show', $prod->slug) }}">{{ $prod->title }}</a>
                                 </h3>
                                 @if($prod->vendor)
-                                    <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
-                                        <span>by</span>
-                                        <span class="font-semibold text-slate-700 truncate">{{ $prod->vendor->shop_name }}</span>
+                                    <p class="text-[10.5px] text-emerald-600 mt-1 flex items-center gap-1 font-semibold">
+                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        <span>Verified Seller</span>
+                                        <span class="text-slate-400 font-normal truncate">&bull; {{ $prod->vendor->shop_name }}</span>
                                     </p>
                                 @endif
                             </div>

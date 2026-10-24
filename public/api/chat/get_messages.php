@@ -2,6 +2,7 @@
 /**
  * API: Get Messages for Conversation with Security & Read Status Sync
  * File: api/chat/get_messages.php
+ * K71 Universal DM Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -49,27 +50,7 @@ try {
         ? (int) $conv['user_two_id'] 
         : (int) $conv['user_one_id'];
 
-    // 2. SECURITY CHECK: Verify mutual follow relation is 'accepted'
-    $stmtFollow = $pdo->prepare("
-        SELECT status 
-        FROM user_follows 
-        WHERE ((follower_id = :me AND following_id = :target) OR (follower_id = :target AND following_id = :me))
-          AND status = 'accepted'
-        LIMIT 1
-    ");
-    $stmtFollow->execute([':me' => $currentUserId, ':target' => $recipientId]);
-    $isAccepted = $stmtFollow->fetchColumn();
-
-    if (!$isAccepted) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Follow request must be accepted to chat.'
-        ]);
-        exit;
-    }
-
-    // 3. Mark incoming unread messages as read
+    // 2. Mark incoming unread messages as read
     $stmtMarkRead = $pdo->prepare("
         UPDATE chat_messages 
         SET is_read = 1 
@@ -77,7 +58,7 @@ try {
     ");
     $stmtMarkRead->execute([$conversationId, $currentUserId]);
 
-    // 4. Fetch all messages in ascending order
+    // 3. Fetch all messages in ascending order
     $stmtMessages = $pdo->prepare("
         SELECT id, conversation_id, sender_id, body, is_read, created_at 
         FROM chat_messages 
@@ -103,7 +84,7 @@ try {
         ];
     }
 
-    // 5. Fetch recipient profile
+    // 4. Fetch recipient profile
     $recipientInfo = get_chat_user_info($pdo, $recipientId);
 
     echo json_encode([

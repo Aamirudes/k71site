@@ -2,6 +2,7 @@
 /**
  * API: Send Message with Security Verification & Timestamp Update
  * File: api/chat/send_message.php
+ * K71 Universal DM Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -71,31 +72,7 @@ try {
         exit;
     }
 
-    $recipientId = ((int) $conv['user_one_id'] === $currentUserId) 
-        ? (int) $conv['user_two_id'] 
-        : (int) $conv['user_one_id'];
-
-    // 2. SECURITY CHECK: Verify mutual 'accepted' follow status
-    $stmtFollow = $pdo->prepare("
-        SELECT status 
-        FROM user_follows 
-        WHERE ((follower_id = :me AND following_id = :target) OR (follower_id = :target AND following_id = :me))
-          AND status = 'accepted'
-        LIMIT 1
-    ");
-    $stmtFollow->execute([':me' => $currentUserId, ':target' => $recipientId]);
-    $isAccepted = $stmtFollow->fetchColumn();
-
-    if (!$isAccepted) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Follow request must be accepted to send messages.'
-        ]);
-        exit;
-    }
-
-    // 3. Insert new message
+    // 2. Insert new message
     $now = date('Y-m-d H:i:s');
     $stmtInsert = $pdo->prepare("
         INSERT INTO chat_messages (conversation_id, sender_id, body, is_read, created_at) 
@@ -104,7 +81,7 @@ try {
     $stmtInsert->execute([$conversationId, $currentUserId, $cleanBody, $now]);
     $messageId = (int) $pdo->lastInsertId();
 
-    // 4. Update last_message_at on conversation
+    // 3. Update last_message_at on conversation
     $stmtUpdateConv = $pdo->prepare("
         UPDATE chat_conversations 
         SET last_message_at = ? 

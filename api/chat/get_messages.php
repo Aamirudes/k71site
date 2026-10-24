@@ -1,8 +1,8 @@
 <?php
 /**
- * API: Get Messages for Conversation with Dynamic Request Status
+ * API: Get Messages for Conversation with Security & Read Status Sync
  * File: api/chat/get_messages.php
- * K71 Realtime Direct Messaging Engine
+ * K71 Universal DM Engine
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -29,7 +29,7 @@ if ($conversationId <= 0) {
 try {
     // 1. Verify user is a participant of the conversation
     $stmtConv = $pdo->prepare("
-        SELECT id, user_one_id, user_two_id, status, requested_by, last_message_at 
+        SELECT id, user_one_id, user_two_id, last_message_at 
         FROM chat_conversations 
         WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) 
         LIMIT 1
@@ -45,10 +45,6 @@ try {
         ]);
         exit;
     }
-
-    $convStatus = $conv['status'] ?? 'accepted';
-    $requestedBy = isset($conv['requested_by']) ? (int)$conv['requested_by'] : null;
-    $isIncomingRequest = ($convStatus === 'pending' && $requestedBy !== null && $requestedBy !== $currentUserId);
 
     $recipientId = ((int) $conv['user_one_id'] === $currentUserId) 
         ? (int) $conv['user_two_id'] 
@@ -93,14 +89,14 @@ try {
 
     echo json_encode([
         'success' => true,
-        'conversation' => [
-            'id' => $conversationId,
-            'status' => $convStatus,
-            'requested_by' => $requestedBy,
-            'is_incoming_request' => $isIncomingRequest,
-        ],
-        'recipient' => $recipientInfo,
-        'messages' => $formattedMessages
+        'data' => [
+            'conversation' => [
+                'id' => $conversationId,
+                'last_message_at' => $conv['last_message_at'],
+            ],
+            'recipient' => $recipientInfo,
+            'messages' => $formattedMessages
+        ]
     ]);
 
 } catch (\Throwable $e) {

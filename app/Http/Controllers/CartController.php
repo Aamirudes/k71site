@@ -78,11 +78,19 @@ class CartController extends Controller
         // Physical inventory check (Gig packages are digital milestone services with virtual availability)
         if (!$gigPackage && $variant) {
             if ($variant->stock <= 0) {
-                return response()->json(['success' => false, 'message' => 'This variant is completely out of stock.'], 400);
+                return response()->json(['success' => false, 'message' => 'This option is completely out of stock.'], 400);
             }
 
             if ($variant->stock < $validated['quantity']) {
                 return response()->json(['success' => false, 'message' => "Only {$variant->stock} pieces available in stock."], 400);
+            }
+        } elseif (!$gigPackage && !$variant) {
+            $availStock = $product->total_stock ?? 100;
+            if ($availStock <= 0) {
+                return response()->json(['success' => false, 'message' => 'This product is completely out of stock.'], 400);
+            }
+            if ($availStock < $validated['quantity']) {
+                return response()->json(['success' => false, 'message' => "Only {$availStock} pieces available in stock."], 400);
             }
         }
 
@@ -133,7 +141,13 @@ class CartController extends Controller
         if ($gigPackage) {
             $cartItem = $cart->items()->where('gig_package_id', $gigPackage->id)->first();
         } else {
-            $existingVariantItems = $cart->items()->where('variant_id', $variant?->id)->get();
+            $query = $cart->items()->where('product_id', $product->id);
+            if ($variant) {
+                $query->where('variant_id', $variant->id);
+            } else {
+                $query->whereNull('variant_id');
+            }
+            $existingVariantItems = $query->get();
             $incomingIds = !empty($validated['selected_modifiers']) ? collect($validated['selected_modifiers'])->sort()->values()->all() : [];
 
             foreach ($existingVariantItems as $existing) {
