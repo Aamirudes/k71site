@@ -333,7 +333,7 @@
                                                     <input type="hidden" name="variant_id" value="{{ $dish->variants->first()?->id }}">
                                                     <input type="hidden" name="quantity" value="1">
                                                     <button type="submit" 
-                                                            class="w-full py-1.5 rounded-xl bg-white border border-emerald-600 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-black text-center shadow-md transition active:scale-95 cursor-pointer">
+                                                            class="w-full py-1.5 rounded-xl bg-white border-2 border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black text-center shadow-md transition active:scale-95 cursor-pointer">
                                                         + ADD
                                                     </button>
                                                 </form>

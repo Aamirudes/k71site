@@ -68,9 +68,29 @@
 
                 <!-- Shipping Details -->
                 <section>
+                    @guest
+                        <div class="mb-4 p-4 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/80 text-xs flex items-center gap-3">
+                            <span class="text-2xl">⚡</span>
+                            <div>
+                                <span class="font-black text-stone-900 block">Instant Guest Checkout</span>
+                                <span class="text-stone-600">No account or password needed. Simply fill your contact and delivery address below to place your order!</span>
+                            </div>
+                        </div>
+                    @endguest
+
                     <h2 class="text-xl font-medium text-brand-text mb-4" x-text="orderType === 'food_takeaway' ? 'Customer Contact Details' : 'Delivery Address'">Delivery Address</h2>
                     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
+                                <input type="text" id="name" name="name" value="{{ old('name', auth()->user()?->name ?? '') }}" required placeholder="e.g. Rahul Sharma" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                            </div>
+
+                            <div>
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address <span class="text-[11px] text-stone-400 font-normal">(for tracking &amp; invoice)</span></label>
+                                <input type="email" id="email" name="email" value="{{ old('email', auth()->user()?->email ?? '') }}" placeholder="e.g. rahul@example.com" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                            </div>
+
                             <div class="md:col-span-2">
                                 <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-1">
                                     {{ ($isFoodOrder ?? false) ? 'Flat / House No. / Building / Landmark' : 'Address' }}
@@ -106,8 +126,8 @@
                             </div>
                             
                             <div>
-                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone (+91...)</label>
-                                <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" required placeholder="10 digit mobile number" minlength="10" maxlength="15" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Mobile Number <span class="text-rose-500">*</span></label>
+                                <input type="tel" id="phone" name="phone" value="{{ old('phone', auth()->user()?->phone ?? '') }}" required placeholder="10-digit mobile number" minlength="10" maxlength="15" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
                             </div>
 
                             @if($isFoodOrder ?? false)

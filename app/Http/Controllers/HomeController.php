@@ -114,14 +114,14 @@ class HomeController extends Controller
         // Actually, VendorScope only applies if the `vendor_context` is set (meaning we are in the vendor panel).
         // Let's ensure the products shown are published and belong to approved vendors.
 
-        $featuredProducts = Product::with('images', 'vendor')
+        $featuredProducts = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
             ->where('is_featured', true)
             ->latest()
             ->take(8)
             ->get();
             
-        $newArrivals = Product::with('images', 'vendor')
+        $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
             ->latest()
             ->take(12)

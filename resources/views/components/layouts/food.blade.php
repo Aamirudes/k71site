@@ -215,10 +215,11 @@
             <div class="md:hidden flex items-center justify-between py-2 border-t border-orange-100/60 text-xs">
                 <button type="button" 
                         @click="locationModalOpen = true" 
-                        class="flex items-center gap-1.5 text-stone-700 font-semibold truncate max-w-[240px]">
+                        class="flex items-center gap-1.5 text-stone-800 font-bold truncate max-w-[240px] cursor-pointer">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span class="truncate" x-text="currentLocation"></span>
-                    <svg class="w-3 h-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    <span class="text-[10px] uppercase tracking-wider text-[#ea580c] font-black shrink-0">DELIVER TO:</span>
+                    <span class="truncate underline decoration-orange-300" x-text="currentLocation"></span>
+                    <svg class="w-3 h-3 text-[#ea580c] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <a href="{{ request()->boolean('pure_veg') ? route('food.index') : route('food.index', ['pure_veg' => 1]) }}" 
                    class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {{ request()->boolean('pure_veg') ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-800 border border-emerald-300' }}">
@@ -373,12 +374,19 @@
                 <span x-text="detectingGps ? 'Detecting your location...' : 'Use Current GPS Location'"></span>
             </button>
 
-            <!-- Manual Search Input -->
-            <div class="relative">
+            <!-- Manual Search Input with instant Set button -->
+            <div class="flex items-center gap-2">
                 <input type="text" 
                        x-model="locationSearch"
+                       @keydown.enter.prevent="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
                        placeholder="Type your area, city, or delivery pincode..."
-                       class="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-xs text-stone-900 focus:border-[#ea580c] focus:outline-none">
+                       class="flex-1 px-4 py-2.5 rounded-xl border border-stone-200 text-xs text-stone-900 focus:border-[#ea580c] focus:outline-none">
+                <button type="button"
+                        @click="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
+                        :disabled="!locationSearch.trim()"
+                        class="px-4 py-2.5 rounded-xl bg-[#ea580c] hover:bg-[#d94e08] disabled:opacity-40 text-white text-xs font-bold transition shrink-0 cursor-pointer">
+                    Apply
+                </button>
             </div>
 
             <!-- Popular Indian Delivery Cities -->
@@ -570,7 +578,10 @@
             setLocation(name) {
                 this.currentLocation = name;
                 localStorage.setItem('k71_food_location', name);
-                if (window.showToast) window.showToast('Delivery zone updated to ' + name);
+                window.dispatchEvent(new CustomEvent('food-location-changed', { detail: name }));
+                if (window.showToast) {
+                    window.showToast('Delivery zone updated to ' + name + ' 📍');
+                }
             },
             detectGPS() {
                 this.detectingGps = true;
@@ -580,13 +591,29 @@
                     return;
                 }
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        this.setLocation('Current Location (' + pos.coords.latitude.toFixed(2) + ', ' + pos.coords.longitude.toFixed(2) + ')');
+                    async (pos) => {
+                        const lat = pos.coords.latitude;
+                        const lon = pos.coords.longitude;
+                        try {
+                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                const place = data.address?.suburb || data.address?.city_district || data.address?.city || data.address?.town || data.address?.state_district || 'Detected Area';
+                                const state = data.address?.state ? ', ' + data.address?.state : '';
+                                this.setLocation(`${place}${state}`);
+                                this.detectingGps = false;
+                                this.locationModalOpen = false;
+                                return;
+                            }
+                        } catch (e) {
+                            // Fallback to coordinates
+                        }
+                        this.setLocation('GPS Location (' + lat.toFixed(2) + ', ' + lon.toFixed(2) + ')');
                         this.detectingGps = false;
                         this.locationModalOpen = false;
                     },
                     (err) => {
-                        this.setLocation('Jaipur Hub (Default)');
+                        this.setLocation('Jaipur Central (Express Hub)');
                         this.detectingGps = false;
                         this.locationModalOpen = false;
                     },

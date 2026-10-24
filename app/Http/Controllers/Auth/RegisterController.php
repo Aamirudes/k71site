@@ -30,7 +30,7 @@ class RegisterController extends Controller
             'last_name' => ['required', 'string', 'max:50'],
             'username' => ['required', 'string', 'max:20', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'password' => ['required', Password::defaults()],
         ]);
 
         DB::transaction(function () use ($validated, $request) {
@@ -83,11 +83,11 @@ class RegisterController extends Controller
                 'last_name' => ['required', 'string', 'max:50'],
                 'username' => ['required', 'string', 'max:20', 'unique:users', 'regex:/^[a-zA-Z0-9_]+$/'],
                 'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-                'phone' => ['required', 'string', 'regex:/^\+91[0-9]{10}$/'],
-                'password' => ['required', 'confirmed', Password::defaults()],
+                'phone' => ['required', 'string', 'min:10', 'max:15'],
+                'password' => ['required', Password::defaults()],
             ]);
         } else {
-            $rules['phone'] = ['nullable', 'string', 'regex:/^\+91[0-9]{10}$/'];
+            $rules['phone'] = ['nullable', 'string', 'min:10', 'max:15'];
         }
 
         $validated = $request->validate($rules);

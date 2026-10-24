@@ -197,27 +197,29 @@ Route::put('/cart/{item}', [\App\Http\Controllers\CartController::class, 'update
 Route::delete('/cart/{item}', [\App\Http\Controllers\CartController::class, 'remove'])->name('cart.remove');
 
 // Checkout and Orders
+// Checkout and Orders (Full Guest Checkout & Authenticated Support)
+Route::get('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.vendor');
+Route::get('/checkout', fn() => redirect()->route('cart.index'))->name('checkout.index');
+Route::post('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
+Route::post('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'applyCoupon'])->name('checkout.coupon.apply');
+Route::delete('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');
+Route::post('/checkout/{vendor}/shipping-rate', [\App\Http\Controllers\CheckoutController::class, 'calculateShippingRate'])->name('checkout.shipping_rate');
+
+Route::get('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'payment'])->name('checkout.payment');
+Route::post('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'processPayment'])->name('checkout.payment.process');
+
+// PhonePe Automated Payment Initiation (Guest & Authenticated)
+Route::get('/payment/phonepe/initiate/{order}', [\App\Http\Controllers\PaymentController::class, 'initiate'])->name('payment.phonepe.initiate');
+
+Route::get('/orders/success/{order}', [\App\Http\Controllers\OrderController::class, 'success'])->name('orders.success');
+Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
+Route::get('/orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
+Route::get('/orders/{order}/cancel', fn(\App\Models\Order $order) => redirect()->route('orders.show', $order));
+Route::post('/orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+
+// Authenticated Account Orders History List
 Route::middleware('auth')->group(function () {
-    Route::get('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'index'])->name('checkout.vendor');
-    Route::get('/checkout', fn() => redirect()->route('cart.index'))->name('checkout.index');
-    Route::post('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::class, 'process'])->name('checkout.process');
-    Route::post('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'applyCoupon'])->name('checkout.coupon.apply');
-    Route::delete('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');
-    Route::post('/checkout/{vendor}/shipping-rate', [\App\Http\Controllers\CheckoutController::class, 'calculateShippingRate'])->name('checkout.shipping_rate');
-    
-    Route::get('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'payment'])->name('checkout.payment');
-    Route::post('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'processPayment'])->name('checkout.payment.process');
-    
-    // PhonePe Automated Payment Initiation (Requires Auth)
-    Route::get('/payment/phonepe/initiate/{order}', [\App\Http\Controllers\PaymentController::class, 'initiate'])->name('payment.phonepe.initiate');
-    
-    Route::get('/orders/success/{order}', [\App\Http\Controllers\OrderController::class, 'success'])->name('orders.success');
     Route::get('/orders', [\App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
-    Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::class, 'invoice'])->name('orders.invoice');
-    Route::get('/orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
-    Route::get('/orders/{order}/cancel', fn(\App\Models\Order $order) => redirect()->route('orders.show', $order));
-    Route::post('/orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
-    
 });
 
 // Master Admin Authentication Routes (Guest accessible)

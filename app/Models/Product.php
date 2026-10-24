@@ -190,6 +190,141 @@ class Product extends Model
         };
     }
 
+    /**
+     * Resolve the visual branding theme and badge metadata for this product card.
+     */
+    public function getVerticalThemeAttribute(): array
+    {
+        $v = strtolower($this->vertical ?? '');
+        if ($v === 'marketplace' || empty($v)) {
+            $v = strtolower($this->category?->vertical ?? '');
+        }
+        $catName = strtolower($this->category?->name ?? '');
+        $catSlug = strtolower($this->category?->slug ?? '');
+
+        // 1. Food & Dining / Groceries
+        if ($v === 'food' || str_contains($catSlug, 'food') || str_contains($catName, 'food') || str_contains($catSlug, 'grocer') || str_contains($catName, 'grocer') || str_contains($catName, 'dining') || str_contains($catSlug, 'dining')) {
+            return [
+                'key' => 'food',
+                'vertical' => 'food',
+                'label' => 'FOOD',
+                'icon' => '🍲',
+                'badge_bg' => 'bg-[#ea580c] text-white',
+                'border_color' => 'border-orange-200 dark:border-orange-950',
+                'card_border_hover' => 'hover:border-[#ea580c] hover:shadow-orange-500/15',
+                'accent_text' => 'text-[#ea580c]',
+                'btn_bg' => 'bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-orange-500/25',
+                'btn_pill' => 'bg-orange-50 hover:bg-[#ea580c] text-[#ea580c] hover:text-white border border-orange-200',
+                'pill_bg' => 'bg-orange-50 text-[#ea580c]',
+            ];
+        }
+
+        // 2. Pre-Owned / Used / Classifieds
+        if ($v === 'used' || str_contains($catSlug, 'used') || str_contains($catSlug, 'pre-loved') || str_contains($catName, 'pre-loved') || str_contains($catName, 'thrift')) {
+            return [
+                'key' => 'used',
+                'vertical' => 'used',
+                'label' => 'PRE-OWNED',
+                'icon' => '♻️',
+                'badge_bg' => 'bg-emerald-600 text-white',
+                'border_color' => 'border-emerald-200 dark:border-emerald-950',
+                'card_border_hover' => 'hover:border-emerald-500 hover:shadow-emerald-500/15',
+                'accent_text' => 'text-emerald-600',
+                'btn_bg' => 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25',
+                'btn_pill' => 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200',
+                'pill_bg' => 'bg-emerald-50 text-emerald-700',
+            ];
+        }
+
+        // 3. Services / On-Demand / Gigs
+        if ($v === 'services' || str_contains($catSlug, 'service') || str_contains($catName, 'service') || str_contains($catSlug, 'gig') || str_contains($catName, 'freelanc')) {
+            return [
+                'key' => 'services',
+                'vertical' => 'services',
+                'label' => 'SERVICE',
+                'icon' => '⚡',
+                'badge_bg' => 'bg-purple-600 text-white',
+                'border_color' => 'border-purple-200 dark:border-purple-950',
+                'card_border_hover' => 'hover:border-purple-500 hover:shadow-purple-500/15',
+                'accent_text' => 'text-purple-600',
+                'btn_bg' => 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/25',
+                'btn_pill' => 'bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white border border-purple-200',
+                'pill_bg' => 'bg-purple-50 text-purple-700',
+            ];
+        }
+
+        // 4. Wholesale / Machinery / Industrial / B2B Quotes
+        if ($v === 'enquiry' || str_contains($catSlug, 'industrial') || str_contains($catSlug, 'machinery') || str_contains($catName, 'machinery') || str_contains($catSlug, 'b2b')) {
+            return [
+                'key' => 'enquiry',
+                'vertical' => 'enquiry',
+                'label' => 'WHOLESALE',
+                'icon' => '🏭',
+                'badge_bg' => 'bg-cyan-700 text-white',
+                'border_color' => 'border-cyan-200 dark:border-cyan-950',
+                'card_border_hover' => 'hover:border-cyan-600 hover:shadow-cyan-500/15',
+                'accent_text' => 'text-cyan-700',
+                'btn_bg' => 'bg-cyan-700 hover:bg-cyan-800 text-white shadow-cyan-500/25',
+                'btn_pill' => 'bg-cyan-50 hover:bg-cyan-700 text-cyan-800 hover:text-white border border-cyan-200',
+                'pill_bg' => 'bg-cyan-50 text-cyan-800',
+            ];
+        }
+
+        // 5. Electronics & Tech
+        if (str_contains($catSlug, 'electronic') || str_contains($catName, 'electronic') || str_contains($catSlug, 'appliances') || str_contains($catSlug, 'smartphone')) {
+            return [
+                'key' => 'electronics',
+                'vertical' => 'electronics',
+                'label' => 'TECH',
+                'icon' => '📱',
+                'badge_bg' => 'bg-blue-600 text-white',
+                'border_color' => 'border-blue-200 dark:border-blue-950',
+                'card_border_hover' => 'hover:border-blue-500 hover:shadow-blue-500/15',
+                'accent_text' => 'text-blue-600',
+                'btn_bg' => 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25',
+                'btn_pill' => 'bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200',
+                'pill_bg' => 'bg-blue-50 text-blue-700',
+            ];
+        }
+
+        // 6. Marble, Granite, Home & Living
+        if (str_contains($catSlug, 'marble') || str_contains($catName, 'marble') || str_contains($catSlug, 'furniture') || str_contains($catSlug, 'home') || str_contains($catSlug, 'living')) {
+            return [
+                'key' => 'marble',
+                'vertical' => 'marble',
+                'label' => 'MARBLE & HOME',
+                'icon' => '🏛️',
+                'badge_bg' => 'bg-amber-700 text-white',
+                'border_color' => 'border-amber-200 dark:border-amber-950',
+                'card_border_hover' => 'hover:border-amber-600 hover:shadow-amber-500/15',
+                'accent_text' => 'text-amber-700',
+                'btn_bg' => 'bg-amber-700 hover:bg-amber-800 text-white shadow-amber-500/25',
+                'btn_pill' => 'bg-amber-50 hover:bg-amber-700 text-amber-800 hover:text-white border border-amber-200',
+                'pill_bg' => 'bg-amber-50 text-amber-800',
+            ];
+        }
+
+        // 7. Fashion & Apparel (Default)
+        return [
+            'key' => 'fashion',
+            'vertical' => 'fashion',
+            'label' => 'FASHION',
+            'icon' => '✨',
+            'badge_bg' => 'bg-indigo-600 text-white',
+            'border_color' => 'border-indigo-200 dark:border-indigo-950',
+            'card_border_hover' => 'hover:border-indigo-500 hover:shadow-indigo-500/15',
+            'accent_text' => 'text-indigo-600',
+            'btn_bg' => 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-500/25',
+            'btn_pill' => 'bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white border border-indigo-200',
+            'pill_bg' => 'bg-indigo-50 text-indigo-700',
+        ];
+    }
+
+    public function getFirstInStockVariantAttribute(): ?ProductVariant
+    {
+        return $this->variants->firstWhere('stock', '>', 0) ?? $this->variants->first();
+    }
+
     public function isFashionMatrix(): bool
     {
         return $this->vertical_type === 'fashion_matrix';

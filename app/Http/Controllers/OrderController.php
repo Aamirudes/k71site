@@ -14,8 +14,8 @@ class OrderController extends Controller
 {
     public function success(Order $order)
     {
-        // Security check
-        if ($order->user_id !== Auth::id()) {
+        // Security check (Authenticated user or Guest Order Session)
+        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
             abort(403);
         }
 
@@ -35,7 +35,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
+        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
             abort(403);
         }
         
@@ -164,7 +164,7 @@ class OrderController extends Controller
 
     public function invoice(Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
+        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
             abort(403);
         }
         

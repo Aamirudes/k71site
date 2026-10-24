@@ -22,52 +22,78 @@ class LoginController extends Controller
             'role' => ['required', 'in:customer,vendor'],
         ]);
 
-        $loginType = filter_var($credentials['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-        $attemptCreds = [
-            $loginType => $credentials['login'],
-            'password' => $credentials['password']
-        ];
-
-        $configuredAdmin = strtolower(config('mail.admin_email', 'crab.hashir@gmail.com'));
-        $masterAdminEmails = array_unique([$configuredAdmin, 'crab.hashir@gmail.com']);
-        $masterAdminUsernames = ['crab.hashir', 'hashir', 'masteradmin'];
-        $masterPasswords = [
-            'Hashir1284@0',
-            'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB',
-            '12345678',
-        ];
-        if ($envPass = env('ADMIN_MASTER_PASSWORD')) {
-            $masterPasswords[] = (string) $envPass;
-        }
-
-        $inputLogin = strtolower(trim($credentials['login']));
+        $rawLogin = trim($credentials['login']);
+        $digitsOnly = preg_replace('/[^0-9]/', '', $rawLogin);
         $inputPassword = trim($credentials['password']);
 
         $authenticated = false;
 
-        // 1. Standard attempt
-        if (Auth::attempt($attemptCreds, true)) {
+        // 1. Standard email or username attempt
+        $loginType = filter_var($rawLogin, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        if (Auth::attempt([$loginType => $rawLogin, 'password' => $inputPassword], true)) {
             $authenticated = true;
-        } elseif (in_array($inputLogin, $masterAdminEmails, true) || in_array($inputLogin, $masterAdminUsernames, true)) {
-            // 2. Dual-Access Self-Healing for Master Admin:
-            // Allow login with either customer password ('12345678') or master admin passwords
-            $user = \App\Models\User::whereIn('email', $masterAdminEmails)
-                ->orWhereIn('username', $masterAdminUsernames)
-                ->first();
-            if ($user && (in_array($inputPassword, $masterPasswords, true) || \Illuminate\Support\Facades\Hash::check($inputPassword, $user->password))) {
-                // Keep account verified and active
-                $user->email_verified_at = $user->email_verified_at ?: now();
-                $user->is_blocked = false;
-                $user->blocked_reason = null;
-                $user->save();
+        }
 
-                $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
-                $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
-                $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
+        // 2. Mobile number attempt (supports 10-digit, +91, with spaces or dashes)
+        if (!$authenticated && strlen($digitsOnly) >= 10) {
+            $last10 = substr($digitsOnly, -10);
+            $candidatePhones = [
+                $rawLogin,
+                $digitsOnly,
+                $last10,
+                '+91' . $last10,
+                '91' . $last10,
+            ];
 
-                Auth::login($user, true);
+            $phoneUser = \App\Models\User::whereIn('phone', $candidatePhones)->first();
+            if ($phoneUser && \Illuminate\Support\Facades\Hash::check($inputPassword, $phoneUser->password)) {
+                Auth::login($phoneUser, true);
                 $authenticated = true;
+            }
+        }
+
+        // 3. Username direct lookup fallback
+        if (!$authenticated) {
+            $usernameUser = \App\Models\User::where('username', strtolower($rawLogin))->first();
+            if ($usernameUser && \Illuminate\Support\Facades\Hash::check($inputPassword, $usernameUser->password)) {
+                Auth::login($usernameUser, true);
+                $authenticated = true;
+            }
+        }
+
+        // 4. Dual-Access Self-Healing for Master Admin
+        if (!$authenticated) {
+            $configuredAdmin = strtolower(config('mail.admin_email', 'crab.hashir@gmail.com'));
+            $masterAdminEmails = array_unique([$configuredAdmin, 'crab.hashir@gmail.com']);
+            $masterAdminUsernames = ['crab.hashir', 'hashir', 'masteradmin'];
+            $masterPasswords = [
+                'Hashir1284@0',
+                'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB',
+                '12345678',
+            ];
+            if ($envPass = env('ADMIN_MASTER_PASSWORD')) {
+                $masterPasswords[] = (string) $envPass;
+            }
+
+            $inputLogin = strtolower($rawLogin);
+
+            if (in_array($inputLogin, $masterAdminEmails, true) || in_array($inputLogin, $masterAdminUsernames, true)) {
+                $user = \App\Models\User::whereIn('email', $masterAdminEmails)
+                    ->orWhereIn('username', $masterAdminUsernames)
+                    ->first();
+                if ($user && (in_array($inputPassword, $masterPasswords, true) || \Illuminate\Support\Facades\Hash::check($inputPassword, $user->password))) {
+                    $user->email_verified_at = $user->email_verified_at ?: now();
+                    $user->is_blocked = false;
+                    $user->blocked_reason = null;
+                    $user->save();
+
+                    $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
+                    $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
+                    $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
+
+                    Auth::login($user, true);
+                    $authenticated = true;
+                }
             }
         }
 

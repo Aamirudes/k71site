@@ -29,8 +29,8 @@
                 @csrf
                 <div class="space-y-4">
                     <div>
-                        <label for="login" class="block text-sm font-medium text-brand-text">Email address or Username</label>
-                        <input id="login" name="login" type="text" autocomplete="email" required class="mt-1 appearance-none relative block w-full px-3 py-2 border border-brand-surface placeholder-gray-400 text-brand-text rounded-md focus:outline-none focus:ring-brand-sage focus:border-brand-sage focus:z-10 sm:text-sm bg-white/50" placeholder="Email or Username" value="{{ old('login') }}">
+                        <label for="login" class="block text-sm font-medium text-brand-text">Email address, Mobile or Username</label>
+                        <input id="login" name="login" type="text" autocomplete="username" required class="mt-1 appearance-none relative block w-full px-3 py-2 border border-brand-surface placeholder-gray-400 text-brand-text rounded-md focus:outline-none focus:ring-brand-sage focus:border-brand-sage focus:z-10 sm:text-sm bg-white/50" placeholder="Enter email, 10-digit mobile or username" value="{{ old('login') }}">
                         @error('login')
                             <p class="mt-1 text-sm text-brand-error">{{ $message }}</p>
                         @enderror

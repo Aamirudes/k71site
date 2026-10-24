@@ -17,7 +17,7 @@ class PaymentController extends Controller
 {
     public function initiate(Order $order, PhonePeService $phonePeService)
     {
-        if ($order->user_id !== Auth::id()) {
+        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
             abort(403);
         }
 

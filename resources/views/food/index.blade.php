@@ -13,8 +13,14 @@
             <div class="max-w-7xl mx-auto space-y-6">
                 
                 <div class="max-w-3xl space-y-2">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/80 border border-orange-200 text-[#ea580c] text-[11px] font-black uppercase tracking-wider">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-[#ea580c] text-[11px] font-black uppercase tracking-wider flex-wrap">
                         <span>⚡ 25-30 MINUTE EXPRESS DOORSTEP DISPATCH</span>
+                        <span class="text-stone-300">•</span>
+                        <button type="button" @click="locationModalOpen = true" class="hover:underline flex items-center gap-1 cursor-pointer">
+                            <span>📍 DELIVERING TO</span>
+                            <span class="font-black underline decoration-orange-400" x-text="currentLocation">Jaipur Central</span>
+                            <span>▾</span>
+                        </button>
                     </div>
                     <h1 class="text-3xl sm:text-5xl font-black text-stone-950 tracking-tight leading-tight">
                         Crave it? Get it hot &amp; fresh from top <span class="text-[#ea580c]">cloud kitchens</span>.
@@ -269,13 +275,19 @@
                 
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-stone-200">
                     <div>
-                        <h2 class="text-xl sm:text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+                        <h2 class="text-xl sm:text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2 flex-wrap">
                             <span>Top Cloud Kitchens &amp; Restaurants</span>
                             <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-black">
                                 {{ $restaurants->total() }} Places
                             </span>
                         </h2>
-                        <p class="text-xs sm:text-sm text-stone-500 font-medium">Hand-picked, hygiene-certified kitchens serving your location.</p>
+                        <p class="text-xs sm:text-sm text-stone-500 font-medium flex items-center gap-1.5 flex-wrap">
+                            <span>Hand-picked, hygiene-certified kitchens serving</span>
+                            <button type="button" @click="locationModalOpen = true" class="font-bold text-[#ea580c] hover:underline cursor-pointer inline-flex items-center gap-1">
+                                <span class="underline decoration-orange-300" x-text="currentLocation">Jaipur Central</span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                        </p>
                     </div>
 
                     <!-- Sort Dropdown -->
@@ -441,13 +453,13 @@
                                 $price = $dish->base_price ? $dish->base_price / 100 : 249;
                                 $hasOptions = $dish->variants->count() > 1 || $dish->modifiers->count() > 0;
                             @endphp
-                            <div class="bg-white rounded-3xl border border-stone-200/90 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
+                            <div class="bg-white rounded-3xl border border-orange-200 hover:border-[#ea580c] shadow-xs hover:shadow-xl hover:shadow-orange-500/15 transition-all duration-300 flex flex-col justify-between group relative">
                                 <div>
                                     <!-- Dish Image -->
-                                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-stone-100">
+                                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-stone-100 rounded-t-3xl">
                                         <img src="{{ $dImage }}" alt="{{ $dish->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                         
-                                        <!-- Diet Type Icon (Green Square / Brown Triangle) -->
+                                        <!-- Top Left: Diet Type Icon (Green Square / Brown Triangle) -->
                                         <div class="absolute top-3 left-3 bg-white/95 backdrop-blur-sm p-1 rounded-md shadow-xs flex items-center justify-center">
                                             @if($isDietVeg)
                                                 <div class="w-4 h-4 border-2 border-emerald-600 flex items-center justify-center rounded-xs">
@@ -458,6 +470,14 @@
                                                     <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[8px] border-b-rose-700"></div>
                                                 </div>
                                             @endif
+                                        </div>
+
+                                        <!-- Top Right: Small Vertical Theme Badge (FOOD) -->
+                                        <div class="absolute top-3 right-3 z-10">
+                                            <span class="px-2.5 py-0.5 rounded-md bg-[#ea580c] text-white text-[9.5px] font-black uppercase tracking-wider shadow-md flex items-center gap-1">
+                                                <span>🍲</span>
+                                                <span>FOOD</span>
+                                            </span>
                                         </div>
 
                                         <!-- Rating Badge -->
@@ -507,12 +527,12 @@
                                         @endif
                                     </div>
 
-                                    <!-- Quick Add Action -->
+                                    <!-- Quick Add Action (Orange Theme) -->
                                     <button type="button" 
                                             @click="quickAddToCart({{ $dish->id }}, '{{ addslashes($dish->title) }}', {{ $dish->vendor_id }}, {{ $dish->variants->first()?->id ?? 'null' }})"
-                                            class="px-4 py-2 rounded-xl bg-orange-50 hover:bg-[#ea580c] text-[#ea580c] hover:text-white border border-orange-200 text-xs font-black transition-all cursor-pointer active:scale-95 flex items-center gap-1.5">
+                                            class="px-4 py-2 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-md shadow-orange-500/25 text-xs font-black transition-all cursor-pointer active:scale-95 flex items-center gap-1.5">
                                         <span>ADD</span>
-                                        <span class="text-sm font-bold">+</span>
+                                        <span class="text-sm font-bold leading-none">+</span>
                                     </button>
                                 </div>
                             </div>
@@ -554,6 +574,12 @@
     <script>
     function k71FoodHomepage() {
         return {
+            currentLocation: localStorage.getItem('k71_food_location') || 'Jaipur Central (Express Hub)',
+            init() {
+                window.addEventListener('food-location-changed', (e) => {
+                    if (e.detail) this.currentLocation = e.detail;
+                });
+            },
             copyCoupon(code) {
                 navigator.clipboard.writeText(code).then(() => {
                     if (window.showToast) {

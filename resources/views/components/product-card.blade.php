@@ -1,6 +1,8 @@
 @props(['product'])
 
 @php
+    $theme = $product->vertical_theme;
+
     // Extract unique colors from variants (assuming variant name format "Color / Size" or just "Color")
     $uniqueColors = collect();
     foreach($product->variants as $variant) {
@@ -24,8 +26,8 @@
     // Accurate stock determination across all variants
     $variantStockSum = $product->variants->isNotEmpty() ? $product->variants->sum('stock') : $product->total_stock;
     $isOutOfStock = $variantStockSum <= 0;
-    $hasMultipleVariants = $product->variants->count() > 1 || ($product->variants->count() === 1 && $product->variants->first()?->sku !== 'Default');
-    $firstInStockVariant = $product->variants->firstWhere('stock', '>', 0);
+    $hasMultipleVariants = $product->variants->count() > 1 || ($product->variants->count() === 1 && $product->variants->first()?->sku !== 'Default' && $product->variants->first()?->name !== 'Default');
+    $firstInStockVariant = $product->first_in_stock_variant;
     $userWishlistIds = \App\Models\Wishlist::getUserWishlistIds();
     $isWishlisted = in_array($product->id, $userWishlistIds);
 @endphp
@@ -49,10 +51,10 @@
             this.isWishlisted = !this.isWishlisted;
         });
     }
-}" class="group flex flex-col h-full relative">
+}" class="group flex flex-col h-full relative bg-white dark:bg-zinc-900 rounded-3xl p-3 border {{ $theme['border_color'] }} {{ $theme['card_border_hover'] }} shadow-xs hover:shadow-xl transition-all duration-300">
     
     <!-- Image Area with Bulletproof 3:4 Aspect Ratio -->
-    <div class="relative w-full aspect-[3/4] bg-gray-100 dark:bg-zinc-800 rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
+    <div class="relative w-full aspect-[3/4] bg-stone-100 dark:bg-zinc-800 rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
         <a href="{{ route('product.show', $product->slug) }}" class="block w-full h-full relative z-0" aria-label="{{ $product->title }}">
             @if($product->images->count() > 0)
                 <img src="{{ \App\Services\ImageService::url($product->images->first()->path, 400) }}" 
@@ -87,16 +89,24 @@
             @endif
         </a>
         
-        <!-- Stock / Sale Badge (Top Left) -->
-        @if($isOutOfStock)
-            <div class="absolute top-2 left-2 px-2.5 py-1 bg-stone-900/90 text-white font-sans text-[9px] font-black tracking-widest uppercase rounded z-10 shadow-sm backdrop-blur-xs">
-                Sold Out
-            </div>
-        @elseif($discount > 0)
-            <div class="absolute top-2 left-2 px-2 py-0.5 bg-[#FDF9DC] text-black font-sans text-[9px] font-black tracking-widest uppercase rounded z-10 shadow-sm">
-                Sale
-            </div>
-        @endif
+        <!-- Top Left: Vertical Category Theme Badge & Stock Pill -->
+        <div class="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+            <!-- Theme Badge (e.g. FOOD, FASHION, PRE-OWNED) -->
+            <span class="px-2.5 py-0.5 {{ $theme['badge_bg'] }} font-sans text-[9px] font-black tracking-widest uppercase rounded-md shadow-md flex items-center gap-1 backdrop-blur-xs">
+                <span>{{ $theme['icon'] }}</span>
+                <span>{{ $theme['label'] }}</span>
+            </span>
+
+            @if($isOutOfStock)
+                <span class="px-2 py-0.5 bg-stone-900/90 text-white font-sans text-[8.5px] font-black tracking-widest uppercase rounded shadow-xs">
+                    Sold Out
+                </span>
+            @elseif($discount > 0)
+                <span class="px-2 py-0.5 bg-rose-600 text-white font-sans text-[8.5px] font-black tracking-widest uppercase rounded shadow-xs">
+                    {{ $discount }}% OFF
+                </span>
+            @endif
+        </div>
         
         <!-- Wishlist Button (Top Right) -->
         <button type="button" 
@@ -116,70 +126,84 @@
         </button>
     </div>
     
-    <!-- Details Area (No background, sits cleanly on page) -->
+    <!-- Details Area -->
     <div class="flex flex-col flex-1 px-1">
         
-        <!-- Verified Seller Badge -->
-        @if($product->vendor)
-            <div class="flex items-center gap-1 mb-1">
-                <span class="text-[9.5px] tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1 font-medium truncate"
-                   title="Sold by {{ $product->vendor->shop_name }}">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 text-[7px] font-bold" title="Verified Seller">✓</span>
-                    <span class="truncate">Sold by {{ $product->vendor->shop_name }}</span>
+        <!-- Category & Verified Seller Row -->
+        <div class="flex items-center justify-between gap-1 mb-1">
+            <span class="text-[9.5px] font-black uppercase tracking-wider {{ $theme['accent_text'] }} truncate">
+                {{ $product->category?->name ?? $theme['label'] }}
+            </span>
+            @if($product->vendor)
+                <span class="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span class="truncate max-w-[80px]">{{ $product->vendor->shop_name }}</span>
                 </span>
-            </div>
-        @endif
+            @endif
+        </div>
 
         <!-- Title -->
-        <h3 class="text-xs text-zinc-900 dark:text-zinc-100 leading-[1.35] mb-1 font-medium line-clamp-2 min-h-[2.7em]">
+        <h3 class="text-xs text-zinc-900 dark:text-zinc-100 leading-[1.35] mb-1.5 font-bold line-clamp-2 min-h-[2.7em]">
             <a href="{{ route('product.show', $product->slug) }}" class="hover:underline decoration-1 underline-offset-2">{{ ucfirst($product->title) }}</a>
         </h3>
         
         <!-- Price Row -->
-        <div class="flex items-baseline gap-1.5 flex-wrap mb-1">
-            <span class="text-sm font-semibold text-zinc-900 dark:text-white">₹{{ number_format($product->base_price / 100, 0) }}</span>
+        <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
+            <span class="text-sm font-black text-zinc-900 dark:text-white">₹{{ number_format($product->base_price / 100, 0) }}</span>
             @if($discount > 0)
                 <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
-                <span class="text-[9.5px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.5 rounded">{{ $discount }}% OFF</span>
             @endif
         </div>
 
-        <!-- Context-Aware Action CTA Row -->
-        <div class="mt-auto pt-1 flex items-center justify-between">
+        <!-- Dynamic Color Swatches -->
+        @if($uniqueColors->count() > 0)
+            <div class="flex items-center gap-1.5 mb-2">
+                @foreach($uniqueColors->take(4) as $index => $color)
+                    <div class="relative flex items-center justify-center w-[14px] h-[14px] rounded-full {{ $index === 0 ? 'ring-1 ring-offset-1 ring-gray-900' : 'ring-1 ring-gray-300' }}" title="{{ $color['name'] }}">
+                        <span class="w-[10px] h-[10px] rounded-full border border-gray-200" style="background-color: {{ $color['css'] }};"></span>
+                    </div>
+                @endforeach
+                @if($uniqueColors->count() > 4)
+                    <span class="text-[9px] text-gray-400 font-medium ml-1">+{{ $uniqueColors->count() - 4 }}</span>
+                @endif
+            </div>
+        @endif
+
+        <!-- Context-Aware Themed Action CTA Row -->
+        <div class="mt-auto pt-2 border-t border-stone-100 dark:border-zinc-800/80 flex items-center justify-between">
             @if($isOutOfStock)
-                <span class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">
+                <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                     Sold Out
                 </span>
             @elseif($product->isEnquiry())
                 <a href="{{ route('product.show', $product->slug) }}" 
-                   class="text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:text-amber-900 transition-colors inline-flex items-center gap-1" 
+                   class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="Request Quotation / View Details">
                     <span>Request Quote</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif($product->isBooking())
                 <a href="{{ route('product.show', $product->slug) }}" 
-                   class="text-[11px] font-bold text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 transition-colors inline-flex items-center gap-1" 
+                   class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="Book Service">
                     <span>Book Service</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif(!$product->isPurchase())
                 <a href="{{ route('product.show', $product->slug) }}" 
-                   class="text-[11px] font-semibold text-zinc-900 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors underline decoration-1 underline-offset-2 inline-flex items-center gap-1" 
+                   class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="View Listing">
                     <span>View Listing</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif($hasMultipleVariants)
                 <a href="{{ route('product.show', $product->slug) }}" 
-                   class="text-[11px] font-semibold text-zinc-900 dark:text-zinc-200 hover:text-black dark:hover:text-white transition-colors underline decoration-1 underline-offset-2 inline-flex items-center gap-1" 
+                   class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1" 
                    title="Select options">
-                    <span>Select Options</span>
-                    <span class="text-[12px] leading-none">&rarr;</span>
+                    <span>Options ›</span>
                 </a>
             @else
-                <!-- Single Variant Quick Add (+) -->
+                <!-- Themed Universal Quick Add Button -->
                 <button type="button" 
                     @click.prevent="
                         adding = true;
@@ -202,7 +226,7 @@
                                 added = true;
                                 setTimeout(() => { added = false }, 2000);
                                 if (typeof window.showToast === 'function') {
-                                    window.showToast('Added to bag');
+                                    window.showToast('{{ addslashes($product->title) }} added to bag! 🛍️');
                                 }
                                 window.dispatchEvent(new CustomEvent('cart-updated'));
                                 window.dispatchEvent(new CustomEvent('open-mini-cart'));
@@ -218,32 +242,27 @@
                             }
                         });
                     "
-                    class="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center hover:bg-black dark:hover:bg-white transition-all shrink-0 shadow-xs cursor-pointer active:scale-95"
+                    class="w-full py-2 px-3 rounded-xl {{ $theme['btn_bg'] }} text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
                     :class="added ? '!bg-emerald-600 !text-white' : ''"
                     :disabled="adding || added"
                     aria-label="Add {{ addslashes($product->title) }} to Cart"
                     title="Add to Cart"
                 >
-                    <svg x-show="!adding && !added" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    <svg x-show="adding" class="animate-spin w-3 h-3 text-white dark:text-zinc-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <svg x-show="added" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <span x-show="!adding && !added" class="flex items-center gap-1">
+                        <span>ADD</span>
+                        <span class="text-sm font-bold leading-none">+</span>
+                    </span>
+                    <span x-show="adding" class="flex items-center gap-1 text-white">
+                        <svg class="animate-spin w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>ADDING...</span>
+                    </span>
+                    <span x-show="added" class="flex items-center gap-1 text-white">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        <span>ADDED</span>
+                    </span>
                 </button>
             @endif
         </div>
-        
-        <!-- Dynamic Color Swatches -->
-        @if($uniqueColors->count() > 0)
-            <div class="flex items-center gap-1.5 mt-auto">
-                @foreach($uniqueColors->take(4) as $index => $color)
-                    <div class="relative flex items-center justify-center w-[14px] h-[14px] rounded-full {{ $index === 0 ? 'ring-1 ring-offset-1 ring-gray-900' : 'ring-1 ring-gray-300' }}" title="{{ $color['name'] }}">
-                        <span class="w-[10px] h-[10px] rounded-full border border-gray-200" style="background-color: {{ $color['css'] }};"></span>
-                    </div>
-                @endforeach
-                @if($uniqueColors->count() > 4)
-                    <span class="text-[9px] text-gray-400 font-medium ml-1">+{{ $uniqueColors->count() - 4 }}</span>
-                @endif
-            </div>
-        @endif
         
     </div>
 </div>

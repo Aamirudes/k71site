@@ -329,20 +329,14 @@
                         
                         <div>
                             <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">Phone Number <span class="text-red-500">*</span></label>
-                            <input id="phone" name="phone" type="tel" required placeholder="+919876543210" class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" value="{{ old('phone') }}">
+                            <input id="phone" name="phone" type="tel" required placeholder="10-digit mobile number" class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" value="{{ old('phone') }}">
                             @error('phone')<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div x-data="{ showPass: false }">
-                                <label for="password" class="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">Password <span class="text-red-500">*</span></label>
-                                <input id="password" name="password" :type="showPass ? 'text' : 'password'" required class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" placeholder="••••••••">
-                                @error('password')<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
-                            </div>
-                            <div>
-                                <label for="password_confirmation" class="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">Confirm Password <span class="text-red-500">*</span></label>
-                                <input id="password_confirmation" name="password_confirmation" type="password" required class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" placeholder="••••••••">
-                            </div>
+                        <div x-data="{ showPass: false }">
+                            <label for="password" class="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">Password <span class="text-red-500">*</span></label>
+                            <input id="password" name="password" :type="showPass ? 'text' : 'password'" required class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" placeholder="••••••••">
+                            @error('password')<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
                         </div>
                     </div>
                     @endguest
@@ -353,7 +347,7 @@
                             <h3 class="text-sm font-black uppercase tracking-wider text-zinc-950 dark:text-white">3. Contact Verification</h3>
                             <div>
                                 <label for="phone" class="block text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">Phone Number <span class="text-red-500">*</span></label>
-                                <input id="phone" name="phone" type="tel" required placeholder="+919876543210" class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" value="{{ old('phone') }}">
+                                <input id="phone" name="phone" type="tel" required placeholder="10-digit mobile number" class="w-full px-4 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-sm text-zinc-950 dark:text-white" value="{{ old('phone') }}">
                                 @error('phone')<p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
                             </div>
                         </div>

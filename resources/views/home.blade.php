@@ -210,56 +210,7 @@
             <!-- Dynamic Database Products Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6">
                 @foreach($newArrivals as $prod)
-                    @php
-                        $cover = $prod->primary_image_url;
-                        $pricePaise = $prod->base_price;
-                        $comparePaise = $prod->compare_at_price;
-                    @endphp
-                    <div class="group bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-300 transition-all flex flex-col justify-between">
-                        <a href="{{ route('product.show', $prod->slug) }}" class="block relative aspect-square bg-slate-100 overflow-hidden">
-                            <img src="{{ $cover }}" alt="{{ $prod->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            @if($comparePaise && $comparePaise > $pricePaise)
-                                @php $pct = round((($comparePaise - $pricePaise) / $comparePaise) * 100); @endphp
-                                <span class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-lg bg-rose-600 text-white font-black text-[10px] uppercase shadow-md">
-                                    {{ $pct }}% OFF
-                                </span>
-                            @endif
-                        </a>
-
-                        <div class="p-4 flex-1 flex flex-col justify-between">
-                            <div>
-                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    {{ $prod->category?->name ?? 'General' }}
-                                </span>
-                                <h3 class="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-indigo-600 line-clamp-2 mt-0.5 transition-colors">
-                                    <a href="{{ route('product.show', $prod->slug) }}">{{ $prod->title }}</a>
-                                </h3>
-                                @if($prod->vendor)
-                                    <p class="text-[10.5px] text-emerald-600 mt-1 flex items-center gap-1 font-semibold">
-                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        <span>Verified Seller</span>
-                                        <span class="text-slate-400 font-normal truncate">&bull; {{ $prod->vendor->shop_name }}</span>
-                                    </p>
-                                @endif
-                            </div>
-
-                            <div class="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                <div>
-                                    <span class="text-base sm:text-lg font-black text-slate-900 font-mono">
-                                        ₹{{ number_format($pricePaise / 100, 2) }}
-                                    </span>
-                                    @if($comparePaise && $comparePaise > $pricePaise)
-                                        <span class="text-xs text-slate-400 line-through font-mono ml-1">
-                                            ₹{{ number_format($comparePaise / 100, 2) }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <a href="{{ route('product.show', $prod->slug) }}" class="p-2 rounded-xl bg-slate-100 group-hover:bg-indigo-600 group-hover:text-white text-slate-700 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    <x-product-card :product="$prod" />
                 @endforeach
             </div>
         @else
