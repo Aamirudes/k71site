@@ -204,9 +204,8 @@
             </div>
         </div>
 
-        <!-- Security Footer Note -->
         <p class="text-center text-[11px] text-slate-400/70 mt-6 font-mono tracking-wide">
-            MarbleMandi Liquid Architecture • Master Security Guard
+            K71 Platform Architecture • Master Security Guard
         </p>
     </div>
 

@@ -26,7 +26,7 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 </div>
                 <div>
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">enquiry.{{ config('k71.root_domain', 'marblemandi.org') }} • Wholesale Delivery Port</div>
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">B2B.K71 • Wholesale Delivery Port</div>
                     <div class="flex items-center gap-1 font-black text-xs sm:text-sm text-zinc-950 dark:text-white cursor-pointer">
                         <span>Nhava Sheva / Inland Hub, India</span>
                         <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -374,6 +374,9 @@
                 </button>
             </div>
         </div>
+
+        <!-- UNIVERSAL DOCK -->
+        <x-k71-bottom-nav />
 
     </div>
 </x-layouts.public>

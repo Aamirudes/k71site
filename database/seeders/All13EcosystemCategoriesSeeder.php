@@ -237,7 +237,7 @@ class All13EcosystemCategoriesSeeder extends Seeder
                     'description' => $s['description'],
                     'sort_order' => $sortOrder++,
                     'is_active' => true,
-                    'seo_title' => Str::limit($s['name'] . ' — MarbleMandi', 60, ''),
+                    'seo_title' => Str::limit($s['name'] . ' — K71', 60, ''),
                     'seo_description' => Str::limit($s['description'], 150, ''),
                 ]
             );

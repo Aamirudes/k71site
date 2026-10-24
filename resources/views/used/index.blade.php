@@ -1181,63 +1181,9 @@
 
 
         <!-- ===================================================================
-             13. MOBILE BOTTOM NAVIGATION DOCK (Matching Screenshot 1 & 2)
-             Home | Chats | + Sell (Elevated Circle) | My Ads | Account
+             13. DYNAMIC DEDICATED PRE-OWNED RECOMMERCE DOCK (Master Admin Managed)
              =================================================================== -->
-        <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 md:hidden shadow-[0_-4px_25px_rgba(0,0,0,0.08)] py-1.5 px-4"
-             style="padding-bottom: env(safe-area-inset-bottom, 8px);">
-            <div class="max-w-md mx-auto grid grid-cols-5 items-center text-center">
-                
-                <!-- 1. Home -->
-                <button type="button" 
-                        @click="activeTab = 'home'; wishlistFilterActive = false;" 
-                        class="flex flex-col items-center justify-center cursor-pointer"
-                        :class="activeTab === 'home' ? 'text-blue-600 font-extrabold' : 'text-slate-400'">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                    <span class="text-[10px] mt-0.5">Home</span>
-                </button>
-
-                <!-- 2. Chats -->
-                <button type="button" 
-                        @click="chatDrawer = true" 
-                        class="flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-blue-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                    <span class="text-[10px] mt-0.5">Chats</span>
-                </button>
-
-                <!-- 3. + SELL (Elevated Center Circle in Yellow & Cyan Ring exactly like Screenshot 1 & 2!) -->
-                <button type="button" 
-                        @click="sellModal = true" 
-                        class="flex flex-col items-center justify-center -mt-5 group focus:outline-none cursor-pointer">
-                    <div class="w-13 h-13 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-400 to-yellow-400 p-1 shadow-lg shadow-cyan-500/30 group-hover:scale-110 active:scale-95 transition-transform">
-                        <div class="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-blue-700 dark:text-blue-400 font-black text-2xl">
-                            +
-                        </div>
-                    </div>
-                    <span class="text-[10px] font-black text-slate-900 dark:text-white mt-0.5">Sell</span>
-                </button>
-
-                <!-- 4. My Ads -->
-                <button type="button" 
-                        @click="activeTab = 'myads'; if(userAds.length === 0) { sellModal = true; }" 
-                        class="flex flex-col items-center justify-center cursor-pointer"
-                        :class="activeTab === 'myads' ? 'text-blue-600 font-extrabold' : 'text-slate-400'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    <span class="text-[10px] mt-0.5">My Ads</span>
-                </button>
-
-                <!-- 5. Account -->
-                <a href="{{ route('account') }}" 
-                   class="flex flex-col items-center justify-center text-slate-400 hover:text-blue-600 cursor-pointer">
-                    <div class="relative">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">✓</span>
-                    </div>
-                    <span class="text-[10px] mt-0.5">Account</span>
-                </a>
-
-            </div>
-        </div>
+        <x-k71-bottom-nav active="used" />
 
     </div>
 </x-layouts.public>

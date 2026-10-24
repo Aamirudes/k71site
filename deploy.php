@@ -22,7 +22,7 @@ header('Content-Type: text/html; charset=utf-8');
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MarbleMandi Live Setup & Auto-Diagnostics</title>
+    <title>K71 Platform Live Setup & Auto-Diagnostics</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 30px; margin: 0; }
         .card { max-width: 900px; margin: 0 auto; background: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
@@ -41,7 +41,7 @@ header('Content-Type: text/html; charset=utf-8');
 </head>
 <body>
 <div class="card">
-    <h1>🚀 MarbleMandi Live Setup & Auto-Diagnostics</h1>
+    <h1>🚀 K71 Platform Live Setup & Auto-Diagnostics</h1>
     <span class="badge">HOSTINGER AUTO-DEPLOYMENT & REPAIR</span>
 <?php
 
@@ -67,7 +67,7 @@ if ($syncRequested) {
             curl_setopt($ch, CURLOPT_TIMEOUT, 120);
             curl_setopt($ch, CURLOPT_FILE, $fp);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'MarbleMandi-Deployer');
+            curl_setopt($ch, CURLOPT_USERAGENT, 'K71-Deployer');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -81,7 +81,7 @@ if ($syncRequested) {
     
     if (!$downloadSuccess) {
         $zipData = @file_get_contents($zipUrl, false, stream_context_create([
-            'http' => ['header' => "User-Agent: MarbleMandi-Deployer\r\n", 'follow_location' => 1, 'timeout' => 120],
+            'http' => ['header' => "User-Agent: K71-Deployer\r\n", 'follow_location' => 1, 'timeout' => 120],
             'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
         ]));
         if ($zipData && strlen($zipData) > 1000) {

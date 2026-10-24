@@ -145,7 +145,7 @@
                             type="text" 
                             required 
                             x-model="form.title" 
-                            placeholder="e.g. Apple iPhone 15 Pro 256GB Natural Titanium" 
+                            placeholder="{{ $sec['title_placeholder'] ?? 'e.g. Product Title' }}" 
                             class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-inner"
                         >
                     </div>
@@ -174,14 +174,14 @@
 
                         <div>
                             <label for="p-brand" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                                Brand / Manufacturer
+                                {{ $sec['brand_label'] ?? 'Brand / Manufacturer' }}
                             </label>
                             <input 
                                 id="p-brand" 
                                 name="brand" 
                                 type="text" 
                                 x-model="form.brand" 
-                                placeholder="e.g. Apple, Bosch, Sony, Puma" 
+                                placeholder="{{ $sec['brand_placeholder'] ?? 'e.g. Brand Name' }}" 
                                 class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-inner"
                             >
                         </div>
@@ -198,7 +198,7 @@
                             rows="4" 
                             required 
                             x-model="form.description" 
-                            placeholder="Detailed technical overview, features, what's inside the box, warranty terms..." 
+                            placeholder="{{ $sec['desc_placeholder'] ?? 'Detailed product overview, features, warranty terms...' }}" 
                             class="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-inner leading-relaxed"
                         ></textarea>
                     </div>
@@ -319,7 +319,7 @@
                     <!-- Base Selling Price -->
                     <div>
                         <label for="p-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            Selling Price (₹) <span class="text-rose-500">*</span>
+                            {{ $sec['price_label'] ?? 'Selling Price (₹)' }} <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">₹</span>
@@ -331,7 +331,7 @@
                                 min="0" 
                                 required 
                                 x-model="form.base_price" 
-                                placeholder="499.00" 
+                                placeholder="{{ $sec['price_placeholder'] ?? '499.00' }}" 
                                 class="w-full pl-8 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-base font-bold focus:ring-2 focus:ring-emerald-500 shadow-inner"
                             >
                         </div>
@@ -340,7 +340,7 @@
                     <!-- MRP / Compare-at Price -->
                     <div>
                         <label for="p-compare" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            Original MRP (₹) <span class="text-slate-400 font-normal">(Optional)</span>
+                            Original MRP / Standard Rate (₹) <span class="text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <div class="relative">
                             <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 font-bold text-sm">₹</span>
@@ -369,18 +369,18 @@
                             x-model="form.gst_rate" 
                             class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 shadow-inner font-semibold"
                         >
-                            <option value="18">18% GST (Standard Electronics &amp; Goods)</option>
-                            <option value="0">0% (Nil / Exempt)</option>
-                            <option value="5">5% GST (Essential Commodities / Apparel &lt;1000)</option>
-                            <option value="12">12% GST (Processed Items / Select Hardware)</option>
-                            <option value="28">28% GST (Luxury &amp; Auto Accessories)</option>
+                            <option value="18">18% GST (Standard Electronics, Tech &amp; Services)</option>
+                            <option value="5">5% GST (Real Estate, Apparel, Food &amp; Essentials)</option>
+                            <option value="0">0% (Nil / Exempt / Second-Hand)</option>
+                            <option value="12">12% GST (Processed Items / Hardware / Sports)</option>
+                            <option value="28">28% GST (Luxury, Auto &amp; Heavy Spares)</option>
                         </select>
                     </div>
 
                     <!-- HSN Code -->
                     <div>
                         <label for="p-hsn" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            HSN Code
+                            HSN / SAC Code
                         </label>
                         <input 
                             id="p-hsn" 
@@ -388,7 +388,7 @@
                             type="text" 
                             maxlength="8" 
                             x-model="form.hsn_code" 
-                            placeholder="e.g. 85171300" 
+                            placeholder="e.g. 85171300 / 998311" 
                             class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-emerald-500 shadow-inner"
                         >
                     </div>
@@ -398,13 +398,13 @@
                 <div class="p-5 sm:p-7 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-xl space-y-4">
                     <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-white/10">
                         <span class="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold text-xs">5</span>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white">Inventory &amp; Shipping</h2>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white">Inventory &amp; Specs</h2>
                     </div>
 
                     <!-- Total Stock Quantity -->
                     <div>
                         <label for="p-stock" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            Available Stock Units <span class="text-rose-500">*</span>
+                            {{ $sec['stock_label'] ?? 'Available Stock Units' }} <span class="text-rose-500">*</span>
                         </label>
                         <input 
                             id="p-stock" 
@@ -421,22 +421,22 @@
                     <!-- SKU -->
                     <div>
                         <label for="p-sku" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            SKU Code
+                            SKU / Identifier Code
                         </label>
                         <input 
                             id="p-sku" 
                             name="sku" 
                             type="text" 
                             x-model="form.sku" 
-                            placeholder="PROD-TECH-001" 
+                            placeholder="e.g. K71-CAT-001" 
                             class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs font-mono focus:ring-2 focus:ring-blue-500 shadow-inner"
                         >
                     </div>
 
-                    <!-- Weight in Grams -->
+                    <!-- Weight in Grams / Dimension Unit -->
                     <div>
                         <label for="p-weight" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                            Package Weight (Grams)
+                            {{ $sec['unit_label'] ?? 'Package Weight (Grams)' }}
                         </label>
                         <input 
                             id="p-weight" 
@@ -503,30 +503,348 @@ function liquidProductUploader() {
             title: '{{ old('title', '') }}',
             category_id: '{{ old('category_id', $categories->first()?->id ?? '') }}',
             vertical: '{{ $targetVertical }}',
-            listing_type: 'purchase',
+            listing_type: '{{ in_array($vendorType, ['real_estate', 'machinery', 'b2b']) ? 'enquiry' : ($vendorType === 'services' ? 'booking' : ($vendorType === 'used' ? 'contact_seller' : 'purchase')) }}',
             brand: '{{ old('brand', '') }}',
             description: '{{ old('description', '') }}',
             base_price: '{{ old('base_price', '') }}',
             compare_at_price: '{{ old('compare_at_price', '') }}',
-            gst_rate: '{{ old('gst_rate', '18') }}',
+            gst_rate: '{{ old('gst_rate', $sec['gst_default'] ?? '18') }}',
             hsn_code: '{{ old('hsn_code', '') }}',
             total_stock: '{{ old('total_stock', '25') }}',
             sku: '{{ old('sku', '') }}',
             weight_grams: '{{ old('weight_grams', '500') }}',
             is_returnable: true,
             status: 'active',
-            specs: [
-                { key: 'Warranty', value: '1 Year Manufacturer Warranty' },
-                { key: 'Condition', value: 'Brand New (Sealed Box)' },
-            ]
+            specs: @json(old('specifications', $sec['default_specs'] ?? [['key' => 'Specification', 'value' => 'Standard']]))
         },
 
-        // Fast Presets by Vertical
+        // Fast Presets by Sector
         presets: {
+            real_estate: [
+                {
+                    icon: '🏢',
+                    title: '3 BHK Luxury Gated High-Rise Apartment',
+                    brand: 'DLF Regal Gardens / Godrej',
+                    base_price: '8500000.00',
+                    compare_at_price: '9200000.00',
+                    gst_rate: '5',
+                    hsn_code: '997211',
+                    total_stock: '4',
+                    sku: 'PROP-3BHK-801',
+                    description: 'Sunlit East-facing 3 BHK luxury apartment on 8th floor with wrap-around balconies, modular German kitchen, clubhouse access, swimming pool, and 2 covered car parkings.',
+                    specs: [
+                        { key: 'Carpet Area', value: '1,650 Sq.Ft (Super Built-up 2,100 Sq.Ft)' },
+                        { key: 'Configuration', value: '3 Bedrooms + 3 Bathrooms + 2 Balconies' },
+                        { key: 'Furnishing Status', value: 'Semi-Furnished with Modular Kitchen & Wardrobes' },
+                        { key: 'Facing & Floor', value: 'North-East Vastu Compliant • 8th Floor of 14' },
+                        { key: 'Possession Status', value: 'Ready to Move In (OC & CC Received)' },
+                        { key: 'RERA Registration No', value: 'RAJ/RERA/P/2023/1089' },
+                        { key: 'Reserved Parking', value: '2 Covered Basement Slots' },
+                    ]
+                },
+                {
+                    icon: '🏡',
+                    title: 'Independent 4 BHK Duplex Villa with Garden',
+                    brand: 'Prestige Royal Woods / Local Builder',
+                    base_price: '14500000.00',
+                    compare_at_price: '16000000.00',
+                    gst_rate: '5',
+                    hsn_code: '997212',
+                    total_stock: '2',
+                    sku: 'PROP-VILLA-04',
+                    description: 'Architect-designed independent 4 BHK villa with private front garden, Italian marble flooring throughout, double-height ceiling living hall, and private rooftop deck.',
+                    specs: [
+                        { key: 'Plot Area', value: '220 Sq.Yards (Built-up Area 3,200 Sq.Ft)' },
+                        { key: 'Configuration', value: '4 BHK Duplex (4 Master Bedrooms with En-suite)' },
+                        { key: 'Flooring', value: 'Pure Imported Italian Botticino Marble' },
+                        { key: 'Private Amenities', value: 'Private Garden Lawn & Rooftop Terrace Deck' },
+                        { key: 'Possession Status', value: 'Ready to Move In • Freehold Registry 90A' },
+                    ]
+                },
+                {
+                    icon: '🏬',
+                    title: 'Commercial Corner Showroom on Main Road',
+                    brand: 'City Center Plaza',
+                    base_price: '6200000.00',
+                    compare_at_price: '7000000.00',
+                    gst_rate: '12',
+                    hsn_code: '997212',
+                    total_stock: '1',
+                    sku: 'COMM-SHOP-G02',
+                    description: 'Prime ground-floor corner commercial shop with massive 28-foot glass facade visibility directly facing main 100-foot arterial road. Ideal for jewelry, retail fashion, banking, or clinic.',
+                    specs: [
+                        { key: 'Carpet Area', value: '850 Sq.Ft (Clear 14ft Ceiling Height)' },
+                        { key: 'Floor Position', value: 'Ground Floor Corner Double-Facing' },
+                        { key: 'Frontage', value: '28 Feet Toughened Glass Display' },
+                        { key: 'Power Backup', value: '100% DG Genset Backup Available' },
+                        { key: 'Approvals', value: 'Commercial Sanctioned Map • Fire NOC Cleared' },
+                    ]
+                },
+                {
+                    icon: '📐',
+                    title: 'Prime Gated Township Residential Plot',
+                    brand: 'Royal Palms Enclave',
+                    base_price: '3250000.00',
+                    compare_at_price: '3600000.00',
+                    gst_rate: '0',
+                    hsn_code: '997211',
+                    total_stock: '6',
+                    sku: 'PLOT-200YD-E',
+                    description: 'East-facing rectangular residential plot located inside premium gated township with 40-foot wide asphalt roads, underground electrification, rainwater harvesting, and landscaped park.',
+                    specs: [
+                        { key: 'Plot Dimensions', value: '30 ft Frontage x 60 ft Depth (200 Sq.Yards)' },
+                        { key: 'Facing', value: 'East Facing Vastu Approved' },
+                        { key: 'Road Width', value: '40 Feet Wide Road Frontage' },
+                        { key: 'Legal Status', value: 'JDA / Municipal Approved 90A Freehold Patta' },
+                    ]
+                },
+                {
+                    icon: '🏭',
+                    title: 'Industrial Factory Shed with Crane Girders',
+                    brand: 'RIICO Industrial Zone',
+                    base_price: '21000000.00',
+                    compare_at_price: '23500000.00',
+                    gst_rate: '18',
+                    hsn_code: '997212',
+                    total_stock: '1',
+                    sku: 'IND-SHED-15K',
+                    description: 'Heavy industrial factory setup on 15,000 sq ft land with 10,000 sq ft PEB shed, 10-Ton EOT crane gantry girders installed, 75 HP dedicated HT electric connection, and trailer turnaround space.',
+                    specs: [
+                        { key: 'Total Land Area', value: '15,000 Sq.Ft (Shed Area: 10,000 Sq.Ft)' },
+                        { key: 'Clear Height', value: '28 Feet Center / 22 Feet Eaves' },
+                        { key: 'Crane Facility', value: 'Provision for 10-Ton Overhead EOT Crane' },
+                        { key: 'Power Sanctioned', value: '75 HP 3-Phase Industrial Power Connection' },
+                        { key: 'Water & Waste', value: 'Borewell + Industrial Effluent Line Connection' },
+                    ]
+                },
+                {
+                    icon: '🔑',
+                    title: 'Fully Furnished 2 BHK Rental Flat in Civil Lines',
+                    brand: 'Silver Oak Residences',
+                    base_price: '22000.00',
+                    compare_at_price: '25000.00',
+                    gst_rate: '0',
+                    hsn_code: '997211',
+                    total_stock: '2',
+                    sku: 'RENT-2BHK-302',
+                    description: 'Ready-to-move fully furnished 2 BHK apartment featuring dual inverter ACs, Smart LED TV, double-door refrigerator, automatic washing machine, and complete cutlery. Family or working pros preferred.',
+                    specs: [
+                        { key: 'Monthly Rent', value: '₹22,000 / Month (Maintenance ₹2,000 Included)' },
+                        { key: 'Security Deposit', value: '2 Months Rent (Refundable)' },
+                        { key: 'Carpet Area', value: '1,100 Sq.Ft (2 Bed + 2 Bath + Hall + Balcony)' },
+                        { key: 'Furnishing Inclusions', value: 'Sofa, 2 King Beds, 2 ACs, Fridge, RO & Washing Machine' },
+                    ]
+                }
+            ],
+            automotive: [
+                {
+                    icon: '🛢️',
+                    title: 'Synthetic Engine Oil 5W-40 (4 Litres)',
+                    brand: 'Apex Lube',
+                    base_price: '2499.00',
+                    compare_at_price: '3200.00',
+                    gst_rate: '18',
+                    hsn_code: '27101980',
+                    total_stock: '45',
+                    sku: 'OIL-5W40-4L',
+                    description: 'High-performance fully synthetic multi-grade engine oil designed for modern turbocharged petrol and diesel engines.',
+                    specs: [
+                        { key: 'Viscosity', value: '5W-40' },
+                        { key: 'Volume', value: '4 Litres' },
+                        { key: 'API Standard', value: 'API SP / ACEA A3/B4' },
+                    ]
+                },
+                {
+                    icon: '🛑',
+                    title: 'Front Ceramic Brake Pads (Set)',
+                    brand: 'BremTech',
+                    base_price: '1699.00',
+                    compare_at_price: '2200.00',
+                    gst_rate: '18',
+                    hsn_code: '87083000',
+                    total_stock: '30',
+                    sku: 'BRAKE-CER-01',
+                    description: 'Low-dust, high-temperature ceramic front disc brake pad set with pre-attached anti-squeal shims.',
+                    specs: [
+                        { key: 'Material', value: 'Non-Asbestos Ceramic Compound' },
+                        { key: 'Position', value: 'Front Axle' },
+                        { key: 'Warranty', value: '1 Year / 20,000 KM' },
+                    ]
+                },
+                {
+                    icon: '💡',
+                    title: 'High-Lumen LED Headlight H7/H4 Kit',
+                    brand: 'LumenMax',
+                    base_price: '2899.00',
+                    compare_at_price: '3999.00',
+                    gst_rate: '18',
+                    hsn_code: '85122010',
+                    total_stock: '25',
+                    sku: 'LED-H7-16000LM',
+                    description: 'High-intensity 16,000 Lumens plug-and-play LED headlight bulb conversion kit with 6000K crisp white beam and active cooling fan.',
+                    specs: [
+                        { key: 'Luminance', value: '16,000 Lumens (8,000 LM per bulb)' },
+                        { key: 'Color Temp', value: '6000K Cool Diamond White' },
+                        { key: 'Wattage', value: '72W per Pair (36W each)' },
+                        { key: 'Waterproof Rating', value: 'IP68 Submersible' },
+                    ]
+                },
+                {
+                    icon: '🚗',
+                    title: 'All-Weather Radial Tubeless Tyre 195/65 R15',
+                    brand: 'Apex Grip',
+                    base_price: '4250.00',
+                    compare_at_price: '5100.00',
+                    gst_rate: '28',
+                    hsn_code: '40111010',
+                    total_stock: '40',
+                    sku: 'TYRE-195-65-R15',
+                    description: 'Low rolling-resistance radial tubeless car tyre offering ultra-quiet ride, high wet-grip siping, and extended tread life.',
+                    specs: [
+                        { key: 'Tyre Size', value: '195/65 R15' },
+                        { key: 'Speed Rating', value: 'H (Up to 210 km/h)' },
+                        { key: 'Tread Warranty', value: '5 Years Unconditional Manufacturer Cover' },
+                    ]
+                },
+                {
+                    icon: '🔋',
+                    title: 'Sealed Maintenance-Free Car Battery 45Ah',
+                    brand: 'PowerCell',
+                    base_price: '4899.00',
+                    compare_at_price: '5800.00',
+                    gst_rate: '28',
+                    hsn_code: '85071000',
+                    total_stock: '20',
+                    sku: 'BATT-45AH-L',
+                    description: 'Heavy-duty silver-calcium alloy battery with high cold-cranking performance and zero maintenance requirements.',
+                    specs: [
+                        { key: 'Capacity', value: '45 Ah' },
+                        { key: 'Cold Cranking Amps', value: '420 CCA' },
+                        { key: 'Warranty', value: '55 Months (30 Months Free + 25 Pro-rata)' },
+                    ]
+                },
+                {
+                    icon: '🏍️',
+                    title: 'Motorcycle High-Tack Chain Lube & Cleaner Kit',
+                    brand: 'RiderPro',
+                    base_price: '699.00',
+                    compare_at_price: '999.00',
+                    gst_rate: '18',
+                    hsn_code: '34031900',
+                    total_stock: '60',
+                    sku: 'LUBE-COMBO-01',
+                    description: 'Dual can set including powerful degreasing chain cleaner spray (400ml) and synthetic PTFE high-adhesion anti-fling chain lube (400ml).',
+                    specs: [
+                        { key: 'Pack Contents', value: '400ml Cleaner + 400ml Synthetic Lube' },
+                        { key: 'Compatibility', value: 'Safe on O-Ring, X-Ring and Z-Ring Chains' },
+                    ]
+                }
+            ],
+            clothing: [
+                {
+                    icon: '👕',
+                    title: 'Heavyweight 240 GSM Oversized Cotton T-Shirt',
+                    brand: 'UrbanCraft',
+                    base_price: '899.00',
+                    compare_at_price: '1499.00',
+                    gst_rate: '5',
+                    hsn_code: '61091000',
+                    total_stock: '60',
+                    sku: 'TEE-240GSM-BLK',
+                    description: 'Relaxed oversized fit streetwear t-shirt crafted from 100% combed ring-spun cotton with bio-washed soft finish.',
+                    specs: [
+                        { key: 'Fabric', value: '100% Combed Cotton (240 GSM)' },
+                        { key: 'Fit', value: 'Relaxed Oversized Fit' },
+                        { key: 'Wash Care', value: 'Machine wash cold, inside out' },
+                    ]
+                },
+                {
+                    icon: '🥻',
+                    title: 'Handloom Pure Banarasi Katan Silk Saree',
+                    brand: 'Varanasi Weaves',
+                    base_price: '4999.00',
+                    compare_at_price: '7999.00',
+                    gst_rate: '5',
+                    hsn_code: '50072010',
+                    total_stock: '15',
+                    sku: 'SAREE-KATAN-MAR',
+                    description: 'Master weaver handcrafted Banarasi Katan silk saree featuring intricate Kadwa gold zari floral jaal with unstitched blouse piece.',
+                    specs: [
+                        { key: 'Fabric', value: 'Pure Katan Silk with Metallic Gold Zari' },
+                        { key: 'Length', value: '5.5 Meters Saree + 0.8 Meter Blouse' },
+                        { key: 'Occasion', value: 'Bridal, Wedding Guest, Festive Ceremony' },
+                    ]
+                },
+                {
+                    icon: '👖',
+                    title: 'Slim Straight Stretch Denim Jeans',
+                    brand: 'DenimWorks',
+                    base_price: '1599.00',
+                    compare_at_price: '2499.00',
+                    gst_rate: '5',
+                    hsn_code: '62034200',
+                    total_stock: '45',
+                    sku: 'JEAN-STR-IND',
+                    description: 'Premium 12 Oz comfort-stretch cotton denim jeans in deep indigo wash with brass rivets and reinforced bar-tack stitching.',
+                    specs: [
+                        { key: 'Composition', value: '98% Cotton / 2% Spandex (12 Oz)' },
+                        { key: 'Fit', value: 'Slim Straight Mid-Rise' },
+                    ]
+                },
+                {
+                    icon: '👗',
+                    title: 'Pure Chanderi Embroidered Kurta Pant Set',
+                    brand: 'Riti Riwaaz',
+                    base_price: '2499.00',
+                    compare_at_price: '3499.00',
+                    gst_rate: '5',
+                    hsn_code: '62044220',
+                    total_stock: '25',
+                    sku: 'KURTA-CHAN-LAV',
+                    description: 'Elegantly tailored pastel lavender Chanderi kurta set with handcrafted mirror and gotta patti work, paired with cigarette pants and organza dupatta.',
+                    specs: [
+                        { key: 'Set Inclusions', value: 'Kurta + Cigarette Pants + Organza Dupatta' },
+                        { key: 'Fabric', value: 'Chanderi Silk with Mulmul Cotton Lining' },
+                    ]
+                },
+                {
+                    icon: '👟',
+                    title: 'Ultra-Light Breathable Mesh Running Shoes',
+                    brand: 'AeroStep',
+                    base_price: '1799.00',
+                    compare_at_price: '2699.00',
+                    gst_rate: '12',
+                    hsn_code: '64041100',
+                    total_stock: '50',
+                    sku: 'SHOE-AERO-01',
+                    description: 'Lightweight ergonomic running shoes with breathable jacquard knit upper, high-rebound EVA phylon foam midsole, and anti-skid rubber grip.',
+                    specs: [
+                        { key: 'Upper Material', value: 'Engineered Jacquard Knit' },
+                        { key: 'Sole Material', value: 'Shock-Absorbing Phylon EVA Midsole' },
+                        { key: 'Weight', value: '260g per shoe' },
+                    ]
+                },
+                {
+                    icon: '👜',
+                    title: 'Structured Vegan Leather Laptop Tote Bag',
+                    brand: 'LuxeCarry',
+                    base_price: '1899.00',
+                    compare_at_price: '2799.00',
+                    gst_rate: '12',
+                    hsn_code: '42022290',
+                    total_stock: '30',
+                    sku: 'BAG-TOTE-BRN',
+                    description: 'Sophisticated dual-tone vegan leather structured tote with padded 14" laptop partition, multiple interior organizer sleeves, and brass zipper.',
+                    specs: [
+                        { key: 'Material', value: 'Scratch-Proof PU Vegan Leather' },
+                        { key: 'Capacity', value: 'Fits up to 14.2" Laptop + Tablet + Daily Essentials' },
+                    ]
+                }
+            ],
             electronics: [
                 {
                     icon: '📱',
-                    title: '5G Smartphone 256GB',
+                    title: '5G Smartphone 256GB Flagship',
                     brand: 'Apex Mobile',
                     base_price: '29999.00',
                     compare_at_price: '34999.00',
@@ -633,58 +951,968 @@ function liquidProductUploader() {
                     ]
                 }
             ],
-            automotive: [
+            beauty: [
                 {
-                    icon: '🛢️',
-                    title: 'Synthetic Engine Oil 5W-40 (4 Litres)',
-                    brand: 'Apex Lube',
-                    base_price: '2499.00',
-                    compare_at_price: '3200.00',
+                    icon: '💧',
+                    title: '10% Niacinamide & Zinc Clarifying Face Serum',
+                    brand: 'GlowRx',
+                    base_price: '599.00',
+                    compare_at_price: '849.00',
                     gst_rate: '18',
-                    hsn_code: '27101980',
-                    total_stock: '45',
-                    sku: 'OIL-5W40-4L',
-                    description: 'High-performance fully synthetic multi-grade engine oil designed for modern turbocharged petrol and diesel engines.',
+                    hsn_code: '33049910',
+                    total_stock: '80',
+                    sku: 'SERUM-NIAC-30ML',
+                    description: 'Clean clinical formulation face serum with 10% pure Niacinamide and 1% Zinc PCA to balance sebum, minimize pores, and fade blemishes.',
                     specs: [
-                        { key: 'Viscosity', value: '5W-40' },
-                        { key: 'Volume', value: '4 Litres' },
-                        { key: 'API Standard', value: 'API SP / ACEA A3/B4' },
+                        { key: 'Active Ingredients', value: '10% Niacinamide + 1% Zinc PCA' },
+                        { key: 'Skin Type', value: 'All Skin Types (Acne & Blemish Prone)' },
+                        { key: 'Net Volume', value: '30 ml' },
                     ]
                 },
                 {
-                    icon: '🛑',
-                    title: 'Front Ceramic Brake Pads (Set)',
-                    brand: 'BremTech',
-                    base_price: '1699.00',
-                    compare_at_price: '2200.00',
+                    icon: '☀️',
+                    title: 'SPF 50+ PA++++ Broad Spectrum Sunscreen Gel',
+                    brand: 'DermaShield',
+                    base_price: '499.00',
+                    compare_at_price: '699.00',
                     gst_rate: '18',
-                    hsn_code: '87083000',
-                    total_stock: '30',
-                    sku: 'BRAKE-CER-01',
-                    description: 'Low-dust, high-temperature ceramic front disc brake pad set with pre-attached anti-squeal shims.',
+                    hsn_code: '33049910',
+                    total_stock: '100',
+                    sku: 'SUN-SPF50-50G',
+                    description: 'Ultra-light water gel sunscreen with zero white cast, certified SPF 50+ PA++++ protection, enriched with Hyaluronic Acid and Cica extract.',
                     specs: [
-                        { key: 'Material', value: 'Non-Asbestos Ceramic Compound' },
-                        { key: 'Position', value: 'Front Axle' },
-                        { key: 'Warranty', value: '1 Year / 20,000 KM' },
+                        { key: 'Protection Factor', value: 'SPF 50+ Broad Spectrum PA++++' },
+                        { key: 'Texture', value: 'Ultra-Light Non-Greasy Water Gel' },
+                        { key: 'Net Weight', value: '50 Grams' },
+                    ]
+                },
+                {
+                    icon: '🌿',
+                    title: '100% Cold-Pressed Organic Rosemary Hair Oil',
+                    brand: 'HerbBotanica',
+                    base_price: '449.00',
+                    compare_at_price: '599.00',
+                    gst_rate: '18',
+                    hsn_code: '33059011',
+                    total_stock: '60',
+                    sku: 'OIL-ROSE-100ML',
+                    description: 'Nourishing botanical hair elixir infused with cold-pressed rosemary leaf extract, golden jojoba, and amla to strengthen roots and promote thick hair growth.',
+                    specs: [
+                        { key: 'Extraction Method', value: 'Cold-Pressed Extraction (Unrefined)' },
+                        { key: 'Free From', value: 'Mineral Oil, Silicones, Synthetic Fragrance' },
+                        { key: 'Net Volume', value: '100 ml Glass Bottle with Dropper' },
+                    ]
+                },
+                {
+                    icon: '💄',
+                    title: 'Velvet Long-Wear Matte Liquid Lipstick',
+                    brand: 'BellaColor',
+                    base_price: '399.00',
+                    compare_at_price: '599.00',
+                    gst_rate: '18',
+                    hsn_code: '33041000',
+                    total_stock: '75',
+                    sku: 'LIP-VELVET-04',
+                    description: 'Weightless transfer-proof velvet matte liquid lipstick enriched with Vitamin E and Jojoba oil that stays put comfortably for up to 12 hours.',
+                    specs: [
+                        { key: 'Finish', value: 'Transfer-Proof Non-Drying Velvet Matte' },
+                        { key: 'Wear Time', value: 'Up to 12 Hours' },
+                        { key: 'Shade', value: 'Desi Spice Nude' },
+                    ]
+                },
+                {
+                    icon: '🌸',
+                    title: 'French Amber Luxury Eau De Parfum (100ml)',
+                    brand: 'Maison Noir',
+                    base_price: '1499.00',
+                    compare_at_price: '2299.00',
+                    gst_rate: '18',
+                    hsn_code: '33030010',
+                    total_stock: '30',
+                    sku: 'PERF-AMBER-100',
+                    description: 'Artisanal Eau De Parfum with intoxicating notes of Bergamot, warm Amber, Madagascar Vanilla, and Virginia Cedarwood.',
+                    specs: [
+                        { key: 'Concentration', value: '20% Eau De Parfum (EDP)' },
+                        { key: 'Longevity', value: '8 - 10 Hours Long Lasting' },
+                        { key: 'Volume', value: '100 ml Premium Glass Spray Bottle' },
+                    ]
+                },
+                {
+                    icon: '🧖',
+                    title: 'Intense Keratin Damage Repair Hair Mask',
+                    brand: 'SalonKera',
+                    base_price: '649.00',
+                    compare_at_price: '899.00',
+                    gst_rate: '18',
+                    hsn_code: '33059040',
+                    total_stock: '50',
+                    sku: 'MASK-KER-200G',
+                    description: 'Deep conditioning salon-grade mask packed with hydrolyzed keratin protein and argan oil to revive chemically treated, colored, and heat-damaged strands.',
+                    specs: [
+                        { key: 'Treatment Type', value: '10-Minute Deep Conditioning Rinse-Off' },
+                        { key: 'Hair Type', value: 'Dry, Frizzy & Chemically Treated Hair' },
+                        { key: 'Net Weight', value: '200 Grams' },
                     ]
                 }
             ],
-            clothing: [
+            home_living: [
                 {
-                    icon: '👕',
-                    title: 'Heavyweight 240 GSM Cotton T-Shirt',
-                    brand: 'UrbanCraft',
-                    base_price: '899.00',
-                    compare_at_price: '1499.00',
-                    gst_rate: '5',
-                    hsn_code: '61091000',
-                    total_stock: '60',
-                    sku: 'TEE-240GSM-BLK',
-                    description: 'Relaxed oversized fit streetwear t-shirt crafted from 100% combed ring-spun cotton with bio-washed soft finish.',
+                    icon: '🪑',
+                    title: 'Solid Sheesham Wood 6-Seater Dining Set',
+                    brand: 'HeritageWood',
+                    base_price: '24999.00',
+                    compare_at_price: '32000.00',
+                    gst_rate: '18',
+                    hsn_code: '94036000',
+                    total_stock: '10',
+                    sku: 'DINE-SHEESH-6S',
+                    description: '100% seasoned Sheesham hardwood dining table with 6 ergonomically cushioned chairs finished in rich honey teak lacquer.',
                     specs: [
-                        { key: 'Fabric', value: '100% Combed Cotton (240 GSM)' },
-                        { key: 'Fit', value: 'Relaxed Oversized Fit' },
-                        { key: 'Wash Care', value: 'Machine wash cold, inside out' },
+                        { key: 'Primary Wood', value: '100% Kiln-Seasoned Sheesham Wood' },
+                        { key: 'Seating Capacity', value: '6 Persons (Includes 6 Chairs)' },
+                        { key: 'Warranty', value: '3 Years Structural & Termite Warranty' },
+                    ]
+                },
+                {
+                    icon: '💺',
+                    title: 'Ergonomic High-Back Breathable Mesh Office Chair',
+                    brand: 'ErgoPro',
+                    base_price: '6499.00',
+                    compare_at_price: '8999.00',
+                    gst_rate: '18',
+                    hsn_code: '94013000',
+                    total_stock: '25',
+                    sku: 'CHAIR-ERGO-01',
+                    description: 'Executive ergonomic office chair with breathable Korean mesh, 2D adjustable lumbar support, 3D armrests, and synchro-tilt lock mechanism.',
+                    specs: [
+                        { key: 'Mechanism', value: 'Synchro-Tilt Multi-Angle Recline Lock' },
+                        { key: 'Gas Lift', value: 'Class-4 Hydraulic Heavy-Duty Gas Cylinder' },
+                        { key: 'Max User Weight', value: '135 Kg Tested' },
+                    ]
+                },
+                {
+                    icon: '🛏️',
+                    title: 'King Size Platform Bed with Hydraulic Storage',
+                    brand: 'SleepCraft',
+                    base_price: '28500.00',
+                    compare_at_price: '36000.00',
+                    gst_rate: '18',
+                    hsn_code: '94035000',
+                    total_stock: '8',
+                    sku: 'BED-KING-HYD-01',
+                    description: 'Modern minimalist king-size bed crafted with high-density engineered wood in warm walnut finish featuring easy-lift dual hydraulic storage pumps.',
+                    specs: [
+                        { key: 'Bed Size', value: 'King (78 x 72 inches mattress compatibility)' },
+                        { key: 'Storage Mechanism', value: 'German Hydraulic Gas-Lift Storage Box' },
+                        { key: 'Headboard', value: 'Padded Fabric Upholstery Cushion Headboard' },
+                    ]
+                },
+                {
+                    icon: '🛋️',
+                    title: 'Velvet Luxury 3-Seater Chesterfield Sofa',
+                    brand: 'RoyalLounge',
+                    base_price: '19999.00',
+                    compare_at_price: '26000.00',
+                    gst_rate: '18',
+                    hsn_code: '94014000',
+                    total_stock: '12',
+                    sku: 'SOFA-CHEST-3S',
+                    description: 'Classic deep-button tufted Chesterfield sofa with solid Sal wood frame, high-resilience 32-density foam, and stain-resistant plush velvet fabric.',
+                    specs: [
+                        { key: 'Frame Material', value: 'Kiln-Dried Solid Sal Hardwood' },
+                        { key: 'Fabric', value: '350 GSM Stain-Resistant Royal Velvet' },
+                        { key: 'Dimensions', value: '84" Length x 34" Depth x 30" Height' },
+                    ]
+                },
+                {
+                    icon: '💡',
+                    title: 'Modern Nordic Adjustable Arc Floor Lamp',
+                    brand: 'Lumiere',
+                    base_price: '3499.00',
+                    compare_at_price: '4999.00',
+                    gst_rate: '18',
+                    hsn_code: '94052000',
+                    total_stock: '30',
+                    sku: 'LAMP-ARC-BLK',
+                    description: 'Contemporary Scandinavian curved arc floor standing lamp with genuine heavy white marble base, matte black iron finish, and foot pedal switch.',
+                    specs: [
+                        { key: 'Base', value: 'Weighted Natural White Marble Slab Base' },
+                        { key: 'Bulb Holder', value: 'E27 Standard (Warm White LED Bulb Included)' },
+                        { key: 'Height', value: 'Adjustable 160cm - 195cm' },
+                    ]
+                },
+                {
+                    icon: '🧶',
+                    title: 'Handwoven Natural Jute & Wool Area Rug (5x7 ft)',
+                    brand: 'Kishangarh Rugs',
+                    base_price: '2899.00',
+                    compare_at_price: '4200.00',
+                    gst_rate: '12',
+                    hsn_code: '57023900',
+                    total_stock: '25',
+                    sku: 'RUG-JUTE-5X7',
+                    description: 'Eco-friendly reversible hand-braided area rug made from natural golden jute and un-dyed wool fibers by traditional Rajasthani weavers.',
+                    specs: [
+                        { key: 'Dimensions', value: '5 Feet x 7 Feet (152cm x 213cm)' },
+                        { key: 'Composition', value: '70% Golden Jute + 30% Pure Wool' },
+                        { key: 'Weave', value: 'Dense Hand-Braided Reversible Weave' },
+                    ]
+                }
+            ],
+            groceries: [
+                {
+                    icon: '🌾',
+                    title: 'Royal Aged Dum Basmati Rice (5kg Bag)',
+                    brand: 'Kohinoor / Fortune',
+                    base_price: '749.00',
+                    compare_at_price: '920.00',
+                    gst_rate: '5',
+                    hsn_code: '10063020',
+                    total_stock: '100',
+                    sku: 'RICE-BAS-5KG',
+                    description: 'Traditional extra-long grain aged Basmati rice with signature royal aroma that elongates to more than twice its size when cooked.',
+                    specs: [
+                        { key: 'Grain Length', value: '8.4mm Pre-Cooked (18mm Post-Cooked)' },
+                        { key: 'Aging', value: '2 Years Naturally Aged in Silos' },
+                        { key: 'FSSAI License', value: 'Certified Grade-A Purity' },
+                    ]
+                },
+                {
+                    icon: '🛢️',
+                    title: 'Cold-Pressed Kachi Ghani Mustard Oil (5L Tin)',
+                    brand: 'Dhara / Engine',
+                    base_price: '899.00',
+                    compare_at_price: '1050.00',
+                    gst_rate: '5',
+                    hsn_code: '15149110',
+                    total_stock: '50',
+                    sku: 'OIL-MUST-5L',
+                    description: 'Authentic stone cold-pressed virgin mustard oil with sharp natural pungency, rich in Omega-3 and natural antioxidants, free from argemone.',
+                    specs: [
+                        { key: 'Extraction', value: 'Traditional Cold-Pressed Kachi Ghani' },
+                        { key: 'Volume', value: '5 Litres Sealed Food-Grade Tin' },
+                        { key: 'Additives', value: '100% Pure, Zero Chemicals / Preservatives' },
+                    ]
+                },
+                {
+                    icon: '🥜',
+                    title: 'California Whole Raw Almonds (500g)',
+                    brand: 'NutriDry',
+                    base_price: '499.00',
+                    compare_at_price: '650.00',
+                    gst_rate: '5',
+                    hsn_code: '08021200',
+                    total_stock: '80',
+                    sku: 'ALM-CAL-500G',
+                    description: 'Handpicked Nonpareil extra-large whole raw almonds vacuum packed in nitrogen flushed resealable zipper pouch for maximum crunch and freshness.',
+                    specs: [
+                        { key: 'Grade', value: 'Nonpareil Extra No. 1 Supreme' },
+                        { key: 'Net Weight', value: '500 Grams Resealable Pouch' },
+                        { key: 'Origin', value: 'California, USA' },
+                    ]
+                },
+                {
+                    icon: '🍯',
+                    title: '100% Pure Raw Wild Forest Honey (500g Jar)',
+                    brand: 'ForestPure',
+                    base_price: '399.00',
+                    compare_at_price: '549.00',
+                    gst_rate: '5',
+                    hsn_code: '04090000',
+                    total_stock: '60',
+                    sku: 'HONEY-RAW-500',
+                    description: 'Unprocessed, unpasteurized wild multi-flora raw forest honey NMR tested 100% pure with natural pollen and enzymes intact.',
+                    specs: [
+                        { key: 'Purity Check', value: 'NMR Laboratory Tested (Zero Sugar Adulteration)' },
+                        { key: 'Processing', value: 'Cold-Filtered Raw & Unheated' },
+                        { key: 'Packaging', value: '500g Glass Jar with Tamper Seal' },
+                    ]
+                },
+                {
+                    icon: '☕',
+                    title: 'Darjeeling Second Flush Whole Leaf Tea (250g)',
+                    brand: 'Makaibari / Glenburn',
+                    base_price: '449.00',
+                    compare_at_price: '600.00',
+                    gst_rate: '5',
+                    hsn_code: '09021020',
+                    total_stock: '70',
+                    sku: 'TEA-DARJ-250G',
+                    description: 'Premium single estate Darjeeling black tea with golden tips yielding an exquisite amber liquor with distinct muscatel fruit and honey notes.',
+                    specs: [
+                        { key: 'Grade', value: 'FTGFOP-1 Muscatel Whole Leaf' },
+                        { key: 'Harvest Flush', value: 'June Second Flush Peak Harvest' },
+                        { key: 'Net Weight', value: '250 Grams Metal Caddy' },
+                    ]
+                },
+                {
+                    icon: '🫘',
+                    title: 'Organic Unpolished Desi Toor Dal (1kg Pouch)',
+                    brand: 'OrganicMandi',
+                    base_price: '189.00',
+                    compare_at_price: '230.00',
+                    gst_rate: '0',
+                    hsn_code: '07132000',
+                    total_stock: '120',
+                    sku: 'DAL-TOOR-1KG',
+                    description: 'Natural unpolished pigeon pea pulses sourced directly from certified organic farms, retaining their natural nutrients and rich aromatic flavor.',
+                    specs: [
+                        { key: 'Polish Status', value: '100% Unpolished (Zero Oil / Water / Leather Polish)' },
+                        { key: 'Protein Content', value: '22g Protein per 100g' },
+                        { key: 'Net Weight', value: '1 Kg Vacuum Pouch' },
+                    ]
+                }
+            ],
+            toys_sports: [
+                {
+                    icon: '🏏',
+                    title: 'English Willow Cricket Bat (Grade 1+)',
+                    brand: 'SS / SG / Kookaburra',
+                    base_price: '9999.00',
+                    compare_at_price: '13500.00',
+                    gst_rate: '12',
+                    hsn_code: '95069920',
+                    total_stock: '15',
+                    sku: 'BAT-ENG-GR1',
+                    description: 'Master craftsman pressed Grade 1+ English willow cricket bat with 8 straight grains, massive 40mm contoured edges, and balanced light pickup.',
+                    specs: [
+                        { key: 'Willow Grade', value: 'Grade 1+ Hand-Selected English Willow' },
+                        { key: 'Edge Thickness', value: '38 - 40 mm Thick Contoured Edge' },
+                        { key: 'Weight', value: '1,180 - 1,210 Grams (Light Balanced Pickup)' },
+                    ]
+                },
+                {
+                    icon: '🧩',
+                    title: '1000-Piece Architectural Jigsaw Puzzle',
+                    brand: 'MindCraft',
+                    base_price: '799.00',
+                    compare_at_price: '1199.00',
+                    gst_rate: '12',
+                    hsn_code: '95030090',
+                    total_stock: '40',
+                    sku: 'PUZ-1000P-CITY',
+                    description: 'High-precision interlocking puzzle made of 100% recycled blue-core cardboard with glare-free linen finish depicting historic Indian architecture.',
+                    specs: [
+                        { key: 'Pieces Count', value: '1,000 Precision Interlocking Pieces' },
+                        { key: 'Finished Dimensions', value: '70 cm x 50 cm' },
+                        { key: 'Age Suitability', value: '12 Years and Above' },
+                    ]
+                },
+                {
+                    icon: '🤖',
+                    title: '7-in-1 STEM Solar & Electric Robotics Kit',
+                    brand: 'RoboSmart',
+                    base_price: '1499.00',
+                    compare_at_price: '2199.00',
+                    gst_rate: '12',
+                    hsn_code: '95030030',
+                    total_stock: '50',
+                    sku: 'ROBO-7IN1-KIT',
+                    description: 'Hands-on educational engineering kit enabling kids to assemble 7 different robotic configurations powered by real solar photovoltaic panel or micro-battery.',
+                    specs: [
+                        { key: 'Learning Focus', value: 'Mechanical Gears, Renewable Solar Energy & Circuits' },
+                        { key: 'Models Possible', value: '7 Working Transformers (Rover, Station, Robot)' },
+                        { key: 'Age Group', value: '8 - 14 Years' },
+                    ]
+                },
+                {
+                    icon: '🧘',
+                    title: 'Dual-Layer Eco TPE 6mm Yoga Mat with Strap',
+                    brand: 'ZenFit',
+                    base_price: '1199.00',
+                    compare_at_price: '1899.00',
+                    gst_rate: '12',
+                    hsn_code: '95069190',
+                    total_stock: '45',
+                    sku: 'YOGA-MAT-6MM',
+                    description: 'Odorless non-slip dual-texture eco-TPE exercise mat with body alignment lines, high-density 6mm joint cushioning, and complimentary carry strap.',
+                    specs: [
+                        { key: 'Material', value: 'Biodegradable Eco-TPE (Zero PVC / Toxic Glues)' },
+                        { key: 'Thickness', value: '6 mm High Density Anti-Tear Cushioning' },
+                        { key: 'Dimensions', value: '72" Length x 24" Width (183cm x 61cm)' },
+                    ]
+                },
+                {
+                    icon: '🛸',
+                    title: '4K Dual-Camera Optical Flow RC Drone',
+                    brand: 'SkyPhantom',
+                    base_price: '3999.00',
+                    compare_at_price: '5999.00',
+                    gst_rate: '18',
+                    hsn_code: '95030090',
+                    total_stock: '25',
+                    sku: 'DRONE-4K-WIFI',
+                    description: 'Foldable quadcopter drone with 4K front camera, bottom optical flow positioning sensor, one-key return, altitude hold, and live smartphone FPV stream.',
+                    specs: [
+                        { key: 'Camera Resolution', value: '4K Ultra HD Main Lens + HD Bottom Flow Sensor' },
+                        { key: 'Flight Time', value: '18 - 20 Minutes per Modular Battery' },
+                        { key: 'Control Range', value: '150 Meters 2.4GHz Wi-Fi' },
+                    ]
+                },
+                {
+                    icon: '⚽',
+                    title: 'FIFA Standard Hand-Stitched Size-5 Football',
+                    brand: 'Nivia / Cosco',
+                    base_price: '1099.00',
+                    compare_at_price: '1599.00',
+                    gst_rate: '12',
+                    hsn_code: '95066210',
+                    total_stock: '60',
+                    sku: 'BALL-SOCC-SZ5',
+                    description: 'Professional 32-panel match soccer ball made of micro-textured PU leather with reinforced multi-ply backing and latex air-retention bladder.',
+                    specs: [
+                        { key: 'Ball Size', value: 'Official Size 5 (Circumference 68-70cm)' },
+                        { key: 'Weight', value: '420 - 440 Grams' },
+                        { key: 'Surface Suitability', value: 'Natural Grass, Artificial Turf & Concrete' },
+                    ]
+                }
+            ],
+            digital_services: [
+                {
+                    icon: '🎨',
+                    title: 'Custom High-Converting Figma UI/UX Landing Page Design',
+                    brand: 'PixelCraft Studio',
+                    base_price: '4999.00',
+                    compare_at_price: '7500.00',
+                    gst_rate: '18',
+                    hsn_code: '998314',
+                    total_stock: '10',
+                    sku: 'GIG-UIUX-LANDING',
+                    description: 'Pixel-perfect, modern responsive Figma landing page UI/UX design with complete auto-layout, mobile viewports, components library, and style guide.',
+                    specs: [
+                        { key: 'Deliverables', value: 'Complete Layered Figma File (Desktop + Tablet + Mobile)' },
+                        { key: 'Turnaround Time', value: '3 Business Days' },
+                        { key: 'Revisions', value: '3 Rounds of Revisions Included' },
+                        { key: 'Commercial Rights', value: '100% Full Ownership Transfer' },
+                    ]
+                },
+                {
+                    icon: '💻',
+                    title: 'Full-Stack Web App Development (Laravel / Next.js)',
+                    brand: 'CodeForge Labs',
+                    base_price: '24999.00',
+                    compare_at_price: '35000.00',
+                    gst_rate: '18',
+                    hsn_code: '998313',
+                    total_stock: '5',
+                    sku: 'GIG-DEV-FULLSTACK',
+                    description: 'End-to-end custom web application engineering with secure authentication, relational database, responsive Tailwind UI, payment gateway integration, and server deployment.',
+                    specs: [
+                        { key: 'Technology Stack', value: 'Laravel 11 / Next.js 14 + Tailwind CSS + MySQL/PostgreSQL' },
+                        { key: 'Features Included', value: 'Admin Panel, User Auth, API Endpoints & Payment Gateway' },
+                        { key: 'Deployment', value: 'Live Deployment on Hostinger VPS or Vercel Included' },
+                    ]
+                },
+                {
+                    icon: '🎬',
+                    title: 'Viral 4K Instagram Reels & YouTube Shorts Video Editing',
+                    brand: 'MotionPulse',
+                    base_price: '1999.00',
+                    compare_at_price: '3000.00',
+                    gst_rate: '18',
+                    hsn_code: '998319',
+                    total_stock: '20',
+                    sku: 'GIG-VIDEO-REELS',
+                    description: 'High-retention short-form video editing with animated Alex Hormozi style captions, dynamic sound effects, punchy zooms, b-roll footage, and color grading.',
+                    specs: [
+                        { key: 'Video Length', value: 'Up to 60 Seconds per Reel (9:16 Vertical 4K)' },
+                        { key: 'Turnaround Time', value: '24 - 48 Hours Fast Delivery' },
+                        { key: 'Audio & Music', value: 'Trending Royalty-Free Sound Design & SFX' },
+                    ]
+                },
+                {
+                    icon: '🏷️',
+                    title: 'Complete Modern Minimalist Brand Identity Kit',
+                    brand: 'BrandMorph',
+                    base_price: '3499.00',
+                    compare_at_price: '5500.00',
+                    gst_rate: '18',
+                    hsn_code: '998314',
+                    total_stock: '15',
+                    sku: 'GIG-BRAND-KIT',
+                    description: 'Distinctive brand identity design including 3 custom vector logo concepts, brand typography pairing, curated color palettes, social media templates, and brand book guidelines.',
+                    specs: [
+                        { key: 'Logo Concepts', value: '3 Unique Minimalist Design Concepts' },
+                        { key: 'Deliverable Formats', value: 'Vector AI, SVG, EPS, Transparent PNG & Print PDF' },
+                        { key: 'Brand Assets', value: 'Business Card, Letterhead & Social Media Profile Kit' },
+                    ]
+                },
+                {
+                    icon: '🔍',
+                    title: 'Comprehensive Technical & On-Page SEO Growth Audit',
+                    brand: 'RankMaster',
+                    base_price: '3999.00',
+                    compare_at_price: '6000.00',
+                    gst_rate: '18',
+                    hsn_code: '998315',
+                    total_stock: '12',
+                    sku: 'GIG-SEO-AUDIT',
+                    description: 'In-depth 100+ checkpoint SEO audit identifying crawl errors, Core Web Vitals bottlenecks, keyword search intent opportunities, structured schema markup, and backlink action plan.',
+                    specs: [
+                        { key: 'Audit Scope', value: 'Full Technical, On-Page, Schema & Core Web Vitals Audit' },
+                        { key: 'Deliverables', value: 'Detailed PDF Report + Actionable Spreadsheet Checklist' },
+                        { key: 'Competitor Analysis', value: 'Top 3 Organic Ranking Competitors Dissected' },
+                    ]
+                },
+                {
+                    icon: '☁️',
+                    title: 'Cloud VPS Server Hardening & Docker CI/CD Pipeline',
+                    brand: 'DevOpsGrid',
+                    base_price: '5499.00',
+                    compare_at_price: '8500.00',
+                    gst_rate: '18',
+                    hsn_code: '998313',
+                    total_stock: '8',
+                    sku: 'GIG-DEVOPS-VPS',
+                    description: 'Professional Linux VPS server setup (Ubuntu 22/24 LTS) with UFW firewall, Nginx reverse proxy, automatic free SSL certificates, Docker containers, and GitHub Actions CI/CD.',
+                    specs: [
+                        { key: 'Server Setup', value: 'Nginx, PHP 8.3/Node.js, MySQL/Redis & UFW Security' },
+                        { key: 'Automation', value: 'GitHub Actions Auto-Deploy Pipeline on Git Push' },
+                        { key: 'Monitoring', value: 'Automated Daily Database Backups to Cloud Storage' },
+                    ]
+                }
+            ],
+            machinery: [
+                {
+                    icon: '⚙️',
+                    title: 'Automatic Marble & Granite Bridge Cutting Machine 15HP',
+                    brand: 'K71 Heavy Machinery',
+                    base_price: '485000.00',
+                    compare_at_price: '550000.00',
+                    gst_rate: '18',
+                    hsn_code: '84641010',
+                    total_stock: '3',
+                    sku: 'MACH-BRIDGE-15HP',
+                    description: 'Heavy cast-iron monoblock bridge cutting saw with microcomputer PLC touch-screen controller, laser alignment guide, and motorized hydraulic tilting table for stone slabs.',
+                    specs: [
+                        { key: 'Main Motor Power', value: '15 HP 3-Phase Pure Copper Induction Motor' },
+                        { key: 'Blade Diameter', value: '350mm - 600mm Diamond Circular Saw' },
+                        { key: 'Max Cutting Dimensions', value: '3200mm Length x 2000mm Width x 150mm Depth' },
+                        { key: 'Control System', value: 'Microcomputer PLC with Color Touchscreen' },
+                        { key: 'Warranty Coverage', value: '1 Year Comprehensive On-Site Warranty' },
+                    ]
+                },
+                {
+                    icon: '⚡',
+                    title: 'Heavy Industrial 3-Phase 10HP Induction Motor',
+                    brand: 'Siemens / Kirloskar / K71',
+                    base_price: '28500.00',
+                    compare_at_price: '34000.00',
+                    gst_rate: '18',
+                    hsn_code: '85015210',
+                    total_stock: '15',
+                    sku: 'MOT-10HP-1440',
+                    description: 'Foot-mounted 10 HP (7.5 kW) 4-pole 1440 RPM totally enclosed fan-cooled (TEFC) industrial squirrel cage induction motor with class-F insulation.',
+                    specs: [
+                        { key: 'Rated Power', value: '10 HP (7.5 kW) 1440 RPM 4-Pole' },
+                        { key: 'Voltage & Phase', value: '415V Three Phase 50Hz (Industrial)' },
+                        { key: 'Enclosure Protection', value: 'Cast Iron TEFC IP55 Dust & Splash Proof' },
+                        { key: 'Winding', value: '100% Super Enameled Pure Copper Wire' },
+                    ]
+                },
+                {
+                    icon: '🔬',
+                    title: '3000W Raycus Fiber Laser Metal Sheet Cutting Machine',
+                    brand: 'LaserCraft B2B',
+                    base_price: '1450000.00',
+                    compare_at_price: '1650000.00',
+                    gst_rate: '18',
+                    hsn_code: '84561100',
+                    total_stock: '2',
+                    sku: 'LASER-3000W-FIB',
+                    description: 'High-speed CNC fiber laser sheet cutting machine with 3000W Raycus generator, heavy welded stress-relieved gantry bed, dual smoke exhaust, and CypCut control software.',
+                    specs: [
+                        { key: 'Laser Source', value: '3000W Raycus Continuous Fiber Laser' },
+                        { key: 'Working Bed Area', value: '1500mm x 3000mm (5ft x 10ft)' },
+                        { key: 'Cutting Thickness', value: 'Mild Steel up to 20mm, Stainless Steel up to 10mm' },
+                        { key: 'Positioning Accuracy', value: '±0.03 mm Repositioning Accuracy' },
+                    ]
+                },
+                {
+                    icon: '🏗️',
+                    title: 'High-Pressure Industrial 100-Ton Hydraulic Workshop Press',
+                    brand: 'Apex Hydro',
+                    base_price: '1650000.00',
+                    compare_at_price: '1900000.00',
+                    gst_rate: '18',
+                    hsn_code: '84629100',
+                    total_stock: '2',
+                    sku: 'HYD-PRESS-100T',
+                    description: 'Heavy H-frame 100-metric ton motorized hydraulic workshop press with adjustable working table height, hard-chrome ram cylinder, and overload relief valve.',
+                    specs: [
+                        { key: 'Pressing Capacity', value: '100 Metric Tons Maximum Force' },
+                        { key: 'Cylinder Stroke', value: '300 mm Ram Travel' },
+                        { key: 'Table Width', value: '1,000 mm Working Bed Clearance' },
+                        { key: 'Pump Unit', value: 'Dual Speed Motorized Hydraulic Power Pack' },
+                    ]
+                },
+                {
+                    icon: '🧱',
+                    title: 'Makrana Calacatta White Marble Gangsaw Slabs (Bulk Lot)',
+                    brand: 'K71 Makrana Stone Quarries',
+                    base_price: '320.00',
+                    compare_at_price: '420.00',
+                    gst_rate: '18',
+                    hsn_code: '68022110',
+                    total_stock: '5000',
+                    sku: 'SLAB-MAK-CAL-18',
+                    description: 'Pure natural Makrana Calacatta white marble gangsaw cut slabs with striking natural grey veining, high calcium purity, zero pinholes, and mirror polish.',
+                    specs: [
+                        { key: 'Slab Thickness', value: '16mm - 18mm Gangsaw Cut Slabs' },
+                        { key: 'Surface Polish', value: 'High Gloss Mirror Polish / Unpolished Honed' },
+                        { key: 'Minimum Order Qty (MOQ)', value: '1,000 Sq.Ft Slabs Lot' },
+                        { key: 'Loading & Dispatch', value: 'Free Wooden Crate Packing & Crane Loading' },
+                    ]
+                },
+                {
+                    icon: '📦',
+                    title: 'Fully Automatic Continuous Band Sealer Machine',
+                    brand: 'PackTech Industrial',
+                    base_price: '24500.00',
+                    compare_at_price: '32000.00',
+                    gst_rate: '18',
+                    hsn_code: '84223000',
+                    total_stock: '20',
+                    sku: 'PACK-BAND-SEAL',
+                    description: 'Continuous horizontal band pouch heat sealing machine with digital temperature controller, embossing date/batch coding wheel, and motorized conveyor.',
+                    specs: [
+                        { key: 'Sealing Speed', value: '0 - 12 Meters per Minute Continuous' },
+                        { key: 'Sealing Width', value: '10 mm Hermetic Embossed Seal' },
+                        { key: 'Temperature Range', value: '0 - 300°C Digital PID Control' },
+                    ]
+                }
+            ],
+            b2b: [
+                {
+                    icon: '🧱',
+                    title: 'Makrana Calacatta White Marble Gangsaw Slabs Lot',
+                    brand: 'K71 Stone Direct',
+                    base_price: '320.00',
+                    compare_at_price: '420.00',
+                    gst_rate: '18',
+                    hsn_code: '68022110',
+                    total_stock: '5000',
+                    sku: 'B2B-MAK-CAL-01',
+                    description: 'Wholesale lot of pure natural white Makrana marble gangsaw slabs for luxury flooring and hotel lobbies.',
+                    specs: [
+                        { key: 'Slab Thickness', value: '16mm - 18mm Gangsaw Cut' },
+                        { key: 'Minimum Order Quantity', value: '1,000 Sq.Ft Lot' },
+                        { key: 'Finish', value: 'Mirror Polish High Gloss' },
+                    ]
+                }
+            ],
+            food: [
+                {
+                    icon: '🍛',
+                    title: 'Royal Hyderabadi Dum Gosht Biryani (Single / Handi)',
+                    brand: 'Bawarchi Grand Kitchen',
+                    base_price: '380.00',
+                    compare_at_price: '450.00',
+                    gst_rate: '5',
+                    hsn_code: '21069099',
+                    total_stock: '40',
+                    sku: 'DISH-BIRY-GOSHT',
+                    description: 'Authentic Kachche Gosht ki Dum Biryani cooked with succulent tender mutton marinated in curd and secret potli spices, layered with aged Basmati rice and pure desi ghee.',
+                    specs: [
+                        { key: 'Portion Size', value: '1 - 2 Persons (650g Servings in Clay Handi)' },
+                        { key: 'Dietary', value: 'Halal Certified Tender Mutton' },
+                        { key: 'Spice Level', value: 'Authentic Desi Medium Spicy' },
+                        { key: 'Accompaniments', value: 'Burani Raita + Mirchi Ka Salan Included' },
+                    ]
+                },
+                {
+                    icon: '🍕',
+                    title: 'Wood-Fired Margherita Pizza (11-Inch Hand-Tossed)',
+                    brand: 'Napoli Wood Ovens',
+                    base_price: '349.00',
+                    compare_at_price: '420.00',
+                    gst_rate: '5',
+                    hsn_code: '19059090',
+                    total_stock: '50',
+                    sku: 'DISH-PIZZA-MARG',
+                    description: 'Classic Neapolitan pizza baked in 450°C wood-fired oven featuring San Marzano tomato sauce, fresh Fior Di Latte mozzarella, extra virgin olive oil, and sweet basil leaves.',
+                    specs: [
+                        { key: 'Pizza Size', value: '11-Inch Hand-Stretched Neapolitan' },
+                        { key: 'Crust Type', value: '48-Hour Cold-Fermented Sourdough Crust' },
+                        { key: 'Cheese', value: '100% Fresh Buffalo Mozzarella' },
+                        { key: 'Dietary', value: 'Pure Vegetarian' },
+                    ]
+                },
+                {
+                    icon: '🍲',
+                    title: 'Dal Makhani with 2 Tandoori Butter Naan Platter',
+                    brand: 'Pind Punjab Dhaba',
+                    base_price: '289.00',
+                    compare_at_price: '350.00',
+                    gst_rate: '5',
+                    hsn_code: '21069099',
+                    total_stock: '60',
+                    sku: 'DISH-DAL-MAKH-COMBO',
+                    description: '16-hour slow-simmered whole black urad lentils infused with smoked butter, rich cream, and Kashmiri red chillies, served with two hot charred tandoori butter naans.',
+                    specs: [
+                        { key: 'Combo Inclusions', value: '350ml Dal Makhani + 2 Tandoori Butter Naan' },
+                        { key: 'Salad & Dips', value: 'Mint Coriander Chutney & Pickled Sirka Onions' },
+                        { key: 'Dietary', value: 'Pure Vegetarian' },
+                    ]
+                },
+                {
+                    icon: '🧀',
+                    title: 'Saffron Paneer Tikka Masala Bowl with Jeera Rice',
+                    brand: 'Zaika Express',
+                    base_price: '319.00',
+                    compare_at_price: '380.00',
+                    gst_rate: '5',
+                    hsn_code: '21069099',
+                    total_stock: '45',
+                    sku: 'DISH-PANEER-BOWL',
+                    description: 'Char-grilled fresh Malai paneer cubes simmered in a luscious cashew and saffron infused tomato makhani gravy, paired with fragrant cumin Basmati rice.',
+                    specs: [
+                        { key: 'Portion Size', value: 'Generous Single Meal (500g Total Bowl)' },
+                        { key: 'Dietary', value: 'Pure Vegetarian' },
+                        { key: 'Spice Level', value: 'Balanced Mild & Creamy' },
+                    ]
+                },
+                {
+                    icon: '🍰',
+                    title: 'Belgian Dark Chocolate Truffle Pastry (120g Slice)',
+                    brand: 'La Petite Patisserie',
+                    base_price: '179.00',
+                    compare_at_price: '220.00',
+                    gst_rate: '5',
+                    hsn_code: '19059010',
+                    total_stock: '35',
+                    sku: 'DISH-PASTRY-CHOC',
+                    description: 'Decadent multi-layered Dutch cocoa sponge filled with silky 70% Callebaut Belgian dark chocolate ganache, topped with mirror glaze.',
+                    specs: [
+                        { key: 'Dietary', value: '100% Eggless Certified' },
+                        { key: 'Chocolate Source', value: '70% Single Origin Callebaut Belgian Chocolate' },
+                        { key: 'Serving Advice', value: 'Best served chilled or warm 10 seconds in microwave' },
+                    ]
+                },
+                {
+                    icon: '🥭',
+                    title: 'Fresh Alphonso Mango Pulp Thick Shake (350ml)',
+                    brand: 'JuiceNation',
+                    base_price: '169.00',
+                    compare_at_price: '210.00',
+                    gst_rate: '5',
+                    hsn_code: '22029990',
+                    total_stock: '50',
+                    sku: 'DISH-MANGO-SHAKE',
+                    description: 'Thick gourmet milkshake blended with 100% natural Ratnagiri Alphonso mango pulp, full cream chilled milk, and a scoop of Madagascar vanilla ice cream.',
+                    specs: [
+                        { key: 'Volume', value: '350 ml Sealed Glass Bottle' },
+                        { key: 'Fruit Content', value: 'Real Alphonso Mango Pulp (Zero Artificial Flavors)' },
+                    ]
+                }
+            ],
+            services: [
+                {
+                    icon: '🧹',
+                    title: 'Complete Deep Home Cleaning & Sanitization (2/3 BHK)',
+                    brand: 'CleanMaster Pro Care',
+                    base_price: '2499.00',
+                    compare_at_price: '3499.00',
+                    gst_rate: '18',
+                    hsn_code: '998533',
+                    total_stock: '6',
+                    sku: 'SERV-CLEAN-3BHK',
+                    description: 'Comprehensive top-to-bottom deep cleaning by verified pros using industrial single-disc scrubbing machines, vacuum degreasing of kitchen chimneys, bathroom descaling, and floor buffing.',
+                    specs: [
+                        { key: 'Service Duration', value: '4 - 5 Hours (Team of 2 Verified Professionals)' },
+                        { key: 'Scope of Work', value: 'Kitchen Cabinets & Chimney, 2 Bathrooms, Floor Buffing & Balconies' },
+                        { key: 'Chemicals Used', value: 'Diversey Professional Non-Toxic Eco-Friendly Chemicals' },
+                        { key: 'Guarantee', value: '100% Revisit Inspection Guarantee within 24 Hours' },
+                    ]
+                },
+                {
+                    icon: '❄️',
+                    title: 'Split AC Master Jet-Wash Overhaul & Gas Check',
+                    brand: 'CoolWave AC Solutions',
+                    base_price: '799.00',
+                    compare_at_price: '1200.00',
+                    gst_rate: '18',
+                    hsn_code: '998713',
+                    total_stock: '12',
+                    sku: 'SERV-AC-JETWASH',
+                    description: 'Advanced high-pressure water jet cleaning with protective AC jacket apron for indoor cooling coils, blower fan, outdoor condenser fins, and digital refrigerant pressure diagnosis.',
+                    specs: [
+                        { key: 'Service Duration', value: '60 - 75 Minutes per AC Unit' },
+                        { key: 'Equipment Deployed', value: 'High-Pressure Water Jet Pump + Foam Cleanser + Gauge Manifold' },
+                        { key: 'Warranty Coverage', value: '30-Day Cooling Performance Warranty' },
+                    ]
+                },
+                {
+                    icon: '⚡',
+                    title: 'Master Electrician Diagnostics & Wiring Repair',
+                    brand: 'Apex Electricals',
+                    base_price: '299.00',
+                    compare_at_price: '450.00',
+                    gst_rate: '18',
+                    hsn_code: '998713',
+                    total_stock: '15',
+                    sku: 'SERV-ELEC-VISIT',
+                    description: 'Licensed ITI electrician doorstep visit for short-circuit troubleshooting, MCB tripping resolution, appliance points installation, and whole house earthing tests.',
+                    specs: [
+                        { key: 'Visit Duration', value: '45 - 60 Minutes On-Site Inspection' },
+                        { key: 'Tools Included', value: 'Digital Multi-Meter, Phase Sequence Tester & Insulated Tools' },
+                        { key: 'Pricing Term', value: '₹299 Inspection Fee (Deducted if major work approved)' },
+                    ]
+                },
+                {
+                    icon: '🔧',
+                    title: 'Precision Plumbing Leak Detection & Fixture Install',
+                    brand: 'HydroFix Plumbing',
+                    base_price: '349.00',
+                    compare_at_price: '500.00',
+                    gst_rate: '18',
+                    hsn_code: '998713',
+                    total_stock: '15',
+                    sku: 'SERV-PLUMB-VISIT',
+                    description: 'Expert plumber visit for resolving hidden concealed pipe leakages, low water pressure, dripping bathroom taps, flush tank overhaul, and sanitary fixture replacements.',
+                    specs: [
+                        { key: 'Typical Duration', value: '45 Minutes' },
+                        { key: 'Workmanship Guarantee', value: '14 Days Free Revisit Warranty' },
+                    ]
+                },
+                {
+                    icon: '💆',
+                    title: 'At-Home Organic Fruit Glow Facial & Salon Spa',
+                    brand: 'GlamAtHome Salon',
+                    base_price: '1499.00',
+                    compare_at_price: '2200.00',
+                    gst_rate: '18',
+                    hsn_code: '999721',
+                    total_stock: '8',
+                    sku: 'SERV-SALON-FACIAL',
+                    description: 'Relaxing luxury salon experience in the comfort of your home using single-use sealed kits: Cleansing, gentle enzymatic scrub, steam, blackhead vacuum extraction, and glowing fruit pack.',
+                    specs: [
+                        { key: 'Duration', value: '75 Minutes' },
+                        { key: 'Hygiene Kit', value: '100% Disposable Biodegradable Towels, Sheet & Headband' },
+                        { key: 'Products Brand', value: 'O3+ / Cheryl’s Cosmeceuticals Certified Kits' },
+                    ]
+                },
+                {
+                    icon: '🎨',
+                    title: 'Full House Waterproof Wall Texture & Repaint',
+                    brand: 'Apex ColorCraft',
+                    base_price: '14999.00',
+                    compare_at_price: '20000.00',
+                    gst_rate: '18',
+                    hsn_code: '995473',
+                    total_stock: '4',
+                    sku: 'SERV-PAINT-2BHK',
+                    description: 'Turnkey interior house painting for 2 BHK apartment with computerized laser measurement, full masking of furniture, 2 coats acrylic putty, 1 coat primer, and 2 coats luxury emulsion.',
+                    specs: [
+                        { key: 'Scope', value: 'Interior 2 BHK Walls & Ceiling (~1,200 Sq.Ft Carpet)' },
+                        { key: 'Paints Used', value: 'Asian Paints Royale Luxury Emulsion or Berger Silk' },
+                        { key: 'Warranty', value: '3 Years Anti-Flaking & Peeling Warranty' },
+                    ]
+                }
+            ],
+            used: [
+                {
+                    icon: '📱',
+                    title: 'iPhone 14 Pro Max 256GB Space Black (Mint 9/10)',
+                    brand: 'Apple',
+                    base_price: '72000.00',
+                    compare_at_price: '85000.00',
+                    gst_rate: '0',
+                    hsn_code: '85171300',
+                    total_stock: '1',
+                    sku: 'USED-IPHONE-14PM',
+                    description: 'Immaculately maintained iPhone 14 Pro Max in Space Black with zero scratches or dents. 89% original battery health, tested 100% working Face ID, Dynamic Island, and True Tone.',
+                    specs: [
+                        { key: 'Cosmetic Condition', value: 'Mint 9.5/10 (Always Used with Case & Screen Guard)' },
+                        { key: 'Battery Health', value: '89% Maximum Capacity (Original Apple Battery)' },
+                        { key: 'Inclusions', value: 'Original Box, Apple USB-C Braided Cable & Invoice' },
+                        { key: 'Ownership Age', value: '14 Months Used by Single Owner' },
+                    ]
+                },
+                {
+                    icon: '💻',
+                    title: 'MacBook Pro 14" M1 Pro 16GB / 512GB Space Grey',
+                    brand: 'Apple',
+                    base_price: '94000.00',
+                    compare_at_price: '115000.00',
+                    gst_rate: '0',
+                    hsn_code: '84713010',
+                    total_stock: '1',
+                    sku: 'USED-MBP-14-M1',
+                    description: 'Flawless condition MacBook Pro 14" with Liquid Retina XDR ProMotion 120Hz display, Apple M1 Pro chip, 16GB unified memory, and 512GB NVMe SSD. Only 142 battery cycles.',
+                    specs: [
+                        { key: 'Condition Grade', value: 'Grade A+ Spotless Body & Clean Screen Coating' },
+                        { key: 'Battery Health', value: '94% Health (142 Total Charge Cycles)' },
+                        { key: 'Charger & Box', value: 'Original 67W MagSafe 3 Fast Charger & Retail Box' },
+                    ]
+                },
+                {
+                    icon: '🛵',
+                    title: 'Honda Activa 6G 110cc BS6 (Single Owner 2022)',
+                    brand: 'Honda',
+                    base_price: '58000.00',
+                    compare_at_price: '68000.00',
+                    gst_rate: '0',
+                    hsn_code: '87112019',
+                    total_stock: '1',
+                    sku: 'USED-ACTIVA-6G',
+                    description: 'Single owner registered 2022 Honda Activa 6G in metallic grey with low verified odometer reading. Regularly serviced at authorized Honda service center. Complete clean paperwork.',
+                    specs: [
+                        { key: 'Registration Year', value: 'November 2022 (Single Owner)' },
+                        { key: 'Kilometers Driven', value: '14,200 KM Verified' },
+                        { key: 'Insurance Status', value: 'Comprehensive Insurance Valid till Nov 2027' },
+                        { key: 'NOC & Transfer', value: 'NOC Ready for Instant Transfer' },
+                    ]
+                },
+                {
+                    icon: '📷',
+                    title: 'Canon EOS R6 Full-Frame Mirrorless Camera (Body Only)',
+                    brand: 'Canon',
+                    base_price: '118000.00',
+                    compare_at_price: '140000.00',
+                    gst_rate: '0',
+                    hsn_code: '85258900',
+                    total_stock: '1',
+                    sku: 'USED-CANON-R6',
+                    description: 'Studio-used Canon EOS R6 full-frame mirrorless body with in-body image stabilization (IBIS), 4K 60p 10-bit video, and dual SD card slots. Shutter actuations under 18,000.',
+                    specs: [
+                        { key: 'Shutter Actuations', value: 'Under 18,000 (Tested Shutter Life 300,000)' },
+                        { key: 'Sensor Condition', value: 'Spotless 100% Clean Full-Frame Sensor' },
+                        { key: 'Inclusions', value: 'Original LP-E6NH Battery, Charger, Neck Strap & Box' },
+                    ]
+                },
+                {
+                    icon: '🏍️',
+                    title: 'Royal Enfield Classic 350 Reborn - Halcyon Black',
+                    brand: 'Royal Enfield',
+                    base_price: '155000.00',
+                    compare_at_price: '185000.00',
+                    gst_rate: '0',
+                    hsn_code: '87112029',
+                    total_stock: '1',
+                    sku: 'USED-RE-CLASSIC',
+                    description: 'Meticulously kept J-series engine Royal Enfield Classic 350 in Halcyon Black with dual-channel ABS, genuine RE touring seats, crash guard, and alloy wheels.',
+                    specs: [
+                        { key: 'Model Year', value: '2022 (BS6 Dual-Channel ABS Edition)' },
+                        { key: 'KM Driven', value: '9,800 KM' },
+                        { key: 'Accessories Fitted', value: 'Touring Rider Seat, Sump Guard, Crash Guard' },
+                    ]
+                },
+                {
+                    icon: '🪑',
+                    title: 'Solid Teak Wood 4-Seater Dining Table Set (Pre-Owned)',
+                    brand: 'Teak Heritage',
+                    base_price: '11500.00',
+                    compare_at_price: '18000.00',
+                    gst_rate: '0',
+                    hsn_code: '94036000',
+                    total_stock: '1',
+                    sku: 'USED-DINE-TEAK4',
+                    description: 'Genuine solid CP teak wood 4-seater dining table recently buffed with natural polyurethane varnish, with 4 matching cushioned teak wood chairs.',
+                    specs: [
+                        { key: 'Condition', value: 'Excellent 9/10 (Re-Varnished Natural Teak)' },
+                        { key: 'Dimensions', value: '48" Length x 36" Width x 30" Height' },
+                        { key: 'Reason for Selling', value: 'Relocating to New City' },
                     ]
                 }
             ]
@@ -692,7 +1920,7 @@ function liquidProductUploader() {
 
         get currentSectorPresets() {
             const vType = '{{ $vendorType }}';
-            return this.presets[vType] || this.presets['electronics'] || this.presets['clothing'];
+            return this.presets[vType] || this.presets['clothing'] || [];
         },
 
         applyPreset(preset) {
@@ -718,9 +1946,7 @@ function liquidProductUploader() {
             this.form.base_price = '';
             this.form.compare_at_price = '';
             this.form.description = '';
-            this.form.specs = [
-                { key: 'Warranty', value: '1 Year Manufacturer Warranty' }
-            ];
+            this.form.specs = @json($sec['default_specs'] ?? [['key' => 'Specification', 'value' => 'Standard']]);
         },
 
         addSpecRow() {

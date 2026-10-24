@@ -85,7 +85,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'city' => 'Kishangarh',
                 'state' => 'Rajasthan',
                 'pincode' => '305801',
-                'address' => 'Industrial Area Phase 2, Marble Mandi Road, Kishangarh',
+                'address' => 'Industrial Area Phase 2, Kishangarh Industrial Corridor, Rajasthan',
                 'phone' => '+91 98290 12345',
                 'description' => 'Pioneers in Makrana Pure White Marble, Dungri slabs, Italian Statuario, and Rajasthan Black Galaxy Granites. Certified quarry-direct wholesale and retail supply across India.',
                 'colour_palette' => 'emerald',

@@ -96,70 +96,187 @@ class ProductController extends Controller
         $targetVertical = $vendor ? $vendor->getVerticalKey() : 'marketplace';
 
         // Smart Category Resolution tailored specifically to vendor's trade sector
-        $categoriesQuery = Category::with('parent')->where('is_active', true);
-
-        if ($vendorType === 'electronics') {
-            $categories = (clone $categoriesQuery)->where(function($q) {
-                $q->where('slug', 'LIKE', '%electronic%')
-                  ->orWhere('slug', 'LIKE', '%mobile%')
-                  ->orWhere('slug', 'LIKE', '%computer%')
-                  ->orWhere('name', 'LIKE', '%Electronic%')
-                  ->orWhere('name', 'LIKE', '%Mobile%')
-                  ->orWhere('name', 'LIKE', '%Computer%');
-            })->get();
-        } elseif ($vendorType === 'automotive') {
-            $categories = (clone $categoriesQuery)->where(function($q) {
-                $q->where('slug', 'LIKE', '%automotive%')
-                  ->orWhere('slug', 'LIKE', '%car%')
-                  ->orWhere('slug', 'LIKE', '%bike%')
-                  ->orWhere('slug', 'LIKE', '%spare%')
-                  ->orWhere('name', 'LIKE', '%Automotive%')
-                  ->orWhere('name', 'LIKE', '%Vehicle%');
-            })->get();
-        } elseif ($vendorType === 'beauty') {
-            $categories = (clone $categoriesQuery)->where(function($q) {
-                $q->where('slug', 'LIKE', '%beauty%')
-                  ->orWhere('slug', 'LIKE', '%skin%')
-                  ->orWhere('slug', 'LIKE', '%cosmetic%')
-                  ->orWhere('name', 'LIKE', '%Beauty%')
-                  ->orWhere('name', 'LIKE', '%Personal Care%');
-            })->get();
-        } elseif ($vendorType === 'home_living') {
-            $categories = (clone $categoriesQuery)->where(function($q) {
-                $q->where('slug', 'LIKE', '%home%')
-                  ->orWhere('slug', 'LIKE', '%furniture%')
-                  ->orWhere('name', 'LIKE', '%Home%')
-                  ->orWhere('name', 'LIKE', '%Furniture%');
-            })->get();
-        } elseif ($vendorType === 'toys_sports') {
-            $categories = (clone $categoriesQuery)->where(function($q) {
-                $q->where('slug', 'LIKE', '%toy%')
-                  ->orWhere('slug', 'LIKE', '%book%')
-                  ->orWhere('slug', 'LIKE', '%sport%')
-                  ->orWhere('name', 'LIKE', '%Toys%')
-                  ->orWhere('name', 'LIKE', '%Sports%');
-            })->get();
-        } elseif (in_array($targetVertical, ['food', 'services', 'used', 'enquiry'])) {
-            $categories = (clone $categoriesQuery)->where('vertical', $targetVertical)->get();
-        } else {
-            $categories = (clone $categoriesQuery)->where('vertical', 'marketplace')->get();
-        }
-
-        if ($categories->isEmpty()) {
-            $categories = Category::with('parent')->where('is_active', true)->get();
-        }
-
-        $categories = $categories->sortBy(function($cat) {
-                $parentName = $cat->parent ? $cat->parent->name : $cat->name;
-                return $parentName . ' - ' . $cat->name;
-            })
-            ->values();
+        $categories = $this->resolveVendorCategories($vendorType, $targetVertical);
 
         $verticals = $this->getVerticalsData();
         $listingTypes = $this->getListingTypesData();
         $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
 
         return view('vendor.products.create', compact('vendor', 'vendorType', 'sectorConfig', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields'));
+    }
+
+    protected function resolveVendorCategories(string $vendorType, string $targetVertical)
+    {
+        $q = Category::with('parent')->where('is_active', true);
+
+        switch ($vendorType) {
+            case 'real_estate':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%real-estate%')
+                       ->orWhere('name', 'LIKE', '%Real Estate%')
+                       ->orWhere('name', 'LIKE', '%Residential%')
+                       ->orWhere('name', 'LIKE', '%Commercial Properties%')
+                       ->orWhere('name', 'LIKE', '%Property Rentals%')
+                       ->orWhere('name', 'LIKE', '%Industrial Real Estate%')
+                       ->orWhere('parent_id', function($sub) {
+                           $sub->select('id')->from('categories')->where('slug', 'LIKE', '%real-estate%');
+                       });
+                });
+                break;
+            case 'clothing':
+            case 'footwear':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%clothing%')
+                       ->orWhere('slug', 'LIKE', '%fashion%')
+                       ->orWhere('slug', 'LIKE', '%footwear%')
+                       ->orWhere('slug', 'LIKE', '%accessories%')
+                       ->orWhere('slug', 'LIKE', '%saree%')
+                       ->orWhere('slug', 'LIKE', '%men%')
+                       ->orWhere('slug', 'LIKE', '%women%')
+                       ->orWhere('slug', 'LIKE', '%kids%')
+                       ->orWhere('name', 'LIKE', '%Fashion%')
+                       ->orWhere('name', 'LIKE', '%Apparel%')
+                       ->orWhere('name', 'LIKE', '%Footwear%');
+                });
+                break;
+            case 'electronics':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%electronic%')
+                       ->orWhere('slug', 'LIKE', '%mobile%')
+                       ->orWhere('slug', 'LIKE', '%computer%')
+                       ->orWhere('slug', 'LIKE', '%appliance%')
+                       ->orWhere('slug', 'LIKE', '%tv%')
+                       ->orWhere('name', 'LIKE', '%Electronic%')
+                       ->orWhere('name', 'LIKE', '%Mobile%')
+                       ->orWhere('name', 'LIKE', '%Computer%');
+                });
+                break;
+            case 'automotive':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%automotive%')
+                       ->orWhere('slug', 'LIKE', '%vehicle%')
+                       ->orWhere('slug', 'LIKE', '%car%')
+                       ->orWhere('slug', 'LIKE', '%bike%')
+                       ->orWhere('slug', 'LIKE', '%spare%')
+                       ->orWhere('name', 'LIKE', '%Automotive%')
+                       ->orWhere('name', 'LIKE', '%Vehicle%');
+                });
+                break;
+            case 'beauty':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%beauty%')
+                       ->orWhere('slug', 'LIKE', '%skin%')
+                       ->orWhere('slug', 'LIKE', '%cosmetic%')
+                       ->orWhere('slug', 'LIKE', '%wellness%')
+                       ->orWhere('slug', 'LIKE', '%fragrance%')
+                       ->orWhere('name', 'LIKE', '%Beauty%')
+                       ->orWhere('name', 'LIKE', '%Personal Care%');
+                });
+                break;
+            case 'home_living':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%home-living%')
+                       ->orWhere('slug', 'LIKE', '%furniture%')
+                       ->orWhere('slug', 'LIKE', '%decor%')
+                       ->orWhere('slug', 'LIKE', '%kitchenware%')
+                       ->orWhere('slug', 'LIKE', '%building%')
+                       ->orWhere('name', 'LIKE', '%Home%')
+                       ->orWhere('name', 'LIKE', '%Furniture%');
+                });
+                break;
+            case 'groceries':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%grocer%')
+                       ->orWhere('slug', 'LIKE', '%fmcg%')
+                       ->orWhere('slug', 'LIKE', '%staple%')
+                       ->orWhere('slug', 'LIKE', '%produce%')
+                       ->orWhere('name', 'LIKE', '%Grocer%')
+                       ->orWhere('name', 'LIKE', '%Daily Essentials%');
+                });
+                break;
+            case 'toys_sports':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%toy%')
+                       ->orWhere('slug', 'LIKE', '%book%')
+                       ->orWhere('slug', 'LIKE', '%sport%')
+                       ->orWhere('slug', 'LIKE', '%baby%')
+                       ->orWhere('slug', 'LIKE', '%game%')
+                       ->orWhere('name', 'LIKE', '%Toys%')
+                       ->orWhere('name', 'LIKE', '%Sports%');
+                });
+                break;
+            case 'digital_services':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%digital-service%')
+                       ->orWhere('slug', 'LIKE', '%freelancing%')
+                       ->orWhere('slug', 'LIKE', '%gig%')
+                       ->orWhere('slug', 'LIKE', '%programming%')
+                       ->orWhere('slug', 'LIKE', '%graphic%')
+                       ->orWhere('name', 'LIKE', '%Digital%')
+                       ->orWhere('name', 'LIKE', '%Freelanc%');
+                });
+                break;
+            case 'machinery':
+            case 'b2b':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%machinery%')
+                       ->orWhere('slug', 'LIKE', '%industrial%')
+                       ->orWhere('slug', 'LIKE', '%bulk%')
+                       ->orWhere('slug', 'LIKE', '%marble%')
+                       ->orWhere('slug', 'LIKE', '%stone%')
+                       ->orWhere('name', 'LIKE', '%Machinery%')
+                       ->orWhere('name', 'LIKE', '%Industrial%')
+                       ->orWhere('vertical', 'enquiry');
+                });
+                break;
+            case 'services':
+            case 'local_services':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%service%')
+                       ->orWhere('slug', 'LIKE', '%on-demand%')
+                       ->orWhere('name', 'LIKE', '%Service%')
+                       ->orWhere('vertical', 'services');
+                });
+                break;
+            case 'food':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%food%')
+                       ->orWhere('slug', 'LIKE', '%dining%')
+                       ->orWhere('slug', 'LIKE', '%restaurant%')
+                       ->orWhere('name', 'LIKE', '%Food%')
+                       ->orWhere('name', 'LIKE', '%Dining%')
+                       ->orWhere('vertical', 'food');
+                });
+                break;
+            case 'used':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%used%')
+                       ->orWhere('slug', 'LIKE', '%pre-owned%')
+                       ->orWhere('slug', 'LIKE', '%pre-loved%')
+                       ->orWhere('slug', 'LIKE', '%thrift%')
+                       ->orWhere('name', 'LIKE', '%Used%')
+                       ->orWhere('name', 'LIKE', '%Pre-Owned%')
+                       ->orWhere('vertical', 'used');
+                });
+                break;
+            default:
+                if (in_array($targetVertical, ['food', 'services', 'used', 'enquiry'])) {
+                    $q->where('vertical', $targetVertical);
+                } else {
+                    $q->where('vertical', 'marketplace');
+                }
+                break;
+        }
+
+        $cats = $q->get();
+        if ($cats->isEmpty()) {
+            $cats = Category::with('parent')->where('is_active', true)->get();
+        }
+
+        return $cats->sortBy(function($cat) {
+            $parentName = $cat->parent ? $cat->parent->name : $cat->name;
+            return $parentName . ' - ' . $cat->name;
+        })->values();
     }
 
     public function store(Request $request)
@@ -419,22 +536,11 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
+        $vendorType = $vendor?->vendor_type ?? 'clothing';
+        $sectorConfig = $vendor ? $vendor->getSectorConfig() : [];
         $targetVertical = $product->vertical ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
 
-        $categories = Category::with('parent')
-            ->where('is_active', true)
-            ->where('vertical', $targetVertical)
-            ->get();
-
-        if ($categories->isEmpty()) {
-            $categories = Category::with('parent')->where('is_active', true)->get();
-        }
-
-        $categories = $categories->sortBy(function($cat) {
-                $parentName = $cat->parent ? $cat->parent->name : $cat->name;
-                return $parentName . ' - ' . $cat->name;
-            })
-            ->values();
+        $categories = $this->resolveVendorCategories($vendorType, $targetVertical);
 
         $product->load(['variants', 'images', 'modifiers', 'gigPackages', 'category']);
 
@@ -483,7 +589,7 @@ class ProductController extends Controller
         return view('vendor.products.edit', compact(
             'vendor', 'targetVertical', 'product', 'categories', 'existingVariants',
             'existingModifiers', 'existingGigPackages', 'existingB2bTiers',
-            'existingServiceConfig', 'existingSpecs', 'verticals', 'listingTypes', 'categoryFields'
+            'existingServiceConfig', 'existingSpecs', 'verticals', 'listingTypes', 'categoryFields', 'sectorConfig'
         ));
     }
 

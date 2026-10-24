@@ -99,7 +99,9 @@ Route::get('/bookings/{booking_number}', [\App\Http\Controllers\BookingControlle
 
 // Enquiry Marketplace & Quotes Routes (Phase 8)
 Route::get('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('enquiry.index');
+Route::get('/b2b', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('b2b.index');
 Route::get('/enquiry/create', [\App\Http\Controllers\EnquiryController::class, 'create'])->name('enquiry.create');
+Route::get('/b2b/create', [\App\Http\Controllers\EnquiryController::class, 'create'])->name('b2b.create');
 Route::post('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'store'])->name('enquiry.store');
 Route::post('/rfq/submit/{product}', [\App\Http\Controllers\EnquiryController::class, 'submitRfq'])->name('rfq.submit');
 Route::get('/enquiry/{enquiry_number}', [\App\Http\Controllers\EnquiryController::class, 'show'])->name('enquiry.show');

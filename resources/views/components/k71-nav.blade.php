@@ -84,52 +84,54 @@
                             </a>
                         </div>
                     @else
-                        <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="MarbleMandi Homepage">
+                        <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="K71 Homepage">
                             <div class="h-9 w-9 rounded-xl overflow-hidden bg-indigo-600 p-1 flex items-center justify-center shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0 border border-indigo-700">
-                                <img src="{{ asset('images/k71-logo.png') }}" alt="M" class="w-full h-full object-contain">
+                                <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                             </div>
-                            <div class="flex flex-col leading-none">
-                                <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-1.5">
-                                    Marble<span class="text-indigo-600">Mandi</span><span class="text-[9px] font-mono font-bold tracking-widest text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">DIRECT</span>
+                            <div class="flex items-baseline gap-1.5 leading-none">
+                                <span class="font-sans text-2xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                    K71
+                                </span>
+                                <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 font-mono hidden sm:inline">
+                                    MARKETPLACE
                                 </span>
                             </div>
-                            @if($currentKey !== 'main')
-                                <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                    {{ $activeVertical['name'] ?? 'Hub' }}
-                                </span>
-                            @endif
                         </a>
                     @endif
                 </div>
             </div>
 
-            <!-- Desktop Middle: High-Contrast Verticals Navigation Bar -->
-            <nav class="hidden lg:flex items-center gap-1 bg-slate-100 p-1.5 rounded-full border border-slate-200 shadow-inner" aria-label="Category Verticals">
-                @foreach($allVerticals as $vKey => $vMeta)
-                    @php $isCurrent = $currentKey === $vKey; @endphp
-                    <a href="{{ $vMeta['url'] }}" 
-                       class="px-3.5 py-1.5 rounded-full text-xs transition-all duration-200 flex items-center gap-1.5 {{ $isCurrent ? 'bg-indigo-600 text-white shadow font-bold' : 'text-slate-700 hover:text-slate-950 hover:bg-white/90 font-semibold' }}">
-                        <span>{{ $vMeta['name'] }}</span>
-                        @if(isset($vMeta['badge']))
-                            <span class="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-rose-600 text-white tracking-wider animate-pulse">
-                                {{ $vMeta['badge'] }}
-                            </span>
-                        @endif
-                    </a>
-                @endforeach
-            </nav>
+            <!-- Desktop Middle: Clean Integrated Search Bar (No capsules) -->
+            <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8">
+                <form action="{{ route('catalog.index') }}" method="GET" class="w-full relative">
+                    <input type="text" name="search" 
+                           placeholder="Search products, verified stores, brands..." 
+                           class="w-full pl-10 pr-20 py-2.5 rounded-full border border-slate-200 bg-slate-50/90 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400 font-medium">
+                    <div class="absolute left-3.5 top-3 text-slate-400">
+                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                    </div>
+                    <button type="submit" class="absolute right-1.5 top-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold tracking-wide transition shadow-xs cursor-pointer">
+                        Search
+                    </button>
+                </form>
+            </div>
 
-            <!-- Right Actions: Search + Messages + Wishlist + Cart + Account -->
+            <!-- Right Actions: Mobile Search + Catalog + Messages + Wishlist + Cart + Account -->
             <div class="flex items-center gap-1 sm:gap-2">
 
-                <!-- Search Button -->
+                <!-- Mobile-Only Search Button -->
                 <button @click="searchOpen = !searchOpen" 
-                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200"
+                        class="md:hidden p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200"
                         aria-label="Search">
                     <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
                     </svg>
                 </button>
+
+                <!-- Catalog Link -->
+                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition">
+                    <span>Catalog</span>
+                </a>
 
                 <!-- Direct Messages Quick Access (Header) -->
                 <a href="{{ route('messages.index') }}" 

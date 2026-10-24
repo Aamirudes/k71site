@@ -1,4 +1,7 @@
 <x-layouts.vendor title="Edit Product">
+    @php
+        $sec = $sectorConfig ?? ($vendor ? $vendor->getSectorConfig() : []);
+    @endphp
     <form action="{{ route('vendor.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="relative" x-data="variantEngine()">
         @csrf
         @method('PUT')
@@ -179,8 +182,8 @@
 
                     <div class="space-y-5">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Product Title *</label>
-                            <input type="text" name="title" value="{{ old('title', $product->title) }}" placeholder="e.g. Premium Cotton Casual Shirt" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm py-2.5 px-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">{{ $sec['title_label'] ?? 'Product Title' }} *</label>
+                            <input type="text" name="title" value="{{ old('title', $product->title) }}" placeholder="{{ $sec['title_placeholder'] ?? 'e.g. Premium Item Title' }}" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm py-2.5 px-3">
                             @error('title') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
 
@@ -189,7 +192,7 @@
                                 <label class="block text-sm font-semibold text-gray-700">Description *</label>
                                 <span class="text-xs text-gray-400">Include key selling points</span>
                             </div>
-                            <textarea name="description" rows="6" placeholder="Describe the fabric, fit, and style..." required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm p-3">{{ old('description', $product->description) }}</textarea>
+                            <textarea name="description" rows="6" placeholder="{{ $sec['desc_placeholder'] ?? 'Describe key features, specifications, and details...' }}" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm p-3">{{ old('description', $product->description) }}</textarea>
                             @error('description') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -326,18 +329,10 @@
 
                         <div class="{{ $targetVertical === 'marketplace' ? '' : 'sm:col-span-2' }}">
                             <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                @if($targetVertical === 'food')
-                                    Kitchen / Chef Specialty Label
-                                @elseif($targetVertical === 'services')
-                                    Service Brand / Agency Name
-                                @elseif($targetVertical === 'used')
-                                    Manufacturer / Brand
-                                @else
-                                    Brand / Craft Collection
-                                @endif
+                                {{ $sec['brand_label'] ?? 'Brand / Manufacturer' }}
                             </label>
                             <input type="text" name="brand" value="{{ old('brand', $product->brand) }}" 
-                                   placeholder="@if($targetVertical === 'food') e.g. Royal Awadhi Kitchen @elseif($targetVertical === 'services') e.g. Urban Expert Care @elseif($targetVertical === 'used') e.g. Apple, Sony, Dell @else e.g. Heritage Handloom, Festive 2026 @endif" 
+                                   placeholder="{{ $sec['brand_placeholder'] ?? 'e.g. Brand, Builder, or Studio' }}" 
                                    class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm py-2.5 px-3">
                         </div>
                     </div>
@@ -680,7 +675,7 @@
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">Base Selling Price (₹) *</label>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">{{ $sec['price_label'] ?? 'Base Selling Price' }} (₹) *</label>
                                 <input type="number" step="0.01" min="0" name="base_price" x-model="basePrice" required class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm font-bold text-green-600">
                             </div>
                             <div>
@@ -690,7 +685,7 @@
                         </div>
                         
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Base Inventory (If no variants) *</label>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">{{ $sec['stock_label'] ?? 'Base Available Quantity' }} *</label>
                             <input type="number" min="0" name="total_stock" value="{{ old('total_stock', 10) }}" required class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
                         </div>
                         

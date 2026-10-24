@@ -65,7 +65,7 @@
                     <img src="{{ asset('images/icon.svg') }}" alt="K71" class="w-10 h-10 rounded-xl shadow-lg border border-white/15">
                     <div>
                         <span class="block text-base font-bold text-white tracking-tight leading-none font-display">
-                            MarbleMandi<span class="text-cyan-400 text-xs font-mono ml-1">ADMIN</span>
+                            K71<span class="text-indigo-400 text-xs font-mono ml-1">ADMIN</span>
                         </span>
                         <div class="flex items-center gap-1.5 mt-1">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -211,7 +211,7 @@
                         <span>{{ $title }}</span>
                     </h1>
                     <div class="flex items-center gap-2 text-xs text-slate-400">
-                        <span>MarbleMandi Liquid Core</span>
+                        <span>K71 Platform Core</span>
                         <span>•</span>
                         <span class="flex items-center gap-1 text-emerald-400 font-medium">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
