@@ -430,6 +430,7 @@ $tasks = [
     'Seed Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]],
     'Seed Verified Production Platform Catalog (Stores, Dishes, Services, Shorts, RFQ)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'MasterProductionPlatformSeeder', '--force' => true]],
     'Seed K71 Food Dedicated Platform (8 Restaurants, Cloud Kitchens & Menus)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'FoodPlatformSeeder', '--force' => true]],
+    'Seed K71 Used Dedicated Platform (Cars, Mobiles, Electronics, Furniture, Appliances)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'RealUsedMarketplaceSeeder', '--force' => true]],
     'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 

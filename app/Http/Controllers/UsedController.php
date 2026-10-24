@@ -178,7 +178,12 @@ class UsedController extends Controller
     public function show(string $slug): View
     {
         $product = Product::with(['images', 'category', 'vendor'])
-            ->where('vertical', 'used')
+            ->where(function ($q) {
+                $q->where('vertical', 'used')
+                  ->orWhereHas('category', function ($cq) {
+                      $cq->where('vertical', 'used');
+                  });
+            })
             ->where('slug', $slug)
             ->firstOrFail();
 
