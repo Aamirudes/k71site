@@ -26,6 +26,7 @@ class UsedController extends Controller
         $negotiableOnly = $request->boolean('negotiable');
         $showSold = $request->boolean('include_sold');
         $openAdSlug = $request->query('ad');
+        $sort = $request->query('sort', 'newest');
 
         // Fetch active used categories
         $usedCategories = Category::where('vertical', 'used')
@@ -78,7 +79,7 @@ class UsedController extends Controller
 
         if ($selectedCategory && $selectedCategory !== 'all') {
             $query->where(function ($q) use ($selectedCategory) {
-                $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', "%{$selectedCategory}%"))
+                $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', "%{$selectedCategory}%")->orWhere('name', 'like', "%{$selectedCategory}%"))
                   ->orWhere('title', 'like', "%{$selectedCategory}%")
                   ->orWhere('brand', 'like', "%{$selectedCategory}%");
             });
@@ -111,7 +112,16 @@ class UsedController extends Controller
             $query->where('is_negotiable', true);
         }
 
-        $items = $query->latest()->paginate(24)->withQueryString();
+        // Sorting
+        if ($sort === 'price_low') {
+            $query->orderBy('base_price', 'asc');
+        } elseif ($sort === 'price_high') {
+            $query->orderBy('base_price', 'desc');
+        } else {
+            $query->latest();
+        }
+
+        $items = $query->paginate(24)->withQueryString();
 
         // Recommended / Featured AI Picks (Top 6)
         $recommendedItems = Product::with(['images', 'vendor'])
@@ -126,11 +136,29 @@ class UsedController extends Controller
             $recommendedItems = $items->take(6);
         }
 
+        // User's own posted ads
+        $myAds = collect();
+        if (auth()->check()) {
+            $user = auth()->user();
+            $vendorId = $user->vendor?->id;
+            $myAds = Product::with(['images', 'category'])
+                ->where('vertical', 'used')
+                ->where(function ($q) use ($user, $vendorId) {
+                    if ($vendorId) {
+                        $q->where('vendor_id', $vendorId);
+                    }
+                    $q->orWhere('custom_fields->user_id', $user->id);
+                })
+                ->latest()
+                ->get();
+        }
+
         return view('used.index', compact(
             'usedCategories',
             'availableCities',
             'items',
             'recommendedItems',
+            'myAds',
             'search',
             'selectedCategory',
             'condition',
@@ -139,7 +167,8 @@ class UsedController extends Controller
             'maxPrice',
             'negotiableOnly',
             'showSold',
-            'openAdSlug'
+            'openAdSlug',
+            'sort'
         ));
     }
 
@@ -157,9 +186,20 @@ class UsedController extends Controller
             ->where('vertical', 'used')
             ->where('status', 'active')
             ->where('id', '!=', $product->id)
+            ->where('category_id', $product->category_id)
             ->latest()
             ->take(4)
             ->get();
+
+        if ($similarItems->isEmpty()) {
+            $similarItems = Product::with(['images', 'vendor'])
+                ->where('vertical', 'used')
+                ->where('status', 'active')
+                ->where('id', '!=', $product->id)
+                ->latest()
+                ->take(4)
+                ->get();
+        }
 
         return view('used.show', compact('product', 'similarItems'));
     }
@@ -178,19 +218,25 @@ class UsedController extends Controller
             'phone' => 'required|string|max:20',
             'description' => 'required|string|max:3000',
             'condition' => 'nullable|string|max:50',
-            'image_url' => 'nullable|url',
+            'image_url' => 'nullable|string',
+            'image' => 'nullable|image|max:8192',
         ]);
 
         // Find or create category
         $category = Category::where('vertical', 'used')
-            ->where('name', 'like', "%{$validated['category']}%")
+            ->where(function($q) use ($validated) {
+                $q->where('name', 'like', "%{$validated['category']}%")
+                  ->orWhere('slug', 'like', "%" . Str::slug($validated['category']) . "%");
+            })
             ->first() ?: Category::where('vertical', 'used')->first();
 
         // Default or active vendor
-        $vendor = Vendor::where('vendor_type', 'used')->first() ?: Vendor::first();
+        $vendor = auth()->user()?->vendor ?: (Vendor::where('vendor_type', 'used')->first() ?: Vendor::first());
+        $userId = auth()->id();
 
         $slug = Str::slug($validated['title']) . '-' . random_int(1000, 9999);
         $adId = (string) random_int(1857000000, 1857999999);
+        $cond = $validated['condition'] ?? 'Good Condition';
 
         $product = Product::create([
             'vendor_id' => $vendor->id,
@@ -201,7 +247,7 @@ class UsedController extends Controller
             'slug' => $slug,
             'description' => $validated['description'],
             'short_description' => Str::limit($validated['description'], 120),
-            'brand' => $validated['brand'] ?? 'Unbranded',
+            'brand' => $validated['brand'] ?? 'Standard',
             'base_price' => (int) ($validated['price'] * 100),
             'compare_at_price' => (int) ($validated['price'] * 1.25 * 100),
             'gst_rate' => 0,
@@ -214,21 +260,31 @@ class UsedController extends Controller
             'published_at' => now(),
             'custom_fields' => [
                 'ad_id' => $adId,
+                'user_id' => $userId,
                 'badge' => 'FEATURED',
                 'deal_label' => 'Fair Deal',
                 'location' => $validated['city'],
                 'contact_phone' => $validated['phone'],
+                'condition' => $cond,
                 'views_past_hour' => 1,
                 'specs' => [
                     'Type' => $validated['category'],
                     'Brand' => $validated['brand'] ?? 'Standard',
-                    'Condition' => $validated['condition'] ?? 'Good Condition',
+                    'Condition' => $cond,
                     'Posted Location' => $validated['city'],
                 ],
             ],
         ]);
 
-        $imgUrl = $validated['image_url'] ?: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+        // Photo handling: file upload or URL
+        $imgUrl = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $storedPath = $request->file('image')->store('products/used', 'public');
+            $imgUrl = asset('storage/' . $storedPath);
+        } elseif (!empty($validated['image_url'])) {
+            $imgUrl = $validated['image_url'];
+        }
+
         ProductImage::create([
             'product_id' => $product->id,
             'path' => $imgUrl,
@@ -245,7 +301,50 @@ class UsedController extends Controller
             ]);
         }
 
-        return redirect()->route('used.index', ['ad' => $product->slug])
+        return redirect()->route('used.show', $product->slug)
             ->with('success', 'Your Ad is LIVE across Kishangarh & India!');
+    }
+
+    /**
+     * Toggle Sold / Available status on an ad.
+     */
+    public function toggleSold(Request $request, Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to modify this listing.');
+        }
+
+        $product->is_sold = !$product->is_sold;
+        $product->save();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'is_sold' => $product->is_sold]);
+        }
+
+        return back()->with('success', $product->is_sold ? 'Ad marked as SOLD.' : 'Ad re-activated as ACTIVE.');
+    }
+
+    /**
+     * Delete an ad owned by the user.
+     */
+    public function deleteAd(Request $request, Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to delete this listing.');
+        }
+
+        $product->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->route('used.index')->with('success', 'Your ad has been removed.');
     }
 }

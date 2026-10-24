@@ -90,6 +90,8 @@ Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middle
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
 Route::post('/used/post-ad', [\App\Http\Controllers\UsedController::class, 'storeAd'])->name('used.post-ad');
+Route::post('/used/ad/{product}/toggle-sold', [\App\Http\Controllers\UsedController::class, 'toggleSold'])->middleware('auth')->name('used.toggle-sold');
+Route::delete('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'deleteAd'])->middleware('auth')->name('used.delete');
 Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('used.show');
 Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
 Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');

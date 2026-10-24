@@ -219,20 +219,20 @@ class Product extends Model
             ];
         }
 
-        // 2. Pre-Owned / Used / Classifieds
+        // 2. Pre-Owned / Used / Classifieds (BLUE & WHITE)
         if ($v === 'used' || str_contains($catSlug, 'used') || str_contains($catSlug, 'pre-loved') || str_contains($catName, 'pre-loved') || str_contains($catName, 'thrift')) {
             return [
                 'key' => 'used',
                 'vertical' => 'used',
                 'label' => 'PRE-OWNED',
-                'icon' => '♻️',
-                'badge_bg' => 'bg-emerald-600 text-white',
-                'border_color' => 'border-emerald-200 dark:border-emerald-950',
-                'card_border_hover' => 'hover:border-emerald-500 hover:shadow-emerald-500/15',
-                'accent_text' => 'text-emerald-600',
-                'btn_bg' => 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25',
-                'btn_pill' => 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200',
-                'pill_bg' => 'bg-emerald-50 text-emerald-700',
+                'icon' => '🔄',
+                'badge_bg' => 'bg-blue-600 text-white',
+                'border_color' => 'border-blue-200 dark:border-blue-900',
+                'card_border_hover' => 'hover:border-blue-600 hover:shadow-blue-500/15',
+                'accent_text' => 'text-blue-600',
+                'btn_bg' => 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25',
+                'btn_pill' => 'bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200',
+                'pill_bg' => 'bg-blue-50 text-blue-700',
             ];
         }
 

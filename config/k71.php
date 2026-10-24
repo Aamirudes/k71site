@@ -52,7 +52,7 @@ return [
             'title' => 'K71 Pre-Loved — Buy & Sell Verified Used Goods with Negotiation',
             'description' => 'Verified pre-owned electronics, fashion, vehicles, and direct buyer-seller offers.',
             'badge' => 'Pre-Loved',
-            'theme_color' => '#059669',
+            'theme_color' => '#1d4ed8',
         ],
         'enquiry' => [
             'key' => 'enquiry',
