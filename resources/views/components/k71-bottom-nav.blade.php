@@ -6,10 +6,11 @@
     $currentRoute = request()->route() ? request()->route()->getName() : '';
 
     // Detect Vertical: Food, Services, Used, Shorts vs Universal Marketplace
-    $isFood = $active === 'food' || request()->is('food*') || str_starts_with($currentHost, 'food.');
-    $isServices = $active === 'services' || request()->is('services*') || str_starts_with($currentHost, 'services.');
-    $isUsed = $active === 'used' || request()->is('used*') || str_starts_with($currentHost, 'used.');
-    $isShorts = $active === 'shorts' || request()->is('shorts*') || str_starts_with($currentHost, 'shorts.');
+    $detectedVertical = $active ?? ($k71_vertical_key ?? 'main');
+    $isFood = $detectedVertical === 'food' || request()->is('food*') || request()->is('s/food*') || str_starts_with($currentHost, 'food.');
+    $isServices = $detectedVertical === 'services' || request()->is('services*') || request()->is('s/services*') || str_starts_with($currentHost, 'services.');
+    $isUsed = $detectedVertical === 'used' || request()->is('used*') || request()->is('s/used*') || str_starts_with($currentHost, 'used.');
+    $isShorts = $detectedVertical === 'shorts' || request()->is('shorts*') || request()->is('s/shorts*') || str_starts_with($currentHost, 'shorts.');
 
     if ($isFood) {
         $panelGroup = 'mobile_food';

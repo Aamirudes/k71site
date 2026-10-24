@@ -559,18 +559,9 @@ class Vendor extends Model
         if ($this->vendor_type) {
             return match($this->vendor_type) {
                 'food' => 'food',
-                'services', 'local_services' => 'services',
+                'services', 'local_services', 'digital_services' => 'services',
                 'used' => 'used',
-                'machinery', 'b2b' => 'enquiry',
-                'real_estate' => 'real_estate',
-                'digital_services' => 'digital_services',
-                'electronics' => 'electronics',
-                'automotive' => 'automotive',
-                'home_living' => 'home_living',
-                'beauty' => 'beauty',
-                'groceries' => 'groceries',
-                'toys_sports' => 'toys_sports',
-                'clothing', 'footwear' => 'clothing',
+                'machinery', 'b2b', 'real_estate' => 'enquiry',
                 default => 'marketplace',
             };
         }

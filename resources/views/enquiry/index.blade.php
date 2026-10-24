@@ -347,9 +347,5 @@
                 </a>
             </div>
         </div>
-
-        <!-- UNIVERSAL DOCK -->
-        <x-k71-bottom-nav />
-
     </div>
 </x-layouts.public>

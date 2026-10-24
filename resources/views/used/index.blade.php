@@ -1179,11 +1179,5 @@
             </div>
         </div>
 
-
-        <!-- ===================================================================
-             13. DYNAMIC DEDICATED PRE-OWNED RECOMMERCE DOCK (Master Admin Managed)
-             =================================================================== -->
-        <x-k71-bottom-nav active="used" />
-
     </div>
 </x-layouts.public>

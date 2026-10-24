@@ -6,86 +6,7 @@
         $dishes = $trendingDishes ?? collect();
     @endphp
 
-    <div x-data="{
-        filterModal: false,
-        activeDishModal: false,
-        cartDrawer: false,
-        cartCount: 0,
-        cartTotal: 0,
-        cartItems: [],
-        selectedDish: null,
-        dishQty: 1,
-        selectedPortion: 'Standard',
-        activeFilterSort: 'recommended',
-        activeDietary: 'all',
-        locationModal: false,
-        selectedLocation: 'Local Delivery Hub (Express)',
-
-        openDishModal(dish) {
-            this.selectedDish = dish;
-            this.dishQty = 1;
-            this.selectedPortion = 'Standard';
-            this.activeDishModal = true;
-        },
-        addToCart(dish) {
-            const target = dish || this.selectedDish;
-            if (!target) return;
-            const price = parseFloat(target.base_price ? target.base_price : (target.price || 199));
-            const qty = this.dishQty || 1;
-
-            // 1. Sync with Laravel Backend Cart
-            fetch('{{ route('cart.add') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    product_id: target.id,
-                    quantity: qty
-                })
-            }).then(r => r.json()).then(data => {
-                if (data.cart_count) {
-                    this.cartCount = data.cart_count;
-                }
-            }).catch(e => console.error('Cart sync error:', e));
-
-            // 2. Local reactive state for instant drawer feedback
-            const existing = this.cartItems.find(i => i.id === target.id);
-            if (existing) {
-                existing.qty += qty;
-            } else {
-                this.cartItems.push({
-                    id: target.id,
-                    title: target.title,
-                    price: price,
-                    qty: qty,
-                    image: target.thumbnail_url || (target.images && target.images[0] ? '/storage/' + target.images[0].path : '')
-                });
-            }
-            this.cartCount += qty;
-            this.cartTotal += (price * qty);
-            this.activeDishModal = false;
-            this.cartDrawer = true;
-        },
-        updateCartQty(id, delta) {
-            const item = this.cartItems.find(i => i.id === id);
-            if (!item) return;
-            item.qty += delta;
-            this.cartCount += delta;
-            this.cartTotal += (item.price * delta);
-            if (item.qty <= 0) {
-                this.cartItems = this.cartItems.filter(i => i.id !== id);
-            }
-        },
-        clearCart() {
-            this.cartItems = [];
-            this.cartCount = 0;
-            this.cartTotal = 0;
-            this.cartDrawer = false;
-        }
-    }" class="min-h-screen bg-[#faf8f5] text-stone-900 pb-24 font-sans">
+    <div x-data="k71FoodApp()" class="min-h-screen bg-[#faf8f5] text-stone-900 pb-24 font-sans">
 
         <!-- 1. FOOD SUBDOMAIN DISTINCT APP HEADER -->
         <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-orange-100/80 shadow-[0_4px_20px_rgba(255,82,0,0.04)]">
@@ -502,8 +423,94 @@
             </div>
         </div>
 
-        <!-- DEDICATED FOOD MOBILE NAVIGATION DOCK -->
-        <x-k71-bottom-nav active="food" />
-
     </div>
+
+    <script>
+    function k71FoodApp() {
+        return {
+            filterModal: false,
+            activeDishModal: false,
+            cartDrawer: false,
+            cartCount: 0,
+            cartTotal: 0,
+            cartItems: [],
+            selectedDish: null,
+            dishQty: 1,
+            selectedPortion: 'Standard',
+            activeFilterSort: 'recommended',
+            activeDietary: 'all',
+            locationModal: false,
+            selectedLocation: 'Local Delivery Hub (Express)',
+
+            openDishModal(dish) {
+                this.selectedDish = dish;
+                this.dishQty = 1;
+                this.selectedPortion = 'Standard';
+                this.activeDishModal = true;
+            },
+            addToCart(dish) {
+                const target = dish || this.selectedDish;
+                if (!target) return;
+                const price = parseFloat(target.base_price ? target.base_price : (target.price || 199));
+                const qty = this.dishQty || 1;
+
+                // 1. Sync with Laravel Backend Cart
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                fetch('{{ route('cart.add') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({
+                        product_id: target.id,
+                        quantity: qty
+                    })
+                }).then(r => r.json()).then(data => {
+                    if (data.cart_count) {
+                        this.cartCount = data.cart_count;
+                    }
+                    if (window.showToast) {
+                        window.showToast(target.title + ' added to cart!');
+                    }
+                }).catch(e => console.error('Cart sync error:', e));
+
+                // 2. Local reactive state for instant drawer feedback
+                const existing = this.cartItems.find(i => i.id === target.id);
+                if (existing) {
+                    existing.qty += qty;
+                } else {
+                    this.cartItems.push({
+                        id: target.id,
+                        title: target.title,
+                        price: price,
+                        qty: qty,
+                        image: target.thumbnail_url || (target.images && target.images[0] ? '/storage/' + target.images[0].path : '')
+                    });
+                }
+                this.cartCount += qty;
+                this.cartTotal += (price * qty);
+                this.activeDishModal = false;
+                this.cartDrawer = true;
+            },
+            updateCartQty(id, delta) {
+                const item = this.cartItems.find(i => i.id === id);
+                if (!item) return;
+                item.qty += delta;
+                this.cartCount += delta;
+                this.cartTotal += (item.price * delta);
+                if (item.qty <= 0) {
+                    this.cartItems = this.cartItems.filter(i => i.id !== id);
+                }
+            },
+            clearCart() {
+                this.cartItems = [];
+                this.cartCount = 0;
+                this.cartTotal = 0;
+                this.cartDrawer = false;
+            }
+        };
+    }
+    </script>
 </x-layouts.public>

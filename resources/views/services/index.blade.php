@@ -2,46 +2,7 @@
     title="Top-Rated Home & Professional Services — K71 Services"
     metaDescription="Book verified home cleaning, car repair, plumbing, painting, electricians, and appliance repair on K71 Services. Guaranteed work, background-checked pros, and instant time-slot booking."
 >
-    <div x-data="{
-        activeTab: 'services', // 'services', 'bookings'
-        bookingModal: false,
-        activeService: null,
-        selectedDate: 'Tomorrow, Oct 21',
-        selectedSlot: '10:00 AM - 12:00 PM',
-        bookingSuccess: false,
-        bookingsTab: 'upcoming', // 'upcoming', 'completed'
-
-        openBooking(svc) {
-            this.activeService = svc;
-            this.bookingSuccess = false;
-            this.bookingModal = true;
-        },
-        confirmBooking() {
-            if (!this.activeService) return;
-            const targetId = this.activeService.id;
-            
-            fetch('{{ route('cart.add') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    product_id: targetId,
-                    quantity: 1
-                })
-            }).then(r => r.json()).then(data => {
-                if (data.success !== false) {
-                    window.location.href = '{{ route('cart.index') }}';
-                } else {
-                    window.location.href = '/product/' + targetId;
-                }
-            }).catch(e => {
-                window.location.href = '/product/' + targetId;
-            });
-        }
-    }" class="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors duration-300 pb-16">
+    <div x-data="k71ServicesApp()" class="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors duration-300 pb-16">
 
         <!-- TOP BAR: LOCATION & TABS (Image 2 Style) -->
         <div class="mb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-white dark:bg-zinc-900 rounded-3xl border border-purple-100 dark:border-zinc-800 shadow-xs">
@@ -459,8 +420,51 @@
             </div>
         </div>
 
-        <!-- DEDICATED SERVICES MOBILE NAVIGATION DOCK -->
-        <x-k71-bottom-nav active="services" />
-
     </div>
+
+    <script>
+    function k71ServicesApp() {
+        return {
+            activeTab: 'services', // 'services', 'bookings'
+            bookingModal: false,
+            activeService: null,
+            selectedDate: 'Tomorrow, Oct 25',
+            selectedSlot: '10:00 AM - 12:00 PM',
+            bookingSuccess: false,
+            bookingsTab: 'upcoming', // 'upcoming', 'completed'
+
+            openBooking(svc) {
+                this.activeService = svc;
+                this.bookingSuccess = false;
+                this.bookingModal = true;
+            },
+            confirmBooking() {
+                if (!this.activeService) return;
+                const targetId = this.activeService.id;
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                
+                fetch('{{ route('cart.add') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify({
+                        product_id: targetId,
+                        quantity: 1
+                    })
+                }).then(r => r.json()).then(data => {
+                    if (data.success !== false) {
+                        window.location.href = '{{ route('cart.index') }}';
+                    } else {
+                        window.location.href = '/product/' + targetId;
+                    }
+                }).catch(e => {
+                    window.location.href = '/product/' + targetId;
+                });
+            }
+        };
+    }
+    </script>
 </x-layouts.public>

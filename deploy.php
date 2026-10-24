@@ -423,11 +423,12 @@ try {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
-// 10. Run Migrations, Seeders & Clean Database
+// 10. Run Migrations, Purge Old Mock Data, Seed Master Production Catalog & Clear Caches
 $tasks = [
     'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
-    'Seed Categories & Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--force' => true]],
-    'Purge All Dummy Vendors & Test Products' => ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]],
+    'Purge All Stale / Mock Dummy Data' => ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]],
+    'Seed Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]],
+    'Seed Verified Production Platform Catalog (Stores, Dishes, Services, Shorts, RFQ)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'MasterProductionPlatformSeeder', '--force' => true]],
     'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
 ];
 
@@ -441,6 +442,12 @@ foreach ($tasks as $label => $task) {
     }
     echo "</div>";
 }
+
+// Clear all navigation cache explicitly
+try {
+    \App\Models\NavigationItem::clearAllNavigationCache();
+    echo "<div class='step'><div class='step-title'>🧭 Navigation Cache Cleared:</div><pre class='success'>All 6 vertical mobile navigation panel caches cleared.</pre></div>";
+} catch (\Throwable $e) {}
 
 // 11. Enforce Master Administrator Credentials
 echo "<div class='step'><div class='step-title'>👤 Enforcing Master Administrator Account:</div>";

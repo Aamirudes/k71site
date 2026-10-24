@@ -76,7 +76,7 @@ class MasterProductionPlatformSeeder extends Seeder
         // 3. Define 9 Production Vendors
         $vendorsData = [
             [
-                'email' => 'makrana@marblemandi.org',
+                'email' => 'makrana@k71.in',
                 'name' => 'Haji Abdul Rehman',
                 'username' => 'makranamarble',
                 'slug' => 'royal-makrana-marble',
@@ -96,7 +96,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'stonecraft@marblemandi.org',
+                'email' => 'stonecraft@k71.in',
                 'name' => 'Rameshwar Sharma',
                 'username' => 'stonecraftjalis',
                 'slug' => 'stonecraft-architecture',
@@ -116,7 +116,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'kirana@marblemandi.org',
+                'email' => 'kirana@k71.in',
                 'name' => 'Vijay Bansal',
                 'username' => 'bansalkirana',
                 'slug' => 'bansal-organic-kirana',
@@ -136,7 +136,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'kitchen@marblemandi.org',
+                'email' => 'kitchen@k71.in',
                 'name' => 'Chef Farhan Qureshi',
                 'username' => 'farhanqureshi',
                 'slug' => 'nawabi-dastarkhwan',
@@ -156,7 +156,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'kavita@marblemandi.org',
+                'email' => 'kavita@k71.in',
                 'name' => 'Kavita Mehta',
                 'username' => 'kavitamehta',
                 'slug' => 'kavita-couture',
@@ -176,7 +176,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'footwear@marblemandi.org',
+                'email' => 'footwear@k71.in',
                 'name' => 'Anil Patil',
                 'username' => 'anilpatil',
                 'slug' => 'royal-footwear',
@@ -196,7 +196,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'tools@marblemandi.org',
+                'email' => 'tools@k71.in',
                 'name' => 'Bhavesh Patel',
                 'username' => 'bhaveshtools',
                 'slug' => 'apex-power-tools',
@@ -216,7 +216,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'polishing@marblemandi.org',
+                'email' => 'polishing@k71.in',
                 'name' => 'Sanjay Verma',
                 'username' => 'sanjayverma',
                 'slug' => 'diamond-gloss-polishing',
@@ -236,7 +236,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'banner' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
             ],
             [
-                'email' => 'horology@marblemandi.org',
+                'email' => 'horology@k71.in',
                 'name' => 'Vikram Singhania',
                 'username' => 'vikramhorology',
                 'slug' => 'heritage-timepieces',
@@ -254,6 +254,46 @@ class MasterProductionPlatformSeeder extends Seeder
                 'upi_id' => 'vikram@upi',
                 'logo' => 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=300&q=80',
                 'banner' => 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=1600&q=80',
+            ],
+            [
+                'email' => 'realty@k71.in',
+                'name' => 'Surendra Singh Rathore',
+                'username' => 'jaipurrealty',
+                'slug' => 'royal-heritage-realty',
+                'shop_name' => 'Royal Heritage Realty & Assets',
+                'vendor_type' => 'real_estate',
+                'city' => 'Jaipur',
+                'state' => 'Rajasthan',
+                'pincode' => '302015',
+                'address' => 'Tonk Road, Near B2 Bypass, Jaipur',
+                'phone' => '+91 98290 44556',
+                'description' => 'RERA-registered luxury high-rise residences, gated community independent duplex villas, and prime commercial plots across Rajasthan.',
+                'colour_palette' => 'emerald',
+                'layout_preset' => 'editorial',
+                'product_preset' => 'immersive',
+                'upi_id' => 'jaipurrealty@upi',
+                'logo' => 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=300&q=80',
+                'banner' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',
+            ],
+            [
+                'email' => 'auto@k71.in',
+                'name' => 'Manish Kulkarni',
+                'username' => 'speedcraftmotors',
+                'slug' => 'speedcraft-auto-spares',
+                'shop_name' => 'SpeedCraft Automotive & OEM Spares',
+                'vendor_type' => 'automotive',
+                'city' => 'Pune',
+                'state' => 'Maharashtra',
+                'pincode' => '411018',
+                'address' => 'MIDC Industrial Area, Pimpri, Pune',
+                'phone' => '+91 98230 77112',
+                'description' => 'Certified OEM replacement spares, synthetic motor lubricants, ceramic brake systems, and performance tuning accessories for 2-wheelers and 4-wheelers.',
+                'colour_palette' => 'cobalt',
+                'layout_preset' => 'grid',
+                'product_preset' => 'standard',
+                'upi_id' => 'speedcraft@upi',
+                'logo' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=300&q=80',
+                'banner' => 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1600&q=80',
             ],
         ];
 
@@ -352,6 +392,12 @@ class MasterProductionPlatformSeeder extends Seeder
 
         $catUsed = Category::where('slug', 'pre-owned-watches')->orWhere('slug', 'pre-loved-used-goods-thrift')->first()
             ?? Category::firstOrCreate(['slug' => 'vintage-watches-collectibles'], ['name' => 'Vintage Watches & Horology', 'is_active' => true]);
+
+        $catRealEstate = Category::where('slug', 'like', '%residential%')->orWhere('slug', 'like', '%real-estate%')->first()
+            ?? Category::firstOrCreate(['slug' => 'luxury-residential-properties'], ['name' => 'Residential Real Estate & Villas', 'vertical' => 'enquiry', 'is_active' => true]);
+
+        $catAuto = Category::where('slug', 'like', '%automotive%')->orWhere('slug', 'like', '%auto%')->first()
+            ?? Category::firstOrCreate(['slug' => 'automotive-spares-parts'], ['name' => 'Automotive Spares & Fluids', 'vertical' => 'marketplace', 'is_active' => true]);
 
         // 5. Products Definition (Rich, Alive, Diverse)
         $productsData = [
@@ -840,6 +886,66 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_negotiable' => true,
                 'images' => [
                     'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80',
+                ],
+            ],
+
+            // --- REAL ESTATE ASSETS & PROPERTIES ---
+            [
+                'vendor_slug' => 'royal-heritage-realty',
+                'category_id' => $catRealEstate->id,
+                'slug' => '3-bhk-luxury-gated-high-rise-jaipur',
+                'title' => '3 BHK Luxury Gated High-Rise Apartment (Vastu Compliant)',
+                'description' => 'Sunlit East-facing 3 BHK luxury apartment on 8th floor with wrap-around balconies, modular German kitchen, clubhouse access, swimming pool, and 2 covered car parkings. RERA approved project.',
+                'base_price' => 850000000, // ₹85,00,000 in paise
+                'compare_at_price' => 920000000,
+                'gst_rate' => 5,
+                'hsn_code' => '997211',
+                'sku' => 'PROP-3BHK-801',
+                'brand' => 'DLF Regal Gardens / Godrej',
+                'vertical' => 'enquiry',
+                'listing_type' => 'enquiry',
+                'total_stock' => 4,
+                'is_featured' => true,
+                'custom_fields' => [
+                    'Carpet Area' => '1,650 Sq.Ft (Super Built-up 2,100 Sq.Ft)',
+                    'Configuration' => '3 Bedrooms + 3 Bathrooms + 2 Balconies',
+                    'Furnishing Status' => 'Semi-Furnished with Modular Kitchen & Wardrobes',
+                    'Facing & Floor' => 'North-East Vastu Compliant • 8th Floor of 14',
+                    'Possession Status' => 'Ready to Move In (OC & CC Received)',
+                    'RERA Registration No' => 'RAJ/RERA/P/2023/1089',
+                    'Reserved Parking' => '2 Covered Basement Slots',
+                ],
+                'images' => [
+                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1000&q=80',
+                ],
+            ],
+
+            // --- AUTOMOTIVE OEM SPARES & OILS ---
+            [
+                'vendor_slug' => 'speedcraft-auto-spares',
+                'category_id' => $catAuto->id,
+                'slug' => 'fully-synthetic-5w-40-engine-oil-4l',
+                'title' => 'Fully Synthetic 5W-40 Performance Engine Oil (4 Litres Pack)',
+                'description' => 'Advanced high-viscosity synthetic lubricant with active cleansing agents. Provides superior thermal stability, cold-start protection, and maximizes fuel economy for turbo-petrol and diesel engines.',
+                'base_price' => 249900, // ₹2,499 in paise
+                'compare_at_price' => 320000,
+                'gst_rate' => 18,
+                'hsn_code' => '27101981',
+                'sku' => 'OIL-SYNTH-5W40-4L',
+                'brand' => 'Motul / Castrol Edge',
+                'vertical' => 'marketplace',
+                'listing_type' => 'purchase',
+                'total_stock' => 50,
+                'is_featured' => true,
+                'custom_fields' => [
+                    'Vehicle Compatibility' => 'Universal Multi-Brand (Petrol, Diesel & Turbocharged)',
+                    'Viscosity Grade' => 'SAE 5W-40 API SN/CF',
+                    'Volume' => '4 Litres Sealed Can',
+                    'Warranty' => '100% Genuine Sealed Batch Guarantee',
+                ],
+                'images' => [
+                    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1000&q=80',
                 ],
             ],
         ];
