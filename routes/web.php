@@ -145,6 +145,8 @@ Route::middleware('guest')->group(function () {
 // Vendor Onboarding (Guest or Authenticated Customer)
 Route::get('/sell', [RegisterController::class, 'vendorShow'])->name('vendor.register');
 Route::post('/sell', [RegisterController::class, 'vendorStore']);
+Route::get('/vendor/register', [RegisterController::class, 'vendorShow']);
+Route::post('/vendor/register', [RegisterController::class, 'vendorStore']);
 
 // OTP Routes (Needs session, but not necessarily fully authenticated)
 Route::get('/verify-otp', [OtpController::class, 'show'])->name('otp.show');
