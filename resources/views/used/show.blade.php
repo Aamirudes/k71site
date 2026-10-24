@@ -7,7 +7,7 @@
         $badge = $custom['badge'] ?? ($product->is_featured ? 'FEATURED' : 'VERIFIED');
         $location = $custom['location'] ?? ($product->vendor->city ?? 'Kishangarh, Rajasthan');
         $adId = $custom['ad_id'] ?? ('1857' . str_pad($product->id, 6, '0', STR_PAD_LEFT));
-        $views = $custom['views_past_hour'] ?? 12;
+        $views = $custom['views_past_hour'] ?? 8;
         $specs = $custom['specs'] ?? [];
         $condition = $custom['condition'] ?? ($specs['Condition'] ?? 'Good Condition');
         $sellerName = $product->vendor->shop_name ?? ($product->vendor->user?->name ?? 'Verified Seller');
@@ -58,7 +58,7 @@
             if (navigator.share) {
                 navigator.share({
                     title: '{{ addslashes($product->title) }} on K71 Used',
-                    text: 'Check out this pre-owned {{ addslashes($product->title) }} for ₹{{ number_format($product->base_price / 100) }} on K71 Used Marketplace.',
+                    text: 'Check out this {{ addslashes($product->title) }} for ₹{{ number_format($product->base_price / 100) }} on K71 Used.',
                     url: window.location.href,
                 }).catch(() => {});
             } else {
@@ -66,70 +66,46 @@
                 alert('Listing link copied to clipboard!');
             }
         }
-    }" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-24 md:pb-12">
+    }" class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 text-slate-900 font-sans selection:bg-blue-600 selection:text-white pb-28 md:pb-12">
 
         <!-- ===================================================================
-             1. BREADCRUMBS & TOP ACTIONS (BLUE & WHITE)
+             1. BREADCRUMBS
              =================================================================== -->
-        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 mb-5 border-b border-blue-100 text-xs font-semibold text-slate-500">
-            <nav class="flex items-center gap-2" aria-label="Breadcrumb">
-                <a href="{{ route('used.index') }}" class="hover:text-blue-600 transition flex items-center gap-1">
-                    <span>←</span>
-                    <span>Back to Classifieds</span>
+        <nav class="flex items-center gap-2 pb-3 mb-4 border-b border-slate-200 text-xs font-semibold text-slate-500 overflow-x-auto no-scrollbar" aria-label="Breadcrumb">
+            <a href="{{ route('used.index') }}" class="hover:text-blue-600 transition flex items-center gap-1 shrink-0">
+                <span>←</span>
+                <span>All Classifieds</span>
+            </a>
+            <span class="text-slate-300">/</span>
+            <a href="{{ route('used.index') }}" class="text-blue-700 hover:underline shrink-0">
+                Used Marketplace
+            </a>
+            @if($product->category)
+                <span class="text-slate-300">/</span>
+                <a href="{{ route('used.index', ['cat' => $product->category->slug]) }}" class="hover:text-blue-600 transition shrink-0">
+                    {{ $product->category->name }}
                 </a>
-                <span class="text-blue-300">/</span>
-                <a href="{{ route('used.index') }}" class="text-blue-700 hover:underline">
-                    Used Marketplace
-                </a>
-                @if($product->category)
-                    <span class="text-blue-300">/</span>
-                    <a href="{{ route('used.index', ['cat' => $product->category->slug]) }}" class="hover:text-blue-600 transition">
-                        {{ $product->category->name }}
-                    </a>
-                @endif
-                <span class="text-blue-300">/</span>
-                <span class="text-slate-800 font-bold truncate max-w-[200px] sm:max-w-xs">{{ $product->title }}</span>
-            </nav>
-
-            <div class="flex items-center gap-2">
-                <!-- Wishlist -->
-                <button type="button" 
-                        @click="toggleWish()" 
-                        class="p-2 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-slate-700 transition flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-4 h-4" :class="isItemWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none stroke-current'" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
-                    </svg>
-                    <span x-text="isItemWishlisted ? 'Saved' : 'Save Ad'"></span>
-                </button>
-
-                <!-- Share -->
-                <button type="button" 
-                        @click="shareListing()" 
-                        class="p-2 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 text-slate-700 transition flex items-center gap-1.5 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                    <span>Share</span>
-                </button>
-            </div>
-        </div>
+            @endif
+            <span class="text-slate-300">/</span>
+            <span class="text-slate-800 font-bold truncate max-w-[180px] sm:max-w-xs">{{ $product->title }}</span>
+        </nav>
 
         <!-- ===================================================================
-             2. MAIN PRODUCT DETAIL LAYOUT: 2-COLUMN (GALLERY + SELLER CARD)
+             2. MAIN 2-COLUMN DETAIL LAYOUT (MOBILE OPTIMIZED ORDER)
              =================================================================== -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
             
-            <!-- Left Column: Gallery, Specs & Description (Cols 7 or 8) -->
-            <div class="lg:col-span-8 space-y-6">
+            <!-- Left Column: Gallery, Specs & Description (Desktop: 7 or 8 cols) -->
+            <div class="lg:col-span-8 space-y-5">
                 
-                <!-- Image Gallery Card -->
-                <div class="bg-white rounded-3xl border border-blue-100 shadow-sm overflow-hidden p-3 sm:p-4">
-                    
-                    <!-- Main Image Display with Zoom/Aspect -->
+                <!-- Image Gallery Box -->
+                <div class="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden p-2.5 sm:p-4">
                     <div class="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center">
                         <img :src="images[activeImageIndex]" 
                              alt="{{ $product->title }}" 
                              class="w-full h-full object-contain select-none">
 
-                        <!-- Badge Top-Left -->
+                        <!-- Badges Top-Left -->
                         <div class="absolute top-3 left-3 flex items-center gap-2 z-10">
                             <span class="px-2.5 py-1 rounded-lg bg-blue-600 text-white font-black text-[10px] uppercase tracking-wider shadow-sm">
                                 👑 {{ $badge }}
@@ -139,36 +115,52 @@
                             </span>
                         </div>
 
+                        <!-- Top-Right Actions: Wishlist + Share -->
+                        <div class="absolute top-3 right-3 flex items-center gap-2 z-10">
+                            <button type="button" 
+                                    @click="toggleWish()" 
+                                    class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-slate-700 hover:text-rose-500 shadow-sm transition cursor-pointer">
+                                <svg class="w-4 h-4" :class="isItemWishlisted ? 'fill-rose-500 text-rose-500' : 'fill-none stroke-current'" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                                </svg>
+                            </button>
+                            <button type="button" 
+                                    @click="shareListing()" 
+                                    class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-slate-700 hover:text-blue-600 shadow-sm transition cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                            </button>
+                        </div>
+
                         <!-- Image Counter Bottom-Right -->
-                        <div class="absolute bottom-3 right-3 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-xs text-white text-xs font-mono font-bold z-10">
+                        <div class="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-xs text-white text-xs font-mono font-bold z-10">
                             <span x-text="(activeImageIndex + 1) + '/' + images.length"></span>
                         </div>
 
-                        <!-- Carousel Prev / Next Controls -->
+                        <!-- Prev / Next Controls -->
                         <template x-if="images.length > 1">
                             <div>
                                 <button type="button" 
                                         @click="activeImageIndex = (activeImageIndex > 0) ? activeImageIndex - 1 : images.length - 1"
-                                        class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition">
+                                        class="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition">
                                     ‹
                                 </button>
                                 <button type="button" 
                                         @click="activeImageIndex = (activeImageIndex < images.length - 1) ? activeImageIndex + 1 : 0"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition">
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition">
                                     ›
                                 </button>
                             </div>
                         </template>
                     </div>
 
-                    <!-- Thumbnails Navigation Strip -->
+                    <!-- Thumbnails Strip -->
                     <template x-if="images.length > 1">
                         <div class="flex items-center gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
                             <template x-for="(thumb, idx) in images" :key="idx">
                                 <button type="button" 
                                         @click="activeImageIndex = idx"
-                                        :class="activeImageIndex === idx ? 'border-blue-600 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-400 opacity-70 hover:opacity-100'"
-                                        class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 bg-slate-100 shrink-0 transition cursor-pointer">
+                                        :class="activeImageIndex === idx ? 'border-blue-600 ring-2 ring-blue-500/20' : 'border-slate-200 opacity-60 hover:opacity-100'"
+                                        class="w-16 h-16 rounded-xl overflow-hidden border-2 bg-slate-100 shrink-0 transition cursor-pointer">
                                     <img :src="thumb" class="w-full h-full object-cover">
                                 </button>
                             </template>
@@ -176,60 +168,102 @@
                     </template>
                 </div>
 
+                <!-- MOBILE-ONLY: Price & Action Box (Appears right after gallery on phones) -->
+                <div class="lg:hidden bg-white rounded-2xl border border-slate-200 p-4 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-2xl font-black text-slate-950">
+                            ₹ {{ number_format($product->base_price / 100) }}
+                        </div>
+                        @if($isNegotiable)
+                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+                                Negotiable
+                            </span>
+                        @endif
+                    </div>
+
+                    <h1 class="text-base font-bold text-slate-900 leading-snug">
+                        {{ $product->title }}
+                    </h1>
+
+                    <div class="text-xs text-slate-500 flex items-center justify-between pt-1 border-t border-slate-100">
+                        <span>📍 {{ $location }}</span>
+                        <span>{{ $product->created_at ? $product->created_at->diffForHumans() : 'Recently' }}</span>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2 pt-2">
+                        <button type="button" 
+                                @click="$dispatch('open-offer-modal', { id: {{ $product->id }}, title: '{{ addslashes($product->title) }}', price: {{ $product->base_price / 100 }}, image: '{{ $primaryImg }}' })"
+                                class="py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-sm">
+                            <span>🤝 Make Offer</span>
+                        </button>
+
+                        <button type="button" 
+                                @click="chatModalOpen = true"
+                                class="py-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200 flex items-center justify-center gap-1.5">
+                            <span>💬 Chat Seller</span>
+                        </button>
+                    </div>
+
+                    <!-- Call Button on mobile -->
+                    <template x-if="!phoneRevealed">
+                        <button type="button" 
+                                @click="phoneRevealed = true"
+                                class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                            <span>📞 Show Phone Number</span>
+                        </button>
+                    </template>
+                    <template x-if="phoneRevealed">
+                        <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs font-bold text-emerald-900">
+                            <span class="font-black text-sm">{{ $sellerPhone }}</span>
+                            <a href="tel:{{ $sellerPhone }}" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-black">Call Now</a>
+                        </div>
+                    </template>
+                </div>
+
                 <!-- Product Specifications Card -->
-                <div class="bg-white rounded-3xl border border-blue-100 shadow-sm p-6 space-y-4">
+                <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h3 class="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                        <h2 class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
                             <span>📋</span>
-                            <span>Item Specifications &amp; Overview</span>
-                        </h3>
+                            <span>Item Overview &amp; Specifications</span>
+                        </h2>
                         <span class="text-xs text-slate-400 font-mono">AD ID: {{ $adId }}</span>
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
-                        <!-- Condition -->
-                        <div class="p-3 rounded-2xl bg-blue-50/60 border border-blue-100">
+                        <div class="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
                             <span class="text-[10px] font-black uppercase text-blue-600 block">Condition</span>
                             <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $condition }}</span>
                         </div>
 
-                        <!-- Brand -->
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-[10px] font-black uppercase text-slate-400 block">Brand / Make</span>
                             <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $product->brand ?? 'Standard' }}</span>
                         </div>
 
-                        <!-- Location -->
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                            <span class="text-[10px] font-black uppercase text-slate-400 block">Inspection Area</span>
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                            <span class="text-[10px] font-black uppercase text-slate-400 block">Location</span>
                             <span class="font-extrabold text-slate-900 text-sm mt-0.5 block truncate">{{ explode(',', $location)[0] }}</span>
                         </div>
 
-                        <!-- Bill & Box Available -->
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-[10px] font-black uppercase text-slate-400 block">Original Bill / Box</span>
                             <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $custom['bill_available'] ?? 'Available' }}</span>
                         </div>
 
-                        <!-- Physical Age -->
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                            <span class="text-[10px] font-black uppercase text-slate-400 block">Approx. Age</span>
-                            <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ isset($custom['age_months']) ? $custom['age_months'] . ' Months' : 'Under 1 Year' }}</span>
-                        </div>
-
-                        <!-- Negotiable -->
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <span class="text-[10px] font-black uppercase text-slate-400 block">Price Flexibility</span>
-                            <span class="font-extrabold text-emerald-700 text-sm mt-0.5 block">{{ $isNegotiable ? 'Negotiable on Table' : 'Fixed Price' }}</span>
+                            <span class="font-extrabold text-emerald-700 text-sm mt-0.5 block">{{ $isNegotiable ? 'Negotiable' : 'Fixed Price' }}</span>
                         </div>
 
-                        <!-- Category-Specific Specs -->
+                        <!-- Specific Attributes -->
                         @if(!empty($specs))
                             @foreach($specs as $specKey => $specVal)
-                                @if(!in_array(strtolower($specKey), ['condition', 'price', 'brand']))
-                                    <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-                                        <span class="text-[10px] font-black uppercase text-slate-400 block">{{ $specKey }}</span>
-                                        <span class="font-extrabold text-slate-900 text-sm mt-0.5 block">{{ $specVal }}</span>
+                                @if(!in_array(strtolower($specKey), ['condition', 'price', 'brand', 'location']))
+                                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                                        <span class="text-[10px] font-black uppercase text-slate-400 block truncate">{{ $specKey }}</span>
+                                        <span class="font-extrabold text-slate-900 text-sm mt-0.5 block truncate">{{ $specVal }}</span>
                                     </div>
                                 @endif
                             @endforeach
@@ -237,48 +271,37 @@
                     </div>
                 </div>
 
-                <!-- Detailed Description Card -->
-                <div class="bg-white rounded-3xl border border-blue-100 shadow-sm p-6 space-y-3">
-                    <h3 class="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <!-- Description Card -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 shadow-xs p-5 sm:p-6 space-y-3">
+                    <h2 class="text-sm sm:text-base font-black text-slate-900 flex items-center gap-2">
                         <span>📝</span>
                         <span>Seller's Description</span>
-                    </h3>
+                    </h2>
                     <div class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
                         {{ $product->description }}
                     </div>
                 </div>
 
-                <!-- Safety Guidelines for Buyer -->
-                <div class="rounded-3xl bg-blue-50/80 border border-blue-200/90 p-5 sm:p-6 space-y-3">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">🛡️</span>
-                        <h4 class="text-sm font-black text-blue-950">Safety Advice for Buyers</h4>
+                <!-- Safety Advice -->
+                <div class="rounded-2xl bg-blue-50/70 border border-blue-200/80 p-5 space-y-2">
+                    <div class="flex items-center gap-2 text-blue-900 font-black text-xs sm:text-sm">
+                        <span>🛡️</span>
+                        <span>Safety Tips for Buyers in Kishangarh &amp; Rajasthan</span>
                     </div>
-                    <ul class="space-y-1.5 text-xs text-slate-700">
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-600 font-bold">•</span>
-                            <span>Meet seller in person at a well-lit, public location (e.g. Kishangarh Bus Stand, Shivaji Nagar).</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-600 font-bold">•</span>
-                            <span>Inspect device serial numbers, battery health, and test working condition before releasing payment.</span>
-                        </li>
-                        <li class="flex items-start gap-2">
-                            <span class="text-blue-600 font-bold">•</span>
-                            <span>Never send advance payments or scan QR codes claiming to give money.</span>
-                        </li>
+                    <ul class="space-y-1 text-xs text-slate-600">
+                        <li>• Meet the seller in a busy public place (e.g. Bus Stand or City Center).</li>
+                        <li>• Physically inspect and test the device or vehicle thoroughly before releasing payment.</li>
+                        <li>• Never transfer advance booking money or scan QR codes claiming to credit your account.</li>
                     </ul>
                 </div>
 
             </div>
 
-            <!-- Right Column: Sticky Pricing, Seller Card & Direct Actions (Cols 4 or 5) -->
-            <div class="lg:col-span-4 space-y-5">
+            <!-- Right Column: Desktop Sticky Price Card & Seller Info (4 or 5 cols) -->
+            <div class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
                 
-                <!-- Main Pricing & Action Card (Sticky on Desktop) -->
-                <div class="bg-white rounded-3xl border border-blue-200 shadow-lg p-5 sm:p-6 space-y-5 lg:sticky lg:top-24">
-                    
-                    <!-- Asking Price & Negotiable tag -->
+                <!-- Desktop Price & Action Card -->
+                <div class="hidden lg:block bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
                     <div>
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-black uppercase tracking-wider text-slate-400">Asking Price</span>
@@ -304,17 +327,15 @@
                         </div>
                     </div>
 
-                    <!-- Direct Action Buttons -->
+                    <!-- Action Buttons -->
                     <div class="space-y-2.5 pt-2 border-t border-slate-100">
-                        <!-- 1. Make an Offer Button (Triggers Global Offer Modal) -->
                         <button type="button" 
                                 @click="$dispatch('open-offer-modal', { id: {{ $product->id }}, title: '{{ addslashes($product->title) }}', price: {{ $product->base_price / 100 }}, image: '{{ $primaryImg }}' })"
-                                class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:brightness-105 text-white text-xs sm:text-sm font-black tracking-wide shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                                class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-black tracking-wide shadow-md shadow-blue-600/25 transition flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                             <span class="text-base">🤝</span>
                             <span>Make an Offer</span>
                         </button>
 
-                        <!-- 2. Chat with Seller -->
                         <button type="button" 
                                 @click="chatModalOpen = true"
                                 class="w-full py-3 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer">
@@ -322,7 +343,7 @@
                             <span>Chat with Seller</span>
                         </button>
 
-                        <!-- 3. Show Seller Contact Phone -->
+                        <!-- Show Contact Phone -->
                         <div>
                             <template x-if="!phoneRevealed">
                                 <button type="button" 
@@ -333,18 +354,17 @@
                             </template>
                             <template x-if="phoneRevealed">
                                 <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs font-bold text-emerald-900">
-                                    <div class="flex items-center gap-2">
-                                        <span>📞</span>
-                                        <a href="tel:{{ $sellerPhone }}" class="text-sm font-black text-emerald-800 hover:underline">{{ $sellerPhone }}</a>
-                                    </div>
+                                    <span class="text-sm font-black">{{ $sellerPhone }}</span>
                                     <a href="tel:{{ $sellerPhone }}" class="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-black">Call Now</a>
                                 </div>
                             </template>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Verified Seller Profile Badge -->
-                    <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <!-- Seller Profile Card -->
+                <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-3">
+                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white font-black text-base flex items-center justify-center shadow-xs">
                                 {{ $sellerInitial }}
@@ -354,25 +374,26 @@
                                     <span>{{ $sellerName }}</span>
                                     <span class="text-blue-600 text-[11px]" title="Verified Seller">✓</span>
                                 </div>
-                                <div class="text-[10px] text-slate-400 font-medium">Member since 2026 • Verified</div>
+                                <div class="text-[10px] text-slate-400 font-medium">Verified Community Seller</div>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[9px] font-black uppercase">
-                                Verified
-                            </span>
-                        </div>
+                        <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[9px] font-black uppercase">
+                            Verified
+                        </span>
                     </div>
 
-                    <!-- Report Listing Trigger -->
-                    <div class="pt-2 text-center">
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span>Member on K71</span>
+                        <span class="font-bold text-slate-800">Since 2025</span>
+                    </div>
+
+                    <div class="pt-1 text-center">
                         <button type="button" 
                                 @click="reportModalOpen = true"
                                 class="text-[11px] font-bold text-slate-400 hover:text-rose-600 transition cursor-pointer">
-                            🚩 Report suspicious listing
+                            🚩 Report suspicious ad
                         </button>
                     </div>
-
                 </div>
 
             </div>
@@ -380,26 +401,26 @@
         </div>
 
         <!-- ===================================================================
-             3. SIMILAR PRODUCTS CAROUSEL / GRID
+             3. SIMILAR PRE-OWNED PRODUCTS
              =================================================================== -->
         @if($similarItems->isNotEmpty())
-            <section class="mt-8 pt-8 border-t border-blue-100">
+            <section class="mt-10 pt-8 border-t border-slate-200">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                        Similar Pre-Owned Listings You Might Like
+                    <h3 class="text-sm sm:text-base font-black text-slate-900">
+                        Similar Pre-Owned Listings
                     </h3>
                     <a href="{{ route('used.index') }}" class="text-xs font-bold text-blue-700 hover:underline">
-                        View All Ads &rarr;
+                        View All Classifieds &rarr;
                     </a>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                     @foreach($similarItems as $sim)
                         @php
                             $simImg = $sim->images->first()?->path ?? 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=400&q=80';
                         @endphp
                         <a href="{{ route('used.show', $sim->slug) }}" class="group bg-white rounded-2xl border border-slate-200/90 hover:border-blue-500 hover:shadow-md transition p-2.5 flex flex-col justify-between">
-                            <div class="aspect-square rounded-xl bg-slate-100 overflow-hidden mb-2">
+                            <div class="aspect-[4/3] rounded-xl bg-slate-100 overflow-hidden mb-2">
                                 <img src="{{ $simImg }}" alt="{{ $sim->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                             </div>
                             <div>
@@ -426,7 +447,7 @@
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
              x-transition>
-            <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4"
+            <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4"
                  @click.outside="chatModalOpen = false">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -481,7 +502,7 @@
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
              x-transition>
-            <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4"
+            <div class="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4"
                  @click.outside="reportModalOpen = false">
                 
                 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -527,29 +548,9 @@
                     <div class="py-6 text-center space-y-2">
                         <div class="text-3xl">✅</div>
                         <h4 class="text-sm font-black text-slate-900">Report Submitted</h4>
-                        <p class="text-xs text-slate-500">Thank you for keeping our community safe. Our moderation team will review this listing within 2 hours.</p>
+                        <p class="text-xs text-slate-500">Thank you for reporting. Our moderation team will inspect this listing promptly.</p>
                     </div>
                 </template>
-            </div>
-        </div>
-
-        <!-- ===================================================================
-             6. MOBILE STICKY ACTION BAR (Fixed at bottom on phones)
-             =================================================================== -->
-        <div class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 flex items-center justify-between gap-3 shadow-2xl">
-            <div class="min-w-0 flex-1">
-                <div class="text-[10px] font-bold text-slate-400 uppercase">Asking Price</div>
-                <div class="text-base font-black text-slate-950 truncate">₹ {{ number_format($product->base_price / 100) }}</div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" 
-                        @click="$dispatch('open-offer-modal', { id: {{ $product->id }}, title: '{{ addslashes($product->title) }}', price: {{ $product->base_price / 100 }}, image: '{{ $primaryImg }}' })"
-                        class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-md shadow-blue-600/30">
-                    🤝 Make Offer
-                </button>
-                <a href="tel:{{ $sellerPhone }}" class="px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold">
-                    📞 Call
-                </a>
             </div>
         </div>
 

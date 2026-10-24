@@ -218,8 +218,10 @@ class UsedController extends Controller
             'phone' => 'required|string|max:20',
             'description' => 'required|string|max:3000',
             'condition' => 'nullable|string|max:50',
+            'photos' => 'nullable|array|max:10',
+            'photos.*' => 'nullable|image|max:12288',
+            'image' => 'nullable|image|max:12288',
             'image_url' => 'nullable|string',
-            'image' => 'nullable|image|max:8192',
         ]);
 
         // Find or create category
@@ -261,7 +263,7 @@ class UsedController extends Controller
             'custom_fields' => [
                 'ad_id' => $adId,
                 'user_id' => $userId,
-                'badge' => 'FEATURED',
+                'badge' => 'VERIFIED',
                 'deal_label' => 'Fair Deal',
                 'location' => $validated['city'],
                 'contact_phone' => $validated['phone'],
@@ -276,21 +278,46 @@ class UsedController extends Controller
             ],
         ]);
 
-        // Photo handling: file upload or URL
-        $imgUrl = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
-        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        // Multi-photo file upload handling
+        $savedImages = [];
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $idx => $photoFile) {
+                if ($photoFile && $photoFile->isValid()) {
+                    $storedPath = $photoFile->store('products/used', 'public');
+                    $savedImages[] = asset('storage/' . $storedPath);
+                }
+            }
+        } elseif ($request->hasFile('image') && $request->file('image')->isValid()) {
             $storedPath = $request->file('image')->store('products/used', 'public');
-            $imgUrl = asset('storage/' . $storedPath);
+            $savedImages[] = asset('storage/' . $storedPath);
         } elseif (!empty($validated['image_url'])) {
-            $imgUrl = $validated['image_url'];
+            $savedImages[] = $validated['image_url'];
         }
 
-        ProductImage::create([
-            'product_id' => $product->id,
-            'path' => $imgUrl,
-            'alt_text' => $product->title,
-            'sort_order' => 0,
-        ]);
+        // Fallback default image per category if no photo was uploaded
+        if (empty($savedImages)) {
+            $catLower = strtolower($validated['category'] . ' ' . $validated['title']);
+            if (str_contains($catLower, 'phone') || str_contains($catLower, 'mobile')) {
+                $savedImages[] = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80';
+            } elseif (str_contains($catLower, 'car') || str_contains($catLower, 'vehicle')) {
+                $savedImages[] = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
+            } elseif (str_contains($catLower, 'bike') || str_contains($catLower, 'scooter') || str_contains($catLower, 'bullet')) {
+                $savedImages[] = 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80';
+            } elseif (str_contains($catLower, 'laptop') || str_contains($catLower, 'electronic')) {
+                $savedImages[] = 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80';
+            } else {
+                $savedImages[] = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
+            }
+        }
+
+        foreach ($savedImages as $sortOrder => $imgUrl) {
+            ProductImage::create([
+                'product_id' => $product->id,
+                'path' => $imgUrl,
+                'alt_text' => $product->title,
+                'sort_order' => $sortOrder,
+            ]);
+        }
 
         if ($request->wantsJson()) {
             return response()->json([

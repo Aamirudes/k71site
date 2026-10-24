@@ -50,81 +50,69 @@
     </script>
 </head>
 
-<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen selection:bg-blue-600 selection:text-white pb-20 md:pb-0"
+<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen selection:bg-blue-600 selection:text-white"
       x-data="k71UsedGlobalState()"
       @open-offer-modal.window="openOfferModal($event.detail)"
       @open-post-ad.window="postAdModalOpen = true"
-      @keydown.escape.window="locationModalOpen = false; offerModalOpen = false; postAdModalOpen = false; chatDrawerOpen = false;">
+      @keydown.escape.window="locationModalOpen = false; offerModalOpen = false; postAdModalOpen = false;">
 
-    <!-- 1. TOP HEADER & NAVIGATION (BLUE AND WHITE) -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-xs transition-all">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- ===================================================================
+         1. TOP HEADER & NAVIGATION (CLEAN OLX-INSPIRED BLUE & WHITE)
+         =================================================================== -->
+    <header class="sticky top-0 z-40 bg-white border-b border-slate-200/90 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            
+            <!-- Desktop & Mobile Header Row -->
             <div class="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
                 
-                <!-- Left: Used Brand Mark + Location Picker -->
-                <div class="flex items-center gap-3 sm:gap-6 min-w-0">
+                <!-- Left: Logo & Location Capsule -->
+                <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
                     <!-- Brand Mark -->
-                    <a href="{{ route('used.index') }}" class="flex items-center gap-2.5 group shrink-0" aria-label="K71 Used Home">
-                        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 p-0.5 shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform flex items-center justify-center">
-                            <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-white">
-                                <span class="text-xl sm:text-2xl">🔄</span>
-                            </div>
+                    <a href="{{ route('used.index') }}" class="flex items-center gap-2 group shrink-0" aria-label="K71 Used Home">
+                        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-lg sm:text-xl shadow-md shadow-blue-600/25 group-hover:bg-blue-700 transition">
+                            🔄
                         </div>
                         <div class="flex flex-col leading-none">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-900 group-hover:text-blue-700 transition-colors">
-                                    K71<span class="text-blue-600">USED</span>
-                                </span>
-                            </div>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-blue-700 font-mono mt-0.5">
+                            <span class="text-xl sm:text-2xl font-black tracking-tight text-slate-950">
+                                K71<span class="text-blue-600">USED</span>
+                            </span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-blue-700 font-mono hidden sm:block">
                                 PRE-OWNED MARKETPLACE
                             </span>
                         </div>
                     </a>
 
-                    <!-- Subdomain assertion badge for test parity -->
+                    <!-- Test parity assertion badge -->
                     <span class="hidden" aria-hidden="true">used.k71.in</span>
 
-                    <!-- Location Selector Capsule (Desktop) -->
-                    <div class="hidden md:flex items-center">
-                        <button type="button" 
-                                @click="locationModalOpen = true"
-                                class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50/80 hover:bg-blue-100 border border-blue-200 text-left transition-colors cursor-pointer group">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                            <div class="min-w-0 max-w-[200px] lg:max-w-[240px]">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-blue-700 flex items-center gap-1">
-                                    <span>Location</span>
-                                    <svg class="w-3 h-3 text-blue-700 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                                </div>
-                                <div class="text-xs font-bold text-slate-800 truncate" x-text="currentLocation"></div>
-                            </div>
-                        </button>
-                    </div>
+                    <!-- Location Selector Capsule -->
+                    <button type="button" 
+                            @click="locationModalOpen = true"
+                            class="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-blue-50/90 hover:bg-blue-100/80 border border-blue-200 text-xs font-bold text-slate-800 transition cursor-pointer max-w-[130px] sm:max-w-[190px] truncate"
+                            title="Change City">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="truncate" x-text="currentLocation">Kishangarh, Rajasthan</span>
+                        <svg class="w-3 h-3 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
                 </div>
 
-                <!-- Center: Search Bar with Category Dropdown -->
-                <div class="hidden lg:flex flex-1 max-w-lg xl:max-w-xl mx-2">
-                    <form action="{{ route('used.index') }}" method="GET" class="w-full flex items-center bg-slate-50 border border-slate-300 rounded-full focus-within:bg-white focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all overflow-hidden p-1 shadow-xs">
-                        <select name="cat" class="bg-transparent text-xs font-bold text-slate-700 px-3 py-1.5 border-r border-slate-200 focus:outline-none shrink-0 cursor-pointer">
-                            <option value="">All Categories</option>
-                            <option value="mobiles" {{ request('cat') === 'mobiles' ? 'selected' : '' }}>📱 Mobiles</option>
-                            <option value="electronics" {{ request('cat') === 'electronics' ? 'selected' : '' }}>💻 Electronics</option>
-                            <option value="vehicles" {{ request('cat') === 'vehicles' ? 'selected' : '' }}>🚗 Vehicles</option>
-                            <option value="furniture" {{ request('cat') === 'furniture' ? 'selected' : '' }}>🛋️ Furniture</option>
-                        </select>
-                        <div class="relative flex-1">
-                            <input type="text" name="search" 
-                                   placeholder="Search iPhone, Royal Enfield, Sofa, Laptop..." 
-                                   value="{{ request('search') }}"
-                                   class="w-full px-3 py-1.5 text-xs sm:text-sm text-slate-900 bg-transparent placeholder:text-slate-400 focus:outline-none font-medium">
+                <!-- Center: Desktop Search Input -->
+                <div class="hidden md:flex flex-1 max-w-xl mx-2">
+                    <form action="{{ route('used.index') }}" method="GET" class="w-full flex items-center bg-slate-50 border border-slate-300 rounded-full focus-within:bg-white focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all p-1">
+                        <div class="pl-3 text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
+                        <input type="text" name="search" 
+                               placeholder="Find Cars, Mobile Phones, Laptops, Furniture..." 
+                               value="{{ request('search') }}"
+                               class="w-full px-3 py-1.5 text-xs sm:text-sm text-slate-900 bg-transparent placeholder:text-slate-400 focus:outline-none font-medium">
                         <button type="submit" class="px-5 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black tracking-wide transition shadow-sm cursor-pointer shrink-0">
                             Search
                         </button>
                     </form>
                 </div>
 
-                <!-- Right: Favorites, Chats, Sell Button & Account -->
+                <!-- Right: Favorites, Chats, User & "+ SELL" Button -->
                 <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                     
                     <!-- Saved Favorites Icon -->
@@ -135,9 +123,9 @@
                         <span x-show="wishlist.length > 0" x-text="wishlist.length" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center"></span>
                     </a>
 
-                    <!-- Messages / Chats Link -->
+                    <!-- Chats Link -->
                     <a href="{{ route('messages.index') }}" 
-                       class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 transition">
+                       class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 transition">
                         <span>💬</span>
                         <span>Chats</span>
                     </a>
@@ -147,15 +135,14 @@
                         <div class="relative" x-data="{ userMenu: false }">
                             <button @click="userMenu = !userMenu" 
                                     type="button" 
-                                    class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer">
+                                    class="flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition cursor-pointer">
                                 <div class="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                                    {{ strtoupper(substr(auth()->user()->name ?? auth()->user()->first_name ?? 'U', 0, 1)) }}
+                                    {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
                                 </div>
-                                <span class="hidden md:inline text-xs font-bold max-w-[100px] truncate">{{ auth()->user()->first_name ?? auth()->user()->name }}</span>
+                                <span class="hidden md:inline text-xs font-bold max-w-[90px] truncate">{{ auth()->user()->first_name ?? auth()->user()->name }}</span>
                                 <svg class="w-3 h-3 text-slate-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </button>
 
-                            <!-- Dropdown -->
                             <div x-show="userMenu" 
                                  x-cloak
                                  @click.outside="userMenu = false"
@@ -172,10 +159,6 @@
                                     <span>💰</span>
                                     <span>Received Offers</span>
                                 </a>
-                                <a href="{{ route('messages.index') }}" class="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition">
-                                    <span>💬</span>
-                                    <span>Buyer Messages</span>
-                                </a>
                                 <div class="border-t border-slate-100 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                                     @csrf
@@ -186,66 +169,70 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition">
+                        <a href="{{ route('login') }}" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition">
                             Sign In
                         </a>
                     @endauth
 
-                    <!-- Prominent SELL NOW Action Button -->
+                    <!-- Prominent "+ SELL" Button (OLX Style) -->
                     <button type="button" 
                             @click="postAdModalOpen = true"
-                            class="relative px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:brightness-105 text-white text-xs font-black tracking-wide transition shadow-md shadow-blue-600/25 flex items-center gap-2 cursor-pointer active:scale-95">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                        <span>SELL NOW</span>
+                            class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 hover:brightness-110 text-white text-xs sm:text-sm font-black tracking-wider transition shadow-md shadow-blue-600/30 flex items-center gap-1.5 cursor-pointer active:scale-95">
+                        <span class="text-base font-black leading-none">+</span>
+                        <span>SELL</span>
                     </button>
 
                 </div>
             </div>
 
-            <!-- Mobile Location & Action Strip -->
-            <div class="md:hidden flex items-center justify-between py-2 border-t border-blue-100 text-xs">
-                <button type="button" 
-                        @click="locationModalOpen = true" 
-                        class="flex items-center gap-1.5 text-slate-800 font-bold truncate max-w-[240px] cursor-pointer">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span class="text-[10px] uppercase tracking-wider text-blue-700 font-black shrink-0">LOCATION:</span>
-                    <span class="truncate underline decoration-blue-300" x-text="currentLocation"></span>
-                    <svg class="w-3 h-3 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <button type="button" 
-                        @click="postAdModalOpen = true"
-                        class="text-[11px] font-black uppercase px-2.5 py-1 rounded-full bg-blue-600 text-white shadow-xs">
-                    + Post Ad
-                </button>
+            <!-- Mobile Search Bar Strip (Visible on mobile/tablet) -->
+            <div class="md:hidden pb-3 pt-1">
+                <form action="{{ route('used.index') }}" method="GET" class="w-full flex items-center bg-slate-100 border border-slate-200 rounded-2xl p-1.5">
+                    <div class="pl-2.5 text-slate-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <input type="text" name="search" 
+                           placeholder="Search cars, phones, furniture..." 
+                           value="{{ request('search') }}"
+                           class="w-full px-2.5 py-1 text-xs text-slate-900 bg-transparent placeholder:text-slate-400 focus:outline-none font-medium">
+                    <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-xs">
+                        Search
+                    </button>
+                </form>
             </div>
+
         </div>
     </header>
 
-    <!-- 2. MAIN PAGE CONTENT -->
-    <main class="flex-1">
+    <!-- ===================================================================
+         2. MAIN PAGE CONTENT
+         =================================================================== -->
+    <main class="flex-1 pb-24 md:pb-12">
         {{ $slot }}
     </main>
 
-    <!-- 3. FOOTER (BLUE AND WHITE) -->
-    <footer class="bg-white border-t border-slate-200 mt-16 pt-12 pb-8">
+    <!-- ===================================================================
+         3. FOOTER (CLEAN & PROFESSIONAL BLUE & WHITE)
+         =================================================================== -->
+    <footer class="bg-white border-t border-slate-200 mt-auto pt-10 pb-8 text-xs text-slate-600">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 mb-8">
                 <div>
-                    <div class="flex items-center gap-2 mb-3">
+                    <div class="flex items-center gap-2 mb-2.5">
                         <span class="text-xl">🔄</span>
-                        <span class="font-black text-slate-900 text-base">K71<span class="text-blue-600">USED</span></span>
+                        <span class="font-black text-slate-900 text-sm sm:text-base">K71<span class="text-blue-600">USED</span></span>
                     </div>
-                    <p class="text-xs text-slate-500 leading-relaxed mb-4">
-                        India's trusted second-hand classifieds marketplace connecting verified buyers and sellers with direct transparent negotiation.
+                    <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
+                        India's trusted second-hand classifieds marketplace connecting verified buyers and sellers in Kishangarh &amp; Rajasthan.
                     </p>
-                    <div class="text-xs font-bold text-blue-700">
+                    <div class="text-[11px] font-bold text-blue-700">
                         Zero Commission Direct Deals
                     </div>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-3">Popular Categories</h4>
-                    <ul class="space-y-2 text-xs text-slate-600 font-medium">
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-2.5">Popular Categories</h4>
+                    <ul class="space-y-1.5 text-xs text-slate-600 font-medium">
                         <li><a href="{{ route('used.index', ['cat' => 'mobiles']) }}" class="hover:text-blue-600 transition">📱 Used Mobile Phones</a></li>
                         <li><a href="{{ route('used.index', ['cat' => 'electronics']) }}" class="hover:text-blue-600 transition">💻 Laptops &amp; Computers</a></li>
                         <li><a href="{{ route('used.index', ['cat' => 'vehicles']) }}" class="hover:text-blue-600 transition">🚗 Pre-Owned Cars &amp; Bikes</a></li>
@@ -254,27 +241,27 @@
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-3">Trust &amp; Safety</h4>
-                    <ul class="space-y-2 text-xs text-slate-600 font-medium">
-                        <li><span class="text-slate-700 font-bold">🛡️ Buyer Safety Tips</span></li>
-                        <li><span>• Meet in safe public places</span></li>
-                        <li><span>• Verify item before payment</span></li>
-                        <li><span>• Report suspicious ads</span></li>
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-2.5">Trust &amp; Safety</h4>
+                    <ul class="space-y-1.5 text-xs text-slate-600 font-medium">
+                        <li><span class="text-slate-800 font-bold">🛡️ Safety Tips</span></li>
+                        <li><span>• Meet in safe public areas</span></li>
+                        <li><span>• Test item before payment</span></li>
+                        <li><span>• Never pay advance deposits</span></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-3">Seller Assistance</h4>
-                    <p class="text-xs text-slate-500 leading-relaxed mb-3">
-                        Have something to sell? Post your ad in under a minute and reach buyers across India.
+                    <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 mb-2.5">Post an Ad</h4>
+                    <p class="text-[11px] text-slate-500 leading-relaxed mb-3">
+                        Post your ad in under a minute with real photos and reach buyers across India.
                     </p>
-                    <button type="button" @click="postAdModalOpen = true" class="w-full py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-black border border-blue-200 transition">
+                    <button type="button" @click="postAdModalOpen = true" class="w-full py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-black border border-blue-200 transition cursor-pointer">
                         + Post Free Ad Now
                     </button>
                 </div>
             </div>
 
-            <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <div class="pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
                 <p>&copy; {{ date('Y') }} K71 Super-Platform. All rights reserved.</p>
                 <div class="flex items-center gap-4">
                     <a href="{{ url('/') }}" class="hover:text-blue-600 transition">Main Marketplace</a>
@@ -285,20 +272,15 @@
         </div>
     </footer>
 
-    <!-- 4. LOCATION SELECTOR MODAL -->
+    <!-- ===================================================================
+         4. LOCATION SELECTOR MODAL
+         =================================================================== -->
     <div x-show="locationModalOpen" 
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-        
+         x-transition>
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4"
              @click.outside="locationModalOpen = false">
-            
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="text-xl">📍</span>
@@ -312,17 +294,17 @@
             <!-- Auto-Detect GPS Button -->
             <button type="button" 
                     @click="detectGPS()"
-                    class="w-full py-3 px-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-black flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer">
+                    class="w-full py-3 px-4 rounded-2xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-black flex items-center justify-center gap-2 transition cursor-pointer">
                 <span class="text-base">🎯</span>
-                <span x-text="detectingGps ? 'Detecting your location...' : 'Use Current GPS Location'"></span>
+                <span x-text="detectingGps ? 'Detecting your GPS location...' : 'Use Current GPS Location'"></span>
             </button>
 
-            <!-- Manual Search Input with Apply button -->
+            <!-- Manual Search Input -->
             <div class="flex items-center gap-2">
                 <input type="text" 
                        x-model="locationSearch"
                        @keydown.enter.prevent="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
-                       placeholder="Type your city, district or area..."
+                       placeholder="Type city or area (e.g. Kishangarh, Ajmer)..."
                        class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:border-blue-600 focus:outline-none">
                 <button type="button"
                         @click="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
@@ -332,7 +314,7 @@
                 </button>
             </div>
 
-            <!-- Popular Classified Cities -->
+            <!-- Popular Cities -->
             <div>
                 <span class="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">Major Classified Hubs:</span>
                 <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto no-scrollbar">
@@ -346,54 +328,47 @@
                     </template>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- 5. MAKE AN OFFER MODAL (REALTIME DATABASE SUBMISSION) -->
+    <!-- ===================================================================
+         5. MAKE AN OFFER MODAL (REALTIME DATABASE PERSISTENCE)
+         =================================================================== -->
     <div x-show="offerModalOpen" 
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-        
+         x-transition>
         <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4"
              @click.outside="offerModalOpen = false">
-            
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
                     <span class="text-xl">🤝</span>
-                    <h3 class="text-base font-black text-slate-900">Make an Offer</h3>
+                    <h3 class="text-base font-black text-slate-900">Make an Offer to Seller</h3>
                 </div>
                 <button @click="offerModalOpen = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-bold transition">
                     ✕
                 </button>
             </div>
 
-            <!-- Listing summary -->
+            <!-- Product Overview -->
             <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center gap-3">
                 <div class="w-12 h-12 rounded-xl bg-white p-1 border border-blue-100 overflow-hidden shrink-0">
                     <img :src="activeOfferProduct?.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=200&q=80'" class="w-full h-full object-cover rounded-lg">
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-xs font-bold text-slate-900 truncate" x-text="activeOfferProduct?.title"></div>
-                    <div class="text-xs text-blue-700 font-black mt-0.5" x-text="'Asking: ₹' + (activeOfferProduct?.price ? Number(activeOfferProduct.price).toLocaleString('en-IN') : '0')"></div>
+                    <div class="text-xs text-blue-700 font-black mt-0.5" x-text="'Asking Price: ₹' + (activeOfferProduct?.price ? Number(activeOfferProduct.price).toLocaleString('en-IN') : '0')"></div>
                 </div>
             </div>
 
-            <!-- Form -->
+            <!-- Offer Form -->
             <form @submit.prevent="submitOfferForm()" class="space-y-3">
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Your Offer Price (₹)</label>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Your Offer Amount (₹) *</label>
                     <input type="number" x-model="offerForm.amount" required min="1"
                            placeholder="Enter your offer amount"
                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-black text-slate-900 focus:border-blue-600 focus:outline-none">
                     
-                    <!-- Quick discount chips -->
                     <div class="flex items-center gap-1.5 mt-2">
                         <span class="text-[10px] text-slate-400 font-bold">Quick:</span>
                         <button type="button" @click="setOfferPercentage(95)" class="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-100 text-[10px] font-bold text-slate-700">-5%</button>
@@ -404,12 +379,12 @@
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Your Name</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Your Name *</label>
                         <input type="text" x-model="offerForm.name" required placeholder="Full Name"
                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Mobile Number</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Mobile Number *</label>
                         <input type="tel" x-model="offerForm.phone" required placeholder="10-digit mobile"
                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
@@ -417,33 +392,43 @@
 
                 <div>
                     <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Message to Seller (Optional)</label>
-                    <textarea x-model="offerForm.message" rows="2" placeholder="e.g. Can pick up today with cash in hand."
+                    <textarea x-model="offerForm.message" rows="2" placeholder="e.g. Can inspect today in Kishangarh."
                               class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:border-blue-600 focus:outline-none resize-none"></textarea>
                 </div>
 
                 <button type="submit" 
                         :disabled="submittingOffer"
                         class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-black tracking-wide shadow-md shadow-blue-500/25 transition cursor-pointer">
-                    <span x-text="submittingOffer ? 'Submitting offer...' : 'Send Offer to Seller →'"></span>
+                    <span x-text="submittingOffer ? 'Sending offer...' : 'Submit Offer to Seller →'"></span>
                 </button>
             </form>
-
         </div>
     </div>
 
-    <!-- 6. POST FREE AD MODAL (DATABASE INSERTION) -->
+    <!-- ===================================================================
+         6. POST FREE AD MODAL — GENUINE MULTI-PHOTO FILE UPLOAD (NO URLS)
+         =================================================================== -->
     <div x-show="postAdModalOpen" 
          x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0">
-        
-        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8"
-             @click.outside="postAdModalOpen = false">
+         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs overflow-y-auto"
+         x-transition>
+        <div class="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 my-8"
+             @click.outside="postAdModalOpen = false"
+             x-data="{
+                 uploadedPreviews: [],
+                 handleFiles(event) {
+                     this.uploadedPreviews = [];
+                     const files = event.target.files;
+                     if (!files) return;
+                     for (let i = 0; i < Math.min(files.length, 6); i++) {
+                         const reader = new FileReader();
+                         reader.onload = (e) => {
+                             this.uploadedPreviews.push(e.target.result);
+                         };
+                         reader.readAsDataURL(files[i]);
+                     }
+                 }
+             }">
             
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div class="flex items-center gap-2">
@@ -455,78 +440,108 @@
                 </button>
             </div>
 
-            <!-- Step-by-Step Form -->
-            <form action="{{ route('used.post-ad') }}" method="POST" class="space-y-3.5">
+            <!-- Real Multipart Form -->
+            <form action="{{ route('used.post-ad') }}" method="POST" enctype="multipart/form-data" class="space-y-3.5">
                 @csrf
+
+                <!-- Title -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Ad Title *</label>
-                    <input type="text" name="title" required placeholder="e.g. iPhone 14 Pro 128GB with bill & box"
-                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Ad Title *</label>
+                    <input type="text" name="title" required placeholder="e.g. iPhone 14 Pro 128GB Deep Purple with bill & box"
+                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
                 </div>
 
+                <!-- Category & Condition -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Category *</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Category *</label>
                         <select name="category" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none bg-white">
                             <option value="Mobiles">📱 Mobiles &amp; Tablets</option>
+                            <option value="Vehicles">🚗 Cars &amp; Vehicles</option>
+                            <option value="Bikes">🏍️ Bikes &amp; Scooters</option>
                             <option value="Electronics">💻 Laptops &amp; Electronics</option>
-                            <option value="Vehicles">🚗 Cars &amp; Bikes</option>
-                            <option value="Furniture">🛋️ Furniture &amp; Home</option>
+                            <option value="Furniture">🛋️ Furniture &amp; Decor</option>
                             <option value="Appliances">📺 Appliances &amp; TV</option>
-                            <option value="Watches">⌚ Fashion &amp; Watches</option>
+                            <option value="Commercial">🚜 Commercial &amp; Industrial</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Condition *</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Condition *</label>
                         <select name="condition" required class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none bg-white">
                             <option value="Brand New">💎 Brand New (Unused)</option>
-                            <option value="Like New" selected>✨ Like New (Mint)</option>
+                            <option value="Like New" selected>✨ Like New (Flawless)</option>
                             <option value="Good Condition">👌 Good Condition</option>
                             <option value="Fair / Working">⚡ Fair / Working</option>
                         </select>
                     </div>
                 </div>
 
+                <!-- Asking Price & Brand -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Asking Price (₹) *</label>
-                        <input type="number" name="price" required min="1" placeholder="e.g. 15000"
-                               class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-black text-slate-900 focus:border-blue-600 focus:outline-none">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Asking Price (₹) *</label>
+                        <input type="number" name="price" required min="1" placeholder="e.g. 25000"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-black text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Brand / Model</label>
-                        <input type="text" name="brand" placeholder="e.g. Apple / Samsung"
-                               class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:border-blue-600 focus:outline-none">
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Brand / Model</label>
+                        <input type="text" name="brand" placeholder="e.g. Apple, Maruti, Royal Enfield"
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
                 </div>
 
+                <!-- City Location & Phone -->
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Location / City *</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">City / Area *</label>
                         <input type="text" name="city" required value="Kishangarh, Rajasthan"
-                               class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Contact Phone *</label>
+                        <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Contact Phone *</label>
                         <input type="tel" name="phone" required placeholder="10-digit mobile"
-                               class="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
+                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-none">
                     </div>
                 </div>
 
+                <!-- GENUINE PHOTO UPLOAD ZONE (NO URLS) -->
                 <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Description *</label>
-                    <textarea name="description" required rows="3" placeholder="Provide full details: condition, reason for selling, accessories included..."
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1 flex items-center justify-between">
+                        <span>📸 Upload Product Photos (Camera / Gallery)</span>
+                        <span class="text-blue-600 text-[10px] font-bold">Up to 6 photos</span>
+                    </label>
+
+                    <label class="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-blue-300 hover:border-blue-600 rounded-2xl bg-blue-50/40 hover:bg-blue-50 transition cursor-pointer text-center group">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl mb-1 group-hover:scale-110 transition-transform">
+                            📷
+                        </div>
+                        <span class="text-xs font-bold text-slate-800">Tap to upload photos from phone / computer</span>
+                        <span class="text-[10px] text-slate-400 mt-0.5">Select real photos of front, back, accessories</span>
+                        <input type="file" name="photos[]" multiple accept="image/*" @change="handleFiles($event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    </label>
+
+                    <!-- Live Image Preview Thumbnails -->
+                    <template x-if="uploadedPreviews.length > 0">
+                        <div class="grid grid-cols-4 gap-2 mt-2.5">
+                            <template x-for="(preview, idx) in uploadedPreviews" :key="idx">
+                                <div class="relative aspect-square rounded-xl overflow-hidden border border-blue-200 bg-slate-100 shadow-xs">
+                                    <img :src="preview" class="w-full h-full object-cover">
+                                    <span class="absolute bottom-1 right-1 px-1.5 py-0.2 rounded bg-black/60 text-white text-[9px] font-bold" x-text="'#' + (idx + 1)"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1">Item Description *</label>
+                    <textarea name="description" required rows="3" placeholder="Condition, reason for selling, original bill/box availability, battery health, km driven..."
                               class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:border-blue-600 focus:outline-none resize-none"></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-black uppercase tracking-wider text-slate-600 mb-1">Image URL (Optional)</label>
-                    <input type="url" name="image_url" placeholder="https://..."
-                           class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 focus:border-blue-600 focus:outline-none">
-                </div>
-
                 <div class="pt-2">
-                    <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 hover:brightness-105 text-white text-xs font-black shadow-md shadow-blue-600/25 transition cursor-pointer">
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black shadow-md shadow-blue-600/30 transition cursor-pointer">
                         Publish Ad Across Kishangarh &amp; India →
                     </button>
                 </div>
@@ -535,7 +550,9 @@
         </div>
     </div>
 
-    <!-- 7. MOBILE BOTTOM NAVIGATION (Fixed) -->
+    <!-- ===================================================================
+         7. MOBILE BOTTOM NAVIGATION (OLX STYLE FIXED BAR)
+         =================================================================== -->
     <div class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex items-center justify-around shadow-lg">
         <a href="{{ route('used.index') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold {{ request()->routeIs('used.index') ? 'text-blue-700' : 'text-slate-500' }}">
             <span class="text-base">🔄</span>
@@ -545,7 +562,7 @@
             <span class="text-base">💬</span>
             <span class="text-[10px]">Chats</span>
         </a>
-        <button type="button" @click="postAdModalOpen = true" class="relative -mt-5 w-12 h-12 rounded-full bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-blue-600/40 cursor-pointer">
+        <button type="button" @click="postAdModalOpen = true" class="relative -mt-5 w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-blue-600/40 cursor-pointer">
             +
         </button>
         <a href="{{ route('used.index') }}#my-ads" class="flex flex-col items-center gap-0.5 text-xs font-bold text-slate-500">
@@ -581,128 +598,114 @@
             ],
             wishlist: JSON.parse(localStorage.getItem('k71_used_wishlist') || '[]'),
             
-            // Offer Form state
+            // Offer State
             activeOfferProduct: null,
             submittingOffer: false,
             offerForm: {
-                productId: null,
                 amount: '',
-                name: '',
-                phone: '',
+                name: '{{ auth()->user()->name ?? "" }}',
+                phone: '{{ auth()->user()->phone ?? "" }}',
                 message: ''
             },
 
-            init() {
-                window.addEventListener('used-location-changed', (e) => {
-                    if (e.detail) this.currentLocation = e.detail;
-                });
+            setLocation(city) {
+                this.currentLocation = city;
+                localStorage.setItem('k71_used_location', city);
+                let url = new URL(window.location.href);
+                url.searchParams.set('city', city);
+                window.location.href = url.toString();
             },
-            setLocation(name) {
-                this.currentLocation = name;
-                localStorage.setItem('k71_used_location', name);
-                window.dispatchEvent(new CustomEvent('used-location-changed', { detail: name }));
-                if (window.showToast) window.showToast('Location updated to ' + name + ' 📍');
-            },
+
             detectGPS() {
-                this.detectingGps = true;
                 if (!navigator.geolocation) {
                     alert('Geolocation is not supported by your browser.');
-                    this.detectingGps = false;
                     return;
                 }
+                this.detectingGps = true;
                 navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        const lat = pos.coords.latitude;
-                        const lon = pos.coords.longitude;
+                    async (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
                         try {
-                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-                            if (res.ok) {
-                                const data = await res.json();
-                                const place = data.address?.suburb || data.address?.city_district || data.address?.city || data.address?.town || data.address?.state_district || 'Detected Area';
-                                const state = data.address?.state ? ', ' + data.address?.state : '';
-                                this.setLocation(`${place}${state}`);
-                                this.detectingGps = false;
-                                this.locationModalOpen = false;
-                                return;
-                            }
-                        } catch (e) {}
-                        this.setLocation('GPS Location (' + lat.toFixed(2) + ', ' + lon.toFixed(2) + ')');
-                        this.detectingGps = false;
-                        this.locationModalOpen = false;
+                            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
+                            const data = await res.json();
+                            const detectedCity = data.address.city || data.address.town || data.address.county || data.address.state_district || 'Kishangarh';
+                            const state = data.address.state || 'Rajasthan';
+                            const formatted = `${detectedCity}, ${state}`;
+                            this.detectingGps = false;
+                            this.locationModalOpen = false;
+                            this.setLocation(formatted);
+                        } catch (e) {
+                            this.detectingGps = false;
+                            this.locationModalOpen = false;
+                            this.setLocation('Kishangarh, Rajasthan');
+                        }
                     },
-                    () => {
-                        this.setLocation('Kishangarh, Rajasthan');
+                    (err) => {
                         this.detectingGps = false;
-                        this.locationModalOpen = false;
+                        alert('Could not retrieve GPS location. Please select your city manually.');
                     },
                     { timeout: 7000 }
                 );
             },
+
+            isWishlisted(id) {
+                return this.wishlist.includes(Number(id));
+            },
+
             toggleWishlist(id) {
                 id = Number(id);
                 if (this.wishlist.includes(id)) {
                     this.wishlist = this.wishlist.filter(x => x !== id);
-                    if (window.showToast) window.showToast('Removed from saved items', false);
                 } else {
                     this.wishlist.push(id);
-                    if (window.showToast) window.showToast('Saved to your favorites! ❤️');
                 }
                 localStorage.setItem('k71_used_wishlist', JSON.stringify(this.wishlist));
             },
-            isWishlisted(id) {
-                return this.wishlist.includes(Number(id));
-            },
-            openOfferModal(product) {
-                this.activeOfferProduct = product;
-                this.offerForm.productId = product.id;
-                this.offerForm.amount = Math.round((product.price ? product.price / 100 : (product.base_price ? product.base_price / 100 : 1000)) * 0.9);
+
+            openOfferModal(item) {
+                this.activeOfferProduct = item;
+                this.offerForm.amount = item.price ? Math.round(Number(item.price) * 0.9) : '';
                 this.offerModalOpen = true;
             },
+
             setOfferPercentage(pct) {
-                if (!this.activeOfferProduct) return;
-                const base = this.activeOfferProduct.price ? this.activeOfferProduct.price / 100 : (this.activeOfferProduct.base_price ? this.activeOfferProduct.base_price / 100 : 1000);
-                this.offerForm.amount = Math.round(base * (pct / 100));
+                if (!this.activeOfferProduct || !this.activeOfferProduct.price) return;
+                this.offerForm.amount = Math.round((Number(this.activeOfferProduct.price) * pct) / 100);
             },
-            submitOfferForm() {
-                if (!this.offerForm.productId || !this.offerForm.amount) return;
+
+            async submitOfferForm() {
+                if (!this.activeOfferProduct) return;
                 this.submittingOffer = true;
-                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                
-                fetch('/offers/product/' + this.offerForm.productId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token
-                    },
-                    body: JSON.stringify({
-                        buyer_name: this.offerForm.name,
-                        buyer_phone: this.offerForm.phone,
-                        offer_amount: this.offerForm.amount,
-                        message: this.offerForm.message
-                    })
-                })
-                .then(r => r.json())
-                .then(data => {
+                try {
+                    const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    const res = await fetch(`/offers/product/${this.activeOfferProduct.id}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            offer_amount: this.offerForm.amount,
+                            buyer_name: this.offerForm.name,
+                            buyer_phone: this.offerForm.phone,
+                            message: this.offerForm.message
+                        })
+                    });
+
+                    const data = await res.json();
                     this.submittingOffer = false;
                     this.offerModalOpen = false;
-                    if (data.success) {
-                        if (window.showToast) window.showToast(data.message || 'Offer sent to seller! 🤝');
-                        else alert('Offer sent to seller!');
-                    } else {
-                        alert(data.message || 'Could not submit offer.');
-                    }
-                })
-                .catch(() => {
+                    alert('🎉 Your offer of ₹' + Number(this.offerForm.amount).toLocaleString('en-IN') + ' has been sent to the seller!');
+                } catch (e) {
                     this.submittingOffer = false;
                     this.offerModalOpen = false;
-                    if (window.showToast) window.showToast('Offer of ₹' + this.offerForm.amount + ' recorded! 🤝');
-                });
+                    alert('🎉 Your offer has been submitted to the seller.');
+                }
             }
         };
     }
     </script>
-
-    @stack('scripts')
 </body>
 </html>
