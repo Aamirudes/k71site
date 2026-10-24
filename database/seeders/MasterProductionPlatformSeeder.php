@@ -855,7 +855,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'product_slug' => 'makrana-pure-white-marble-slabs',
                 'title' => 'Live Diamond Saw Cutting Makrana White Marble Slabs',
                 'description' => 'Watch raw marble blocks from Makrana quarry get water-jet cut into 18mm mirror-polish flooring slabs.',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-cutting-a-marble-slab-in-a-workshop-43846-large.mp4',
+                'video_url' => '/videos/shorts/short6.mp4',
                 'thumb_url' => 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80',
                 'views' => 14250,
                 'likes' => 1120,
@@ -867,7 +867,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'product_slug' => 'slow-cooked-awadhi-dum-mutton-biryani',
                 'title' => 'Unsealing 4-Hour Dum Awadhi Mutton Biryani Clay Handi',
                 'description' => 'Breaking the dough seal on our steaming clay handi dum biryani. Fragrant saffron rice, falling-off-the-bone tender meat.',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-chef-plating-a-dish-in-a-restaurant-kitchen-42790-large.mp4',
+                'video_url' => '/videos/shorts/short2.mp4',
                 'thumb_url' => 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=400&q=80',
                 'views' => 48200,
                 'likes' => 4560,
@@ -879,7 +879,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'product_slug' => 'banarasi-kadwa-pure-katan-silk-saree',
                 'title' => 'Weaving Pure Katan Silk Banarasi Saree on Handloom',
                 'description' => 'Master artisan weaving real gold and silver zari threads on traditional handloom. 30 days of heritage craftsmanship in one drape.',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-woman-embroidering-a-fabric-41808-large.mp4',
+                'video_url' => '/videos/shorts/short1.mp4',
                 'thumb_url' => 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=400&q=80',
                 'views' => 29100,
                 'likes' => 3120,
@@ -891,7 +891,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'product_slug' => 'italian-makrana-marble-mirror-polish-service',
                 'title' => 'Mirror-Finish Italian Marble Polishing Time-Lapse',
                 'description' => 'Watch dull, scratched marble floors transform into a high-gloss 95+ unit mirror reflection with our diamond crystallization.',
-                'video_url' => 'https://assets.mixkit.co/videos/preview/mixkit-cleaning-a-room-with-a-cleaning-machine-42436-large.mp4',
+                'video_url' => '/videos/shorts/short6.mp4',
                 'thumb_url' => 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=400&q=80',
                 'views' => 61000,
                 'likes' => 9810,
@@ -1078,5 +1078,8 @@ class MasterProductionPlatformSeeder extends Seeder
                 ]
             );
         }
+
+        // 13. K71 Shoppable Video Commerce (Verified 9:16 Shorts with Catalog Product Tags)
+        $this->call(RealShoppableShortsSeeder::class);
     }
 }

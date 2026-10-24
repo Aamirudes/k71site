@@ -98,16 +98,16 @@ class ShortsController extends Controller
             'shorts_url' => route('shorts.index'),
             'open_id' => $openId,
             'open_cat' => $openCat,
-            'primary_color' => Setting::get('zsu_primary_color', '#7c3aed'),
-            'accent_color' => Setting::get('zsu_accent_color', '#f59e0b'),
-            'spin_wheel_enabled' => (int) (Setting::get('zsu_spin_wheel_enabled', 1)),
+            'primary_color' => Setting::get('zsu_primary_color', '#2874f0'),
+            'accent_color' => Setting::get('zsu_accent_color', '#ff9f00'),
+            'spin_wheel_enabled' => (int) (Setting::get('zsu_spin_wheel_enabled', 0)),
             'spin_wheel_prizes' => $spinPrizes,
         ];
 
         // Fetch SEO short if openId is provided
-        $seoShort = $openId > 0 ? Short::with('vendor')->find($openId) : null;
+        $seoShort = $openId > 0 ? Short::with(['vendor', 'category', 'products.images'])->find($openId) : null;
 
-        $featuredShorts = Short::with(['vendor', 'category', 'products'])
+        $featuredShorts = Short::with(['vendor', 'category', 'products.images'])
             ->whereIn('status', ['published', 'approved', 'active'])
             ->where('is_featured', true)
             ->orderByDesc('is_boosted')
@@ -115,11 +115,75 @@ class ShortsController extends Controller
             ->take(8)
             ->get();
 
-        $initialShorts = Short::with(['vendor', 'category', 'products'])
+        $trendingShorts = Short::with(['vendor', 'category', 'products.images'])
             ->whereIn('status', ['published', 'approved', 'active'])
-            ->orderByDesc('id')
-            ->take(24)
+            ->orderByDesc('trending_score')
+            ->orderByDesc('views')
+            ->take(12)
             ->get();
+
+        $initialQuery = Short::with(['vendor', 'category', 'products.images'])
+            ->whereIn('status', ['published', 'approved', 'active']);
+
+        if (!empty($openCat)) {
+            $cat = Category::where('slug', $openCat)->first();
+            if ($cat) {
+                $initialQuery->where('category_id', $cat->id);
+            }
+        }
+
+        $initialShorts = $initialQuery->orderByDesc('id')->take(24)->get();
+
+        // Spotlight / Hero short
+        $heroShort = ($openId > 0 && $seoShort) ? $seoShort : ($featuredShorts->first() ?? $trendingShorts->first() ?? $initialShorts->first());
+
+        // Extract genuine tagged products for direct "Shop What You See" rail
+        $allTaggedIds = collect();
+        foreach ([$trendingShorts, $featuredShorts, $initialShorts] as $collection) {
+            foreach ($collection as $short) {
+                $allTaggedIds = $allTaggedIds->merge($short->products->pluck('id'));
+            }
+        }
+        $allTaggedIds = $allTaggedIds->unique()->take(12)->values()->all();
+
+        $shoppableProducts = \App\Models\Product::with(['images', 'vendor', 'category', 'variants'])
+            ->whereIn('id', $allTaggedIds)
+            ->where('status', 'active')
+            ->take(12)
+            ->get();
+
+        // Featured boutique creators & stores
+        $creators = \App\Models\Vendor::whereHas('shorts', fn($q) => $q->whereIn('status', ['published', 'approved', 'active']))
+            ->withCount(['shorts' => fn($q) => $q->whereIn('status', ['published', 'approved', 'active'])])
+            ->take(8)
+            ->get();
+
+        // Build client-ready shorts array for instant vertical swipe player
+        $clientShorts = $initialShorts->map(function ($s) {
+            $arr = $s->toZsuArray();
+            $arr['products_detail'] = $s->products->map(function ($p) {
+                $priceRupees = $p->base_price / 100;
+                $compareRupees = $p->compare_at_price ? ($p->compare_at_price / 100) : null;
+                $isOnSale = $compareRupees && ($compareRupees > $priceRupees);
+                $discountPct = $isOnSale ? (int) round((1 - ($priceRupees / $compareRupees)) * 100) : 0;
+                return [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'slug' => $p->slug,
+                    'price' => '₹' . number_format($priceRupees, 0),
+                    'price_raw' => $priceRupees,
+                    'original_price' => $compareRupees ? '₹' . number_format($compareRupees, 0) : null,
+                    'discount_pct' => $discountPct,
+                    'image' => $p->images->first() ? asset('storage/' . $p->images->first()->path) : asset('images/product-placeholder.svg'),
+                    'in_stock' => $p->total_stock > 0,
+                    'rating' => (float) ($p->avg_rating ?? 4.8),
+                    'reviews_count' => (int) ($p->review_count ?? 18),
+                    'url' => route('product.show', $p->slug),
+                    'vendor_name' => $p->vendor?->shop_name ?? 'K71 Verified Partner',
+                ];
+            })->values()->all();
+            return $arr;
+        })->values()->all();
 
         return view('shorts.index', [
             'zsuConfig' => $zsuConfig,
@@ -129,7 +193,12 @@ class ShortsController extends Controller
             'categories' => $categories,
             'spinPrizes' => $spinPrizes,
             'featuredShorts' => $featuredShorts,
+            'trendingShorts' => $trendingShorts,
             'initialShorts' => $initialShorts,
+            'heroShort' => $heroShort,
+            'shoppableProducts' => $shoppableProducts,
+            'creators' => $creators,
+            'clientShorts' => $clientShorts,
         ]);
     }
 }

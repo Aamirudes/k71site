@@ -144,7 +144,7 @@ class Short extends Model
             'video_url' => $this->video_url,
             'thumb_url' => $thumb,
             'thumb_b_url' => $this->thumb_b_url,
-            'product_ids' => $this->products()->pluck('products.id')->toArray(),
+            'product_ids' => $this->relationLoaded('products') ? $this->products->pluck('id')->toArray() : $this->products()->pluck('products.id')->toArray(),
             'vendor_id' => $this->vendor_id,
             'vendor_name' => $vendorName,
             'vendor_store' => $vendorStore,

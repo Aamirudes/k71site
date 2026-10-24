@@ -63,6 +63,15 @@ class ShortsFeatureTest extends TestCase
             'total_stock' => 10,
         ]);
 
+        \App\Models\ProductVariant::create([
+            'product_id' => $this->product->id,
+            'title' => 'Standard',
+            'sku' => 'CHAND-STD-01',
+            'price' => 299900,
+            'stock' => 10,
+            'is_active' => true,
+        ]);
+
         $this->short = Short::create([
             'vendor_id' => $this->vendor->id,
             'category_id' => $this->category->id,
@@ -285,4 +294,49 @@ class ShortsFeatureTest extends TestCase
 
         $this->assertEquals(24.00, (float) $this->short->fresh()->trending_score);
     }
+
+    public function test_flipkart_shoppable_video_commerce_homepage_renders_all_components(): void
+    {
+        $response = $this->get('/shorts');
+
+        $response->assertStatus(200);
+        $response->assertSee('K71');
+        $response->assertSee('SHORTS');
+        $response->assertSee('Live Video Shopping');
+        $response->assertSee('Trending Shoppable Reels');
+        $response->assertSee('Shop What You Watch');
+        $response->assertSee($this->short->title);
+        $response->assertSee($this->product->title);
+        $response->assertSee('flipkartShortsViewer', false);
+    }
+
+    public function test_tagged_product_can_be_added_directly_to_cart_via_ajax(): void
+    {
+        $this->withSession(['guest_active' => true]);
+
+        $response = $this->postJson(route('cart.add'), [
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson(['success' => true]);
+
+        // Verify cart items table has record
+        $this->assertDatabaseHas('cart_items', [
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+        ]);
+    }
+
+    public function test_vertical_subdomain_routes_shorts_seamlessly(): void
+    {
+        $response = $this->get('http://shorts.marblemandi.org/');
+
+        $response->assertStatus(200);
+        $response->assertViewIs('shorts.index');
+        $response->assertSee('K71');
+        $response->assertSee('SHORTS');
+    }
 }
+
