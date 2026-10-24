@@ -618,6 +618,11 @@ class Vendor extends Model
         return asset('storage/' . ltrim($this->banner, '/'));
     }
 
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        return $this->banner_url;
+    }
+
     public function getCityAttribute($value): ?string
     {
         return $value ?: ($this->pickup_address['city'] ?? null);

@@ -224,6 +224,10 @@
                         <span>All Categories &amp; Products</span>
                         <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
                     </a>
+                    <a href="{{ route('stores.index') }}" class="flex items-center justify-between py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium border-b border-zinc-100 dark:border-zinc-800">
+                        <span>🏪 Verified Stores Directory</span>
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                    </a>
                     <a href="{{ route('wishlist.index') }}" class="flex items-center justify-between py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium">
                         <span>Saved Wishlist</span>
                         <svg width="16" height="16" class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

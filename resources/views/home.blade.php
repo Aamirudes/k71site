@@ -173,113 +173,16 @@
                 <a href="{{ route('catalog.index', ['q' => 'brake']) }}" class="px-3 py-1 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-semibold transition-all shadow-2xs hover:border-indigo-300">🛑 Auto Spares</a>
                 <a href="{{ route('catalog.index', ['q' => 'laptop']) }}" class="px-3 py-1 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-semibold transition-all shadow-2xs hover:border-indigo-300">💻 Laptops</a>
                 <a href="{{ route('catalog.index', ['q' => 'furniture']) }}" class="px-3 py-1 rounded-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-semibold transition-all shadow-2xs hover:border-indigo-300">🛋️ Living</a>
+                <a href="{{ route('stores.index') }}" class="px-3.5 py-1 rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 font-bold transition-all shadow-2xs flex items-center gap-1">
+                    <span>🏪 All Stores</span>
+                    <span>&rarr;</span>
+                </a>
             </div>
 
         </div>
     </div>
 
-    <!-- SECTION 1: VERIFIED STORES & ATELIERS (STORES FIRST!) -->
-    <section class="mb-14 sm:mb-18">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-                        Authorized Sellers
-                    </span>
-                    <span class="text-xs text-slate-400 font-mono">Storefronts</span>
-                </div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1 flex items-center gap-2">
-                    <span>🏪 Featured Stores &amp; Brands</span>
-                </h2>
-            </div>
-            <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group">
-                <span>View All Stores</span>
-                <span class="group-hover:translate-x-1 transition-transform">&rarr;</span>
-            </a>
-        </div>
-
-        @if($topVendors->isNotEmpty())
-            <!-- Dynamic Database Stores Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                @foreach($topVendors as $vendor)
-                    <div class="group bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-300 transition-all flex flex-col justify-between">
-                        <!-- Cover & Avatar -->
-                        <div class="relative h-28 bg-gradient-to-r from-slate-800 to-indigo-900 overflow-hidden">
-                            @if($vendor->cover_image_url)
-                                <img src="{{ $vendor->cover_image_url }}" alt="{{ $vendor->shop_name }}" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300">
-                            @endif
-                            <div class="absolute -bottom-5 left-4">
-                                <div class="w-12 h-12 rounded-2xl bg-white p-1 border-2 border-white shadow-md overflow-hidden">
-                                    @if($vendor->logo_url)
-                                        <img src="{{ $vendor->logo_url }}" alt="{{ $vendor->shop_name }}" class="w-full h-full object-cover rounded-xl">
-                                    @else
-                                        <div class="w-full h-full bg-indigo-600 text-white font-black text-sm flex items-center justify-center rounded-xl">
-                                            {{ strtoupper(substr($vendor->shop_name, 0, 1)) }}
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Info Body -->
-                        <div class="p-4 pt-7 flex-1 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center gap-1.5">
-                                    <h3 class="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
-                                        {{ $vendor->shop_name }}
-                                    </h3>
-                                    <span class="text-emerald-500 text-xs shrink-0" title="Verified Store">✓</span>
-                                </div>
-                                <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                    {{ $vendor->description ?? 'Authorized K71 Direct Seller' }}
-                                </p>
-                                <div class="flex items-center gap-2 mt-2 text-[10px] font-semibold text-slate-600">
-                                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                                        {{ $vendor->products_count }} Products
-                                    </span>
-                                    <span class="text-amber-500 font-bold">★ 4.9</span>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 pt-3 border-t border-slate-100">
-                                <a href="{{ route('storefront.show', $vendor->slug) }}" class="w-full py-2 rounded-xl bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-800 text-xs font-bold text-center block transition-all">
-                                    Visit Store &rarr;
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        @else
-            <!-- Clean Seller Storefront Onboarding State -->
-            <div class="p-8 sm:p-12 rounded-[2.5rem] bg-gradient-to-br from-white via-indigo-50/40 to-slate-50 border border-slate-200/90 shadow-2xs text-center relative overflow-hidden">
-                <div class="max-w-xl mx-auto">
-                    <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-indigo-600/25">
-                        🏪
-                    </div>
-                    <span class="text-[11px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200/60 inline-block mb-2">
-                        Zero Listing Fee Seller Onboarding
-                    </span>
-                    <h3 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mb-2">
-                        Launch Your Branded Store on K71
-                    </h3>
-                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
-                        Open your digital storefront with sector-tailored specifications, automated courier logistics, and direct PhonePe payouts.
-                    </p>
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <a href="{{ route('vendor.register') }}" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md active:scale-95 transition-all">
-                            Register Your Store &rarr;
-                        </a>
-                        <a href="{{ route('vendor.login') }}" class="px-6 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs sm:text-sm border border-slate-200 shadow-2xs transition-all">
-                            Vendor Sign In
-                        </a>
-                    </div>
-                </div>
-            </div>
-        @endif
-    </section>
-
-    <!-- SECTION 2: TRENDING PRODUCTS & FRESH ARRIVALS (PRODUCTS SECTION!) -->
+    <!-- SECTION 1: TRENDING PRODUCTS & FRESH ARRIVALS -->
     <section class="mb-14 sm:mb-20">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>

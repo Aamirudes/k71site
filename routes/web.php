@@ -178,6 +178,10 @@ Route::get('/s/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index
 Route::get('/s/shorts', [ShortsController::class, 'index'])->name('storefront.shorts');
 Route::get('/s/vendor', fn() => redirect()->route('vendor.register'))->name('storefront.vendor');
 
+// Verified Stores Directory
+Route::get('/stores', [\App\Http\Controllers\StorefrontController::class, 'index'])->name('stores.index');
+Route::get('/vendors', fn() => redirect()->route('stores.index'));
+
 // Public Vendor Storefronts
 Route::get('/s/{slug}', [\App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.show');
 

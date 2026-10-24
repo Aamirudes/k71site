@@ -8,6 +8,102 @@ use Illuminate\Http\Request;
 
 class StorefrontController extends Controller
 {
+    /**
+     * Display a directory of all verified vendor storefronts.
+     */
+    public function index(Request $request)
+    {
+        $searchQuery = trim($request->input('q', $request->input('search', '')));
+        $selectedType = $request->input('type', $request->input('category', 'all'));
+        $selectedCity = $request->input('city', 'all');
+        $activeSort = $request->input('sort', 'popular');
+
+        $query = Vendor::where('status', 'approved')
+            ->withCount(['products' => function($q) {
+                $q->where('status', 'active');
+            }])
+            ->with(['products' => function($q) {
+                $q->where('status', 'active')
+                    ->with('images')
+                    ->latest()
+                    ->take(4);
+            }]);
+
+        // Search Filter
+        if (!empty($searchQuery)) {
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('shop_name', 'like', "%{$searchQuery}%")
+                  ->orWhere('description', 'like', "%{$searchQuery}%")
+                  ->orWhere('city', 'like', "%{$searchQuery}%")
+                  ->orWhere('state', 'like', "%{$searchQuery}%");
+            });
+        }
+
+        // Category / Sector Filter
+        if ($selectedType && $selectedType !== 'all') {
+            if ($selectedType === 'fashion') {
+                $query->whereIn('vendor_type', ['clothing', 'footwear', 'apparel', 'fashion']);
+            } elseif ($selectedType === 'services') {
+                $query->whereIn('vendor_type', ['services', 'digital_services', 'local_services']);
+            } elseif ($selectedType === 'b2b') {
+                $query->whereIn('vendor_type', ['b2b', 'machinery']);
+            } else {
+                $query->where('vendor_type', $selectedType);
+            }
+        }
+
+        // City Filter
+        if ($selectedCity && $selectedCity !== 'all') {
+            $query->where('city', $selectedCity);
+        }
+
+        // Sorting
+        if ($activeSort === 'newest') {
+            $query->latest('id');
+        } elseif ($activeSort === 'alpha') {
+            $query->orderBy('shop_name', 'asc');
+        } else {
+            // Default: Most products first, then highest ID
+            $query->orderByDesc('products_count')->latest('id');
+        }
+
+        $vendors = $query->paginate(12)->withQueryString();
+
+        // Dynamic categories & verticals list
+        $typesList = [
+            'all' => ['label' => 'All Stores', 'icon' => '🏪'],
+            'food' => ['label' => 'Food & Dining', 'icon' => '🍽️'],
+            'fashion' => ['label' => 'Fashion & Footwear', 'icon' => '👗'],
+            'electronics' => ['label' => 'Electronics & Tech', 'icon' => '📱'],
+            'automotive' => ['label' => 'Auto Spares & Parts', 'icon' => '🚗'],
+            'b2b' => ['label' => 'Machinery & B2B', 'icon' => '⚙️'],
+            'services' => ['label' => 'Services & Digital', 'icon' => '🛠️'],
+            'used' => ['label' => 'Pre-Loved & Vintage', 'icon' => '⏳'],
+            'real_estate' => ['label' => 'Real Estate & Properties', 'icon' => '🏡'],
+            'marketplace' => ['label' => 'General & Lifestyle', 'icon' => '✨'],
+        ];
+
+        $cities = Vendor::where('status', 'approved')
+            ->whereNotNull('city')
+            ->where('city', '!=', '')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city');
+
+        $totalStoresCount = Vendor::where('status', 'approved')->count();
+
+        return view('stores.index', compact(
+            'vendors',
+            'typesList',
+            'cities',
+            'searchQuery',
+            'selectedType',
+            'selectedCity',
+            'activeSort',
+            'totalStoresCount'
+        ));
+    }
+
     public function show(Request $request, $slug)
     {
         $cleanSlug = strtolower(trim($slug));

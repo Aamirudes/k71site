@@ -128,8 +128,13 @@
                     </svg>
                 </button>
 
+                <!-- Stores Directory Link -->
+                <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('stores.index') ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
+                    <span>🏪 Stores</span>
+                </a>
+
                 <!-- Catalog Link -->
-                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition">
+                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('catalog.*') ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
                     <span>Catalog</span>
                 </a>
 
