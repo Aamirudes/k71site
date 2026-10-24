@@ -97,6 +97,13 @@ function get_current_user_id(): ?int
         return (int) $_SESSION['id'];
     }
 
+    // Check fast bridge cookie
+    if (!empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
+        $uid = (int) $_COOKIE['k71_uid'];
+        $_SESSION['user_id'] = $uid;
+        return $uid;
+    }
+
     // Check if Laravel Auth is available in runtime
     if (class_exists('\Illuminate\Support\Facades\Auth')) {
         $laravelId = \Illuminate\Support\Facades\Auth::id();
@@ -107,7 +114,7 @@ function get_current_user_id(): ?int
     }
 
     // Fallback: Check Laravel file & database session from cookie
-    global $basePath, $pdo;
+    global $basePath, $pdo, $envVars;
     
     // Detect session cookie value from any candidate cookie
     $cookieVal = null;
@@ -121,7 +128,23 @@ function get_current_user_id(): ?int
     }
 
     if ($cookieVal) {
-        $cleanSessionId = preg_replace('/[^a-zA-Z0-9_-]/', '', $cookieVal);
+        // Attempt decryption with APP_KEY if available
+        $rawSessionId = null;
+        if (!empty($envVars['APP_KEY'])) {
+            $appKey = $envVars['APP_KEY'];
+            $key = str_starts_with($appKey, 'base64:') ? base64_decode(substr($appKey, 7)) : $appKey;
+            $payload = json_decode(base64_decode(urldecode($cookieVal)), true);
+            if (isset($payload['iv'], $payload['value'])) {
+                $dec = openssl_decrypt(base64_decode($payload['value']), 'AES-256-CBC', $key, OPENSSL_RAW_DATA, base64_decode($payload['iv']));
+                if ($dec) {
+                    $unser = @unserialize($dec);
+                    $candidate = ($unser !== false && is_string($unser)) ? $unser : $dec;
+                    $rawSessionId = preg_replace('/[^a-zA-Z0-9_-]/', '', $candidate);
+                }
+            }
+        }
+
+        $sessionIds = array_filter([$rawSessionId, preg_replace('/[^a-zA-Z0-9_-]/', '', $cookieVal)]);
 
         // 1. Try file session driver
         $sessionDir = $basePath . '/storage/framework/sessions';
@@ -130,18 +153,19 @@ function get_current_user_id(): ?int
         }
 
         if (is_dir($sessionDir)) {
-            // Check direct file matching session ID
-            $directFile = $sessionDir . '/' . $cleanSessionId;
-            if (file_exists($directFile)) {
-                $content = @file_get_contents($directFile);
-                if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
-                    $uid = (int) $matches[1];
-                    $_SESSION['user_id'] = $uid;
-                    return $uid;
+            foreach ($sessionIds as $sId) {
+                $directFile = $sessionDir . '/' . $sId;
+                if (file_exists($directFile)) {
+                    $content = @file_get_contents($directFile);
+                    if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
+                        $uid = (int) $matches[1];
+                        $_SESSION['user_id'] = $uid;
+                        return $uid;
+                    }
                 }
             }
 
-            // Fallback: Check most recent files
+            // Fallback: Check most recent session files
             $files = glob($sessionDir . '/*');
             if ($files) {
                 usort($files, function ($a, $b) {
@@ -160,17 +184,17 @@ function get_current_user_id(): ?int
 
         // 2. Try database session driver if PDO available
         if ($pdo) {
-            try {
-                $stmtDb = $pdo->prepare("SELECT user_id FROM sessions WHERE id = ? AND user_id IS NOT NULL LIMIT 1");
-                $stmtDb->execute([$cleanSessionId]);
-                $dbUid = $stmtDb->fetchColumn();
-                if ($dbUid) {
-                    $uid = (int) $dbUid;
-                    $_SESSION['user_id'] = $uid;
-                    return $uid;
-                }
-            } catch (\Throwable $t) {
-                // Ignore if sessions table does not exist
+            foreach ($sessionIds as $sId) {
+                try {
+                    $stmtDb = $pdo->prepare("SELECT user_id FROM sessions WHERE id = ? AND user_id IS NOT NULL LIMIT 1");
+                    $stmtDb->execute([$sId]);
+                    $dbUid = $stmtDb->fetchColumn();
+                    if ($dbUid) {
+                        $uid = (int) $dbUid;
+                        $_SESSION['user_id'] = $uid;
+                        return $uid;
+                    }
+                } catch (\Throwable $t) {}
             }
         }
     }

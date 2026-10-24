@@ -24,6 +24,7 @@ class MessageController extends Controller
             }
             $_SESSION['user_id'] = $user->id;
             $_SESSION['username'] = $user->username ?? ($user->first_name ?? 'User');
+            @setcookie('k71_uid', (string)$user->id, time() + 86400 * 30, '/', '', false, false);
         }
         return view('messages.index', compact('user'));
     }
