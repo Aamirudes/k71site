@@ -95,4 +95,41 @@ class WishlistController extends Controller
             'message' => $isWishlisted ? 'Added to your Wishlist ❤️' : 'Removed from Wishlist'
         ]);
     }
+
+    public function getJson()
+    {
+        if (Auth::check()) {
+            $wishlists = Wishlist::with(['product.vendor', 'product.images', 'product.variants'])
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->get();
+            $products = $wishlists->map(fn($w) => $w->product)->filter();
+        } else {
+            $guestItems = session()->get('guest_wishlist', []);
+            $products = \App\Models\Product::with(['vendor', 'images', 'variants'])
+                ->whereIn('id', $guestItems)
+                ->get();
+        }
+
+        $items = $products->map(function ($product) {
+            $img = $product->images->first();
+            $imageUrl = $img ? (str_starts_with($img->path, 'http') ? $img->path : asset('storage/' . $img->path)) : null;
+            return [
+                'id' => $product->id,
+                'title' => $product->title,
+                'slug' => $product->slug,
+                'vendor_name' => $product->vendor?->shop_name ?? 'K71 Verified Store',
+                'price' => $product->base_price,
+                'price_formatted' => '₹' . number_format($product->base_price / 100, 2),
+                'image_url' => $imageUrl,
+                'url' => route('product.show', $product->slug),
+                'in_stock' => $product->stock_quantity > 0,
+            ];
+        })->values();
+
+        return response()->json([
+            'items' => $items,
+            'count' => $items->count(),
+        ]);
+    }
 }

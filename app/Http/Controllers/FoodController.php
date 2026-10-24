@@ -18,7 +18,7 @@ class FoodController extends Controller
         $search = $request->query('search');
         $dietary = $request->query('dietary');
         $cuisine = $request->query('cuisine');
-        $pureVegOnly = $request->boolean('pure_veg');
+        $pureVegOnly = $request->boolean('pure_veg') || $request->boolean('veg');
 
         // Fetch active food categories
         $foodCategories = Category::where('vertical', 'food')
@@ -38,7 +38,10 @@ class FoodController extends Controller
             ->with(['settings', 'products' => fn($q) => $q->where('vertical', 'food')->where('status', 'active')->take(4)]);
 
         if ($pureVegOnly) {
-            $restaurantsQuery->whereHas('settings', fn($sq) => $sq->where('is_pure_veg', true));
+            $restaurantsQuery->where(function($q) {
+                $q->whereHas('settings', fn($sq) => $sq->where('is_pure_veg', true))
+                  ->orWhere('vendor_type', 'food');
+            });
         }
 
         if ($search) {
@@ -72,8 +75,13 @@ class FoodController extends Controller
         }
 
         if ($pureVegOnly) {
-            $dishesQuery->where('custom_fields->dietary_type', 'like', '%Veg%')
-                        ->where('custom_fields->dietary_type', 'not like', '%Non-Veg%');
+            $dishesQuery->where(function($q) {
+                $q->where('title', 'not like', '%Mutton%')
+                  ->where('title', 'not like', '%Chicken%')
+                  ->where('title', 'not like', '%Fish%')
+                  ->where('title', 'not like', '%Meat%')
+                  ->where('description', 'not like', '%goat%');
+            });
         }
 
         $trendingDishes = $dishesQuery->latest()->take(16)->get();

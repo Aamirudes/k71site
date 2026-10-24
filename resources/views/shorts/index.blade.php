@@ -511,9 +511,10 @@
         🎡
     </button>
 
-    <!-- K71 Bottom Navigation & Mini-Cart -->
+    <!-- K71 Bottom Navigation, Mini-Cart & Mini-Wishlist -->
     <x-k71-bottom-nav active="shorts" />
     <x-k71-mini-cart />
+    <x-k71-mini-wishlist />
 
     <!-- Localize ZSU configuration & load frontend script -->
     <script>

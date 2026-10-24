@@ -148,18 +148,19 @@
                     @endif
                 </a>
 
-                <!-- Wishlist (Desktop) -->
-                <a href="{{ route('wishlist.index') }}" 
-                   class="hidden sm:flex p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 relative"
-                   aria-label="Wishlist">
+                <!-- Wishlist (Desktop - Triggers Mini-Wishlist Popup) -->
+                <button type="button" 
+                        @click="$dispatch('open-mini-wishlist')" 
+                        class="hidden sm:flex p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 relative cursor-pointer"
+                        aria-label="Wishlist">
                     <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
                     </svg>
                     <span id="global-wishlist-badge" 
-                          class="absolute top-1 right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
+                          class="absolute top-1 right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
                         {{ $navWishlistCount }}
                     </span>
-                </a>
+                </button>
 
                 <!-- Cart Bag Button (Triggers Mini-Cart Sheet) -->
                 <button @click="$dispatch('open-mini-cart')" 

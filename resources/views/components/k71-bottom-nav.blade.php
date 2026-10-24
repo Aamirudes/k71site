@@ -32,10 +32,21 @@
     $navItems = \App\Models\NavigationItem::getPanelItems($panelGroup);
     $colsCount = max($navItems->count(), 1);
     $wishlistCount = count(\App\Models\Wishlist::getUserWishlistIds());
+
+    $initialCartCount = 0;
+    if (auth()->check()) {
+        $userCart = \App\Models\Cart::where('user_id', auth()->id())->first();
+        $initialCartCount = $userCart ? $userCart->items()->sum('quantity') : 0;
+    } else {
+        $guestCart = \App\Models\Cart::where('session_id', session()->getId())->first();
+        $initialCartCount = $guestCart ? $guestCart->items()->sum('quantity') : 0;
+    }
 @endphp
 
 <!-- Bottom Nav Container with Theme-Specific Styles -->
-<div class="fixed bottom-0 inset-x-0 z-40 md:hidden transition-all duration-300 {{ 
+<div x-data="{ cartBadgeCount: {{ $initialCartCount }} }"
+     @cart-count-updated.window="cartBadgeCount = $event.detail.count"
+     class="fixed bottom-0 inset-x-0 z-40 md:hidden transition-all duration-300 {{ 
     $theme === 'shorts' ? 'bg-black/92 backdrop-blur-2xl border-t border-zinc-800/80 text-white shadow-[0_-4px_30px_rgba(0,0,0,0.8)]' : 
     ($theme === 'food' ? 'bg-white/95 backdrop-blur-2xl border-t border-orange-100 shadow-[0_-4px_25px_rgba(255,82,0,0.08)] text-stone-900' : 
     ($theme === 'services' ? 'bg-slate-950/95 backdrop-blur-2xl border-t border-purple-900/50 shadow-[0_-4px_25px_rgba(124,58,237,0.15)] text-white' : 
@@ -52,6 +63,7 @@
                 $isActive = $item->url === '/' ? request()->is('/') : ($cleanUrl ? (request()->is($cleanUrl . '*') || request()->fullUrlIs(url($item->url))) : false);
                 $isCenterElevated = str_contains(strtolower($item->badge ?? ''), 'live') || str_contains(strtolower($item->badge ?? ''), 'sell') || str_contains(strtolower($item->title), 'shorts');
                 $isWishlist = str_contains(strtolower($item->title), 'wishlist') || str_contains(strtolower($item->title), 'saved');
+                $isCart = str_contains(strtolower($item->title), 'cart') || str_contains(strtolower($item->title), 'bag') || $item->url === '/cart' || str_starts_with($item->url, '/cart');
             @endphp
 
             @if($isCenterElevated && ($theme === 'universal' || $theme === 'used' || $theme === 'shorts'))
@@ -90,6 +102,53 @@
                         </span>
                     @endif
                 </a>
+            @elseif($isCart)
+                <!-- Cart Popup Button (Zero Page Reload) -->
+                <button type="button" 
+                        @click="$dispatch('open-mini-cart')"
+                        class="flex flex-col items-center justify-center py-1 relative group transition-all duration-200 focus:outline-none cursor-pointer w-full {{
+                            $theme === 'food' ? 'text-[#ff5200] font-extrabold' : 'text-slate-600 hover:text-slate-950 font-semibold'
+                        }}"
+                        aria-label="Open Shopping Bag">
+                    <div class="relative">
+                        @if($item->icon)
+                            <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {!! $item->icon !!}
+                            </svg>
+                        @else
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        @endif
+                        <span x-show="cartBadgeCount > 0" 
+                              x-text="cartBadgeCount"
+                              class="absolute -top-1.5 -right-2 bg-{{ $theme === 'food' ? 'orange' : 'indigo' }}-600 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full leading-tight min-w-[15px] text-center shadow-sm"></span>
+                    </div>
+                    <span class="text-[10px] mt-1 tracking-tight leading-none truncate max-w-[58px] {{ $theme === 'food' ? 'text-[#ff5200] font-bold' : 'text-slate-700 font-semibold' }}">
+                        {{ $item->title }}
+                    </span>
+                </button>
+            @elseif($isWishlist)
+                <!-- Wishlist Popup Button (Zero Page Reload) -->
+                <button type="button" 
+                        @click="$dispatch('open-mini-wishlist')"
+                        class="flex flex-col items-center justify-center py-1 relative group transition-all duration-200 focus:outline-none cursor-pointer w-full text-slate-600 hover:text-slate-950 font-semibold"
+                        aria-label="Open Saved Wishlist">
+                    <div class="relative">
+                        @if($item->icon)
+                            <svg class="w-5 h-5 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {!! $item->icon !!}
+                            </svg>
+                        @else
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                        @endif
+                        <span id="bottom-nav-wishlist-badge" 
+                              class="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full leading-tight min-w-[15px] text-center shadow-sm {{ $wishlistCount > 0 ? '' : 'hidden' }}">
+                            {{ $wishlistCount }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] mt-1 tracking-tight leading-none truncate max-w-[58px] text-slate-700 font-semibold">
+                        {{ $item->title }}
+                    </span>
+                </button>
             @else
                 <!-- Standard Navigation Tab with Theme Colors -->
                 <a href="{{ $item->url }}" 
@@ -115,13 +174,7 @@
                             <div class="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold">★</div>
                         @endif
 
-                        <!-- Live Badge or Wishlist Counter -->
-                        @if($isWishlist)
-                            <span id="bottom-nav-wishlist-badge" 
-                                  class="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[8px] font-black px-1.5 py-0.2 rounded-full leading-tight min-w-[15px] text-center shadow-sm {{ $wishlistCount > 0 ? '' : 'hidden' }}">
-                                {{ $wishlistCount }}
-                            </span>
-                        @elseif($item->badge)
+                        @if($item->badge)
                             <span class="absolute -top-1.5 -right-2 bg-{{ $item->badge_color ?? 'emerald' }}-500 text-white text-[7.5px] font-black uppercase px-1 rounded-full leading-tight shadow-sm">
                                 {{ $item->badge }}
                             </span>

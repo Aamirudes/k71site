@@ -8,50 +8,51 @@
 
     <div x-data="k71FoodApp()" class="min-h-screen bg-[#faf8f5] text-stone-900 pb-24 font-sans">
 
-        <!-- 1. FOOD SUBDOMAIN DISTINCT APP HEADER -->
-        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-orange-100/80 shadow-[0_4px_20px_rgba(255,82,0,0.04)]">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-                <div class="flex items-center justify-between gap-4">
+        <!-- 1. FOOD SUBDOMAIN DISTINCT STRIP -->
+        <div class="bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent border-b border-orange-100/80 py-2.5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="flex items-center justify-between gap-3">
                     
                     <!-- Left: Delivery Location & Subdomain Indicator -->
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#ff5200] to-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-orange-500/20">
-                            <span class="text-xl">🍕</span>
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#ff5200] to-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20">
+                            <span class="text-base">🍕</span>
                         </div>
                         <div class="min-w-0">
                             <div class="flex items-center gap-1.5">
-                                <span class="font-black text-sm tracking-tight text-stone-900">K71 Food</span>
-                                <span class="text-[9px] font-black uppercase tracking-wider bg-orange-100 text-[#ff5200] px-1.5 py-0.2 rounded-md">20 MIN DELIVERY</span>
+                                <span class="font-black text-xs sm:text-sm tracking-tight text-stone-900">K71 Food</span>
+                                <span class="text-[8.5px] font-black uppercase tracking-wider bg-orange-100 text-[#ff5200] px-1.5 py-0.2 rounded-md">20 MIN DELIVERY</span>
                             </div>
-                            <div @click="locationModal = true" class="flex items-center gap-1 text-xs text-stone-500 hover:text-stone-900 cursor-pointer truncate">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-ping"></span>
+                            <div @click="locationModal = true" class="flex items-center gap-1 text-[11px] text-stone-500 hover:text-stone-900 cursor-pointer truncate">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 animate-ping"></span>
                                 <span class="truncate font-semibold text-stone-700" x-text="selectedLocation"></span>
-                                <svg class="w-3.5 h-3.5 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                <svg class="w-3 h-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right: Veg Mode, Search Quick Action & Live Cart -->
-                    <div class="flex items-center gap-2.5 shrink-0">
+                    <!-- Right: Veg Mode & Live Bag Button -->
+                    <div class="flex items-center gap-2 shrink-0">
                         <!-- Veg Only Toggle -->
                         <a href="{{ $pureVegOnly ? route('food.index') : route('food.index', ['pure_veg' => 1]) }}" 
                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all cursor-pointer {{ $pureVegOnly ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30' : 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100' }}">
                             <span class="w-2 h-2 rounded-full {{ $pureVegOnly ? 'bg-white' : 'bg-emerald-600' }}"></span>
-                            <span class="text-[11px] uppercase tracking-wider">PURE VEG</span>
+                            <span class="text-[10px] uppercase tracking-wider">PURE VEG</span>
                         </a>
 
-                        <!-- Floating Food Cart Button -->
-                        <button type="button" @click="cartDrawer = true" 
-                                class="relative px-3.5 py-2 rounded-2xl bg-[#ff5200] hover:bg-[#e04800] text-white text-xs font-black transition shadow-lg shadow-orange-500/25 flex items-center gap-1.5 cursor-pointer active:scale-95">
+                        <!-- Floating Food Cart Button (Triggers Mini-Cart Popup) -->
+                        <button type="button" 
+                                @click="$dispatch('open-mini-cart')" 
+                                class="relative px-3.5 py-1.5 rounded-xl bg-[#ff5200] hover:bg-[#e04800] text-white text-xs font-black transition shadow-md shadow-orange-500/25 flex items-center gap-1.5 cursor-pointer active:scale-95">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                            <span class="hidden sm:inline">Orders</span>
+                            <span class="hidden sm:inline">Bag</span>
                             <span x-show="cartCount > 0" x-text="cartCount" class="w-4 h-4 rounded-full bg-stone-900 text-white text-[9px] font-black flex items-center justify-center"></span>
                         </button>
                     </div>
 
                 </div>
             </div>
-        </header>
+        </div>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 pt-5 space-y-7">
             
@@ -339,87 +340,20 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="translate-y-0 opacity-100"
              x-transition:leave-end="translate-y-full opacity-0"
-             class="fixed bottom-20 inset-x-4 sm:inset-x-auto sm:right-6 sm:w-96 z-40 bg-[#ff5200] text-white p-3.5 rounded-2xl shadow-2xl shadow-orange-500/40 flex items-center justify-between gap-3 border border-orange-400/40 cursor-pointer"
-             @click="cartDrawer = true">
+             class="fixed bottom-20 inset-x-4 sm:inset-x-auto sm:right-6 sm:w-96 z-40 bg-gradient-to-r from-[#ff5200] to-amber-500 text-white p-3.5 rounded-2xl shadow-2xl shadow-orange-500/40 flex items-center justify-between gap-3 border border-orange-400/40 cursor-pointer"
+             @click="$dispatch('open-mini-cart')">
             <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-sm">
                     <span x-text="cartCount"></span>
                 </div>
                 <div>
-                    <div class="text-[10px] uppercase font-bold text-orange-100">Cart Total</div>
-                    <div class="text-sm font-black">₹<span x-text="cartTotal.toFixed(0)"></span></div>
+                    <div class="text-[10px] uppercase font-bold text-orange-100">Food Bag Ready</div>
+                    <div class="text-xs font-black">Tap to view items & checkout</div>
                 </div>
             </div>
-            <div class="flex items-center gap-1 font-black text-xs uppercase tracking-wider bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition">
-                <span>View Order</span>
+            <div class="flex items-center gap-1 font-black text-xs uppercase tracking-wider bg-white/25 hover:bg-white/35 px-3 py-1.5 rounded-xl transition">
+                <span>View Bag</span>
                 <span>›</span>
-            </div>
-        </div>
-
-        <!-- FOOD CART DRAWER SLIDEOUT -->
-        <div x-show="cartDrawer" 
-             x-cloak 
-             class="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end">
-            <div @click.away="cartDrawer = false" 
-                 class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between p-6 overflow-y-auto">
-                
-                <div>
-                    <div class="flex items-center justify-between pb-4 border-b border-stone-100">
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl">🍲</span>
-                            <div>
-                                <h3 class="text-base font-black text-stone-900">Your Food Order</h3>
-                                <p class="text-[11px] text-stone-500">Superfast Express Delivery (20 Mins)</p>
-                            </div>
-                        </div>
-                        <button @click="cartDrawer = false" class="p-2 text-stone-400 hover:text-stone-900 text-lg cursor-pointer">&times;</button>
-                    </div>
-
-                    <!-- Cart Item List -->
-                    <div class="py-4 divide-y divide-stone-100 space-y-3">
-                        <template x-if="cartItems.length === 0">
-                            <div class="py-12 text-center text-stone-400">
-                                <span class="text-4xl block mb-2">🍽️</span>
-                                <p class="text-xs font-bold">Your cart is hungry!</p>
-                                <p class="text-[11px] text-stone-400 mt-1">Add your favorite dishes from the menu above.</p>
-                            </div>
-                        </template>
-
-                        <template x-for="item in cartItems" :key="item.id">
-                            <div class="flex items-center justify-between pt-3">
-                                <div class="min-w-0 pr-3">
-                                    <h4 class="text-xs font-bold text-stone-900 truncate" x-text="item.title"></h4>
-                                    <div class="text-[11px] text-[#ff5200] font-black">₹<span x-text="(item.price * item.qty).toFixed(0)"></span></div>
-                                </div>
-
-                                <!-- Qty controls -->
-                                <div class="flex items-center gap-2 bg-stone-100 px-2 py-1 rounded-xl">
-                                    <button @click="updateCartQty(item.id, -1)" class="w-5 h-5 rounded-md bg-white text-stone-700 font-black text-xs hover:bg-orange-100 cursor-pointer">-</button>
-                                    <span class="text-xs font-black text-stone-900 px-1" x-text="item.qty"></span>
-                                    <button @click="updateCartQty(item.id, 1)" class="w-5 h-5 rounded-md bg-white text-stone-700 font-black text-xs hover:bg-orange-100 cursor-pointer">+</button>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Drawer Checkout Footer -->
-                <div x-show="cartItems.length > 0" class="pt-4 border-t border-stone-100 space-y-3">
-                    <div class="flex items-center justify-between text-xs font-bold text-stone-600">
-                        <span>Delivery Fee (Express 20m)</span>
-                        <span class="text-emerald-600 font-black">FREE</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm font-black text-stone-900">
-                        <span>Total Payable</span>
-                        <span class="text-[#ff5200]">₹<span x-text="cartTotal.toFixed(0)"></span></span>
-                    </div>
-
-                    <a href="{{ route('checkout.index') }}" 
-                       class="w-full py-3.5 rounded-2xl bg-[#ff5200] hover:bg-[#e04800] text-white text-center text-xs font-black shadow-lg shadow-orange-500/30 block cursor-pointer transition">
-                        Proceed to Superfast Checkout ›
-                    </a>
-                </div>
-
             </div>
         </div>
 
@@ -472,27 +406,15 @@
                         this.cartCount = data.cart_count;
                     }
                     if (window.showToast) {
-                        window.showToast(target.title + ' added to cart!');
+                        window.showToast(target.title + ' added to bag! 🛍️');
                     }
+                    window.dispatchEvent(new CustomEvent('cart-updated'));
+                    window.dispatchEvent(new CustomEvent('cart-count-updated', { detail: { count: data.cart_count || this.cartCount } }));
+                    window.dispatchEvent(new CustomEvent('open-mini-cart'));
                 }).catch(e => console.error('Cart sync error:', e));
 
                 // 2. Local reactive state for instant drawer feedback
-                const existing = this.cartItems.find(i => i.id === target.id);
-                if (existing) {
-                    existing.qty += qty;
-                } else {
-                    this.cartItems.push({
-                        id: target.id,
-                        title: target.title,
-                        price: price,
-                        qty: qty,
-                        image: target.thumbnail_url || (target.images && target.images[0] ? '/storage/' + target.images[0].path : '')
-                    });
-                }
-                this.cartCount += qty;
-                this.cartTotal += (price * qty);
                 this.activeDishModal = false;
-                this.cartDrawer = true;
             },
             updateCartQty(id, delta) {
                 const item = this.cartItems.find(i => i.id === id);

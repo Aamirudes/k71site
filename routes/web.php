@@ -69,6 +69,7 @@ Route::get('/return-policy', [\App\Http\Controllers\PageController::class, 'refu
 Route::get('/shipping-policy', [\App\Http\Controllers\PageController::class, 'shipping'])->name('pages.shipping');
 
 Route::get('/wishlist', [\App\Http\Controllers\WishlistController::class, 'index'])->name('wishlist.index');
+Route::get('/wishlist/json', [\App\Http\Controllers\WishlistController::class, 'getJson'])->name('wishlist.json');
 Route::post('/wishlist/toggle', [\App\Http\Controllers\WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
 // Shorts (Short-form video commerce)
@@ -183,6 +184,7 @@ Route::get('/s/{slug}', [\App\Http\Controllers\StorefrontController::class, 'sho
 // Cart Routes
 Route::get('/cart', [\App\Http\Controllers\CartController::class, 'index'])->name('cart.index');
 Route::get('/cart/data', [\App\Http\Controllers\CartController::class, 'data'])->name('cart.data');
+Route::get('/cart/json', [\App\Http\Controllers\CartController::class, 'data'])->name('cart.json');
 Route::post('/cart/add', [\App\Http\Controllers\CartController::class, 'add'])->name('cart.add');
 Route::get('/cart/count', [\App\Http\Controllers\CartController::class, 'getCount'])->name('cart.count');
 Route::put('/cart/{item}', [\App\Http\Controllers\CartController::class, 'update'])->name('cart.update');
