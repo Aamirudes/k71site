@@ -66,6 +66,16 @@ class User extends Authenticatable
         return $this->roles->contains('name', $role);
     }
 
+    public function isVendor(): bool
+    {
+        return $this->hasRole('vendor') || !is_null($this->vendor);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
     public function bids(): HasMany
     {
         return $this->hasMany(Bid::class);

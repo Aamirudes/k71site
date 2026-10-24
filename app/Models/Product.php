@@ -369,4 +369,25 @@ class Product extends Model
         }
         return asset('images/product-placeholder.svg');
     }
+
+    public function isVeg(): bool
+    {
+        $cf = json_encode($this->custom_fields ?? []);
+        return str_contains(strtolower($cf), 'veg') && !str_contains(strtolower($cf), 'non-veg');
+    }
+
+    public function getDietaryTypeAttribute(): string
+    {
+        return $this->custom_fields['dietary_type'] ?? ($this->isVeg() ? 'Veg' : 'Non-Veg');
+    }
+
+    public function getSpiceLevelAttribute(): ?string
+    {
+        return $this->custom_fields['spice_level'] ?? null;
+    }
+
+    public function getServingSizeAttribute(): ?string
+    {
+        return $this->custom_fields['serving_size'] ?? null;
+    }
 }

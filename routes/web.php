@@ -83,7 +83,9 @@ Route::post('/shorts/spin/result', [ShortsSpinController::class, 'result'])->nam
 
 // Food & Restaurants Vertical Routes
 Route::get('/food', [FoodController::class, 'index'])->name('food.index');
+Route::get('/food/suggest', [FoodController::class, 'suggest'])->name('food.suggest');
 Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('food.restaurant');
+Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middleware('auth')->name('food.reorder');
 
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');

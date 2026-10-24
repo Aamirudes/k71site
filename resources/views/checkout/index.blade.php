@@ -20,20 +20,61 @@
         </div>
     @endif
 
+    @if($isFoodOrder ?? false)
+        <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🍲</span>
+                <div>
+                    <h3 class="text-sm font-black text-stone-900">Food Order Dispatch</h3>
+                    <p class="text-xs text-stone-600">Freshly prepared & hot packed by <strong class="text-[#ea580c]">{{ $vendor->shop_name }}</strong></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">⚡ Express Dispatch</span>
+                <span class="px-2.5 py-1 rounded-full bg-orange-100 text-[#ea580c] text-[11px] font-bold">🛡️ Verified Kitchen</span>
+            </div>
+        </div>
+    @endif
+
     <form action="{{ route('checkout.process', $vendor->id) }}" method="POST" id="checkout-form">
         @csrf
-        <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16">
+        <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16" x-data="{ orderType: '{{ old('order_type', 'food_delivery') }}' }">
             
             <!-- Left Column: Shipping & Payment -->
             <div class="lg:col-span-7 space-y-10">
                 
+                @if($isFoodOrder ?? false)
+                    <!-- Delivery vs Takeaway Option -->
+                    <section class="bg-white p-5 rounded-2xl border border-stone-200 shadow-sm">
+                        <h2 class="text-xs font-black text-stone-900 uppercase tracking-wider mb-3">Order Fulfillment Mode</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
+                                   :class="orderType === 'food_delivery' ? 'border-[#ea580c] bg-orange-50/40 text-stone-950 font-black' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'">
+                                <input type="radio" name="order_type" value="food_delivery" x-model="orderType" class="sr-only">
+                                <span class="text-xl">🛵</span>
+                                <span class="text-xs font-black">Doorstep Delivery</span>
+                                <span class="text-[10px] text-stone-500 font-medium">Delivered hot to your address</span>
+                            </label>
+                            <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
+                                   :class="orderType === 'food_takeaway' ? 'border-stone-900 bg-stone-50 text-stone-950 font-black' : 'border-stone-200 bg-white text-stone-600 hover:border-stone-300'">
+                                <input type="radio" name="order_type" value="food_takeaway" x-model="orderType" class="sr-only">
+                                <span class="text-xl">🥡</span>
+                                <span class="text-xs font-black">Direct Takeaway</span>
+                                <span class="text-[10px] text-emerald-600 font-bold">₹0 Delivery Fee • Self Pickup</span>
+                            </label>
+                        </div>
+                    </section>
+                @endif
+
                 <!-- Shipping Details -->
                 <section>
-                    <h2 class="text-xl font-medium text-brand-text mb-4">Shipping Details</h2>
+                    <h2 class="text-xl font-medium text-brand-text mb-4" x-text="orderType === 'food_takeaway' ? 'Customer Contact Details' : 'Delivery Address'">Delivery Address</h2>
                     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="md:col-span-2">
-                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <label for="address_line_1" class="block text-sm font-medium text-gray-700 mb-1">
+                                    {{ ($isFoodOrder ?? false) ? 'Flat / House No. / Building / Landmark' : 'Address' }}
+                                </label>
                                 <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1') }}" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm" placeholder="House/Flat No., Street, Landmark">
                             </div>
                             
@@ -68,6 +109,17 @@
                                 <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone (+91...)</label>
                                 <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" required placeholder="10 digit mobile number" minlength="10" maxlength="15" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
                             </div>
+
+                            @if($isFoodOrder ?? false)
+                                <div class="md:col-span-2 pt-2 border-t border-stone-100">
+                                    <label for="kitchen_notes" class="block text-xs font-black text-stone-900 uppercase tracking-wider mb-1">
+                                        🍳 Special Cooking / Kitchen Instructions
+                                    </label>
+                                    <input type="text" id="kitchen_notes" name="kitchen_notes" value="{{ old('kitchen_notes') }}" 
+                                           placeholder="e.g. Less spicy, send extra green chutney, cutlery required"
+                                           class="w-full rounded-xl border-stone-300 shadow-xs focus:border-[#ea580c] focus:ring-[#ea580c] text-xs font-medium py-2.5 px-3">
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </section>

@@ -20,7 +20,7 @@ class UsedController extends Controller
         $search = $request->query('search');
         $selectedCategory = $request->query('cat');
         $condition = $request->query('condition');
-        $city = $request->query('city', 'Kishangarh, Rajasthan');
+        $city = $request->query('city');
         $minPrice = $request->query('min_price');
         $maxPrice = $request->query('max_price');
         $negotiableOnly = $request->boolean('negotiable');
@@ -85,7 +85,10 @@ class UsedController extends Controller
         }
 
         if ($condition) {
-            $query->where('custom_fields->specs->Condition', 'like', "%{$condition}%");
+            $query->where(function ($q) use ($condition) {
+                $q->where('custom_fields->specs->Condition', 'like', "%{$condition}%")
+                  ->orWhere('custom_fields->condition', 'like', "%{$condition}%");
+            });
         }
 
         if ($city && $city !== 'All India') {

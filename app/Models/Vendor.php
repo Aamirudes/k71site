@@ -139,6 +139,25 @@ class Vendor extends Model
         return $this->vendor_type === 'food';
     }
 
+    public function getIsOpenAttribute(): bool
+    {
+        $opening = $this->settings?->opening_time ?? '10:00';
+        $closing = $this->settings?->closing_time ?? '23:00';
+        $now = now()->format('H:i');
+        return $now >= $opening && $now <= $closing;
+    }
+
+    public function getCuisineListAttribute(): array
+    {
+        if (empty($this->settings?->cuisine_types)) {
+            return ['Multi-Cuisine'];
+        }
+        $c = $this->settings->cuisine_types;
+        if (is_array($c)) return $c;
+        $decoded = json_decode($c, true);
+        return is_array($decoded) ? $decoded : [$c];
+    }
+
     public function isServices(): bool
     {
         return in_array($this->vendor_type, ['services', 'local_services']);

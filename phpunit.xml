@@ -32,6 +32,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="APP_URL" value="https://k71.in"/>
         <env name="K71_ROOT_DOMAIN" value="k71.in"/>
         <env name="MARKETPLACE_DOMAIN" value="k71.in"/>
     </php>

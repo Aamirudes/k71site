@@ -103,34 +103,101 @@
 
             <!-- Stepper -->
             @if($order->status !== 'cancelled')
-                <div class="px-6 sm:px-8 pt-5 pb-3 border-b border-gray-100 bg-white">
-                    <div class="grid grid-cols-4 gap-2 relative">
-                        <div class="absolute top-3 left-4 right-4 h-1 bg-gray-100 -z-0"></div>
-                        <div class="absolute top-3 left-4 h-1 bg-[#1F2A26] -z-0 transition-all duration-500" 
-                             style="width: {{ $isOutForDelivery ? '82%' : match((int)$statusStep) { 1 => '10%', 2 => '38%', 3 => '70%', 4 => '96%', default => '0%' } }};"></div>
-
-                        <div class="flex flex-col items-center text-center relative z-10">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 1 ? 'bg-[#1F2A26] text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">✓</div>
-                            <span class="text-[11px] font-bold text-brand-text mt-1.5">Confirmed</span>
-                        </div>
-                        <div class="flex flex-col items-center text-center relative z-10">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 2 ? 'bg-[#1F2A26] text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">{{ $statusStep >= 2 ? '✓' : '2' }}</div>
-                            <span class="text-[11px] font-bold {{ $statusStep >= 2 ? 'text-brand-text' : 'text-gray-400' }} mt-1.5">Packing</span>
-                        </div>
-                        <div class="flex flex-col items-center text-center relative z-10">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 3 ? ($isOutForDelivery ? 'bg-amber-600 text-white ring-4 ring-amber-100' : 'bg-[#1F2A26] text-white ring-4 ring-white') : 'bg-gray-100 text-gray-400' }}">
-                                {{ $isOutForDelivery ? '🛵' : ($statusStep >= 3 ? '✓' : '3') }}
+                @if($order->isFoodOrder())
+                    <!-- Dedicated Food Culinary Live Stepper -->
+                    <div class="px-6 sm:px-8 pt-6 pb-5 border-b border-orange-100 bg-gradient-to-b from-orange-50/40 to-white">
+                        <!-- Food ETA / Status Banner -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 p-4 rounded-2xl bg-white border border-orange-200/80 shadow-xs">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-[#ea580c] text-white flex items-center justify-center text-lg font-bold shadow-md shadow-orange-500/20">
+                                    {{ $isDelivered ? '🍽️' : ($isOutForDelivery ? '🛵' : '🍳') }}
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-black text-stone-900">
+                                        {{ $isDelivered ? 'Order Delivered!' : ($isOutForDelivery ? ($order->isFoodTakeaway() ? 'Ready for Self Pickup' : 'Out for Doorstep Delivery') : ($order->status === 'processing' ? 'Kitchen is Cooking your Meal' : 'Order Placed & Confirmed')) }}
+                                    </h3>
+                                    <p class="text-xs text-stone-500">
+                                        @if($isDelivered)
+                                            Delivered at {{ $order->delivered_at ? $order->delivered_at->format('h:i A') : 'Doorstep' }}. Enjoy your meal!
+                                        @else
+                                            Estimated Delivery: ~{{ $order->estimated_delivery_time ? $order->estimated_delivery_time->format('h:i A') : $order->created_at->addMinutes(30)->format('h:i A') }} (approx 25-35 mins)
+                                        @endif
+                                    </p>
+                                </div>
                             </div>
-                            <span class="text-[11px] font-bold {{ $isOutForDelivery ? 'text-amber-800' : ($statusStep >= 3 ? 'text-brand-text' : 'text-gray-400') }} mt-1.5">
-                                {{ $isOutForDelivery ? 'Out for Delivery' : 'Shipped' }}
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('food.reorder', $order->id) }}" class="px-4 py-2 rounded-xl bg-orange-50 border border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black transition active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                    <span>🔄</span>
+                                    <span>1-Click Reorder</span>
+                                </a>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-center text-center relative z-10">
-                            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 4 ? 'bg-emerald-600 text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">{{ $statusStep >= 4 ? '✓' : '4' }}</div>
-                            <span class="text-[11px] font-bold {{ $statusStep >= 4 ? 'text-emerald-700' : 'text-gray-400' }} mt-1.5">Delivered</span>
+
+                        <!-- 4-Stage Food Stepper -->
+                        <div class="grid grid-cols-4 gap-2 relative">
+                            <div class="absolute top-3.5 left-6 right-6 h-1 bg-stone-100 -z-0"></div>
+                            <div class="absolute top-3.5 left-6 h-1 bg-[#ea580c] -z-0 transition-all duration-500" 
+                                 style="width: {{ $isDelivered ? '92%' : ($isOutForDelivery ? '70%' : ($statusStep >= 2 ? '38%' : '5%')) }};"></div>
+
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xs {{ $statusStep >= 1 ? 'bg-[#ea580c] text-white ring-4 ring-orange-100' : 'bg-stone-100 text-stone-400' }}">✓</div>
+                                <span class="text-[11px] font-bold text-stone-900 mt-2">Placed</span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xs {{ $statusStep >= 2 ? 'bg-[#ea580c] text-white ring-4 ring-orange-100' : 'bg-stone-100 text-stone-400' }}">{{ $statusStep >= 2 ? '✓' : '2' }}</div>
+                                <span class="text-[11px] font-bold {{ $statusStep >= 2 ? 'text-stone-900' : 'text-stone-400' }} mt-2">Cooking</span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xs {{ $statusStep >= 3 ? ($isOutForDelivery ? 'bg-amber-500 text-white ring-4 ring-amber-100 animate-bounce' : 'bg-[#ea580c] text-white ring-4 ring-orange-100') : 'bg-stone-100 text-stone-400' }}">
+                                    {{ $isOutForDelivery ? '🛵' : ($statusStep >= 3 ? '✓' : '3') }}
+                                </div>
+                                <span class="text-[11px] font-bold {{ $isOutForDelivery ? 'text-amber-800 font-black' : ($statusStep >= 3 ? 'text-stone-900' : 'text-stone-400') }} mt-2">
+                                    {{ $order->isFoodTakeaway() ? 'Ready for Pickup' : 'Out for Delivery' }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xs {{ $statusStep >= 4 ? 'bg-emerald-600 text-white ring-4 ring-emerald-100' : 'bg-stone-100 text-stone-400' }}">{{ $statusStep >= 4 ? '✓' : '4' }}</div>
+                                <span class="text-[11px] font-bold {{ $statusStep >= 4 ? 'text-emerald-700' : 'text-stone-400' }} mt-2">Delivered</span>
+                            </div>
+                        </div>
+
+                        @if($order->kitchen_notes)
+                            <div class="mt-5 p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+                                <span>📝</span>
+                                <span><strong>Special Kitchen Request:</strong> {{ $order->kitchen_notes }}</span>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="px-6 sm:px-8 pt-5 pb-3 border-b border-gray-100 bg-white">
+                        <div class="grid grid-cols-4 gap-2 relative">
+                            <div class="absolute top-3 left-4 right-4 h-1 bg-gray-100 -z-0"></div>
+                            <div class="absolute top-3 left-4 h-1 bg-[#1F2A26] -z-0 transition-all duration-500" 
+                                 style="width: {{ $isOutForDelivery ? '82%' : match((int)$statusStep) { 1 => '10%', 2 => '38%', 3 => '70%', 4 => '96%', default => '0%' } }};"></div>
+
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 1 ? 'bg-[#1F2A26] text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">✓</div>
+                                <span class="text-[11px] font-bold text-brand-text mt-1.5">Confirmed</span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 2 ? 'bg-[#1F2A26] text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">{{ $statusStep >= 2 ? '✓' : '2' }}</div>
+                                <span class="text-[11px] font-bold {{ $statusStep >= 2 ? 'text-brand-text' : 'text-gray-400' }} mt-1.5">Packing</span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 3 ? ($isOutForDelivery ? 'bg-amber-600 text-white ring-4 ring-amber-100' : 'bg-[#1F2A26] text-white ring-4 ring-white') : 'bg-gray-100 text-gray-400' }}">
+                                    {{ $isOutForDelivery ? '🛵' : ($statusStep >= 3 ? '✓' : '3') }}
+                                </div>
+                                <span class="text-[11px] font-bold {{ $isOutForDelivery ? 'text-amber-800' : ($statusStep >= 3 ? 'text-brand-text' : 'text-gray-400') }} mt-1.5">
+                                    {{ $isOutForDelivery ? 'Out for Delivery' : 'Shipped' }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col items-center text-center relative z-10">
+                                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-2xs {{ $statusStep >= 4 ? 'bg-emerald-600 text-white ring-4 ring-white' : 'bg-gray-100 text-gray-400' }}">{{ $statusStep >= 4 ? '✓' : '4' }}</div>
+                                <span class="text-[11px] font-bold {{ $statusStep >= 4 ? 'text-emerald-700' : 'text-gray-400' }} mt-1.5">Delivered</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
             @endif
 
             <!-- Items -->

@@ -29,7 +29,7 @@ class IsAdmin
             strtolower((string) config('mail.admin_email', '')),
         ]);
 
-        $isAdmin = $user->hasRole('admin') || in_array(strtolower($user->email), $allowedAdminEmails, true) || $user->id === 1;
+        $isAdmin = $user->hasRole('admin') || in_array(strtolower($user->email), $allowedAdminEmails, true);
 
         if (!$isAdmin) {
             if ($user->hasRole('vendor') || $user->vendor) {
