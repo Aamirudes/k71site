@@ -232,7 +232,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'layout_preset' => 'grid',
                 'product_preset' => 'standard',
                 'upi_id' => 'apextools@upi',
-                'logo' => 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=300&q=80',
+                'logo' => 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=300&q=80',
                 'banner' => 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80',
             ],
             // 7. Home & Living (Marble Slabs)
@@ -358,7 +358,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'layout_preset' => 'grid',
                 'product_preset' => 'standard',
                 'upi_id' => 'speedcraft@upi',
-                'logo' => 'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=300&q=80',
+                'logo' => 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=300&q=80',
                 'banner' => 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&fit=crop&w=1600&q=80',
             ],
             // 13. Beauty & Wellness
@@ -379,7 +379,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'layout_preset' => 'editorial',
                 'product_preset' => 'immersive',
                 'upi_id' => 'vedicglow@upi',
-                'logo' => 'https://images.unsplash.com/photo-1608248597359-2993181822c6?auto=format&fit=crop&w=300&q=80',
+                'logo' => 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=300&q=80',
                 'banner' => 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80',
             ],
             // 14. Sports & Gear
@@ -400,7 +400,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'layout_preset' => 'grid',
                 'product_preset' => 'standard',
                 'upi_id' => 'proactivesports@upi',
-                'logo' => 'https://images.unsplash.com/photo-1531415074868-036b1c5f53ec?auto=format&fit=crop&w=300&q=80',
+                'logo' => 'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=300&q=80',
                 'banner' => 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1600&q=80',
             ],
         ];
@@ -602,7 +602,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_featured' => true,
                 'custom_fields' => ['Diameter' => '400mm (16 inch)', 'Bore Size' => '50mm / 60mm', 'Segment Height' => '15mm Premium Diamond', 'Speed' => 'Max 3000 RPM'],
                 'images' => [
-                    'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=1000&q=80',
                 ],
             ],
 
@@ -742,7 +742,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_featured' => true,
                 'custom_fields' => ['Grade' => 'SAE 5W-40 Fully Synthetic', 'Specifications' => 'API SP / ACEA A3/B4', 'Capacity' => '4 Litres Bottle', 'Compatibility' => 'Cars, SUVs & Turbo Fleets'],
                 'images' => [
-                    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&w=1000&q=80',
                 ],
             ],
 
@@ -765,7 +765,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_featured' => true,
                 'custom_fields' => ['Volume' => '30ml Glass Dropper', 'Ingredients' => 'Kashmiri Mogra Saffron, Sandalwood, Manjistha', 'Skin Type' => 'All Skin Types', 'Cruelty Free' => '100% Ayurvedic Herbals'],
                 'images' => [
-                    'https://images.unsplash.com/photo-1608248597359-2993181822c6?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=1000&q=80',
                 ],
             ],
 
@@ -788,7 +788,7 @@ class MasterProductionPlatformSeeder extends Seeder
                 'is_featured' => true,
                 'custom_fields' => ['Willow' => 'Selected Grade 1 English Willow', 'Weight' => '1,180 grams (Light Pickup)', 'Grains' => '8-10 Straight Natural Grains', 'Handle' => 'Singapore Full Cane Semi-Oval'],
                 'images' => [
-                    'https://images.unsplash.com/photo-1531415074868-036b1c5f53ec?auto=format&fit=crop&w=1000&q=80',
+                    'https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?auto=format&fit=crop&w=1000&q=80',
                 ],
             ],
         ];
