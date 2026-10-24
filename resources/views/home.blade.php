@@ -111,8 +111,6 @@
             'shape' => 'rounded-3xl',
         ],
     ];
-
-    ];
 @endphp
 
 <x-layouts.public 
