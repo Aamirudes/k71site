@@ -40,11 +40,11 @@ class FoodController extends Controller
             ->get();
 
         // 2. Query Restaurants & Cloud Kitchens
-        $restaurantsQuery = Vendor::where('status', 'approved')
+        $restaurantsQuery = Vendor::where('vendors.status', 'approved')
             ->where(function ($q) {
-                $q->where('vendor_type', 'food')
+                $q->where('vendors.vendor_type', 'food')
                   ->orWhereHas('settings', fn($sq) => $sq->where('is_restaurant', true))
-                  ->orWhereHas('products', fn($pq) => $pq->where('vertical', 'food')->where('status', 'active'));
+                  ->orWhereHas('products', fn($pq) => $pq->where('products.vertical', 'food')->where('products.status', 'active'));
             })
             ->with(['settings', 'products' => fn($q) => $q->where('vertical', 'food')->where('status', 'active')->with('images')->take(4)]);
 
@@ -102,8 +102,8 @@ class FoodController extends Controller
         $restaurants = $restaurantsQuery->paginate(12)->withQueryString();
 
         // Featured & Top Cloud Kitchens for Highlight Carousel
-        $featuredRestaurants = Vendor::where('status', 'approved')
-            ->where('vendor_type', 'food')
+        $featuredRestaurants = Vendor::where('vendors.status', 'approved')
+            ->where('vendors.vendor_type', 'food')
             ->with(['settings', 'products' => fn($q) => $q->where('vertical', 'food')->where('status', 'active')->take(3)])
             ->take(6)
             ->get();

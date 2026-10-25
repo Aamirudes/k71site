@@ -211,11 +211,17 @@ class MessageController extends Controller
     private function resolveChatUserId(): ?int
     {
         $uid = null;
-        if (auth()->check()) {
-            $uid = (int) auth()->id();
-        } elseif (!empty($_SESSION['user_id'])) {
+        try {
+            if (auth()->check()) {
+                $uid = (int) auth()->id();
+            }
+        } catch (\Throwable $e) {
+            // Session guard not initialized in standalone script context
+        }
+
+        if (!$uid && !empty($_SESSION['user_id'])) {
             $uid = (int) $_SESSION['user_id'];
-        } elseif (!empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
+        } elseif (!$uid && !empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
             $uid = (int) $_COOKIE['k71_uid'];
         }
 

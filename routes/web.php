@@ -374,4 +374,32 @@ Route::get('/storage/{path}', function ($path) {
     abort(404);
 })->where('path', '.*');
 
+// Instagram Direct Messages (DM) Platform
+Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
+Route::get('/messages.php', [\App\Http\Controllers\MessageController::class, 'index']);
+Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
+Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+
+// Modern Chat API Endpoints (Direct and .php bridge compatible)
+Route::get('/api/chat/get_conversations.php', [\App\Http\Controllers\MessageController::class, 'apiGetConversations']);
+Route::get('/api/chat/get_messages.php', [\App\Http\Controllers\MessageController::class, 'apiGetMessages']);
+Route::post('/api/chat/send_message.php', [\App\Http\Controllers\MessageController::class, 'apiSendMessage']);
+Route::get('/api/chat/search_users.php', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers']);
+Route::post('/api/chat/typing.php', [\App\Http\Controllers\MessageController::class, 'apiTyping']);
+Route::post('/api/chat/unsend_message.php', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage']);
+Route::post('/api/chat/delete_conversation.php', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation']);
+Route::post('/api/chat/upload_photo.php', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto']);
+
+Route::prefix('api/chat')->group(function () {
+    Route::get('/conversations', [\App\Http\Controllers\MessageController::class, 'apiGetConversations']);
+    Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'apiGetMessages']);
+    Route::post('/send', [\App\Http\Controllers\MessageController::class, 'apiSendMessage']);
+    Route::get('/users', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers']);
+    Route::post('/typing', [\App\Http\Controllers\MessageController::class, 'apiTyping']);
+    Route::post('/unsend', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage']);
+    Route::post('/delete-conversation', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation']);
+    Route::post('/upload-photo', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto']);
+});
+
+
 

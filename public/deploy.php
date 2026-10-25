@@ -177,6 +177,21 @@ foreach ($staleCacheFiles as $f) {
     }
 }
 
+// Clear compiled views
+$viewCacheFiles = glob($baseDir . '/storage/framework/views/*');
+if ($viewCacheFiles) {
+    foreach ($viewCacheFiles as $vf) {
+        if (is_file($vf)) {
+            @unlink($vf);
+        }
+    }
+}
+
+// Reset OPcache for instantaneous bytecode reload
+if (function_exists('opcache_reset')) {
+    @opcache_reset();
+}
+
 // 2. Ensure root index.php forwards cleanly to public/index.php
 $rootIndex = $baseDir . '/index.php';
 $rootIndexContent = "<?php\n\n/**\n * Laravel - Shared Hosting Gateway\n */\nif (!defined('LARAVEL_START')) {\n    define('LARAVEL_START', microtime(true));\n}\nrequire_once __DIR__ . '/public/index.php';\n";
