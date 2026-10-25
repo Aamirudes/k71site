@@ -163,66 +163,170 @@
             <section class="pt-4 sm:pt-6 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
                     
-                    <!-- Main High-Converting Hero Banner (8 cols) -->
-                    <div class="lg:col-span-8 rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br from-indigo-950 via-slate-900 to-zinc-950 text-white p-6 sm:p-10 shadow-xl relative overflow-hidden flex flex-col justify-between border border-white/10 min-h-[340px] sm:min-h-[420px]">
-                        <!-- Ambient luminous glow inside banner -->
-                        <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/20 blur-[90px] pointer-events-none" aria-hidden="true"></div>
-                        <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-indigo-500/20 blur-[90px] pointer-events-none" aria-hidden="true"></div>
+                    @php
+                        $carouselSlides = [
+                            [
+                                'badge' => $hp['slide1_badge'] ?? ($hp['hero_badge'] ?? '🔥 Mega Product Bazaar • Lowest Factory Prices'),
+                                'title' => $hp['slide1_title'] ?? 'Direct Products. Factory Direct Prices.',
+                                'subtitle' => $hp['slide1_subtitle'] ?? ($hp['hero_description'] ?? 'Shop trending fashion, smartphones, home living, cloud dining, and marble craft directly from verified Indian sellers with PhonePe escrow protection.'),
+                                'btn1_text' => $hp['slide1_btn1_text'] ?? ($hp['hero_cta_primary_text'] ?? 'Browse All Products'),
+                                'btn1_link' => $hp['slide1_btn1_link'] ?? ($hp['hero_cta_primary_link'] ?? '#product-showcase'),
+                                'btn2_text' => $hp['slide1_btn2_text'] ?? '₹199 Budget Store',
+                                'btn2_link' => $hp['slide1_btn2_link'] ?? '/catalog?sort=price_low',
+                                'image' => !empty($hp['slide1_image']) ? asset('storage/' . $hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80'),
+                                'gradient' => 'from-indigo-950/95 via-slate-900/85 to-zinc-950/90',
+                                'accent' => 'from-amber-300 via-rose-300 to-pink-400'
+                            ],
+                            [
+                                'badge' => $hp['slide2_badge'] ?? '⚡ Cloud Kitchen Dining • 30 Min Express',
+                                'title' => $hp['slide2_title'] ?? 'Authentic Flavors. Delivered Hot & Fresh.',
+                                'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.',
+                                'btn1_text' => $hp['slide2_btn1_text'] ?? 'Order Food Online',
+                                'btn1_link' => $hp['slide2_btn1_link'] ?? '/food',
+                                'btn2_text' => $hp['slide2_btn2_text'] ?? 'View Restaurants',
+                                'btn2_link' => $hp['slide2_btn2_link'] ?? '/food',
+                                'image' => !empty($hp['slide2_image']) ? asset('storage/' . $hp['slide2_image']) : (!empty($hp['slide2_image_url']) ? $hp['slide2_image_url'] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1400&q=80'),
+                                'gradient' => 'from-orange-950/95 via-amber-950/85 to-zinc-950/90',
+                                'accent' => 'from-amber-400 via-orange-300 to-yellow-200'
+                            ],
+                            [
+                                'badge' => $hp['slide3_badge'] ?? '💎 Artisanal Craft & Certified Home Pro',
+                                'title' => $hp['slide3_title'] ?? 'Makrana Marble & Pro Verified Services.',
+                                'subtitle' => $hp['slide3_subtitle'] ?? 'Quarry-direct marble slabs, temple carvings, diamond polishing, and verified home professionals with milestone payment security.',
+                                'btn1_text' => $hp['slide3_btn1_text'] ?? 'Explore Services',
+                                'btn1_link' => $hp['slide3_btn1_link'] ?? '/services',
+                                'btn2_text' => $hp['slide3_btn2_text'] ?? 'Submit B2B Enquiry',
+                                'btn2_link' => $hp['slide3_btn2_link'] ?? '/enquiry',
+                                'image' => !empty($hp['slide3_image']) ? asset('storage/' . $hp['slide3_image']) : (!empty($hp['slide3_image_url']) ? $hp['slide3_image_url'] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=80'),
+                                'gradient' => 'from-stone-950/95 via-neutral-900/85 to-zinc-950/90',
+                                'accent' => 'from-emerald-300 via-teal-200 to-cyan-300'
+                            ]
+                        ];
+                    @endphp
 
-                        <!-- Top Tagline & Trust Chip -->
-                        <div class="relative z-10 flex flex-wrap items-center gap-2.5">
-                            <span class="px-3 py-1 rounded-full bg-rose-600 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm">
-                                🔥 Mega Product Bazaar
-                            </span>
-                            <span class="px-3 py-1 rounded-full bg-white/10 text-zinc-300 text-[10px] sm:text-xs font-bold backdrop-blur-md border border-white/10">
-                                ⚡ Lowest Prices Guaranteed
-                            </span>
-                        </div>
+                    <!-- Main High-Converting Hero 3-Slide Carousel (8 cols) -->
+                    <div class="lg:col-span-8 rounded-[2rem] sm:rounded-[2.5rem] text-white shadow-xl relative overflow-hidden border border-white/10 min-h-[380px] sm:min-h-[440px] flex flex-col justify-between group"
+                         x-data="{
+                            currentSlide: 0,
+                            totalSlides: 3,
+                            timer: null,
+                            startAutoplay() {
+                                this.timer = setInterval(() => { this.nextSlide(); }, 6000);
+                            },
+                            stopAutoplay() {
+                                if (this.timer) clearInterval(this.timer);
+                            },
+                            nextSlide() {
+                                this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+                            },
+                            prevSlide() {
+                                this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+                            },
+                            goToSlide(idx) {
+                                this.currentSlide = idx;
+                            }
+                         }"
+                         x-init="startAutoplay()"
+                         @mouseenter="stopAutoplay()"
+                         @mouseleave="startAutoplay()">
+                        
+                        @foreach($carouselSlides as $idx => $slide)
+                            <div x-show="currentSlide === {{ $idx }}"
+                                 x-transition:enter="transition ease-out duration-500"
+                                 x-transition:enter-start="opacity-0 scale-95"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-300 absolute inset-0"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-95"
+                                 class="absolute inset-0 w-full h-full p-6 sm:p-10 flex flex-col justify-between z-10"
+                                 style="{{ $idx > 0 ? 'display: none;' : '' }}">
+                                
+                                <!-- Background Image with Scrim -->
+                                <img src="{{ $slide['image'] }}" 
+                                     alt="{{ $slide['title'] }}" 
+                                     class="absolute inset-0 w-full h-full object-cover object-center pointer-events-none -z-20">
+                                <div class="absolute inset-0 bg-gradient-to-r {{ $slide['gradient'] }} backdrop-blur-[0.5px] -z-10 pointer-events-none"></div>
 
-                        <!-- Hero Main Headline: Direct Product Value -->
-                        <div class="relative z-10 my-4 sm:my-6 space-y-2 sm:space-y-3">
-                            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
-                                Direct Products. <br>
-                                <span class="bg-gradient-to-r from-amber-300 via-rose-300 to-pink-400 bg-clip-text text-transparent">
-                                    Factory Direct Prices.
-                                </span>
-                            </h1>
-                            <p class="text-xs sm:text-base text-zinc-300 max-w-xl font-normal leading-relaxed">
-                                Shop trending fashion, smartphones, home living, cloud dining, and marble craft directly from verified Indian sellers with PhonePe escrow protection.
-                            </p>
-                        </div>
+                                <!-- Top Tagline & Trust Chip -->
+                                <div class="relative z-10 flex flex-wrap items-center gap-2.5">
+                                    <span class="px-3 py-1 rounded-full bg-rose-600/90 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm backdrop-blur-sm border border-rose-400/30">
+                                        {{ $slide['badge'] }}
+                                    </span>
+                                    <span class="px-3 py-1 rounded-full bg-white/10 text-zinc-200 text-[10px] sm:text-xs font-bold backdrop-blur-md border border-white/10 hidden sm:inline-block">
+                                        ⚡ Verified Sellers &amp; Escrow Protection
+                                    </span>
+                                </div>
 
-                        <!-- Instant Action Links & Trust Badges -->
-                        <div class="relative z-10 space-y-4">
-                            <div class="flex flex-wrap items-center gap-3">
-                                <a href="#product-showcase" 
-                                   class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                                    <span>Browse All Products</span>
-                                    <span>&darr;</span>
-                                </a>
-                                <a href="{{ route('catalog.index', ['sort' => 'price_low']) }}" 
-                                   class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm tracking-wide border border-white/20 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                                    <span>₹199 Budget Store</span>
-                                    <span>&rarr;</span>
-                                </a>
+                                <!-- Hero Main Headline -->
+                                <div class="relative z-10 my-4 sm:my-6 space-y-2 sm:space-y-3">
+                                    <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.12] text-white drop-shadow-md">
+                                        {{ $slide['title'] }}
+                                    </h1>
+                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-200 max-w-xl font-normal leading-relaxed drop-shadow-sm">
+                                        {{ $slide['subtitle'] }}
+                                    </p>
+                                </div>
+
+                                <!-- Action Buttons & Trust Badges -->
+                                <div class="relative z-10 space-y-4">
+                                    <div class="flex flex-wrap items-center gap-3">
+                                        @if(!empty($slide['btn1_text']))
+                                            <a href="{{ $slide['btn1_link'] }}" 
+                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-lg active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                                <span>{{ $slide['btn1_text'] }}</span>
+                                                <span>&rarr;</span>
+                                            </a>
+                                        @endif
+                                        @if(!empty($slide['btn2_text']))
+                                            <a href="{{ $slide['btn2_link'] }}" 
+                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm tracking-wide border border-white/20 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                                <span>{{ $slide['btn2_text'] }}</span>
+                                                <span>↗</span>
+                                            </a>
+                                        @endif
+                                    </div>
+
+                                    <!-- Trust Mini Badges -->
+                                    <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-[10px] sm:text-xs text-zinc-300 font-medium pt-1">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black">✓</span>
+                                            <span>Direct Verified Indian Sellers</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black">✓</span>
+                                            <span>100% Secure Escrow Protection</span>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
+                        @endforeach
 
-                            <!-- Trust Mini Badges -->
-                            <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-[11px] sm:text-xs text-zinc-300 font-medium pt-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black">✓</span>
-                                    <span>Free Delivery on 1st Order</span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black">✓</span>
-                                    <span>7-Day Easy Returns</span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-black">✓</span>
-                                    <span>PhonePe Safe Escrow</span>
-                                </div>
-                            </div>
+                        <!-- Carousel Controls: Left & Right Chevrons -->
+                        <button type="button" 
+                                @click="prevSlide()" 
+                                aria-label="Previous Slide"
+                                class="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 cursor-pointer shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" 
+                                @click="nextSlide()" 
+                                aria-label="Next Slide"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-20 cursor-pointer shadow-md">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+
+                        <!-- Carousel Indicators / Dots (Bottom Center) -->
+                        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+                            @foreach($carouselSlides as $idx => $slide)
+                                <button type="button" 
+                                        @click="goToSlide({{ $idx }})" 
+                                        aria-label="Go to slide {{ $idx + 1 }}"
+                                        :class="currentSlide === {{ $idx }} ? 'w-7 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'"
+                                        class="h-2 rounded-full transition-all duration-300 cursor-pointer"></button>
+                            @endforeach
                         </div>
+
                     </div>
 
                     <!-- Right Column: 2 Quick-Pick Product Tiles (4 cols) -->
@@ -468,84 +572,6 @@
                 </div>
             </section>
 
-            <!-- ==========================================
-                 4. TRENDING DEALS OF THE DAY (AMAZON LIGHTNING SLIDER)
-                 ========================================== -->
-            @php 
-                $dealsProducts = $featuredProducts->isNotEmpty() ? $featuredProducts : $newArrivals;
-            @endphp
-            @if($dealsProducts->isNotEmpty())
-            <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8" x-data="{
-                scrollLeft() {
-                    this.$refs.dealsTrack.scrollBy({ left: -300, behavior: 'smooth' });
-                },
-                scrollRight() {
-                    this.$refs.dealsTrack.scrollBy({ left: 300, behavior: 'smooth' });
-                }
-            }">
-                <div class="p-4 sm:p-6 rounded-[2rem] bg-white/90 dark:bg-zinc-900/90 border border-black/[0.06] dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.02)] backdrop-blur-xl space-y-4">
-                    
-                    <!-- Header with Live Ticking Countdown -->
-                    <div class="flex items-center justify-between pb-3 border-b border-black/[0.05] dark:border-white/10 flex-wrap gap-2">
-                        <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                            <div class="flex items-center gap-2">
-                                <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-lg font-black">⚡</span>
-                                <div>
-                                    <h2 class="text-base sm:text-2xl font-black text-zinc-950 dark:text-white tracking-tight leading-tight">Trending Deals of the Day</h2>
-                                    <p class="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">Handpicked boutique offers with express pan-India dispatch</p>
-                                </div>
-                            </div>
-                            
-                            <!-- Timer Chip with simulated dynamic countdown -->
-                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs font-bold"
-                                 x-data="{
-                                     hours: 5, minutes: 24, seconds: 48,
-                                     init() {
-                                         setInterval(() => {
-                                             if (this.seconds > 0) { this.seconds--; }
-                                             else {
-                                                 this.seconds = 59;
-                                                 if (this.minutes > 0) { this.minutes--; }
-                                                 else { this.minutes = 59; this.hours = this.hours > 0 ? this.hours - 1 : 12; }
-                                             }
-                                         }, 1000);
-                                     }
-                                 }">
-                                <span>⏰</span>
-                                <span class="font-mono text-[11px]">Ends in <span x-text="String(hours).padStart(2,'0') + ':' + String(minutes).padStart(2,'0') + ':' + String(seconds).padStart(2,'0')"></span></span>
-                            </div>
-                        </div>
-
-                        <!-- Chevrons & View All -->
-                        <div class="flex items-center gap-2">
-                            <a href="{{ route('catalog.index') }}" class="px-3.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-black dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-bold transition shadow-xs hidden sm:inline-flex items-center gap-1">
-                                <span>View All</span>
-                                <span>&rarr;</span>
-                            </a>
-                            
-                            <button type="button" @click="scrollLeft()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer" aria-label="Previous Products">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                            </button>
-                            <button type="button" @click="scrollRight()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer" aria-label="Next Products">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Products Horizontal Slider Track -->
-                    <div x-ref="dealsTrack" 
-                         class="flex items-stretch gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 touch-pan-x"
-                         style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
-                        @foreach($dealsProducts->take(12) as $prod)
-                            <div class="w-[180px] sm:w-[220px] shrink-0">
-                                <x-product-card :product="$prod" />
-                            </div>
-                        @endforeach
-                    </div>
-
-                </div>
-            </section>
-            @endif
 
             <!-- ==========================================
                  5. MAIN DIRECT PRODUCT SHOWCASE (MEESHO / AMAZON ULTRA-RESPONSIVE GRID)

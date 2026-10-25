@@ -33,6 +33,10 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
+        if ($request->has('modifiers') && !$request->has('selected_modifiers')) {
+            $request->merge(['selected_modifiers' => (array) $request->input('modifiers')]);
+        }
+
         $validated = $request->validate([
             'product_id' => 'nullable|integer|exists:products,id',
             'variant_id' => 'nullable|integer|exists:product_variants,id',

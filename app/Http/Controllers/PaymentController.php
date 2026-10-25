@@ -35,7 +35,7 @@ class PaymentController extends Controller
         // Graceful fallback to Direct UPI QR payment so the customer never gets stranded
         $order->update(['payment_method' => 'upi']);
         return redirect()->route('checkout.payment', $order->id)
-            ->with('info', 'PhonePe Gateway is temporarily busy. Please scan the QR code below or enter UTR to complete your order!');
+            ->with('info', 'Please scan the UPI QR code below or enter your UTR to complete payment!');
     }
 
     public function callback(Request $request, Order $order, PhonePeService $phonePeService)

@@ -29,6 +29,22 @@ class ProductModifier extends Model
     }
 
     /**
+     * Get title alias for modifier_name
+     */
+    public function getTitleAttribute(): string
+    {
+        return $this->modifier_name ?? '';
+    }
+
+    /**
+     * Get price alias for price_delta (Rupees)
+     */
+    public function getPriceAttribute(): float
+    {
+        return (float) ($this->price_delta ?? 0);
+    }
+
+    /**
      * Get price delta in paise for cart integration
      */
     public function getPriceDeltaPaiseAttribute(): int

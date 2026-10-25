@@ -495,12 +495,33 @@
 
         .glass-back-btn {
             display: none;
-            background: none;
-            border: none;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid var(--glass-border);
             color: var(--color-text-main);
-            padding: 6px;
+            width: 38px;
+            height: 38px;
             cursor: pointer;
-            border-radius: 10px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            margin-right: 2px;
+        }
+        .dark .glass-back-btn {
+            background: rgba(30, 41, 59, 0.65);
+        }
+        .glass-back-btn:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.08);
+            box-shadow: 0 4px 14px var(--glass-glow);
+        }
+        .dark .glass-back-btn:hover {
+            background: rgba(51, 65, 85, 0.95);
+        }
+        .glass-back-btn:active {
+            transform: scale(0.95);
         }
 
         .glass-chat-header-avatar {
@@ -1335,6 +1356,12 @@
                 display: flex;
             }
             .glass-back-btn {
+                display: flex !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .glass-chat-frame.chat-active .glass-back-btn {
                 display: flex;
             }
         }
@@ -1430,15 +1457,18 @@
                     
                     <!-- Chat Header -->
                     <div class="glass-chat-header">
-                        <div class="glass-chat-header-user">
-                            <!-- Mobile Back Button -->
-                            <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="15 18 9 12 15 6"></polyline>
+                            <!-- Instagram-Style Back Button -->
+                            <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox" aria-label="Back to Inbox">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                                    <polyline points="12 19 5 12 12 5"></polyline>
                                 </svg>
                             </button>
                             
-                            <img src="" alt="" class="glass-chat-header-avatar" id="headerAvatar">
+                            <div style="position: relative; flex-shrink: 0;">
+                                <img src="" alt="" class="glass-chat-header-avatar" id="headerAvatar">
+                                <span class="glass-online-badge" id="headerOnlineDot" style="display: none;" title="Active now"></span>
+                            </div>
                             <div class="glass-chat-header-info">
                                 <span class="glass-chat-header-username" id="headerUsername">&#64;username</span>
                                 <span class="glass-chat-header-status" id="headerStatus">
@@ -1568,6 +1598,7 @@
         'use strict';
 
         const CURRENT_USER_ID = {{ auth()->id() }};
+        const INITIAL_TARGET_USER_ID = {{ !empty($targetUserId) ? (int)$targetUserId : 'null' }};
         let currentTab = 'primary';
         let currentConversationId = null;
         let activeRecipientId = null;
@@ -1801,6 +1832,10 @@
                     headerUsername.textContent = '@' + (recipient.username || 'user');
 
                     const isOnline = Boolean(recipient.is_online);
+                    const headerOnlineDot = document.getElementById('headerOnlineDot');
+                    if (headerOnlineDot) {
+                        headerOnlineDot.style.display = isOnline ? 'block' : 'none';
+                    }
                     if (isOnline) {
                         headerStatus.innerHTML = `<span class="glass-online-pill"><span class="glass-online-dot"></span> Active now</span> • ${escapeHtml(recipient.name || 'User')}`;
                     } else {
@@ -2091,6 +2126,18 @@
 
         backBtn.addEventListener('click', () => {
             mainContainer.classList.remove('chat-active');
+            currentConversationId = null;
+            activeRecipientId = null;
+            if (window.innerWidth <= 768) {
+                // On mobile, removing chat-active shows glass-sidebar and hides glass-chat-pane
+            } else {
+                activeChat.style.display = 'none';
+                emptyState.style.display = 'flex';
+            }
+            conversationsList.querySelectorAll('.glass-conv-item').forEach(i => i.classList.remove('active'));
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         });
 
         // Photo Upload Handling
@@ -2520,6 +2567,35 @@
         // ---------------------------------------------------------------------
         fetchConversations();
         startPolling();
+
+        // 8. Auto-load conversation if target user or conversation passed in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const qConv = urlParams.get('conversation');
+        const qUser = INITIAL_TARGET_USER_ID || urlParams.get('user') || urlParams.get('chat_with') || urlParams.get('uid') || urlParams.get('vendor');
+
+        if (qConv) {
+            loadConversation(parseInt(qConv, 10), null);
+        } else if (qUser) {
+            fetch('/api/chat/search_users.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    action: 'start_or_find',
+                    target_user_id: parseInt(qUser, 10)
+                })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success && result.conversation_id) {
+                    loadConversation(result.conversation_id, parseInt(qUser, 10));
+                }
+            })
+            .catch(err => console.error('Direct chat auto-start error:', err));
+        }
 
     })();
     </script>

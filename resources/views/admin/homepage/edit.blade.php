@@ -181,6 +181,250 @@
                                        class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-bold">
                             </div>
                         </div>
+                <!-- Front Banner 3-Slide Carousel Studio Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-6" x-data="{ activeSlideTab: 1 }">
+                    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-2">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-[10px] uppercase tracking-wider">3-Slide Carousel</span>
+                                <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                                    Homepage Front Banner Carousel
+                                </h3>
+                            </div>
+                            <p class="text-xs text-zinc-500 mt-0.5">Customize images, titles, badges, and CTA buttons for all 3 rotating slides.</p>
+                        </div>
+
+                        <!-- Slide Switcher Pills -->
+                        <div class="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl">
+                            <button type="button" @click="activeSlideTab = 1" 
+                                    :class="activeSlideTab === 1 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                Slide 1 (Bazaar)
+                            </button>
+                            <button type="button" @click="activeSlideTab = 2" 
+                                    :class="activeSlideTab === 2 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                Slide 2 (Dining)
+                            </button>
+                            <button type="button" @click="activeSlideTab = 3" 
+                                    :class="activeSlideTab === 3 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                Slide 3 (Craft & Pro)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Slide 1 Fields -->
+                    <div x-show="activeSlideTab === 1" class="space-y-4 text-xs">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Badge Tagline</label>
+                                <input type="text" name="slide1_badge" value="{{ $hp['slide1_badge'] ?? '🔥 Mega Product Bazaar • Lowest Factory Prices' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Headline</label>
+                                <input type="text" name="slide1_title" value="{{ $hp['slide1_title'] ?? 'Direct Products. Factory Direct Prices.' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Subtitle / Description</label>
+                            <textarea name="slide1_subtitle" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $hp['slide1_subtitle'] ?? 'Shop trending fashion, smartphones, home living, cloud dining, and marble craft directly from verified Indian sellers with PhonePe escrow protection.' }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Primary Button (Left)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide1_btn1_text" value="{{ $hp['slide1_btn1_text'] ?? 'Browse All Products' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide1_btn1_link" value="{{ $hp['slide1_btn1_link'] ?? '#product-showcase' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Secondary Button (Right)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide1_btn2_text" value="{{ $hp['slide1_btn2_text'] ?? '₹199 Budget Store' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide1_btn2_link" value="{{ $hp['slide1_btn2_link'] ?? '/catalog?sort=price_low' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Slide 1 Image File Upload</label>
+                                <input type="file" name="slide1_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($hp['slide1_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $hp['slide1_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Image URL</label>
+                                <input type="text" name="slide1_image_url" value="{{ $hp['slide1_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slide 2 Fields -->
+                    <div x-show="activeSlideTab === 2" class="space-y-4 text-xs" style="display: none;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Badge Tagline</label>
+                                <input type="text" name="slide2_badge" value="{{ $hp['slide2_badge'] ?? '⚡ Cloud Kitchen Dining • 30 Min Express' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Headline</label>
+                                <input type="text" name="slide2_title" value="{{ $hp['slide2_title'] ?? 'Authentic Flavors. Delivered Hot & Fresh.' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Subtitle / Description</label>
+                            <textarea name="slide2_subtitle" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.' }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Primary Button (Left)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide2_btn1_text" value="{{ $hp['slide2_btn1_text'] ?? 'Order Food Online' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide2_btn1_link" value="{{ $hp['slide2_btn1_link'] ?? '/food' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Secondary Button (Right)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide2_btn2_text" value="{{ $hp['slide2_btn2_text'] ?? 'View Restaurants' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide2_btn2_link" value="{{ $hp['slide2_btn2_link'] ?? '/food#restaurants' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Slide 2 Image File Upload</label>
+                                <input type="file" name="slide2_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($hp['slide2_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $hp['slide2_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Image URL</label>
+                                <input type="text" name="slide2_image_url" value="{{ $hp['slide2_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Slide 3 Fields -->
+                    <div x-show="activeSlideTab === 3" class="space-y-4 text-xs" style="display: none;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Badge Tagline</label>
+                                <input type="text" name="slide3_badge" value="{{ $hp['slide3_badge'] ?? '💎 Artisanal Craft & Certified Home Pro' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Headline</label>
+                                <input type="text" name="slide3_title" value="{{ $hp['slide3_title'] ?? 'Makrana Marble & Pro Verified Services.' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Subtitle / Description</label>
+                            <textarea name="slide3_subtitle" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $hp['slide3_subtitle'] ?? 'Quarry-direct marble slabs, temple carvings, diamond polishing, and verified home professionals with milestone payment security.' }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Primary Button (Left)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide3_btn1_text" value="{{ $hp['slide3_btn1_text'] ?? 'Explore Services' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide3_btn1_link" value="{{ $hp['slide3_btn1_link'] ?? '/services' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-2">
+                                <span class="font-bold text-zinc-900 block">Secondary Button (Right)</span>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Text</label>
+                                    <input type="text" name="slide3_btn2_text" value="{{ $hp['slide3_btn2_text'] ?? 'Submit B2B Enquiry' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
+                                    <input type="text" name="slide3_btn2_link" value="{{ $hp['slide3_btn2_link'] ?? '/enquiry' }}"
+                                           class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Slide 3 Image File Upload</label>
+                                <input type="file" name="slide3_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($hp['slide3_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $hp['slide3_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Image URL</label>
+                                <input type="text" name="slide3_image_url" value="{{ $hp['slide3_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
                     </div>
                 </div>
 

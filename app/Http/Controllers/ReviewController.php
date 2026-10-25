@@ -21,6 +21,8 @@ class ReviewController extends Controller
             'rating' => 'required|integer|min:1|max:5',
             'title' => 'nullable|string|max:200',
             'body' => 'required|string|max:2000',
+            'images' => 'nullable|array|max:4',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         // Check verified purchase
@@ -28,6 +30,22 @@ class ReviewController extends Controller
             ->where('status', 'delivered')
             ->whereHas('items', fn($q) => $q->where('product_id', $product->id))
             ->exists();
+
+        // Handle uploaded customer photos
+        $storedImages = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $path = $imgFile->store('reviews', 'public');
+                    $storedImages[] = $path;
+                }
+            }
+        }
+
+        $existingReview = Review::where('product_id', $product->id)->where('user_id', $user->id)->first();
+        if ($existingReview && empty($storedImages) && !empty($existingReview->images)) {
+            $storedImages = $existingReview->images;
+        }
 
         Review::updateOrCreate(
             [
@@ -38,12 +56,22 @@ class ReviewController extends Controller
                 'rating' => $validated['rating'],
                 'title' => $validated['title'] ?? null,
                 'body' => $validated['body'],
+                'images' => !empty($storedImages) ? $storedImages : null,
                 'is_verified_purchase' => $isVerifiedPurchase,
                 'is_approved' => true,
             ]
         );
 
-        return back()->with('success', 'Thank you! Your review has been published.');
+        // Update product average rating & review count cache
+        $approvedReviews = Review::where('product_id', $product->id)->where('is_approved', true);
+        $reviewCount = $approvedReviews->count();
+        $avgRating = $reviewCount > 0 ? round($approvedReviews->avg('rating'), 2) : null;
+        $product->update([
+            'review_count' => $reviewCount,
+            'avg_rating' => $avgRating,
+        ]);
+
+        return back()->with('success', 'Thank you! Your photo review has been published.');
     }
 
     /**

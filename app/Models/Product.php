@@ -140,6 +140,76 @@ class Product extends Model
     }
 
     /**
+     * Determine category vertical type with robust fallbacks
+     */
+    public function getVerticalTypeAttribute(): string
+    {
+        // 1. Explicit Category vertical type if available
+        if ($this->category && !empty($this->category->vertical_type) && $this->category->vertical_type !== 'standard_retail') {
+            return $this->category->vertical_type;
+        }
+
+        // 2. Food listings & restaurants
+        if ($this->vertical === 'food' || $this->listing_type === 'food' || $this->modifiers()->exists()) {
+            return 'food_portion';
+        }
+
+        // 3. Services & freelance gigs
+        if ($this->vertical === 'services' || $this->isBooking()) {
+            return 'service_booking';
+        }
+        if ($this->gigPackages()->exists()) {
+            return 'digital_gig';
+        }
+
+        // 4. Pre-owned & classifieds
+        if ($this->vertical === 'used' || $this->listing_type === 'classified') {
+            return 'classified_asset';
+        }
+
+        // 5. B2B & Wholesale enquiries
+        if ($this->vertical === 'enquiry' || $this->isEnquiry()) {
+            return 'b2b_machinery';
+        }
+
+        // 6. Check if actually apparel / fashion
+        if ($this->isClothing()) {
+            return 'fashion_matrix';
+        }
+
+        return 'standard_retail';
+    }
+
+    /**
+     * Check if product is apparel / clothing / footwear
+     */
+    public function isClothing(): bool
+    {
+        $catName = strtolower($this->category?->name ?? '');
+        $catSlug = strtolower($this->category?->slug ?? '');
+        $titleLower = strtolower($this->title ?? '');
+
+        // Non-clothing verticals explicitly false
+        if (in_array($this->vertical, ['food', 'services', 'used', 'enquiry'])) {
+            return false;
+        }
+
+        $apparelKeywords = [
+            'cloth', 'apparel', 'fashion', 'shirt', 't-shirt', 'tshirt', 'pant', 'trouser', 
+            'jeans', 'dress', 'saree', 'kurti', 'kurta', 'lehenga', 'suit', 'jacket', 
+            'hoodie', 'sweater', 'ethnic', 'footwear', 'shoe', 'sneaker', 'sandals', 'blouse', 'dupatta'
+        ];
+
+        foreach ($apparelKeywords as $kw) {
+            if (str_contains($catName, $kw) || str_contains($catSlug, $kw) || str_contains($titleLower, $kw)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if product is a booking listing (e.g. doorstep services).
      */
     public function isBooking(): bool
@@ -221,23 +291,7 @@ class Product extends Model
         return $this->hasMany(ProductGigPackage::class);
     }
 
-    /**
-     * Resolve the active vertical type for this product
-     */
-    public function getVerticalTypeAttribute(): string
-    {
-        if ($this->category && !empty($this->category->vertical_type)) {
-            return $this->category->vertical_type;
-        }
 
-        return match ($this->vertical) {
-            'food' => 'food_portion',
-            'services' => ($this->listing_type === 'gig' ? 'digital_gig' : 'service_booking'),
-            'enquiry' => 'b2b_machinery',
-            'used' => 'classified_asset',
-            default => 'fashion_matrix',
-        };
-    }
 
     /**
      * Resolve the visual branding theme and badge metadata for this product card.

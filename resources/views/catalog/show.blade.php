@@ -1210,7 +1210,7 @@
                                     <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
                                     </svg>
-                                    <span>Material &amp; Specifications</span>
+                                    <span>{{ $product->isClothing() ? 'Fabric & Specifications' : ($verticalType === 'food_portion' ? 'Ingredients & Details' : 'Product Specifications') }}</span>
                                 </span>
                                 <svg class="w-4 h-4 text-stone-400 transform transition-transform duration-200" :class="activeTab === 'fabric' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
@@ -1221,13 +1221,13 @@
                                     </div>
                                     
                                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-stone-100 text-[11px]">
-                                        @if(!empty($product->material))
+                                        @if($product->isClothing() && !empty($product->material))
                                             <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
                                                 <span class="text-stone-400 block uppercase text-[9px] font-bold">Material</span>
                                                 <span class="font-semibold text-brand-text">{{ $product->material }}</span>
                                             </div>
                                         @endif
-                                        @if(!empty($product->care_instructions))
+                                        @if($product->isClothing() && !empty($product->care_instructions))
                                             <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
                                                 <span class="text-stone-400 block uppercase text-[9px] font-bold">Care Instructions</span>
                                                 <span class="font-semibold text-brand-text">{{ $product->care_instructions }}</span>
@@ -1263,7 +1263,7 @@
                         </div>
 
                         <!-- Accordion 2: Size & Measurements Guide -->
-                        @if($verticalType === 'fashion_matrix' || $hasCustomChart)
+                        @if(($verticalType === 'fashion_matrix' || $hasCustomChart) && $product->isClothing())
                         <div class="py-3.5">
                             <button type="button" 
                                      @click="activeTab = (activeTab === 'size' ? '' : 'size')"
@@ -1433,6 +1433,7 @@
             </div>
         </div>
 
+        @if(($verticalType === 'fashion_matrix' || $hasCustomChart) && $product->isClothing())
         <!-- Garment Size Guide Modal -->
         <div x-show="showSizeGuide" 
              x-cloak 
@@ -1561,11 +1562,12 @@
                 @endif
 
                 <button type="button" @click="showSizeGuide = false" 
-                        class="w-full py-2.5 rounded-full bg-brand-text text-white font-bold text-xs hover:bg-black transition-colors">
+                        class="w-full py-2.5 rounded-full bg-brand-text text-white font-bold text-xs hover:bg-black transition-colors cursor-pointer">
                     Close Guide
                 </button>
             </div>
         </div>
+        @endif
 
         <!-- Universal Mobile Sticky Action Bar (100% Mobile Responsive) -->
         <div class="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-white/95 backdrop-blur-xl border-t border-stone-200/90 shadow-2xl flex items-center justify-between gap-3"
@@ -1610,8 +1612,9 @@
 
     </div>
 
-    <!-- Reviews, Ratings & Vendor Response Section -->
-    <section class="mt-12 bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/80 shadow-xs" x-data="{ showReportModal: false, showReviewForm: false }">
+    <!-- Reviews, Ratings & Customer Photo Gallery Section -->
+    <section class="mt-12 bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/80 shadow-xs" 
+             x-data="{ showReportModal: false, showReviewForm: false, showReviewLightbox: false, reviewLightboxImg: '' }">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-stone-100 gap-4">
             <div>
                 <div class="flex items-center gap-2">
@@ -1620,15 +1623,19 @@
                     </svg>
                     <h2 class="text-xl sm:text-2xl font-sans font-bold text-brand-text">Customer Reviews &amp; Ratings</h2>
                 </div>
-                <p class="text-xs text-stone-500 mt-1">Verified customer feedback and store responses.</p>
+                <p class="text-xs text-stone-500 mt-1">Verified buyer feedback, real customer photos, and official store responses.</p>
             </div>
             <div class="flex items-center gap-2">
                 @auth
-                    <button type="button" @click="showReviewForm = !showReviewForm" class="px-4 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold transition">
-                        Write a Review
+                    <button type="button" @click="showReviewForm = !showReviewForm" class="px-4 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                        <span>📸 Write Photo Review</span>
                     </button>
+                @else
+                    <a href="{{ route('login') }}" class="px-4 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                        <span>Sign In to Review</span>
+                    </a>
                 @endauth
-                <button type="button" @click="showReportModal = true" class="px-3 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition flex items-center gap-1.5">
+                <button type="button" @click="showReportModal = true" class="px-3 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
                     </svg>
@@ -1643,37 +1650,91 @@
             </div>
         @endif
 
-        <!-- Write Review Drawer / Form -->
-        <div x-show="showReviewForm" class="mt-6 p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200/60" style="display: none;">
+        @php
+            $allReviewImages = collect($product->reviews ?? [])->pluck('images')->flatten()->filter()->values();
+        @endphp
+
+        <!-- Customer Photos Ribbon (Amazon / Meesho Pattern) -->
+        @if($allReviewImages->isNotEmpty())
+            <div class="mt-6 p-4 rounded-2xl bg-stone-50/80 border border-stone-200/60 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-black uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+                        <span>📸 Photos from Customers</span>
+                        <span class="text-[10px] text-stone-500 font-semibold">({{ $allReviewImages->count() }} photos)</span>
+                    </h3>
+                </div>
+                <div class="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+                    @foreach($allReviewImages as $img)
+                        <button type="button" 
+                                @click="reviewLightboxImg = '{{ asset('storage/' . $img) }}'; showReviewLightbox = true"
+                                class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-stone-200/80 shadow-2xs hover:scale-105 hover:shadow-md transition-all cursor-pointer">
+                            <img src="{{ asset('storage/' . $img) }}" alt="Customer Review Photo" class="w-full h-full object-cover">
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Write Review Drawer / Form with Image Upload Support -->
+        <div x-show="showReviewForm" class="mt-6 p-5 sm:p-6 rounded-2xl bg-[#FAF8F5] border border-stone-200/80" style="display: none;" x-data="{ reviewPhotos: [] }">
             <h3 class="text-sm font-bold text-brand-text mb-3">Share Your Experience with this Item</h3>
-            <form action="{{ route('reviews.store', $product) }}" method="POST" class="space-y-3">
+            <form action="{{ route('reviews.store', $product) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-stone-700 mb-1">Rating *</label>
                     <select name="rating" required class="w-full sm:w-48 px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold text-stone-900 bg-white">
-                        <option value="5">5 Stars (Exceptional)</option>
-                        <option value="4">4 Stars (Very Good)</option>
-                        <option value="3">3 Stars (Average)</option>
-                        <option value="2">2 Stars (Below Expectations)</option>
-                        <option value="1">1 Star (Disappointing)</option>
+                        <option value="5">⭐⭐⭐⭐⭐ 5 Stars (Exceptional)</option>
+                        <option value="4">⭐⭐⭐⭐ 4 Stars (Very Good)</option>
+                        <option value="3">⭐⭐⭐ 3 Stars (Average)</option>
+                        <option value="2">⭐⭐ 2 Stars (Below Expectations)</option>
+                        <option value="1">⭐ 1 Star (Disappointing)</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-stone-700 mb-1">Headline (Optional)</label>
-                    <input type="text" name="title" placeholder="Summary of your thoughts..." class="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-900 bg-white">
+                    <input type="text" name="title" placeholder="Summary of your thoughts..." class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs text-stone-900 bg-white">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-stone-700 mb-1">Detailed Review *</label>
-                    <textarea name="body" rows="3" required placeholder="Describe fabric quality, sizing accuracy, delivery experience..." class="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs text-stone-900 bg-white"></textarea>
+                    <textarea name="body" rows="3" required placeholder="Describe product quality, delivery speed, packaging, sizing or taste..." class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs text-stone-900 bg-white"></textarea>
                 </div>
+
+                <!-- Customer Real Photos Upload -->
+                <div>
+                    <label class="block text-xs font-bold text-stone-700 mb-1.5 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <span>📸 Attach Real Product Photos</span>
+                            <span class="text-[10px] text-stone-400 font-normal">(Optional • Up to 4 photos)</span>
+                        </span>
+                        <span class="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Verified Photo</span>
+                    </label>
+                    
+                    <div class="p-4 rounded-2xl bg-white border border-dashed border-stone-300 hover:border-stone-400 transition-colors">
+                        <input type="file" 
+                               name="images[]" 
+                               multiple 
+                               accept="image/jpeg,image/png,image/webp,image/jpg" 
+                               @change="reviewPhotos = Array.from($event.target.files).slice(0, 4)"
+                               class="block w-full text-xs text-stone-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-stone-100 file:text-stone-800 hover:file:bg-stone-200 cursor-pointer">
+                        <p class="text-[10px] text-stone-400 mt-1">Select up to 4 real photos of the item received (JPEG, PNG, WEBP max 5MB)</p>
+                        
+                        <div x-show="reviewPhotos.length > 0" class="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-stone-100" style="display: none;">
+                            <span class="text-[10px] font-bold text-stone-600">Selected:</span>
+                            <template x-for="(f, i) in reviewPhotos" :key="i">
+                                <span class="px-2 py-0.5 rounded-md bg-stone-100 text-[10px] text-stone-700 font-mono" x-text="f.name"></span>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" @click="showReviewForm = false" class="px-4 py-2 rounded-xl text-xs text-stone-500 hover:bg-stone-200/60">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold">Submit Review</button>
+                    <button type="button" @click="showReviewForm = false" class="px-4 py-2 rounded-xl text-xs text-stone-500 hover:bg-stone-200/60 cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold cursor-pointer">Publish Review</button>
                 </div>
             </form>
         </div>
 
-        <!-- Reviews List -->
+        <!-- Reviews List with Photos Display -->
         <div class="mt-6 space-y-4">
             @if($product->reviews && $product->reviews->count() > 0)
                 @foreach($product->reviews as $rev)
@@ -1693,6 +1754,19 @@
                                     <h4 class="text-xs font-bold text-stone-900 mt-1">{{ $rev->title }}</h4>
                                 @endif
                                 <p class="text-xs text-stone-600 mt-1 leading-relaxed">{{ $rev->body }}</p>
+
+                                <!-- Customer Photo Thumbnails -->
+                                @if(!empty($rev->images) && is_array($rev->images))
+                                    <div class="flex flex-wrap items-center gap-2 mt-3 pt-2 border-t border-stone-100">
+                                        @foreach($rev->images as $revImg)
+                                            <button type="button" 
+                                                    @click="reviewLightboxImg = '{{ asset('storage/' . $revImg) }}'; showReviewLightbox = true"
+                                                    class="w-16 h-16 rounded-xl overflow-hidden border border-stone-200 shadow-2xs hover:scale-105 transition-all cursor-pointer">
+                                                <img src="{{ asset('storage/' . $revImg) }}" alt="Customer review photo" class="w-full h-full object-cover">
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                             <span class="text-[10px] text-stone-400 shrink-0 font-mono">{{ $rev->created_at->format('d M Y') }}</span>
                         </div>
@@ -1714,9 +1788,20 @@
                 @endforeach
             @else
                 <div class="p-8 text-center bg-stone-50/40 rounded-2xl border border-stone-100">
-                    <p class="text-xs text-stone-500">No reviews yet for this design. Be the first to share your thoughts!</p>
+                    <p class="text-xs text-stone-500">No reviews yet for this listing. Be the first to share your thoughts and photos!</p>
                 </div>
             @endif
+        </div>
+
+        <!-- Review Photo Lightbox Modal -->
+        <div x-show="showReviewLightbox" 
+             x-cloak 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+             @keydown.escape.window="showReviewLightbox = false">
+            <div class="relative max-w-2xl max-h-[85vh] w-full flex flex-col items-center justify-center" @click.away="showReviewLightbox = false">
+                <button type="button" @click="showReviewLightbox = false" class="absolute -top-10 right-0 text-white/80 hover:text-white text-2xl font-bold cursor-pointer">✕</button>
+                <img :src="reviewLightboxImg" alt="Customer Review Photo Enlarged" class="max-h-[80vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/20">
+            </div>
         </div>
 
         <!-- Report Modal -->

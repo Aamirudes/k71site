@@ -58,10 +58,10 @@
     <div x-ref="sizeSelector">
         <div class="flex items-center justify-between mb-2.5">
             <div class="flex items-center gap-1.5">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">Select Size</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">{{ $product->isClothing() ? 'Select Size' : 'Select Option' }}</h3>
                 <span class="text-[11px] text-stone-400 font-normal">(Required)</span>
             </div>
-            @if(!($product->size_chart && isset($product->size_chart['type']) && $product->size_chart['type'] === 'none'))
+            @if($product->isClothing() && !($product->size_chart && isset($product->size_chart['type']) && $product->size_chart['type'] === 'none'))
                 <button type="button" @click="$dispatch('open-size-guide')" class="text-xs text-stone-800 hover:text-brand-sage flex items-center gap-1 font-bold transition-colors">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2zM7 7v4M11 7v2M15 7v4M19 7v2"/>

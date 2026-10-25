@@ -26,7 +26,20 @@ class MessageController extends Controller
             $_SESSION['username'] = $user->username ?? ($user->first_name ?? 'User');
             @setcookie('k71_uid', (string)$user->id, time() + 86400 * 30, '/', '', false, false);
         }
-        return view('messages.index', compact('user'));
+
+        $targetUserId = null;
+        if ($request->filled('user')) {
+            $targetUserId = (int)$request->input('user');
+        } elseif ($request->filled('chat_with')) {
+            $targetUserId = (int)$request->input('chat_with');
+        } elseif ($request->filled('vendor')) {
+            $vendor = \App\Models\Vendor::find($request->input('vendor'));
+            if ($vendor && $vendor->user_id) {
+                $targetUserId = (int)$vendor->user_id;
+            }
+        }
+
+        return view('messages.index', compact('user', 'targetUserId'));
     }
 
     /**

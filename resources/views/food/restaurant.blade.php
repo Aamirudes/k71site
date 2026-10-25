@@ -222,20 +222,20 @@
                                         'id' => $dish->id,
                                         'title' => $dish->title,
                                         'description' => $dish->description,
-                                        'base_price' => $dish->base_price / 100,
+                                        'base_price' => (float)($dish->base_price / 100),
                                         'image' => $dish->primary_image_url,
                                         'is_veg' => $isVeg,
                                         'variants' => $dish->variants->map(fn($v) => [
                                             'id' => $v->id,
-                                            'title' => $v->title,
-                                            'price' => $v->price / 100
-                                        ]),
+                                            'title' => $v->title ?: ($v->sku ?: 'Standard'),
+                                            'price' => (float)$v->effective_price
+                                        ])->values(),
                                         'modifiers' => $dish->modifiers->map(fn($m) => [
                                             'id' => $m->id,
-                                            'title' => $m->title,
-                                            'price' => $m->price / 100,
+                                            'title' => $m->modifier_name ?: ($m->title ?: 'Add-on'),
+                                            'price' => (float)($m->price_delta ?? $m->price ?? 0),
                                             'is_required' => (bool)$m->is_required
-                                        ])
+                                        ])->values()
                                     ]);
                                 @endphp
 
@@ -416,18 +416,18 @@
                                     <span>Add Extras & Sides</span>
                                     <span class="text-[10px] text-stone-500 font-semibold">Optional</span>
                                 </h4>
-                                <div class="space-y-2">
+                                <div class="space-y-2.5">
                                     <template x-for="m in activeDish.modifiers" :key="m.id">
-                                        <label class="flex items-center justify-between p-3 rounded-2xl border transition cursor-pointer"
-                                               :class="selectedModifiers.includes(m.id) ? 'border-[#ea580c] bg-orange-50/50' : 'border-stone-200 hover:bg-stone-50'">
+                                        <label class="flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer"
+                                               :class="(selectedModifiers.includes(m.id) || selectedModifiers.includes(String(m.id))) ? 'border-[#ea580c] bg-orange-50/70 shadow-xs' : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/60'">
                                             <div class="flex items-center gap-3">
                                                 <input type="checkbox" 
                                                        :value="m.id" 
                                                        x-model="selectedModifiers" 
-                                                       class="text-[#ea580c] rounded-md focus:ring-[#ea580c]">
-                                                <span class="text-xs font-bold text-stone-900" x-text="m.title"></span>
+                                                       class="w-4 h-4 text-[#ea580c] rounded-md focus:ring-[#ea580c] border-stone-300 cursor-pointer">
+                                                <span class="text-xs font-bold text-stone-800" x-text="m.title"></span>
                                             </div>
-                                            <span class="text-xs font-bold text-stone-600" x-text="'+₹' + m.price.toFixed(2)"></span>
+                                            <span class="text-xs font-black text-stone-900" x-text="'+₹' + Number(m.price).toFixed(2)"></span>
                                         </label>
                                     </template>
                                 </div>
@@ -524,18 +524,18 @@
 
             get calculatedCustomPrice() {
                 if (!this.activeDish) return 0;
-                let unitPrice = this.activeDish.base_price;
+                let unitPrice = Number(this.activeDish.base_price) || 0;
                 if (this.selectedVariantId && this.activeDish.variants) {
-                    const foundV = this.activeDish.variants.find(v => v.id === this.selectedVariantId);
-                    if (foundV) unitPrice = foundV.price;
+                    const foundV = this.activeDish.variants.find(v => v.id == this.selectedVariantId);
+                    if (foundV && Number(foundV.price) > 0) unitPrice = Number(foundV.price);
                 }
                 if (this.selectedModifiers.length > 0 && this.activeDish.modifiers) {
                     this.selectedModifiers.forEach(modId => {
-                        const foundM = this.activeDish.modifiers.find(m => m.id === modId);
-                        if (foundM) unitPrice += foundM.price;
+                        const foundM = this.activeDish.modifiers.find(m => m.id == modId);
+                        if (foundM && Number(foundM.price) > 0) unitPrice += Number(foundM.price);
                     });
                 }
-                return unitPrice * this.itemQuantity;
+                return unitPrice * (this.itemQuantity || 1);
             },
 
             async submitCustomizedItem() {
@@ -549,7 +549,10 @@
                 }
                 formData.append('quantity', this.itemQuantity);
                 if (this.selectedModifiers.length > 0) {
-                    this.selectedModifiers.forEach(id => formData.append('modifiers[]', id));
+                    this.selectedModifiers.forEach(id => {
+                        formData.append('selected_modifiers[]', id);
+                        formData.append('modifiers[]', id);
+                    });
                 }
                 if (this.kitchenNote) {
                     formData.append('instructions', this.kitchenNote);

@@ -20,28 +20,22 @@ class PhonePeService
 
     public function __construct()
     {
-        $this->merchantId = config('services.phonepe.merchant_id');
-        if (empty($this->merchantId)) {
-            throw new \RuntimeException('PhonePe MERCHANT_ID is not configured. Set PHONEPE_MERCHANT_ID in .env');
-        }
-
+        $this->merchantId = (string) config('services.phonepe.merchant_id', '');
         $this->clientId = config('services.phonepe.client_id');
         $this->clientSecret = config('services.phonepe.client_secret');
-
         $this->clientVersion = max(1, (int) config('services.phonepe.client_version', 1));
-
-        $this->saltKey = config('services.phonepe.salt_key', '');
+        $this->saltKey = (string) config('services.phonepe.salt_key', '');
         $this->saltIndex = (int) config('services.phonepe.salt_index', 1);
-
         $this->env = strtoupper(config('services.phonepe.env', 'PRODUCTION')) ?: 'PRODUCTION';
-
-        // If client_id and client_secret are provided, use PhonePe V2 Standard Checkout API
         $this->isV2 = !empty($this->clientId) && !empty($this->clientSecret);
+    }
 
-        // V1 requires salt_key; V2 requires client credentials
-        if (!$this->isV2 && empty($this->saltKey)) {
-            throw new \RuntimeException('PhonePe SALT_KEY is required for V1 API. Set PHONEPE_SALT_KEY in .env');
+    public function isConfigured(): bool
+    {
+        if (empty($this->merchantId)) {
+            return false;
         }
+        return $this->isV2 || !empty($this->saltKey);
     }
 
     public function getMerchantId(): string
@@ -69,6 +63,14 @@ class PhonePeService
      */
     public function initiatePayment(Order $order, string $returnUrl): array
     {
+        if (!$this->isConfigured()) {
+            return [
+                'success' => false,
+                'message' => 'PhonePe credentials are not configured.',
+                'order_id' => $order->id,
+            ];
+        }
+
         if ($this->isV2) {
             return $this->initiateV2Payment($order, $returnUrl);
         }

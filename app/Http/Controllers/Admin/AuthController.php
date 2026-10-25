@@ -134,15 +134,23 @@ class AuthController extends Controller
         $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
         $user->load('roles');
 
-        // Direct secure authentication into Master Admin Console
-        Auth::login($user, true);
-        $request->session()->regenerate();
-        $request->session()->put('admin_2fa_passed', true);
+        // Store intermediate auth session for 2FA OTP verification
         $request->session()->put('admin_auth_user_id', $user->id);
         $request->session()->put('admin_auth_email', $user->email);
+        $request->session()->put('admin_auth_time', now()->toIso8601String());
 
-        return redirect()->intended(route('admin.dashboard'))
-            ->with('success', 'Welcome back, Master Administrator. Console unlocked.');
+        try {
+            $otp = $this->otpService->generateAndSend($user->email, 'admin_login', $user->id);
+            // If in debug/test mode, also provide the code in session for developer testing
+            if (app()->environment('local') || config('app.debug')) {
+                session()->flash('test_otp_code', $otp);
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Admin OTP dispatch error: ' . $e->getMessage());
+        }
+
+        return redirect()->route('admin.otp.show')
+            ->with('success', 'A 6-digit verification code has been dispatched to your email.');
     }
 
     public function showOtp(Request $request)

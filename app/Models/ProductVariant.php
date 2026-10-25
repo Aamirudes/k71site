@@ -69,14 +69,25 @@ class ProductVariant extends Model
     }
 
     /**
+     * Human-friendly variant title or label
+     */
+    public function getTitleAttribute(): string
+    {
+        if (!empty($this->attributes_hash) && is_array($this->attributes_hash)) {
+            return implode(' / ', array_values($this->attributes_hash));
+        }
+        return $this->sku ?: 'Standard';
+    }
+
+    /**
      * Get price in rupees attribute with fallback to price_override or product base price
      */
     public function getEffectivePriceAttribute(): float
     {
-        if (!is_null($this->price)) {
+        if (!is_null($this->price) && (float) $this->price > 0) {
             return (float) $this->price;
         }
-        if (!is_null($this->price_override)) {
+        if (!is_null($this->price_override) && (int) $this->price_override > 0) {
             return (float) ($this->price_override / 100);
         }
         return (float) (($this->product?->base_price ?? 0) / 100);
@@ -87,12 +98,13 @@ class ProductVariant extends Model
      */
     public function getEffectivePricePaiseAttribute(): int
     {
-        if (!is_null($this->price_override)) {
+        if (!is_null($this->price_override) && (int) $this->price_override > 0) {
             return (int) $this->price_override;
         }
-        if (!is_null($this->price)) {
+        if (!is_null($this->price) && (float) $this->price > 0) {
             return (int) round(((float) $this->price) * 100);
         }
         return (int) ($this->product?->base_price ?? 0);
     }
 }
+

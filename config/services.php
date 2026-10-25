@@ -42,13 +42,13 @@ return [
     ],
 
     'phonepe' => [
-        'merchant_id' => (env('PHONEPE_MERCHANT_ID') && env('PHONEPE_MERCHANT_ID') !== 'PGTESTPAYUAT86') ? env('PHONEPE_MERCHANT_ID') : 'M23TKU0R0MJ8I',
-        'client_id' => env('PHONEPE_CLIENT_ID') ?: 'SU2610161656542399718703',
-        'client_secret' => env('PHONEPE_CLIENT_SECRET') ?: '8967e108-d791-45f6-a1b2-fb168beed1ee',
+        'merchant_id' => env('PHONEPE_MERCHANT_ID', ''),
+        'client_id' => env('PHONEPE_CLIENT_ID', ''),
+        'client_secret' => env('PHONEPE_CLIENT_SECRET', ''),
         'client_version' => (int) (env('PHONEPE_CLIENT_VERSION') ?: 1),
-        'salt_key' => env('PHONEPE_SALT_KEY') ?: '8967e108-d791-45f6-a1b2-fb168beed1ee',
+        'salt_key' => env('PHONEPE_SALT_KEY', ''),
         'salt_index' => (int) (env('PHONEPE_SALT_INDEX') ?: 1),
-        'env' => (env('PHONEPE_ENV') === 'UAT' && (!env('PHONEPE_CLIENT_ID') || env('PHONEPE_MERCHANT_ID') === 'PGTESTPAYUAT86')) ? 'PRODUCTION' : (env('PHONEPE_ENV') ?: 'PRODUCTION'),
+        'env' => env('PHONEPE_ENV', 'PRODUCTION'),
     ],
 
 ];
