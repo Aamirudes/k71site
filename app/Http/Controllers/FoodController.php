@@ -162,6 +162,8 @@ class FoodController extends Controller
                 ->get();
         }
 
+        $foodSettings = \App\Models\Setting::getGroup('food_page');
+
         return view('food.index', compact(
             'foodCategories',
             'restaurants',
@@ -176,7 +178,8 @@ class FoodController extends Controller
             'rating',
             'deliveryTime',
             'budget',
-            'sort'
+            'sort',
+            'foodSettings'
         ));
     }
 

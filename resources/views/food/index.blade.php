@@ -12,9 +12,12 @@
         <section class="relative bg-gradient-to-b from-orange-500/10 via-amber-500/5 to-transparent pt-6 sm:pt-10 pb-6 px-4 sm:px-6 lg:px-8 border-b border-orange-100/60">
             <div class="max-w-7xl mx-auto space-y-6">
                 
+                @php
+                    $fs = $foodSettings ?? [];
+                @endphp
                 <div class="max-w-3xl space-y-2">
                     <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-100/80 border border-orange-200 text-[#ea580c] text-[11px] font-black uppercase tracking-wider flex-wrap">
-                        <span>⚡ 25-30 MINUTE EXPRESS DOORSTEP DISPATCH</span>
+                        <span>{{ $fs['food_hero_badge'] ?? '⚡ 25-30 MINUTE EXPRESS DOORSTEP DISPATCH' }}</span>
                         <span class="text-stone-300">•</span>
                         <button type="button" @click="locationModalOpen = true" class="hover:underline flex items-center gap-1 cursor-pointer">
                             <span>📍 DELIVERING TO</span>
@@ -23,10 +26,10 @@
                         </button>
                     </div>
                     <h1 class="text-3xl sm:text-5xl font-black text-stone-950 tracking-tight leading-tight">
-                        Crave it? Get it hot &amp; fresh from top <span class="text-[#ea580c]">cloud kitchens</span>.
+                        {{ $fs['food_hero_title'] ?? 'Crave it? Get it hot & fresh from top cloud kitchens.' }}
                     </h1>
                     <p class="text-sm sm:text-base text-stone-600 font-medium">
-                        Explore hand-crafted dum biryanis, wood-fired artisan pizzas, gourmet burgers, and pure veg royal thalis.
+                        {{ $fs['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, gourmet burgers, and pure veg royal thalis.' }}
                     </p>
                 </div>
 

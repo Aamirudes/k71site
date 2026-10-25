@@ -1,487 +1,642 @@
-<x-layouts.admin title="Homepage & SEO Studio">
-    <div class="space-y-6" x-data="{ activeTab: 'seo' }">
-            
-            <!-- Header Bar -->
-            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-sage mb-1">
-                        <span class="px-2 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">Master Controller</span>
-                        <span>•</span>
-                        <span>Full Admin Rights</span>
-                    </div>
-                    <h1 class="text-3xl font-serif font-bold text-brand-text">Homepage & SEO Command Center</h1>
-                    <p class="text-sm text-gray-500 mt-1">Configure search visibility, brand storytelling, hero aesthetics, and storefront merchandising.</p>
+<x-layouts.admin title="Page Studio • Visual Elementor Site Builder">
+    @php
+        $hp = $homepage ?? [];
+        $sp = $servicesPage ?? [];
+        $fp = $foodPage ?? [];
+        $up = $usedPage ?? [];
+        $seoData = $seo ?? [];
+    @endphp
+
+    <div x-data="{
+        activeVertical: 'homepage', // 'homepage', 'services', 'food', 'used', 'seo'
+        previewMode: 'desktop', // 'desktop', 'mobile'
+        
+        // Homepage Live State
+        hp_hero_badge: '{{ addslashes($hp['hero_badge'] ?? 'K71 UNIFIED MARKETPLACE • Verified Stores & Secure Escrow') }}',
+        hp_title_line1: '{{ addslashes($hp['hero_title_line1'] ?? 'Discover Top Stores &') }}',
+        hp_title_line2: '{{ addslashes($hp['hero_title_line2'] ?? 'Trending Products') }}',
+        hp_description: '{{ addslashes($hp['hero_description'] ?? 'Shop directly from authorized distributor storefronts, boutique ateliers, and certified suppliers nationwide.') }}',
+        hp_cta_text: '{{ addslashes($hp['hero_cta_primary_text'] ?? 'Search') }}',
+        hp_search_placeholder: '{{ addslashes($hp['search_placeholder'] ?? 'Search products, brands, model numbers, stores...') }}',
+        hp_arrivals_title: '{{ addslashes($hp['arrivals_section_title'] ?? '🔥 Trending Products & Deals') }}',
+        hp_services_title: '{{ addslashes($hp['services_section_title'] ?? '💜 Top Freelance & Professional Services') }}',
+        hp_services_sub: '{{ addslashes($hp['services_section_subtitle'] ?? 'Hire vetted specialists for tech, video, marketing & home craftsmanship') }}',
+        hp_cat_title: '{{ addslashes($hp['cat_section_title'] ?? 'Structured Categories') }}',
+        hp_cat_sub: '{{ addslashes($hp['cat_section_subtitle'] ?? 'Explore retail and trade verticals tailored for specific sectors.') }}',
+        hp_show_trending: {{ ($hp['show_trending_products'] ?? true) ? 'true' : 'false' }},
+        hp_show_services: {{ ($hp['show_services_showcase'] ?? true) ? 'true' : 'false' }},
+        hp_show_categories: {{ ($hp['show_categories'] ?? true) ? 'true' : 'false' }},
+        hp_show_pillars: {{ ($hp['show_value_pillars'] ?? true) ? 'true' : 'false' }},
+        hp_show_seller: {{ ($hp['show_seller_banner'] ?? true) ? 'true' : 'false' }},
+
+        // Services Hub Live State
+        srv_hero_badge: '{{ addslashes($sp['services_hero_badge'] ?? 'services.k71.in • K71 Verified Freelancers & Services') }}',
+        srv_hero_title: '{{ addslashes($sp['services_hero_title'] ?? 'Find the Perfect Freelance Services') }}',
+        srv_hero_sub: '{{ addslashes($sp['services_hero_subtitle'] ?? 'Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.') }}',
+        srv_search_placeholder: '{{ addslashes($sp['services_search_placeholder'] ?? 'What service are you looking for today? (e.g. Logo Design, Website)') }}',
+        srv_cat_title: '{{ addslashes($sp['services_cat_title'] ?? 'Explore Services by Category') }}',
+        srv_cat_sub: '{{ addslashes($sp['services_cat_subtitle'] ?? 'Select a category to view verified specialists') }}',
+        srv_trending_title: '{{ addslashes($sp['services_trending_title'] ?? 'Trending Services & Packages') }}',
+        srv_trending_sub: '{{ addslashes($sp['services_trending_subtitle'] ?? 'Vetted freelancers ready to start on your project today') }}',
+        srv_seller_title: '{{ addslashes($sp['services_seller_cta_title'] ?? 'Are You a Skilled Freelancer or Professional?') }}',
+        srv_seller_sub: '{{ addslashes($sp['services_seller_cta_subtitle'] ?? 'Join K71 Services and start earning. Create your gigs, set your packages, and receive guaranteed escrow payouts directly to your bank account.') }}',
+
+        // Food Hub Live State
+        food_hero_badge: '{{ addslashes($fp['food_hero_badge'] ?? '⚡ 25-30 MINUTE EXPRESS DOORSTEP DISPATCH') }}',
+        food_hero_title: '{{ addslashes($fp['food_hero_title'] ?? 'Crave it? Get it hot & fresh from top cloud kitchens.') }}',
+        food_hero_sub: '{{ addslashes($fp['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, gourmet burgers, and pure veg royal thalis.') }}',
+
+        // Used Market Live State
+        used_hero_badge: '{{ addslashes($up['used_hero_badge'] ?? '♻️ K71 VERIFIED PRE-LOVED & RE-COMMERCE') }}',
+        used_hero_title: '{{ addslashes($up['used_hero_title'] ?? 'Certified Second-Hand Goods & Direct Classifieds') }}',
+        used_hero_sub: '{{ addslashes($up['used_hero_subtitle'] ?? 'Buy and sell authenticated pre-owned smartphones, laptops, electronics, and vehicles safely.') }}',
+    }" class="space-y-6">
+
+        <!-- TOP MASTER TOOLBAR (ELEMENTOR HEADER) -->
+        <div class="bg-slate-900 text-white rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 mb-1.5">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-600 text-white">
+                        Visual Page Studio
+                    </span>
+                    <span class="text-xs text-slate-400">• Elementor-Style Live Customizer</span>
                 </div>
-                <div class="flex items-center gap-3 w-full sm:w-auto">
-                    <a href="{{ route('home') }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-medium border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-xs">
-                        <svg class="w-4 h-4 mr-1.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                        Preview Storefront
-                    </a>
-                    <button type="submit" form="homepage-studio-form" class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl text-sm font-medium bg-brand-text text-white hover:bg-brand-sage transition-colors shadow-sm">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                        Publish All Changes
-                    </button>
-                </div>
+                <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                    <span>⚡ K71 Page Studio &amp; Visual Layout Editor</span>
+                </h1>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    Live editing for Homepage, Services Hub, Food &amp; Cloud Kitchens, and Used Marketplaces.
+                </p>
             </div>
 
-            @if(session('success'))
-                <div class="p-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 flex items-center justify-between shadow-xs">
-                    <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span class="text-sm font-medium">{{ session('success') }}</span>
-                    </div>
-                    <span class="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-semibold">Live Now</span>
-                </div>
-            @endif
-
-            @if(isset($errors) && $errors->any())
-                <div class="p-4 bg-red-50 text-red-700 rounded-2xl border border-red-200">
-                    <p class="font-bold text-sm mb-1">Please fix the following validation errors:</p>
-                    <ul class="list-disc list-inside text-xs space-y-1">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <!-- Navigation Tabs -->
-            <div class="bg-white rounded-2xl p-2 border border-brand-surface shadow-xs flex flex-wrap gap-1.5">
-                <button type="button" @click="activeTab = 'seo'" :class="activeTab === 'seo' ? 'bg-brand-sage text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
-                    <span>🔍</span> Search Engine Optimization (SEO)
-                </button>
-                <button type="button" @click="activeTab = 'hero'" :class="activeTab === 'hero' ? 'bg-brand-sage text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
-                    <span>👑</span> Hero Section & Atmosphere
-                </button>
-                <button type="button" @click="activeTab = 'announcement'" :class="activeTab === 'announcement' ? 'bg-brand-sage text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
-                    <span>📢</span> Announcement Marquee
-                </button>
-                <button type="button" @click="activeTab = 'sections'" :class="activeTab === 'sections' ? 'bg-brand-sage text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
-                    <span>📑</span> Section Controls & Visibility
-                </button>
-                <button type="button" @click="activeTab = 'editorial'" :class="activeTab === 'editorial' ? 'bg-brand-sage text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all">
-                    <span>✍️</span> SEO Ranking Article
-                </button>
-            </div>
-
-            <!-- Configuration Form -->
-            <form id="homepage-studio-form" action="{{ route('admin.homepage.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-
-                <!-- TAB 1: SEO & Metadata -->
-                <div x-show="activeTab === 'seo'" class="space-y-6">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm space-y-6">
-                        <div class="border-b border-gray-100 pb-4">
-                            <h2 class="text-xl font-serif font-bold text-brand-text">Core Search Engine Optimization (Meta & Indexing)</h2>
-                            <p class="text-xs text-gray-500 mt-1">Configure exactly how Google, Bing, and social crawlers perceive and rank your marketplace home page.</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Meta Title -->
-                            <div class="space-y-1.5 md:col-span-2">
-                                <div class="flex justify-between items-center">
-                                    <label class="block text-sm font-semibold text-gray-800">Homepage Meta Title (Title Tag)</label>
-                                    <span class="text-xs text-gray-400">Recommended: 50–60 characters</span>
-                                </div>
-                                <input type="text" name="seo_meta_title" value="{{ old('seo_meta_title', $seo['seo_meta_title'] ?? 'The Curated Luxury Marketplace for Modern Designers & Artisans') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="e.g. ShopDost | Handcrafted Luxury Ethnic & Designer Fashion">
-                                <p class="text-xs text-gray-500">Appears in Google search results and browser tab titles.</p>
-                            </div>
-
-                            <!-- Meta Description -->
-                            <div class="space-y-1.5 md:col-span-2">
-                                <div class="flex justify-between items-center">
-                                    <label class="block text-sm font-semibold text-gray-800">Meta Description</label>
-                                    <span class="text-xs text-gray-400">Recommended: 140–160 characters</span>
-                                </div>
-                                <textarea name="seo_meta_description" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="Discover bespoke designer fashion, handcrafted ethnic wear, and luxury silhouettes directly from verified independent ateliers.">{{ old('seo_meta_description', $seo['seo_meta_description'] ?? 'Discover exclusive designer collections, handcrafted ethnic couture, and slow fashion directly from independent boutiques and master ateliers across India.') }}</textarea>
-                                <p class="text-xs text-gray-500">The snippet shown below your search result in Google.</p>
-                            </div>
-
-                            <!-- Meta Keywords -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Target Meta Keywords</label>
-                                <input type="text" name="seo_meta_keywords" value="{{ old('seo_meta_keywords', $seo['seo_meta_keywords'] ?? 'luxury fashion, designer kurtis, handcrafted sarees, artisan atelier, multi-vendor fashion marketplace') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="keyword1, keyword2, keyword3">
-                                <p class="text-xs text-gray-500">Comma-separated target terms.</p>
-                            </div>
-
-                            <!-- Canonical URL -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Canonical URL</label>
-                                <input type="url" name="seo_canonical_url" value="{{ old('seo_canonical_url', $seo['seo_canonical_url'] ?? url('/')) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="https://yourdomain.com/">
-                                <p class="text-xs text-gray-500">Prevents duplicate content penalties if accessing via aliases or params.</p>
-                            </div>
-
-                            <!-- Robots Directive -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Robots Directive (Indexation)</label>
-                                <select name="seo_robots" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs bg-white">
-                                    <option value="index, follow" {{ ($seo['seo_robots'] ?? 'index, follow') === 'index, follow' ? 'selected' : '' }}>index, follow (Standard - Fully Index & Follow Links)</option>
-                                    <option value="noindex, follow" {{ ($seo['seo_robots'] ?? '') === 'noindex, follow' ? 'selected' : '' }}>noindex, follow (Do not show on Google, but follow links)</option>
-                                    <option value="index, nofollow" {{ ($seo['seo_robots'] ?? '') === 'index, nofollow' ? 'selected' : '' }}>index, nofollow (Index page only)</option>
-                                    <option value="noindex, nofollow" {{ ($seo['seo_robots'] ?? '') === 'noindex, nofollow' ? 'selected' : '' }}>noindex, nofollow (Strictly Hidden)</option>
-                                </select>
-                            </div>
-
-                            <!-- Schema.org JSON-LD Toggle -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Schema.org JSON-LD Structured Data</label>
-                                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                                    <input type="checkbox" name="seo_schema_enabled" value="1" {{ !empty($seo['seo_schema_enabled']) || !isset($seo['seo_schema_enabled']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                    <div>
-                                        <p class="text-xs font-semibold text-gray-800">Inject Rich JSON-LD Microdata</p>
-                                        <p class="text-[11px] text-gray-500">Generates Google WebSite, Organization, SearchAction, and Marketplace schemas.</p>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- OpenGraph & Social Media Previews -->
-                        <div class="border-t border-gray-100 pt-6 mt-6">
-                            <h3 class="text-md font-serif font-bold text-brand-text mb-4">OpenGraph & Social Sharing (WhatsApp, Twitter, Facebook)</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div class="space-y-1.5">
-                                    <label class="block text-sm font-semibold text-gray-800">OG Sharing Title</label>
-                                    <input type="text" name="seo_og_title" value="{{ old('seo_og_title', $seo['seo_og_title'] ?? 'ShopDost Marketplace | Modern Designer Couture & Artisan Fashion') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">
-                                </div>
-
-                                <div class="space-y-1.5">
-                                    <label class="block text-sm font-semibold text-gray-800">OG Social Share Image (1200x630 px)</label>
-                                    <input type="file" name="seo_og_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-sage/10 file:text-brand-sage hover:file:bg-brand-sage/20">
-                                    @if(!empty($seo['seo_og_image']))
-                                        <div class="mt-2 flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
-                                            <img src="{{ asset('storage/' . $seo['seo_og_image']) }}" alt="Current OG" class="w-16 h-10 object-cover rounded-md border border-gray-200">
-                                            <span class="text-xs text-gray-600">Active custom social share card</span>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <div class="space-y-1.5 md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-800">OG Social Description</label>
-                                    <textarea name="seo_og_description" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">{{ old('seo_og_description', $seo['seo_og_description'] ?? 'Discover handcrafted masterpieces, designer ensembles, and slow fashion created by independent Indian artisans.') }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: Hero Visuals & Typography -->
-                <div x-show="activeTab === 'hero'" class="space-y-6">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm space-y-6">
-                        <div class="border-b border-gray-100 pb-4">
-                            <h2 class="text-xl font-serif font-bold text-brand-text">Hero Presentation & Brand Atmosphere</h2>
-                            <p class="text-xs text-gray-500 mt-1">This is the visual centerpiece that first greets visitors on desktop and mobile.</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Hero Badge -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Top Capsule Badge</label>
-                                <input type="text" name="hero_badge" value="{{ old('hero_badge', $homepage['hero_badge'] ?? '✨ Redefining the Modern Marketplace') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">
-                                <p class="text-xs text-gray-500">Floats above the main title.</p>
-                            </div>
-
-                            <!-- Hero Image Upload -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Hero Card / Background Artwork</label>
-                                <input type="file" name="hero_image" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-sage/10 file:text-brand-sage hover:file:bg-brand-sage/20">
-                                @if(!empty($homepage['hero_image']))
-                                    <div class="mt-2 flex items-center gap-3 p-2 bg-gray-50 rounded-xl border border-gray-200">
-                                        <img src="{{ asset('storage/' . $homepage['hero_image']) }}" alt="Current Hero" class="w-16 h-12 object-cover rounded-md border border-gray-200">
-                                        <span class="text-xs text-gray-600">Active custom hero image</span>
-                                    </div>
-                                @else
-                                    <p class="text-[11px] text-gray-400">Currently using high-end atelier gradient with subtle luxury mesh.</p>
-                                @endif
-                            </div>
-
-                            <!-- Headline Line 1 -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Headline Line 1 (Bold Modern)</label>
-                                <input type="text" name="hero_title_line1" value="{{ old('hero_title_line1', $homepage['hero_title_line1'] ?? 'Curated Fashion') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs font-bold">
-                            </div>
-
-                            <!-- Headline Line 2 -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Headline Line 2 (Editorial Serif / Script)</label>
-                                <input type="text" name="hero_title_line2" value="{{ old('hero_title_line2', $homepage['hero_title_line2'] ?? 'for the Modern Soul.') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs italic font-serif">
-                            </div>
-
-                            <!-- Hero Description -->
-                            <div class="space-y-1.5 md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-800">Hero Subtitle Story</label>
-                                <textarea name="hero_description" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">{{ old('hero_description', $homepage['hero_description'] ?? 'Discover exclusive collections from independent designers. A seamless space where premium quality meets aesthetic brilliance.') }}</textarea>
-                            </div>
-
-                            <!-- Primary CTA -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Primary CTA Button Text</label>
-                                <input type="text" name="hero_cta_primary_text" value="{{ old('hero_cta_primary_text', $homepage['hero_cta_primary_text'] ?? 'Explore Collection') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Primary CTA Target Link</label>
-                                <input type="text" name="hero_cta_primary_link" value="{{ old('hero_cta_primary_link', $homepage['hero_cta_primary_link'] ?? '#featured-products') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="/products or #featured-products">
-                            </div>
-
-                            <!-- Secondary CTA -->
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Secondary CTA Button Text</label>
-                                <input type="text" name="hero_cta_secondary_text" value="{{ old('hero_cta_secondary_text', $homepage['hero_cta_secondary_text'] ?? 'Become a Seller') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs">
-                            </div>
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Secondary CTA Target Link</label>
-                                <input type="text" name="hero_cta_secondary_link" value="{{ old('hero_cta_secondary_link', $homepage['hero_cta_secondary_link'] ?? '/vendor/register') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage focus:border-brand-sage text-sm shadow-xs" placeholder="/vendor/register">
-                            </div>
-                        </div>
-
-                        <!-- Credentials Stats Bar -->
-                        <div class="border-t border-gray-100 pt-6 mt-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <h3 class="text-md font-serif font-bold text-brand-text">Trust Stats Bar (Credentials)</h3>
-                                    <p class="text-xs text-gray-500">Displayed beneath the hero card to establish instant marketplace authority.</p>
-                                </div>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" name="hero_stats_enabled" value="1" {{ !empty($homepage['hero_stats_enabled']) || !isset($homepage['hero_stats_enabled']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                    <span class="text-xs font-semibold text-gray-700">Display Stats Bar</span>
-                                </label>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
-                                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Metric 1</span>
-                                    <input type="text" name="hero_stat_1_val" value="{{ old('hero_stat_1_val', $homepage['hero_stat_1_val'] ?? '500+') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-bold" placeholder="500+">
-                                    <input type="text" name="hero_stat_1_lbl" value="{{ old('hero_stat_1_lbl', $homepage['hero_stat_1_lbl'] ?? 'Artisan Boutiques') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Artisan Boutiques">
-                                </div>
-
-                                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
-                                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Metric 2</span>
-                                    <input type="text" name="hero_stat_2_val" value="{{ old('hero_stat_2_val', $homepage['hero_stat_2_val'] ?? '100%') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-bold" placeholder="100%">
-                                    <input type="text" name="hero_stat_2_lbl" value="{{ old('hero_stat_2_lbl', $homepage['hero_stat_2_lbl'] ?? 'Pure Verified Fabrics') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Pure Verified Fabrics">
-                                </div>
-
-                                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
-                                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-500">Metric 3</span>
-                                    <input type="text" name="hero_stat_3_val" value="{{ old('hero_stat_3_val', $homepage['hero_stat_3_val'] ?? '4.9★') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-bold" placeholder="4.9★">
-                                    <input type="text" name="hero_stat_3_lbl" value="{{ old('hero_stat_3_lbl', $homepage['hero_stat_3_lbl'] ?? 'Atelier Rating') }}" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Atelier Rating">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 3: Announcement Marquee -->
-                <div x-show="activeTab === 'announcement'" class="space-y-6">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm space-y-6">
-                        <div class="border-b border-gray-100 pb-4 flex justify-between items-center">
-                            <div>
-                                <h2 class="text-xl font-serif font-bold text-brand-text">Header Announcement Marquee</h2>
-                                <p class="text-xs text-gray-500 mt-1">Slim luxury ribbon pinned to the top of the homepage for urgent promotions, sales, or seasonal alerts.</p>
-                            </div>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="announcement_enabled" value="1" {{ !empty($homepage['announcement_enabled']) || !isset($homepage['announcement_enabled']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                <span class="text-sm font-semibold text-gray-700">Enable Marquee</span>
-                            </label>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Badge Label</label>
-                                <input type="text" name="announcement_badge" value="{{ old('announcement_badge', $homepage['announcement_badge'] ?? 'CURATED EDIT') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm shadow-xs uppercase">
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Icon / Emoji</label>
-                                <input type="text" name="announcement_emoji" value="{{ old('announcement_emoji', $homepage['announcement_emoji'] ?? '✦') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm shadow-xs">
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">Destination Link (Optional)</label>
-                                <input type="text" name="announcement_link" value="{{ old('announcement_link', $homepage['announcement_link'] ?? '#new-arrivals') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm shadow-xs">
-                            </div>
-
-                            <div class="space-y-1.5 md:col-span-3">
-                                <label class="block text-sm font-semibold text-gray-800">Marquee Message</label>
-                                <input type="text" name="announcement_text" value="{{ old('announcement_text', $homepage['announcement_text'] ?? 'Complimentary pan-India white-glove shipping on all bespoke designer orders over ₹1,999') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm shadow-xs">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 4: Section Controls & Visibility -->
-                <div x-show="activeTab === 'sections'" class="space-y-6">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm space-y-6">
-                        <div class="border-b border-gray-100 pb-4">
-                            <h2 class="text-xl font-serif font-bold text-brand-text">Homepage Layout & Merchandising Rails</h2>
-                            <p class="text-xs text-gray-500 mt-1">Control which sections are visible and customize their editorial titles and subtitles.</p>
-                        </div>
-
-                        <div class="space-y-6">
-                            <!-- Categories Section -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
-                                <div class="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                                    <div class="flex-1 space-y-2 w-full">
-                                        <div class="flex items-center gap-3">
-                                            <input type="checkbox" name="show_categories" value="1" id="sc_cat" {{ !empty($homepage['show_categories']) || !isset($homepage['show_categories']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                            <label for="sc_cat" class="text-sm font-bold text-gray-800 cursor-pointer">1. Curated Categories Rail</label>
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7">
-                                            <input type="text" name="cat_section_title" value="{{ old('cat_section_title', $homepage['cat_section_title'] ?? 'Explore By Craft') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Title">
-                                            <input type="text" name="cat_section_subtitle" value="{{ old('cat_section_subtitle', $homepage['cat_section_subtitle'] ?? 'Handpicked silhouettes across distinctive designer genres') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Subtitle">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Category Cover Images Manager -->
-                                @if(isset($categories) && $categories->isNotEmpty())
-                                    <div class="border-t border-gray-200 pt-4 mt-2">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
-                                            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700">Category Card Cover Images</h4>
-                                            <span class="text-[11px] text-gray-500">Auto-fetches from real products by default, or upload custom photos below.</span>
-                                        </div>
-                                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            @foreach($categories as $cat)
-                                                <div class="bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs space-y-2">
-                                                    <div class="flex items-center justify-between">
-                                                        <span class="font-bold text-xs text-gray-800">{{ $cat->name }}</span>
-                                                        @if($cat->image)
-                                                            <span class="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Custom Upload</span>
-                                                        @else
-                                                            <span class="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">Auto-Product</span>
-                                                        @endif
-                                                    </div>
-                                                    
-                                                    @if($cat->image)
-                                                        <div class="relative w-full h-24 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                                                            <img src="{{ asset('storage/' . $cat->image) }}" alt="{{ $cat->name }}" class="w-full h-full object-cover">
-                                                        </div>
-                                                        <label class="flex items-center gap-1.5 text-[11px] text-red-600 cursor-pointer pt-1">
-                                                            <input type="checkbox" name="remove_category_image[{{ $cat->id }}]" value="1" class="w-3.5 h-3.5 rounded text-red-600 focus:ring-red-500 border-gray-300">
-                                                            <span>Reset to auto-fetched product photo</span>
-                                                        </label>
-                                                    @endif
-
-                                                    <div>
-                                                        <label class="block text-[10px] font-medium text-gray-500 mb-1">
-                                                            {{ $cat->image ? 'Replace Cover Image' : 'Upload Custom Cover' }}
-                                                        </label>
-                                                        <input type="file" name="category_images[{{ $cat->id }}]" accept="image/*" class="w-full text-[11px] text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-brand-sage/10 file:text-brand-sage hover:file:bg-brand-sage/20">
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-
-                            <!-- Boutiques / Ateliers Section -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                                <div class="flex-1 space-y-2 w-full">
-                                    <div class="flex items-center gap-3">
-                                        <input type="checkbox" name="show_boutiques" value="1" id="sc_bout" {{ !empty($homepage['show_boutiques']) || !isset($homepage['show_boutiques']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                        <label for="sc_bout" class="text-sm font-bold text-gray-800 cursor-pointer">2. Featured Boutiques & Ateliers</label>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7">
-                                        <input type="text" name="boutiques_section_title" value="{{ old('boutiques_section_title', $homepage['boutiques_section_title'] ?? 'Master Boutiques') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Title">
-                                        <input type="text" name="boutiques_section_subtitle" value="{{ old('boutiques_section_subtitle', $homepage['boutiques_section_subtitle'] ?? 'Meet the passionate artisans and slow-fashion ateliers behind the craft') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Subtitle">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Featured Spotlight Products -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                                <div class="flex-1 space-y-2 w-full">
-                                    <div class="flex items-center gap-3">
-                                        <input type="checkbox" name="show_featured_products" value="1" id="sc_feat" {{ !empty($homepage['show_featured_products']) || !isset($homepage['show_featured_products']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                        <label for="sc_feat" class="text-sm font-bold text-gray-800 cursor-pointer">3. Curated Spotlight Picks (Featured)</label>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7">
-                                        <input type="text" name="spotlight_section_title" value="{{ old('spotlight_section_title', $homepage['spotlight_section_title'] ?? 'The Atelier Spotlight') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Title">
-                                        <input type="text" name="spotlight_section_subtitle" value="{{ old('spotlight_section_subtitle', $homepage['spotlight_section_subtitle'] ?? 'Hand-selected by our fashion editors for supreme craftsmanship') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Subtitle">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- New Arrivals Section -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-                                <div class="flex-1 space-y-2 w-full">
-                                    <div class="flex items-center gap-3">
-                                        <input type="checkbox" name="show_new_arrivals" value="1" id="sc_arr" {{ !empty($homepage['show_new_arrivals']) || !isset($homepage['show_new_arrivals']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                        <label for="sc_arr" class="text-sm font-bold text-gray-800 cursor-pointer">4. Just Landed (New Arrivals)</label>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-7">
-                                        <input type="text" name="arrivals_section_title" value="{{ old('arrivals_section_title', $homepage['arrivals_section_title'] ?? 'Fresh Off The Loom') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Title">
-                                        <input type="text" name="arrivals_section_subtitle" value="{{ old('arrivals_section_subtitle', $homepage['arrivals_section_subtitle'] ?? 'The latest couture and everyday modern statements added this week') }}" class="px-3 py-1.5 rounded-lg border border-gray-300 text-xs" placeholder="Section Subtitle">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Trust Pillars & Values -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <input type="checkbox" name="show_value_pillars" value="1" id="sc_pil" {{ !empty($homepage['show_value_pillars']) || !isset($homepage['show_value_pillars']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                    <div>
-                                        <label for="sc_pil" class="text-sm font-bold text-gray-800 cursor-pointer">5. Marketplace Trust & Assurance Pillars</label>
-                                        <p class="text-xs text-gray-500">Showcases 100% Verified Quality, Direct Atelier Pricing, Safe Escrow, and Pan-India Delivery guarantees.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- SEO Article Section -->
-                            <div class="p-5 bg-gray-50 rounded-2xl border border-gray-200 flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <input type="checkbox" name="show_seo_editorial" value="1" id="sc_seo" {{ !empty($homepage['show_seo_editorial']) || !isset($homepage['show_seo_editorial']) ? 'checked' : '' }} class="w-4 h-4 text-brand-sage rounded focus:ring-brand-sage border-gray-300">
-                                    <div>
-                                        <label for="sc_seo" class="text-sm font-bold text-gray-800 cursor-pointer">6. High-Impact SEO Ranking Editorial (Bottom Section)</label>
-                                        <p class="text-xs text-gray-500">Essential for Google keyword dominance. Features expandable "Read More / Show Less" to keep the visual design pristine.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 5: Rich SEO Ranking Article -->
-                <div x-show="activeTab === 'editorial'" class="space-y-6">
-                    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-brand-surface shadow-sm space-y-6">
-                        <div class="border-b border-gray-100 pb-4">
-                            <h2 class="text-xl font-serif font-bold text-brand-text">Long-Form SEO Content Engine</h2>
-                            <p class="text-xs text-gray-500 mt-1">Google strongly favors homepages with authoritative, topical keyword depth. This text is styled cleanly at the bottom of the page with an interactive accordion to preserve aesthetic luxury.</p>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div class="space-y-1.5">
-                                <label class="block text-sm font-semibold text-gray-800">SEO Section Heading</label>
-                                <input type="text" name="seo_footer_title" value="{{ old('seo_footer_title', $seo['seo_footer_title'] ?? 'The Premier Destination for Curated Fashion & Independent Boutiques') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm shadow-xs font-serif font-bold">
-                            </div>
-
-                            <div class="space-y-1.5">
-                                <div class="flex justify-between items-center">
-                                    <label class="block text-sm font-semibold text-gray-800">SEO Editorial Narrative (Markdown or HTML supported)</label>
-                                    <span class="text-xs text-brand-sage font-medium">Rankings Booster</span>
-                                </div>
-                                <textarea name="seo_footer_content" rows="12" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-brand-sage text-sm font-mono leading-relaxed shadow-xs" placeholder="Write rich keyword copy about your designers, handloom fabrics, regional heritage, and fashion philosophy...">{{ old('seo_footer_content', $seo['seo_footer_content'] ?? "Welcome to the vanguard of modern apparel where discerning customers connect directly with India's most talented fashion creators, boutique ateliers, and independent artisans. Our curated marketplace redefines high fashion by eliminating intermediaries and celebrating authentic, slow-crafted perfection.
-
-From bespoke handloom sarees woven in Chanderi, Banaras, and Kanchipuram to contemporary Indo-western ensembles, minimalist streetwear, and luxury daily essentials, every creation hosted on our platform undergoes stringent authenticity checks. Whether you are curating a festive bridal trousseau, elevating your corporate wardrobe with tailored linens, or discovering bohemian fusion pieces, our marketplace guarantees certified pure fabrics, transparent pricing, and direct-to-artisan prosperity.
-
-Shop with complete confidence knowing every order is backed by comprehensive quality inspections, buyer protection escrow, express pan-India insured transit, and hassle-free returns. Join thousands of connoisseurs who celebrate individuality and sustainable elegance.") }}</textarea>
-                                <p class="text-xs text-gray-500">Tip: Include high-intent search phrases such as "designer kurtis", "handcrafted sarees", "slow fashion marketplace", and "independent fashion boutiques".</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Floating Save Bar -->
-                <div class="sticky bottom-6 z-30 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-brand-surface shadow-lg flex justify-between items-center mt-8">
-                    <div class="flex items-center gap-2 text-xs text-gray-500">
-                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        <span>Changes take effect immediately on the live marketplace.</span>
-                    </div>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-brand-text text-white hover:bg-brand-sage transition-all shadow-sm">
-                        Publish Changes Live
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Device Preview Switcher -->
+                <div class="bg-slate-800 p-1 rounded-2xl flex items-center gap-1 border border-slate-700">
+                    <button type="button" @click="previewMode = 'desktop'"
+                            :class="previewMode === 'desktop' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'"
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <span>🖥️ Desktop</span>
+                    </button>
+                    <button type="button" @click="previewMode = 'mobile'"
+                            :class="previewMode === 'mobile' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'"
+                            class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <span>📱 Mobile</span>
                     </button>
                 </div>
-            </form>
+
+                <!-- Live Preview External Link -->
+                <a :href="activeVertical === 'services' ? '{{ k71_vertical_url('services') }}' : (activeVertical === 'food' ? '{{ k71_vertical_url('food') }}' : (activeVertical === 'used' ? '{{ k71_vertical_url('used') }}' : '{{ url('/') }}'))"
+                   target="_blank"
+                   class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition flex items-center gap-1.5">
+                    <span>View Live</span>
+                    <span>↗</span>
+                </a>
+
+                <!-- Publish Form Button -->
+                <button type="submit" form="page-studio-form"
+                        class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black tracking-wide shadow-lg shadow-purple-600/30 transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>Publish Changes Live</span>
+                </button>
+            </div>
         </div>
+
+        @if(session('success'))
+            <div class="p-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-200 flex items-center justify-between shadow-xs">
+                <div class="flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="text-xs sm:text-sm font-bold">{{ session('success') }}</span>
+                </div>
+                <span class="text-xs bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-md font-bold">Published Live</span>
+            </div>
+        @endif
+
+        <!-- PAGE SELECTOR TABS -->
+        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button type="button" @click="activeVertical = 'homepage'"
+                    :class="activeVertical === 'homepage' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                    class="px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-2 shrink-0">
+                <span>🏠 Homepage</span>
+            </button>
+            <button type="button" @click="activeVertical = 'services'"
+                    :class="activeVertical === 'services' ? 'bg-purple-600 text-white shadow-md' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                    class="px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-2 shrink-0">
+                <span>💜 Services Hub</span>
+            </button>
+            <button type="button" @click="activeVertical = 'food'"
+                    :class="activeVertical === 'food' ? 'bg-orange-600 text-white shadow-md' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                    class="px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-2 shrink-0">
+                <span>🍕 Food &amp; Dining</span>
+            </button>
+            <button type="button" @click="activeVertical = 'used'"
+                    :class="activeVertical === 'used' ? 'bg-teal-600 text-white shadow-md' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                    class="px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-2 shrink-0">
+                <span>♻️ Pre-Loved &amp; Used</span>
+            </button>
+            <button type="button" @click="activeVertical = 'seo'"
+                    :class="activeVertical === 'seo' ? 'bg-slate-900 text-white shadow-md' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'"
+                    class="px-4 py-2.5 rounded-2xl text-xs font-black transition flex items-center gap-2 shrink-0">
+                <span>🔍 SEO &amp; Meta</span>
+            </button>
+        </div>
+
+        <!-- MAIN SPLIT WORKSPACE: LEFT CONTROLS (5 cols) + RIGHT LIVE CANVAS (7 cols) -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+            <!-- LEFT CONTROL PANEL (INSPECTOR) -->
+            <div class="xl:col-span-5 space-y-6">
+                <form id="page-studio-form" action="{{ route('admin.homepage.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <!-- TAB 1: HOMEPAGE CONTROLS -->
+                    <div x-show="activeVertical === 'homepage'" class="space-y-5">
+                        
+                        <!-- Hero Section -->
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                    <span>👑 Homepage Hero Header</span>
+                                </h3>
+                                <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">Above Fold</span>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Super Badge Pill</label>
+                                    <input type="text" name="hero_badge" x-model="hp_hero_badge"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-medium">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-bold text-slate-700 mb-1">Headline Part 1</label>
+                                        <input type="text" name="hero_title_line1" x-model="hp_title_line1"
+                                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-700 mb-1">Headline Part 2 (Gradient)</label>
+                                        <input type="text" name="hero_title_line2" x-model="hp_title_line2"
+                                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold text-indigo-600">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Hero Subtitle / Description</label>
+                                    <textarea name="hero_description" x-model="hp_description" rows="2"
+                                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-medium"></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block font-bold text-slate-700 mb-1">Search Placeholder</label>
+                                        <input type="text" name="search_placeholder" x-model="hp_search_placeholder"
+                                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500">
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-700 mb-1">Primary CTA Button</label>
+                                        <input type="text" name="hero_cta_primary_text" x-model="hp_cta_text"
+                                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Headers -->
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                            <div class="pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                    <span>📑 Section Titles &amp; Headings</span>
+                                </h3>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Trending Products Title</label>
+                                    <input type="text" name="arrivals_section_title" x-model="hp_arrivals_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Freelance Showcase Title</label>
+                                    <input type="text" name="services_section_title" x-model="hp_services_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold text-purple-700">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Freelance Showcase Subtitle</label>
+                                    <input type="text" name="services_section_subtitle" x-model="hp_services_sub"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Structured Categories Title</label>
+                                    <input type="text" name="cat_section_title" x-model="hp_cat_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-bold">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Structured Categories Subtitle</label>
+                                    <input type="text" name="cat_section_subtitle" x-model="hp_cat_sub"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Visibility Toggles -->
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                            <div class="pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                    <span>👁️ Section Visibility Toggles</span>
+                                </h3>
+                                <p class="text-[11px] text-slate-500">Turn homepage blocks on or off with instant preview.</p>
+                            </div>
+
+                            <div class="space-y-2.5 text-xs">
+                                <label class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+                                    <span class="font-bold text-slate-800">Show Trending Products &amp; Deals</span>
+                                    <input type="checkbox" name="show_trending_products" value="1" x-model="hp_show_trending" class="w-4 h-4 text-indigo-600 rounded">
+                                </label>
+
+                                <label class="flex items-center justify-between p-3 rounded-2xl bg-purple-50/50 border border-purple-200 cursor-pointer">
+                                    <span class="font-bold text-purple-900">Show Freelance &amp; Services Showcase</span>
+                                    <input type="checkbox" name="show_services_showcase" value="1" x-model="hp_show_services" class="w-4 h-4 text-purple-600 rounded">
+                                </label>
+
+                                <label class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+                                    <span class="font-bold text-slate-800">Show Structured Categories</span>
+                                    <input type="checkbox" name="show_categories" value="1" x-model="hp_show_categories" class="w-4 h-4 text-indigo-600 rounded">
+                                </label>
+
+                                <label class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+                                    <span class="font-bold text-slate-800">Show Value Assurance Pillars</span>
+                                    <input type="checkbox" name="show_value_pillars" value="1" x-model="hp_show_pillars" class="w-4 h-4 text-indigo-600 rounded">
+                                </label>
+
+                                <label class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 cursor-pointer">
+                                    <span class="font-bold text-slate-800">Show Seller Onboarding Banner</span>
+                                    <input type="checkbox" name="show_seller_banner" value="1" x-model="hp_show_seller" class="w-4 h-4 text-indigo-600 rounded">
+                                </label>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 2: SERVICES HUB CONTROLS -->
+                    <div x-show="activeVertical === 'services'" class="space-y-5">
+                        
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-purple-200 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-purple-100">
+                                <h3 class="text-sm font-black text-purple-900 uppercase tracking-wider">
+                                    <span>💜 Services Hub Hero &amp; Brand</span>
+                                </h3>
+                                <span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-bold">services.k71.in</span>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Services Trust Badge</label>
+                                    <input type="text" name="services_hero_badge" x-model="srv_hero_badge"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Services Hero Title</label>
+                                    <input type="text" name="services_hero_title" x-model="srv_hero_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 font-black text-sm">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Services Hero Subtitle</label>
+                                    <textarea name="services_hero_subtitle" x-model="srv_hero_sub" rows="2"
+                                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500"></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Services Search Placeholder</label>
+                                    <input type="text" name="services_search_placeholder" x-model="srv_search_placeholder"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Category Slider Title</label>
+                                    <input type="text" name="services_cat_title" x-model="srv_cat_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 font-bold">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Trending Gigs Title</label>
+                                    <input type="text" name="services_trending_title" x-model="srv_trending_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 font-bold">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Freelancer Onboarding Title</label>
+                                    <input type="text" name="services_seller_cta_title" x-model="srv_seller_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-purple-500 font-bold">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 3: FOOD & DINING CONTROLS -->
+                    <div x-show="activeVertical === 'food'" class="space-y-5">
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-orange-200 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-orange-100">
+                                <h3 class="text-sm font-black text-orange-950 uppercase tracking-wider">
+                                    <span>🍕 Food Hub Hero &amp; Kitchens</span>
+                                </h3>
+                                <span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">food.k71.in</span>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Express Delivery Badge</label>
+                                    <input type="text" name="food_hero_badge" x-model="food_hero_badge"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Food Hero Title</label>
+                                    <input type="text" name="food_hero_title" x-model="food_hero_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 font-black text-sm">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Food Hero Subtitle</label>
+                                    <textarea name="food_hero_subtitle" x-model="food_hero_sub" rows="2"
+                                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: PRE-LOVED & USED CONTROLS -->
+                    <div x-show="activeVertical === 'used'" class="space-y-5">
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-teal-200 shadow-sm space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-teal-100">
+                                <h3 class="text-sm font-black text-teal-950 uppercase tracking-wider">
+                                    <span>♻️ Pre-Loved Re-Commerce Hub</span>
+                                </h3>
+                                <span class="text-[10px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-bold">used.k71.in</span>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Re-Commerce Badge</label>
+                                    <input type="text" name="used_hero_badge" x-model="used_hero_badge"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-500 font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Used Market Hero Title</label>
+                                    <input type="text" name="used_hero_title" x-model="used_hero_title"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-500 font-black text-sm">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Used Market Subtitle</label>
+                                    <textarea name="used_hero_subtitle" x-model="used_hero_sub" rows="2"
+                                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-500"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: SEO CONTROLS -->
+                    <div x-show="activeVertical === 'seo'" class="space-y-5">
+                        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                            <div class="pb-3 border-b border-slate-100">
+                                <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                    <span>🔍 Search Engine Meta &amp; Social Previews</span>
+                                </h3>
+                            </div>
+
+                            <div class="space-y-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Meta Title</label>
+                                    <input type="text" name="seo_meta_title" value="{{ $seoData['seo_meta_title'] ?? 'K71 • Curated Multi-Vendor Marketplace' }}"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-700 font-medium">
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Meta Description</label>
+                                    <textarea name="seo_meta_description" rows="2"
+                                              class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-700">{{ $seoData['seo_meta_description'] ?? 'Discover verified brand stores, boutique ateliers, and trending products on K71.' }}</textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">Target Meta Keywords</label>
+                                    <input type="text" name="seo_meta_keywords" value="{{ $seoData['seo_meta_keywords'] ?? 'marketplace, ecommerce, freelance services, cloud kitchen food' }}"
+                                           class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-slate-700">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- RIGHT LIVE INTERACTIVE VISUAL CANVAS (7 cols) -->
+            <div class="xl:col-span-7 sticky top-6">
+                
+                <!-- Browser / Device Wrapper -->
+                <div class="rounded-3xl border-2 border-slate-800 bg-slate-950 p-2 shadow-2xl transition-all duration-300"
+                     :class="previewMode === 'mobile' ? 'max-w-[390px] mx-auto rounded-[3rem] p-3 border-4 border-slate-700' : 'w-full'">
+                    
+                    <!-- Chrome Header Mockup Bar -->
+                    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-800 text-xs text-slate-400">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                        </div>
+                        <div class="px-3 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-400 truncate max-w-xs">
+                            <span x-text="activeVertical === 'services' ? 'https://services.marblemandi.org/' : (activeVertical === 'food' ? 'https://food.marblemandi.org/' : (activeVertical === 'used' ? 'https://used.marblemandi.org/' : 'https://marblemandi.org/'))"></span>
+                        </div>
+                        <div class="text-[10px] font-bold uppercase text-purple-400" x-text="previewMode.toUpperCase()"></div>
+                    </div>
+
+                    <!-- Inner Live Render Stage -->
+                    <div class="bg-[#faf5ff] text-zinc-900 rounded-2xl overflow-y-auto max-h-[750px] p-4 sm:p-6 no-scrollbar space-y-6">
+
+                        <!-- VIEW 1: HOMEPAGE LIVE SIMULATION -->
+                        <div x-show="activeVertical === 'homepage'" class="space-y-6">
+                            
+                            <!-- Hero Preview -->
+                            <div class="text-center space-y-3 pt-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-900 text-[10px] font-black shadow-xs">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span x-text="hp_hero_badge"></span>
+                                </div>
+
+                                <h2 class="text-xl sm:text-3xl font-black text-slate-950 tracking-tight leading-tight">
+                                    <span x-text="hp_title_line1"></span> <br>
+                                    <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent" x-text="hp_title_line2"></span>
+                                </h2>
+
+                                <p class="text-xs text-slate-600 max-w-md mx-auto leading-relaxed" x-text="hp_description"></p>
+
+                                <div class="p-1 rounded-full bg-white border border-slate-200 shadow-md flex items-center gap-2 max-w-sm mx-auto">
+                                    <span class="pl-3 text-indigo-600">🔍</span>
+                                    <input type="text" :placeholder="hp_search_placeholder" disabled class="w-full bg-transparent border-0 text-xs text-slate-700">
+                                    <span class="px-4 py-1.5 rounded-full bg-indigo-600 text-white font-bold text-xs" x-text="hp_cta_text"></span>
+                                </div>
+                            </div>
+
+                            <!-- Trending Products Preview -->
+                            <div x-show="hp_show_trending" class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-black text-slate-900" x-text="hp_arrivals_title"></h4>
+                                    <span class="text-[10px] text-indigo-600 font-bold">All Items &rarr;</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-center text-[10px]">
+                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="h-16 rounded-lg bg-indigo-100/50 flex items-center justify-center text-lg mb-1">📱</div>
+                                        <div class="font-bold truncate">5G Smartphone</div>
+                                        <div class="text-indigo-600 font-black">₹18,999</div>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                                        <div class="h-16 rounded-lg bg-indigo-100/50 flex items-center justify-center text-lg mb-1">👗</div>
+                                        <div class="font-bold truncate">Silk Kurti Atelier</div>
+                                        <div class="text-indigo-600 font-black">₹2,499</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dedicated Services Showcase Preview -->
+                            <div x-show="hp_show_services" class="p-4 rounded-2xl bg-gradient-to-br from-purple-100/60 to-purple-50 border-2 border-purple-200 space-y-3">
+                                <div>
+                                    <span class="px-2 py-0.5 rounded-full bg-purple-600 text-white text-[9px] font-black uppercase">Talent Hub</span>
+                                    <h4 class="text-xs font-black text-purple-950 mt-1" x-text="hp_services_title"></h4>
+                                    <p class="text-[10px] text-purple-700" x-text="hp_services_sub"></p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-left text-[10px]">
+                                    <div class="p-2 bg-white rounded-xl border border-purple-100 shadow-2xs">
+                                        <div class="h-14 rounded-lg bg-purple-100 flex items-center justify-center text-lg mb-1">💻</div>
+                                        <div class="font-bold text-zinc-900 truncate">Web Development</div>
+                                        <div class="text-purple-700 font-black">From ₹4,999</div>
+                                    </div>
+                                    <div class="p-2 bg-white rounded-xl border border-purple-100 shadow-2xs">
+                                        <div class="h-14 rounded-lg bg-purple-100 flex items-center justify-center text-lg mb-1">🎬</div>
+                                        <div class="font-bold text-zinc-900 truncate">Reels &amp; Video Edit</div>
+                                        <div class="text-purple-700 font-black">From ₹999</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Structured Categories Preview -->
+                            <div x-show="hp_show_categories" class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-black text-slate-900" x-text="hp_cat_title"></h4>
+                                    <span class="text-[10px] text-indigo-600">Explore &rarr;</span>
+                                </div>
+                                <div class="grid grid-cols-4 gap-1.5 text-center text-[9px] font-bold text-slate-700">
+                                    <div class="p-2 bg-white rounded-xl border border-slate-100">📱 Gadgets</div>
+                                    <div class="p-2 bg-white rounded-xl border border-slate-100">👗 Apparel</div>
+                                    <div class="p-2 bg-white rounded-xl border border-slate-100">🍽️ Food</div>
+                                    <div class="p-2 bg-white rounded-xl border border-slate-100">🔧 Services</div>
+                                </div>
+                            </div>
+
+                            <!-- Value Assurance Pillars Preview -->
+                            <div x-show="hp_show_pillars" class="grid grid-cols-2 gap-2 text-center text-[10px]">
+                                <div class="p-2.5 bg-white rounded-xl border border-slate-100 font-bold">🛡️ Verified Sellers</div>
+                                <div class="p-2.5 bg-white rounded-xl border border-slate-100 font-bold">⚡ Instant UPI</div>
+                            </div>
+
+                            <!-- Seller Banner Preview -->
+                            <div x-show="hp_show_seller" class="p-4 rounded-2xl bg-slate-950 text-white text-center space-y-1">
+                                <span class="text-[9px] uppercase font-bold text-indigo-400">0% Listing Fee</span>
+                                <h5 class="text-xs font-black">Sell on K71 Today</h5>
+                                <span class="inline-block px-3 py-1 bg-white text-slate-950 text-[10px] font-bold rounded-lg mt-1">Register Store &rarr;</span>
+                            </div>
+
+                        </div>
+
+                        <!-- VIEW 2: SERVICES HUB LIVE SIMULATION -->
+                        <div x-show="activeVertical === 'services'" class="space-y-6">
+                            <div class="text-center space-y-3 pt-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-purple-200 text-purple-700 text-[10px] font-black shadow-xs">
+                                    <span class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
+                                    <span x-text="srv_hero_badge"></span>
+                                </div>
+
+                                <h2 class="text-xl sm:text-2xl font-black text-zinc-950 tracking-tight" x-text="srv_hero_title"></h2>
+                                <p class="text-xs text-zinc-600 max-w-md mx-auto" x-text="srv_hero_sub"></p>
+
+                                <div class="p-1 rounded-full bg-white border border-purple-200 shadow-md flex items-center gap-2 max-w-sm mx-auto">
+                                    <span class="pl-3 text-purple-600">🔍</span>
+                                    <input type="text" :placeholder="srv_search_placeholder" disabled class="w-full bg-transparent border-0 text-xs text-zinc-700">
+                                    <span class="px-4 py-1.5 rounded-full bg-purple-600 text-white font-bold text-xs">Search</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-white rounded-2xl border border-purple-100 space-y-3">
+                                <h4 class="text-xs font-black text-zinc-950" x-text="srv_cat_title"></h4>
+                                <div class="grid grid-cols-2 gap-2 text-[10px]">
+                                    <div class="p-2 rounded-xl bg-purple-50 text-purple-900 font-bold">💻 Web &amp; Apps</div>
+                                    <div class="p-2 rounded-xl bg-purple-50 text-purple-900 font-bold">🎨 Graphic &amp; Logo</div>
+                                    <div class="p-2 rounded-xl bg-purple-50 text-purple-900 font-bold">🎬 Video Editing</div>
+                                    <div class="p-2 rounded-xl bg-purple-50 text-purple-900 font-bold">🔧 Craftsmanship</div>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-white border border-purple-100 space-y-3">
+                                <h4 class="text-xs font-black text-zinc-950" x-text="srv_trending_title"></h4>
+                                <div class="p-2.5 rounded-xl border border-purple-100 flex items-center justify-between text-xs">
+                                    <div>
+                                        <div class="font-bold text-zinc-900">Italian Marble Polishing</div>
+                                        <div class="text-[10px] text-zinc-400">Artisan Ateliers • ⭐ 5.0</div>
+                                    </div>
+                                    <span class="font-black text-purple-700">₹2,499</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-700 text-white text-center space-y-1">
+                                <h5 class="text-xs font-black" x-text="srv_seller_title"></h5>
+                                <p class="text-[10px] text-purple-200" x-text="srv_seller_sub"></p>
+                                <span class="inline-block px-3 py-1 bg-white text-purple-900 text-[10px] font-bold rounded-lg mt-1">Become a Specialist &rarr;</span>
+                            </div>
+                        </div>
+
+                        <!-- VIEW 3: FOOD HUB LIVE SIMULATION -->
+                        <div x-show="activeVertical === 'food'" class="space-y-6">
+                            <div class="text-center space-y-3 pt-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-[#ea580c] text-[10px] font-black">
+                                    <span x-text="food_hero_badge"></span>
+                                </div>
+
+                                <h2 class="text-xl sm:text-2xl font-black text-stone-950 tracking-tight" x-text="food_hero_title"></h2>
+                                <p class="text-xs text-stone-600 max-w-md mx-auto" x-text="food_hero_sub"></p>
+
+                                <div class="p-1 rounded-full bg-white border border-orange-200 shadow-md flex items-center gap-2 max-w-sm mx-auto">
+                                    <span class="pl-3 text-orange-600">🍲</span>
+                                    <input type="text" placeholder="Search biryani, pizza, thalis..." disabled class="w-full bg-transparent border-0 text-xs text-stone-700">
+                                    <span class="px-4 py-1.5 rounded-full bg-orange-600 text-white font-bold text-xs">Order</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VIEW 4: USED MARKET LIVE SIMULATION -->
+                        <div x-show="activeVertical === 'used'" class="space-y-6">
+                            <div class="text-center space-y-3 pt-2">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-100 text-teal-800 text-[10px] font-black">
+                                    <span x-text="used_hero_badge"></span>
+                                </div>
+
+                                <h2 class="text-xl sm:text-2xl font-black text-teal-950 tracking-tight" x-text="used_hero_title"></h2>
+                                <p class="text-xs text-slate-600 max-w-md mx-auto" x-text="used_hero_sub"></p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 </x-layouts.admin>

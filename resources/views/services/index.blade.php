@@ -2,6 +2,10 @@
     title="K71 Services — Freelance & Professional Services Marketplace"
     metaDescription="Discover top-rated freelancers and vetted professionals on K71 Services. Web development, graphic design, video editing, marketing, and skilled craftsmanship with milestone protection."
 >
+    @php
+        $ss = $servicesSettings ?? [];
+    @endphp
+
     <!-- PURPLE & WHITE CLEAN FREELANCE MARKETPLACE -->
     <div class="min-h-screen bg-gradient-to-b from-[#faf5ff] via-white to-[#faf5ff] text-zinc-900 pb-20">
 
@@ -14,16 +18,16 @@
                 <!-- Simple Trust Badge -->
                 <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-purple-200/80 shadow-xs text-xs font-bold text-purple-700">
                     <span class="w-2 h-2 rounded-full bg-purple-600 animate-pulse"></span>
-                    <span>services.k71.in • K71 Verified Freelancers &amp; Services</span>
+                    <span>{{ $ss['services_hero_badge'] ?? 'services.k71.in • K71 Verified Freelancers & Services' }}</span>
                 </div>
 
                 <!-- Clear Direct Title -->
                 <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-zinc-950 leading-tight">
-                    Find the Perfect <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-600">Freelance Services</span>
+                    {{ $ss['services_hero_title'] ?? 'Find the Perfect Freelance Services' }}
                 </h1>
 
                 <p class="max-w-xl mx-auto text-sm sm:text-base text-zinc-600 font-medium">
-                    Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.
+                    {{ $ss['services_hero_subtitle'] ?? 'Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.' }}
                 </p>
 
                 <!-- Clean, Friendly Search Bar -->

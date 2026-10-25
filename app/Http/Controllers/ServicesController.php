@@ -126,6 +126,8 @@ class ServicesController extends Controller
             ->take(4)
             ->get();
 
+        $servicesSettings = \App\Models\Setting::getGroup('services_page');
+
         return view('services.index', compact(
             'servicesCategories',
             'services',
@@ -139,7 +141,8 @@ class ServicesController extends Controller
             'minPrice',
             'maxPrice',
             'deliveryDays',
-            'sort'
+            'sort',
+            'servicesSettings'
         ));
     }
 

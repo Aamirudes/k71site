@@ -128,9 +128,19 @@ class HomeController extends Controller
         // Actually, VendorScope only applies if the `vendor_context` is set (meaning we are in the vendor panel).
         // Let's ensure the products shown are published and belong to approved vendors, strictly excluding used/classified ads.
 
+        $retailFilter = function($q) {
+            $q->where(function($sq) {
+                $sq->whereNull('vertical')
+                   ->orWhereNotIn('vertical', ['services', 'used', 'food', 'enquiry']);
+            })->where(function($sq) {
+                $sq->whereNull('listing_type')
+                   ->orWhereNotIn('listing_type', ['classified', 'gig', 'service', 'booking']);
+            });
+        };
+
         $featuredProducts = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
-            ->excludeUsed()
+            ->where($retailFilter)
             ->where('is_featured', true)
             ->latest()
             ->take(8)
@@ -138,9 +148,35 @@ class HomeController extends Controller
             
         $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
-            ->excludeUsed()
+            ->where($retailFilter)
             ->latest()
             ->take(12)
+            ->get();
+
+        // If new arrivals is small, include any active non-used retail products
+        if ($newArrivals->count() < 4) {
+            $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
+                ->where('status', 'active')
+                ->where($retailFilter)
+                ->latest()
+                ->take(12)
+                ->get();
+        }
+
+        // Dedicated Services & Freelancers for Homepage Showcase
+        $featuredServices = Product::with(['images', 'vendor', 'category', 'gigPackages'])
+            ->where('vertical', 'services')
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        // Dedicated Food & Kitchens for Homepage Showcase
+        $featuredFood = Product::with(['images', 'vendor', 'category'])
+            ->where('vertical', 'food')
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
             ->get();
             
         $categories = Category::whereNull('parent_id')
@@ -197,6 +233,8 @@ class HomeController extends Controller
         return view('home', compact(
             'featuredProducts', 
             'newArrivals', 
+            'featuredServices',
+            'featuredFood',
             'categories', 
             'topVendors',
             'latestShorts',

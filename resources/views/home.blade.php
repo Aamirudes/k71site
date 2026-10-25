@@ -129,19 +129,19 @@
             <!-- Dynamic Geometric Pill Badge -->
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-slate-200/90 text-slate-900 text-xs font-black shadow-xs mb-5">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span>K71 UNIFIED MARKETPLACE</span>
-                <span class="text-slate-300">•</span>
-                <span class="text-indigo-600 font-bold">Verified Stores &amp; Secure Escrow</span>
+                <span>{{ $hp['hero_badge'] ?? 'K71 UNIFIED MARKETPLACE • Verified Stores & Secure Escrow' }}</span>
             </div>
 
             <!-- Crisp Main Headline -->
             <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-[1.15] mb-3">
-                Discover Top Stores &amp; <br class="hidden sm:inline">
-                <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">Trending Products</span>
+                {{ $hp['hero_title_line1'] ?? 'Discover Top Stores &' }} <br class="hidden sm:inline">
+                <span class="bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent">
+                    {{ $hp['hero_title_line2'] ?? 'Trending Products' }}
+                </span>
             </h1>
 
             <p class="text-xs sm:text-sm text-slate-600 font-medium max-w-xl mx-auto leading-relaxed mb-6">
-                Shop directly from authorized distributor storefronts, boutique ateliers, and certified suppliers nationwide.
+                {{ $hp['hero_description'] ?? 'Shop directly from authorized distributor storefronts, boutique ateliers, and certified suppliers nationwide.' }}
             </p>
 
             <!-- Compact Liquid Geometric Search Box -->
@@ -153,14 +153,14 @@
                     <input 
                         type="text" 
                         name="q" 
-                        placeholder="Search products, brands, model numbers, stores..." 
+                        placeholder="{{ $hp['search_placeholder'] ?? 'Search products, brands, model numbers, stores...' }}" 
                         class="w-full bg-transparent border-none text-slate-950 text-xs sm:text-sm placeholder-slate-400 focus:ring-0 focus:outline-none font-semibold px-2"
                     >
                     <button 
                         type="submit" 
                         class="px-5 sm:px-6 py-2.5 rounded-xl sm:rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all shrink-0 cursor-pointer"
                     >
-                        Search
+                        {{ $hp['hero_cta_primary_text'] ?? 'Search' }}
                     </button>
                 </form>
             </div>
@@ -183,6 +183,7 @@
     </div>
 
     <!-- SECTION 1: TRENDING PRODUCTS & FRESH ARRIVALS -->
+    @if($hp['show_trending_products'] ?? true)
     <section class="mb-14 sm:mb-20">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
             <div>
@@ -193,7 +194,7 @@
                     <span class="text-xs text-slate-400 font-mono">Real-Time</span>
                 </div>
                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
-                    🔥 Trending Products &amp; Deals
+                    {{ $hp['arrivals_section_title'] ?? '🔥 Trending Products & Deals' }}
                 </h2>
             </div>
 
@@ -241,15 +242,84 @@
             </div>
         @endif
     </section>
+    @endif
+
+    <!-- SECTION 2: DEDICATED FREELANCE & SERVICES SHOWCASE -->
+    @if(($hp['show_services_showcase'] ?? true) && $featuredServices->isNotEmpty())
+    <section class="mb-14 sm:mb-20 p-6 sm:p-8 rounded-[2.5rem] bg-gradient-to-br from-purple-900/5 via-white to-purple-900/10 border-2 border-purple-200/80 shadow-sm relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-600 text-white shadow-xs">
+                        Freelance &amp; Talent Hub
+                    </span>
+                    <span class="text-xs text-purple-700 font-semibold">Milestone Escrow Protected</span>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-black text-zinc-950 tracking-tight mt-1">
+                    {{ $hp['services_section_title'] ?? '💜 Top Freelance & Professional Services' }}
+                </h2>
+                <p class="text-xs sm:text-sm text-zinc-600 font-medium mt-0.5">
+                    {{ $hp['services_section_subtitle'] ?? 'Hire vetted specialists for tech, video, marketing & home craftsmanship' }}
+                </p>
+            </div>
+
+            <a href="{{ k71_vertical_url('services') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-md transition-all self-start sm:self-auto cursor-pointer">
+                <span>Browse All Services</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            @foreach($featuredServices as $service)
+                @php
+                    $basicPkg = $service->gigPackages->firstWhere('tier', 'basic') ?? $service->gigPackages->first();
+                    $startingPrice = $basicPkg ? $basicPkg->price : ($service->base_price / 100);
+                    $vendor = $service->vendor;
+                @endphp
+                <div class="bg-white rounded-3xl border border-purple-100 hover:border-purple-300 shadow-xs hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col group">
+                    <div class="relative aspect-video overflow-hidden bg-purple-50">
+                        <img src="{{ $service->primary_image_url }}" alt="{{ $service->title }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-purple-700/90 backdrop-blur-xs text-white text-[10px] font-black uppercase tracking-wider">
+                            Verified Pro
+                        </div>
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span class="text-[11px] font-bold text-purple-700 truncate">{{ $vendor?->shop_name ?? 'Specialist' }}</span>
+                                <span class="text-[10px] text-zinc-400">• ⭐ {{ number_format($vendor?->rating ?? 5.0, 1) }}</span>
+                            </div>
+                            <h3 class="font-bold text-xs sm:text-sm text-zinc-900 group-hover:text-purple-700 transition line-clamp-2 leading-snug">
+                                {{ $service->title }}
+                            </h3>
+                        </div>
+                        <div class="pt-3 border-t border-purple-50 flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] text-zinc-400 block uppercase font-semibold">Starting at</span>
+                                <span class="text-sm sm:text-base font-black text-purple-900">₹{{ number_format($startingPrice) }}</span>
+                            </div>
+                            <a href="{{ route('services.show', $service->slug) }}" 
+                               class="px-3.5 py-1.5 rounded-xl bg-purple-50 group-hover:bg-purple-600 text-purple-700 group-hover:text-white text-xs font-bold transition">
+                                View Packages &rarr;
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
 
     <!-- SECTION 3: BROWSE BY SECTOR (GEOMETRIC SHAPE TILES) -->
+    @if($hp['show_categories'] ?? true)
     <section class="mb-14 sm:mb-20">
         <div class="flex items-center justify-between mb-5">
             <div>
                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                    Structured Categories
+                    {{ $hp['cat_section_title'] ?? 'Structured Categories' }}
                 </h2>
-                <p class="text-xs text-slate-500 mt-0.5">Explore retail and trade verticals tailored for specific sectors.</p>
+                <p class="text-xs text-slate-500 mt-0.5">{{ $hp['cat_section_subtitle'] ?? 'Explore retail and trade verticals tailored for specific sectors.' }}</p>
             </div>
             <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group">
                 <span>All Categories</span>
@@ -275,8 +345,10 @@
             @endforeach
         </div>
     </section>
+    @endif
 
     <!-- SECTION 4: PLATFORM VALUE ASSURANCE (COMPACT SHAPES STRIP) -->
+    @if($hp['show_value_pillars'] ?? true)
     <section class="mb-14">
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-5xl mx-auto">
             <div class="p-4 rounded-3xl bg-white border border-slate-200/90 shadow-2xs text-center">
@@ -301,8 +373,10 @@
             </div>
         </div>
     </section>
+    @endif
 
     <!-- SECTION 5: BECOME A VENDOR / SELLER INVITATION (ASYMMETRIC GEOMETRIC BANNER) -->
+    @if($hp['show_seller_banner'] ?? true)
     <section class="mb-12">
         <div class="p-6 sm:p-10 rounded-[2.5rem] bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 text-white shadow-2xl relative overflow-hidden border border-indigo-900/40">
             <div class="absolute -right-16 -bottom-16 w-64 h-64 rounded-full bg-cyan-500/20 blur-3xl pointer-events-none"></div>
@@ -331,5 +405,6 @@
             </div>
         </div>
     </section>
+    @endif
 
 </x-layouts.public>

@@ -15,9 +15,17 @@ class ProductViewController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
-        // Strict vertical isolation: Used / second-hand classified listings must never be rendered as a regular retail product
+        // Strict vertical isolation: Redirect services, gigs, used, and food listings to their dedicated experiences
+        if ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking'])) {
+            return redirect()->route('services.show', $product->slug);
+        }
+
         if ($product->vertical === 'used' || $product->listing_type === 'classified') {
             return redirect()->route('used.show', $product->slug);
+        }
+
+        if ($product->vertical === 'food' && $product->vendor) {
+            return redirect()->route('food.restaurant', $product->vendor->slug);
         }
 
         // High-CTR SEO Data (Google SERP optimized)

@@ -299,7 +299,7 @@
                                                 @click="selectImage({{ $index }})"
                                                 :class="activeImgIndex === {{ $index }} ? 'ring-2 ring-brand-text ring-offset-2 border-transparent shadow-sm' : 'border-stone-200/80 opacity-70 hover:opacity-100'"
                                                 class="relative w-14 h-18 sm:w-16 sm:h-22 rounded-xl overflow-hidden bg-white border transition-all duration-200 shrink-0 group focus:outline-none">
-                                            <img src="{{ asset('storage/' . $image->path) }}" 
+                                            <img src="{{ $image->url }}" 
                                                  alt="{{ $product->title }} angle {{ $index + 1 }}" 
                                                  class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
                                                  onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
@@ -853,102 +853,12 @@
                                 </div>
                             </div>
                         @else
-                            @if($product->isSold())
-                                <div class="p-4 rounded-2xl bg-stone-100 border border-stone-200 text-center">
-                                    <span class="text-sm font-bold text-stone-600">This pre-owned listing has been marked as SOLD.</span>
-                                </div>
-                            @else
-                                <div class="space-y-3" x-data="{ showOfferModal: false }">
-                                    <!-- Offer Button & WhatsApp -->
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        <button type="button" @click="showOfferModal = true"
-                                                class="w-full py-3.5 px-5 rounded-full bg-zinc-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"/>
-                                            </svg>
-                                            <span>Make an Offer</span>
-                                        </button>
-
-                                        <a href="https://wa.me/{{ $sellerPhone ?? '' }}?text={{ rawurlencode('Hello! I am contacting you regarding your used listing: ' . $product->title . ' on K71. Is it still available? What is your best offer?') }}" target="_blank"
-                                           class="w-full py-3.5 px-5 rounded-full bg-zinc-800 hover:bg-zinc-900 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-95">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                                            </svg>
-                                            <span>Chat on WhatsApp</span>
-                                        </a>
-                                    </div>
-
-                                    @if(!empty($sellerPhone))
-                                        <a href="tel:{{ $sellerPhone }}" 
-                                           class="w-full py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition">
-                                            <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-                                            </svg>
-                                            <span>Call Seller ({{ $sellerPhone }})</span>
-                                        </a>
-                                    @endif
-
-                                    <p class="text-[11px] text-center text-stone-500">Direct peer-to-peer negotiation per Decision D9. No cart or middlemen fees.</p>
-
-                                    <!-- Make an Offer Modal -->
-                                    <div x-show="showOfferModal" 
-                                         x-transition.opacity
-                                         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-                                         style="display: none;">
-                                        <div @click.away="showOfferModal = false" class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 text-brand-text relative">
-                                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-xl">🤝</span>
-                                                    <h3 class="text-base font-bold text-gray-900">Make an Offer</h3>
-                                                </div>
-                                                <button type="button" @click="showOfferModal = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
-                                            </div>
-
-                                            <form action="{{ route('offers.store', $product) }}" method="POST" class="space-y-4">
-                                                @csrf
-                                                <div>
-                                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Asking Price</label>
-                                                    <div class="text-lg font-bold text-gray-900">₹{{ number_format($product->base_price / 100, 2) }}</div>
-                                                </div>
-
-                                                <div>
-                                                    <label for="offer_amount" class="block text-xs font-bold text-gray-700 uppercase mb-1">Your Offer Price (₹)</label>
-                                                    <input type="number" step="1" min="1" name="offer_amount" id="offer_amount" required 
-                                                           value="{{ round($product->base_price / 100 * 0.9) }}"
-                                                           placeholder="Enter your offer amount in ₹" 
-                                                           class="w-full rounded-xl border border-gray-300 py-2.5 px-3 text-sm font-mono font-bold text-gray-900 focus:ring-2 focus:ring-cyan-500">
-                                                </div>
-
-                                                <div>
-                                                    <label for="buyer_name" class="block text-xs font-bold text-gray-700 uppercase mb-1">Your Name</label>
-                                                    <input type="text" name="buyer_name" id="buyer_name" required value="{{ auth()->user()?->name ?? '' }}"
-                                                           placeholder="Your Full Name" 
-                                                           class="w-full rounded-xl border border-gray-300 py-2 px-3 text-sm focus:ring-2 focus:ring-cyan-500">
-                                                </div>
-
-                                                <div>
-                                                    <label for="buyer_phone" class="block text-xs font-bold text-gray-700 uppercase mb-1">Phone Number (+91)</label>
-                                                    <input type="tel" name="buyer_phone" id="buyer_phone" required value="{{ auth()->user()?->phone ?? '' }}"
-                                                           placeholder="10-digit mobile number" 
-                                                           class="w-full rounded-xl border border-gray-300 py-2 px-3 text-sm focus:ring-2 focus:ring-cyan-500">
-                                                </div>
-
-                                                <div>
-                                                    <label for="message" class="block text-xs font-bold text-gray-700 uppercase mb-1">Note to Seller (Optional)</label>
-                                                    <textarea name="message" id="message" rows="2" 
-                                                              placeholder="e.g. Can pick up today evening, cash ready." 
-                                                              class="w-full rounded-xl border border-gray-300 py-2 px-3 text-xs focus:ring-2 focus:ring-cyan-500"></textarea>
-                                                </div>
-
-                                                <div class="pt-2 flex items-center justify-end gap-2">
-                                                    <button type="button" @click="showOfferModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-700">Cancel</button>
-                                                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold shadow-md transition active:scale-95">Send Offer to Seller</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
+                            <div class="space-y-2">
+                                <a href="{{ $product->vendor->storefront_url }}" 
+                                   class="w-full py-3 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition">
+                                    <span>🏪 Visit {{ $product->vendor->shop_name }} Storefront</span>
+                                </a>
+                            </div>
                         @endif
 
                         <!-- Feedback Message Alert -->
@@ -959,7 +869,7 @@
                             <span x-text="message"></span>
                         </div>
 
-                        <!-- WhatsApp Designer Direct Inquiry Button -->
+                        <!-- Single Discrete WhatsApp Inquiry -->
                         @if(!empty($sellerPhone))
                             <div class="mt-3">
                                 <a href="https://wa.me/{{ $sellerPhone }}?text={{ $waProductMsg }}" target="_blank"

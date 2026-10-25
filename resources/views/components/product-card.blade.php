@@ -24,12 +24,25 @@
     }
 
     // Accurate stock determination across all variants
+    $isService = ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking']));
+    $isFood = ($product->vertical === 'food');
+    $tracksPhysicalStock = ($product->vertical === 'ecommerce' || empty($product->vertical) || $product->listing_type === 'product');
+
     $variantStockSum = $product->variants->isNotEmpty() ? $product->variants->sum('stock') : $product->total_stock;
-    $isOutOfStock = $variantStockSum <= 0;
+    $isOutOfStock = $tracksPhysicalStock && ($variantStockSum <= 0);
     $hasMultipleVariants = $product->variants->count() > 1 || ($product->variants->count() === 1 && $product->variants->first()?->sku !== 'Default' && $product->variants->first()?->name !== 'Default');
     $firstInStockVariant = $product->first_in_stock_variant;
     $userWishlistIds = \App\Models\Wishlist::getUserWishlistIds();
     $isWishlisted = in_array($product->id, $userWishlistIds);
+
+    $cardUrl = route('product.show', $product->slug);
+    if ($isService) {
+        $cardUrl = route('services.show', $product->slug);
+    } elseif ($product->vertical === 'used' || $product->listing_type === 'classified') {
+        $cardUrl = route('used.show', $product->slug);
+    } elseif ($isFood && $product->vendor) {
+        $cardUrl = route('food.restaurant', $product->vendor->slug);
+    }
 @endphp
 
 <div x-data="{ 
@@ -55,7 +68,7 @@
     
     <!-- Image Area with Bulletproof 3:4 Aspect Ratio -->
     <div class="relative w-full aspect-[3/4] bg-stone-100 dark:bg-zinc-800 rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
-        <a href="{{ route('product.show', $product->slug) }}" class="block w-full h-full relative z-0" aria-label="{{ $product->title }}">
+        <a href="{{ $cardUrl }}" class="block w-full h-full relative z-0" aria-label="{{ $product->title }}">
             @if($product->images->count() > 0)
                 <img src="{{ \App\Services\ImageService::url($product->images->first()->path, 400) }}" 
                      alt="{{ $product->title }}" 
@@ -144,19 +157,24 @@
 
         <!-- Title -->
         <h3 class="text-xs text-zinc-900 dark:text-zinc-100 leading-[1.35] mb-1.5 font-bold line-clamp-2 min-h-[2.7em]">
-            <a href="{{ route('product.show', $product->slug) }}" class="hover:underline decoration-1 underline-offset-2">{{ ucfirst($product->title) }}</a>
+            <a href="{{ $cardUrl }}" class="hover:underline decoration-1 underline-offset-2">{{ ucfirst($product->title) }}</a>
         </h3>
         
         <!-- Price Row -->
         <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
-            <span class="text-sm font-black text-zinc-900 dark:text-white">₹{{ number_format($product->base_price / 100, 0) }}</span>
-            @if($discount > 0)
+            <span class="text-sm font-black text-zinc-900 dark:text-white">
+                @if($isService)
+                    <span class="text-[10px] text-zinc-400 font-semibold block w-full">Starting at</span>
+                @endif
+                ₹{{ number_format($product->base_price / 100, 0) }}
+            </span>
+            @if($discount > 0 && !$isService)
                 <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
             @endif
         </div>
 
         <!-- Dynamic Color Swatches -->
-        @if($uniqueColors->count() > 0)
+        @if($uniqueColors->count() > 0 && !$isService)
             <div class="flex items-center gap-1.5 mb-2">
                 @foreach($uniqueColors->take(4) as $index => $color)
                     <div class="relative flex items-center justify-center w-[14px] h-[14px] rounded-full {{ $index === 0 ? 'ring-1 ring-offset-1 ring-gray-900' : 'ring-1 ring-gray-300' }}" title="{{ $color['name'] }}">
@@ -175,29 +193,36 @@
                 <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
                     Sold Out
                 </span>
+            @elseif($isService)
+                <a href="{{ $cardUrl }}" 
+                   class="text-[11px] font-black text-purple-700 hover:text-purple-900 hover:underline inline-flex items-center gap-1" 
+                   title="View Service Packages">
+                    <span>View Packages</span>
+                    <span class="text-[12px] leading-none">&rarr;</span>
+                </a>
             @elseif($product->isEnquiry())
-                <a href="{{ route('product.show', $product->slug) }}" 
+                <a href="{{ $cardUrl }}" 
                    class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="Request Quotation / View Details">
                     <span>Request Quote</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif($product->isBooking())
-                <a href="{{ route('product.show', $product->slug) }}" 
+                <a href="{{ $cardUrl }}" 
                    class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="Book Service">
                     <span>Book Service</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif(!$product->isPurchase())
-                <a href="{{ route('product.show', $product->slug) }}" 
+                <a href="{{ $cardUrl }}" 
                    class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
                    title="View Listing">
                     <span>View Listing</span>
                     <span class="text-[12px] leading-none">&rarr;</span>
                 </a>
             @elseif($hasMultipleVariants)
-                <a href="{{ route('product.show', $product->slug) }}" 
+                <a href="{{ $cardUrl }}" 
                    class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1" 
                    title="Select options">
                     <span>Options ›</span>

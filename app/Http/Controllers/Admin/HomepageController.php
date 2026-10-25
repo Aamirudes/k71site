@@ -13,10 +13,13 @@ class HomepageController extends Controller
     public function edit()
     {
         $homepage = Setting::getGroup('homepage');
+        $servicesPage = Setting::getGroup('services_page');
+        $foodPage = Setting::getGroup('food_page');
+        $usedPage = Setting::getGroup('used_page');
         $seo = Setting::getGroup('seo');
         $categories = Category::whereNull('parent_id')->orderBy('sort_order')->get();
 
-        return view('admin.homepage.edit', compact('homepage', 'seo', 'categories'));
+        return view('admin.homepage.edit', compact('homepage', 'servicesPage', 'foodPage', 'usedPage', 'seo', 'categories'));
     }
 
     public function update(Request $request)
@@ -42,42 +45,57 @@ class HomepageController extends Controller
             'announcement_emoji' => ['nullable', 'string', 'max:10'],
             'announcement_link' => ['nullable', 'string', 'max:255'],
 
-            // Hero Section
+            // Homepage Hero Section
             'hero_badge' => ['nullable', 'string', 'max:80'],
             'hero_title_line1' => ['nullable', 'string', 'max:100'],
             'hero_title_line2' => ['nullable', 'string', 'max:100'],
             'hero_description' => ['nullable', 'string', 'max:500'],
             'hero_cta_primary_text' => ['nullable', 'string', 'max:50'],
             'hero_cta_primary_link' => ['nullable', 'string', 'max:255'],
-            'hero_cta_secondary_text' => ['nullable', 'string', 'max:50'],
-            'hero_cta_secondary_link' => ['nullable', 'string', 'max:255'],
-            'hero_image' => ['nullable', 'image', 'max:5120'],
-            'hero_stats_enabled' => ['nullable', 'boolean'],
-            'hero_stat_1_val' => ['nullable', 'string', 'max:30'],
-            'hero_stat_1_lbl' => ['nullable', 'string', 'max:50'],
-            'hero_stat_2_val' => ['nullable', 'string', 'max:30'],
-            'hero_stat_2_lbl' => ['nullable', 'string', 'max:50'],
-            'hero_stat_3_val' => ['nullable', 'string', 'max:30'],
-            'hero_stat_3_lbl' => ['nullable', 'string', 'max:50'],
+            'search_placeholder' => ['nullable', 'string', 'max:100'],
 
-            // Section Titles
+            // Homepage Section Titles
+            'arrivals_section_title' => ['nullable', 'string', 'max:100'],
+            'services_section_title' => ['nullable', 'string', 'max:100'],
+            'services_section_subtitle' => ['nullable', 'string', 'max:200'],
+            'food_section_title' => ['nullable', 'string', 'max:100'],
+            'food_section_subtitle' => ['nullable', 'string', 'max:200'],
             'cat_section_title' => ['nullable', 'string', 'max:100'],
             'cat_section_subtitle' => ['nullable', 'string', 'max:200'],
-            'boutiques_section_title' => ['nullable', 'string', 'max:100'],
-            'boutiques_section_subtitle' => ['nullable', 'string', 'max:200'],
-            'spotlight_section_title' => ['nullable', 'string', 'max:100'],
-            'spotlight_section_subtitle' => ['nullable', 'string', 'max:200'],
-            'arrivals_section_title' => ['nullable', 'string', 'max:100'],
-            'arrivals_section_subtitle' => ['nullable', 'string', 'max:200'],
 
-            // Section Toggles
-            'show_announcement' => ['nullable', 'boolean'],
+            // Homepage Section Toggles
+            'show_trending_products' => ['nullable', 'boolean'],
+            'show_services_showcase' => ['nullable', 'boolean'],
+            'show_food_showcase' => ['nullable', 'boolean'],
             'show_categories' => ['nullable', 'boolean'],
-            'show_boutiques' => ['nullable', 'boolean'],
-            'show_featured_products' => ['nullable', 'boolean'],
-            'show_new_arrivals' => ['nullable', 'boolean'],
             'show_value_pillars' => ['nullable', 'boolean'],
-            'show_seo_editorial' => ['nullable', 'boolean'],
+            'show_seller_banner' => ['nullable', 'boolean'],
+
+            // Services Page Studio
+            'services_hero_badge' => ['nullable', 'string', 'max:100'],
+            'services_hero_title' => ['nullable', 'string', 'max:150'],
+            'services_hero_subtitle' => ['nullable', 'string', 'max:300'],
+            'services_search_placeholder' => ['nullable', 'string', 'max:120'],
+            'services_cat_title' => ['nullable', 'string', 'max:100'],
+            'services_cat_subtitle' => ['nullable', 'string', 'max:200'],
+            'services_trending_title' => ['nullable', 'string', 'max:100'],
+            'services_trending_subtitle' => ['nullable', 'string', 'max:200'],
+            'services_seller_cta_title' => ['nullable', 'string', 'max:120'],
+            'services_seller_cta_subtitle' => ['nullable', 'string', 'max:300'],
+
+            // Food Page Studio
+            'food_hero_badge' => ['nullable', 'string', 'max:100'],
+            'food_hero_title' => ['nullable', 'string', 'max:150'],
+            'food_hero_subtitle' => ['nullable', 'string', 'max:300'],
+            'food_search_placeholder' => ['nullable', 'string', 'max:120'],
+            'food_cuisines_title' => ['nullable', 'string', 'max:100'],
+            'food_trending_title' => ['nullable', 'string', 'max:100'],
+            'food_restaurants_title' => ['nullable', 'string', 'max:100'],
+
+            // Used Page Studio
+            'used_hero_badge' => ['nullable', 'string', 'max:100'],
+            'used_hero_title' => ['nullable', 'string', 'max:150'],
+            'used_hero_subtitle' => ['nullable', 'string', 'max:300'],
         ]);
 
         // File uploads
@@ -132,15 +150,9 @@ class HomepageController extends Controller
         $stringHomepageFields = [
             'announcement_badge', 'announcement_text', 'announcement_emoji', 'announcement_link',
             'hero_badge', 'hero_title_line1', 'hero_title_line2', 'hero_description',
-            'hero_cta_primary_text', 'hero_cta_primary_link',
-            'hero_cta_secondary_text', 'hero_cta_secondary_link',
-            'hero_stat_1_val', 'hero_stat_1_lbl',
-            'hero_stat_2_val', 'hero_stat_2_lbl',
-            'hero_stat_3_val', 'hero_stat_3_lbl',
-            'cat_section_title', 'cat_section_subtitle',
-            'boutiques_section_title', 'boutiques_section_subtitle',
-            'spotlight_section_title', 'spotlight_section_subtitle',
-            'arrivals_section_title', 'arrivals_section_subtitle',
+            'hero_cta_primary_text', 'hero_cta_primary_link', 'search_placeholder',
+            'arrivals_section_title', 'services_section_title', 'services_section_subtitle',
+            'food_section_title', 'food_section_subtitle', 'cat_section_title', 'cat_section_subtitle'
         ];
         foreach ($stringHomepageFields as $field) {
             Setting::set($field, $request->input($field), 'homepage', 'string');
@@ -148,14 +160,42 @@ class HomepageController extends Controller
 
         // Save Homepage Booleans
         $boolHomepageFields = [
-            'announcement_enabled', 'hero_stats_enabled', 'show_announcement',
-            'show_categories', 'show_boutiques', 'show_featured_products',
-            'show_new_arrivals', 'show_value_pillars', 'show_seo_editorial'
+            'announcement_enabled', 'show_trending_products', 'show_services_showcase',
+            'show_food_showcase', 'show_categories', 'show_value_pillars', 'show_seller_banner'
         ];
         foreach ($boolHomepageFields as $field) {
             Setting::set($field, $request->has($field), 'homepage', 'boolean');
         }
 
-        return back()->with('success', 'Marketplace homepage & SEO configuration successfully published live!');
+        // Save Services Page Settings
+        $servicesFields = [
+            'services_hero_badge', 'services_hero_title', 'services_hero_subtitle',
+            'services_search_placeholder', 'services_cat_title', 'services_cat_subtitle',
+            'services_trending_title', 'services_trending_subtitle',
+            'services_seller_cta_title', 'services_seller_cta_subtitle'
+        ];
+        foreach ($servicesFields as $field) {
+            Setting::set($field, $request->input($field), 'services_page', 'string');
+        }
+
+        // Save Food Page Settings
+        $foodFields = [
+            'food_hero_badge', 'food_hero_title', 'food_hero_subtitle',
+            'food_search_placeholder', 'food_cuisines_title', 'food_trending_title',
+            'food_restaurants_title'
+        ];
+        foreach ($foodFields as $field) {
+            Setting::set($field, $request->input($field), 'food_page', 'string');
+        }
+
+        // Save Used Page Settings
+        $usedFields = [
+            'used_hero_badge', 'used_hero_title', 'used_hero_subtitle'
+        ];
+        foreach ($usedFields as $field) {
+            Setting::set($field, $request->input($field), 'used_page', 'string');
+        }
+
+        return back()->with('success', 'Page Studio settings successfully published live across all verticals!');
     }
 }
