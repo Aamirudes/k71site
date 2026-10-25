@@ -57,9 +57,10 @@
                         
                         <!-- Left: Service & Appointment Info -->
                         <div class="flex items-start gap-4">
-                            @if($booking->product->images->isNotEmpty())
-                                <img src="{{ asset('storage/' . $booking->product->images->first()->path) }}" alt="{{ $booking->product->title }}"
-                                     class="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0">
+                            @if($booking->product)
+                                <img src="{{ $booking->product->primary_image_url }}" alt="{{ $booking->product->title }}"
+                                     class="w-16 h-16 rounded-xl object-cover border border-gray-200 shrink-0"
+                                     onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                             @else
                                 <div class="w-16 h-16 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-2xl shrink-0">
                                     🛠️

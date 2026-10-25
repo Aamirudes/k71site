@@ -5,6 +5,17 @@
     $currentPath = request()->path();
     $currentRoute = request()->route() ? request()->route()->getName() : '';
 
+    // Hide mobile bottom tab nav on detail and checkout pages to prioritize sticky buy and order bars
+    $hideOnDetail = request()->routeIs('product.show') 
+        || request()->routeIs('catalog.show') 
+        || request()->routeIs('services.show') 
+        || request()->routeIs('checkout.*')
+        || request()->routeIs('cart.*')
+        || request()->routeIs('services.order.*');
+    if ($hideOnDetail) {
+        return;
+    }
+
     // Detect Vertical: Food, Services, Used, Shorts vs Universal Marketplace
     $detectedVertical = $active ?? ($k71_vertical_key ?? 'main');
     $isFood = $detectedVertical === 'food' || request()->is('food*') || request()->is('s/food*') || str_starts_with($currentHost, 'food.');

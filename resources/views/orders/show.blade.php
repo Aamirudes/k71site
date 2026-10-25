@@ -205,14 +205,14 @@
                 @foreach($order->items as $item)
                     <div class="flex items-center gap-4 sm:gap-5 pb-4 border-b border-gray-100 last:border-b-0 last:pb-0">
                         <div class="w-18 h-22 sm:w-20 sm:h-24 bg-gray-100 rounded-2xl overflow-hidden shrink-0 border border-gray-200/50 shadow-2xs">
-                            @if($item->product && $item->product->images->count() > 0)
-                                <img src="{{ asset('storage/' . $item->product->images->first()->path) }}" 
+                            @if($item->product)
+                                <img src="{{ $item->product->primary_image_url }}" 
                                      alt="{{ $item->product->title ?? 'Product' }}"
                                      class="w-full h-full object-cover"
                                      onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                             @else
                                 <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                     alt="{{ $item->product->title ?? 'Product' }}"
+                                     alt="Product"
                                      class="w-full h-full object-cover">
                             @endif
                         </div>

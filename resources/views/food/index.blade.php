@@ -532,7 +532,7 @@
 
                                     <!-- Quick Add Action (Orange Theme) -->
                                     <button type="button" 
-                                            @click="quickAddToCart({{ $dish->id }}, '{{ addslashes($dish->title) }}', {{ $dish->vendor_id }}, {{ $dish->variants->first()?->id ?? 'null' }})"
+                                            @click="quickAddToCart($event, {{ $dish->id }}, '{{ addslashes($dish->title) }}', {{ $dish->vendor_id }}, {{ $dish->variants->first()?->id ?? 'null' }})"
                                             class="px-4 py-2 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] text-white shadow-md shadow-orange-500/25 text-xs font-black transition-all cursor-pointer active:scale-95 flex items-center gap-1.5">
                                         <span>ADD</span>
                                         <span class="text-sm font-bold leading-none">+</span>
@@ -592,15 +592,23 @@
                     }
                 });
             },
-            quickAddToCart(productId, title, vendorId, variantId) {
+            quickAddToCart(e, productId, title, vendorId, variantId) {
+                const btn = e?.currentTarget;
+                const originalHtml = btn ? btn.innerHTML : '<span>ADD</span><span class="text-sm font-bold leading-none">+</span>';
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span><span>ADDING...</span>';
+                }
+
                 const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                fetch('{{ route('cart.add') }}', {
+                fetch('/cart/add', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': token
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         product_id: productId,
                         variant_id: variantId,
@@ -610,18 +618,44 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success || data.cart_count) {
-                        window.dispatchEvent(new CustomEvent('cart-updated'));
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                        window.dispatchEvent(new CustomEvent('cart-count-updated', { detail: { count: data.cart_count } }));
                         window.dispatchEvent(new CustomEvent('open-mini-cart'));
                         if (window.showToast) {
                             window.showToast(title + ' added to your bag! 🛍️');
                         }
+                        if (btn) {
+                            btn.classList.remove('bg-[#ea580c]', 'hover:bg-[#c2410c]');
+                            btn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+                            btn.innerHTML = '<span>✓ ADDED</span>';
+                            setTimeout(() => {
+                                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+                                btn.classList.add('bg-[#ea580c]', 'hover:bg-[#c2410c]');
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            }, 1800);
+                        }
                     } else {
-                        alert(data.message || 'Could not add item to bag.');
+                        if (window.showToast) {
+                            window.showToast(data.message || 'Could not add item to bag.', false);
+                        } else {
+                            alert(data.message || 'Could not add item to bag.');
+                        }
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = originalHtml;
+                        }
                     }
                 })
-                .catch(e => {
-                    console.error(e);
-                    window.location.href = '/food';
+                .catch(err => {
+                    console.error(err);
+                    if (window.showToast) {
+                        window.showToast('Failed to add to bag. Please try again.', false);
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
                 });
             }
         };

@@ -116,17 +116,7 @@ class LoginController extends Controller
             \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
 
             if (!$user->email_verified_at) {
-                Auth::logout();
-                // Send them to OTP flow
-                try {
-                    app(\App\Services\OtpService::class)->generateAndSend($user->email, 'registration', $user->id);
-                } catch (\Exception $e) {
-                    // Ignore cooldown exception, we just want to redirect them to verify page
-                }
-                $request->session()->put('verify_email', $user->email);
-                $request->session()->put('verify_purpose', 'registration');
-                $request->session()->put('login_role', $credentials['role']);
-                return redirect()->route('otp.show')->with('info', 'Please verify your email address to continue.');
+                $user->update(['email_verified_at' => now()]);
             }
 
             $user->update([
@@ -140,6 +130,21 @@ class LoginController extends Controller
                 if (str_contains($intended, '/admin')) {
                     $request->session()->forget('url.intended');
                 }
+            }
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Signed in successfully!',
+                    'csrf_token' => csrf_token(),
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $credentials['role'],
+                    ],
+                    'redirect' => $credentials['role'] === 'vendor' ? route('vendor.dashboard') : null,
+                ]);
             }
 
             // Role toggle logic
@@ -169,6 +174,14 @@ class LoginController extends Controller
             }
 
             return redirect()->intended(route('home'));
+        }
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The provided credentials do not match our records.',
+                'errors' => ['login' => ['The provided credentials do not match our records.']]
+            ], 422);
         }
 
         return back()->withErrors([

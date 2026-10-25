@@ -172,8 +172,8 @@
                         @foreach($order->items as $item)
                             <li class="py-4 flex gap-4">
                                 <div class="w-16 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-                                    @if($item->product && $item->product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $item->product->images->first()->path) }}" class="w-full h-full object-cover">
+                                    @if($item->product)
+                                        <img src="{{ $item->product->primary_image_url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                     @endif
                                 </div>
                                 <div class="flex-1">

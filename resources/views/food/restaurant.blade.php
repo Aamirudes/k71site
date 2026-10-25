@@ -223,7 +223,7 @@
                                         'title' => $dish->title,
                                         'description' => $dish->description,
                                         'base_price' => $dish->base_price / 100,
-                                        'image' => $dish->images->first() ? asset('storage/' . $dish->images->first()->path) : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80',
+                                        'image' => $dish->primary_image_url,
                                         'is_veg' => $isVeg,
                                         'variants' => $dish->variants->map(fn($v) => [
                                             'id' => $v->id,
@@ -307,7 +307,7 @@
                                     <div class="relative w-full sm:w-32 h-28 shrink-0 flex flex-col items-center justify-between">
                                         <div class="w-full h-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200">
                                             @if($dish->images->isNotEmpty())
-                                                <img src="{{ asset('storage/' . $dish->images->first()->path) }}" 
+                                                <img src="{{ $dish->primary_image_url }}" 
                                                      alt="{{ $dish->title }}" 
                                                      class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                                             @else
@@ -556,26 +556,30 @@
                 }
 
                 try {
-                    const res = await fetch('{{ route('cart.add') }}', {
+                    const res = await fetch('/cart/add', {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                             'Accept': 'application/json'
                         },
+                        credentials: 'same-origin',
                         body: formData
                     });
                     const data = await res.json();
-                    if (data.success) {
+                    if (data.success || data.cart_count) {
                         this.customizerOpen = false;
                         window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                        window.dispatchEvent(new CustomEvent('cart-count-updated', { detail: { count: data.cart_count } }));
                         window.dispatchEvent(new CustomEvent('open-mini-cart'));
-                        if (window.showToast) window.showToast('Item customized & added to your bag!');
+                        if (window.showToast) window.showToast('Item customized & added to your bag! 🛍️');
                     } else {
-                        alert(data.message || 'Could not add item.');
+                        if (window.showToast) window.showToast(data.message || 'Could not add item.', false);
+                        else alert(data.message || 'Could not add item.');
                     }
                 } catch(e) {
                     console.error(e);
-                    alert('Error adding customized item. Please try again.');
+                    if (window.showToast) window.showToast('Error adding item. Please try again.', false);
+                    else alert('Error adding customized item. Please try again.');
                 } finally {
                     this.addingCustomized = false;
                 }
@@ -594,28 +598,52 @@
         }
 
         try {
-            const res = await fetch(form.action, {
+            const res = await fetch('/cart/add', {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json'
                 },
+                credentials: 'same-origin',
                 body: formData
             });
             const data = await res.json();
-            if (data.success) {
+            if (data.success || data.cart_count) {
                 window.dispatchEvent(new CustomEvent('cart-updated', { detail: data }));
+                window.dispatchEvent(new CustomEvent('cart-count-updated', { detail: { count: data.cart_count } }));
                 window.dispatchEvent(new CustomEvent('open-mini-cart'));
                 if (window.showToast) {
-                    window.showToast('Item added to your bag!');
+                    window.showToast('Item added to your bag! 🛍️');
+                }
+                if (submitBtn) {
+                    submitBtn.classList.remove('bg-white', 'text-[#ea580c]', 'border-[#ea580c]');
+                    submitBtn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                    submitBtn.innerHTML = '✓ ADDED';
+                    setTimeout(() => {
+                        submitBtn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                        submitBtn.classList.add('bg-white', 'text-[#ea580c]', 'border-[#ea580c]');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }, 1800);
                 }
             } else {
-                alert(data.message || 'Could not add item.');
+                if (window.showToast) {
+                    window.showToast(data.message || 'Could not add item.', false);
+                } else {
+                    alert(data.message || 'Could not add item.');
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
             }
         } catch(e) {
             console.error(e);
-            alert('Error adding item. Please try again.');
-        } finally {
+            if (window.showToast) {
+                window.showToast('Error adding item. Please try again.', false);
+            } else {
+                alert('Error adding item. Please try again.');
+            }
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;

@@ -267,8 +267,7 @@ class CartController extends Controller
             $subtotal += $lineTotal;
 
             $product = $item->product ?? $item->variant?->product;
-            $image = $product?->images?->first();
-            $imageUrl = $image ? asset('storage/' . $image->path) : null;
+            $imageUrl = $product ? $product->primary_image_url : null;
 
             $variantLabel = 'Standard';
             if ($item->gigPackage) {

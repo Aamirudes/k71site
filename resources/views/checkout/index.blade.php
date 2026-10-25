@@ -262,14 +262,14 @@
                             @endphp
                             <li class="py-4 flex gap-4">
                                 <div class="w-16 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 relative">
-                                    @if($product && $product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
+                                    @if($product)
+                                        <img src="{{ $product->primary_image_url }}" 
                                              alt="{{ $product->title }}"
                                              class="w-full h-full object-cover"
                                              onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                     @else
                                         <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                             alt="{{ $product?->title ?? 'Product' }}" 
+                                             alt="Product" 
                                              class="w-full h-full object-cover">
                                     @endif
                                 </div>

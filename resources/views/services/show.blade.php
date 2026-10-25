@@ -412,13 +412,14 @@
         </div>
 
         <!-- STICKY MOBILE BOTTOM ORDER BAR -->
-        <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-white/95 backdrop-blur-xl border-t border-purple-200 shadow-2xl flex items-center justify-between gap-3">
+        <div class="lg:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-white/95 backdrop-blur-xl border-t border-purple-200 shadow-2xl flex items-center justify-between gap-3"
+             style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
             <div>
                 <div class="text-[10px] text-zinc-400 uppercase font-black tracking-wider" x-text="selectedTier.toUpperCase() + ' PACKAGE'"></div>
                 <div class="text-lg font-black text-purple-700" x-text="'₹' + Number(prices[selectedTier]).toLocaleString('en-IN')"></div>
             </div>
             <a :href="'{{ route('services.order.checkout', $service) }}?tier=' + selectedTier"
-               class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-purple-500/30 flex items-center gap-1.5 transition">
+               class="px-6 py-3 rounded-2xl bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-purple-500/30 flex items-center gap-2 transition">
                 <span>Continue to Order</span>
                 <span>&rarr;</span>
             </a>

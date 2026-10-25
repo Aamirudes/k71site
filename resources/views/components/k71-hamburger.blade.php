@@ -129,12 +129,16 @@
                         <p class="text-sm font-semibold text-zinc-900 dark:text-white">Welcome to K71</p>
                         <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Sign in for fast checkout &amp; order tracking</p>
                         <div class="grid grid-cols-2 gap-2 mt-3">
-                            <a href="{{ route('login') }}" class="py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold shadow-xs text-center transition-colors">
+                            <button type="button" 
+                                    @click="closeDrawer(); window.openAuthModal ? window.openAuthModal(null, 'login') : $dispatch('open-auth-modal', { tab: 'login' })" 
+                                    class="py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer">
                                 Sign In
-                            </a>
-                            <a href="{{ route('register') }}" class="py-2.5 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 text-center transition-colors">
+                            </button>
+                            <button type="button" 
+                                    @click="closeDrawer(); window.openAuthModal ? window.openAuthModal(null, 'register') : $dispatch('open-auth-modal', { tab: 'register' })" 
+                                    class="py-2.5 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 text-center transition-colors cursor-pointer">
                                 Register
-                            </a>
+                            </button>
                         </div>
                     </div>
                 @endauth

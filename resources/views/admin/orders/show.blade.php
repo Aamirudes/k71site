@@ -340,10 +340,10 @@
                         @foreach($order->items as $item)
                             <div class="py-4 flex gap-4 items-start first:pt-0 last:pb-0">
                                 <div class="w-16 h-20 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-200">
-                                    @if($item->product && $item->product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $item->product->images->first()->path) }}" alt="{{ $item->product->title }}" class="w-full h-full object-cover">
+                                    @if($item->product)
+                                        <img src="{{ $item->product->primary_image_url }}" alt="{{ $item->product->title }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                     @else
-                                        <div class="w-full h-full flex items-center justify-center text-slate-400 text-xl font-serif">👗</div>
+                                        <div class="w-full h-full flex items-center justify-center text-slate-400 text-xl font-serif">🛍️</div>
                                     @endif
                                 </div>
 

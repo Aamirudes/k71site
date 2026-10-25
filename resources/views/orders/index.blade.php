@@ -120,8 +120,8 @@
                             <div class="flex items-center gap-3.5 sm:gap-5 min-w-0 flex-1">
                                 <!-- Product Thumbnail with Multi-Item Counter -->
                                 <div class="relative w-16 h-18 sm:w-20 sm:h-22 rounded-2xl bg-stone-100 overflow-hidden shrink-0 border border-gray-200/60 shadow-2xs group-hover:scale-102 transition-transform duration-200">
-                                    @if($firstItem && $firstItem->product && $firstItem->product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $firstItem->product->images->first()->path) }}" 
+                                    @if($firstItem && $firstItem->product)
+                                        <img src="{{ $firstItem->product->primary_image_url }}" 
                                              alt="{{ $firstItem->product->title ?? 'Order Item' }}" 
                                              class="w-full h-full object-cover"
                                              onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
@@ -409,8 +409,8 @@
                                         <div class="flex items-center gap-4 py-4">
                                             <!-- Thumbnail -->
                                             <div class="w-14 h-16 sm:w-16 sm:h-20 bg-stone-100 rounded-xl overflow-hidden shrink-0 border border-gray-200/50 shadow-2xs">
-                                                @if($item->product && $item->product->images->count() > 0)
-                                                    <img src="{{ asset('storage/' . $item->product->images->first()->path) }}" 
+                                                @if($item->product)
+                                                    <img src="{{ $item->product->primary_image_url }}" 
                                                          alt="{{ $item->product->title ?? 'Product' }}"
                                                          class="w-full h-full object-cover"
                                                          onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">

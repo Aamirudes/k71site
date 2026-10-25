@@ -25,6 +25,26 @@ class RegisterController extends Controller
 
     public function store(Request $request)
     {
+        // Support single full name input from modal
+        if ($request->has('name') && !$request->has('first_name')) {
+            $parts = explode(' ', trim($request->input('name')), 2);
+            $request->merge([
+                'first_name' => $parts[0] ?: 'User',
+                'last_name' => $parts[1] ?? 'Buyer'
+            ]);
+        }
+
+        // Auto-generate unique username if not provided
+        if (!$request->filled('username') && $request->filled('email')) {
+            $baseUser = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', explode('@', $request->input('email'))[0]));
+            if (strlen($baseUser) < 3) $baseUser = 'user';
+            $generated = substr($baseUser, 0, 14) . rand(100, 999);
+            while (User::where('username', $generated)->exists()) {
+                $generated = substr($baseUser, 0, 14) . rand(100, 9999);
+            }
+            $request->merge(['username' => $generated]);
+        }
+
         $validated = $request->validate([
             'first_name' => ['required', 'string', 'max:50'],
             'last_name' => ['required', 'string', 'max:50'],
@@ -33,33 +53,42 @@ class RegisterController extends Controller
             'password' => ['required', Password::defaults()],
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
-            $user = User::create([
+        $createdUser = null;
+        DB::transaction(function () use ($validated, $request, &$createdUser) {
+            $createdUser = User::create([
                 'first_name' => $validated['first_name'],
                 'last_name' => $validated['last_name'],
                 'username' => strtolower($validated['username']),
                 'email' => strtolower($validated['email']),
                 'password' => Hash::make($validated['password']),
+                'email_verified_at' => now(), // Instant activation for streamlined buyer checkout/RFQ
                 'terms_accepted_at' => now(),
             ]);
 
-            $customerRole = Role::where('name', UserRole::Customer->value)->first();
-            $user->roles()->attach($customerRole);
+            $customerRole = Role::firstOrCreate(['name' => UserRole::Customer->value]);
+            $createdUser->roles()->syncWithoutDetaching([$customerRole->id]);
 
-            // Generate OTP for email verification
-            try {
-                $this->otpService->generateAndSend($user->email, 'registration', $user->id);
-            } catch (\Exception $e) {
-                // Ignore cooldown exception
-            }
-            
-            // Store email in session for OTP verification step
-            $request->session()->put('verify_email', $user->email);
-            $request->session()->put('verify_purpose', 'registration');
-            $request->session()->put('login_role', 'customer');
+            // Merge guest cart
+            \App\Models\Cart::mergeGuestCart($createdUser->id, $request->session()->getId());
+
+            \Illuminate\Support\Facades\Auth::login($createdUser, true);
         });
 
-        return redirect()->route('otp.show');
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Welcome to K71! Your account has been created.',
+                'csrf_token' => csrf_token(),
+                'user' => [
+                    'id' => $createdUser->id,
+                    'name' => $createdUser->name,
+                    'email' => $createdUser->email,
+                    'role' => 'customer',
+                ]
+            ]);
+        }
+
+        return redirect()->route('home')->with('success', 'Welcome to K71!');
     }
 
     public function vendorShow()

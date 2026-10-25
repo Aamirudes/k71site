@@ -1,351 +1,687 @@
 <x-layouts.public 
-    title="B2B Wholesale & Custom Requirements Marketplace — K71 B2B"
-    metaDescription="Post bulk buying requirements, compare factory quotes, and access wholesale deals on K71 B2B. Zero middlemen, volume discounts, and verified manufacturers."
+    title="K71 Enquiry — India's Premium B2B Sourcing & RFQ Marketplace"
+    metaDescription="Discover verified suppliers, post bulk buying requirements, compare factory quotations, and do business directly with verified manufacturers on K71 Enquiry."
 >
-    <div x-data="{
-        rfqModal: false,
-        membershipModal: false,
-        activeTab: 'deals', // 'deals', 'leads', 'membership'
-        rfqProductTitle: '',
-        rfqQuantity: '100',
-        rfqTargetPrice: '150',
-        rfqCity: 'Mumbai',
-        countdownHours: '05',
-        countdownMins: '42',
-        countdownSecs: '18',
-        openRfq(title = '') {
-            this.rfqProductTitle = title;
-            this.rfqModal = true;
-        }
-    }" class="min-h-screen text-zinc-900 dark:text-zinc-100 transition-colors duration-300 pb-16">
+    <div x-data="k71EnquiryHub()" class="min-h-screen text-slate-900 pb-20">
 
-        <!-- TOP BAR: LOCATION, SCAN & CART (Image 4 Style) -->
-        <div class="mb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3.5 bg-white dark:bg-zinc-900 rounded-3xl border border-red-100 dark:border-zinc-800 shadow-xs">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                </div>
-                <div>
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">B2B.K71 • Wholesale Delivery Port</div>
-                    <div class="flex items-center gap-1 font-black text-xs sm:text-sm text-zinc-950 dark:text-white cursor-pointer">
-                        <span>Nhava Sheva / Inland Hub, India</span>
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        <!-- 1. FLOATING GLASS B2B HERO & SMART SEARCH DOCK -->
+        <section class="relative pt-6 sm:pt-10 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-200/60 bg-gradient-to-b from-slate-100/60 via-white to-transparent">
+            <!-- Subtle Ambient Light -->
+            <div class="absolute top-0 inset-x-0 h-96 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+                <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-gradient-to-b from-indigo-500/10 via-cyan-500/5 to-transparent blur-3xl rounded-full"></div>
+            </div>
+
+            <div class="max-w-7xl mx-auto space-y-6">
+
+                <!-- Breadcrumb & Sourcing Hub Tag -->
+                <div class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-slate-200/80 shadow-2xs text-slate-700 font-bold backdrop-blur-md">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="tracking-wide uppercase text-[10.5px] text-slate-500 font-extrabold">B2B Sourcing Hub</span>
+                        <span class="text-slate-300">•</span>
+                        <span>{{ number_format($stats['total_rfqs'] ?? 42) }}+ Active Buyer Requirements</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('vendor.register') }}" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs flex items-center gap-1 transition">
+                            <span>Become a Verified Supplier</span>
+                            <span>&rarr;</span>
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <!-- Header Action Buttons -->
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <button type="button" @click="openRfq()" 
-                        class="flex-1 sm:flex-none px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider transition shadow-md shadow-red-600/20 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer">
-                    <span>+ Post Requirement</span>
-                </button>
-
-                <button type="button" @click="membershipModal = true" 
-                        class="px-4 py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
-                    <span>👑 Club Pass</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- SEARCH BAR WITH BARCODE/SCAN ICON (Image 4 Screen 3) -->
-        <div class="mb-6">
-            <form action="{{ route('enquiry.index') }}" method="GET" class="relative">
-                <div class="absolute left-4 top-3.5 text-zinc-400">
-                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                </div>
-                <input type="text" name="search" value="{{ $search }}" 
-                       placeholder="Search bulk products, raw cotton, CNC machinery, milk powder, packaging..." 
-                       class="w-full pl-12 pr-28 py-3.5 rounded-2xl bg-white dark:bg-zinc-900 border border-red-100 dark:border-zinc-800 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none transition shadow-xs">
-                
-                <div class="absolute right-2 top-2 flex items-center gap-1.5">
-                    <button type="button" title="Scan Barcode / Product Code" class="p-2 rounded-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
-                    </button>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold transition shadow-xs">
-                        Search
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- CATEGORIES / DEALS HORIZONTAL RAIL (Image 4 Screen 3) -->
-        <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-6">
-            <a href="{{ route('enquiry.index', array_merge(request()->query(), ['cat' => ''])) }}" 
-               class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 flex items-center gap-1.5 {{ empty($selectedCategory) ? 'bg-red-600 text-white shadow-xs' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300' }}">
-                <span>🔥 All Deals</span>
-            </a>
-            <a href="{{ route('enquiry.index', ['search' => 'groceries']) }}" class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-red-400">
-                🥫 Bulk Groceries
-            </a>
-            <a href="{{ route('enquiry.index', ['search' => 'textiles']) }}" class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-red-400">
-                🧵 Textiles &amp; Garments
-            </a>
-            <a href="{{ route('enquiry.index', ['search' => 'machinery']) }}" class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-red-400">
-                ⚙️ Industrial Machinery
-            </a>
-            <a href="{{ route('enquiry.index', ['search' => 'beverages']) }}" class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-red-400">
-                🥤 Beverages &amp; Milk
-            </a>
-            <a href="{{ route('enquiry.index', ['search' => 'packaging']) }}" class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:border-red-400">
-                📦 Corrugated Packaging
-            </a>
-            @foreach($enquiryCategories as $cat)
-                <a href="{{ route('enquiry.index', array_merge(request()->query(), ['cat' => $cat->slug])) }}" 
-                   class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 {{ $selectedCategory === $cat->slug ? 'bg-red-600 text-white shadow-xs' : 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300' }}">
-                    {{ $cat->name }}
-                </a>
-            @endforeach
-        </div>
-
-        <!-- HERO BANNER: THOUSANDS OF DEALS (Exact Image 4 Screen 3 Banner) -->
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 p-6 sm:p-8 text-white shadow-xl mb-8">
-            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div class="max-w-md text-center md:text-left">
-                    <span class="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-black uppercase tracking-wider mb-3">
-                        Wholesale Price Guarantee
-                    </span>
-                    <h2 class="text-3xl sm:text-4xl font-black tracking-tight leading-tight mb-2">
-                        Thousands of deals. <br>
-                        <span class="text-amber-200">Low Prices. Every day.</span>
-                    </h2>
-                    <p class="text-xs sm:text-sm text-red-100 mb-5 leading-relaxed">
-                        Source direct from verified mills, foundries, and food processing plants. Request custom quotes and lock factory wholesale margins.
+                <!-- Minimal Headline & Mission -->
+                <div class="max-w-3xl space-y-2.5">
+                    <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+                        Find suppliers. Compare offers. Do business.
+                    </h1>
+                    <p class="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
+                        The next-generation B2B enquiry marketplace. Connect directly with verified manufacturers, request customized bulk quotations, and trade with complete transparency.
                     </p>
-                    <button type="button" @click="openRfq()" 
-                            class="px-6 py-2.5 rounded-2xl bg-white text-red-700 hover:bg-red-50 font-black text-xs uppercase tracking-wider shadow-lg transition active:scale-95 cursor-pointer">
-                        Post Buying Requirement (60s)
-                    </button>
                 </div>
 
-                <div class="relative shrink-0 flex items-center justify-center">
-                    <div class="w-44 h-44 sm:w-52 sm:h-52 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 p-4 shadow-2xl flex flex-col items-center justify-center text-center">
-                        <span class="text-5xl mb-2">🛒</span>
-                        <span class="text-lg font-black text-white">% B2B VOLUME</span>
-                        <span class="text-[11px] text-amber-200 font-bold">Up to 45% Margins</span>
+                <!-- 2. PREMIUM FLOATING GLASS SEARCH PANEL -->
+                <div class="bg-white/90 backdrop-blur-2xl rounded-3xl p-3 sm:p-4 border border-slate-200/80 shadow-xl shadow-slate-200/50">
+                    <form action="{{ route('enquiry.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                        
+                        <!-- Search Keyword Input (5 cols) -->
+                        <div class="md:col-span-5 relative">
+                            <div class="absolute left-3.5 top-3.5 text-indigo-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                            </div>
+                            <input type="text" name="search" value="{{ $search }}"
+                                   placeholder="Enter product, machine, or service (e.g. Makrana Marble, Gangsaw, CNC)..."
+                                   class="w-full pl-11 pr-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400">
+                        </div>
+
+                        <!-- Category Selector (3 cols) -->
+                        <div class="md:col-span-3 relative">
+                            <select name="cat" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs sm:text-sm font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all cursor-pointer">
+                                <option value="">All B2B Categories</option>
+                                @foreach($enquiryCategories as $cat)
+                                    <option value="{{ $cat->slug }}" {{ $selectedCategory === $cat->slug ? 'selected' : '' }}>
+                                        {{ $cat->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <!-- Location Selector (2 cols) -->
+                        <div class="md:col-span-2 relative">
+                            <select name="city" class="w-full px-3 py-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs sm:text-sm font-semibold text-slate-800 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all cursor-pointer">
+                                <option value="">All Locations</option>
+                                @foreach($availableCities as $c)
+                                    <option value="{{ $c }}" {{ $city === $c ? 'selected' : '' }}>{{ $c }}</option>
+                                @endforeach
+                                <option value="Jaipur">Jaipur</option>
+                                <option value="Makrana">Makrana</option>
+                                <option value="Kishangarh">Kishangarh</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Delhi">Delhi NCR</option>
+                                <option value="Ahmedabad">Ahmedabad</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons (2 cols) -->
+                        <div class="md:col-span-2 flex items-center gap-2">
+                            <button type="submit" 
+                                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                <span>Search</span>
+                            </button>
+                        </div>
+
+                    </form>
+
+                    <!-- Popular Sourcing Chips + Quick RFQ CTA Strip -->
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                            <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider shrink-0">Trending:</span>
+                            @foreach(['Makrana Marble', 'Diamond Blades', 'Granite Slabs', 'CNC Machines', 'Packaging Material', 'Quartz Stone'] as $chip)
+                                <a href="{{ route('enquiry.index', ['search' => $chip]) }}" 
+                                   class="px-3 py-1 rounded-full bg-slate-100 hover:bg-indigo-50 border border-slate-200/70 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-xs font-semibold transition shrink-0">
+                                    {{ $chip }}
+                                </a>
+                            @endforeach
+                        </div>
+
+                        <button type="button" 
+                                @click="openRfqModal()" 
+                                class="px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-600/20 active:scale-95 transition flex items-center gap-1.5 cursor-pointer shrink-0">
+                            <span>✨ Post Your Requirement</span>
+                            <span>&rarr;</span>
+                        </button>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- B2B WHOLESALE VALUE PILLARS & DISCOVERY -->
-        <div class="mb-10 p-6 sm:p-8 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xs">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                    <span class="text-[10px] font-black uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-full border border-red-200/60 inline-block mb-2">
-                        Factory-Direct Sourcing
-                    </span>
-                    <h3 class="text-xl sm:text-2xl font-black text-zinc-950 dark:text-white tracking-tight mb-1">
-                        Looking for Bulk Materials or Custom Manufacturing?
-                    </h3>
-                    <p class="text-xs sm:text-sm text-zinc-500 max-w-xl leading-relaxed">
-                        Skip middlemen and traders. Post your exact quantity, target price per unit, and delivery destination. Verified manufacturers will quote directly.
-                    </p>
+            </div>
+        </section>
+
+        <!-- 3. MAIN BODY CONTAINER -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 mt-8 sm:mt-12">
+
+            <!-- A. CATEGORY DISCOVERY GRID -->
+            <section class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Key Industry Categories</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Explore high-volume manufacturing sectors and raw materials.</p>
+                    </div>
+                    @if($selectedCategory)
+                        <a href="{{ route('enquiry.index') }}" class="text-xs font-bold text-indigo-600 hover:underline">Clear Filter ✕</a>
+                    @endif
                 </div>
-                <div class="flex items-center gap-3 shrink-0">
-                    <button type="button" @click="openRfq()" 
-                            class="px-6 py-3 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-red-600/20 active:scale-95 transition cursor-pointer">
-                        Post Requirement Now &rarr;
-                    </button>
-                    <a href="{{ route('vendor.register') }}" 
-                       class="px-5 py-3 rounded-2xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-800 dark:text-zinc-200 font-bold text-xs transition">
-                        Register as Supplier
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                    @php
+                        $sampleCategoryIcons = [
+                            'natural-stone' => '🏛️',
+                            'machinery' => '⚙️',
+                            'construction' => '🏗️',
+                            'minerals' => '💎',
+                            'chemicals' => '🧪',
+                            'packaging' => '📦',
+                        ];
+                    @endphp
+
+                    @forelse($enquiryCategories as $cat)
+                        <a href="{{ route('enquiry.index', ['cat' => $cat->slug]) }}" 
+                           class="p-4 rounded-3xl bg-white/80 hover:bg-white border transition-all duration-300 group flex flex-col justify-between shadow-2xs hover:shadow-lg hover:shadow-slate-200/60 {{ $selectedCategory === $cat->slug ? 'border-indigo-600 ring-2 ring-indigo-100 bg-white' : 'border-slate-200/80 hover:border-indigo-200' }}">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50/70 border border-indigo-100/60 text-indigo-700 flex items-center justify-center text-xl font-bold mb-3 group-hover:scale-110 transition-transform">
+                                @if($cat->image)
+                                    <img src="{{ format_image_url($cat->image) }}" alt="{{ $cat->name }}" class="w-7 h-7 object-contain">
+                                @else
+                                    <span>{{ $sampleCategoryIcons[$cat->slug] ?? '🏭' }}</span>
+                                @endif
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                                    {{ $cat->name }}
+                                </h3>
+                                <p class="text-[10.5px] text-slate-500 font-medium mt-0.5">
+                                    {{ $cat->enquiries_count }} Active RFQs
+                                </p>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="col-span-full py-8 text-center text-slate-400 text-xs">
+                            No dedicated categories configured yet. All general wholesale requirements are supported.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
+            <!-- B. RECOMMENDED B2B WHOLESALE PRODUCTS -->
+            <section class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Recommended Industrial &amp; Wholesale Listings</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct factory-priced products ready for bulk dispatch and custom quotation.</p>
+                    </div>
+                    <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1">
+                        <span>Browse Catalog</span>
+                        <span>&rarr;</span>
                     </a>
                 </div>
-            </div>
-        </div>
 
-        <!-- OPEN BUYING REQUIREMENTS & RFQ FEED (B2B Engine) -->
-        <div class="mb-6 flex items-center justify-between">
-            <h3 class="text-sm font-black uppercase tracking-wider text-zinc-900 dark:text-white">Active Buyer RFQs &amp; Leads 📋</h3>
-            <span class="text-xs text-zinc-400">{{ $enquiries->total() }} Open Inquiries</span>
-        </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    @forelse($b2bProducts as $prod)
+                        <div class="bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200/80 hover:border-indigo-300 shadow-xs hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 flex flex-col justify-between group overflow-hidden">
+                            <div>
+                                <!-- Image Preview -->
+                                <div class="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+                                    <img src="{{ $prod->primary_image_url }}" 
+                                         alt="{{ $prod->title }}" 
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                         onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
+                                    
+                                    <div class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[9.5px] font-black uppercase tracking-wider">
+                                        {{ $prod->category?->name ?? 'Wholesale' }}
+                                    </div>
 
-        @if($enquiries->isEmpty())
-            <div class="text-center py-16 px-4 bg-red-50/40 dark:bg-zinc-900/40 rounded-3xl border border-red-100 dark:border-zinc-800 max-w-md mx-auto my-8">
-                <div class="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 flex items-center justify-center mx-auto mb-3 text-2xl">
-                    📑
-                </div>
-                <h3 class="text-base font-bold text-zinc-900 dark:text-white mb-1">No open RFQs found</h3>
-                <p class="text-xs text-zinc-500 mb-4">Be the first buyer to post a requirement and receive factory bids.</p>
-                <button type="button" @click="openRfq()" class="px-5 py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold">
-                    Post 1st Requirement
-                </button>
-            </div>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
-                @foreach($enquiries as $enquiry)
-                    <div class="p-5 rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-red-400 transition shadow-xs flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 text-[10px] font-black uppercase">
-                                    {{ $enquiry->status === 'quoted' ? 'Quotes Received' : 'Open for Bids' }}
-                                </span>
-                                <span class="text-[11px] text-zinc-400">📍 {{ $enquiry->city ?? 'Pan-India' }}</span>
-                            </div>
-
-                            @if($enquiry->category)
-                                <div class="text-[10px] font-black uppercase text-red-600 dark:text-red-400 mb-1">
-                                    {{ $enquiry->category->name }}
+                                    @if($prod->vendor)
+                                        <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-sm border border-slate-200/60 text-slate-900 text-[10px] font-bold shadow-xs flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span class="truncate max-w-[140px]">{{ $prod->vendor->shop_name }}</span>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
 
-                            <h4 class="text-sm font-black text-zinc-950 dark:text-white line-clamp-2 mb-1">
-                                {{ $enquiry->title }}
-                            </h4>
-                            <p class="text-xs text-zinc-500 line-clamp-2 mb-3">
-                                {{ $enquiry->description }}
-                            </p>
+                                <!-- Product Details -->
+                                <div class="p-4 space-y-2">
+                                    <h3 class="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
+                                        <a href="{{ route('product.show', $prod->slug) }}">
+                                            {{ $prod->title }}
+                                        </a>
+                                    </h3>
 
-                            <div class="grid grid-cols-2 gap-2 p-2.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 text-xs mb-3">
-                                <div>
-                                    <span class="text-[10px] text-zinc-400 block font-bold">TARGET QUANTITY</span>
-                                    <span class="font-black text-zinc-900 dark:text-white">{{ $enquiry->quantity }}</span>
-                                </div>
-                                <div>
-                                    <span class="text-[10px] text-zinc-400 block font-bold">TARGET BUDGET</span>
-                                    <span class="font-black text-red-600 dark:text-red-400">{{ $enquiry->formatted_budget }}</span>
+                                    <div class="flex items-baseline gap-2">
+                                        <span class="text-base font-black text-slate-950">
+                                            ₹{{ number_format($prod->base_price / 100, 2) }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-semibold uppercase">Per Unit / Slab</span>
+                                    </div>
+
+                                    <!-- Specs Snippet -->
+                                    <div class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                        {{ Str::limit(strip_tags($prod->description), 110) ?: 'High grade commercial quality with factory dispatch guarantee.' }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-                            <span class="text-[11px] text-zinc-400">By: {{ $enquiry->buyer_name ?? 'Verified Buyer' }}</span>
-                            <a href="{{ route('enquiry.show', $enquiry->id) }}" 
-                               class="px-3.5 py-1.5 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-bold transition">
-                                Submit Quote
-                            </a>
+                            <!-- Card Action: Get Best Price / Send Enquiry -->
+                            <div class="p-4 pt-0 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+                                <a href="{{ route('product.show', $prod->slug) }}" 
+                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
+                                    View Specs
+                                </a>
+                                <button type="button" 
+                                        @click="openRfqModal('{{ addslashes($prod->title) }}', {{ $prod->vendor_id ?? 'null' }}, {{ $prod->id }})"
+                                        class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black text-center shadow-md shadow-indigo-600/20 transition cursor-pointer">
+                                    Get Best Price
+                                </button>
+                            </div>
                         </div>
+                    @empty
+                        <div class="col-span-full py-8 text-center text-slate-400 text-xs">
+                            No wholesale products matching this filter. Post your requirement below to get direct quotes from suppliers.
+                        </div>
+                    @endforelse
+                </div>
+            </section>
+
+            <!-- C. TRUSTED SUPPLIER DISCOVERY -->
+            @if($verifiedSuppliers->isNotEmpty())
+            <section class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Verified Suppliers &amp; Manufacturers</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Pre-audited verified businesses with direct contact and quoting capabilities.</p>
                     </div>
-                @endforeach
-            </div>
-
-            <div class="mt-8">
-                {{ $enquiries->links() }}
-            </div>
-        @endif
-
-        <!-- ======================================================== -->
-        <!-- POST BUYING REQUIREMENT RFQ MODAL (60 Seconds Flow) -->
-        <!-- ======================================================== -->
-        <div x-show="rfqModal" 
-             x-cloak 
-             class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0"
-             x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
-             x-transition:leave-start="opacity-100"
-             x-transition:leave-end="opacity-0">
-            
-            <div @click.away="rfqModal = false" 
-                 class="bg-white dark:bg-zinc-950 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-red-100 dark:border-zinc-800 relative text-zinc-950 dark:text-white"
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 scale-95"
-                 x-transition:enter-end="opacity-100 scale-100">
-                
-                <button type="button" @click="rfqModal = false" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 text-xl font-bold p-1">
-                    ✕
-                </button>
-
-                <div class="mb-5">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">Post Buying Requirement</span>
-                    <h3 class="text-xl font-black text-zinc-950 dark:text-white mt-0.5">Tell verified suppliers what you need</h3>
-                    <p class="text-xs text-zinc-500 mt-1">Receive direct wholesale bids within 2 hours. Zero commission.</p>
                 </div>
 
-                <form action="{{ route('enquiry.store') }}" method="POST" class="space-y-4">
-                    @csrf
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($verifiedSuppliers as $sup)
+                        <div class="p-5 rounded-3xl bg-white/90 backdrop-blur-xl border border-slate-200/80 hover:border-indigo-300 shadow-2xs hover:shadow-lg transition-all flex flex-col justify-between group">
+                            <div class="flex items-start gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                    <img src="{{ $sup->logo ? format_image_url($sup->logo) : asset('images/default-avatar.png') }}" 
+                                         alt="{{ $sup->shop_name }}" 
+                                         class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <h3 class="text-sm font-black text-slate-900 truncate">{{ $sup->shop_name }}</h3>
+                                        <span class="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9.5px] font-black uppercase shrink-0">
+                                            ✓ Verified
+                                        </span>
+                                    </div>
+                                    <p class="text-[11px] text-slate-500 flex items-center gap-1">
+                                        <span>📍</span>
+                                        <span class="truncate">{{ $sup->city ?? 'Jaipur' }}, {{ $sup->state ?? 'India' }}</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 font-semibold mt-1">
+                                        {{ $sup->products_count }} Published Catalog Products
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+                                <a href="{{ route('storefront.show', $sup->slug) }}" 
+                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
+                                    View Storefront
+                                </a>
+                                <button type="button" 
+                                        @click="openRfqModal('', {{ $sup->id }})"
+                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold text-center transition cursor-pointer">
+                                    Contact Supplier
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+
+            <!-- D. LIVE BUYER REQUIREMENTS & RFQ BOARD -->
+            <section class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Product or Material Name *</label>
-                        <input type="text" name="title" required x-model="rfqProductTitle" 
-                               placeholder="e.g. 500 Bags of White Refined Sugar / 2000 Cotton T-Shirts" 
-                               class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight flex items-center gap-2">
+                            <span>Open Buyer Requirements &amp; Leads</span>
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">Live Board</span>
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct RFQs posted by verified commercial buyers waiting for supplier quotations.</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Target Quantity *</label>
-                            <input type="number" name="quantity" required x-model="rfqQuantity" min="1" 
-                                   class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Est. Budget (₹) *</label>
-                            <input type="number" name="target_budget" required x-model="rfqTargetPrice" min="100" 
-                                   class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Delivery Destination City *</label>
-                        <input type="text" name="city" required x-model="rfqCity" placeholder="e.g. Mumbai, Surat, Delhi, Bengaluru" 
-                               class="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Detailed Specifications (GSM, Grade, Packaging)</label>
-                        <textarea name="description" rows="2" placeholder="Mention exact material grade, lead time required, or sample request..." 
-                                  class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Contact Name *</label>
-                            <input type="text" name="buyer_name" required value="{{ auth()->user()?->name }}" placeholder="Your Name" 
-                                   class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">Mobile / WhatsApp *</label>
-                            <input type="tel" name="buyer_phone" required value="{{ auth()->user()?->phone }}" placeholder="WhatsApp Number" 
-                                   class="w-full px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <button type="submit" 
-                            class="w-full py-3.5 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-red-600/20 active:scale-95 cursor-pointer">
-                        Broadcast RFQ to Verified Suppliers
+                    <button type="button" 
+                            @click="openRfqModal()" 
+                            class="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-md shadow-indigo-600/20 transition self-start sm:self-auto cursor-pointer">
+                        + Post Requirement Free
                     </button>
+                </div>
+
+                <!-- Enquiries List / Table -->
+                <div class="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
+                    @forelse($enquiries as $enq)
+                        <div class="p-5 sm:p-6 hover:bg-slate-50/70 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="space-y-2 flex-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[10px] font-mono font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                                        {{ $enq->enquiry_number }}
+                                    </span>
+                                    <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
+                                        {{ $enq->category?->name ?? 'General Sourcing' }}
+                                    </span>
+                                    @if($enq->urgency === 'immediate')
+                                        <span class="text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                                            ⚡ Immediate Need
+                                        </span>
+                                    @endif
+                                    <span class="text-xs text-slate-400">
+                                        Posted {{ $enq->created_at->diffForHumans() }}
+                                    </span>
+                                </div>
+
+                                <h3 class="text-base sm:text-lg font-black text-slate-900 hover:text-indigo-600 transition leading-snug">
+                                    <a href="{{ route('enquiry.show', $enq->enquiry_number) }}">
+                                        {{ $enq->title }}
+                                    </a>
+                                </h3>
+
+                                <p class="text-xs text-slate-600 line-clamp-2 max-w-3xl leading-relaxed">
+                                    {{ $enq->description }}
+                                </p>
+
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-semibold pt-1">
+                                    <span>📦 Quantity: <strong class="text-slate-800">{{ $enq->quantity }}</strong></span>
+                                    <span>📍 Delivery: <strong class="text-slate-800">{{ $enq->city }}</strong></span>
+                                    @if($enq->target_budget)
+                                        <span>💰 Target: <strong class="text-emerald-700">₹{{ number_format($enq->target_budget / 100, 2) }}</strong></span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- Right CTA -->
+                            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0">
+                                <div class="text-right">
+                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 block">
+                                        💬 {{ $enq->quotes->count() }} Quotes Submitted
+                                    </span>
+                                </div>
+                                <a href="{{ route('enquiry.show', $enq->enquiry_number) }}" 
+                                   class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs">
+                                    Submit Quotation &rarr;
+                                </a>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="py-16 text-center space-y-3">
+                            <div class="text-3xl">📋</div>
+                            <h4 class="text-base font-bold text-slate-800">No matching requirements found</h4>
+                            <p class="text-xs text-slate-500 max-w-md mx-auto">Be the first to submit a requirement or adjust your keyword and location search.</p>
+                            <button type="button" @click="openRfqModal()" class="px-5 py-2.5 rounded-full bg-indigo-600 text-white text-xs font-bold">
+                                Post New Requirement
+                            </button>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- Pagination -->
+                @if($enquiries->hasPages())
+                    <div class="pt-4">
+                        {{ $enquiries->links() }}
+                    </div>
+                @endif
+            </section>
+
+            <!-- E. HOW IT WORKS (3 SIMPLE STEPS) -->
+            <section class="rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200/80 p-8 sm:p-12 shadow-xs">
+                <div class="text-center max-w-xl mx-auto mb-10 space-y-2">
+                    <span class="text-xs font-black uppercase tracking-wider text-indigo-600">Seamless Sourcing Journey</span>
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">How K71 B2B Works</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">Connecting bulk buyers and verified manufacturers in 3 transparent steps.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                    <!-- Step 1 -->
+                    <div class="space-y-3 text-center sm:text-left p-6 rounded-2xl bg-slate-50/80 border border-slate-100">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-600/20">
+                            1
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Discover or Post Requirement</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Search wholesale catalog products or submit your customized RFQ with volume, delivery destination, and specs.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="space-y-3 text-center sm:text-left p-6 rounded-2xl bg-slate-50/80 border border-slate-100">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-600/20">
+                            2
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Compare Factory Quotations</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Verified manufacturers submit competitive structured quotations detailing unit prices, MOQ, and lead times.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="space-y-3 text-center sm:text-left p-6 rounded-2xl bg-slate-50/80 border border-slate-100">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-indigo-600/20">
+                            3
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">Connect &amp; Close Deals</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">
+                            Chat directly via direct messaging or phone with zero commission middlemen or inflated price tags.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- 4. INTERACTIVE POST REQUIREMENT (RFQ) GLASS MODAL -->
+        <div x-show="rfqModalOpen" 
+             x-cloak
+             @keydown.escape.window="rfqModalOpen = false"
+             class="fixed inset-0 z-[105] flex items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-md">
+            
+            <div @click.outside="rfqModalOpen = false"
+                 class="w-full max-w-xl bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-2xl p-6 sm:p-8 overflow-hidden relative max-h-[92vh] overflow-y-auto no-scrollbar">
+
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                    <div>
+                        <span class="text-[10px] font-black uppercase tracking-wider text-indigo-600">RFQ SOURCING WIZARD</span>
+                        <h3 class="text-lg sm:text-xl font-black text-slate-950 tracking-tight">Post Your Requirement</h3>
+                    </div>
+                    <button type="button" @click="rfqModalOpen = false" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer">
+                        ✕
+                    </button>
+                </div>
+
+                <!-- Form Error Banner -->
+                <div x-show="rfqError" x-cloak class="mt-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                    <span x-text="rfqError"></span>
+                </div>
+
+                <form @submit.prevent="submitRfqForm()" class="space-y-4 pt-4">
+                    <input type="hidden" name="vendor_id" x-model="rfqVendorId">
+                    <input type="hidden" name="product_id" x-model="rfqProductId">
+
+                    <!-- Product / Requirement Title -->
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Product or Requirement Needed *</label>
+                        <input type="text" 
+                               x-model="rfqTitle" 
+                               placeholder="e.g. 5,000 Sq.Ft Makrana Pure White Marble Slabs 18mm"
+                               required
+                               class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition">
+                    </div>
+
+                    <!-- Category & Urgency -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Category</label>
+                            <select x-model="rfqCategoryId" class="w-full px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600">
+                                <option value="">Select Category</option>
+                                @foreach($enquiryCategories as $c)
+                                    <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Requirement Timeline</label>
+                            <select x-model="rfqUrgency" class="w-full px-3 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 text-xs font-semibold text-slate-800 outline-none focus:border-indigo-600">
+                                <option value="immediate">Immediate (Ready stock needed)</option>
+                                <option value="within_1_week">Within 1-2 Weeks</option>
+                                <option value="flexible" selected>Flexible / Planning Phase</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quantity & Target Budget -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Quantity &amp; Unit *</label>
+                            <input type="text" 
+                                   x-model="rfqQuantity" 
+                                   placeholder="e.g. 5,000 Sq.Ft or 25 Metric Tonnes"
+                                   required
+                                   class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 outline-none">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Target Budget (Optional ₹)</label>
+                            <input type="number" 
+                                   x-model="rfqBudget" 
+                                   placeholder="e.g. 250000"
+                                   class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Delivery City & Pincode -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Delivery Destination / City *</label>
+                            <input type="text" 
+                                   x-model="rfqCity" 
+                                   placeholder="e.g. Jaipur, Delhi, Mumbai Port"
+                                   required
+                                   class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 outline-none">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Destination Pincode</label>
+                            <input type="text" 
+                                   x-model="rfqPincode" 
+                                   placeholder="e.g. 302001"
+                                   class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Specifications / Notes -->
+                    <div class="space-y-1">
+                        <label class="block text-xs font-bold text-slate-800 uppercase tracking-wider">Technical Specifications &amp; Requirements *</label>
+                        <textarea rows="3" 
+                                  x-model="rfqDescription" 
+                                  placeholder="Describe required grades, finish, dimensions, packing, or certification details..."
+                                  required
+                                  class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 focus:bg-white text-xs font-medium text-slate-900 focus:border-indigo-600 outline-none"></textarea>
+                    </div>
+
+                    <!-- Buyer Contact Info -->
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                        <div class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Your Buyer Contact Information</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <input type="text" 
+                                   x-model="rfqBuyerName" 
+                                   placeholder="Your Full Name *"
+                                   required
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white">
+                            
+                            <input type="tel" 
+                                   x-model="rfqBuyerPhone" 
+                                   placeholder="Mobile / WhatsApp *"
+                                   required
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white">
+                            
+                            <input type="email" 
+                                   x-model="rfqBuyerEmail" 
+                                   placeholder="Work Email"
+                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 bg-white">
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-2 flex items-center justify-end gap-2.5">
+                        <button type="button" 
+                                @click="rfqModalOpen = false" 
+                                class="px-5 py-2.5 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                            Cancel
+                        </button>
+
+                        <button type="submit" 
+                                :disabled="rfqSubmitting" 
+                                class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/25 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                            <span x-show="!rfqSubmitting">Submit Requirement &amp; Get Quotes &rarr;</span>
+                            <span x-show="rfqSubmitting">Posting Requirement...</span>
+                        </button>
+                    </div>
                 </form>
 
             </div>
         </div>
 
-        <!-- ======================================================== -->
-        <!-- B2B MEMBERSHIP CLUB MODAL (Image 4 Screen 2) -->
-        <!-- ======================================================== -->
-        <div x-show="membershipModal" 
-             x-cloak 
-             class="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            
-            <div @click.away="membershipModal = false" 
-                 class="bg-white dark:bg-zinc-950 rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-amber-300 dark:border-amber-700 relative text-zinc-950 dark:text-white">
-                
-                <button type="button" @click="membershipModal = false" class="absolute top-4 right-4 text-zinc-400 hover:text-zinc-600 text-xl font-bold p-1">
-                    ✕
-                </button>
-
-                <!-- Gold Club Card (Exact Image 4 Style) -->
-                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 via-amber-300 to-yellow-500 p-5 text-zinc-950 shadow-lg mb-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-800">K71 Enterprise Pass</span>
-                        <span class="text-xs font-black">★ CLUB GOLD</span>
-                    </div>
-                    <div class="text-xs font-bold text-zinc-800">Rewards Balance</div>
-                    <div class="text-2xl font-black tracking-tight mb-3">2,550 pts</div>
-                    <div class="text-[10px] text-zinc-800 font-medium">HOLDER: {{ auth()->user()?->name ?? 'Ahmed Enterprise' }}</div>
-                </div>
-
-                <div class="space-y-2 text-xs text-zinc-600 dark:text-zinc-400 mb-5">
-                    <div class="flex items-center gap-2">✓ <strong>0% Escrow Fee</strong> on wholesale orders above ₹1,00,000</div>
-                    <div class="flex items-center gap-2">✓ <strong>Direct Factory Contacts</strong> unmasked instantly</div>
-                    <div class="flex items-center gap-2">✓ <strong>Free Third-Party Inspection</strong> on 1st container</div>
-                </div>
-
-                <a href="{{ route('vendor.register') }}" 
-                   class="w-full py-3 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 font-black text-xs uppercase tracking-wider transition block text-center">
-                    Join Verified B2B Network &rarr;
-                </a>
-            </div>
-        </div>
     </div>
+
+    @push('scripts')
+    <script>
+    function k71EnquiryHub() {
+        return {
+            rfqModalOpen: false,
+            rfqSubmitting: false,
+            rfqError: '',
+            rfqTitle: '',
+            rfqCategoryId: '',
+            rfqUrgency: 'flexible',
+            rfqQuantity: '',
+            rfqBudget: '',
+            rfqCity: 'Jaipur',
+            rfqPincode: '',
+            rfqDescription: '',
+            rfqBuyerName: '{{ auth()->user()?->name ?? '' }}',
+            rfqBuyerPhone: '{{ auth()->user()?->phone ?? '' }}',
+            rfqBuyerEmail: '{{ auth()->user()?->email ?? '' }}',
+            rfqVendorId: null,
+            rfqProductId: null,
+
+            openRfqModal(title = '', vendorId = null, productId = null) {
+                this.rfqTitle = title;
+                this.rfqVendorId = vendorId;
+                this.rfqProductId = productId;
+                this.rfqError = '';
+                this.rfqModalOpen = true;
+            },
+
+            async submitRfqForm() {
+                this.rfqSubmitting = true;
+                this.rfqError = '';
+
+                // If user is not logged in and needs authentication
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+                try {
+                    const res = await fetch('/enquiry', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            title: this.rfqTitle,
+                            category_id: this.rfqCategoryId || null,
+                            urgency: this.rfqUrgency,
+                            quantity: this.rfqQuantity,
+                            target_budget: this.rfqBudget ? parseFloat(this.rfqBudget) : null,
+                            city: this.rfqCity,
+                            pincode: this.rfqPincode || null,
+                            description: this.rfqDescription,
+                            buyer_name: this.rfqBuyerName,
+                            buyer_phone: this.rfqBuyerPhone,
+                            buyer_email: this.rfqBuyerEmail,
+                            vendor_id: this.rfqVendorId,
+                            product_id: this.rfqProductId
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        this.rfqModalOpen = false;
+                        if (window.showToast) {
+                            window.showToast('Requirement posted! RFQ: ' + data.enquiry_number + ' 🎉');
+                        }
+                        if (data.redirect) {
+                            setTimeout(() => {
+                                window.location.href = data.redirect;
+                            }, 800);
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        this.rfqError = data.message || (data.errors ? Object.values(data.errors)[0][0] : 'Could not submit requirement.');
+                    }
+                } catch(e) {
+                    console.error(e);
+                    this.rfqError = 'Network error while submitting requirement. Please try again.';
+                } finally {
+                    this.rfqSubmitting = false;
+                }
+            }
+        };
+    }
+    </script>
+    @endpush
 </x-layouts.public>

@@ -184,10 +184,11 @@
                 <!-- Desktop User Menu -->
                 <div class="hidden sm:block relative ml-1">
                     @guest
-                        <a href="{{ route('login') }}" 
-                           class="px-4 py-2 rounded-full bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all duration-200 shadow-sm shadow-indigo-600/20">
+                        <button type="button" 
+                                @click="window.openAuthModal ? window.openAuthModal() : $dispatch('open-auth-modal')"
+                                class="px-4 py-2 rounded-full bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all duration-200 shadow-sm shadow-indigo-600/20 cursor-pointer">
                             Sign In
-                        </a>
+                        </button>
                     @else
                         <div class="relative">
                             <button @click="userMenuOpen = !userMenuOpen" 

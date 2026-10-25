@@ -78,14 +78,14 @@
                                 <li class="py-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start {{ $isItemOutOfStock ? 'opacity-75 bg-rose-50/30 rounded-2xl p-4' : '' }}">
                                     <!-- Image -->
                                     <div class="flex-shrink-0 w-32 sm:w-36 aspect-square bg-[#F1EBE2]/40 rounded-2xl overflow-hidden relative border border-gray-50 group">
-                                        @if($product && $product->images->count() > 0)
-                                            <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
+                                        @if($product)
+                                            <img src="{{ $product->primary_image_url }}" 
                                                  alt="{{ $product->title }}"
-                                                 class="absolute inset-0 w-full h-full object-contain mix-blend-multiply transition-transform duration-700 group-hover:scale-105 p-3"
+                                                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 p-1"
                                                  onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                         @else
                                             <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                                 alt="{{ $product?->title ?? 'Product' }}" 
+                                                 alt="Product" 
                                                  class="absolute inset-0 w-full h-full object-contain p-3">
                                         @endif
 

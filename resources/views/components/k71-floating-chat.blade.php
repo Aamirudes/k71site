@@ -16,13 +16,20 @@
         }
     }
     $currentVendor = app()->bound('current_vendor') ? app('current_vendor') : null;
+    $isDetailPage = request()->routeIs('services.show') 
+        || request()->routeIs('catalog.show') 
+        || request()->routeIs('product.show')
+        || request()->routeIs('food.restaurant') 
+        || request()->routeIs('cart.*') 
+        || request()->routeIs('checkout.*') 
+        || request()->routeIs('services.order.*');
 @endphp
 
 <div x-data="{ 
         chatOpen: false, 
         unread: {{ (int)$unreadChatCount }} 
      }" 
-     class="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 select-none"
+     class="{{ $isDetailPage ? 'hidden md:block' : '' }} fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 select-none"
      @keydown.escape.window="chatOpen = false">
 
     <!-- Expandable Liquid Glass Quick-Chat Flyout -->

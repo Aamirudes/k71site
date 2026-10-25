@@ -676,6 +676,9 @@
     }
     </script>
 
+    <!-- K71 Global Authentication Modal (Non-Negotiable) -->
+    <x-k71-auth-modal />
+
     @stack('scripts')
 </body>
 </html>

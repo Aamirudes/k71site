@@ -61,16 +61,10 @@
                     
                     <div class="flex gap-4">
                         <div class="w-20 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
-                            @if($product->images->count() > 0)
-                                <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
-                                     alt="{{ $product->title }}" 
-                                     class="w-full h-full object-cover"
-                                     onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
-                            @else
-                                <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                     alt="{{ $product->title }}" 
-                                     class="w-full h-full object-cover">
-                            @endif
+                            <img src="{{ $product->primary_image_url }}" 
+                                 alt="{{ $product->title }}" 
+                                 class="w-full h-full object-cover"
+                                 onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                         </div>
                         
                         <div class="flex-1 min-w-0 flex flex-col justify-between">
@@ -139,16 +133,10 @@
                                     {{ $product->status === 'archived' ? 'bg-gray-400' : '' }}
                                 "></div>
                                 <div class="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
-                                    @if($product->images->count() > 0)
-                                        <img src="{{ asset('storage/' . $product->images->first()->path) }}" 
-                                             alt="{{ $product->title }}" 
-                                             class="h-full w-full object-cover"
-                                             onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
-                                    @else
-                                        <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                             alt="{{ $product->title }}" 
-                                             class="h-full w-full object-cover">
-                                    @endif
+                                    <img src="{{ $product->primary_image_url }}" 
+                                         alt="{{ $product->title }}" 
+                                         class="h-full w-full object-cover"
+                                         onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                 </div>
                                 <div class="ml-4">
                                     <div class="font-bold text-gray-900 max-w-[200px] truncate" title="{{ $product->title }}">{{ $product->title }}</div>

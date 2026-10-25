@@ -404,6 +404,9 @@
     <!-- K71 Mini-Wishlist Drawer / Popup -->
     <x-k71-mini-wishlist />
     
+    <!-- K71 Global Authentication Modal (Non-Negotiable) -->
+    <x-k71-auth-modal />
+    
     <!-- Global Floating Toast Container -->
     <div id="k71-toast-container" class="fixed bottom-20 sm:bottom-6 inset-x-0 flex justify-center items-center pointer-events-none z-50 px-4"></div>
 

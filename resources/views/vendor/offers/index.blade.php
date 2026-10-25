@@ -60,8 +60,8 @@
                         <div class="flex items-start gap-4">
                             <!-- Thumbnail -->
                             <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
-                                @if($product && $product->images->isNotEmpty())
-                                    <img src="{{ asset('storage/' . $product->images->first()->path) }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+                                @if($product)
+                                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->title }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-2xl text-gray-400">🏷️</div>
                                 @endif

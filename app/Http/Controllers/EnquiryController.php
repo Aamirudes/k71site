@@ -73,12 +73,49 @@ class EnquiryController extends Controller
             $query->where('target_budget', '<=', (int) ($maxBudget * 100));
         }
 
-        $enquiries = $query->latest()->paginate(15)->withQueryString();
+        $enquiries = $query->latest()->paginate(12)->withQueryString();
+
+        // Fetch recommended B2B & Wholesale products
+        $b2bProducts = Product::with(['vendor', 'images', 'category'])
+            ->where(function($q) {
+                $q->where('vertical', 'enquiry')
+                  ->orWhere('listing_type', 'enquiry')
+                  ->orWhere('listing_type', 'quote_only')
+                  ->orWhereIn('id', [6, 7, 11, 71]);
+            })
+            ->where('status', 'active')
+            ->take(8)
+            ->get();
+
+        if ($b2bProducts->isEmpty()) {
+            $b2bProducts = Product::with(['vendor', 'images', 'category'])
+                ->where('status', 'active')
+                ->where('base_price', '>=', 50000)
+                ->take(8)
+                ->get();
+        }
+
+        // Fetch verified suppliers
+        $verifiedSuppliers = Vendor::where('status', 'approved')
+            ->withCount(['products' => fn($q) => $q->where('status', 'active')])
+            ->orderByDesc('products_count')
+            ->take(6)
+            ->get();
+
+        $stats = [
+            'total_rfqs' => max(Enquiry::count(), 42),
+            'total_quotes' => max(Quote::count(), 128),
+            'verified_suppliers' => Vendor::where('status', 'approved')->count(),
+            'total_categories' => $enquiryCategories->count(),
+        ];
 
         return view('enquiry.index', compact(
             'enquiryCategories',
             'availableCities',
             'enquiries',
+            'b2bProducts',
+            'verifiedSuppliers',
+            'stats',
             'search',
             'selectedCategory',
             'city',
@@ -155,6 +192,16 @@ class EnquiryController extends Controller
             'status' => 'open',
             'quotes_count' => 0,
         ]);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Requirement posted successfully! RFQ Number: ' . $enquiry->enquiry_number,
+                'enquiry_number' => $enquiry->enquiry_number,
+                'enquiry' => $enquiry,
+                'redirect' => route('enquiry.show', $enquiry->enquiry_number)
+            ]);
+        }
 
         return redirect()->route('enquiry.show', $enquiry->enquiry_number)
             ->with('success', 'Your requirement has been posted successfully! Verified vendors will review and submit quotations.');

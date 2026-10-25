@@ -1357,26 +1357,46 @@
             </div>
         </div>
 
-        <!-- Immersive Preset: Floating Quick-Checkout Dock -->
-        @if($productPreset === 'immersive')
-            <div x-show="isScrolledPastCTA" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0"
-                 x-transition:leave-end="opacity-0 translate-y-4"
-                 class="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:w-96 z-40 bg-white/95 backdrop-blur-xl border border-stone-200/90 p-3.5 rounded-2xl shadow-2xl flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="text-xs font-bold text-gray-900 truncate">{{ $product->title }}</p>
-                    <p class="text-xs font-bold text-emerald-800">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></p>
+        <!-- Universal Mobile Sticky Action Bar (100% Mobile Responsive) -->
+        <div class="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-white/95 backdrop-blur-xl border-t border-stone-200/90 shadow-2xl flex items-center justify-between gap-3"
+             style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+            <div class="min-w-0">
+                <div class="flex items-baseline gap-1">
+                    <span class="text-xs text-stone-500 font-bold">Total:</span>
+                    <span class="text-lg font-black text-slate-950">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></span>
                 </div>
-                <button type="button" @click="addToCart()" :disabled="adding || isCurrentVariantOutOfStock" class="px-5 py-2.5 rounded-xl bg-brand-sage text-white text-xs font-bold hover:bg-brand-sage/90 transition-all shadow-md active:scale-95 shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50">
-                    <span x-show="!adding">Quick Add</span>
-                    <span x-show="adding">Adding...</span>
-                </button>
+                <div class="text-[10px] text-stone-500 truncate" 
+                     x-text="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Out of stock' : (selectedStock <= 5 ? 'Only ' + selectedStock + ' left!' : 'In stock • Fast Dispatch')">
+                </div>
             </div>
-        @endif
+
+            @if($product->isPurchase())
+                <button type="button" 
+                        @click="submitAddToCart()"
+                        :disabled="adding || isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0"
+                        class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span x-show="!adding">
+                        <span x-text="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Sold Out' : 'Add to Bag 🛍️'"></span>
+                    </span>
+                    <span x-show="adding" class="flex items-center gap-1.5">
+                        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>Adding...</span>
+                    </span>
+                </button>
+            @elseif($product->isEnquiry())
+                <a href="https://wa.me/{{ $sellerPhone ?? '' }}?text={{ rawurlencode('Hello! I would like to request a quotation for: ' . $product->title . ' on K71') }}" target="_blank"
+                   class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-md flex items-center gap-1.5">
+                    <span>Enquire Now</span>
+                    <span>&rarr;</span>
+                </a>
+            @elseif($product->isBooking())
+                <button type="button" @click="showBookingModal = true"
+                        class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-md flex items-center gap-1.5">
+                    <span>Book Service</span>
+                    <span>&rarr;</span>
+                </button>
+            @endif
+        </div>
 
     </div>
 
