@@ -158,6 +158,41 @@ class RouteAuditAllTest extends TestCase
         $resStore = $this->get('/s/' . $this->vendor->slug);
         $this->assertNotEquals(500, $resStore->getStatusCode());
         $this->assertTrue(in_array($resStore->getStatusCode(), [200, 302]));
+
+        // 5. Food Restaurant Menu Page
+        $foodVendorUser = User::factory()->create();
+        $foodVendor = Vendor::create([
+            'user_id' => $foodVendorUser->id,
+            'shop_name' => 'Jaipur Kitchen Express',
+            'slug' => 'jaipur-kitchen-express',
+            'status' => 'approved',
+            'business_type' => 'food',
+            'vertical' => 'food',
+            'phone' => '9829012345',
+            'email' => 'kitchen@jaipur.test',
+            'address' => 'MI Road',
+            'city' => 'Jaipur',
+            'state' => 'Rajasthan',
+            'pincode' => '302001',
+        ]);
+
+        $dish = Product::create([
+            'vendor_id' => $foodVendor->id,
+            'category_id' => $this->category->id,
+            'title' => 'Special Paneer Butter Masala',
+            'slug' => 'paneer-butter-masala',
+            'description' => 'Rich creamy gravy with fresh cottage cheese.',
+            'vertical' => 'food',
+            'listing_type' => 'purchase',
+            'base_price' => 32000,
+            'gst_rate' => 5,
+            'total_stock' => 50,
+            'status' => 'active',
+        ]);
+
+        $resFoodRestaurant = $this->get('/food/restaurant/' . $foodVendor->slug);
+        $this->assertNotEquals(500, $resFoodRestaurant->getStatusCode());
+        $this->assertTrue(in_array($resFoodRestaurant->getStatusCode(), [200, 302]));
     }
 
     public function test_vendor_and_admin_authenticated_dashboards_return_ok(): void

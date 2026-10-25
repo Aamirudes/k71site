@@ -219,7 +219,7 @@ class FoodController extends Controller
             });
         }
 
-        $menuItems = $menuQuery->orderBy('sort_order')->latest()->get();
+        $menuItems = $menuQuery->latest()->get();
 
         // Group menu by category
         $groupedMenu = $menuItems->groupBy(function ($item) {
