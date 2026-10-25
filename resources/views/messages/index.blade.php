@@ -1355,10 +1355,15 @@
                 <!-- Header: Current User + New Chat Button -->
                 <div class="glass-sidebar-header">
                     <div class="glass-user-profile">
-                        <img src="{{ format_user_avatar($user->avatar ?? null, $user->name ?? $user->username) }}" 
-                             alt="{{ $user->username }}" 
+                        @php
+                            $uName = $user?->name ?? ($user?->username ?? 'Guest');
+                            $uHandle = $user?->username ?? 'guest';
+                            $uAvatar = $user?->avatar ?? null;
+                        @endphp
+                        <img src="{{ format_user_avatar($uAvatar, $uName) }}" 
+                             alt="{{ $uHandle }}" 
                              class="glass-user-avatar">
-                        <span class="glass-user-name">&#64;{{ $user->username }}</span>
+                        <span class="glass-user-name">&#64;{{ $uHandle }}</span>
                     </div>
                     <button type="button" class="glass-icon-btn" id="glassNewChatBtn" title="Search user or start message">
                         <!-- Instagram / Pencil Edit Icon -->
