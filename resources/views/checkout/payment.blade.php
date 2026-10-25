@@ -65,7 +65,7 @@
                             </div>
                             
                             <p class="text-sm text-gray-500 mb-1">Or Pay directly to VPA:</p>
-                            <p class="text-lg font-bold text-brand-text select-all">{{ $settings->upi_id }}</p>
+                            <p class="text-lg font-bold text-brand-text select-all">{{ $vpa ?? $settings?->upi_id ?? 'marblemandi@upi' }}</p>
                         </div>
                     </div>
 

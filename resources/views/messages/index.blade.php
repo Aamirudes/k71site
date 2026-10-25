@@ -1039,6 +1039,273 @@
             transform: translateY(-1px);
         }
 
+        /* ---------------- INSTAGRAM DIRECT UPGRADE STYLES ---------------- */
+        .glass-online-badge {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #10B981;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+            z-index: 2;
+        }
+        .dark .glass-online-badge {
+            border-color: #0F172A;
+        }
+        .glass-online-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #059669;
+            font-weight: 700;
+        }
+        .dark .glass-online-pill {
+            color: #34D399;
+        }
+        .glass-online-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10B981;
+            display: inline-block;
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.8; }
+        }
+
+        /* Instagram 3-Dot Bouncing Typing Bubble */
+        .glass-typing-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-left: 2px;
+            animation: fadeIn 0.2s ease;
+        }
+        .glass-typing-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 10px 16px;
+            background: var(--color-bubble-received);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px 20px 20px 6px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+        }
+        .typing-dot {
+            width: 6.5px;
+            height: 6.5px;
+            border-radius: 50%;
+            background: #8e8e93;
+            display: inline-block;
+            animation: igTypingBounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dot:nth-child(3) { animation-delay: 0s; }
+        @keyframes igTypingBounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-5px); opacity: 1; background: #0600c2; }
+        }
+        .dark @keyframes igTypingBounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-5px); opacity: 1; background: #38BDF8; }
+        }
+
+        /* Chat Photo / Image Bubble */
+        .glass-msg-image-wrap {
+            max-width: 280px;
+            border-radius: 18px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+        .glass-msg-image-wrap:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        .glass-msg-image-wrap img {
+            width: 100%;
+            max-height: 320px;
+            object-fit: cover;
+            display: block;
+        }
+        .glass-msg-image-caption {
+            padding: 8px 12px;
+            font-size: 13.5px;
+            line-height: 1.4;
+        }
+
+        /* Unsend Message Trigger */
+        .glass-msg-row {
+            position: relative;
+        }
+        .glass-msg-unsend-btn {
+            opacity: 0;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #EF4444;
+            transition: all 0.18s ease;
+            font-size: 11px;
+            font-weight: 800;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            z-index: 5;
+        }
+        .dark .glass-msg-unsend-btn {
+            background: rgba(30, 41, 59, 0.9);
+        }
+        .glass-msg-row.sent .glass-msg-unsend-btn {
+            left: -32px;
+        }
+        .glass-msg-row:hover .glass-msg-unsend-btn {
+            opacity: 1;
+        }
+        .glass-msg-unsend-btn:hover {
+            background: #EF4444;
+            color: #FFFFFF;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        /* Long-press Instagram Action Sheet Modal */
+        .glass-action-sheet-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.15s ease-out;
+        }
+        .glass-action-sheet {
+            width: 100%;
+            max-width: 440px;
+            margin: 0 16px 24px 16px;
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .glass-action-sheet-handle {
+            width: 36px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(148, 163, 184, 0.4);
+            margin: 0 auto 8px auto;
+        }
+        .glass-action-sheet-header {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-muted);
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .glass-action-sheet-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .glass-action-sheet-btn {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 14.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+        }
+        .glass-action-sheet-btn.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+        }
+        .glass-action-sheet-btn.danger:hover {
+            background: #EF4444;
+            color: #FFFFFF;
+        }
+        .glass-action-sheet-btn.cancel {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--color-text-main);
+        }
+        .glass-action-sheet-btn.cancel:hover {
+            background: rgba(148, 163, 184, 0.2);
+        }
+
+        /* Image Lightbox Modal */
+        .glass-lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(12px);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            cursor: zoom-out;
+            animation: fadeIn 0.2s ease;
+        }
+        .glass-lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 16px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+        }
+        .glass-lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .glass-lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
         /* ---------------- RESPONSIVE BREAKPOINT ---------------- */
         @media (max-width: 768px) {
             #k71-chat-wrapper {
@@ -1224,6 +1491,10 @@
                             <button type="button" class="glass-composer-emoji-btn" id="glassEmojiToggleBtn" title="Insert Emoji">
                                 😊
                             </button>
+                            <button type="button" class="glass-composer-emoji-btn" id="glassAttachBtn" title="Send Photo" style="font-size: 16px;">
+                                📷
+                            </button>
+                            <input type="file" id="glassPhotoInput" accept="image/*" style="display: none;">
                             <textarea id="glassMessageInput" 
                                       class="glass-composer-textarea" 
                                       rows="1" 
@@ -1262,6 +1533,28 @@
                 </ul>
             </div>
         </div>
+
+        <!-- ==============================================================
+             INSTAGRAM ACTION SHEET MODAL (Long-Press / Touch / Context Menu)
+             ============================================================== -->
+        <div class="glass-action-sheet-overlay" id="glassActionSheetModal" style="display: none;">
+            <div class="glass-action-sheet">
+                <div class="glass-action-sheet-handle"></div>
+                <div class="glass-action-sheet-header" id="actionSheetHeader">Options</div>
+                <div class="glass-action-sheet-actions">
+                    <button type="button" class="glass-action-sheet-btn danger" id="actionSheetDangerBtn">Delete</button>
+                    <button type="button" class="glass-action-sheet-btn cancel" id="actionSheetCancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================================
+             IMAGE LIGHTBOX VIEWER
+             ============================================================== -->
+        <div class="glass-lightbox-overlay" id="glassImageLightbox" style="display: none;">
+            <button type="button" class="glass-lightbox-close" id="glassLightboxClose">&times;</button>
+            <img id="lightboxImg" src="" alt="Enlarged photo">
+        </div>
     </div>
 
     <!-- Real-time Direct Messaging Engine -->
@@ -1280,6 +1573,8 @@
         let searchDebounceTimer = null;
         let messagePollTimer = null;
         let inboxPollTimer = null;
+        let lastTypingPing = 0;
+        let pendingAction = null; // { type: 'conversation'|'message', id: 123, label: '...' }
 
         // DOM References
         const mainContainer = document.getElementById('glassMainContainer');
@@ -1309,6 +1604,17 @@
         const requestBannerTitle = document.getElementById('requestBannerTitle');
         const btnAcceptRequest = document.getElementById('btnAcceptRequest');
         const btnDeclineRequest = document.getElementById('btnDeclineRequest');
+
+        // Upgraded Instagram Feature Elements
+        const attachBtn = document.getElementById('glassAttachBtn');
+        const photoInput = document.getElementById('glassPhotoInput');
+        const actionSheetModal = document.getElementById('glassActionSheetModal');
+        const actionSheetHeader = document.getElementById('actionSheetHeader');
+        const actionSheetDangerBtn = document.getElementById('actionSheetDangerBtn');
+        const actionSheetCancelBtn = document.getElementById('actionSheetCancelBtn');
+        const lightboxModal = document.getElementById('glassImageLightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxClose = document.getElementById('glassLightboxClose');
 
         // ---------------------------------------------------------------------
         // 1. INBOX TABS & CONVERSATIONS ENGINE
@@ -1383,6 +1689,7 @@
             conversationsList.innerHTML = filtered.map(c => {
                 const isActive = (c.id === currentConversationId);
                 const isUnread = (c.unread_count > 0);
+                const isOnline = Boolean(c.recipient && c.recipient.is_online);
                 const prefix = (c.last_message && c.last_message.is_sent_by_me) ? 'You: ' : '';
                 const lastMsgText = (c.last_message && c.last_message.body) ? c.last_message.body : 'Tap to start chatting';
                 const lastMsgTime = (c.last_message && c.last_message.time_formatted) ? c.last_message.time_formatted : '';
@@ -1392,9 +1699,10 @@
                 const recId = (c.recipient && c.recipient.id) ? c.recipient.id : 0;
 
                 return `
-                    <li class="glass-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${recId}">
-                        <div class="glass-avatar-wrap">
+                    <li class="glass-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${recId}" data-username="${escapeHtml(recUsername)}">
+                        <div class="glass-avatar-wrap" style="position: relative;">
                             <img src="${escapeHtml(recAvatar)}" alt="${escapeHtml(recName)}" class="glass-conv-avatar">
+                            ${isOnline ? '<span class="glass-online-badge" title="Active now"></span>' : ''}
                             ${isUnread ? '<div class="glass-unread-dot"></div>' : ''}
                         </div>
                         <div class="glass-conv-details">
@@ -1410,12 +1718,35 @@
                 `;
             }).join('');
 
-            // Click Handler
+            // Click & Long-Press Handlers on Conversation Items
             conversationsList.querySelectorAll('.glass-conv-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const convId = parseInt(item.getAttribute('data-conv-id'), 10);
-                    const recId = parseInt(item.getAttribute('data-recipient-id'), 10);
+                const convId = parseInt(item.getAttribute('data-conv-id'), 10);
+                const recId = parseInt(item.getAttribute('data-recipient-id'), 10);
+                const uName = item.getAttribute('data-username') || 'user';
+
+                // Standard Click to open
+                item.addEventListener('click', (e) => {
+                    if (e.defaultPrevented) return;
                     loadConversation(convId, recId);
+                });
+
+                // Long-Press for Mobile Touch Devices (500ms)
+                let pressTimer = null;
+                item.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => {
+                        e.preventDefault();
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        openActionSheet('conversation', convId, uName);
+                    }, 500);
+                }, { passive: false });
+
+                item.addEventListener('touchend', () => clearTimeout(pressTimer));
+                item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+                // Desktop Right-Click Context Menu
+                item.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    openActionSheet('conversation', convId, uName);
                 });
             });
         }
@@ -1459,11 +1790,18 @@
                     const convInfo = result.conversation || (result.data ? result.data.conversation : {});
                     activeConversationStatus = convInfo.status || 'accepted';
 
-                    // Update Active Chat Header
+                    // Update Active Chat Header with Online Indicator
                     headerAvatar.src = recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
                     headerAvatar.alt = recipient.name || 'User';
                     headerUsername.textContent = '@' + (recipient.username || 'user');
-                    headerStatus.innerHTML = `<span class="glass-online-indicator"></span> ${escapeHtml(recipient.name || 'User')}`;
+
+                    const isOnline = Boolean(recipient.is_online);
+                    if (isOnline) {
+                        headerStatus.innerHTML = `<span class="glass-online-pill"><span class="glass-online-dot"></span> Active now</span> • ${escapeHtml(recipient.name || 'User')}`;
+                    } else {
+                        const statusTxt = recipient.status_label ? escapeHtml(recipient.status_label) : 'Offline';
+                        headerStatus.innerHTML = `<span style="color:var(--color-text-muted);font-size:12px;">${statusTxt}</span> • ${escapeHtml(recipient.name || 'User')}`;
+                    }
 
                     // Check Instagram Request Action Banner
                     if (convInfo.is_incoming_request) {
@@ -1484,6 +1822,30 @@
                             scrollFeedToBottom();
                         }
                     }
+
+                    // Instagram-Style 3-Dot Bouncing Typing Indicator
+                    const isTyping = Boolean(result.is_typing);
+                    const existingTyping = document.getElementById('glassTypingRow');
+                    if (isTyping) {
+                        if (!existingTyping) {
+                            const typingEl = document.createElement('div');
+                            typingEl.id = 'glassTypingRow';
+                            typingEl.className = 'glass-typing-row';
+                            typingEl.innerHTML = `
+                                <img src="${escapeHtml(recipient.profile_pic)}" class="glass-msg-avatar" alt="">
+                                <div class="glass-typing-bubble">
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                </div>
+                            `;
+                            chatFeed.appendChild(typingEl);
+                            if (wasNearBottom) scrollFeedToBottom(true);
+                        }
+                    } else if (existingTyping) {
+                        existingTyping.remove();
+                    }
+
                 } else if (result.error) {
                     chatFeed.innerHTML = `
                         <div style="padding: 40px; text-align: center; color: #EF4444; font-size: 13.5px; font-weight: 700;">
@@ -1520,20 +1882,74 @@
                 }
 
                 const isSent = msg.is_mine;
+                let attachmentHtml = '';
+                if (msg.attachment_url) {
+                    attachmentHtml = `
+                        <div class="glass-msg-image-wrap" data-img-url="${escapeHtml(msg.attachment_url)}">
+                            <img src="${escapeHtml(msg.attachment_url)}" alt="Photo" loading="lazy">
+                        </div>
+                    `;
+                }
+
+                const bodyHtml = (msg.body && msg.body !== '📷 Photo')
+                    ? `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`
+                    : (attachmentHtml ? '' : `<div class="glass-msg-bubble">📷 Photo</div>`);
+
+                const unsendBtnHtml = (isSent && !msg.is_optimistic)
+                    ? `<button type="button" class="glass-msg-unsend-btn" data-msg-id="${msg.id}" title="Unsend message">&times;</button>`
+                    : '';
+
                 html += `
-                    <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}">
+                    <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}" data-is-mine="${isSent ? '1' : '0'}">
                         ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="glass-msg-avatar">` : ''}
                         <div>
-                            <div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">
-                                ${escapeHtml(msg.body).replace(/\n/g, '<br>')}
-                            </div>
+                            ${attachmentHtml}
+                            ${bodyHtml}
                             <div class="glass-msg-meta">${escapeHtml(msg.time_formatted || '')}</div>
                         </div>
+                        ${unsendBtnHtml}
                     </div>
                 `;
             });
 
             chatFeed.innerHTML = html;
+
+            // Bind click to open lightbox on photo thumbnails
+            chatFeed.querySelectorAll('.glass-msg-image-wrap').forEach(wrap => {
+                wrap.addEventListener('click', () => {
+                    const url = wrap.getAttribute('data-img-url');
+                    if (url) window.openLightbox(url);
+                });
+            });
+
+            // Bind Unsend Button clicks
+            chatFeed.querySelectorAll('.glass-msg-unsend-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const msgId = parseInt(btn.getAttribute('data-msg-id'), 10);
+                    if (msgId) {
+                        openActionSheet('message', msgId, '');
+                    }
+                });
+            });
+
+            // Bind Long-press on Sent Messages
+            chatFeed.querySelectorAll('.glass-msg-row.sent').forEach(row => {
+                const msgId = parseInt(row.getAttribute('data-msg-id'), 10);
+                if (!msgId) return;
+
+                let pressTimer = null;
+                row.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => {
+                        e.preventDefault();
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        openActionSheet('message', msgId, '');
+                    }, 500);
+                }, { passive: false });
+
+                row.addEventListener('touchend', () => clearTimeout(pressTimer));
+                row.addEventListener('touchmove', () => clearTimeout(pressTimer));
+            });
         }
 
         function isUserNearBottom() {
@@ -1605,7 +2021,6 @@
                         profile_pic: headerAvatar.src
                     });
                     
-                    // If conversation was pending and got promoted to accepted, hide request banner
                     if (result.conversation_status === 'accepted') {
                         requestBanner.style.display = 'none';
                         activeConversationStatus = 'accepted';
@@ -1636,10 +2051,25 @@
             }
         }
 
+        // Emit typing indicator with debounce
         messageInput.addEventListener('input', () => {
             updateSendButtonState();
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+
+            const now = Date.now();
+            if (now - lastTypingPing > 2200 && currentConversationId) {
+                lastTypingPing = now;
+                fetch('/api/chat/typing.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ conversation_id: currentConversationId })
+                }).catch(() => {});
+            }
         });
 
         messageInput.addEventListener('keydown', (e) => {
@@ -1657,6 +2087,187 @@
         backBtn.addEventListener('click', () => {
             mainContainer.classList.remove('chat-active');
         });
+
+        // Photo Upload Handling
+        attachBtn.addEventListener('click', () => {
+            if (!currentConversationId) {
+                alert('Please select or start a chat first to send a photo.');
+                return;
+            }
+            photoInput.click();
+        });
+
+        photoInput.addEventListener('change', () => {
+            const file = photoInput.files[0];
+            if (!file || !currentConversationId) return;
+
+            const optId = 'opt_img_' + Date.now();
+            const tempUrl = URL.createObjectURL(file);
+            const optimisticMsg = {
+                id: optId,
+                body: '📷 Uploading...',
+                attachment_url: tempUrl,
+                attachment_type: 'image',
+                sender_id: CURRENT_USER_ID,
+                is_mine: true,
+                is_optimistic: true,
+                created_at: new Date().toISOString(),
+                time_formatted: 'Sending photo...'
+            };
+
+            messagesCache.push(optimisticMsg);
+            renderMessages(messagesCache, {
+                username: headerUsername.textContent.replace('@', ''),
+                name: headerStatus.textContent,
+                profile_pic: headerAvatar.src
+            });
+            scrollFeedToBottom(true);
+
+            const formData = new FormData();
+            formData.append('conversation_id', currentConversationId);
+            formData.append('photo', file);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            fetch('/api/chat/upload_photo.php', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(result => {
+                photoInput.value = '';
+                const sentMsg = result.data || result.message;
+                if (result.success && sentMsg) {
+                    const idx = messagesCache.findIndex(m => m.id === optId);
+                    if (idx !== -1) {
+                        messagesCache[idx] = sentMsg;
+                    }
+                    renderMessages(messagesCache, {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                    scrollFeedToBottom(true);
+                    fetchConversations(true);
+                } else {
+                    alert(result.error || 'Failed to upload photo.');
+                    messagesCache = messagesCache.filter(m => m.id !== optId);
+                    renderMessages(messagesCache, {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                }
+            })
+            .catch(err => {
+                photoInput.value = '';
+                console.error('Photo upload error:', err);
+                alert('Network error while uploading photo.');
+            });
+        });
+
+        // Lightbox Functions
+        window.openLightbox = function(url) {
+            lightboxImg.src = url;
+            lightboxModal.style.display = 'flex';
+        };
+        lightboxClose.addEventListener('click', () => {
+            lightboxModal.style.display = 'none';
+        });
+        lightboxModal.addEventListener('click', (e) => {
+            if (e.target === lightboxModal || e.target === lightboxClose) {
+                lightboxModal.style.display = 'none';
+            }
+        });
+
+        // Instagram Long-Press Action Sheet Functions
+        function openActionSheet(type, id, label) {
+            pendingAction = { type, id, label };
+            if (type === 'conversation') {
+                actionSheetHeader.textContent = `Chat with @${label}`;
+                actionSheetDangerBtn.textContent = 'Delete Chat';
+            } else {
+                actionSheetHeader.textContent = 'Message Options';
+                actionSheetDangerBtn.textContent = 'Unsend Message';
+            }
+            actionSheetModal.style.display = 'flex';
+        }
+
+        function closeActionSheet() {
+            actionSheetModal.style.display = 'none';
+            pendingAction = null;
+        }
+
+        actionSheetCancelBtn.addEventListener('click', closeActionSheet);
+        actionSheetModal.addEventListener('click', (e) => {
+            if (e.target === actionSheetModal) closeActionSheet();
+        });
+
+        actionSheetDangerBtn.addEventListener('click', () => {
+            if (!pendingAction) return;
+            const { type, id } = pendingAction;
+            closeActionSheet();
+
+            if (type === 'conversation') {
+                if (!confirm('Delete this conversation? All messages will be permanently deleted.')) return;
+                fetch('/api/chat/delete_conversation.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ conversation_id: id })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        if (currentConversationId === id) {
+                            currentConversationId = null;
+                            mainContainer.classList.remove('chat-active');
+                            activeChat.style.display = 'none';
+                            emptyState.style.display = 'flex';
+                        }
+                        fetchConversations(false);
+                    } else {
+                        alert(result.error || 'Failed to delete chat.');
+                    }
+                })
+                .catch(err => console.error('Delete chat error:', err));
+            } else if (type === 'message') {
+                unsendMessage(id);
+            }
+        });
+
+        function unsendMessage(msgId) {
+            fetch('/api/chat/unsend_message.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ message_id: msgId })
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.success) {
+                    messagesCache = messagesCache.filter(m => m.id !== msgId);
+                    renderMessages(messagesCache, {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                    fetchConversations(true);
+                } else {
+                    alert(result.error || 'Failed to unsend message.');
+                }
+            })
+            .catch(err => console.error('Unsend error:', err));
+        }
 
         // Emoji Drawer
         emojiToggleBtn.addEventListener('click', () => {
@@ -1698,7 +2309,6 @@
                 if (result.success) {
                     requestBanner.style.display = 'none';
                     activeConversationStatus = 'accepted';
-                    // Switch to primary inbox tab cleanly without refresh
                     switchTab('primary');
                     fetchConversations(true);
                 } else {
@@ -1736,7 +2346,6 @@
                 btnDeclineRequest.disabled = false;
                 btnDeclineRequest.textContent = 'Decline';
                 if (result.success) {
-                    // Close chat and return to empty state
                     currentConversationId = null;
                     mainContainer.classList.remove('chat-active');
                     activeChat.style.display = 'none';
@@ -1831,13 +2440,11 @@
                 </li>
             `).join('');
 
-            // 1-Click Message / Start Conversation
             modalUserList.querySelectorAll('.glass-modal-user-item, .glass-modal-msg-btn').forEach(el => {
                 el.addEventListener('click', (e) => {
                     const targetId = parseInt(el.getAttribute('data-user-id'), 10);
                     if (!targetId) return;
 
-                    // Immediately find or initialize conversation with target user
                     fetch('/api/chat/search_users.php', {
                         method: 'POST',
                         headers: {
@@ -1867,17 +2474,15 @@
         }
 
         // ---------------------------------------------------------------------
-        // 6. REAL-TIME POLLING SYNC (Zero browser refresh)
+        // 6. REAL-TIME POLLING SYNC (Fast 2.5s message, 5s inbox)
         // ---------------------------------------------------------------------
         function startPolling() {
-            // Message feed poll every 2.5 seconds
             messagePollTimer = setInterval(() => {
                 if (isPollingActive && currentConversationId) {
                     fetchMessages(false);
                 }
             }, 2500);
 
-            // Conversations & request badge count poll every 5 seconds
             inboxPollTimer = setInterval(() => {
                 if (isPollingActive) {
                     fetchConversations(true);

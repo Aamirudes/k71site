@@ -164,12 +164,20 @@ Route::middleware('web')->group(function () {
     Route::match(['get', 'post'], '/api/chat/search_users.php', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers']);
     Route::post('/api/chat/follow_actions.php', [\App\Http\Controllers\MessageController::class, 'apiFollowActions']);
     Route::post('/api/chat/request_action.php', [\App\Http\Controllers\MessageController::class, 'apiRequestAction']);
+    Route::post('/api/chat/typing.php', [\App\Http\Controllers\MessageController::class, 'apiTyping']);
+    Route::post('/api/chat/unsend_message.php', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage']);
+    Route::post('/api/chat/delete_conversation.php', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation']);
+    Route::post('/api/chat/upload_photo.php', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto']);
 
     Route::get('/chat/api/conversations', [\App\Http\Controllers\MessageController::class, 'apiGetConversations'])->name('chat.api.conversations');
     Route::get('/chat/api/messages', [\App\Http\Controllers\MessageController::class, 'apiGetMessages'])->name('chat.api.messages');
     Route::post('/chat/api/send', [\App\Http\Controllers\MessageController::class, 'apiSendMessage'])->name('chat.api.send');
     Route::match(['get', 'post'], '/chat/api/search', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers'])->name('chat.api.search');
     Route::post('/chat/api/follow', [\App\Http\Controllers\MessageController::class, 'apiFollowActions'])->name('chat.api.follow');
+    Route::post('/chat/api/typing', [\App\Http\Controllers\MessageController::class, 'apiTyping'])->name('chat.api.typing');
+    Route::post('/chat/api/unsend', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage'])->name('chat.api.unsend');
+    Route::post('/chat/api/delete_conversation', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation'])->name('chat.api.delete_conversation');
+    Route::post('/chat/api/upload_photo', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto'])->name('chat.api.upload_photo');
 });
 
 

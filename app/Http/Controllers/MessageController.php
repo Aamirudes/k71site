@@ -210,16 +210,30 @@ class MessageController extends Controller
      */
     private function resolveChatUserId(): ?int
     {
+        $uid = null;
         if (auth()->check()) {
-            return (int) auth()->id();
+            $uid = (int) auth()->id();
+        } elseif (!empty($_SESSION['user_id'])) {
+            $uid = (int) $_SESSION['user_id'];
+        } elseif (!empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
+            $uid = (int) $_COOKIE['k71_uid'];
         }
-        if (!empty($_SESSION['user_id'])) {
-            return (int) $_SESSION['user_id'];
+
+        if ($uid > 0) {
+            // Heartbeat online activity (cached for 5 min, throttled DB write)
+            \Illuminate\Support\Facades\Cache::put("user_last_seen_{$uid}", time(), 300);
+            $cacheDbKey = "user_db_seen_{$uid}";
+            if (!\Illuminate\Support\Facades\Cache::has($cacheDbKey)) {
+                try {
+                    \Illuminate\Support\Facades\DB::table('users')
+                        ->where('id', $uid)
+                        ->update(['last_seen_at' => now()]);
+                    \Illuminate\Support\Facades\Cache::put($cacheDbKey, 1, 60);
+                } catch (\Throwable $e) {}
+            }
         }
-        if (!empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
-            return (int) $_COOKIE['k71_uid'];
-        }
-        return null;
+
+        return $uid;
     }
 
     private function formatChatAvatar(?string $avatar, string $name): string
@@ -248,19 +262,24 @@ class MessageController extends Controller
 
     private function getChatUserInfo(int $userId): ?array
     {
+        $selectCols = [
+            'users.id',
+            'users.username',
+            'users.first_name',
+            'users.last_name',
+            'users.avatar',
+            'users.email',
+            'vendors.shop_name'
+        ];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_seen_at')) {
+            $selectCols[] = 'users.last_seen_at';
+        }
+
         $u = \Illuminate\Support\Facades\DB::table('users')
             ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
             ->where('users.id', $userId)
             ->whereNull('users.deleted_at')
-            ->first([
-                'users.id',
-                'users.username',
-                'users.first_name',
-                'users.last_name',
-                'users.avatar',
-                'users.email',
-                'vendors.shop_name'
-            ]);
+            ->first($selectCols);
 
         if (!$u) return null;
 
@@ -274,6 +293,10 @@ class MessageController extends Controller
             $displayName = $u->shop_name . ' (' . $personName . ')';
         }
 
+        // Real-time activity status (Online if active within last 3 minutes)
+        $lastSeenTime = !empty($u->last_seen_at) ? strtotime($u->last_seen_at) : (int)\Illuminate\Support\Facades\Cache::get("user_last_seen_{$u->id}", 0);
+        $isOnline = ($lastSeenTime > (time() - 180));
+
         return [
             'id' => (int) $u->id,
             'username' => $u->username ?? ('user_' . $u->id),
@@ -281,15 +304,26 @@ class MessageController extends Controller
             'shop_name' => $u->shop_name ?? null,
             'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
             'email' => $u->email ?? '',
+            'is_online' => $isOnline,
+            'last_seen_at' => $u->last_seen_at ?? null,
+            'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : ''),
         ];
     }
 
     /**
-     * Self-healing table check: ensure chat_conversations, chat_messages, user_follows exist.
+     * Self-healing table check: ensure chat_conversations, chat_messages, user_follows exist with attachments & activity.
      */
     private function ensureChatSchema(): void
     {
         try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('users')) {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_seen_at')) {
+                    \Illuminate\Support\Facades\Schema::table('users', function ($t) {
+                        $t->timestamp('last_seen_at')->nullable()->after('email_verified_at');
+                    });
+                }
+            }
+
             if (!\Illuminate\Support\Facades\Schema::hasTable('chat_conversations')) {
                 \Illuminate\Support\Facades\Schema::create('chat_conversations', function ($table) {
                     $table->id();
@@ -321,11 +355,20 @@ class MessageController extends Controller
                     $table->unsignedBigInteger('conversation_id');
                     $table->unsignedBigInteger('sender_id');
                     $table->text('body');
+                    $table->string('attachment_url', 1000)->nullable();
+                    $table->string('attachment_type', 50)->nullable();
                     $table->boolean('is_read')->default(false);
                     $table->timestamp('created_at')->useCurrent();
                     $table->index('conversation_id');
                     $table->index('sender_id');
                 });
+            } else {
+                if (!\Illuminate\Support\Facades\Schema::hasColumn('chat_messages', 'attachment_url')) {
+                    \Illuminate\Support\Facades\Schema::table('chat_messages', function ($t) {
+                        $t->string('attachment_url', 1000)->nullable()->after('body');
+                        $t->string('attachment_type', 50)->nullable()->after('attachment_url');
+                    });
+                }
             }
 
             if (!\Illuminate\Support\Facades\Schema::hasTable('user_follows')) {
@@ -447,6 +490,8 @@ class MessageController extends Controller
                 $formatted[] = [
                     'id' => (int) $m->id,
                     'body' => $m->body,
+                    'attachment_url' => $m->attachment_url ?? null,
+                    'attachment_type' => $m->attachment_type ?? null,
                     'sender_id' => $senderId,
                     'is_mine' => ($senderId === $userId),
                     'is_read' => (bool) $m->is_read,
@@ -457,6 +502,8 @@ class MessageController extends Controller
             }
 
             $recipientInfo = $this->getChatUserInfo($recipientId);
+            $isTyping = (bool) \Illuminate\Support\Facades\Cache::has("chat_typing_{$conversationId}_{$recipientId}");
+
             $convData = [
                 'id' => $conversationId,
                 'status' => $conv->status ?? 'accepted',
@@ -469,10 +516,12 @@ class MessageController extends Controller
                 'success' => true,
                 'conversation' => $convData,
                 'recipient' => $recipientInfo,
+                'is_typing' => $isTyping,
                 'messages' => $formatted,
                 'data' => [
                     'conversation' => $convData,
                     'recipient' => $recipientInfo,
+                    'is_typing' => $isTyping,
                     'messages' => $formatted
                 ]
             ]);
@@ -732,5 +781,198 @@ class MessageController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * API: Broadcast typing indicator (Instagram-style).
+     */
+    public function apiTyping(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
+        if ($conversationId > 0) {
+            \Illuminate\Support\Facades\Cache::put("chat_typing_{$conversationId}_{$userId}", time(), 4);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * API: Unsend a message (Instagram unsend feature).
+     */
+    public function apiUnsendMessage(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $messageId = (int) ($request->input('message_id') ?: $request->json('message_id', 0));
+        if ($messageId <= 0) {
+            return response()->json(['success' => false, 'error' => 'Invalid message ID.'], 400);
+        }
+
+        $msg = \Illuminate\Support\Facades\DB::table('chat_messages')
+            ->where('id', $messageId)
+            ->where('sender_id', $userId)
+            ->first();
+
+        if (!$msg) {
+            return response()->json(['success' => false, 'error' => 'Message not found or you cannot unsend this message.'], 403);
+        }
+
+        \Illuminate\Support\Facades\DB::table('chat_messages')->where('id', $messageId)->delete();
+
+        // Update conversation last_message_at if needed
+        $latest = \Illuminate\Support\Facades\DB::table('chat_messages')
+            ->where('conversation_id', $msg->conversation_id)
+            ->latest('id')
+            ->first();
+        if ($latest) {
+            \Illuminate\Support\Facades\DB::table('chat_conversations')
+                ->where('id', $msg->conversation_id)
+                ->update(['last_message_at' => $latest->created_at]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message_id' => $messageId,
+            'conversation_id' => (int) $msg->conversation_id
+        ]);
+    }
+
+    /**
+     * API: Delete entire conversation (Long-press / touch action).
+     */
+    public function apiDeleteConversation(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
+        if ($conversationId <= 0) {
+            return response()->json(['success' => false, 'error' => 'Invalid conversation ID.'], 400);
+        }
+
+        $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->where(function($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        \Illuminate\Support\Facades\DB::table('chat_messages')->where('conversation_id', $conversationId)->delete();
+        \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $conversationId)->delete();
+
+        return response()->json([
+            'success' => true,
+            'conversation_id' => $conversationId
+        ]);
+    }
+
+    /**
+     * API: Upload Photo / Attachment in chat (Instagram browser feature).
+     */
+    public function apiUploadPhoto(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in.'], 401);
+        }
+
+        $conversationId = (int) $request->input('conversation_id');
+        if ($conversationId <= 0) {
+            return response()->json(['success' => false, 'error' => 'Invalid conversation.'], 400);
+        }
+
+        $this->ensureChatSchema();
+
+        $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->where(function($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if (!$request->hasFile('photo')) {
+            return response()->json(['success' => false, 'error' => 'No photo uploaded.'], 400);
+        }
+
+        $file = $request->file('photo');
+        if (!$file->isValid()) {
+            return response()->json(['success' => false, 'error' => 'Uploaded photo is invalid.'], 400);
+        }
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+        if (!in_array($file->getMimeType(), $allowedMimes)) {
+            return response()->json(['success' => false, 'error' => 'Only JPG, PNG, WEBP, or GIF images are supported.'], 400);
+        }
+
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            return response()->json(['success' => false, 'error' => 'Photo size exceeds maximum limit of 10MB.'], 400);
+        }
+
+        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $fileName = 'chat_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
+
+        $targetDir = public_path('storage/chat_attachments');
+        if (!file_exists($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        $file->move($targetDir, $fileName);
+        $attachmentUrl = asset('storage/chat_attachments/' . $fileName);
+
+        $caption = htmlspecialchars(trim((string)$request->input('caption', '')), ENT_QUOTES, 'UTF-8');
+        $body = $caption !== '' ? $caption : '📷 Photo';
+        $now = now()->toDateTimeString();
+
+        $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $conversationId,
+            'sender_id' => $userId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'image',
+            'is_read' => 0,
+            'created_at' => $now,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+
+        $msgPayload = [
+            'id' => (int) $messageId,
+            'conversation_id' => $conversationId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'image',
+            'sender_id' => $userId,
+            'is_mine' => true,
+            'is_read' => false,
+            'created_at' => $now,
+            'time_formatted' => date('g:i A', strtotime($now))
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $msgPayload,
+            'message' => $msgPayload,
+            'conversation_status' => 'accepted'
+        ]);
     }
 }

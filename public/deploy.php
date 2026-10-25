@@ -421,18 +421,33 @@ try {
 
     // Chat Instagram Direct Schema Hardening
     try {
+        DB::statement("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `last_seen_at` TIMESTAMP NULL AFTER `email_verified_at`");
+    } catch (\Throwable $ue) {
+        try { DB::statement("ALTER TABLE `users` ADD `last_seen_at` TIMESTAMP NULL AFTER `email_verified_at`"); } catch (\Throwable $ue2) {}
+    }
+
+    try {
         DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN IF NOT EXISTS `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'");
         DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN IF NOT EXISTS `requested_by` BIGINT UNSIGNED NULL");
     } catch (\Throwable $ce) {
-        try {
-            DB::statement("ALTER TABLE `chat_conversations` ADD `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'");
-        } catch (\Throwable $ce2) {}
-        try {
-            DB::statement("ALTER TABLE `chat_conversations` ADD `requested_by` BIGINT UNSIGNED NULL");
-        } catch (\Throwable $ce3) {}
+        try { DB::statement("ALTER TABLE `chat_conversations` ADD `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'"); } catch (\Throwable $ce2) {}
+        try { DB::statement("ALTER TABLE `chat_conversations` ADD `requested_by` BIGINT UNSIGNED NULL"); } catch (\Throwable $ce3) {}
     }
 
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO & Chat columns verified (truncation-proof and schema-aligned).</pre></div>";
+    try {
+        DB::statement("ALTER TABLE `chat_messages` ADD COLUMN IF NOT EXISTS `attachment_url` VARCHAR(1000) NULL AFTER `body`");
+        DB::statement("ALTER TABLE `chat_messages` ADD COLUMN IF NOT EXISTS `attachment_type` VARCHAR(50) NULL AFTER `attachment_url`");
+    } catch (\Throwable $me) {
+        try { DB::statement("ALTER TABLE `chat_messages` ADD `attachment_url` VARCHAR(1000) NULL AFTER `body`"); } catch (\Throwable $me2) {}
+        try { DB::statement("ALTER TABLE `chat_messages` ADD `attachment_type` VARCHAR(50) NULL AFTER `attachment_url`"); } catch (\Throwable $me3) {}
+    }
+
+    $chatAttachDir = $baseDir . '/public/storage/chat_attachments';
+    if (!file_exists($chatAttachDir)) {
+        @mkdir($chatAttachDir, 0775, true);
+    }
+
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO & Chat columns verified (truncation-proof, last_seen_at active status, and attachment-enabled).</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }

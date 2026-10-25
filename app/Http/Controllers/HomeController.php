@@ -143,23 +143,23 @@ class HomeController extends Controller
             ->where($retailFilter)
             ->where('is_featured', true)
             ->latest()
-            ->take(8)
+            ->take(12)
             ->get();
             
         $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
             ->where($retailFilter)
             ->latest()
-            ->take(12)
+            ->take(24)
             ->get();
 
         // If new arrivals is small, include any active non-used retail products
-        if ($newArrivals->count() < 4) {
+        if ($newArrivals->count() < 8) {
             $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
                 ->where('status', 'active')
                 ->where($retailFilter)
                 ->latest()
-                ->take(12)
+                ->take(24)
                 ->get();
         }
 
