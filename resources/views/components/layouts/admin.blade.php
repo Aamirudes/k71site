@@ -86,7 +86,7 @@
                 <div>
                     <p class="px-3 text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold mb-2">Core Overview</p>
                     <div class="space-y-1">
-                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.dashboard') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                             <span>Platform Dashboard</span>
                         </a>
@@ -97,13 +97,13 @@
                 <div>
                     <p class="px-3 text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold mb-2">Storefront &amp; Growth</p>
                     <div class="space-y-1">
-                        <a href="{{ route('admin.homepage') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.homepage*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.homepage') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.homepage*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
                             <span>Homepage &amp; SEO Studio</span>
                             <span class="ml-auto text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.homepage*') ? 'bg-slate-900 text-amber-300' : 'bg-amber-500/20 text-amber-300' }}">Live</span>
                         </a>
 
-                        <a href="{{ route('admin.navigation.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.navigation*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.navigation.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.navigation*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                             <span>Mobile Panel &amp; Nav</span>
                             <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.navigation*') ? 'bg-slate-900 text-amber-300' : 'bg-emerald-500/20 text-emerald-300' }}">Power</span>
@@ -115,55 +115,55 @@
                 <div>
                     <p class="px-3 text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold mb-2">Commerce Operations</p>
                     <div class="space-y-1">
-                        <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.users*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.users*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">👥</span>
                             <span>Users &amp; Accounts</span>
                             <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.users*') ? 'bg-slate-900 text-amber-300' : 'bg-purple-500/20 text-purple-300' }}">Super</span>
                         </a>
 
-                        <a href="{{ route('admin.orders') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.orders*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.orders') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.orders*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                             <span>All Orders</span>
                         </a>
 
-                        <a href="{{ route('admin.settlements') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.settlements*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.settlements') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.settlements*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             <span>Settlements</span>
                             <span class="ml-auto text-[9px] uppercase font-bold font-mono tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.settlements*') ? 'bg-slate-900 text-amber-300' : 'bg-emerald-500/20 text-emerald-300' }}">PhonePe</span>
                         </a>
 
-                        <a href="{{ route('admin.products') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.products*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.products') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.products*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                             <span>All Products</span>
                         </a>
 
-                        <a href="{{ route('admin.services.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.services*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.services.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.services*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">⚡</span>
                             <span>Services &amp; Gigs</span>
                             <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.services*') ? 'bg-slate-900 text-amber-300' : 'bg-purple-500/20 text-purple-300' }}">Pro</span>
                         </a>
 
-                        <a href="{{ route('admin.vendors') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.vendors*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.vendors') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.vendors*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                             <span>Manage Vendors</span>
                         </a>
 
-                        <a href="{{ route('admin.shorts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.shorts*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.shorts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.shorts*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">🎬</span>
                             <span>Shorts Moderation</span>
                         </a>
 
-                        <a href="{{ route('admin.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.reports*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.reports.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.reports*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">🛡️</span>
                             <span>Trust &amp; Reports</span>
                         </a>
 
-                        <a href="{{ route('admin.promotions.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promotions*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.promotions.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.promotions*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">⚡</span>
                             <span>Promotions &amp; Flash</span>
                         </a>
 
-                        <a href="{{ route('admin.audit_logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.audit_logs*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                        <a href="{{ route('admin.audit_logs.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.audit_logs*') ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <span class="text-base">📜</span>
                             <span>Audit Logs</span>
                         </a>

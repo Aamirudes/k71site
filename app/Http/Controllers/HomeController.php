@@ -221,6 +221,53 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
+        // Dedicated Used / Re-Commerce Listings
+        $featuredUsed = Product::with(['images', 'vendor', 'category'])
+            ->where(function($q) {
+                $q->where('vertical', 'used')
+                  ->orWhere('listing_type', 'classified')
+                  ->orWhere('product_type', 'used');
+            })
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        // Dedicated B2B & Wholesale Enquiries & Products
+        $featuredEnquiries = \App\Models\Enquiry::with(['category', 'vendor', 'quotes'])
+            ->whereIn('status', ['open', 'quoted'])
+            ->latest()
+            ->take(4)
+            ->get();
+
+        $featuredEnquiryProducts = Product::with(['images', 'vendor', 'category'])
+            ->where(function($q) {
+                $q->where('vertical', 'enquiry')
+                  ->orWhere('listing_type', 'enquiry')
+                  ->orWhere('listing_type', 'quote_only')
+                  ->orWhere('product_type', 'enquiry');
+            })
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        if ($featuredEnquiryProducts->isEmpty()) {
+            $featuredEnquiryProducts = Product::with(['images', 'vendor', 'category'])
+                ->where('status', 'active')
+                ->where('base_price', '>=', 50000)
+                ->take(4)
+                ->get();
+        }
+
+        $foodRestaurants = \App\Models\Vendor::where('status', 'approved')
+            ->where(function($q) {
+                $q->where('business_type', 'food')
+                  ->orWhere('vendor_type', 'food');
+            })
+            ->take(4)
+            ->get();
+
         $homepageSettings = \App\Models\Setting::getGroup('homepage');
         $seoSettings = \App\Models\Setting::getGroup('seo');
 
@@ -235,6 +282,10 @@ class HomeController extends Controller
             'newArrivals', 
             'featuredServices',
             'featuredFood',
+            'foodRestaurants',
+            'featuredUsed',
+            'featuredEnquiries',
+            'featuredEnquiryProducts',
             'categories', 
             'topVendors',
             'latestShorts',

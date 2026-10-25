@@ -97,12 +97,16 @@ class Product extends Model
      */
     public function isPurchase(): bool
     {
-        if ($this->vertical === 'used' || $this->listing_type === 'classified') {
+        if ($this->isEnquiry() || $this->vertical === 'used' || $this->listing_type === 'classified') {
+            return false;
+        }
+
+        if ($this->isBooking() || $this->product_type === 'service') {
             return false;
         }
 
         return empty($this->listing_type) 
-            || in_array($this->listing_type, ['purchase', 'food', 'grocery', 'service', 'booking']);
+            || in_array($this->listing_type, ['purchase', 'food', 'grocery']);
     }
 
     /**
@@ -110,7 +114,29 @@ class Product extends Model
      */
     public function isEnquiry(): bool
     {
-        return in_array($this->listing_type, ['enquiry', 'quote_only', 'contact_seller']);
+        if (in_array($this->listing_type, ['enquiry', 'quote_only', 'contact_seller'])) {
+            return true;
+        }
+
+        if ($this->vertical === 'enquiry' || $this->product_type === 'enquiry') {
+            return true;
+        }
+
+        // Automatic detection for Real Estate, Properties, Villas, Houses, Industrial Machinery, Bulk Wholesale Marble
+        $titleLower = strtolower($this->title ?? '');
+        if (str_contains($titleLower, 'real estate') || str_contains($titleLower, 'villa') || str_contains($titleLower, 'apartment') || str_contains($titleLower, 'plot') || str_contains($titleLower, 'property') || str_contains($titleLower, 'house for sale')) {
+            return true;
+        }
+
+        if ($this->category) {
+            $catSlug = strtolower($this->category->slug ?? '');
+            $catName = strtolower($this->category->name ?? '');
+            if (str_contains($catSlug, 'real-estate') || str_contains($catSlug, 'property') || str_contains($catSlug, 'house') || str_contains($catName, 'real estate') || str_contains($catName, 'property')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

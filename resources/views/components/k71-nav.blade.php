@@ -3,31 +3,49 @@
     $activeVertical = $k71_vertical ?? config('k71.verticals.main');
     $currentKey = $k71_vertical_key ?? 'main';
 
-    $allVerticals = [
+    $navCategories = [
+        'all' => [
+            'name' => 'All',
+            'url' => route('catalog.index'),
+            'icon' => '✦',
+            'active' => request()->routeIs('catalog.*') && !request()->filled('vertical'),
+        ],
         'main' => [
-            'name' => 'Marketplace',
+            'name' => 'K71Mart',
             'url' => k71_vertical_url('main'),
+            'icon' => '🛍️',
+            'active' => request()->routeIs('home') || ($currentKey === 'main' && !request()->routeIs('catalog.*')),
         ],
         'food' => [
-            'name' => 'Food',
+            'name' => 'Foods',
             'url' => k71_vertical_url('food'),
+            'icon' => '🍽️',
+            'active' => $currentKey === 'food' || request()->routeIs('food.*'),
         ],
         'services' => [
             'name' => 'Services',
             'url' => k71_vertical_url('services'),
+            'icon' => '⚡',
+            'active' => $currentKey === 'services' || request()->routeIs('services.*'),
         ],
         'used' => [
-            'name' => 'Pre-Loved',
+            'name' => 'Used',
             'url' => k71_vertical_url('used'),
+            'icon' => '♻️',
+            'active' => $currentKey === 'used' || request()->routeIs('used.*'),
         ],
         'enquiry' => [
-            'name' => 'Quotes & B2B',
+            'name' => 'Enquiry',
             'url' => k71_vertical_url('enquiry'),
+            'icon' => '📋',
+            'active' => $currentKey === 'enquiry' || request()->routeIs('enquiry.*') || request()->routeIs('b2b.*'),
         ],
         'shorts' => [
             'name' => 'Shorts',
             'url' => k71_vertical_url('shorts'),
+            'icon' => '▶',
             'badge' => 'LIVE',
+            'active' => $currentKey === 'shorts' || request()->routeIs('shorts.*'),
         ],
     ];
 
@@ -239,6 +257,26 @@
 
             </div>
 
+        </div>
+    </div>
+
+    <!-- Integrated Category Navigation Row -->
+    <div class="border-t border-slate-100/80 bg-white/60 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex items-center gap-1 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth" aria-label="Commerce Categories">
+                @foreach($navCategories as $catKey => $cat)
+                    <a href="{{ $cat['url'] }}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0 {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80' }}">
+                        <span class="text-xs">{{ $cat['icon'] }}</span>
+                        <span>{{ $cat['name'] }}</span>
+                        @if(!empty($cat['badge']))
+                            <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
+                                {{ $cat['badge'] }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </nav>
         </div>
     </div>
 

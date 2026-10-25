@@ -119,21 +119,41 @@
         <!-- 3. MAIN BODY CONTAINER -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16 mt-8 sm:mt-12">
 
-            <!-- A. CATEGORY DISCOVERY GRID -->
-            <section class="space-y-4">
+            <!-- A. CATEGORY DISCOVERY SLIDER & STRIP -->
+            <section class="space-y-4" x-data="{
+                scrollLeft() { $refs.catSlider.scrollBy({ left: -280, behavior: 'smooth' }); },
+                scrollRight() { $refs.catSlider.scrollBy({ left: 280, behavior: 'smooth' }); }
+            }">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Key Industry Categories</h2>
-                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Explore high-volume manufacturing sectors and raw materials.</p>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800">
+                                Sourcing Categories
+                            </span>
+                            <span class="text-xs text-slate-400 font-mono">Wholesale &amp; Real Estate</span>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mt-1">Key Industry &amp; Real Estate Sectors</h2>
                     </div>
-                    @if($selectedCategory)
-                        <a href="{{ route('enquiry.index') }}" class="text-xs font-bold text-indigo-600 hover:underline">Clear Filter ✕</a>
-                    @endif
+                    
+                    <div class="flex items-center gap-2">
+                        @if($selectedCategory)
+                            <a href="{{ route('enquiry.index') }}" class="text-xs font-bold text-indigo-600 hover:underline mr-2">Clear Filter ✕</a>
+                        @endif
+                        <button type="button" @click="scrollLeft()" class="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-2xs active:scale-95" aria-label="Previous categories">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" @click="scrollRight()" class="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition shadow-2xs active:scale-95" aria-label="Next categories">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                <!-- Smooth Horizontal Slider -->
+                <div x-ref="catSlider" class="flex items-stretch gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2 pt-1">
                     @php
                         $sampleCategoryIcons = [
+                            'real-estate' => '🏡',
+                            'property' => '🏢',
                             'natural-stone' => '🏛️',
                             'machinery' => '⚙️',
                             'construction' => '🏗️',
@@ -145,20 +165,21 @@
 
                     @forelse($enquiryCategories as $cat)
                         <a href="{{ route('enquiry.index', ['cat' => $cat->slug]) }}" 
-                           class="p-4 rounded-3xl bg-white/80 hover:bg-white border transition-all duration-300 group flex flex-col justify-between shadow-2xs hover:shadow-lg hover:shadow-slate-200/60 {{ $selectedCategory === $cat->slug ? 'border-indigo-600 ring-2 ring-indigo-100 bg-white' : 'border-slate-200/80 hover:border-indigo-200' }}">
-                            <div class="w-12 h-12 rounded-2xl bg-indigo-50/70 border border-indigo-100/60 text-indigo-700 flex items-center justify-center text-xl font-bold mb-3 group-hover:scale-110 transition-transform">
+                           class="w-48 sm:w-56 shrink-0 p-4 rounded-3xl bg-white/90 hover:bg-white border transition-all duration-300 group flex flex-col justify-between shadow-2xs hover:shadow-xl hover:shadow-slate-200/60 {{ $selectedCategory === $cat->slug ? 'border-amber-600 ring-2 ring-amber-100 bg-white' : 'border-slate-200/80 hover:border-amber-300' }}">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50/80 border border-amber-200/60 text-amber-800 flex items-center justify-center text-2xl font-bold mb-3 group-hover:scale-110 transition-transform">
                                 @if($cat->image)
                                     <img src="{{ format_image_url($cat->image) }}" alt="{{ $cat->name }}" class="w-7 h-7 object-contain">
                                 @else
-                                    <span>{{ $sampleCategoryIcons[$cat->slug] ?? '🏭' }}</span>
+                                    <span>{{ $sampleCategoryIcons[$cat->slug] ?? (str_contains(strtolower($cat->name), 'real estate') ? '🏡' : '🏭') }}</span>
                                 @endif
                             </div>
                             <div>
-                                <h3 class="text-xs font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
+                                <h3 class="text-xs sm:text-sm font-black text-slate-900 group-hover:text-amber-800 transition-colors leading-snug">
                                     {{ $cat->name }}
                                 </h3>
-                                <p class="text-[10.5px] text-slate-500 font-medium mt-0.5">
-                                    {{ $cat->enquiries_count }} Active RFQs
+                                <p class="text-[11px] text-slate-500 font-medium mt-1 flex items-center justify-between">
+                                    <span>{{ $cat->enquiries_count }} RFQs</span>
+                                    <span class="text-amber-700 font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                                 </p>
                             </div>
                         </a>

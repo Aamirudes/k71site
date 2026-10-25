@@ -428,13 +428,13 @@ class UsedItemsAndOffersTest extends TestCase
             'is_featured' => true,
         ]);
 
-        // 1. Check Homepage
+        // 1. Check Homepage - Unified 6-vertical homepage features used items in dedicated preview section
         $homeResponse = $this->get('/');
         $homeResponse->assertStatus(200);
         $homeResponse->assertSee('Brand New Wireless Mechanical Keyboard');
-        $homeResponse->assertDontSee('Second Hand iPhone 12 Mini Blue');
+        $homeResponse->assertSee('Second Hand iPhone 12 Mini Blue');
 
-        // 2. Check Catalog
+        // 2. Check Catalog - Retail catalog strictly excludes used items
         $catalogResponse = $this->get('/catalog');
         $catalogResponse->assertStatus(200);
         $catalogResponse->assertSee('Brand New Wireless Mechanical Keyboard');
