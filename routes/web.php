@@ -156,6 +156,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/reports', [\App\Http\Controllers\ReportController::class, 'store'])->name('reports.store');
 });
 
+// Instagram Direct Chat Real-time API Endpoints (Auth checked internally, returns clean JSON)
+Route::middleware('web')->group(function () {
+    Route::get('/api/chat/get_conversations.php', [\App\Http\Controllers\MessageController::class, 'apiGetConversations']);
+    Route::get('/api/chat/get_messages.php', [\App\Http\Controllers\MessageController::class, 'apiGetMessages']);
+    Route::post('/api/chat/send_message.php', [\App\Http\Controllers\MessageController::class, 'apiSendMessage']);
+    Route::match(['get', 'post'], '/api/chat/search_users.php', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers']);
+    Route::post('/api/chat/follow_actions.php', [\App\Http\Controllers\MessageController::class, 'apiFollowActions']);
+    Route::post('/api/chat/request_action.php', [\App\Http\Controllers\MessageController::class, 'apiRequestAction']);
+
+    Route::get('/chat/api/conversations', [\App\Http\Controllers\MessageController::class, 'apiGetConversations'])->name('chat.api.conversations');
+    Route::get('/chat/api/messages', [\App\Http\Controllers\MessageController::class, 'apiGetMessages'])->name('chat.api.messages');
+    Route::post('/chat/api/send', [\App\Http\Controllers\MessageController::class, 'apiSendMessage'])->name('chat.api.send');
+    Route::match(['get', 'post'], '/chat/api/search', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers'])->name('chat.api.search');
+    Route::post('/chat/api/follow', [\App\Http\Controllers\MessageController::class, 'apiFollowActions'])->name('chat.api.follow');
+});
+
 
 // Guest Auth Routes
 Route::middleware('guest')->group(function () {

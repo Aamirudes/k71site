@@ -1,4 +1,4 @@
-<x-layouts.public 
+<x-layouts.services 
     title="Become a Seller — Freelance Onboarding | K71 Services"
     metaDescription="Join K71 Services as an independent specialist. Showcase your services, receive client milestone orders, and grow your freelance career."
 >
@@ -124,4 +124,4 @@
 
         </div>
     </div>
-</x-layouts.public>
+</x-layouts.services>

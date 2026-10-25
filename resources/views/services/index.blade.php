@@ -1,4 +1,4 @@
-<x-layouts.public 
+<x-layouts.services 
     title="K71 Services — Freelance & Professional Services Marketplace"
     metaDescription="Discover top-rated freelancers and vetted professionals on K71 Services. Web development, graphic design, video editing, marketing, and skilled craftsmanship with milestone protection."
 >
@@ -413,4 +413,4 @@
         </div>
 
     </div>
-</x-layouts.public>
+</x-layouts.services>

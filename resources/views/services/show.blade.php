@@ -1,4 +1,4 @@
-<x-layouts.public 
+<x-layouts.services 
     :title="$service->title . ' — K71 Services'"
     :metaDescription="Str::limit(strip_tags($service->description), 155)"
 >
@@ -426,4 +426,4 @@
         </div>
 
     </div>
-</x-layouts.public>
+</x-layouts.services>

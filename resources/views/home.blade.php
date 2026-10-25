@@ -44,12 +44,120 @@
         <div class="absolute top-80 right-0 w-[600px] h-[600px] rounded-full bg-gradient-to-bl from-amber-100/40 via-rose-100/25 to-transparent blur-[160px] pointer-events-none" aria-hidden="true"></div>
         <div class="absolute top-[1800px] left-0 w-[800px] h-[700px] rounded-full bg-gradient-to-r from-teal-100/30 via-slate-100/40 to-transparent blur-[150px] pointer-events-none" aria-hidden="true"></div>
 
-        <div class="relative z-10 space-y-24 sm:space-y-36 pb-28 sm:pb-36">
+        <!-- ==========================================
+             0. FLIPKART-SIGNATURE TOP CATEGORY SLIDER
+             ========================================== -->
+        <section class="w-full bg-white/90 dark:bg-zinc-900/90 border-b border-black/[0.05] dark:border-white/10 shadow-[0_2px_12px_rgba(0,0,0,0.02)] backdrop-blur-xl sticky top-0 z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 sm:py-4">
+                <div class="flex items-center gap-5 sm:gap-8 overflow-x-auto no-scrollbar scroll-smooth py-1 px-1 touch-pan-x" 
+                     style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                    
+                    <!-- 1. K71Mart (Everyday Retail) -->
+                    <a href="{{ route('catalog.index') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-zinc-100 to-zinc-50 border border-black/[0.08] shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-black/20 transition-all duration-300 relative">
+                            🛍️
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">HOT</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">K71Mart</span>
+                    </a>
+
+                    <!-- 2. Mobiles & Tech -->
+                    <a href="{{ route('catalog.index', ['search' => 'phone']) }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-sky-50 to-indigo-50 border border-sky-100 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-sky-300 transition-all duration-300 relative">
+                            📱
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-sky-600 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">5G</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Mobiles</span>
+                    </a>
+
+                    <!-- 3. Fashion & Apparel -->
+                    <a href="{{ route('catalog.index', ['search' => 'saree']) }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-pink-50 to-rose-50 border border-pink-100 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-pink-300 transition-all duration-300 relative">
+                            👗
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-pink-600 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">SALE</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Fashion</span>
+                    </a>
+
+                    <!-- 4. Electronics -->
+                    <a href="{{ route('catalog.index', ['search' => 'laptop']) }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-indigo-50 to-purple-50 border border-indigo-100 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-indigo-300 transition-all duration-300 relative">
+                            💻
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Electronics</span>
+                    </a>
+
+                    <!-- 5. Cloud Dining & Food -->
+                    <a href="{{ k71_vertical_url('food') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-amber-50 to-orange-50 border border-amber-200/60 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-amber-400 transition-all duration-300 relative">
+                            🍲
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-amber-600 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">FRESH</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Food &amp; Dining</span>
+                    </a>
+
+                    <!-- 6. Professional Services -->
+                    <a href="{{ k71_vertical_url('services') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-purple-50 to-violet-50 border border-purple-200/60 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-purple-400 transition-all duration-300 relative">
+                            ⚡
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-purple-700 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">VETTED</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Services</span>
+                    </a>
+
+                    <!-- 7. Pre-Owned Marketplace -->
+                    <a href="{{ k71_vertical_url('used') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-teal-50 to-emerald-50 border border-teal-200/60 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-teal-400 transition-all duration-300 relative">
+                            ♻️
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-teal-700 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">DEALS</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Pre-Owned</span>
+                    </a>
+
+                    <!-- 8. B2B Wholesale RFQs -->
+                    <a href="{{ k71_vertical_url('enquiry') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-amber-50 to-yellow-50 border border-amber-300/60 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-amber-500 transition-all duration-300 relative">
+                            📋
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-amber-800 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">B2B</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Wholesale</span>
+                    </a>
+
+                    <!-- 9. Shoppable Video Reels -->
+                    <a href="{{ k71_vertical_url('shorts') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-gradient-to-tr from-rose-50 to-red-50 border border-rose-200/60 shadow-xs flex items-center justify-center text-2xl sm:text-3xl group-hover:scale-108 group-hover:shadow-md group-hover:border-rose-400 transition-all duration-300 relative">
+                            ▶
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-[8.5px] font-black text-white uppercase tracking-wider shadow-xs">LIVE</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">Reels</span>
+                    </a>
+
+                    <!-- Real Database Categories -->
+                    @if(!empty($categories))
+                        @foreach($categories->take(6) as $cat)
+                            <a href="{{ route('catalog.index', ['category' => $cat->slug]) }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                                <div class="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-white dark:bg-zinc-800 border border-black/[0.08] shadow-xs flex items-center justify-center text-xl overflow-hidden group-hover:scale-108 group-hover:shadow-md group-hover:border-black/20 transition-all duration-300 relative">
+                                    @if($cat->sample_image)
+                                        <img src="{{ \App\Services\ImageService::url($cat->sample_image, 120) }}" alt="{{ $cat->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <span class="text-zinc-700 dark:text-zinc-300 font-bold text-xs uppercase">{{ substr($cat->name, 0, 2) }}</span>
+                                    @endif
+                                </div>
+                                <span class="text-[11px] sm:text-xs font-bold text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white mt-1.5 tracking-tight truncate w-full">{{ $cat->name }}</span>
+                            </a>
+                        @endforeach
+                    @endif
+
+                </div>
+            </div>
+        </section>
+
+        <div class="relative z-10 space-y-16 sm:space-y-24 pb-28 sm:pb-36">
 
             <!-- ==========================================
                  1. HERO SECTION — SPACIOUS MINIMAL GLASSMORPHISM
                  ========================================== -->
-            <section class="pt-10 sm:pt-18 lg:pt-24 max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
+            <section class="pt-6 sm:pt-12 lg:pt-16 max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
                     
                     <!-- Left Column: Vision & Action (7 cols) -->
@@ -213,7 +321,84 @@
             </section>
 
             <!-- ==========================================
-                 2. UNIVERSAL DYNAMIC SEARCH DOCK
+                 2. FLIPKART SIGNATURE: TRENDING DEALS OF THE DAY (PRODUCTS SLIDER)
+                 ========================================== -->
+            @php 
+                $dealsProducts = $featuredProducts->isNotEmpty() ? $featuredProducts : $newArrivals;
+            @endphp
+            @if($dealsProducts->isNotEmpty())
+            <section class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12" x-data="{
+                scrollLeft() {
+                    this.$refs.dealsTrack.scrollBy({ left: -340, behavior: 'smooth' });
+                },
+                scrollRight() {
+                    this.$refs.dealsTrack.scrollBy({ left: 340, behavior: 'smooth' });
+                }
+            }">
+                <div class="p-5 sm:p-7 rounded-[2.5rem] bg-white/90 dark:bg-zinc-900/90 border border-black/[0.06] dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.03)] backdrop-blur-xl space-y-5">
+                    
+                    <!-- Flipkart Deal Header -->
+                    <div class="flex items-center justify-between pb-4 border-b border-black/[0.05] dark:border-white/10">
+                        <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+                            <div class="flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-lg font-black">⚡</span>
+                                <div>
+                                    <h2 class="text-lg sm:text-2xl font-black text-zinc-950 dark:text-white tracking-tight leading-tight">Trending Deals of the Day</h2>
+                                    <p class="text-[11px] sm:text-xs text-zinc-500">Curated boutique offers with express pan-India dispatch</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Flipkart Timer Chip -->
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs font-bold">
+                                <span>⏰</span>
+                                <span class="font-mono text-[11px]">Limited Time Offers</span>
+                            </div>
+                        </div>
+
+                        <!-- Controls & View All -->
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <a href="{{ route('catalog.index') }}" class="px-4 py-2 rounded-xl bg-zinc-950 hover:bg-black dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-zinc-950 text-xs font-bold transition shadow-xs hidden sm:inline-flex items-center gap-1.5">
+                                <span>View All Deals</span>
+                                <span>&rarr;</span>
+                            </a>
+                            
+                            <!-- Left / Right Scroll Chevrons -->
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" @click="scrollLeft()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer" aria-label="Previous Products">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <button type="button" @click="scrollRight()" class="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 flex items-center justify-center transition active:scale-95 cursor-pointer" aria-label="Next Products">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Horizontal Slider Track -->
+                    <div x-ref="dealsTrack" 
+                         class="flex items-stretch gap-4 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth py-2 px-1 touch-pan-x"
+                         style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                        @foreach($dealsProducts->take(10) as $prod)
+                            <div class="w-[210px] sm:w-[250px] shrink-0">
+                                <x-product-card :product="$prod" />
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Mobile View All Link -->
+                    <div class="text-center pt-2 sm:hidden">
+                        <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-zinc-900 dark:text-zinc-100 inline-flex items-center gap-1">
+                            <span>Explore all catalog products</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                </div>
+            </section>
+            @endif
+
+            <!-- ==========================================
+                 3. UNIVERSAL DYNAMIC SEARCH DOCK
                  ========================================== -->
             <section class="max-w-4xl mx-auto px-6 sm:px-8">
                 <div class="p-3 sm:p-4 rounded-[2rem] bg-white/80 border border-black/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.06)] backdrop-blur-2xl relative"
@@ -339,7 +524,7 @@
             </section>
 
             <!-- ==========================================
-                 3. THE 6 COMMERCE VERTICALS — LUXURY CARDS
+                 4. THE 6 COMMERCE VERTICALS — LUXURY CARDS
                  ========================================== -->
             <section id="marketplace-discovery" class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-10">
                 <div class="text-center max-w-2xl mx-auto space-y-3">
@@ -481,7 +666,7 @@
             </section>
 
             <!-- ==========================================
-                 4. TRENDING RETAIL PRODUCTS (K71MART)
+                 5. ALL CURATED RETAIL PRODUCTS (K71MART)
                  ========================================== -->
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]">
@@ -512,7 +697,7 @@
             </section>
 
             <!-- ==========================================
-                 5. CLOUD DINING & RESTAURANTS
+                 6. CLOUD DINING & RESTAURANTS
                  ========================================== -->
             @if($foodRestaurants->isNotEmpty() || $featuredFood->isNotEmpty())
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
@@ -568,7 +753,7 @@
             @endif
 
             <!-- ==========================================
-                 6. VERIFIED SERVICES & SPECIALISTS
+                 7. VERIFIED SERVICES & SPECIALISTS
                  ========================================== -->
             @if($featuredServices->isNotEmpty())
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
@@ -622,7 +807,7 @@
             @endif
 
             <!-- ==========================================
-                 7. VERIFIED PRE-OWNED & RE-COMMERCE
+                 8. VERIFIED PRE-OWNED & RE-COMMERCE
                  ========================================== -->
             @if($featuredUsed->isNotEmpty())
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
@@ -660,7 +845,7 @@
             @endif
 
             <!-- ==========================================
-                 8. B2B WHOLESALE & REAL ESTATE RFQS
+                 9. B2B WHOLESALE & REAL ESTATE RFQS
                  ========================================== -->
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]">
@@ -713,7 +898,7 @@
             </section>
 
             <!-- ==========================================
-                 9. SHOPPABLE SHORTS VIDEO ROW
+                 10. SHOPPABLE SHORTS VIDEO ROW
                  ========================================== -->
             @if($latestShorts->isNotEmpty())
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 space-y-8">
@@ -754,7 +939,7 @@
             @endif
 
             <!-- ==========================================
-                 10. SELLER RECRUITMENT — GRAPHITE GLASS CARD
+                 11. SELLER RECRUITMENT — GRAPHITE GLASS CARD
                  ========================================== -->
             <section class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
                 <div class="p-8 sm:p-14 rounded-[3rem] bg-zinc-950 text-white shadow-2xl relative overflow-hidden border border-white/10">
@@ -790,7 +975,7 @@
             </section>
 
             <!-- ==========================================
-                 11. TRUST & PLATFORM INTEGRITY PILLARS
+                 12. TRUST & PLATFORM INTEGRITY PILLARS
                  ========================================== -->
             <section class="max-w-6xl mx-auto px-6 sm:px-8">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">

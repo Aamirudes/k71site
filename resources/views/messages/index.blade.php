@@ -1363,9 +1363,10 @@
         function renderConversations(filterKeyword = '') {
             const query = filterKeyword.toLowerCase();
             const filtered = conversationsCache.filter(c => {
-                return c.recipient.username.toLowerCase().includes(query) ||
-                       c.recipient.name.toLowerCase().includes(query) ||
-                       c.last_message.body.toLowerCase().includes(query);
+                const username = (c.recipient && c.recipient.username) ? c.recipient.username.toLowerCase() : '';
+                const name = (c.recipient && c.recipient.name) ? c.recipient.name.toLowerCase() : '';
+                const lastBody = (c.last_message && c.last_message.body) ? c.last_message.body.toLowerCase() : '';
+                return username.includes(query) || name.includes(query) || lastBody.includes(query);
             });
 
             if (filtered.length === 0) {
@@ -1382,20 +1383,27 @@
             conversationsList.innerHTML = filtered.map(c => {
                 const isActive = (c.id === currentConversationId);
                 const isUnread = (c.unread_count > 0);
-                const prefix = c.last_message.is_sent_by_me ? 'You: ' : '';
+                const prefix = (c.last_message && c.last_message.is_sent_by_me) ? 'You: ' : '';
+                const lastMsgText = (c.last_message && c.last_message.body) ? c.last_message.body : 'Tap to start chatting';
+                const lastMsgTime = (c.last_message && c.last_message.time_formatted) ? c.last_message.time_formatted : '';
+                const recUsername = (c.recipient && c.recipient.username) ? c.recipient.username : 'user';
+                const recName = (c.recipient && c.recipient.name) ? c.recipient.name : 'User';
+                const recAvatar = (c.recipient && c.recipient.profile_pic) ? c.recipient.profile_pic : 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                const recId = (c.recipient && c.recipient.id) ? c.recipient.id : 0;
+
                 return `
-                    <li class="glass-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${c.recipient.id}">
+                    <li class="glass-conv-item ${isActive ? 'active' : ''}" data-conv-id="${c.id}" data-recipient-id="${recId}">
                         <div class="glass-avatar-wrap">
-                            <img src="${escapeHtml(c.recipient.profile_pic)}" alt="${escapeHtml(c.recipient.name)}" class="glass-conv-avatar">
+                            <img src="${escapeHtml(recAvatar)}" alt="${escapeHtml(recName)}" class="glass-conv-avatar">
                             ${isUnread ? '<div class="glass-unread-dot"></div>' : ''}
                         </div>
                         <div class="glass-conv-details">
                             <div class="glass-conv-top">
-                                <div class="glass-conv-username">&#64;${escapeHtml(c.recipient.username)}</div>
-                                <div class="glass-conv-time">${escapeHtml(c.last_message.time_formatted || '')}</div>
+                                <div class="glass-conv-username">&#64;${escapeHtml(recUsername)}</div>
+                                <div class="glass-conv-time">${escapeHtml(lastMsgTime)}</div>
                             </div>
                             <div class="glass-conv-last-msg ${isUnread ? 'unread-bold' : ''}">
-                                <span>${escapeHtml(prefix + c.last_message.body)}</span>
+                                <span>${escapeHtml(prefix + lastMsgText)}</span>
                             </div>
                         </div>
                     </li>
@@ -1446,27 +1454,27 @@
             })
             .then(res => res.json())
             .then(result => {
-                if (result.success && result.recipient) {
-                    const recipient = result.recipient;
-                    const convInfo = result.conversation || {};
+                const recipient = result.recipient || (result.data ? result.data.recipient : null);
+                if (result.success && recipient) {
+                    const convInfo = result.conversation || (result.data ? result.data.conversation : {});
                     activeConversationStatus = convInfo.status || 'accepted';
 
                     // Update Active Chat Header
-                    headerAvatar.src = recipient.profile_pic;
-                    headerAvatar.alt = recipient.name;
-                    headerUsername.textContent = '@' + recipient.username;
-                    headerStatus.innerHTML = `<span class="glass-online-indicator"></span> ${escapeHtml(recipient.name)}`;
+                    headerAvatar.src = recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                    headerAvatar.alt = recipient.name || 'User';
+                    headerUsername.textContent = '@' + (recipient.username || 'user');
+                    headerStatus.innerHTML = `<span class="glass-online-indicator"></span> ${escapeHtml(recipient.name || 'User')}`;
 
                     // Check Instagram Request Action Banner
                     if (convInfo.is_incoming_request) {
-                        requestBannerTitle.textContent = `Message Request from @${recipient.username}`;
+                        requestBannerTitle.textContent = `Message Request from @${recipient.username || 'user'}`;
                         requestBanner.style.display = 'flex';
                     } else {
                         requestBanner.style.display = 'none';
                     }
 
                     // Render Messages
-                    const newMessages = result.messages || [];
+                    const newMessages = result.messages || (result.data ? result.data.messages : []);
                     const wasNearBottom = isUserNearBottom();
 
                     if (JSON.stringify(newMessages) !== JSON.stringify(messagesCache)) {
@@ -1575,7 +1583,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     conversation_id: currentConversationId,
@@ -1584,10 +1593,11 @@
             })
             .then(res => res.json())
             .then(result => {
-                if (result.success && result.data) {
+                const sentMsg = result.data || result.message;
+                if (result.success && sentMsg) {
                     const index = messagesCache.findIndex(m => m.id === optimisticMsg.id);
                     if (index !== -1) {
-                        messagesCache[index] = result.data;
+                        messagesCache[index] = sentMsg;
                     }
                     renderMessages(messagesCache, {
                         username: headerUsername.textContent.replace('@', ''),
@@ -1673,7 +1683,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     conversation_id: currentConversationId,
@@ -1712,7 +1723,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     conversation_id: currentConversationId,
@@ -1830,7 +1842,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
                         body: JSON.stringify({
                             action: 'start_or_find',

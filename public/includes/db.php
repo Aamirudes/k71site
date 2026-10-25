@@ -68,14 +68,57 @@ try {
         ]);
     }
 } catch (\Throwable $e) {
-    // If direct PDO fails, try Laravel facade if booted
+    $pdo = null;
+}
+
+// 2b. If direct PDO connection was not established, bootstrap Laravel to obtain official PDO
+if (!$pdo) {
     if (class_exists('\Illuminate\Support\Facades\DB')) {
         try {
             $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
         } catch (\Throwable $ex) {
             $pdo = null;
         }
+    } else {
+        $candidateAutoloads = [
+            $basePath . '/vendor/autoload.php',
+            dirname($basePath) . '/vendor/autoload.php',
+            dirname(dirname($basePath)) . '/vendor/autoload.php'
+        ];
+        foreach ($candidateAutoloads as $al) {
+            if (file_exists($al)) {
+                $rootD = dirname($al);
+                if (file_exists($rootD . '/bootstrap/app.php')) {
+                    try {
+                        require_once $al;
+                        $appBoot = require_once $rootD . '/bootstrap/app.php';
+                        $appBoot->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+                        $pdo = \Illuminate\Support\Facades\DB::connection()->getPdo();
+                        break;
+                    } catch (\Throwable $bt) {}
+                }
+            }
+        }
     }
+}
+
+// 2c. Self-healing schema validation: ensure chat_conversations has status and requested_by
+if ($pdo) {
+    try {
+        if ($dbConnection === 'sqlite') {
+            @$pdo->exec("ALTER TABLE chat_conversations ADD COLUMN status TEXT DEFAULT 'accepted'");
+            @$pdo->exec("ALTER TABLE chat_conversations ADD COLUMN requested_by INTEGER NULL");
+        } else {
+            $checkCols = $pdo->query("SHOW COLUMNS FROM `chat_conversations` LIKE 'status'")->fetch();
+            if (!$checkCols) {
+                $pdo->exec("ALTER TABLE `chat_conversations` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'");
+            }
+            $checkCols2 = $pdo->query("SHOW COLUMNS FROM `chat_conversations` LIKE 'requested_by'")->fetch();
+            if (!$checkCols2) {
+                $pdo->exec("ALTER TABLE `chat_conversations` ADD COLUMN `requested_by` BIGINT UNSIGNED NULL");
+            }
+        }
+    } catch (\Throwable $st) {}
 }
 
 // Aliases for compatibility

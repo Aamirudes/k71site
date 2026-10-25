@@ -37,6 +37,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/delivery-status*',
             'shorts/ajax*',
             'admin-ajax.php*',
+            'api/chat*',
+            'chat/api*',
         ]);
         
         $middleware->web(append: [
