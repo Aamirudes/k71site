@@ -69,23 +69,22 @@
 @endphp
 
 <header x-data="{ 
-            searchOpen: false, 
             userMenuOpen: false, 
             cartBadgeCount: {{ $cartCount }}
         }" 
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
-        class="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16 sm:h-18">
+        class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14 sm:h-16">
             
             <!-- Left: Hamburger + Logo -->
-            <div class="flex items-center gap-3 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3.5">
                 <!-- Hamburger Trigger Button -->
                 <button @click="$dispatch('open-hamburger')" 
                         type="button"
-                        class="p-2 -ml-2 rounded-xl text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 focus:outline-none"
+                        class="p-2 -ml-1 rounded-xl text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
                         aria-label="Open Navigation Menu">
-                    <svg width="24" height="24" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="22" height="22" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
                     </svg>
                 </button>
@@ -97,17 +96,17 @@
                             @if($currentVendor->logo_url)
                                 <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 rounded-lg object-cover border border-slate-200">
                             @endif
-                            <a href="{{ route('home') }}" class="font-sans text-lg sm:text-xl font-black tracking-tight text-slate-900 leading-none">
+                            <a href="{{ route('home') }}" class="font-sans text-base sm:text-xl font-black tracking-tight text-slate-900 leading-none truncate max-w-[140px] sm:max-w-none">
                                 {{ $currentVendor->shop_name }}
                             </a>
                         </div>
                     @else
-                        <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="K71 Homepage">
-                            <div class="h-9 w-9 rounded-xl overflow-hidden bg-indigo-600 p-1 flex items-center justify-center shadow-md shadow-indigo-600/20 group-hover:scale-105 transition-transform shrink-0 border border-indigo-700">
+                        <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
+                            <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl overflow-hidden bg-slate-950 p-1 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0 border border-slate-900">
                                 <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                             </div>
-                            <div class="flex items-baseline gap-1.5 leading-none">
-                                <span class="font-sans text-2xl font-black tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
+                            <div class="flex items-baseline gap-1 leading-none">
+                                <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black transition-colors">
                                     K71
                                 </span>
                                 <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 font-mono hidden sm:inline">
@@ -197,49 +196,40 @@
                 </div>
             </div>
 
-            <!-- Right Actions: Mobile Search + Catalog + Messages + Wishlist + Cart + Account -->
-            <div class="flex items-center gap-1 sm:gap-2">
+            <!-- Right Actions: Stores + Catalog + Messages + Wishlist + Cart + Account -->
+            <div class="flex items-center gap-1 sm:gap-1.5">
 
-                <!-- Mobile-Only Search Button -->
-                <button @click="searchOpen = !searchOpen" 
-                        class="md:hidden p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200"
-                        aria-label="Search">
-                    <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-                    </svg>
-                </button>
-
-                <!-- Stores Directory Link -->
-                <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('stores.index') ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
+                <!-- Stores Directory Link (Desktop) -->
+                <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('stores.index') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
                     <span>🏪 Stores</span>
                 </a>
 
-                <!-- Catalog Link -->
-                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('catalog.*') ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
+                <!-- Catalog Link (Desktop) -->
+                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('catalog.*') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
                     <span>Catalog</span>
                 </a>
 
-                <!-- Direct Messages Quick Access (Header) -->
+                <!-- Direct Messages Quick Access -->
                 <a href="{{ route('messages.index') }}" 
-                   class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 relative"
+                   class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
                    title="Direct Messages"
                    aria-label="Direct Messages">
-                    <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                     </svg>
                     @if($navUnreadMessagesCount > 0)
-                        <span class="absolute top-1 right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs animate-pulse">
+                        <span class="absolute top-1 right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs">
                             {{ $navUnreadMessagesCount > 99 ? '99+' : $navUnreadMessagesCount }}
                         </span>
                     @endif
                 </a>
 
-                <!-- Wishlist (Desktop - Triggers Mini-Wishlist Popup) -->
+                <!-- Wishlist (Visible on mobile and desktop) -->
                 <button type="button" 
                         @click="$dispatch('open-mini-wishlist')" 
-                        class="hidden sm:flex p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 relative cursor-pointer"
+                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
                         aria-label="Wishlist">
-                    <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
                     </svg>
                     <span id="global-wishlist-badge" 
@@ -248,33 +238,34 @@
                     </span>
                 </button>
 
-                <!-- Cart Bag Button (Triggers Mini-Cart Sheet) -->
+                <!-- Cart Bag Button -->
                 <button @click="$dispatch('open-mini-cart')" 
                         type="button"
-                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-all duration-200 relative cursor-pointer"
+                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
                         aria-label="View Shopping Cart">
-                    <svg width="24" height="24" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"></path>
                     </svg>
                     <!-- Counter Badge -->
                     <span x-show="cartBadgeCount > 0"
                           x-text="cartBadgeCount"
-                          class="absolute top-1 right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
+                          class="absolute top-1 right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
                 </button>
 
-                <!-- Desktop User Menu -->
-                <div class="hidden sm:block relative ml-1">
+                <!-- User Profile / Sign In (Visible on mobile and desktop) -->
+                <div class="relative ml-0.5 sm:ml-1">
                     @guest
                         <button type="button" 
                                 @click="window.openAuthModal ? window.openAuthModal() : $dispatch('open-auth-modal')"
-                                class="px-4 py-2 rounded-full bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-all duration-200 shadow-sm shadow-indigo-600/20 cursor-pointer">
+                                class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-slate-900 text-white text-[11px] sm:text-xs font-bold hover:bg-black transition-all cursor-pointer">
                             Sign In
                         </button>
                     @else
                         <div class="relative">
                             <button @click="userMenuOpen = !userMenuOpen" 
                                     @click.away="userMenuOpen = false" 
-                                    class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-indigo-700 transition-colors cursor-pointer overflow-hidden border border-indigo-200">
+                                    class="w-8 h-8 rounded-full bg-slate-900 text-white font-black flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-black transition-colors cursor-pointer overflow-hidden border border-slate-200"
+                                    aria-label="User Account Menu">
                                 @if(auth()->user()->avatar)
                                     <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
                                 @else
@@ -308,7 +299,7 @@
                                     <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Notifications</a>
                                     @if(auth()->user()->hasRole('vendor'))
                                         <div class="border-t border-slate-100 my-1"></div>
-                                        <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50">Vendor Dashboard</a>
+                                        <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>
                                     @endif
                                     @if(auth()->user()->hasRole('admin'))
                                         <div class="border-t border-slate-100 my-1"></div>
@@ -318,7 +309,7 @@
                                 <div class="border-t border-slate-100 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50">
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer">
                                         Sign out
                                     </button>
                                 </form>
@@ -330,10 +321,90 @@
             </div>
 
         </div>
+
+        <!-- Mobile Integrated Search Bar (Always visible on mobile screens) -->
+        <div class="md:hidden pb-2.5 pt-0.5"
+             x-data="{
+                mq: '',
+                msuggestions: [],
+                mloading: false,
+                mopen: false,
+                fetchSuggest() {
+                    if(this.mq.trim().length < 2) {
+                        this.msuggestions = [];
+                        this.mopen = false;
+                        return;
+                    }
+                    this.mloading = true;
+                    fetch('/api/search/suggest?q=' + encodeURIComponent(this.mq))
+                        .then(r => r.json())
+                        .then(data => {
+                            this.msuggestions = data.results || [];
+                            this.mopen = true;
+                            this.mloading = false;
+                        })
+                        .catch(() => { this.mloading = false; });
+                }
+             }"
+             @click.away="mopen = false">
+            <form action="{{ route('catalog.index') }}" method="GET" class="relative">
+                <div class="relative flex items-center">
+                    <input type="text" name="search" x-model="mq"
+                           @input.debounce.250ms="fetchSuggest()"
+                           @focus="if(msuggestions.length > 0) mopen = true"
+                           autocomplete="off"
+                           placeholder="Search products, stores, brands..." 
+                           class="w-full pl-9 pr-16 py-2 rounded-xl border border-slate-200/90 bg-slate-100/80 text-xs text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
+                    <div class="absolute left-2.5 text-slate-400">
+                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                    </div>
+                    <button type="submit" class="absolute right-1 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-bold tracking-wide">
+                        Search
+                    </button>
+                </div>
+            </form>
+
+            <!-- Mobile Live Autocomplete Dropdown -->
+            <div x-show="mopen && (msuggestions.length > 0 || mloading)" 
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="absolute left-3 right-3 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100 max-h-72 overflow-y-auto"
+                 style="display: none;">
+                
+                <div x-show="mloading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span>Searching...</span>
+                </div>
+
+                <template x-for="item in msuggestions" :key="item.id">
+                    <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition">
+                        <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-slate-900 truncate" x-text="item.title"></p>
+                            <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
+                                <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
+                            </div>
+                        </div>
+                    </a>
+                </template>
+                
+                <div x-show="msuggestions.length > 0" class="p-2 bg-slate-50 text-center">
+                    <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(mq)" class="text-xs font-bold text-slate-900">
+                        View all results for "<span x-text="mq"></span>" →
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Integrated Category Navigation Row -->
-    <div class="border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
+    <!-- Integrated Category Navigation Row (Hidden on mobile when on Home page to avoid duplicate category slider) -->
+    <div class="{{ request()->routeIs('home') ? 'hidden md:block' : '' }} border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
                  style="-webkit-overflow-scrolling: touch;"
@@ -351,83 +422,6 @@
                     </a>
                 @endforeach
             </nav>
-        </div>
-    </div>
-
-    <!-- Search Overlay with Live Autocomplete -->
-    <div x-show="searchOpen" 
-         x-data="{
-            mq: '',
-            msuggestions: [],
-            mloading: false,
-            mfetchSuggest() {
-                if(this.mq.trim().length < 2) {
-                    this.msuggestions = [];
-                    return;
-                }
-                this.mloading = true;
-                fetch('/api/search/suggest?q=' + encodeURIComponent(this.mq))
-                    .then(r => r.json())
-                    .then(data => {
-                        this.msuggestions = data.results || [];
-                        this.mloading = false;
-                    })
-                    .catch(() => { this.mloading = false; });
-            }
-         }"
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 -translate-y-2"
-         @click.away="searchOpen = false"
-         class="bg-white/98 backdrop-blur-xl border-t border-slate-200 p-4 shadow-xl"
-         style="display: none;">
-        <div class="max-w-3xl mx-auto relative">
-            <form action="{{ route('catalog.index') }}" method="GET">
-                <input type="text" name="search" x-model="mq"
-                       @input.debounce.250ms="mfetchSuggest()"
-                       placeholder="Search products, brands, services, machinery, cars, thrift..." 
-                       class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium"
-                       x-ref="navSearchInput"
-                       x-init="$watch('searchOpen', val => { if(val) setTimeout(() => $refs.navSearchInput.focus(), 100) })">
-                <div class="absolute left-3.5 top-3.5 text-slate-400">
-                    <svg width="20" height="20" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-                    </svg>
-                </div>
-            </form>
-
-            <!-- Mobile Suggestions List -->
-            <div x-show="msuggestions.length > 0 || mloading" class="mt-3 bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                <div x-show="mloading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                    <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                    <span>Searching...</span>
-                </div>
-
-                <template x-for="item in msuggestions" :key="item.id">
-                    <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition">
-                        <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-900 truncate" x-text="item.title"></p>
-                            <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
-                                <span class="uppercase px-1 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
-                            </div>
-                        </div>
-                    </a>
-                </template>
-
-                <div x-show="msuggestions.length > 0" class="p-2 bg-slate-50 text-center">
-                    <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(mq)" class="text-xs font-bold text-slate-900">
-                        View all results for "<span x-text="mq"></span>" →
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </header>
