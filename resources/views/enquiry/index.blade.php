@@ -257,7 +257,7 @@
                                 </a>
                                 <button type="button" 
                                         @click="openRfqModal('{{ addslashes($prod->title) }}', {{ $prod->vendor_id ?? 'null' }}, {{ $prod->id }})"
-                                        class="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black text-center shadow-md shadow-indigo-600/20 transition cursor-pointer">
+                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold text-center shadow-xs transition cursor-pointer">
                                     Get Best Price
                                 </button>
                             </div>

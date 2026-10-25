@@ -31,20 +31,16 @@
         <div @click.outside="close()"
              class="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden relative">
 
-            <!-- Decorative Ambient Glow -->
-            <div class="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/15 to-transparent blur-2xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-gradient-to-tr from-rose-500/15 to-transparent blur-2xl pointer-events-none"></div>
-
             <!-- Header & Close Button -->
-            <div class="px-6 sm:px-8 pt-7 pb-4 flex items-center justify-between relative z-10 border-b border-slate-100">
+            <div class="px-6 sm:px-8 pt-6 pb-4 flex items-center justify-between relative z-10 border-b border-slate-100">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-black shadow-md shadow-indigo-500/20 text-base">
+                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-tight text-sm shadow-xs">
                         K71
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-none" 
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none" 
                             x-text="tab === 'login' ? 'Sign In to K71' : (tab === 'register' ? 'Create Your Account' : 'Reset Password')"></h3>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">One account for B2B Quotes, Retail & Services</p>
+                        <p class="text-[11px] text-slate-500 font-medium mt-1">Unified access for Mart, Services, Foods, Used & RFQs</p>
                     </div>
                 </div>
 
@@ -97,12 +93,12 @@
                     <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Signing In As</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all"
-                               :class="loginRole === 'customer' ? 'border-indigo-600 bg-indigo-50/70 text-indigo-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'">
+                               :class="loginRole === 'customer' ? 'border-slate-900 bg-slate-900 text-white shadow-xs' : 'border-slate-200 text-slate-700 bg-slate-50/70 hover:bg-slate-100'">
                             <input type="radio" name="modal_login_role" value="customer" x-model="loginRole" class="sr-only">
                             <span>🛍️ Buyer / Client</span>
                         </label>
                         <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all"
-                               :class="loginRole === 'vendor' ? 'border-indigo-600 bg-indigo-50/70 text-indigo-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'">
+                               :class="loginRole === 'vendor' ? 'border-slate-900 bg-slate-900 text-white shadow-xs' : 'border-slate-200 text-slate-700 bg-slate-50/70 hover:bg-slate-100'">
                             <input type="radio" name="modal_login_role" value="vendor" x-model="loginRole" class="sr-only">
                             <span>🏭 Supplier / Seller</span>
                         </label>
@@ -117,7 +113,7 @@
                                x-model="loginInput" 
                                placeholder="e.g. buyer@company.com or 9876543210"
                                required
-                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400">
+                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
                     </div>
                 </div>
 
@@ -125,14 +121,14 @@
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
                         <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Password</label>
-                        <button type="button" @click="tab = 'forgot'; errorMessage = '';" class="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition">Forgot password?</button>
+                        <button type="button" @click="tab = 'forgot'; errorMessage = '';" class="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition underline underline-offset-2">Forgot password?</button>
                     </div>
                     <div class="relative">
                         <input :type="showPassword ? 'text' : 'password'" 
                                x-model="passwordInput" 
                                placeholder="Enter your password"
                                required
-                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all pr-12">
+                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all pr-12">
                         <button type="button" 
                                 @click="showPassword = !showPassword" 
                                 class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 focus:outline-none text-xs font-semibold">
@@ -144,7 +140,7 @@
                 <!-- Submit Button -->
                 <button type="submit" 
                         :disabled="isLoading" 
-                        class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
+                        class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs sm:text-sm font-bold tracking-wide shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
                     <template x-if="isLoading">
                         <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     </template>
@@ -160,7 +156,7 @@
                            x-model="regName" 
                            placeholder="e.g. Ramesh Sharma or Marble Impex Ltd"
                            required
-                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="space-y-1">
@@ -169,7 +165,7 @@
                            x-model="regEmail" 
                            placeholder="e.g. procurement@company.com"
                            required
-                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="space-y-1">
@@ -179,7 +175,7 @@
                         <input type="tel" 
                                x-model="regPhone" 
                                placeholder="10-digit mobile number"
-                               class="w-full px-4 py-2.5 rounded-r-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all">
+                               class="w-full px-4 py-2.5 rounded-r-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all">
                     </div>
                 </div>
 
@@ -191,7 +187,7 @@
                                placeholder="••••••••"
                                required
                                minlength="8"
-                               class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all pr-12">
+                               class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all pr-12">
                         <button type="button" 
                                 @click="showPassword = !showPassword" 
                                 class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-700 focus:outline-none text-xs font-semibold">
@@ -203,7 +199,7 @@
                 <div class="pt-2">
                     <button type="submit" 
                             :disabled="isLoading" 
-                            class="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-xs sm:text-sm font-bold tracking-wide shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
+                            class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs sm:text-sm font-bold tracking-wide shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
                         <template x-if="isLoading">
                             <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </template>
@@ -220,13 +216,13 @@
                            x-model="forgotEmail" 
                            placeholder="name@company.com"
                            required
-                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="flex items-center gap-2">
                     <button type="submit" 
                             :disabled="isLoading" 
-                            class="flex-1 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center justify-center gap-2 cursor-pointer">
+                            class="flex-1 py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
                         <span x-text="isLoading ? 'Sending...' : 'Send Recovery Link'"></span>
                     </button>
                     <button type="button" 

@@ -84,10 +84,10 @@
                    target="{{ $item->target ?? '_self' }}"
                    class="flex flex-col items-center justify-center -mt-4 group relative focus:outline-none"
                    aria-label="{{ $item->title }}">
-                    <div class="w-12 h-12 rounded-full text-white shadow-lg flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-active:scale-95 border-2 {{
-                        $theme === 'used' ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 shadow-emerald-500/30 border-white' :
-                        ($theme === 'shorts' ? 'bg-gradient-to-tr from-rose-600 via-red-500 to-amber-500 shadow-rose-500/40 border-zinc-900' :
-                        'bg-gradient-to-tr from-rose-600 via-red-500 to-amber-500 shadow-rose-500/30 border-white')
+                    <div class="w-12 h-12 rounded-full text-white shadow-md flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-active:scale-95 border-2 {{
+                        $theme === 'used' ? 'bg-slate-900 shadow-slate-900/25 border-white' :
+                        ($theme === 'shorts' ? 'bg-rose-600 shadow-rose-600/30 border-zinc-900' :
+                        'bg-slate-900 shadow-slate-900/25 border-white')
                     }}">
                         @if($item->icon_type === 'image' && $item->image_url)
                             <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-7 h-7 object-contain">
@@ -103,13 +103,13 @@
                     </div>
                     <span class="text-[9.5px] mt-1 font-bold tracking-tight {{ 
                         $theme === 'shorts' ? ($isActive ? 'text-rose-400' : 'text-zinc-300') : 
-                        ($theme === 'used' ? ($isActive ? 'text-emerald-600' : 'text-stone-800') : 
-                        ($isActive ? 'text-rose-600' : 'text-slate-800')) 
+                        ($theme === 'used' ? ($isActive ? 'text-slate-900' : 'text-slate-700') : 
+                        ($isActive ? 'text-slate-950 font-extrabold' : 'text-slate-700')) 
                     }}">
                         {{ $item->title }}
                     </span>
                     @if($item->badge)
-                        <span class="absolute -top-1 -right-0.5 text-white text-[7.5px] font-black uppercase px-1 py-0.2 rounded-full leading-tight shadow-sm {{ $theme === 'used' ? 'bg-emerald-600' : 'bg-rose-600 animate-pulse' }}">
+                        <span class="absolute -top-1 -right-0.5 text-white text-[7.5px] font-black uppercase px-1.5 py-0.2 rounded-full leading-tight shadow-2xs {{ $theme === 'shorts' ? 'bg-rose-600' : 'bg-slate-900' }}">
                             {{ $item->badge }}
                         </span>
                     @endif
