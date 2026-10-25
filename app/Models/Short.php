@@ -127,15 +127,12 @@ class Short extends Model
         $vendor = $this->vendor;
         $vendorName = $vendor?->shop_name ?? 'Creator';
         $vendorStore = $vendor?->shop_name ?? '';
-        $vendorAvatar = $vendor?->logo ? asset('storage/' . $vendor->logo) : asset('images/default-avatar.png');
+        $vendorAvatar = $vendor?->logo ? format_image_url($vendor->logo, asset('images/default-avatar.png')) : asset('images/default-avatar.png');
         $vendorStoreUrl = $vendor ? route('storefront.show', $vendor->slug) : '#';
 
         $categories = $this->category ? [$this->category->name] : [];
 
-        $thumb = $this->thumb_url;
-        if (!$thumb) {
-            $thumb = self::placeholderThumb($this->id, $this->title);
-        }
+        $thumb = $this->thumb_url ? format_image_url($this->thumb_url) : self::placeholderThumb($this->id, $this->title);
 
         return [
             'id' => $this->id,
@@ -143,7 +140,7 @@ class Short extends Model
             'excerpt' => Str::limit($this->description ?? '', 80),
             'video_url' => $this->video_url,
             'thumb_url' => $thumb,
-            'thumb_b_url' => $this->thumb_b_url,
+            'thumb_b_url' => $this->thumb_b_url ? format_image_url($this->thumb_b_url) : null,
             'product_ids' => $this->relationLoaded('products') ? $this->products->pluck('id')->toArray() : $this->products()->pluck('products.id')->toArray(),
             'vendor_id' => $this->vendor_id,
             'vendor_name' => $vendorName,

@@ -274,7 +274,7 @@
                     @if($heroShort->products->isNotEmpty())
                     @php $firstProd = $heroShort->products->first(); @endphp
                     <div class="mt-4 p-3 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-4">
-                        <img src="{{ $firstProd->images->first() ? asset('storage/' . $firstProd->images->first()->path) : asset('images/product-placeholder.svg') }}"
+                        <img src="{{ $firstProd->primary_image_url }}"
                              alt="{{ $firstProd->title }}"
                              class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-slate-200 shrink-0">
                         
@@ -390,7 +390,7 @@
                 <div class="bg-white border border-slate-200 rounded-lg p-2.5 flex flex-col justify-between hover:shadow-md transition group">
                     <a href="{{ route('product.show', $p->slug) }}" class="block">
                         <div class="relative aspect-square rounded-md overflow-hidden bg-slate-100">
-                            <img src="{{ $p->images->first() ? asset('storage/' . $p->images->first()->path) : asset('images/product-placeholder.svg') }}"
+                            <img src="{{ $p->primary_image_url }}"
                                  alt="{{ $p->title }}"
                                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                             @if($disc > 0)

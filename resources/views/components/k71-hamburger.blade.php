@@ -78,16 +78,18 @@
 
         <!-- Drawer Header -->
         <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-600 via-teal-500 to-sky-500 flex items-center justify-center text-white text-xs font-black shadow-sm shrink-0">
-                    M
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-indigo-600 p-1 flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0 border border-indigo-700">
+                    <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                 </div>
-                <span class="font-sans text-xl font-black tracking-tight text-zinc-950 dark:text-white">
-                    Marble<span class="text-emerald-500 dark:text-emerald-400 font-bold">Mandi</span>
-                </span>
-                <span class="text-[9px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
-                    Ecosystem
-                </span>
+                <div class="flex items-baseline gap-1.5 leading-none">
+                    <span class="font-sans text-xl font-black tracking-tight text-zinc-950 dark:text-white">
+                        K71
+                    </span>
+                    <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        MARKETPLACE
+                    </span>
+                </div>
             </div>
             <button @click="menuOpen = false" 
                     class="w-8 h-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center transition-colors">

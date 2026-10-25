@@ -28,15 +28,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $host = request()->getHost();
-        $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '']) 
-            || str_contains($host, 'localhost') 
-            || str_contains($host, '127.0.0.1')
-            || str_starts_with($host, '192.168.')
-            || str_starts_with($host, '10.')
-            || str_starts_with($host, '172.');
-        if (app()->environment('production') && !$isLocalHost && !str_starts_with(config('app.url'), 'http://')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+        if (!$this->app->runningInConsole() && $this->app->bound('request')) {
+            $host = request()->getHost();
+            $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '']) 
+                || str_contains($host, 'localhost') 
+                || str_contains($host, '127.0.0.1')
+                || str_starts_with($host, '192.168.')
+                || str_starts_with($host, '10.')
+                || str_starts_with($host, '172.');
+            if (app()->environment('production') && !$isLocalHost && !str_starts_with(config('app.url'), 'http://')) {
+                \Illuminate\Support\Facades\URL::forceScheme('https');
+            }
         }
         Product::addGlobalScope(new VendorScope);
         SizeChart::addGlobalScope(new VendorScope);

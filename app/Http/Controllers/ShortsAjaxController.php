@@ -411,7 +411,7 @@ class ShortsAjaxController extends Controller
             $isOnSale = $compareRupees && ($compareRupees > $priceRupees);
             $discountPct = $isOnSale ? (int) round((1 - ($priceRupees / $compareRupees)) * 100) : 0;
 
-            $imageUrl = $p->images->first() ? asset('storage/' . $p->images->first()->path) : asset('images/product-placeholder.svg');
+            $imageUrl = $p->primary_image_url;
 
             $trayItems[] = [
                 'id' => $p->id,
@@ -423,7 +423,7 @@ class ShortsAjaxController extends Controller
                 'on_sale' => $isOnSale,
                 'discount_pct' => $discountPct,
                 'image' => $imageUrl,
-                'gallery' => $p->images->pluck('path')->map(fn($path) => asset('storage/' . $path))->toArray(),
+                'gallery' => $p->images->map(fn($img) => $img->url)->toArray(),
                 'url' => route('product.show', $p->slug),
                 'add_to_cart' => route('cart.add', ['product' => $p->id]),
                 'in_stock' => $p->total_stock > 0,

@@ -61,7 +61,7 @@ class BookingController extends Controller
             ->with(['product.images', 'vendor.settings'])
             ->firstOrFail();
 
-        return view('services.show', compact('booking'));
+        return view('services.booking-show', compact('booking'));
     }
 
     /**

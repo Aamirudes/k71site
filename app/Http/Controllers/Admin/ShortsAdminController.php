@@ -92,4 +92,23 @@ class ShortsAdminController extends Controller
             'message' => $short->is_manual_boost ? 'Short pinned to top of feeds!' : 'Manual pin removed.',
         ]);
     }
+
+    /**
+     * Delete a short permanently by Admin.
+     */
+    public function destroy(Short $short)
+    {
+        $id = $short->id;
+        $title = $short->title;
+        $short->delete();
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Short #{$id} '{$title}' permanently removed.",
+            ]);
+        }
+
+        return back()->with('success', "Short #{$id} ('{$title}') deleted successfully.");
+    }
 }

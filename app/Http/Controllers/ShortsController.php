@@ -174,7 +174,7 @@ class ShortsController extends Controller
                     'price_raw' => $priceRupees,
                     'original_price' => $compareRupees ? '₹' . number_format($compareRupees, 0) : null,
                     'discount_pct' => $discountPct,
-                    'image' => $p->images->first() ? asset('storage/' . $p->images->first()->path) : asset('images/product-placeholder.svg'),
+                    'image' => $p->primary_image_url,
                     'in_stock' => $p->total_stock > 0,
                     'rating' => (float) ($p->avg_rating ?? 4.8),
                     'reviews_count' => (int) ($p->review_count ?? 18),

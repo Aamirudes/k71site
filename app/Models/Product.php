@@ -56,6 +56,9 @@ class Product extends Model
         'specifications_json',
         'b2b_tiers_json',
         'service_config_json',
+        'faqs_json',
+        'requirements_prompt',
+        'addons_json',
         'reserve_price',
         'bid_increment',
         'auction_starts_at',
@@ -71,6 +74,8 @@ class Product extends Model
         'specifications_json' => 'array',
         'b2b_tiers_json' => 'array',
         'service_config_json' => 'array',
+        'faqs_json' => 'array',
+        'addons_json' => 'array',
         'tags' => 'json',
         'size_chart' => 'array',
         'custom_fields' => 'array',
@@ -381,6 +386,31 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function getCoverImageUrlAttribute(): string
+    {
+        return $this->primary_image_url;
+    }
+
+    public function serviceOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrder::class);
+    }
+
+    public function getBasicPackageAttribute(): ?ProductGigPackage
+    {
+        return $this->gigPackages->firstWhere('tier', 'basic');
+    }
+
+    public function getStandardPackageAttribute(): ?ProductGigPackage
+    {
+        return $this->gigPackages->firstWhere('tier', 'standard');
+    }
+
+    public function getPremiumPackageAttribute(): ?ProductGigPackage
+    {
+        return $this->gigPackages->firstWhere('tier', 'premium');
     }
 
     public function shorts(): BelongsToMany

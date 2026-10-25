@@ -157,3 +157,35 @@ if (!function_exists('format_user_avatar')) {
     }
 }
 
+if (!function_exists('format_image_url')) {
+    /**
+     * Return universally valid image URL handling absolute HTTP/HTTPS, Unsplash, storage paths, and fallbacks.
+     */
+    function format_image_url(?string $path, ?string $fallback = null): string
+    {
+        if (empty($path)) {
+            return $fallback ?: asset('images/product-placeholder.svg');
+        }
+
+        $path = trim($path);
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, 'storage/')) {
+            return asset($path);
+        }
+
+        if (str_starts_with($path, '/storage/')) {
+            return asset(ltrim($path, '/'));
+        }
+
+        if (str_starts_with($path, '/')) {
+            return asset(ltrim($path, '/'));
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
+    }
+}
+

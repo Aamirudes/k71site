@@ -64,5 +64,14 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
 
         // Vendor Review Replies (Phase 10)
         Route::post('/reviews/{review}/reply', [\App\Http\Controllers\ReviewController::class, 'vendorReply'])->name('reviews.reply');
+
+        // Vendor Freelance Services & Project Studio
+        Route::get('/services', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'index'])->name('services.index');
+        Route::get('/services/create', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'create'])->name('services.create');
+        Route::post('/services', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'store'])->name('services.store');
+        Route::get('/services/{product}/edit', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'edit'])->name('services.edit');
+        Route::put('/services/{product}', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'update'])->name('services.update');
+        Route::delete('/services/{product}', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'destroy'])->name('services.destroy');
+        Route::get('/service-orders', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'orders'])->name('service_orders.index');
     });
 });

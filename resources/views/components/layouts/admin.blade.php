@@ -115,6 +115,12 @@
                 <div>
                     <p class="px-3 text-[11px] font-mono uppercase tracking-widest text-slate-400 font-semibold mb-2">Commerce Operations</p>
                     <div class="space-y-1">
+                        <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.users*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                            <span class="text-base">👥</span>
+                            <span>Users &amp; Accounts</span>
+                            <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.users*') ? 'bg-slate-900 text-amber-300' : 'bg-purple-500/20 text-purple-300' }}">Super</span>
+                        </a>
+
                         <a href="{{ route('admin.orders') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.orders*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                             <span>All Orders</span>
@@ -129,6 +135,12 @@
                         <a href="{{ route('admin.products') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.products*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                             <span>All Products</span>
+                        </a>
+
+                        <a href="{{ route('admin.services.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.services*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                            <span class="text-base">⚡</span>
+                            <span>Services &amp; Gigs</span>
+                            <span class="ml-auto text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded {{ request()->routeIs('admin.services*') ? 'bg-slate-900 text-amber-300' : 'bg-purple-500/20 text-purple-300' }}">Pro</span>
                         </a>
 
                         <a href="{{ route('admin.vendors') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ request()->routeIs('admin.vendors*') ? 'bg-amber-500 text-slate-950 font-semibold shadow-md shadow-amber-500/20' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">

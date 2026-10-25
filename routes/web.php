@@ -97,9 +97,30 @@ Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show']
 Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
 Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');
 
-// Services Vertical & Bookings Routes (Phase 7)
+// K71 Services & Freelance Marketplace Routes
 Route::get('/services', [\App\Http\Controllers\ServicesController::class, 'index'])->name('services.index');
+Route::get('/services/category/{slug}', [\App\Http\Controllers\ServicesController::class, 'category'])->name('services.category');
+Route::get('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'becomeSeller'])->name('services.become_seller');
+Route::post('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'storeSeller'])->name('services.store_seller');
 Route::get('/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('services.provider');
+Route::get('/services/{slug}', [\App\Http\Controllers\ServicesController::class, 'show'])->name('services.show');
+
+// Service Ordering & Checkout
+Route::get('/services/order/{product}', [\App\Http\Controllers\ServiceOrderController::class, 'checkout'])->name('services.order.checkout');
+Route::post('/services/order/{product}', [\App\Http\Controllers\ServiceOrderController::class, 'placeOrder'])->name('services.order.place');
+
+// Protected Service Workspace & Deliverables Management
+Route::middleware('auth')->group(function () {
+    Route::get('/account/service-orders', [\App\Http\Controllers\ServiceOrderController::class, 'myOrders'])->name('services.orders.index');
+    Route::get('/services/workspace/{order}', [\App\Http\Controllers\ServiceWorkspaceController::class, 'show'])->name('services.workspace');
+    Route::post('/services/workspace/{order}/message', [\App\Http\Controllers\ServiceWorkspaceController::class, 'sendMessage'])->name('services.workspace.message');
+    Route::post('/services/workspace/{order}/deliver', [\App\Http\Controllers\ServiceWorkspaceController::class, 'submitDelivery'])->name('services.workspace.deliver');
+    Route::post('/services/workspace/{order}/revision', [\App\Http\Controllers\ServiceWorkspaceController::class, 'requestRevision'])->name('services.workspace.revision');
+    Route::post('/services/workspace/{order}/approve', [\App\Http\Controllers\ServiceWorkspaceController::class, 'approveOrder'])->name('services.workspace.approve');
+    Route::post('/services/workspace/{order}/dispute', [\App\Http\Controllers\ServiceWorkspaceController::class, 'raiseDispute'])->name('services.workspace.dispute');
+});
+
+// Preserved In-Person / Doorstep Bookings
 Route::post('/services/book/{product}', [\App\Http\Controllers\BookingController::class, 'store'])->name('services.book');
 Route::get('/bookings/{booking_number}', [\App\Http\Controllers\BookingController::class, 'show'])->name('bookings.show');
 
@@ -239,9 +260,26 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn() => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', [\App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+    // Users & Superpowers Control
+    Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users'])->name('users.index');
+    Route::delete('/users/{user}', [\App\Http\Controllers\AdminController::class, 'deleteUser'])->name('users.destroy');
+    Route::post('/users/{user}/role', [\App\Http\Controllers\AdminController::class, 'updateUserRole'])->name('users.role');
+
+    // Vendors Control
     Route::get('/vendors', [\App\Http\Controllers\AdminController::class, 'vendors'])->name('vendors');
     Route::put('/vendors/{vendor}/status', [\App\Http\Controllers\AdminController::class, 'updateVendorStatus'])->name('vendors.status');
+    Route::delete('/vendors/{vendor}', [\App\Http\Controllers\AdminController::class, 'deleteVendor'])->name('vendors.destroy');
+
+    // Products Control
     Route::get('/products', [\App\Http\Controllers\AdminController::class, 'products'])->name('products');
+    Route::delete('/products/{product}', [\App\Http\Controllers\AdminController::class, 'deleteProduct'])->name('products.destroy');
+
+    // Services Control
+    Route::get('/services', [\App\Http\Controllers\AdminController::class, 'services'])->name('services.index');
+    Route::delete('/services/{service}', [\App\Http\Controllers\AdminController::class, 'deleteService'])->name('services.destroy');
+    Route::patch('/services/{service}/status', [\App\Http\Controllers\AdminController::class, 'updateServiceStatus'])->name('services.status');
+
+    // Orders & Treasury
     Route::get('/orders', [\App\Http\Controllers\AdminController::class, 'orders'])->name('orders');
     Route::post('/orders/batch-settlement', [\App\Http\Controllers\AdminController::class, 'processBatchSettlements'])->name('orders.batch_settlement');
     Route::get('/orders/{order}', [\App\Http\Controllers\AdminController::class, 'showOrder'])->name('orders.show');
@@ -255,6 +293,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/shorts/{short}/approve', [ShortsAdminController::class, 'approve'])->name('shorts.approve');
     Route::post('/shorts/{short}/reject', [ShortsAdminController::class, 'reject'])->name('shorts.reject');
     Route::post('/shorts/{short}/manual-boost', [ShortsAdminController::class, 'manualBoost'])->name('shorts.manual_boost');
+    Route::delete('/shorts/{short}', [ShortsAdminController::class, 'destroy'])->name('shorts.destroy');
 
     // Trust Moderation, Promotions & Audit Logs (Phase 10)
     Route::get('/reports', [\App\Http\Controllers\AdminController::class, 'reports'])->name('reports.index');

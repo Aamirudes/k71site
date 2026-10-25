@@ -11,6 +11,8 @@ use App\Models\Report;
 use App\Models\Promotion;
 use App\Models\AuditLog;
 use App\Models\Review;
+use App\Models\Short;
+use App\Models\Category;
 use App\Services\SettlementService;
 use App\Services\PayoutService;
 use Carbon\Carbon;
@@ -533,5 +535,192 @@ class AdminController extends Controller
         $logs = $query->paginate(30)->withQueryString();
 
         return view('admin.audit-logs.index', compact('logs'));
+    }
+
+    /**
+     * Users Directory & Master Account Control
+     */
+    public function users(Request $request)
+    {
+        $query = User::with(['vendor'])->withCount(['orders']);
+
+        if ($search = trim($request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($role = $request->input('role')) {
+            if ($role === 'admin') {
+                $query->where(function($q) {
+                    $q->where('role', 'admin')->orWhere('is_admin', true)->orWhereIn('email', ['crab.hashir@gmail.com', 'hashir0867@gmail.com']);
+                });
+            } elseif ($role === 'vendor') {
+                $query->whereHas('vendor');
+            } elseif ($role === 'customer') {
+                $query->doesntHave('vendor')->where('role', '!=', 'admin');
+            }
+        }
+
+        $users = $query->latest()->paginate(25)->withQueryString();
+
+        $counts = [
+            'all' => User::count(),
+            'admins' => User::where('role', 'admin')->orWhere('is_admin', true)->count(),
+            'vendors' => User::has('vendor')->count(),
+            'customers' => User::doesntHave('vendor')->count(),
+        ];
+
+        return view('admin.users.index', compact('users', 'counts'));
+    }
+
+    /**
+     * Delete user permanently or soft-delete safely
+     */
+    public function deleteUser(Request $request, User $user)
+    {
+        // Prevent deleting self
+        if ($user->id === auth()->id()) {
+            return back()->with('error', "Cannot delete your own account while logged in as Master Admin.");
+        }
+
+        $name = $user->name ?: $user->email;
+
+        // If user is a vendor, delete or detach vendor
+        if ($user->vendor) {
+            $user->vendor->products()->delete();
+            $user->vendor->delete();
+        }
+
+        // Delete user's cart, sessions, etc.
+        DB::table('cart_items')->whereIn('cart_id', function($q) use ($user) {
+            $q->select('id')->from('carts')->where('user_id', $user->id);
+        })->delete();
+        DB::table('carts')->where('user_id', $user->id)->delete();
+        DB::table('wishlists')->where('user_id', $user->id)->delete();
+
+        $user->delete();
+
+        return back()->with('success', "User '{$name}' (ID #{$user->id}) was permanently deleted by Master Admin.");
+    }
+
+    /**
+     * Update user role (admin, vendor, customer)
+     */
+    public function updateUserRole(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'role' => 'required|in:admin,vendor,customer,user',
+        ]);
+
+        $user->role = $validated['role'];
+        if ($validated['role'] === 'admin') {
+            $user->is_admin = true;
+        }
+        $user->save();
+
+        return back()->with('success', "Role for {$user->name} updated to " . strtoupper($validated['role']) . ".");
+    }
+
+    /**
+     * Delete Product by Master Admin
+     */
+    public function deleteProduct(Request $request, Product $product)
+    {
+        $title = $product->title;
+        $id = $product->id;
+
+        // Delete related images & records
+        $product->images()->delete();
+        $product->delete();
+
+        return back()->with('success', "Product #{$id} '{$title}' was successfully deleted from the marketplace.");
+    }
+
+    /**
+     * Delete Vendor by Master Admin
+     */
+    public function deleteVendor(Request $request, Vendor $vendor)
+    {
+        $shop = $vendor->shop_name;
+        $id = $vendor->id;
+
+        // Delete associated products & delete vendor
+        Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->delete();
+        $vendor->delete();
+
+        return back()->with('success', "Vendor boutique '{$shop}' (ID #{$id}) and all associated catalog items have been deleted.");
+    }
+
+    /**
+     * Services & Freelance Moderation Hub for Master Admin
+     */
+    public function services(Request $request)
+    {
+        $query = Product::withoutGlobalScopes()
+            ->where('vertical', 'services')
+            ->with(['vendor', 'category', 'images', 'gigPackages']);
+
+        if ($search = trim($request->input('search', ''))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', "%{$search}%"));
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        if ($cat = $request->input('category')) {
+            $query->whereHas('category', fn($q) => $q->where('slug', $cat));
+        }
+
+        $services = $query->latest()->paginate(20)->withQueryString();
+
+        $counts = [
+            'all' => Product::withoutGlobalScopes()->where('vertical', 'services')->count(),
+            'active' => Product::withoutGlobalScopes()->where('vertical', 'services')->where('status', 'active')->count(),
+            'pending' => Product::withoutGlobalScopes()->where('vertical', 'services')->where('status', 'draft')->count(),
+        ];
+
+        $categories = Category::where('vertical', 'services')->get();
+
+        return view('admin.services.index', compact('services', 'counts', 'categories'));
+    }
+
+    /**
+     * Delete Service by Master Admin
+     */
+    public function deleteService(Request $request, Product $service)
+    {
+        $title = $service->title;
+        $id = $service->id;
+
+        $service->gigPackages()->delete();
+        $service->images()->delete();
+        $service->delete();
+
+        return back()->with('success', "Service #{$id} '{$title}' was permanently deleted.");
+    }
+
+    /**
+     * Update Service Status (active, draft, suspended)
+     */
+    public function updateServiceStatus(Request $request, Product $service)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:active,draft,suspended',
+        ]);
+
+        $service->status = $validated['status'];
+        $service->save();
+
+        return back()->with('success', "Service '{$service->title}' status updated to " . strtoupper($validated['status']) . ".");
     }
 }
