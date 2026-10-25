@@ -101,7 +101,7 @@ class Product extends Model
             return false;
         }
 
-        if ($this->isBooking() || $this->product_type === 'service') {
+        if ($this->isBooking() || $this->vertical === 'services') {
             return false;
         }
 
@@ -118,7 +118,7 @@ class Product extends Model
             return true;
         }
 
-        if ($this->vertical === 'enquiry' || $this->product_type === 'enquiry') {
+        if ($this->vertical === 'enquiry') {
             return true;
         }
 

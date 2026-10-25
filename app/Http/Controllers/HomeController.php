@@ -225,8 +225,7 @@ class HomeController extends Controller
         $featuredUsed = Product::with(['images', 'vendor', 'category'])
             ->where(function($q) {
                 $q->where('vertical', 'used')
-                  ->orWhere('listing_type', 'classified')
-                  ->orWhere('product_type', 'used');
+                  ->orWhere('listing_type', 'classified');
             })
             ->where('status', 'active')
             ->latest()
@@ -244,8 +243,7 @@ class HomeController extends Controller
             ->where(function($q) {
                 $q->where('vertical', 'enquiry')
                   ->orWhere('listing_type', 'enquiry')
-                  ->orWhere('listing_type', 'quote_only')
-                  ->orWhere('product_type', 'enquiry');
+                  ->orWhere('listing_type', 'quote_only');
             })
             ->where('status', 'active')
             ->latest()

@@ -16,7 +16,7 @@ class ProductViewController extends Controller
             ->firstOrFail();
 
         // Strict vertical isolation: Redirect services, gigs, used, and food listings to their dedicated experiences
-        if ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking']) || $product->product_type === 'service') {
+        if ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking'])) {
             return redirect()->route('services.show', $product->slug);
         }
 
