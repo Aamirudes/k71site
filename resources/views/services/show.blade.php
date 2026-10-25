@@ -24,22 +24,22 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
             <!-- BREADCRUMBS & TOP BAR -->
-            <div class="flex flex-wrap items-center justify-between gap-3 text-xs mb-6 text-zinc-500">
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('services.index') }}" class="hover:text-purple-700 transition">Services</a>
-                    <span>/</span>
+            <div class="flex items-center justify-between gap-3 text-xs mb-6 text-zinc-500 overflow-hidden">
+                <div class="flex items-center gap-1.5 min-w-0 overflow-x-auto no-scrollbar whitespace-nowrap py-1">
+                    <a href="{{ route('services.index') }}" class="hover:text-purple-700 transition shrink-0">Services</a>
+                    <span class="text-zinc-300">/</span>
                     @if($service->category)
-                        <a href="{{ route('services.category', $service->category->slug) }}" class="hover:text-purple-700 transition font-medium">
+                        <a href="{{ route('services.category', $service->category->slug) }}" class="hover:text-purple-700 transition font-medium shrink-0 max-w-[120px] sm:max-w-none truncate">
                             {{ $service->category->name }}
                         </a>
-                        <span>/</span>
+                        <span class="text-zinc-300">/</span>
                     @endif
-                    <span class="text-zinc-800 font-bold truncate max-w-xs">{{ $service->title }}</span>
+                    <span class="text-zinc-800 font-bold truncate max-w-[150px] sm:max-w-xs">{{ $service->title }}</span>
                 </div>
 
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('services.become_seller') }}" class="text-purple-700 hover:text-purple-900 font-bold">
-                        Become a Seller
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('services.become_seller') }}" class="text-purple-700 hover:text-purple-900 font-bold whitespace-nowrap text-[11px] sm:text-xs">
+                        Become a Seller &rarr;
                     </a>
                 </div>
             </div>

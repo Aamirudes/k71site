@@ -2,31 +2,31 @@
     <div class="space-y-8">
         
         <!-- Welcome Greeting & Status Banner -->
-        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-xl flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div class="bg-white rounded-2xl p-5 sm:p-6 border border-zinc-200/80 shadow-xs flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-                <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold mb-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <div class="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400 font-bold mb-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span>Executive Command Hub</span>
                     <span>•</span>
-                    <span>Real-time Financial Reconciliations</span>
+                    <span>Live Financial Ledger</span>
                 </div>
-                <h2 class="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">
-                    Marketplace Treasury & Operations
+                <h2 class="text-xl sm:text-2xl font-bold text-zinc-950 tracking-tight">
+                    Marketplace Treasury &amp; Operations
                 </h2>
-                <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-                    Audited overview of PhonePe customer collections, Current Account bank settlements, vendor 95% UPI disbursals, and fulfillment telemetry across all boutique ateliers.
+                <p class="text-xs sm:text-sm text-zinc-500 mt-0.5 max-w-2xl leading-relaxed">
+                    Overview of PhonePe customer collections, Current Account bank settlements, vendor 95% UPI disbursals, and order fulfillment.
                 </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
                 <form action="{{ route('admin.orders.batch_settlement') }}" method="POST" onsubmit="return confirm('Process clearing for all eligible T+1 pending customer orders? This will mark funds as received in your Current Account and unlock vendor payouts.');">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer">
-                        <span>⚡ Process Today's Bank Settlements</span>
+                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold bg-zinc-950 hover:bg-zinc-800 text-white transition shadow-xs active:scale-95 cursor-pointer">
+                        <span>⚡ Process Bank Settlements</span>
                     </button>
                 </form>
-                <a href="{{ route('admin.homepage') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all">
-                    <span>✨ Homepage Studio</span>
+                <a href="{{ route('admin.homepage') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 border border-zinc-200/80 transition">
+                    <span>Homepage Studio ↗</span>
                 </a>
             </div>
         </div>

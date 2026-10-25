@@ -1,5 +1,5 @@
-<x-layouts.public 
-    title="K71 Enquiry — India's Premium B2B Sourcing & RFQ Marketplace"
+<x-layouts.enquiry 
+    title="K71 Enquiry — India's Leading B2B Sourcing & Factory Quotation Marketplace"
     metaDescription="Discover verified suppliers, post bulk buying requirements, compare factory quotations, and do business directly with verified manufacturers on K71 Enquiry."
 >
     <div x-data="k71EnquiryHub()" class="min-h-screen text-slate-900 pb-20">
@@ -705,4 +705,4 @@
     }
     </script>
     @endpush
-</x-layouts.public>
+</x-layouts.enquiry>

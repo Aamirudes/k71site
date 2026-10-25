@@ -542,7 +542,7 @@ class AdminController extends Controller
      */
     public function users(Request $request)
     {
-        $query = User::with(['vendor'])->withCount(['orders']);
+        $query = User::with(['vendor', 'roles'])->withCount(['orders']);
 
         if ($search = trim($request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
@@ -557,12 +557,13 @@ class AdminController extends Controller
         if ($role = $request->input('role')) {
             if ($role === 'admin') {
                 $query->where(function($q) {
-                    $q->where('role', 'admin')->orWhere('is_admin', true)->orWhereIn('email', ['crab.hashir@gmail.com', 'hashir0867@gmail.com']);
+                    $q->whereHas('roles', fn($rq) => $rq->where('name', 'admin'))
+                      ->orWhereIn('email', ['crab.hashir@gmail.com', 'hashir0867@gmail.com']);
                 });
             } elseif ($role === 'vendor') {
                 $query->whereHas('vendor');
             } elseif ($role === 'customer') {
-                $query->doesntHave('vendor')->where('role', '!=', 'admin');
+                $query->doesntHave('vendor')->whereDoesntHave('roles', fn($rq) => $rq->where('name', 'admin'));
             }
         }
 
@@ -570,7 +571,9 @@ class AdminController extends Controller
 
         $counts = [
             'all' => User::count(),
-            'admins' => User::where('role', 'admin')->orWhere('is_admin', true)->count(),
+            'admins' => User::whereHas('roles', fn($rq) => $rq->where('name', 'admin'))
+                            ->orWhereIn('email', ['crab.hashir@gmail.com', 'hashir0867@gmail.com'])
+                            ->count(),
             'vendors' => User::has('vendor')->count(),
             'customers' => User::doesntHave('vendor')->count(),
         ];
@@ -617,13 +620,11 @@ class AdminController extends Controller
             'role' => 'required|in:admin,vendor,customer,user',
         ]);
 
-        $user->role = $validated['role'];
-        if ($validated['role'] === 'admin') {
-            $user->is_admin = true;
-        }
-        $user->save();
+        $roleName = $validated['role'] === 'user' ? 'customer' : $validated['role'];
+        $roleModel = \App\Models\Role::firstOrCreate(['name' => $roleName], ['guard_name' => 'web']);
+        $user->roles()->sync([$roleModel->id]);
 
-        return back()->with('success', "Role for {$user->name} updated to " . strtoupper($validated['role']) . ".");
+        return back()->with('success', "Role for {$user->name} updated to " . strtoupper($roleName) . ".");
     }
 
     /**

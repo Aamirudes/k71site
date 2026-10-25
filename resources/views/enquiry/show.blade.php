@@ -1,4 +1,4 @@
-<x-layouts.public 
+<x-layouts.enquiry 
     :title="$enquiry->title . ' — RFQ #' . $enquiry->enquiry_number . ' | K71'"
     :metaDescription="'Requirement details and vendor quotations for RFQ #' . $enquiry->enquiry_number . ' on K71 Enquiry Marketplace.'"
 >
@@ -297,4 +297,4 @@
         </div>
 
     </div>
-</x-layouts.public>
+</x-layouts.enquiry>

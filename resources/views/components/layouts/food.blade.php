@@ -59,8 +59,9 @@
 
 <body class="bg-[#faf8f5] text-stone-900 font-sans antialiased flex flex-col min-h-screen selection:bg-[#ea580c] selection:text-white pb-20 md:pb-0"
       x-data="k71FoodGlobalState()"
-      @cart-updated.window="fetchCartData()"
-      @open-mini-cart.window="cartDrawerOpen = true"
+      @cart-updated.window="if($event.detail && ($event.detail.cart_count !== undefined || $event.detail.count !== undefined)) { cartTotalCount = ($event.detail.cart_count !== undefined ? $event.detail.cart_count : $event.detail.count); } fetchCartData();"
+      @cart-count-updated.window="if($event.detail && $event.detail.count !== undefined) { cartTotalCount = $event.detail.count; }"
+      @open-mini-cart.window="cartDrawerOpen = true; fetchCartData();"
       @keydown.escape.window="cartDrawerOpen = false; locationModalOpen = false;">
 
     <!-- 1. TOP HEADER & NAVIGATION -->
@@ -621,21 +622,24 @@
                 );
             },
             fetchCartData() {
-                fetch('{{ route('cart.data') }}')
+                fetch('/cart/data', {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                })
                     .then(r => r.json())
                     .then(data => {
                         if (data && data.items) {
                             this.cartItems = data.items.map(i => ({
                                 id: i.id,
-                                title: i.product?.title || 'Dish',
-                                restaurant_name: i.vendor?.shop_name || 'Restaurant',
-                                price: (i.price_at_add ? i.price_at_add / 100 : (i.unit_price ? i.unit_price / 100 : 199)),
+                                title: i.product_title || i.title || i.product?.title || 'Dish',
+                                restaurant_name: i.vendor_name || i.restaurant_name || i.vendor?.shop_name || 'Kitchen Hub',
+                                price: (i.unit_price ? i.unit_price / 100 : (i.price_at_add ? i.price_at_add / 100 : (i.price ? i.price : 199))),
                                 quantity: i.quantity,
-                                is_veg: true,
+                                is_veg: i.is_veg !== undefined ? i.is_veg : true,
                                 vendor_id: i.vendor_id
                             }));
-                            this.cartTotalCount = data.count || this.cartItems.reduce((acc, it) => acc + it.quantity, 0);
-                            this.cartSubtotal = this.cartItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
+                            this.cartTotalCount = data.count !== undefined ? data.count : this.cartItems.reduce((acc, it) => acc + it.quantity, 0);
+                            this.cartSubtotal = data.subtotal ? (data.subtotal / 100) : this.cartItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
                             this.cartGrandTotal = this.cartSubtotal + this.cartDeliveryFee + this.cartTaxes;
                             if (this.cartItems.length > 0 && this.cartItems[0].vendor_id) {
                                 this.checkoutUrl = '/checkout/' + this.cartItems[0].vendor_id;
@@ -650,14 +654,16 @@
                 const item = this.cartItems.find(i => i.id === cartItemId);
                 if (!item) return;
                 const newQty = item.quantity + delta;
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                 if (newQty <= 0) {
                     // Remove
                     fetch('/cart/' + cartItemId, {
                         method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-CSRF-TOKEN': token,
                             'Accept': 'application/json'
-                        }
+                        },
+                        credentials: 'same-origin'
                     }).then(() => this.fetchCartData());
                 } else {
                     // Update
@@ -665,9 +671,10 @@
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-CSRF-TOKEN': token,
                             'Accept': 'application/json'
                         },
+                        credentials: 'same-origin',
                         body: JSON.stringify({ quantity: newQty })
                     }).then(() => this.fetchCartData());
                 }

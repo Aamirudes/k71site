@@ -1,4 +1,4 @@
-<x-layouts.public 
+<x-layouts.enquiry 
     title="Post a Requirement / RFQ — K71 Enquiry Marketplace"
     metaDescription="Submit your product or service specifications, target budget, and quantity to receive competitive direct quotations from verified vendors on K71."
 >
@@ -147,4 +147,4 @@
         </form>
 
     </div>
-</x-layouts.public>
+</x-layouts.enquiry>

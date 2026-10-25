@@ -324,16 +324,18 @@
     </div>
 
     <!-- Integrated Category Navigation Row -->
-    <div class="border-t border-slate-100/80 bg-white/60 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav class="flex items-center gap-1 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth" aria-label="Commerce Categories">
+    <div class="border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
+                 style="-webkit-overflow-scrolling: touch;"
+                 aria-label="Commerce Categories">
                 @foreach($navCategories as $catKey => $cat)
                     <a href="{{ $cat['url'] }}"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 shrink-0 {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80' }}">
-                        <span class="text-xs">{{ $cat['icon'] }}</span>
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 select-none {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 active:scale-95' }}">
+                        <span class="text-xs leading-none">{{ $cat['icon'] }}</span>
                         <span>{{ $cat['name'] }}</span>
                         @if(!empty($cat['badge']))
-                            <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
+                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
                                 {{ $cat['badge'] }}
                             </span>
                         @endif
