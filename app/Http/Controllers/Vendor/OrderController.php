@@ -522,5 +522,44 @@ class OrderController extends Controller
 
         return back()->with('success', "⚡ Bank Settlement Simulation Complete! Funds credited to K71 Platform Settlement Account. Order is now UNLOCKED for Acceptance & Instant Payout!");
     }
+
+    /**
+     * Real-time polling endpoint for incoming orders with loud audio chime
+     */
+    public function checkNewOrders(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $lastOrderId = (int) $request->query('last_order_id', 0);
+        $pendingOrders = Order::where('vendor_id', $vendor->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->with(['items.product', 'user'])
+            ->latest('id')
+            ->get();
+
+        $newOrders = $lastOrderId > 0 
+            ? $pendingOrders->where('id', '>', $lastOrderId)->values()
+            : collect();
+
+        $latestOrder = Order::where('vendor_id', $vendor->id)->latest('id')->first();
+
+        return response()->json([
+            'pending_count' => $pendingOrders->count(),
+            'has_new' => $newOrders->isNotEmpty(),
+            'new_orders' => $newOrders->map(fn($o) => [
+                'id' => $o->id,
+                'order_number' => $o->order_number,
+                'total' => '₹' . number_format($o->total / 100, 2),
+                'items_count' => $o->items->count(),
+                'customer' => $o->user?->name ?? 'Guest Buyer',
+                'created_at' => $o->created_at->diffForHumans(),
+                'url' => route('vendor.orders.show', $o->id),
+            ]),
+            'latest_order_id' => $latestOrder?->id ?? 0,
+        ]);
+    }
 }
 

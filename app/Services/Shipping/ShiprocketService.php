@@ -21,8 +21,8 @@ class ShiprocketService
     public function __construct()
     {
         $this->baseUrl = config('shipping.shiprocket.base_url', 'https://apiv2.shiprocket.in/v1/external');
-        $this->email = config('shipping.shiprocket.email', 'crab.hashir@gmail.com');
-        $this->password = config('shipping.shiprocket.password', 'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB');
+        $this->email = config('shipping.shiprocket.email', '');
+        $this->password = config('shipping.shiprocket.password', '');
         $this->mode = config('shipping.mode', 'live');
         $this->markupPaise = config('shipping.platform_markup_paise', 1800);
     }
@@ -32,6 +32,10 @@ class ShiprocketService
      */
     public function getToken(): string
     {
+        if (empty($this->email) || empty($this->password)) {
+            throw new \Exception('Shiprocket API credentials are not configured yet. Please configure SHIPROCKET_API_EMAIL and SHIPROCKET_API_PASSWORD in your environment.');
+        }
+
         $cacheKey = 'shiprocket_token_' . md5($this->email);
 
         return Cache::remember($cacheKey, now()->addDays(9), function () {

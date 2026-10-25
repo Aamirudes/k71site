@@ -883,7 +883,12 @@
                 selectedColors: [],
                 customColorName: '',
                 customColorHex: '#4F46E5',
-                availableSizesList: ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size'],
+                availableSizesList: @json(match($vendorType ?? ($curVendor?->vendor_type ?? 'clothing')) {
+                    'footwear' => ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12'],
+                    'kirana', 'groceries' => ['100 g', '250 g', '500 g', '1 kg', '2 kg', '5 kg', '10 kg', '1 Packet', '1 Bottle', '1 Piece'],
+                    'electronics' => ['4GB / 64GB', '6GB / 128GB', '8GB / 128GB', '8GB / 256GB', '12GB / 256GB', '16GB / 512GB', '16GB / 1TB'],
+                    default => ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size']
+                }),
                 selectedSizes: [],
                 customSizeName: '',
                 fashionMatrixRows: (@json($existingVariants ?? [])).map(v => ({

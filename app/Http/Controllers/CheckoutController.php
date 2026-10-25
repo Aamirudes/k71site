@@ -197,8 +197,38 @@ class CheckoutController extends Controller
             'kitchen_notes' => 'nullable|string|max:500',
         ]);
 
-        // Seamless Guest Checkout User Resolution:
+        // Seamless Guest Checkout User Resolution with 2-Step Email Verification:
         if (!Auth::check()) {
+            $providedEmail = strtolower(trim($validated['email'] ?? ''));
+            if (!empty($providedEmail)) {
+                $isEmailVerified = session('checkout_verified_email') === $providedEmail;
+                
+                // If user provided email_otp in form submission, verify it
+                if (!$isEmailVerified && $request->filled('email_otp')) {
+                    try {
+                        $verified = app(\App\Services\OtpService::class)->verify($providedEmail, trim($request->input('email_otp')), 'checkout');
+                        if ($verified) {
+                            $isEmailVerified = true;
+                            session(['checkout_verified_email' => $providedEmail]);
+                        }
+                    } catch (\Throwable $e) {
+                        return back()->withInput()->withErrors(['email_otp' => 'Invalid or expired OTP: ' . $e->getMessage()]);
+                    }
+                }
+
+                // If email is still not verified, send OTP and prompt customer to enter code
+                if (!$isEmailVerified) {
+                    try {
+                        app(\App\Services\OtpService::class)->generateAndSend($providedEmail, 'checkout');
+                    } catch (\Throwable $e) {}
+
+                    return back()->withInput()
+                        ->with('requires_checkout_otp', true)
+                        ->with('otp_sent_to', $providedEmail)
+                        ->with('success', "A 6-digit confirmation code was sent to {$providedEmail}. Please enter the code below to confirm your genuine order.");
+                }
+            }
+
             $digitsPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
             $last10 = strlen($digitsPhone) >= 10 ? substr($digitsPhone, -10) : $digitsPhone;
             $candidatePhones = [
@@ -218,7 +248,7 @@ class CheckoutController extends Controller
                 try {
                     $customerEmail = !empty($validated['email']) 
                         ? strtolower(trim($validated['email']))
-                        : ('guest_' . $last10 . '_' . Str::lower(Str::random(5)) . '@marblemandi.org');
+                        : ('guest_' . $last10 . '_' . Str::lower(Str::random(5)) . '@k71.in');
                     
                     $customerName = !empty($validated['name']) ? trim($validated['name']) : 'Guest Customer';
                     $nameParts = explode(' ', $customerName, 2);
@@ -230,7 +260,7 @@ class CheckoutController extends Controller
                         'email' => $customerEmail,
                         'phone' => $last10,
                         'password' => bcrypt(Str::random(24)),
-                        'email_verified_at' => now(),
+                        'email_verified_at' => !empty($validated['email']) ? now() : null,
                         'is_blocked' => false,
                     ]);
                 } catch (\Throwable $e) {
@@ -242,7 +272,7 @@ class CheckoutController extends Controller
                             'first_name' => 'Guest',
                             'last_name' => 'Customer',
                             'username' => 'guest_' . time() . '_' . Str::lower(Str::random(4)),
-                            'email' => 'guest_' . time() . '_' . Str::lower(Str::random(6)) . '@marblemandi.org',
+                            'email' => 'guest_' . time() . '_' . Str::lower(Str::random(6)) . '@k71.in',
                             'phone' => $last10,
                             'password' => bcrypt(Str::random(24)),
                             'email_verified_at' => now(),
@@ -588,7 +618,7 @@ class CheckoutController extends Controller
 
         $vendor = $order->vendor;
         $settings = VendorSetting::where('vendor_id', $vendor->id)->first();
-        $fallbackVpa = preg_replace('/[^0-9]/', '', $vendor->phone ?? '') ? (preg_replace('/[^0-9]/', '', $vendor->phone) . '@upi') : 'marblemandi@upi';
+        $fallbackVpa = preg_replace('/[^0-9]/', '', $vendor->phone ?? '') ? (preg_replace('/[^0-9]/', '', $vendor->phone) . '@upi') : 'k71@upi';
         $vpa = !empty($settings?->upi_id) ? $settings->upi_id : $fallbackVpa;
         
         $upiUrl = "upi://pay?pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am=" . ($order->total_amount / 100) . "&cu=INR";
@@ -600,24 +630,89 @@ class CheckoutController extends Controller
     public function processPayment(Request $request, Order $order)
     {
         if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) abort(403);
-        if ($order->payment_method !== 'upi' || $order->payment_status !== 'pending') {
+        if ($order->payment_method !== 'upi' || !in_array($order->payment_status, ['pending', 'pending_verification'])) {
             return redirect()->route('orders.success', $order->id);
         }
 
         $request->validate([
-            'upi_transaction_id' => 'required|string|min:8',
+            'upi_transaction_id' => 'nullable|string|min:6|max:40',
+            'payment_screenshot' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        $order->paymentClaim()->create([
-            'user_id' => $order->user_id,
-            'utr_number' => $request->upi_transaction_id,
-            'amount_claimed' => $order->total_amount,
-            'status' => 'pending',
+        if (empty($request->upi_transaction_id) && !$request->hasFile('payment_screenshot')) {
+            return back()->with('error', 'Please submit either a 12-digit UTR/Reference number or upload a payment screenshot.');
+        }
+
+        $screenshotPath = null;
+        if ($request->hasFile('payment_screenshot')) {
+            $screenshotPath = $request->file('payment_screenshot')->store('payment_claims', 'public');
+        }
+
+        $claim = $order->paymentClaim()->updateOrCreate(
+            ['order_id' => $order->id],
+            [
+                'user_id' => $order->user_id,
+                'utr_number' => $request->upi_transaction_id ?: ('PROOF_' . strtoupper(Str::random(10))),
+                'screenshot' => $screenshotPath ?? $order->paymentClaim?->screenshot,
+                'amount_claimed' => $order->total_amount,
+                'status' => 'submitted', // Payment submitted pending verification
+            ]
+        );
+
+        $order->update([
+            'payment_status' => 'processing',
         ]);
 
-        $order->update(['payment_status' => 'processing']);
+        return redirect()->route('orders.success', $order->id)->with('success', 'Payment proof submitted successfully! Your order is pending verification by the vendor.');
+    }
 
-        return redirect()->route('orders.success', $order->id)->with('success', 'Payment verified successfully!');
+    public function sendOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+
+        try {
+            $code = app(\App\Services\OtpService::class)->generateAndSend($email, 'checkout');
+            return response()->json([
+                'success' => true,
+                'message' => "Verification code sent to {$email}.",
+                'dev_code' => app()->environment('local', 'testing') ? session('dev_otp_code') : null,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $email = strtolower(trim($validated['email']));
+
+        try {
+            $verified = app(\App\Services\OtpService::class)->verify($email, $validated['code'], 'checkout');
+            if ($verified) {
+                session(['checkout_verified_email' => $email]);
+                session()->save();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Email verified successfully!',
+                    'verified_email' => $email,
+                ]);
+            }
+            return response()->json(['success' => false, 'message' => 'Invalid or expired verification code.'], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
     }
 
     public function applyCoupon(Request $request, Vendor $vendor)

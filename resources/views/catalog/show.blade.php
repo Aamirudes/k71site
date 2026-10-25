@@ -46,6 +46,13 @@
         $isEntirelyOutOfStock = $totalAvailableStock <= 0;
         $firstInStockVariant = $product->variants->firstWhere('stock', '>', 0);
         $productPreset = $product->vendor->product_preset ?? 'gallery';
+
+        $catSlug = strtolower($product->category?->slug ?? '');
+        $catName = strtolower($product->category?->name ?? '');
+        $titleLower = strtolower($product->title ?? '');
+        $isMarble = str_contains($catSlug, 'marble') || str_contains($catName, 'marble') || str_contains($titleLower, 'marble') || str_contains($catSlug, 'granite') || str_contains($titleLower, 'granite') || str_contains($catSlug, 'stone') || str_contains($titleLower, 'slab') || str_contains($titleLower, 'tiles');
+        $isMachinery = str_contains($catSlug, 'machin') || str_contains($catName, 'machin') || str_contains($titleLower, 'machin') || str_contains($titleLower, 'equipment') || str_contains($catSlug, 'industrial') || str_contains($titleLower, 'cnc') || str_contains($titleLower, 'lathe');
+        $isEnquiryBased = $product->isEnquiry() || $isMarble || $isMachinery || ($product->vertical_type === 'b2b_machinery');
     @endphp
 
     <!-- Universal Blueprint Variants JSON Repository -->
@@ -94,18 +101,32 @@
             name: '{{ addslashes(auth()->user()?->name ?? '') }}',
             phone: '{{ addslashes(auth()->user()?->phone ?? '') }}',
             email: '{{ addslashes(auth()->user()?->email ?? '') }}',
-            city: '{{ addslashes(auth()->user()?->city ?? 'Delhi') }}',
-            quantity: '1 Unit / Requirement',
+            state: 'Maharashtra',
+            city: '{{ addslashes(auth()->user()?->city ?? '') }}',
+            quantity: '{{ $isMarble ? '500' : '1' }}',
+            unit: '{{ $isMarble ? 'Sq.Ft' : ($isMachinery ? 'Units' : 'Pieces') }}',
+            thickness: '18mm Polished',
+            specs: '',
             budget: '{{ round($product->base_price / 100) }}',
-            description: 'Inquiring regarding {{ addslashes($product->title) }}. Please provide quotation, terms, and availability.'
+            description: ''
         },
         submitEnquiryModal() {
-            if(!this.enquiryForm.name || !this.enquiryForm.phone || !this.enquiryForm.description) {
-                this.enquiryError = 'Please fill in your name, contact phone, and requirement details.';
+            if(!this.enquiryForm.name || !this.enquiryForm.phone) {
+                this.enquiryError = 'Please provide your full name and 10-digit mobile number.';
                 return;
             }
             this.enquirySubmitting = true;
             this.enquiryError = '';
+
+            let details = '';
+            if ({{ $isMarble ? 'true' : 'false' }}) {
+                details = `Marble / Stone Requirement:\nQuantity: ${this.enquiryForm.quantity} ${this.enquiryForm.unit}\nDestination: State: ${this.enquiryForm.state}${this.enquiryForm.city ? ', City: ' + this.enquiryForm.city : ''}\nThickness/Finish: ${this.enquiryForm.thickness}\nMessage: ${this.enquiryForm.description || 'Please provide quotation with freight charges to destination.'}`;
+            } else if ({{ $isMachinery ? 'true' : 'false' }}) {
+                details = `Machinery & Industrial Requirement:\nQuantity: ${this.enquiryForm.quantity} ${this.enquiryForm.unit}\nDestination: State: ${this.enquiryForm.state}${this.enquiryForm.city ? ', City: ' + this.enquiryForm.city : ''}\nTechnical Specs: ${this.enquiryForm.specs || 'Standard'}\nMessage: ${this.enquiryForm.description || 'Please share product video, technical catalog, and CIF/ex-factory quotation.'}`;
+            } else {
+                details = `Commercial Requirement:\nQuantity: ${this.enquiryForm.quantity} ${this.enquiryForm.unit}\nDestination: ${this.enquiryForm.state}${this.enquiryForm.city ? ', ' + this.enquiryForm.city : ''}\nMessage: ${this.enquiryForm.description || 'Please share official quotation and delivery timeline.'}`;
+            }
+
             fetch('{{ route('enquiry.store') }}', {
                 method: 'POST',
                 headers: {
@@ -122,10 +143,10 @@
                     buyer_name: this.enquiryForm.name,
                     buyer_phone: this.enquiryForm.phone,
                     buyer_email: this.enquiryForm.email,
-                    city: this.enquiryForm.city || 'India',
-                    quantity: this.enquiryForm.quantity || '1 Unit',
+                    city: this.enquiryForm.state + (this.enquiryForm.city ? ' - ' + this.enquiryForm.city : ''),
+                    quantity: `${this.enquiryForm.quantity} ${this.enquiryForm.unit}`,
                     target_budget: this.enquiryForm.budget || null,
-                    description: this.enquiryForm.description
+                    description: details
                 })
             })
             .then(res => res.json())
@@ -140,7 +161,7 @@
             })
             .catch(err => {
                 this.enquirySubmitting = false;
-                this.enquiryError = 'Unable to send enquiry. Please contact directly on WhatsApp.';
+                this.enquiryError = 'Unable to send enquiry. Please contact seller directly on WhatsApp.';
             });
         },
         variants: {{ $product->variants->map(function($v) use ($product) { 
@@ -602,7 +623,7 @@
                         </div>
 
                         <!-- Vertical Context Action CTAs -->
-                        @if($product->isPurchase())
+                        @if(!$isEnquiryBased && $product->isPurchase())
                             @if($verticalType === 'food_portion')
                                 <div class="flex items-center gap-3">
                                     <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs">
@@ -627,15 +648,6 @@
                                             :disabled="adding || isEntirelyOutOfStock" 
                                             class="flex-1 py-3.5 px-6 rounded-full bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                                         <span>🔒 Buy Verified Asset Now (₹{{ number_format($product->base_price / 100, 2) }})</span>
-                                    </button>
-                                </div>
-                            @elseif($verticalType === 'b2b_machinery')
-                                <div class="flex items-center gap-3 pt-2">
-                                    <button type="submit" 
-                                            x-ref="mainBuyBtn"
-                                            :disabled="adding || isEntirelyOutOfStock" 
-                                            class="flex-1 py-3 px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
-                                        <span>🛒 Buy Single Sample Machine</span>
                                     </button>
                                 </div>
                             @elseif($verticalType !== 'digital_gig' && $verticalType !== 'service_booking')
@@ -669,158 +681,277 @@
                                     </button>
                                 </div>
                             @endif
-                        @elseif($product->isEnquiry())
-                            <div class="space-y-4 p-5 rounded-2xl bg-zinc-900/5 border border-zinc-200 backdrop-blur-sm shadow-xs">
+                        @elseif($isEnquiryBased || $product->isEnquiry())
+                            <!-- IndiaMART Style B2B / Marble / Machinery Enquiry Hub -->
+                            <div class="space-y-4 p-5 rounded-3xl bg-gradient-to-br from-stone-50 via-white to-amber-50/30 border border-stone-200 shadow-sm text-left">
                                 <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wide">
-                                        <span>📋</span>
-                                        <span>B2B, Real Estate &amp; Wholesale Enquiry</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-base">🏢</span>
+                                        <span class="text-xs font-black text-stone-900 uppercase tracking-wider">
+                                            {{ $isMarble ? 'Marble & Stone Slabs Enquiry' : ($isMachinery ? 'Industrial Machinery & Equipment RFQ' : 'B2B Commercial Quotation') }}
+                                        </span>
                                     </div>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">RFQ Mode</span>
+                                    <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30">
+                                        Direct Enquiry Mode
+                                    </span>
                                 </div>
-                                <p class="text-xs text-zinc-600 leading-relaxed">
-                                    Direct verified supplier pricing. Submit your specifications to receive custom quotations, wholesale rates, or schedule inspection.
+
+                                <p class="text-xs text-stone-600 leading-relaxed">
+                                    {{ $isMarble ? 'Get live stock lot photos, exact slab dimensions, ex-factory rates, and freight estimation to your state/city.' : ($isMachinery ? 'Direct manufacturer quotation with technical specifications, power consumption, machine demonstration video, and warranty terms.' : 'Submit your requirement to receive official wholesale quotation directly from this verified supplier.') }}
                                 </p>
 
-                                <div class="space-y-2 pt-1">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 py-1 text-[11px] text-stone-700 font-semibold">
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80">
+                                        <span class="text-emerald-600">✓</span>
+                                        <span>Verified Supplier</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80">
+                                        <span class="text-emerald-600">✓</span>
+                                        <span>Ex-Factory Pricing</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80 col-span-2 sm:col-span-1">
+                                        <span class="text-emerald-600">✓</span>
+                                        <span>Pan-India Delivery</span>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2.5 pt-1">
+                                    <!-- IndiaMART Primary CTA -->
                                     <button type="button" 
                                             @click="showEnquiryModal = true"
-                                            class="w-full py-3.5 px-5 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold tracking-wide transition shadow-md flex flex-col items-center justify-center gap-0.5 active:scale-[0.99] cursor-pointer">
-                                        <span>⚡ Request Instant Quotation</span>
-                                        <span class="text-[11px] font-normal text-zinc-300">Request Custom Quotation / Bulk Enquiry</span>
+                                            class="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg shadow-stone-900/15 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                        <span>📋</span>
+                                        <span>Request Best Quotation / Send Enquiry</span>
                                     </button>
 
-                                    <!-- Instant Frosted Glass RFQ Modal -->
-                                    <div x-show="showEnquiryModal" 
-                                         x-transition:enter="transition ease-out duration-300"
-                                         x-transition:enter-start="opacity-0 backdrop-blur-none"
-                                         x-transition:enter-end="opacity-100 backdrop-blur-md"
-                                         x-transition:leave="transition ease-in duration-200"
-                                         x-transition:leave-start="opacity-100 backdrop-blur-md"
-                                         x-transition:leave-end="opacity-0 backdrop-blur-none"
-                                         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
-                                         style="display: none;"
-                                         @keydown.escape.window="showEnquiryModal = false">
-                                        
-                                        <div @click.away="showEnquiryModal = false"
-                                             class="w-full max-w-lg bg-zinc-950 border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl text-left text-zinc-100 relative max-h-[92vh] overflow-y-auto">
-                                            
-                                            <button type="button" @click="showEnquiryModal = false" 
-                                                    class="absolute top-5 right-5 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
-                                                ✕
-                                            </button>
-
-                                            <template x-if="!enquirySuccess">
-                                                <div>
-                                                    <div class="flex items-center gap-3 mb-5">
-                                                        <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl shrink-0">
-                                                            ⚡
-                                                        </div>
-                                                        <div>
-                                                            <h3 class="text-lg font-black text-white tracking-tight">Request Instant Quotation</h3>
-                                                            <p class="text-xs text-zinc-400 mt-0.5 truncate max-w-xs">{{ $product->title }}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <template x-if="enquiryError">
-                                                        <div class="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium" x-text="enquiryError"></div>
-                                                    </template>
-
-                                                    <form @submit.prevent="submitEnquiryModal()" class="space-y-3.5">
-                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Your Name *</label>
-                                                                <input type="text" x-model="enquiryForm.name" required placeholder="Your Full Name"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Phone Number *</label>
-                                                                <input type="tel" x-model="enquiryForm.phone" required placeholder="10-digit mobile"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Email (Optional)</label>
-                                                                <input type="email" x-model="enquiryForm.email" placeholder="name@company.com"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">City / Location *</label>
-                                                                <input type="text" x-model="enquiryForm.city" required placeholder="e.g. Mumbai, Delhi"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Quantity / Scope</label>
-                                                                <input type="text" x-model="enquiryForm.quantity" placeholder="e.g. 500 sqft / 10 units"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                            <div>
-                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Target Budget (₹)</label>
-                                                                <input type="number" x-model="enquiryForm.budget" placeholder="Approx budget"
-                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Specific Requirements / Message *</label>
-                                                            <textarea x-model="enquiryForm.description" required rows="3" placeholder="Provide specs, delivery timeline, or site visit preference..."
-                                                                      class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition resize-none"></textarea>
-                                                        </div>
-
-                                                        <div class="pt-2 flex flex-col gap-2.5">
-                                                            <button type="submit" :disabled="enquirySubmitting"
-                                                                    class="w-full py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
-                                                                <span x-show="!enquirySubmitting">Submit Requirement Directly to Seller</span>
-                                                                <span x-show="enquirySubmitting">Transmitting Quotation Request...</span>
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </template>
-
-                                            <template x-if="enquirySuccess">
-                                                <div class="text-center py-6 space-y-4">
-                                                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center text-3xl">
-                                                        ✓
-                                                    </div>
-                                                    <h3 class="text-xl font-black text-white">Quotation Request Dispatched!</h3>
-                                                    <p class="text-xs text-zinc-300 leading-relaxed max-w-sm mx-auto">
-                                                        Your enquiry has been successfully logged with reference:
-                                                        <span class="block mt-1 font-mono font-bold text-amber-400 text-sm" x-text="enquiryNumber"></span>
-                                                    </p>
-                                                    <p class="text-[11px] text-zinc-400">
-                                                        The verified vendor has received notification and will get in touch shortly.
-                                                    </p>
-
-                                                    <div class="pt-4 flex flex-col gap-2 max-w-xs mx-auto">
-                                                        @if(!empty($sellerPhone))
-                                                            <a :href="`https://wa.me/{{ $sellerPhone }}?text=${encodeURIComponent('Hello! I just submitted quotation request ' + enquiryNumber + ' for {{ addslashes($product->title) }} on K71.')}`" target="_blank"
-                                                               class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
-                                                                Open in WhatsApp Now
-                                                            </a>
-                                                        @endif
-                                                        <button type="button" @click="showEnquiryModal = false; enquirySuccess = false;"
-                                                                class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition">
-                                                            Done
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-
                                     @if(!empty($sellerPhone))
-                                        <a href="https://wa.me/{{ $sellerPhone }}?text={{ rawurlencode('Hello! I would like to inquire about: ' . $product->title . ' on K71.') }}" target="_blank"
-                                           class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center justify-center gap-2 transition shadow-xs">
-                                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                            <span>Chat with Verified Seller on WhatsApp</span>
+                                        <a href="https://wa.me/{{ $sellerPhone }}?text={{ rawurlencode('Hello! I am interested in ' . $product->title . ' (Ref: #' . $product->id . ') on K71. Could you please share the quotation, current availability, and delivery terms?') }}" 
+                                           target="_blank"
+                                           class="w-full py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-sm flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                            <span>Chat Directly on WhatsApp</span>
                                         </a>
                                     @endif
+                                </div>
+
+                                <!-- IndiaMART Style Modal Popup -->
+                                <div x-show="showEnquiryModal" 
+                                     x-transition:enter="transition ease-out duration-300"
+                                     x-transition:enter-start="opacity-0 backdrop-blur-none"
+                                     x-transition:enter-end="opacity-100 backdrop-blur-md"
+                                     x-transition:leave="transition ease-in duration-200"
+                                     x-transition:leave-start="opacity-100 backdrop-blur-md"
+                                     x-transition:leave-end="opacity-0 backdrop-blur-none"
+                                     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md"
+                                     style="display: none;"
+                                     @keydown.escape.window="showEnquiryModal = false">
+                                    
+                                    <div @click.away="showEnquiryModal = false"
+                                         class="w-full max-w-xl bg-white border border-stone-200 rounded-3xl p-5 sm:p-7 shadow-2xl text-left text-stone-900 relative max-h-[92vh] overflow-y-auto">
+                                        
+                                        <button type="button" @click="showEnquiryModal = false" 
+                                                class="absolute top-4 right-4 text-stone-400 hover:text-stone-900 p-2 rounded-full hover:bg-stone-100 transition text-lg font-bold">
+                                            ✕
+                                        </button>
+
+                                        <template x-if="!enquirySuccess">
+                                            <div>
+                                                <!-- Modal Header -->
+                                                <div class="flex items-center gap-3 pb-4 mb-4 border-b border-stone-100">
+                                                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-700 border border-amber-500/20 flex items-center justify-center text-2xl shrink-0 font-bold">
+                                                        {{ $isMarble ? '🏛️' : ($isMachinery ? '⚙️' : '📋') }}
+                                                    </div>
+                                                    <div class="min-w-0 pr-6">
+                                                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-full inline-block mb-0.5">
+                                                            {{ $isMarble ? 'Marble & Stone Slabs Enquiry' : ($isMachinery ? 'Industrial Machinery RFQ' : 'B2B Quotation Request') }}
+                                                        </span>
+                                                        <h3 class="text-base sm:text-lg font-black text-stone-950 truncate tracking-tight">{{ $product->title }}</h3>
+                                                        <p class="text-[11px] text-stone-500">Supplier: <span class="font-bold text-stone-800">{{ $product->vendor->shop_name }}</span> (Verified Seller)</p>
+                                                    </div>
+                                                </div>
+
+                                                <template x-if="enquiryError">
+                                                    <div class="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold" x-text="enquiryError"></div>
+                                                </template>
+
+                                                <form @submit.prevent="submitEnquiryModal()" class="space-y-4">
+                                                    <!-- Quantity & Units -->
+                                                    <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-2">
+                                                        <div class="flex items-center justify-between">
+                                                            <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider">
+                                                                {{ $isMarble ? 'Required Quantity (Sq.Ft / Slabs) *' : ($isMachinery ? 'Required Quantity (Units) *' : 'Quantity Required *') }}
+                                                            </label>
+                                                            <span class="text-[10px] text-stone-500">Select or type amount</span>
+                                                        </div>
+                                                        <div class="grid grid-cols-3 gap-2">
+                                                            <input type="number" x-model="enquiryForm.quantity" required min="1" placeholder="Quantity"
+                                                                   class="col-span-2 px-3 py-2 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-bold focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                            <select x-model="enquiryForm.unit" class="px-2 py-2 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-semibold focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                                @if($isMarble)
+                                                                    <option value="Sq.Ft">Sq.Ft</option>
+                                                                    <option value="Slabs">Slabs</option>
+                                                                    <option value="Tons">Metric Tons</option>
+                                                                    <option value="Sq.M">Sq.Meters</option>
+                                                                @elseif($isMachinery)
+                                                                    <option value="Units">Units</option>
+                                                                    <option value="Sets">Sets</option>
+                                                                    <option value="Lines">Complete Line</option>
+                                                                @else
+                                                                    <option value="Units">Units</option>
+                                                                    <option value="Pieces">Pieces</option>
+                                                                    <option value="Sets">Sets</option>
+                                                                @endif
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Quick Quantity Chips -->
+                                                        <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                                                            @if($isMarble)
+                                                                <button type="button" @click="enquiryForm.quantity = 500; enquiryForm.unit = 'Sq.Ft'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 500 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">500 Sq.Ft</button>
+                                                                <button type="button" @click="enquiryForm.quantity = 1000; enquiryForm.unit = 'Sq.Ft'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 1000 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">1,000 Sq.Ft</button>
+                                                                <button type="button" @click="enquiryForm.quantity = 2500; enquiryForm.unit = 'Sq.Ft'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 2500 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">2,500 Sq.Ft</button>
+                                                                <button type="button" @click="enquiryForm.quantity = 5000; enquiryForm.unit = 'Sq.Ft'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 5000 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">5,000+ Sq.Ft</button>
+                                                            @elseif($isMachinery)
+                                                                <button type="button" @click="enquiryForm.quantity = 1; enquiryForm.unit = 'Units'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 1 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">1 Unit</button>
+                                                                <button type="button" @click="enquiryForm.quantity = 2; enquiryForm.unit = 'Units'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 2 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">2 Units</button>
+                                                                <button type="button" @click="enquiryForm.quantity = 5; enquiryForm.unit = 'Units'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.quantity == 5 ? 'bg-stone-900 text-white border-stone-900' : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'">5 Units</button>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Delivery Destination: State & City -->
+                                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">Destination State *</label>
+                                                            <select x-model="enquiryForm.state" required class="w-full px-3 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-semibold focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                                <option value="Maharashtra">Maharashtra</option>
+                                                                <option value="Gujarat">Gujarat</option>
+                                                                <option value="Rajasthan">Rajasthan</option>
+                                                                <option value="Karnataka">Karnataka</option>
+                                                                <option value="Delhi NCR">Delhi NCR</option>
+                                                                <option value="Tamil Nadu">Tamil Nadu</option>
+                                                                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                                                <option value="Telangana">Telangana</option>
+                                                                <option value="West Bengal">West Bengal</option>
+                                                                <option value="Kerala">Kerala</option>
+                                                                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                                                <option value="Punjab">Punjab</option>
+                                                                <option value="Haryana">Haryana</option>
+                                                                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                                                <option value="Bihar">Bihar</option>
+                                                                <option value="Odisha">Odisha</option>
+                                                                <option value="Goa">Goa</option>
+                                                                <option value="Other">Other / International</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">City / Industrial Area *</label>
+                                                            <input type="text" x-model="enquiryForm.city" required placeholder="e.g. Mumbai, Surat, Jaipur, Pune"
+                                                                   class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-medium placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                        </div>
+                                                    </div>
+
+                                                    @if($isMarble)
+                                                        <!-- Slab Thickness / Finish Preset -->
+                                                        <div>
+                                                            <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">Preferred Thickness / Finish</label>
+                                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                                @foreach(['16mm Polished', '18mm Polished', '20mm Polished', 'Honed Finish', 'Leather / Antique'] as $opt)
+                                                                    <button type="button" @click="enquiryForm.thickness = '{{ $opt }}'" class="px-2.5 py-1 rounded-lg text-[10px] font-bold border transition" :class="enquiryForm.thickness === '{{ $opt }}' ? 'bg-stone-900 text-white border-stone-900' : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100'">
+                                                                        {{ $opt }}
+                                                                    </button>
+                                                                @endforeach
+                                                            </div>
+                                                        </div>
+                                                    @elseif($isMachinery)
+                                                        <!-- Machine Specs -->
+                                                        <div>
+                                                            <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">Technical Requirements (HP / Voltage / Automation)</label>
+                                                            <input type="text" x-model="enquiryForm.specs" placeholder="e.g. 15 HP motor, 415V 3-phase, Automatic control"
+                                                                   class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-medium placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                        </div>
+                                                    @endif
+
+                                                    <!-- IndiaMART Specific Message Box -->
+                                                    <div>
+                                                        <label class="block text-[11px] font-bold text-stone-700 uppercase tracking-wider mb-1">
+                                                            {{ $isMachinery ? 'Detailed Requirements & Application Details *' : 'Specific Requirement / Notes for Seller' }}
+                                                        </label>
+                                                        <textarea x-model="enquiryForm.description" rows="2" placeholder="{{ $isMarble ? 'e.g., White background, minimal veins, bookmatch slabs required for villa flooring...' : ($isMachinery ? 'e.g., Please share product video, machine specs catalogue, cutting speed, warranty, and delivery schedule...' : 'e.g., Please share quotation with GST and freight terms...') }}"
+                                                                  class="w-full px-3.5 py-2 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs placeholder:text-stone-400 focus:ring-2 focus:ring-stone-900 focus:outline-none resize-none"></textarea>
+                                                    </div>
+
+                                                    <!-- Contact Information -->
+                                                    <div class="p-3.5 rounded-2xl bg-amber-50/50 border border-amber-200/60 space-y-3">
+                                                        <span class="text-[10px] font-black uppercase tracking-wider text-amber-900 block">Your Contact Details (For Seller Response)</span>
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">Your Full Name *</label>
+                                                                <input type="text" x-model="enquiryForm.name" required placeholder="Name or Company"
+                                                                       class="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-medium focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">Mobile Number (10 Digits) *</label>
+                                                                <div class="flex">
+                                                                    <span class="px-2.5 py-2 bg-stone-100 border border-r-0 border-stone-300 rounded-l-xl text-xs font-bold text-stone-600">+91</span>
+                                                                    <input type="tel" x-model="enquiryForm.phone" required placeholder="9876543210"
+                                                                           class="w-full px-3 py-2 rounded-r-xl bg-white border border-stone-300 text-stone-900 text-xs font-bold focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-[10px] font-bold text-stone-700 uppercase tracking-wider mb-1">Email Address (Optional — for quotation PDF)</label>
+                                                            <input type="email" x-model="enquiryForm.email" placeholder="name@company.com"
+                                                                   class="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-stone-900 text-xs font-medium focus:ring-2 focus:ring-stone-900 focus:outline-none">
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Submission CTA -->
+                                                    <div class="pt-2 flex flex-col gap-2">
+                                                        <button type="submit" :disabled="enquirySubmitting"
+                                                                class="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-black text-white font-black text-xs sm:text-sm tracking-wide transition shadow-lg shadow-stone-900/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                                                            <span x-show="!enquirySubmitting">⚡ Submit Enquiry &amp; Get Quotation</span>
+                                                            <span x-show="enquirySubmitting">Transmitting Quotation Request...</span>
+                                                        </button>
+                                                        <p class="text-[10px] text-center text-stone-400">
+                                                            🔒 Zero Commission • Verified Supplier Contact • Quotation sent within 24 hours
+                                                        </p>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </template>
+
+                                        <!-- Success State -->
+                                        <template x-if="enquirySuccess">
+                                            <div class="text-center py-6 space-y-4">
+                                                <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 mx-auto flex items-center justify-center text-3xl font-black">
+                                                    ✓
+                                                </div>
+                                                <h3 class="text-xl font-black text-stone-900">Enquiry Dispatched Successfully!</h3>
+                                                <p class="text-xs text-stone-600 leading-relaxed max-w-sm mx-auto">
+                                                    Your enquiry has been registered directly with {{ $product->vendor->shop_name }}.
+                                                    <span class="block mt-2 font-mono font-bold text-stone-900 text-sm bg-stone-100 py-1.5 px-3 rounded-xl border border-stone-200" x-text="enquiryNumber"></span>
+                                                </p>
+                                                <p class="text-[11px] text-stone-500">
+                                                    The verified supplier will review your destination state &amp; specifications to provide best ex-factory quotation.
+                                                </p>
+
+                                                <div class="pt-4 flex flex-col gap-2 max-w-xs mx-auto">
+                                                    @if(!empty($sellerPhone))
+                                                        <a :href="`https://wa.me/{{ $sellerPhone }}?text=${encodeURIComponent('Hello {{ addslashes($product->vendor->shop_name) }}! I have submitted enquiry ' + enquiryNumber + ' for {{ addslashes($product->title) }} on K71 Marketplace. Looking forward to your quotation.')}`" target="_blank"
+                                                           class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm">
+                                                            <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                                            <span>Chat Directly on WhatsApp</span>
+                                                        </a>
+                                                    @endif
+                                                    <button type="button" @click="showEnquiryModal = false; enquirySuccess = false;"
+                                                            class="w-full py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold transition">
+                                                        Close Window
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
                                 </div>
                             </div>
                         @elseif($product->isBooking())

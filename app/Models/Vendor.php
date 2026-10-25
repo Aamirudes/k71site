@@ -231,7 +231,24 @@ class Vendor extends Model
 
     public function getSectorConfig(): array
     {
-        $type = $this->vendor_type ?: 'clothing';
+        $type = $this->vendor_type;
+        if (empty($type) || $type === 'clothing') {
+            $nameLower = strtolower(($this->shop_name ?? '') . ' ' . ($this->business_name ?? '') . ' ' . ($this->description ?? ''));
+            if (str_contains($nameLower, 'marble') || str_contains($nameLower, 'granite') || str_contains($nameLower, 'stone') || str_contains($nameLower, 'slab')) {
+                $type = 'marble';
+            } elseif (str_contains($nameLower, 'machin') || str_contains($nameLower, 'equipment') || str_contains($nameLower, 'cnc') || str_contains($nameLower, 'industrial')) {
+                $type = 'machinery';
+            } elseif (str_contains($nameLower, 'kirana') || str_contains($nameLower, 'grocery') || str_contains($nameLower, 'supermarket') || str_contains($nameLower, 'mart') || str_contains($nameLower, 'provision')) {
+                $type = 'kirana';
+            } elseif (str_contains($nameLower, 'shoe') || str_contains($nameLower, 'footwear') || str_contains($nameLower, 'sneaker')) {
+                $type = 'footwear';
+            } elseif (str_contains($nameLower, 'restaurant') || str_contains($nameLower, 'kitchen') || str_contains($nameLower, 'food') || str_contains($nameLower, 'cafe') || str_contains($nameLower, 'bhojanalaya') || str_contains($nameLower, 'dhaba') || str_contains($nameLower, 'baker')) {
+                $type = 'food';
+            } elseif (str_contains($nameLower, 'electron') || str_contains($nameLower, 'mobile') || str_contains($nameLower, 'computer') || str_contains($nameLower, 'laptop')) {
+                $type = 'electronics';
+            }
+        }
+        $type = $type ?: 'clothing';
 
         $sectors = [
             'electronics' => [
@@ -574,14 +591,102 @@ class Vendor extends Model
                     ['key' => 'Testing Status', 'value' => '100% Tested & Fully Functional (Clean IMEI)'],
                 ],
             ],
+            'footwear' => [
+                'key' => 'footwear',
+                'label' => 'Footwear & Shoes',
+                'icon' => '👟',
+                'color' => 'from-slate-700 to-zinc-900',
+                'badge' => 'bg-slate-500/10 text-slate-800 dark:text-slate-200 border-slate-500/20',
+                'catalog_name' => 'Footwear & Shoe Catalog',
+                'item_singular' => 'Footwear Pair',
+                'add_btn' => 'Add Shoes / Footwear',
+                'specs_label' => 'Sole Material, Upper Material, Closure & Sizing',
+                'title_placeholder' => 'e.g. Men Lightweight Breathable Running Shoes',
+                'brand_placeholder' => 'e.g. Nike, Adidas, Puma, Sparx, Bata, Red Tape',
+                'brand_label' => 'Brand / Manufacturer',
+                'price_label' => 'Selling Price (₹)',
+                'price_placeholder' => '1999.00',
+                'unit_label' => 'Package Weight (Grams)',
+                'stock_label' => 'Available Stock Units',
+                'gst_default' => '12',
+                'desc_placeholder' => 'Insole cushioning, grip type, upper fabric, water resistance, shoe care instructions...',
+                'default_specs' => [
+                    ['key' => 'Upper Material', 'value' => 'Breathable Mesh / Genuine Leather'],
+                    ['key' => 'Sole Material', 'value' => 'Anti-Skid Air Cushioned EVA / Rubber'],
+                    ['key' => 'Closure', 'value' => 'Lace-Up / Slip-On'],
+                    ['key' => 'Toe Shape', 'value' => 'Round Toe Ergonomic Fit'],
+                ],
+            ],
+            'marble' => [
+                'key' => 'marble',
+                'label' => 'Marble & Natural Stone RFQ',
+                'icon' => '🏛️',
+                'color' => 'from-stone-600 to-neutral-800',
+                'badge' => 'bg-stone-500/10 text-stone-800 dark:text-stone-200 border-stone-500/20',
+                'catalog_name' => 'Marble Slabs, Tiles & Stone Blocks',
+                'item_singular' => 'Marble Slab / Block',
+                'add_btn' => 'Add Marble Listing',
+                'specs_label' => 'Thickness, Finish, Grade, Origin & Slab Dimensions',
+                'title_placeholder' => 'e.g. Pure White Makrana Dungri Marble Slabs (18mm)',
+                'brand_placeholder' => 'e.g. Makrana Quarries, Kishangarh Marbles, K71 Stone',
+                'brand_label' => 'Quarry / Quarry Brand',
+                'price_label' => 'Rate per Sq. Ft. / Ton (₹)',
+                'price_placeholder' => '185.00',
+                'unit_label' => 'Slab Thickness (mm)',
+                'stock_label' => 'Available Stock (Sq. Ft.)',
+                'gst_default' => '18',
+                'desc_placeholder' => 'Slab dimensions, polish quality, figure patterns, quarry lot size, transport terms...',
+                'orders_name' => 'Client Quotations & Enquiries',
+                'default_specs' => [
+                    ['key' => 'Thickness', 'value' => '16mm - 18mm Diamond Cut'],
+                    ['key' => 'Surface Finish', 'value' => 'Mirror Polish / Honed / Leather Finish'],
+                    ['key' => 'Color & Pattern', 'value' => 'Milky White with Natural Grey/Blue Veins'],
+                    ['key' => 'Quarry Origin', 'value' => 'Makrana, Nagaur, Rajasthan'],
+                    ['key' => 'MOQ (Minimum Order)', 'value' => '500 Sq. Ft. Commercial Dispatch'],
+                ],
+            ],
+            'kirana' => [
+                'key' => 'groceries',
+                'label' => 'Kirana & Daily Grocery (D-Mart Style)',
+                'icon' => '🛒',
+                'color' => 'from-emerald-600 to-green-700',
+                'badge' => 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+                'catalog_name' => 'Kirana & FMCG Inventory',
+                'item_singular' => 'Kirana / Grocery Item',
+                'add_btn' => 'Add Grocery Item',
+                'specs_label' => 'Quantity, Pack Units, FSSAI & Shelf Life',
+                'title_placeholder' => 'e.g. Premium Sharbati Whole Wheat Atta 5kg Bag',
+                'brand_placeholder' => 'e.g. Aashirvaad, Fortune, Tata, D-Mart Select, Amul',
+                'brand_label' => 'Brand / Miller',
+                'price_label' => 'Selling Price (₹)',
+                'price_placeholder' => '240.00',
+                'unit_label' => 'Pack Size (100g, 500g, 1kg, 5kg, pkt)',
+                'stock_label' => 'Available Packets/Bags',
+                'gst_default' => '5',
+                'desc_placeholder' => 'Grain purity, packaging type, storage advice, FSSAI certified...',
+                'orders_name' => 'Customer Grocery Orders & Pickups',
+                'default_specs' => [
+                    ['key' => 'Pack Sizes Available', 'value' => '100g, 250g, 500g, 1kg, 5kg'],
+                    ['key' => 'Food Grade', 'value' => '100% Vegetarian (FSSAI Lic. Approved)'],
+                    ['key' => 'Shelf Life', 'value' => '9 Months from Packing Date'],
+                    ['key' => 'Storage', 'value' => 'Store in a cool, dry and hygienic container'],
+                ],
+            ],
         ];
+
+        // Aliases
+        if ($type === 'grocery' || $type === 'kirana') {
+            $type = 'kirana';
+        }
 
         $config = $sectors[$type] ?? $sectors['clothing'];
         $config['name'] = $config['name'] ?? ($config['label'] ?? 'Marketplace Store');
         $config['orders_name'] = match($config['key'] ?? '') {
             'food' => 'Kitchen Orders & Live Delivery Stream',
+            'groceries' => 'Customer Grocery Orders & Pickups',
             'services' => 'Service Appointments & Bookings',
             'real_estate' => 'Client Inquiries & Property Visits',
+            'marble', 'machinery' => 'Quotation Requests & B2B Leads',
             'digital_services' => 'Project Briefs & Milestones',
             default => 'Customer Orders & Shipments',
         };
@@ -591,12 +696,20 @@ class Vendor extends Model
 
     public function getVerticalKey(): string
     {
-        if ($this->vendor_type) {
-            return match($this->vendor_type) {
+        $vType = $this->vendor_type;
+        if (empty($vType)) {
+            $nameLower = strtolower(($this->shop_name ?? '') . ' ' . ($this->business_name ?? ''));
+            if (str_contains($nameLower, 'marble') || str_contains($nameLower, 'granite') || str_contains($nameLower, 'stone') || str_contains($nameLower, 'machin')) {
+                return 'enquiry';
+            }
+        }
+        if ($vType) {
+            return match($vType) {
                 'food' => 'food',
+                'kirana', 'groceries', 'grocery' => 'marketplace',
                 'services', 'local_services', 'digital_services' => 'services',
                 'used' => 'used',
-                'machinery', 'b2b', 'real_estate' => 'enquiry',
+                'machinery', 'b2b', 'real_estate', 'marble' => 'enquiry',
                 default => 'marketplace',
             };
         }
@@ -607,10 +720,23 @@ class Vendor extends Model
     }
 
     /**
+     * Check if vendor is a physical marketplace seller eligible for automated courier parcel shipping.
+     */
+    public function isMarketplacePhysical(): bool
+    {
+        $nonPhysical = ['food', 'services', 'local_services', 'digital_services', 'used', 'machinery', 'b2b', 'real_estate', 'marble'];
+        return !in_array($this->vendor_type, $nonPhysical) && $this->getVerticalKey() === 'marketplace';
+    }
+
+    /**
      * Check if vendor operates as a food restaurant or cloud kitchen.
      */
     public function isRestaurant(): bool
     {
+        // Grocery and physical stores are strictly NOT restaurants
+        if (in_array($this->vendor_type, ['kirana', 'groceries', 'grocery', 'clothing', 'footwear', 'electronics', 'marble', 'machinery'])) {
+            return false;
+        }
         return $this->vendor_type === 'food' 
             || (bool) ($this->settings?->is_restaurant || $this->products()->where('vertical', 'food')->exists());
     }

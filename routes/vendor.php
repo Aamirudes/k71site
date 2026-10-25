@@ -22,6 +22,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::post('/products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
         Route::resource('coupons', CouponController::class)->except(['show']);
         
+        Route::get('/orders/check-new', [\App\Http\Controllers\Vendor\OrderController::class, 'checkNewOrders'])->name('orders.check_new');
         Route::get('/orders', [\App\Http\Controllers\Vendor\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [\App\Http\Controllers\Vendor\OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{order}/shipping-label', [\App\Http\Controllers\Vendor\OrderController::class, 'shippingLabel'])->name('orders.shipping_label');

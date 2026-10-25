@@ -192,6 +192,7 @@
             </div>
             @endif
 
+            @if($vendor->isMarketplacePhysical())
             <!-- Physical Courier Pickup Address (Shiprocket Multi-Vendor Origin) -->
             <div id="pickup-address" class="space-y-4 pt-4 border-t border-gray-200">
                 <div class="flex items-start justify-between flex-wrap gap-2 pb-2 border-b border-gray-200">
@@ -319,6 +320,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Customer Payment Options -->
             @php

@@ -12,30 +12,30 @@
         </div>
         <div class="space-y-1">
             <a href="{{ route('vendor.dashboard') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.dashboard') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.dashboard') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">📊</span>
                     <span>Dashboard & Analytics</span>
                 </span>
                 @if(request()->routeIs('vendor.dashboard'))
-                    <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-white dark:bg-stone-900 animate-pulse"></span>
                 @endif
             </a>
 
             <a href="{{ route('vendor.products.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.products.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.products.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">{{ $sec['icon'] ?? '🛍️' }}</span>
                     <span>{{ $sec['catalog_name'] ?? 'Product Catalog' }}</span>
                 </span>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('vendor.products.*') ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-zinc-400' }}">
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {{ request()->routeIs('vendor.products.*') ? 'bg-white/20 text-white dark:bg-stone-900/10 dark:text-stone-900' : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-zinc-400' }}">
                     Items
                 </span>
             </a>
 
             @if(!in_array($vType, ['services', 'digital_services', 'real_estate']))
             <a href="{{ route('vendor.orders.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.orders.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.orders.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">{{ $vType === 'food' ? '🛵' : ($vType === 'electronics' ? '📦' : ($vType === 'automotive' ? '🏎️' : '📦')) }}</span>
                     <span>{{ $vType === 'food' ? 'Kitchen Orders' : ($vType === 'electronics' ? 'Customer Orders & Shipments' : 'Customer Orders') }}</span>
@@ -45,7 +45,7 @@
 
             @if(in_array($vType, ['services']))
             <a href="{{ route('vendor.bookings.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.bookings.*') ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.bookings.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">📅</span>
                     <span>Client Bookings</span>
@@ -55,7 +55,7 @@
 
             @if($vType === 'used')
             <a href="{{ route('vendor.offers.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.offers.*') ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.offers.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">🤝</span>
                     <span>Buyer Offers & Deals</span>
@@ -63,12 +63,12 @@
             </a>
             @endif
 
-            @if(in_array($vType, ['b2b', 'machinery', 'real_estate', 'digital_services']))
+            @if(in_array($vType, ['b2b', 'machinery', 'real_estate', 'digital_services', 'marble']))
             <a href="{{ route('vendor.enquiries.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.enquiries.*') ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.enquiries.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">📋</span>
-                    <span>{{ $vType === 'real_estate' ? 'Property Enquiries' : ($vType === 'digital_services' ? 'Client Project Briefs' : 'RFQ Enquiries') }}</span>
+                    <span>{{ $vType === 'real_estate' ? 'Property Enquiries' : ($vType === 'digital_services' ? 'Client Project Briefs' : ($vType === 'marble' ? 'Marble RFQs & Leads' : 'RFQ Enquiries')) }}</span>
                 </span>
             </a>
             @endif
@@ -82,29 +82,29 @@
         </div>
         <div class="space-y-1">
             <a href="{{ route('vendor.shorts.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.shorts.*') ? 'bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.shorts.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">🎬</span>
                     <span>Shorts Video Studio</span>
                 </span>
-                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 dark:text-rose-300 border border-rose-500/30">
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 dark:bg-white/10 dark:text-stone-200 border border-stone-200 dark:border-white/15">
                     Live
                 </span>
             </a>
 
             <a href="{{ route('messages.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('messages.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('messages.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">💬</span>
                     <span>Direct Messages</span>
                 </span>
-                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 dark:bg-white/10 dark:text-stone-200 border border-stone-200 dark:border-white/15">
                     Realtime
                 </span>
             </a>
 
             <a href="{{ route('vendor.coupons.index') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.coupons.*') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.coupons.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">🏷️</span>
                     <span>{{ $vType === 'food' ? 'Dish Promotions' : 'Coupons & Deals' }}</span>
@@ -120,7 +120,7 @@
         </div>
         <div class="space-y-1">
             <a href="{{ route('vendor.profile') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.profile') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.profile') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">🏬</span>
                     <span>Store Identity & Logo</span>
@@ -128,7 +128,7 @@
             </a>
 
             <a href="{{ route('vendor.settings') }}" 
-               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.settings') ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-600/20 font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.settings') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">⚙️</span>
                     <span>{{ $vType === 'food' ? 'Kitchen & FSSAI' : ($vType === 'services' ? 'Service Areas & Slates' : 'Logistics & Payouts') }}</span>

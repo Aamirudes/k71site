@@ -136,8 +136,8 @@
             </div>
         </header>
 
-        <!-- 3. STICKY IN-MENU FILTER & SEARCH BAR -->
-        <div class="sticky top-20 z-30 bg-white/95 backdrop-blur-md rounded-2xl border border-stone-200 shadow-sm p-3 mb-8">
+        <!-- 3. IN-MENU FILTER & SEARCH BAR (NON-STICKY) -->
+        <div class="relative bg-white/95 backdrop-blur-md rounded-2xl border border-stone-200 shadow-sm p-3 mb-8">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <!-- Category Navigation Pills -->
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">

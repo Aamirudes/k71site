@@ -43,10 +43,10 @@
           sidebarOpen: false
       }">
 
-    <!-- Ambient Optical Liquid Glow Refraction Orbs (Figma Depth Spec) -->
+    <!-- Ambient Optical Neutral Soft Refraction (Minimalist Aesthetic) -->
     <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
-        <div class="absolute -top-[20%] right-[15%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-600/12 via-purple-600/8 to-transparent blur-3xl"></div>
-        <div class="absolute bottom-[10%] -left-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-blue-600/10 via-cyan-500/8 to-transparent blur-3xl"></div>
+        <div class="absolute -top-[15%] right-[10%] w-[500px] h-[500px] rounded-full bg-slate-200/50 dark:bg-white/[0.02] blur-3xl"></div>
+        <div class="absolute bottom-[5%] -left-[5%] w-[450px] h-[450px] rounded-full bg-stone-200/40 dark:bg-white/[0.01] blur-3xl"></div>
     </div>
 
     @php
@@ -217,7 +217,7 @@
             <!-- Right Controls: Quick Action, Live Store -->
             <div class="flex items-center gap-3">
                 <!-- Quick Action New Product -->
-                <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-purple-600/20 active:scale-95 transition-all">
+                <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-md shadow-stone-900/10 active:scale-95 transition-all">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <span class="hidden sm:inline">{{ $currentVInfo['add_btn'] ?? 'Add Product' }}</span>
                     <span class="sm:hidden">Add</span>
@@ -298,5 +298,8 @@
 
     <!-- Universal Floating Quick-Chat Launcher -->
     <x-k71-floating-chat />
+
+    <!-- Incoming Order Bell Notification System -->
+    <x-vendor-order-bell />
 </body>
 </html>

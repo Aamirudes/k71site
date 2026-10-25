@@ -14,6 +14,9 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Alpine.js (Defer) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <style>
         /* ======================================================================
            META / APPLE LIQUID GLASS DIRECT MESSAGING DESIGN SYSTEM
@@ -1360,31 +1363,24 @@
 
         /* ---------------- RESPONSIVE BREAKPOINT ---------------- */
         @media (max-width: 768px) {
-            html, body {
-                height: 100%;
-                overflow: hidden;
-            }
-            body.chat-active header {
-                display: none !important;
-            }
             #k71-chat-wrapper {
-                padding: 0 !important;
+                padding: 4px 6px !important;
                 margin: 0 !important;
                 width: 100% !important;
-                height: calc(100dvh - 104px);
-                max-height: calc(100dvh - 104px);
-                min-height: 0 !important;
+                height: calc(100dvh - 128px);
+                max-height: calc(100dvh - 128px);
+                min-height: 480px !important;
                 overflow: hidden !important;
                 display: flex !important;
                 align-items: stretch !important;
+                margin-bottom: 64px !important;
             }
             body.chat-active #k71-chat-wrapper {
-                height: 100dvh !important;
-                height: 100vh !important;
-                max-height: 100dvh !important;
-                position: fixed !important;
-                inset: 0 !important;
-                z-index: 9999 !important;
+                height: calc(100dvh - 128px) !important;
+                max-height: calc(100dvh - 128px) !important;
+                position: relative !important;
+                inset: auto !important;
+                z-index: 1 !important;
             }
             .glass-chat-frame {
                 border-radius: 0 !important;
@@ -2910,5 +2906,8 @@
 
     })();
     </script>
+
+    <!-- Mobile Bottom Navigation Panel -->
+    <x-k71-bottom-nav />
 </body>
 </html>

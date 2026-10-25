@@ -156,7 +156,7 @@
                  1. HIGH-IMPACT PROMOTIONAL PRODUCT HERO (AMAZON & MEESHO STYLE)
                  ========================================== -->
             <section class="pt-4 sm:pt-6 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-stretch">
+                <div class="w-full">
                     
                     @php
                         $carouselSlides = [
@@ -165,7 +165,7 @@
                                 'title' => $hp['slide1_title'] ?? 'Direct Products. Factory Direct Prices.',
                                 'subtitle' => $hp['slide1_subtitle'] ?? ($hp['hero_description'] ?? 'Shop trending fashion, smartphones, home living, cloud dining, and marble craft directly from verified Indian sellers with PhonePe escrow protection.'),
                                 'btn1_text' => $hp['slide1_btn1_text'] ?? ($hp['hero_cta_primary_text'] ?? 'Browse All Products'),
-                                'btn1_link' => $hp['slide1_btn1_link'] ?? ($hp['hero_cta_primary_link'] ?? '#product-showcase'),
+                                'btn1_link' => $hp['slide1_btn1_link'] ?? ($hp['hero_cta_primary_link'] ?? '#latest-products'),
                                 'btn2_text' => $hp['slide1_btn2_text'] ?? '₹199 Budget Store',
                                 'btn2_link' => $hp['slide1_btn2_link'] ?? '/catalog?sort=price_low',
                                 'image' => !empty($hp['slide1_image']) ? asset('storage/' . $hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80'),
@@ -193,8 +193,8 @@
                         ];
                     @endphp
 
-                    <!-- Main High-Converting Hero 3-Slide Carousel (8 cols) -->
-                    <div class="lg:col-span-8 rounded-2xl sm:rounded-3xl text-white shadow-md relative overflow-hidden border border-slate-900/10 min-h-[380px] sm:min-h-[440px] flex flex-col justify-between group"
+                    <!-- Main High-Converting Hero 3-Slide Carousel (Full Width) -->
+                    <div class="w-full rounded-2xl sm:rounded-3xl text-white shadow-md relative overflow-hidden border border-slate-900/10 min-h-[380px] sm:min-h-[460px] flex flex-col justify-between group"
                          x-data="{
                             currentSlide: 0,
                             totalSlides: 3,
@@ -251,7 +251,7 @@
                                     <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.12] text-white drop-shadow-sm">
                                         {{ $slide['title'] }}
                                     </h1>
-                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-200 max-w-xl font-normal leading-relaxed drop-shadow-sm">
+                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-200 max-w-2xl font-normal leading-relaxed drop-shadow-sm">
                                         {{ $slide['subtitle'] }}
                                     </p>
                                 </div>
@@ -315,81 +315,6 @@
                                         class="h-2 rounded-full transition-all duration-300 cursor-pointer"></button>
                             @endforeach
                         </div>
-
-                    </div>
-
-                    <!-- Right Column: 2 Quick-Pick Product Tiles (4 cols) -->
-                    <div class="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-3.5 sm:gap-4">
-                        @php 
-                            $tileProd1 = $featuredProducts->first() ?? $newArrivals->first();
-                            $tileProd2 = $featuredProducts->skip(1)->first() ?? $newArrivals->skip(1)->first();
-                        @endphp
-
-                        <!-- Tile 1 -->
-                        @if($tileProd1)
-                        <a href="{{ route('product.show', $tileProd1->slug) }}" 
-                           class="group p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-zinc-200 font-bold text-[9px] uppercase tracking-wider">
-                                    ⭐ Trending Pick
-                                </span>
-                                @if($tileProd1->compare_at_price > $tileProd1->base_price)
-                                    <span class="px-1.5 py-0.5 rounded bg-rose-600 text-white font-black text-[9px]">
-                                        {{ round((($tileProd1->compare_at_price - $tileProd1->base_price) / $tileProd1->compare_at_price) * 100) }}% OFF
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 mb-2 relative">
-                                @if($tileProd1->primary_image_url)
-                                    <img src="{{ $tileProd1->primary_image_url }}" alt="{{ $tileProd1->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-3xl">🛍️</div>
-                                @endif
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ $tileProd1->title }}</h4>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-sm font-black text-slate-950 dark:text-white">{{ $tileProd1->formatted_base_price }}</span>
-                                    @if($tileProd1->compare_at_price > $tileProd1->base_price)
-                                        <span class="text-[10px] text-slate-400 line-through">{{ $tileProd1->formatted_compare_at_price }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </a>
-                        @endif
-
-                        <!-- Tile 2 -->
-                        @if($tileProd2)
-                        <a href="{{ route('product.show', $tileProd2->slug) }}" 
-                           class="group p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 dark:bg-zinc-800 dark:text-zinc-200 font-bold text-[9px] uppercase tracking-wider">
-                                    ✨ Best Value
-                                </span>
-                                @if($tileProd2->compare_at_price > $tileProd2->base_price)
-                                    <span class="px-1.5 py-0.5 rounded bg-rose-600 text-white font-black text-[9px]">
-                                        {{ round((($tileProd2->compare_at_price - $tileProd2->base_price) / $tileProd2->compare_at_price) * 100) }}% OFF
-                                    </span>
-                                @endif
-                            </div>
-                            <div class="aspect-[4/3] rounded-xl overflow-hidden bg-slate-100 dark:bg-zinc-800 mb-2 relative">
-                                @if($tileProd2->primary_image_url)
-                                    <img src="{{ $tileProd2->primary_image_url }}" alt="{{ $tileProd2->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center text-3xl">👗</div>
-                                @endif
-                            </div>
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ $tileProd2->title }}</h4>
-                                <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-sm font-black text-slate-950 dark:text-white">{{ $tileProd2->formatted_base_price }}</span>
-                                    @if($tileProd2->compare_at_price > $tileProd2->base_price)
-                                        <span class="text-[10px] text-slate-400 line-through">{{ $tileProd2->formatted_compare_at_price }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                        </a>
-                        @endif
 
                     </div>
 
@@ -459,184 +384,39 @@
                             <p class="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 line-clamp-1">Verified factory clearance stock</p>
                         </a>
 
-                    </div>
-                </div>
-            </section>
-
             <!-- ==========================================
-                 3. UNIVERSAL DYNAMIC SEARCH DOCK (FAST & COMPACT)
+                 3. LATEST PRODUCTS (20 ITEMS WITH LOAD MORE)
                  ========================================== -->
-            <section class="max-w-4xl mx-auto px-3 sm:px-6">
-                <div class="p-3 sm:p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xs relative"
-                     x-data="{
-                        query: '',
-                        results: [],
-                        loading: false,
-                        isOpen: false,
-                        fetchSuggestions() {
-                            if(this.query.trim().length < 2) {
-                                this.results = [];
-                                this.isOpen = false;
-                                return;
-                            }
-                            this.loading = true;
-                            fetch('/api/search/suggest?q=' + encodeURIComponent(this.query))
-                                .then(r => r.json())
-                                .then(data => {
-                                    this.results = data.results || [];
-                                    this.isOpen = true;
-                                    this.loading = false;
-                                })
-                                .catch(() => { this.loading = false; });
-                        }
-                     }"
-                     @click.away="isOpen = false">
-                    
-                    <!-- Search Input Form -->
-                    <form action="{{ route('catalog.index') }}" method="GET" class="flex flex-col sm:flex-row items-center gap-2">
-                        <div class="relative flex-1 w-full flex items-center">
-                            <div class="pl-3.5 text-slate-400">
-                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                            </div>
-                            <input type="text" name="search" x-model="query"
-                                   @input.debounce.250ms="fetchSuggestions()"
-                                   @focus="if(results.length > 0) isOpen = true"
-                                   autocomplete="off"
-                                   placeholder="Search 10,000+ products, fashion, mobiles, cloud dining, services..."
-                                   class="w-full px-3.5 py-3 bg-transparent text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none">
-                            
-                            <div x-show="loading" class="pr-3 text-slate-400" style="display: none;">
-                                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                                </svg>
-                            </div>
-                        </div>
-
-                        <button type="submit" 
-                                class="w-full sm:w-auto px-7 py-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm tracking-wide shadow-xs active:scale-95 transition shrink-0 cursor-pointer">
-                            Search Products
-                        </button>
-                    </form>
-
-                    <!-- Live Dynamic Suggestions Dropdown -->
-                    <div x-show="isOpen && (results.length > 0 || loading)" 
-                         x-transition:enter="transition ease-out duration-150"
-                         x-transition:enter-start="opacity-0 translate-y-1"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100 dark:divide-zinc-800"
-                         style="display: none;">
-                        
-                        <template x-for="item in results" :key="item.id">
-                            <a :href="item.url" class="flex items-center gap-3.5 p-3 hover:bg-slate-50 dark:hover:bg-zinc-800 transition group">
-                                <img :src="item.thumb" :alt="item.title" class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-zinc-700 shrink-0">
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate group-hover:text-black" x-text="item.title"></p>
-                                    <div class="flex items-center gap-2.5 text-[11px] text-slate-500 mt-0.5">
-                                        <span class="font-mono font-bold text-slate-900 dark:text-zinc-100" x-text="item.price"></span>
-                                        <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 font-bold text-[9px]" x-text="item.vertical"></span>
-                                        <span class="truncate text-slate-400" x-text="item.vendor"></span>
-                                    </div>
-                                </div>
-                                <span class="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all text-xs font-bold pr-2">&rarr;</span>
-                            </a>
-                        </template>
-
-                        <div x-show="results.length > 0" class="p-2.5 bg-slate-50/90 dark:bg-zinc-800/90 text-center">
-                            <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(query)" class="text-xs font-bold text-slate-800 dark:text-zinc-200 hover:text-black">
-                                See all matching items for "<span x-text="query"></span>" &rarr;
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Trending Search Keywords -->
-                    <div class="pt-2.5 px-2 pb-0.5 border-t border-slate-100 dark:border-zinc-800 mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span class="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Trending:</span>
-                        <a href="{{ route('catalog.index', ['search' => 'silk']) }}" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-slate-200 transition">Silk Sarees</a>
-                        <a href="{{ route('catalog.index', ['search' => 'phone']) }}" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-slate-200 transition">5G Mobiles</a>
-                        <a href="{{ k71_vertical_url('food') }}" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-slate-200 transition">Biryani &amp; Sweets</a>
-                        <a href="{{ k71_vertical_url('services') }}" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-slate-200 transition">Marble Polishing</a>
-                        <a href="{{ k71_vertical_url('used') }}" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-[11px] font-medium hover:bg-slate-200 transition">Used iPhones</a>
-                    </div>
-                </div>
-            </section>
-
-
-            <!-- ==========================================
-                 5. MAIN DIRECT PRODUCT SHOWCASE (MEESHO / AMAZON ULTRA-RESPONSIVE GRID)
-                 ========================================== -->
-            <section id="product-showcase" class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 space-y-6"
-                     x-data="{
-                        activeTab: 'all',
-                        filterProducts(itemCategory, itemPrice, isDeal) {
-                            if (this.activeTab === 'all') return true;
-                            if (this.activeTab === 'deals') return isDeal;
-                            if (this.activeTab === 'under499') return itemPrice <= 49900;
-                            if (this.activeTab === 'fashion') return (itemCategory || '').toLowerCase().includes('fashion') || (itemCategory || '').toLowerCase().includes('clothing') || (itemCategory || '').toLowerCase().includes('saree') || (itemCategory || '').toLowerCase().includes('apparel');
-                            if (this.activeTab === 'tech') return (itemCategory || '').toLowerCase().includes('tech') || (itemCategory || '').toLowerCase().includes('mobile') || (itemCategory || '').toLowerCase().includes('electronic') || (itemCategory || '').toLowerCase().includes('laptop');
-                            return true;
-                        }
-                     }">
-                
-                <!-- Header with Quick-Filter Pills -->
+            <section id="latest-products" class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 space-y-6">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-3 border-b border-slate-200/80 dark:border-zinc-800">
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-black text-[9px] uppercase tracking-wider">
-                                DIRECT SHOWCASE
+                            <span class="px-2.5 py-0.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-zinc-900 font-black text-[9px] uppercase tracking-wider">
+                                FRESH ARRIVALS
                             </span>
-                            <span class="text-xs text-slate-500 font-bold">1-Tap Add to Bag</span>
+                            <span class="text-xs text-slate-500 font-bold">Direct from Verified Sellers</span>
                         </div>
                         <h2 class="text-xl sm:text-3xl font-black text-slate-950 dark:text-white tracking-tight mt-1">
-                            Explore Trending Products
+                            Latest Products
                         </h2>
                     </div>
 
-                    <!-- Category Filter Tabs (Instant Alpine filtering) -->
-                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 text-xs font-bold" style="scrollbar-width: none;">
-                        <button type="button" @click="activeTab = 'all'"
-                                :class="activeTab === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700'"
-                                class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
-                            All Items
-                        </button>
-                        <button type="button" @click="activeTab = 'deals'"
-                                :class="activeTab === 'deals' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700'"
-                                class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
-                            🔥 Top Deals
-                        </button>
-                        <button type="button" @click="activeTab = 'under499'"
-                                :class="activeTab === 'under499' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700'"
-                                class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
-                            ⚡ Under ₹499
-                        </button>
-                        <button type="button" @click="activeTab = 'fashion'"
-                                :class="activeTab === 'fashion' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700'"
-                                class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
-                            👗 Fashion
-                        </button>
-                        <button type="button" @click="activeTab = 'tech'"
-                                :class="activeTab === 'tech' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs' : 'bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700'"
-                                class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
-                            📱 Mobiles &amp; Tech
-                        </button>
-                    </div>
+                    <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-zinc-100 hover:underline">
+                        <span>View Entire Catalog</span>
+                        <span>&rarr;</span>
+                    </a>
                 </div>
 
-                <!-- ULTRA-RESPONSIVE PRODUCT GRID: 2-COL MOBILE, 3-4 COL TABLET, 4-5 COL DESKTOP -->
-                @if($allCatalogProducts->isNotEmpty())
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
-                        @foreach($allCatalogProducts as $prod)
-                            @php
-                                $catSlug = $prod->category?->slug ?? '';
-                                $catName = $prod->category?->name ?? '';
-                                $hasDiscount = ($prod->compare_at_price > $prod->base_price);
-                            @endphp
-                            <div x-show="filterProducts('{{ addslashes($catName . ' ' . $catSlug) }}', {{ $prod->base_price }}, {{ $hasDiscount ? 'true' : 'false' }})"
-                                 x-transition:enter="transition ease-out duration-200"
-                                 x-transition:enter-start="opacity-0 scale-95"
-                                 x-transition:enter-end="opacity-100 scale-100">
-                                <x-product-card :product="$prod" />
-                            </div>
+                @php
+                    $displayLatest = (isset($latestProducts) && $latestProducts->isNotEmpty()) 
+                        ? $latestProducts 
+                        : (isset($allCatalogProducts) ? $allCatalogProducts->take(20) : collect());
+                @endphp
+
+                @if($displayLatest->isNotEmpty())
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-5">
+                        @foreach($displayLatest->take(20) as $prod)
+                            <x-product-card :product="$prod" />
                         @endforeach
                     </div>
                 @else
@@ -645,12 +425,90 @@
                     </div>
                 @endif
 
-                <!-- View All Full Catalog Button -->
+                <!-- Load More Button -->
                 <div class="text-center pt-4">
                     <a href="{{ route('catalog.index') }}" 
-                       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm tracking-wide shadow-xs active:scale-95 transition">
+                       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-100 font-bold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer">
                         <span>Load More Products</span>
                         <span>&rarr;</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- ==========================================
+                 4. LATEST SHORTS INTERACTIVE SLIDER
+                 ========================================== -->
+            @if(isset($latestShorts) && $latestShorts->isNotEmpty())
+            <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4"
+                     x-data="{
+                        scrollLeft() {
+                            this.$refs.shortsTrack.scrollBy({ left: -340, behavior: 'smooth' });
+                        },
+                        scrollRight() {
+                            this.$refs.shortsTrack.scrollBy({ left: 340, behavior: 'smooth' });
+                        }
+                     }">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-zinc-800">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center font-black text-sm shadow-sm">
+                            ▶
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg sm:text-2xl font-black text-slate-950 dark:text-white tracking-tight leading-tight">Latest Shorts</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-rose-600/10 text-rose-600 text-[10px] font-black uppercase tracking-wider">LIVE</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500">Watch products in motion with 1-tap checkout</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="scrollLeft()" aria-label="Previous Shorts"
+                                class="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 shadow-xs cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" @click="scrollRight()" aria-label="Next Shorts"
+                                class="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-700 shadow-xs cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                        <a href="{{ k71_vertical_url('shorts') }}" class="ml-2 text-xs sm:text-sm font-bold text-slate-900 dark:text-zinc-100 hover:underline">
+                            View All &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <div x-ref="shortsTrack" class="flex items-center gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-2 touch-pan-x"
+                     style="scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+                    @foreach($latestShorts as $short)
+                        <a href="{{ route('shorts.show', $short->id) }}" 
+                           class="shrink-0 w-[160px] sm:w-[190px] aspect-[9/16] rounded-2xl overflow-hidden bg-slate-950 shadow-xs hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative group block border border-slate-900/20">
+                            @if($short->thumbnail_url)
+                                <img src="{{ $short->thumbnail_url }}" alt="{{ $short->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            @else
+                                <div class="w-full h-full flex items-center justify-center text-white text-3xl bg-zinc-900">▶</div>
+                            @endif
+                            
+                            <!-- Frosted Glass Liquid Bubble Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30 p-3 flex flex-col justify-between text-white">
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] font-black uppercase tracking-wider border border-white/20">
+                                        ⚡ Short
+                                    </span>
+                                    <div class="w-7 h-7 rounded-full bg-white/25 backdrop-blur-md flex items-center justify-center text-white text-xs group-hover:scale-110 transition-transform">
+                                        ▶
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <h4 class="text-xs font-bold line-clamp-2 leading-snug drop-shadow-sm text-white group-hover:text-zinc-100">{{ $short->title }}</h4>
+                                    @if($short->vendor)
+                                        <p class="text-[10px] text-zinc-300 truncate font-medium">@ {{ $short->vendor->shop_name }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            </section>
+            @endifn>&rarr;</span>
                     </a>
                 </div>
 
@@ -797,47 +655,7 @@
             </section>
             @endif
 
-            <!-- ==========================================
-                 9. SHOPPABLE STORIES & REELS (9:16 VIDEO ROW)
-                 ========================================== -->
-            @if($latestShorts->isNotEmpty())
-            <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-5">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-200/80 dark:border-zinc-800">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">▶</span>
-                        <div>
-                            <h2 class="text-lg sm:text-2xl font-black text-slate-950 dark:text-white tracking-tight leading-tight">Shoppable Video Stories</h2>
-                            <p class="text-[11px] text-slate-500">Watch products in motion with 1-tap checkout</p>
-                        </div>
-                    </div>
-                    <a href="{{ k71_vertical_url('shorts') }}" class="text-xs sm:text-sm font-bold text-slate-900 dark:text-zinc-100 hover:underline flex items-center gap-1">
-                        <span>Watch Reels Feed</span>
-                        <span>&rarr;</span>
-                    </a>
-                </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                    @foreach($latestShorts->take(6) as $short)
-                        <a href="{{ route('shorts.show', $short->id) }}" class="group relative aspect-[9/16] rounded-2xl overflow-hidden bg-slate-950 shadow-xs hover:shadow-md transition-all duration-200 block">
-                            @if($short->thumbnail_url)
-                                <img src="{{ $short->thumbnail_url }}" alt="{{ $short->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                            @else
-                                <div class="w-full h-full flex items-center justify-center text-white text-3xl">▶</div>
-                            @endif
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/20 p-3 flex flex-col justify-between text-white">
-                                <span class="self-start px-2 py-0.5 rounded-full bg-rose-600 text-[8px] font-black uppercase tracking-wider">
-                                    LIVE
-                                </span>
-                                <div>
-                                    <h4 class="text-xs font-bold line-clamp-2 leading-snug drop-shadow-sm">{{ $short->title }}</h4>
-                                    <span class="text-[10px] text-zinc-300 mt-1 block">Watch &amp; Buy &rarr;</span>
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
-            @endif
 
             <!-- ==========================================
                  10. B2B FACTORY REQUIREMENTS & RFQS

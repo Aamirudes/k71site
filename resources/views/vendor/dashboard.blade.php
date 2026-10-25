@@ -79,16 +79,16 @@
         }
 
         .glass-btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            background: #0f172a;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
             color: #ffffff;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .glass-btn-primary:hover {
+            background: #000000;
             transform: translateY(-1px);
-            box-shadow: 0 14px 30px -5px rgba(79, 70, 229, 0.55), inset 0 1px 1.5px rgba(255, 255, 255, 0.4);
-            filter: brightness(1.08);
+            box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.4);
         }
     </style>
 

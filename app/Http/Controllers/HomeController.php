@@ -163,6 +163,23 @@ class HomeController extends Controller
                 ->get();
         }
 
+        // Dedicated 20 Latest Products for Homepage
+        $latestProducts = Product::with(['images', 'vendor', 'category', 'variants'])
+            ->where('status', 'active')
+            ->where($retailFilter)
+            ->latest()
+            ->take(20)
+            ->get();
+
+        if ($latestProducts->count() < 20) {
+            $fallback = Product::with(['images', 'vendor', 'category', 'variants'])
+                ->where('status', 'active')
+                ->latest()
+                ->take(20)
+                ->get();
+            $latestProducts = $latestProducts->merge($fallback)->unique('id')->take(20);
+        }
+
         // Dedicated Services & Freelancers for Homepage Showcase
         $featuredServices = Product::with(['images', 'vendor', 'category', 'gigPackages'])
             ->where('vertical', 'services')
@@ -269,12 +286,13 @@ class HomeController extends Controller
         $latestShorts = \App\Models\Short::with(['vendor'])
             ->where('status', 'approved')
             ->latest('trending_score')
-            ->take(8)
+            ->take(12)
             ->get();
 
         return view('home', compact(
             'featuredProducts', 
             'newArrivals', 
+            'latestProducts',
             'featuredServices',
             'featuredFood',
             'foodRestaurants',

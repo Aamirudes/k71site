@@ -94,10 +94,19 @@
             <div class="mb-6 p-4 rounded-xl bg-stone-50 border border-stone-200/60">
                 <div class="flex items-center justify-between mb-3">
                     <label class="text-xs font-bold uppercase tracking-wider text-stone-700 flex items-center gap-1.5">
-                        <span>🏷️ 2. Choose Sizing Options</span>
-                        <span class="text-stone-400 font-normal">(Adult, Kids, or Custom)</span>
+                        <span>🏷️ 2. Choose Sizing / Pack / Spec Options</span>
+                        <span class="text-stone-400 font-normal">(Clothing, Shoes, Kirana, or Hardware)</span>
                     </label>
-                    <span class="text-[11px] font-semibold text-brand-sage" x-text="selectedSizes.length + ' sizes selected'"></span>
+                    <span class="text-[11px] font-semibold text-brand-sage" x-text="selectedSizes.length + ' options selected'"></span>
+                </div>
+
+                <!-- Quick Category Presets Chips -->
+                <div class="flex flex-wrap gap-1.5 mb-3 pb-2 border-b border-stone-200/50">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-stone-400 py-1">Quick Presets:</span>
+                    <button type="button" @click="availableSizesList = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', 'Free Size']; selectedSizes = ['M', 'L', 'XL']; generateFashionMatrix();" class="text-[11px] px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold transition">👗 Apparel (XS-3XL)</button>
+                    <button type="button" @click="availableSizesList = ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12']; selectedSizes = ['UK 7', 'UK 8', 'UK 9']; generateFashionMatrix();" class="text-[11px] px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold transition">👟 Shoes (UK 5-12)</button>
+                    <button type="button" @click="availableSizesList = ['100 g', '250 g', '500 g', '1 kg', '2 kg', '5 kg', '10 kg', '1 Packet', '1 Bottle', '1 Piece']; selectedSizes = ['500 g', '1 kg']; generateFashionMatrix();" class="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold transition">🛒 Kirana Packs</button>
+                    <button type="button" @click="availableSizesList = ['4GB/64GB', '6GB/128GB', '8GB/128GB', '8GB/256GB', '12GB/256GB', '16GB/512GB', '16GB/1TB']; selectedSizes = ['8GB/128GB', '8GB/256GB']; generateFashionMatrix();" class="text-[11px] px-2.5 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 font-bold transition">📱 Electronics RAM/Storage</button>
                 </div>
 
                 <div class="flex flex-wrap gap-2 mb-3">

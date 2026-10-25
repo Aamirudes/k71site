@@ -102,20 +102,20 @@
             @endif
         </a>
         
-        <!-- Top Left: Vertical Category Theme Badge & Stock Pill -->
-        <div class="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
-            <!-- Theme Badge (e.g. FOOD, FASHION, PRE-OWNED) -->
-            <span class="px-2.5 py-0.5 {{ $theme['badge_bg'] }} font-sans text-[9px] font-black tracking-widest uppercase rounded-md shadow-md flex items-center gap-1 backdrop-blur-xs">
-                <span>{{ $theme['icon'] }}</span>
+        <!-- Top Left: Liquid Bubble Frosted Glass Theme Badge & Stock Pill -->
+        <div class="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
+            <!-- Liquid Bubble Glass Pill Badge -->
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ $theme['badge_bg'] }} transition-all group-hover:scale-102">
+                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-900 dark:bg-white' }} shadow-xs"></span>
                 <span>{{ $theme['label'] }}</span>
             </span>
 
             @if($isOutOfStock)
-                <span class="px-2 py-0.5 bg-stone-900/90 text-white font-sans text-[8.5px] font-black tracking-widest uppercase rounded shadow-xs">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-black/80 text-white backdrop-blur-md border border-white/20 shadow-sm">
                     Sold Out
                 </span>
             @elseif($discount > 0)
-                <span class="px-2 py-0.5 bg-rose-600 text-white font-sans text-[8.5px] font-black tracking-widest uppercase rounded shadow-xs">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase bg-rose-500/90 text-white backdrop-blur-md border border-white/30 shadow-[0_2px_8px_rgba(244,63,94,0.3)]">
                     {{ $discount }}% OFF
                 </span>
             @endif

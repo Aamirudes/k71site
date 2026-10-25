@@ -86,9 +86,136 @@
                                 <input type="text" id="name" name="name" value="{{ old('name', auth()->user()?->name ?? '') }}" required placeholder="e.g. Rahul Sharma" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
                             </div>
 
-                            <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address <span class="text-[11px] text-stone-400 font-normal">(for tracking &amp; invoice)</span></label>
-                                <input type="email" id="email" name="email" value="{{ old('email', auth()->user()?->email ?? '') }}" placeholder="e.g. rahul@example.com" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                            <div class="sm:col-span-2" 
+                                 x-data="{
+                                    email: '{{ old('email', auth()->user()?->email ?? '') }}',
+                                    otpCode: '',
+                                    otpSent: {{ session('requires_checkout_otp') ? 'true' : 'false' }},
+                                    verified: {{ session('checkout_verified_email') ? 'true' : (auth()->check() && auth()->user()->email_verified_at ? 'true' : 'false') }},
+                                    loading: false,
+                                    msg: '{{ session('success') ?? '' }}',
+                                    errorMsg: '{{ $errors->first('email_otp') ?? '' }}',
+                                    cooldown: 0,
+                                    sendOtp() {
+                                        if (!this.email || !this.email.includes('@')) {
+                                            this.errorMsg = 'Please enter a valid email address first.';
+                                            return;
+                                        }
+                                        this.loading = true;
+                                        this.errorMsg = '';
+                                        fetch('{{ route('checkout.otp.send') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                'Accept': 'application/json'
+                                            },
+                                            body: JSON.stringify({ email: this.email })
+                                        })
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            this.loading = false;
+                                            if (data.success) {
+                                                this.otpSent = true;
+                                                this.msg = data.message;
+                                                this.cooldown = 45;
+                                                const timer = setInterval(() => {
+                                                    this.cooldown--;
+                                                    if (this.cooldown <= 0) clearInterval(timer);
+                                                }, 1000);
+                                            } else {
+                                                this.errorMsg = data.message || 'Failed to send OTP.';
+                                            }
+                                        })
+                                        .catch(() => {
+                                            this.loading = false;
+                                            this.errorMsg = 'Network error while dispatching OTP.';
+                                        });
+                                    },
+                                    verifyOtp() {
+                                        if (this.otpCode.length !== 6) {
+                                            this.errorMsg = 'Please enter the 6-digit code sent to your email.';
+                                            return;
+                                        }
+                                        this.loading = true;
+                                        this.errorMsg = '';
+                                        fetch('{{ route('checkout.otp.verify') }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                                'Accept': 'application/json'
+                                            },
+                                            body: JSON.stringify({ email: this.email, code: this.otpCode })
+                                        })
+                                        .then(r => r.json())
+                                        .then(data => {
+                                            this.loading = false;
+                                            if (data.success) {
+                                                this.verified = true;
+                                                this.msg = '✓ Email confirmed genuine!';
+                                                this.errorMsg = '';
+                                            } else {
+                                                this.errorMsg = data.message || 'Invalid OTP code.';
+                                            }
+                                        })
+                                        .catch(() => {
+                                            this.loading = false;
+                                            this.errorMsg = 'Network error while verifying OTP.';
+                                        });
+                                    }
+                                 }">
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="email" class="block text-sm font-medium text-gray-700">
+                                        Email Address <span class="text-rose-500">*</span>
+                                        <span class="text-[11px] text-stone-400 font-normal">(for 2-step verification &amp; order tracking)</span>
+                                    </label>
+                                    <template x-if="verified">
+                                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                            ✓ Email Confirmed
+                                        </span>
+                                    </template>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="email" id="email" name="email" x-model="email" required
+                                           :readonly="verified"
+                                           placeholder="e.g. rahul@example.com" 
+                                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                                    @guest
+                                    <button type="button" 
+                                            x-show="!verified"
+                                            @click="sendOtp()"
+                                            :disabled="loading || cooldown > 0"
+                                            class="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shrink-0 transition active:scale-95 disabled:opacity-50 cursor-pointer">
+                                        <span x-show="!loading && cooldown === 0" x-text="otpSent ? 'Resend OTP' : 'Verify Email (OTP)'"></span>
+                                        <span x-show="cooldown > 0" x-text="'Wait ' + cooldown + 's'"></span>
+                                        <span x-show="loading">Sending...</span>
+                                    </button>
+                                    @endguest
+                                </div>
+
+                                <!-- Inline OTP Input Box for Guest Checkout -->
+                                @guest
+                                <div x-show="otpSent && !verified" class="mt-3 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-2">
+                                    <p class="text-xs text-amber-900 font-medium">
+                                        A 6-digit confirmation code was sent to <strong x-text="email"></strong>. Please enter it below:
+                                    </p>
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" name="email_otp" x-model="otpCode" maxlength="6" pattern="[0-9]{6}"
+                                               placeholder="6-digit OTP" 
+                                               class="w-36 rounded-lg border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm font-mono tracking-widest text-center">
+                                        <button type="button" 
+                                                @click="verifyOtp()"
+                                                :disabled="loading"
+                                                class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition active:scale-95 cursor-pointer">
+                                            Confirm Code
+                                        </button>
+                                    </div>
+                                </div>
+                                @endguest
+
+                                <p x-show="msg" x-text="msg" class="text-xs text-emerald-600 mt-1 font-medium"></p>
+                                <p x-show="errorMsg" x-text="errorMsg" class="text-xs text-rose-600 mt-1 font-medium"></p>
                             </div>
 
                             <div class="md:col-span-2">
@@ -341,7 +468,7 @@
                         <dd id="total-display" class="text-2xl font-bold text-brand-text">₹{{ number_format($total / 100, 2) }}</dd>
                     </div>
                     
-                    <button type="submit" form="checkout-form" class="w-full btn-primary py-4 text-base shadow-sm font-semibold" x-text="paymentMethod === 'upi' ? 'Continue to Secure UPI Payment' : 'Place Order (Cash on Delivery)'">
+                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-lg font-bold text-white bg-slate-900 hover:bg-black rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer" x-text="paymentMethod === 'upi' ? 'Continue to Secure UPI Payment' : 'Place Order (Cash on Delivery)'">
                         Place Order
                     </button>
                     

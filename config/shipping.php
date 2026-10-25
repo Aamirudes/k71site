@@ -10,8 +10,8 @@ return [
     'mode' => env('SHIPPING_MODE', 'live'), // 'live' (real couriers via Shiprocket) or 'sandbox' (testing)
 
     'shiprocket' => [
-        'email' => env('SHIPROCKET_API_EMAIL', 'crab.hashir@gmail.com'),
-        'password' => env('SHIPROCKET_API_PASSWORD', 'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB'),
+        'email' => env('SHIPROCKET_API_EMAIL', ''),
+        'password' => env('SHIPROCKET_API_PASSWORD', ''),
         'base_url' => 'https://apiv2.shiprocket.in/v1/external',
         'token_cache_ttl' => 240 * 60, // 10 days in minutes
         'default_channel_id' => null,

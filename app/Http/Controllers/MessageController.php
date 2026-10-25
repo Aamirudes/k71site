@@ -15,8 +15,12 @@ class MessageController extends Controller
     /**
      * Customer messages inbox.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        if (!auth()->check()) {
+            return redirect()->guest(route('login'))->with('error', 'Please log in to access your direct messages.');
+        }
+
         $user = auth()->user();
         if ($user) {
             if (session_status() === PHP_SESSION_NONE) {

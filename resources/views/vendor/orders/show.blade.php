@@ -418,8 +418,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            @else
+            @elseif($order->vendor && $order->vendor->isMarketplacePhysical())
             <!-- ⚡ Automated Shiprocket Logistics Card -->
             <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl overflow-hidden mb-6">
                 <div class="px-4 py-5 sm:px-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

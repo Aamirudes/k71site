@@ -146,10 +146,10 @@ return [
     |--------------------------------------------------------------------------
     */
     'seo' => [
-        'title_suffix' => env('MARKETPLACE_NAME', 'Marketplace'),
-        'default_description' => 'Shop the latest fashion trends from top Indian vendors. Quality clothing delivered to your doorstep.',
+        'title_suffix' => env('MARKETPLACE_NAME', 'K71'),
+        'default_description' => 'Shop & source across K71 Multi-Category Marketplace: Fashion, Footwear, Kirana, Electronics, Food, Doorstep Services, Certified Pre-Owned, and Industrial Marble & Machinery RFQs.',
         'og_image' => '/images/og-default.jpg',
-        'canonical_domain' => env('MARKETPLACE_DOMAIN', 'marketplace.com'),
+        'canonical_domain' => env('MARKETPLACE_DOMAIN', 'marblemandi.org'),
         'google_analytics_id' => env('GOOGLE_ANALYTICS_ID', ''),
         'google_search_console_id' => env('GOOGLE_SEARCH_CONSOLE_ID', ''),
         'meta_pixel_id' => env('META_PIXEL_ID', ''),

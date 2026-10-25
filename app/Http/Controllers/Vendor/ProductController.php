@@ -124,19 +124,24 @@ class ProductController extends Controller
                 });
                 break;
             case 'clothing':
-            case 'footwear':
                 $q->where(function($sq) {
                     $sq->where('slug', 'LIKE', '%clothing%')
                        ->orWhere('slug', 'LIKE', '%fashion%')
-                       ->orWhere('slug', 'LIKE', '%footwear%')
                        ->orWhere('slug', 'LIKE', '%accessories%')
                        ->orWhere('slug', 'LIKE', '%saree%')
                        ->orWhere('slug', 'LIKE', '%men%')
                        ->orWhere('slug', 'LIKE', '%women%')
                        ->orWhere('slug', 'LIKE', '%kids%')
                        ->orWhere('name', 'LIKE', '%Fashion%')
-                       ->orWhere('name', 'LIKE', '%Apparel%')
-                       ->orWhere('name', 'LIKE', '%Footwear%');
+                       ->orWhere('name', 'LIKE', '%Apparel%');
+                });
+                break;
+            case 'footwear':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%footwear%')
+                       ->orWhere('slug', 'LIKE', '%shoe%')
+                       ->orWhere('name', 'LIKE', '%Footwear%')
+                       ->orWhere('name', 'LIKE', '%Shoes%');
                 });
                 break;
             case 'electronics':
@@ -185,12 +190,15 @@ class ProductController extends Controller
                 });
                 break;
             case 'groceries':
+            case 'kirana':
                 $q->where(function($sq) {
                     $sq->where('slug', 'LIKE', '%grocer%')
+                       ->orWhere('slug', 'LIKE', '%kirana%')
                        ->orWhere('slug', 'LIKE', '%fmcg%')
                        ->orWhere('slug', 'LIKE', '%staple%')
                        ->orWhere('slug', 'LIKE', '%produce%')
                        ->orWhere('name', 'LIKE', '%Grocer%')
+                       ->orWhere('name', 'LIKE', '%Kirana%')
                        ->orWhere('name', 'LIKE', '%Daily Essentials%');
                 });
                 break;
@@ -216,6 +224,7 @@ class ProductController extends Controller
                        ->orWhere('name', 'LIKE', '%Freelanc%');
                 });
                 break;
+            case 'marble':
             case 'machinery':
             case 'b2b':
                 $q->where(function($sq) {
@@ -223,9 +232,12 @@ class ProductController extends Controller
                        ->orWhere('slug', 'LIKE', '%industrial%')
                        ->orWhere('slug', 'LIKE', '%bulk%')
                        ->orWhere('slug', 'LIKE', '%marble%')
+                       ->orWhere('slug', 'LIKE', '%granite%')
                        ->orWhere('slug', 'LIKE', '%stone%')
                        ->orWhere('name', 'LIKE', '%Machinery%')
                        ->orWhere('name', 'LIKE', '%Industrial%')
+                       ->orWhere('name', 'LIKE', '%Marble%')
+                       ->orWhere('name', 'LIKE', '%Granite%')
                        ->orWhere('vertical', 'enquiry');
                 });
                 break;

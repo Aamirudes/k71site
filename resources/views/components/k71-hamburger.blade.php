@@ -79,14 +79,14 @@
         <!-- Drawer Header -->
         <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-indigo-600 p-1 flex items-center justify-center shadow-md shadow-indigo-600/20 shrink-0 border border-indigo-700">
+                <div class="h-8 w-8 flex items-center justify-center shrink-0">
                     <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                 </div>
                 <div class="flex items-baseline gap-1.5 leading-none">
                     <span class="font-sans text-xl font-black tracking-tight text-zinc-950 dark:text-white">
                         K71
                     </span>
-                    <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-zinc-500 dark:text-zinc-400">
                         MARKETPLACE
                     </span>
                 </div>
@@ -106,7 +106,7 @@
             <div class="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80">
                 @auth
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-violet-600 text-white font-medium flex items-center justify-center text-sm shadow-xs overflow-hidden border border-violet-200">
+                        <div class="w-10 h-10 rounded-full bg-zinc-900 text-white font-medium flex items-center justify-center text-sm shadow-xs overflow-hidden border border-zinc-700">
                             @if(auth()->user()->avatar)
                                 <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
                             @else
@@ -135,7 +135,7 @@
                         <div class="grid grid-cols-2 gap-2 mt-3">
                             <button type="button" 
                                     @click="closeDrawer(); window.openAuthModal ? window.openAuthModal(null, 'login') : $dispatch('open-auth-modal', { tab: 'login' })" 
-                                    class="py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer">
+                                    class="py-2.5 rounded-xl bg-zinc-950 hover:bg-black text-white text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer">
                                 Sign In
                             </button>
                             <button type="button" 
@@ -155,9 +155,9 @@
                     @foreach($verticalsList as $vert)
                         @php $isActive = $currentKey === $vert['key']; @endphp
                         <a href="{{ $vert['url'] }}" 
-                           class="flex items-center justify-between p-3 rounded-2xl transition-all duration-200 {{ $isActive ? 'bg-violet-600 text-white shadow-md' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-800 dark:text-zinc-200' }}">
+                           class="flex items-center justify-between p-3 rounded-2xl transition-all duration-200 {{ $isActive ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-800 dark:text-zinc-200' }}">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $isActive ? 'bg-white/20 text-white' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 shadow-xs' }}">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $isActive ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 shadow-xs' }}">
                                     <svg width="18" height="18" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $vert['icon_path'] }}"></path>
                                     </svg>
@@ -171,10 +171,10 @@
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-[10px] {{ $isActive ? 'text-violet-100' : 'text-zinc-500 dark:text-zinc-400' }}">{{ $vert['desc'] }}</p>
+                                    <p class="text-[10px] {{ $isActive ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400' }}">{{ $vert['desc'] }}</p>
                                 </div>
                             </div>
-                            <svg class="w-4 h-4 {{ $isActive ? 'text-white' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 {{ $isActive ? 'text-white dark:text-zinc-950' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path>
                             </svg>
                         </a>

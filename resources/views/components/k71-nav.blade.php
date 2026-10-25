@@ -102,7 +102,7 @@
                         </div>
                     @else
                         <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
-                            <div class="h-8 w-8 sm:h-9 sm:w-9 rounded-xl overflow-hidden bg-slate-950 p-1 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform shrink-0 border border-slate-900">
+                            <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                                 <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                             </div>
                             <div class="flex items-baseline gap-1 leading-none">

@@ -65,7 +65,7 @@
                             </div>
                             
                             <p class="text-sm text-gray-500 mb-1">Or Pay directly to VPA:</p>
-                            <p class="text-lg font-bold text-brand-text select-all">{{ $vpa ?? $settings?->upi_id ?? 'marblemandi@upi' }}</p>
+                            <p class="text-lg font-bold text-brand-text select-all">{{ $vpa ?? $settings?->upi_id ?? 'k71@upi' }}</p>
                         </div>
                     </div>
 
@@ -81,21 +81,47 @@
                             
                             <h3 class="text-blue-900 font-bold mb-2 flex items-center gap-2">
                                 <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-200 text-blue-700 text-xs">2</span>
-                                Enter Reference ID
+                                Submit Proof of Payment
                             </h3>
-                            <p class="text-sm text-blue-800 ml-8">After paying, copy the 12-digit UTR/Reference number from your app and paste it below.</p>
+                            <p class="text-sm text-blue-800 ml-8">Submit either your <b>12-digit UTR/Reference ID</b>, or upload a <b>Payment Screenshot</b> (or both) to confirm your order.</p>
                         </div>
 
-                        <form action="{{ route('checkout.payment.process', $order->id) }}" method="POST">
+                        <form action="{{ route('checkout.payment.process', $order->id) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
                             @csrf
-                            <div class="mb-6">
-                                <label for="upi_transaction_id" class="block text-sm font-medium text-gray-700 mb-2">Transaction ID (12-digit UTR)</label>
-                                <input type="text" id="upi_transaction_id" name="upi_transaction_id" required class="w-full rounded-2xl border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage px-4 py-3 text-lg tracking-wide" placeholder="e.g. 312345678901">
+                            <div>
+                                <label for="upi_transaction_id" class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                    Option A: 12-digit UPI / UTR Reference ID
+                                </label>
+                                <input type="text" id="upi_transaction_id" name="upi_transaction_id" 
+                                       value="{{ old('upi_transaction_id') }}"
+                                       class="w-full rounded-2xl border-gray-300 shadow-sm focus:border-slate-900 focus:ring-slate-900 px-4 py-3 text-base tracking-wide" 
+                                       placeholder="e.g. 312345678901">
+                            </div>
+
+                            <div class="relative flex items-center py-1">
+                                <div class="flex-grow border-t border-gray-200"></div>
+                                <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-bold uppercase tracking-wider">AND / OR</span>
+                                <div class="flex-grow border-t border-gray-200"></div>
+                            </div>
+
+                            <div x-data="{ fileName: '' }">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                                    Option B: Upload Payment Screenshot
+                                </label>
+                                <div class="border-2 border-dashed border-gray-200 hover:border-slate-400 rounded-2xl p-4 text-center cursor-pointer transition relative bg-slate-50/50">
+                                    <input type="file" name="payment_screenshot" accept="image/*" 
+                                           @change="fileName = $event.target.files[0] ? $event.target.files[0].name : ''"
+                                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                    <div class="space-y-1">
+                                        <div class="text-2xl">📸</div>
+                                        <p class="text-xs font-bold text-slate-800" x-text="fileName ? fileName : 'Click or drag screenshot here'"></p>
+                                        <p class="text-[11px] text-gray-400">PNG, JPG, WebP up to 5MB</p>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <button type="submit" class="w-full py-4 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-2xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2">
-                                Verify Payment
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <button type="submit" class="w-full py-4 bg-slate-900 hover:bg-black text-white font-bold rounded-2xl shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 cursor-pointer">
+                                Submit Payment Proof &rarr;
                             </button>
                         </form>
                     </div>

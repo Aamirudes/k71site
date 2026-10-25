@@ -61,7 +61,7 @@ class RegisterController extends Controller
                 'username' => strtolower($validated['username']),
                 'email' => strtolower($validated['email']),
                 'password' => Hash::make($validated['password']),
-                'email_verified_at' => now(), // Instant activation for streamlined buyer checkout/RFQ
+                'email_verified_at' => null, // Enforce 2-step OTP email confirmation
                 'terms_accepted_at' => now(),
             ]);
 
@@ -71,24 +71,29 @@ class RegisterController extends Controller
             // Merge guest cart
             \App\Models\Cart::mergeGuestCart($createdUser->id, $request->session()->getId());
 
-            \Illuminate\Support\Facades\Auth::login($createdUser, true);
+            try {
+                $this->otpService->generateAndSend($createdUser->email, 'registration', $createdUser->id);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Buyer OTP send notice: " . $e->getMessage());
+            }
+
+            $request->session()->put('verify_email', $createdUser->email);
+            $request->session()->put('verify_purpose', 'registration');
+            $request->session()->put('login_role', 'customer');
         });
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Welcome to K71! Your account has been created.',
+                'requires_otp' => true,
+                'redirect_url' => route('otp.show'),
+                'message' => 'A 6-digit verification code has been sent to your email. Please verify to continue.',
                 'csrf_token' => csrf_token(),
-                'user' => [
-                    'id' => $createdUser->id,
-                    'name' => $createdUser->name,
-                    'email' => $createdUser->email,
-                    'role' => 'customer',
-                ]
+                'email' => $createdUser->email,
             ]);
         }
 
-        return redirect()->route('home')->with('success', 'Welcome to K71!');
+        return redirect()->route('otp.show')->with('success', 'A 6-digit verification code has been sent to your email. Please verify to complete your registration.');
     }
 
     public function vendorShow()

@@ -211,7 +211,7 @@
                             <span class="w-7 h-7 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center font-bold text-xs">2</span>
                             <div>
                                 <h2 class="text-base font-bold text-slate-900 dark:text-white">Technical &amp; Product Specifications</h2>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">Structured specs displayed in the product specification table.</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Structured parameters displayed cleanly on your storefront specification table.</p>
                             </div>
                         </div>
                         <button type="button" @click="addSpecRow()" class="text-xs font-bold text-indigo-500 hover:text-indigo-400 flex items-center gap-1 cursor-pointer">
@@ -219,29 +219,518 @@
                         </button>
                     </div>
 
-                    <!-- Dynamic Spec Key-Value Rows -->
+                    <!-- Responsive Spec Key-Value Capsules -->
                     <div class="space-y-2.5">
                         <template x-for="(spec, index) in form.specs" :key="index">
-                            <div class="flex items-center gap-2.5">
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 sm:p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 transition-all shadow-inner">
                                 <input 
                                     type="text" 
                                     x-model="spec.key" 
                                     :name="'specifications[' + index + '][name]'" 
-                                    placeholder="Spec Key (e.g. RAM, Engine, Size)" 
-                                    class="w-1/3 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-cyan-500 shadow-inner"
+                                    placeholder="Spec Key (e.g. RAM, Sizing, Fabric, Motor)" 
+                                    class="w-full sm:w-1/3 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-cyan-500 shadow-inner"
                                 >
                                 <input 
                                     type="text" 
                                     x-model="spec.value" 
                                     :name="'specifications[' + index + '][value]'" 
-                                    placeholder="Value (e.g. 16GB LPDDR5X, 1.5L Turbo, XL)" 
-                                    class="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-cyan-500 shadow-inner"
+                                    placeholder="Value (e.g. 16GB LPDDR5X, 100% Cotton, 415V Three Phase)" 
+                                    class="flex-1 px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-cyan-500 shadow-inner"
                                 >
-                                <button type="button" @click="removeSpecRow(index)" class="p-2 rounded-lg text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" title="Remove specification">
+                                <button type="button" @click="removeSpecRow(index)" class="p-2 self-end sm:self-center rounded-lg text-slate-400 hover:text-rose-500 transition-colors cursor-pointer" title="Remove specification">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                             </div>
                         </template>
+                    </div>
+                </div>
+
+                <!-- 2.5 Category-Adaptive Product Variations & Options Studio -->
+                <div class="p-5 sm:p-7 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-xl space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold text-xs">2.5</span>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>Product Variations &amp; Options</span>
+                                    <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                        Adaptive Studio
+                                    </span>
+                                </h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Configure clothing sizes, footwear sizing, grocery pack units, hardware specs, or food portions.</p>
+                            </div>
+                        </div>
+
+                        <!-- Category Selector Pills -->
+                        <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-x-auto text-[11px] font-bold">
+                            <button type="button" @click="activeVariantTab = 'clothing'" :class="activeVariantTab === 'clothing' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👗 Clothing</button>
+                            <button type="button" @click="activeVariantTab = 'footwear'" :class="activeVariantTab === 'footwear' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👟 Footwear</button>
+                            <button type="button" @click="activeVariantTab = 'kirana'" :class="activeVariantTab === 'kirana' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🛒 Kirana</button>
+                            <button type="button" @click="activeVariantTab = 'electronics'" :class="activeVariantTab === 'electronics' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📱 Electronics</button>
+                            <button type="button" @click="activeVariantTab = 'food'" :class="activeVariantTab === 'food' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🍽️ Food</button>
+                            <button type="button" @click="activeVariantTab = 'enquiry'" :class="activeVariantTab === 'enquiry' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📋 Marble / B2B</button>
+                        </div>
+                    </div>
+
+                    <!-- 1. CLOTHING VARIATIONS (Sizes XS-3XL & Colors) -->
+                    <div x-show="activeVariantTab === 'clothing'" class="space-y-4">
+                        <div class="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-800/30">
+                            <!-- Color Swatches Selection -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                                    1. Pick Apparel Colors:
+                                </label>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <template x-for="(col, cIdx) in availableColors" :key="col.name">
+                                        <button type="button" 
+                                                @click="toggleClothingColor(col)"
+                                                :class="selectedColors.some(c => c.name === col.name) ? 'ring-2 ring-indigo-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-sm' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+                                            <span class="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0" :style="'background-color:' + col.hex"></span>
+                                            <span x-text="col.name"></span>
+                                            <span x-show="selectedColors.some(c => c.name === col.name)" class="text-indigo-600 font-bold">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" x-model="customColorName" placeholder="Custom Color (e.g. Coral Peach)" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <input type="color" x-model="customColorHex" class="w-7 h-7 rounded-lg cursor-pointer border-0 p-0">
+                                    <button type="button" @click="addCustomClothingColor()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition cursor-pointer">
+                                        + Add Color
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Clothing Sizes Chips -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                                    2. Pick Clothing Sizes:
+                                </label>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <template x-for="sz in availableSizes" :key="sz">
+                                        <button type="button" 
+                                                @click="toggleClothingSize(sz)"
+                                                :class="selectedSizes.includes(sz) ? 'bg-indigo-600 text-white font-bold shadow-sm ring-2 ring-indigo-400/40' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+                                            <span x-text="sz"></span>
+                                            <span x-show="selectedSizes.includes(sz)" class="ml-1">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="text" x-model="customSize" placeholder="Custom Size (e.g. 4XL or 38-R)" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <button type="button" @click="addCustomClothingSize()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition cursor-pointer">
+                                        + Add Size
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Generated Variation Table -->
+                        <div x-show="variants.length > 0" class="space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300" x-text="variants.length + ' variations generated (Color × Size Matrix)'"></span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" step="0.01" x-model="bulkPrice" placeholder="Bulk Price (₹)" class="w-28 px-2.5 py-1 text-xs rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900">
+                                    <input type="number" x-model="bulkStock" placeholder="Bulk Stock" class="w-24 px-2.5 py-1 text-xs rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900">
+                                    <button type="button" @click="applyBulkToClothing()" class="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-black cursor-pointer">Apply All</button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
+                                <table class="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-950/60 font-bold uppercase text-slate-500">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Color</th>
+                                            <th class="px-3 py-2.5 text-left">Size</th>
+                                            <th class="px-3 py-2.5 text-left">SKU</th>
+                                            <th class="px-3 py-2.5 text-left">Price (₹)</th>
+                                            <th class="px-3 py-2.5 text-left">Stock</th>
+                                            <th class="px-3 py-2.5 text-right">Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-slate-900">
+                                        <template x-for="(v, idx) in variants" :key="idx">
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="w-3 h-3 rounded-full border border-black/20" :style="'background-color:' + (v.color_hex || '#000')"></span>
+                                                        <span class="font-bold" x-text="v.color || 'Standard'"></span>
+                                                    </div>
+                                                    <input type="hidden" :name="'variants[' + idx + '][name]'" :value="v.name">
+                                                    <input type="hidden" :name="'variants[' + idx + '][color]'" :value="v.color">
+                                                    <input type="hidden" :name="'variants[' + idx + '][color_hex]'" :value="v.color_hex">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap font-bold" x-text="v.size">
+                                                    <input type="hidden" :name="'variants[' + idx + '][size]'" :value="v.size">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="text" :name="'variants[' + idx + '][sku]'" x-model="v.sku" class="w-28 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" step="0.01" :name="'variants[' + idx + '][price]'" x-model="v.price" class="w-24 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" :name="'variants[' + idx + '][stock]'" x-model="v.stock" class="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-right">
+                                                    <button type="button" @click="variants.splice(idx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. FOOTWEAR VARIATIONS (Shoe Sizes UK 5 to UK 12) -->
+                    <div x-show="activeVariantTab === 'footwear'" class="space-y-4">
+                        <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30">
+                            <!-- Footwear Colors Selection -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                                    1. Pick Shoe Colors:
+                                </label>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="col in availableShoeColors" :key="col.name">
+                                        <button type="button" 
+                                                @click="toggleShoeColor(col)"
+                                                :class="selectedShoeColors.some(c => c.name === col.name) ? 'ring-2 ring-amber-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-bold shadow-sm' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+                                            <span class="w-3.5 h-3.5 rounded-full border border-black/20 shrink-0" :style="'background-color:' + col.hex"></span>
+                                            <span x-text="col.name"></span>
+                                            <span x-show="selectedShoeColors.some(c => c.name === col.name)" class="text-amber-600 font-bold">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- UK Shoe Sizes Chips -->
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                                    2. Pick UK/India Shoe Sizes:
+                                </label>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="sz in availableShoeSizes" :key="sz">
+                                        <button type="button" 
+                                                @click="toggleShoeSize(sz)"
+                                                :class="selectedShoeSizes.includes(sz) ? 'bg-amber-600 text-white font-bold shadow-sm ring-2 ring-amber-400/40' : 'bg-white/60 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="px-3 py-1.5 rounded-xl text-xs transition-all cursor-pointer">
+                                            <span x-text="sz"></span>
+                                            <span x-show="selectedShoeSizes.includes(sz)" class="ml-1">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footwear Matrix Table -->
+                        <div x-show="footwearVariants.length > 0" class="space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl">
+                                <span class="text-xs font-bold text-slate-700 dark:text-slate-300" x-text="footwearVariants.length + ' shoe variants generated'"></span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" step="0.01" x-model="bulkShoePrice" placeholder="Bulk Price (₹)" class="w-28 px-2.5 py-1 text-xs rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900">
+                                    <input type="number" x-model="bulkShoeStock" placeholder="Bulk Stock" class="w-24 px-2.5 py-1 text-xs rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900">
+                                    <button type="button" @click="applyBulkToFootwear()" class="px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-black cursor-pointer">Apply All</button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
+                                <table class="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-950/60 font-bold uppercase text-slate-500">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Color</th>
+                                            <th class="px-3 py-2.5 text-left">Shoe Size</th>
+                                            <th class="px-3 py-2.5 text-left">SKU</th>
+                                            <th class="px-3 py-2.5 text-left">Price (₹)</th>
+                                            <th class="px-3 py-2.5 text-left">Stock</th>
+                                            <th class="px-3 py-2.5 text-right">Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-slate-900">
+                                        <template x-for="(v, idx) in footwearVariants" :key="idx">
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <span class="w-3 h-3 rounded-full border border-black/20" :style="'background-color:' + (v.color_hex || '#000')"></span>
+                                                        <span class="font-bold" x-text="v.color"></span>
+                                                    </div>
+                                                    <input type="hidden" :name="'variants[' + idx + '][name]'" :value="v.name">
+                                                    <input type="hidden" :name="'variants[' + idx + '][color]'" :value="v.color">
+                                                    <input type="hidden" :name="'variants[' + idx + '][color_hex]'" :value="v.color_hex">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap font-bold" x-text="v.size">
+                                                    <input type="hidden" :name="'variants[' + idx + '][size]'" :value="v.size">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="text" :name="'variants[' + idx + '][sku]'" x-model="v.sku" class="w-28 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" step="0.01" :name="'variants[' + idx + '][price]'" x-model="v.price" class="w-24 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" :name="'variants[' + idx + '][stock]'" x-model="v.stock" class="w-20 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-right">
+                                                    <button type="button" @click="footwearVariants.splice(idx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. KIRANA & GROCERY (100g, 250g, 500g, 1kg, 5kg pack sizes) -->
+                    <div x-show="activeVariantTab === 'kirana'" class="space-y-4">
+                        <div class="p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/30">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                                Quick Add Grocery Pack Sizes &amp; Units:
+                            </label>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <template x-for="unit in availableGroceryUnits" :key="unit">
+                                    <button type="button" 
+                                            @click="addGroceryPack(unit)"
+                                            class="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                                        <span>+</span>
+                                        <span x-text="unit"></span>
+                                    </button>
+                                </template>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                D-Mart / Reliance Mart style retail packing. Customers choose their exact pack size on the product page.
+                            </p>
+                        </div>
+
+                        <!-- Grocery Variations Table -->
+                        <div x-show="groceryVariants.length > 0" class="space-y-3">
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
+                                <table class="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-950/60 font-bold uppercase text-slate-500">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Pack Size / Unit</th>
+                                            <th class="px-3 py-2.5 text-left">Selling Price (₹)</th>
+                                            <th class="px-3 py-2.5 text-left">Available Stock</th>
+                                            <th class="px-3 py-2.5 text-left">Barcode / SKU</th>
+                                            <th class="px-3 py-2.5 text-right">Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-slate-900">
+                                        <template x-for="(g, idx) in groceryVariants" :key="idx">
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="text" :name="'variants[' + idx + '][name]'" x-model="g.name" class="w-32 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                    <input type="hidden" :name="'variants[' + idx + '][size]'" :value="g.size">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" step="0.01" :name="'variants[' + idx + '][price]'" x-model="g.price" placeholder="99.00" class="w-28 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" :name="'variants[' + idx + '][stock]'" x-model="g.stock" placeholder="50" class="w-24 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="text" :name="'variants[' + idx + '][sku]'" x-model="g.sku" placeholder="EAN / SKU" class="w-32 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-right">
+                                                    <button type="button" @click="groceryVariants.splice(idx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. ELECTRONICS & MOBILES (RAM + Storage + Colors) -->
+                    <div x-show="activeVariantTab === 'electronics'" class="space-y-4">
+                        <div class="p-4 rounded-2xl bg-cyan-50/50 dark:bg-cyan-950/20 border border-cyan-200/50 dark:border-cyan-800/30">
+                            <!-- RAM Selection -->
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                                    1. Choose RAM Options:
+                                </label>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="r in availableRams" :key="r">
+                                        <button type="button" 
+                                                @click="toggleElecRam(r)"
+                                                :class="selectedRams.includes(r) ? 'bg-cyan-600 text-white font-bold shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="px-3 py-1.5 rounded-xl text-xs transition cursor-pointer">
+                                            <span x-text="r"></span>
+                                            <span x-show="selectedRams.includes(r)">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Storage Selection -->
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                                    2. Choose Internal Storage:
+                                </label>
+                                <div class="flex flex-wrap gap-2">
+                                    <template x-for="st in availableStorages" :key="st">
+                                        <button type="button" 
+                                                @click="toggleElecStorage(st)"
+                                                :class="selectedStorages.includes(st) ? 'bg-cyan-600 text-white font-bold shadow-sm' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'"
+                                                class="px-3 py-1.5 rounded-xl text-xs transition cursor-pointer">
+                                            <span x-text="st"></span>
+                                            <span x-show="selectedStorages.includes(st)">✓</span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Electronics Matrix Table -->
+                        <div x-show="elecVariants.length > 0" class="space-y-3">
+                            <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/10">
+                                <table class="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-xs">
+                                    <thead class="bg-slate-50 dark:bg-slate-950/60 font-bold uppercase text-slate-500">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Configuration</th>
+                                            <th class="px-3 py-2.5 text-left">SKU</th>
+                                            <th class="px-3 py-2.5 text-left">Price (₹)</th>
+                                            <th class="px-3 py-2.5 text-left">Stock</th>
+                                            <th class="px-3 py-2.5 text-right">Remove</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-white/5 bg-white dark:bg-slate-900">
+                                        <template x-for="(v, idx) in elecVariants" :key="idx">
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap font-bold">
+                                                    <span x-text="v.name"></span>
+                                                    <input type="hidden" :name="'variants[' + idx + '][name]'" :value="v.name">
+                                                    <input type="hidden" :name="'variants[' + idx + '][size]'" :value="v.size">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="text" :name="'variants[' + idx + '][sku]'" x-model="v.sku" class="w-32 px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" step="0.01" :name="'variants[' + idx + '][price]'" x-model="v.price" class="w-28 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap">
+                                                    <input type="number" :name="'variants[' + idx + '][stock]'" x-model="v.stock" class="w-24 px-2 py-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                                </td>
+                                                <td class="px-3 py-2 whitespace-nowrap text-right">
+                                                    <button type="button" @click="elecVariants.splice(idx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. FOOD & RESTAURANT PORTIONS & ADD-ONS -->
+                    <div x-show="activeVariantTab === 'food'" class="space-y-5">
+                        <!-- Portions Repeater -->
+                        <div class="p-4 rounded-2xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200/50 dark:border-orange-800/30">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    🍽️ 1. Serving Portions (Half / Full / 1 Plate):
+                                </label>
+                                <button type="button" @click="addFoodPortion('Custom Portion')" class="text-xs font-bold text-orange-600 hover:text-orange-700 cursor-pointer">+ Add Portion</button>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button type="button" @click="addFoodPortion('Full Portion')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Full Portion</button>
+                                <button type="button" @click="addFoodPortion('Half Portion')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Half Portion</button>
+                                <button type="button" @click="addFoodPortion('1 Plate (Single)')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ 1 Plate</button>
+                                <button type="button" @click="addFoodPortion('2 Pieces')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ 2 Pcs</button>
+                            </div>
+
+                            <div class="space-y-2">
+                                <template x-for="(p, pIdx) in foodPortions" :key="pIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
+                                        <input type="text" :name="'food_portions[' + pIdx + '][name]'" x-model="p.name" placeholder="Portion Name" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-slate-400">₹</span>
+                                            <input type="number" step="0.01" :name="'food_portions[' + pIdx + '][price]'" x-model="p.price" placeholder="Price" class="w-24 px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        </div>
+                                        <input type="number" :name="'food_portions[' + pIdx + '][stock]'" x-model="p.stock" placeholder="Stock" class="w-20 px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        <button type="button" @click="foodPortions.splice(pIdx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Add-ons / Modifiers Repeater (Extra Pav, Extra Chole, etc.) -->
+                        <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30">
+                            <div class="flex items-center justify-between mb-3">
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    ➕ 2. Optional Dish Add-ons &amp; Upgrades:
+                                </label>
+                                <button type="button" @click="addFoodModifier('Extra Add-on', 20)" class="text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer">+ Add Custom Add-on</button>
+                            </div>
+
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button type="button" @click="addFoodModifier('Extra Pav', 20)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Extra Pav (+₹20)</button>
+                                <button type="button" @click="addFoodModifier('Extra Chole', 40)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Extra Chole (+₹40)</button>
+                                <button type="button" @click="addFoodModifier('Extra Cheese Slice', 30)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Extra Cheese (+₹30)</button>
+                                <button type="button" @click="addFoodModifier('Extra Butter', 15)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Extra Butter (+₹15)</button>
+                                <button type="button" @click="addFoodModifier('Extra Raita', 25)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Extra Raita (+₹25)</button>
+                                <button type="button" @click="addFoodModifier('Cold Beverage (Drink)', 40)" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs font-semibold cursor-pointer">+ Cold Drink (+₹40)</button>
+                            </div>
+
+                            <div class="space-y-2">
+                                <template x-for="(m, mIdx) in foodModifiers" :key="mIdx">
+                                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10">
+                                        <input type="text" :name="'modifiers[' + mIdx + '][group_name]'" x-model="m.group_name" placeholder="Group (e.g. Add-ons)" class="w-32 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        <input type="text" :name="'modifiers[' + mIdx + '][modifier_name]'" x-model="m.modifier_name" placeholder="Modifier Name" class="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-slate-400">+₹</span>
+                                            <input type="number" step="0.01" :name="'modifiers[' + mIdx + '][price_delta]'" x-model="m.price_delta" placeholder="20" class="w-20 px-2 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        </div>
+                                        <label class="flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400">
+                                            <input type="checkbox" :name="'modifiers[' + mIdx + '][is_required]'" value="1" x-model="m.is_required" class="rounded text-orange-600">
+                                            <span>Req</span>
+                                        </label>
+                                        <button type="button" @click="foodModifiers.splice(mIdx, 1)" class="p-1 text-rose-500 hover:text-rose-700 cursor-pointer">✕</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. MARBLE, MACHINERY & B2B (Enquiry / RFQ Mode) -->
+                    <div x-show="activeVariantTab === 'enquiry'" class="space-y-4">
+                        <div class="p-5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/40">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xl">📋</span>
+                                        <h3 class="text-sm font-bold text-blue-950 dark:text-blue-200">
+                                            IndiaMart-Style Enquiry / Quotation (RFQ) Mode
+                                        </h3>
+                                    </div>
+                                    <p class="text-xs text-blue-900/80 dark:text-blue-300/80 leading-relaxed">
+                                        Marble, granite, heavy machinery, and industrial products require custom discussions. Standard cart checkout is disabled; interested buyers will submit their required quantity, delivery location/state, and project requirements directly to your vendor enquiry inbox.
+                                    </p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
+                                    <input type="checkbox" name="enable_rfq" value="1" x-model="enableRfq" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Technical Machine / Marble Quick Spec Presets -->
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 space-y-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                                Quick Spec Presets (Click to insert into technical specs above):
+                            </span>
+                            <div class="flex flex-wrap gap-2 text-xs">
+                                <button type="button" @click="insertSpec('Thickness', '16mm - 18mm Gangsaw Cut Slabs')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Marble Thickness (16-18mm)</button>
+                                <button type="button" @click="insertSpec('Surface Polish', 'High Gloss Mirror Polish')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Mirror Polish</button>
+                                <button type="button" @click="insertSpec('Motor Power', '10 HP (7.5 kW) 1440 RPM 3-Phase')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Motor Power (10 HP)</button>
+                                <button type="button" @click="insertSpec('Operating Voltage', '415V Three Phase 50Hz Industrial')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ 415V 3-Phase</button>
+                                <button type="button" @click="insertSpec('Automation Grade', 'Automatic CNC Control')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Automatic CNC</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -499,6 +988,72 @@ function liquidProductUploader() {
         dragOver: false,
         appliedPreset: null,
         previewImages: [],
+        activeVariantTab: '{{ in_array($vendorType, ["clothing"]) ? "clothing" : (in_array($vendorType, ["footwear"]) ? "footwear" : (in_array($vendorType, ["kirana", "groceries"]) ? "kirana" : (in_array($vendorType, ["electronics"]) ? "electronics" : (in_array($vendorType, ["food"]) ? "food" : (in_array($vendorType, ["marble", "machinery", "b2b"]) ? "enquiry" : "clothing"))))) }}',
+
+        // 👗 Clothing Variations State
+        selectedSizes: ['M', 'L', 'XL'],
+        availableSizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Free Size'],
+        selectedColors: [{name: 'Black', hex: '#000000'}, {name: 'White', hex: '#FFFFFF'}, {name: 'Navy Blue', hex: '#0B192C'}],
+        availableColors: [
+            {name: 'Black', hex: '#000000'},
+            {name: 'White', hex: '#FFFFFF'},
+            {name: 'Navy Blue', hex: '#0B192C'},
+            {name: 'Red', hex: '#E53E3E'},
+            {name: 'Beige', hex: '#D4C4B5'},
+            {name: 'Grey', hex: '#718096'},
+            {name: 'Olive Green', hex: '#556B2F'},
+            {name: 'Maroon', hex: '#800000'}
+        ],
+        customSize: '',
+        customColorName: '',
+        customColorHex: '#111827',
+        variants: [],
+        bulkPrice: '',
+        bulkStock: '',
+
+        // 👟 Footwear Variations State
+        selectedShoeSizes: ['UK 7', 'UK 8', 'UK 9'],
+        availableShoeSizes: ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12'],
+        selectedShoeColors: [{name: 'Black', hex: '#000000'}, {name: 'Brown', hex: '#8B4513'}, {name: 'White', hex: '#FFFFFF'}],
+        availableShoeColors: [
+            {name: 'Black', hex: '#000000'},
+            {name: 'Brown', hex: '#8B4513'},
+            {name: 'White', hex: '#FFFFFF'},
+            {name: 'Tan', hex: '#D2B48C'},
+            {name: 'Grey', hex: '#808080'},
+            {name: 'Navy', hex: '#000080'}
+        ],
+        footwearVariants: [],
+        bulkShoePrice: '',
+        bulkShoeStock: '',
+
+        // 🛒 Kirana & Grocery Pack Units State (D-Mart Style)
+        availableGroceryUnits: ['100 g', '250 g', '500 g', '1 kg', '2 kg', '5 kg', '10 kg', '1 Packet', '1 Bottle', '1 Piece', 'Combo Pack'],
+        groceryVariants: [
+            { name: '500 g', size: '500 g', price: '', stock: 50, sku: '' },
+            { name: '1 kg', size: '1 kg', price: '', stock: 50, sku: '' }
+        ],
+
+        // 📱 Electronics & Mobiles Specs State
+        availableRams: ['4 GB', '6 GB', '8 GB', '12 GB', '16 GB', '32 GB'],
+        selectedRams: ['8 GB'],
+        availableStorages: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB'],
+        selectedStorages: ['128 GB', '256 GB'],
+        elecVariants: [],
+
+        // 🍽️ Food Portions & Modifiers State
+        foodPortions: [
+            { name: 'Full Portion', price: '', stock: 50 },
+            { name: 'Half Portion', price: '', stock: 50 }
+        ],
+        foodModifiers: [
+            { group_name: 'Add-ons', modifier_name: 'Extra Pav', price_delta: 20, is_required: false },
+            { group_name: 'Add-ons', modifier_name: 'Extra Chole', price_delta: 40, is_required: false }
+        ],
+
+        // 📋 Marble / Machinery RFQ Mode
+        enableRfq: {{ in_array($vendorType, ['marble', 'machinery', 'b2b']) ? 'true' : 'false' }},
+
         form: {
             title: '{{ old('title', '') }}',
             category_id: '{{ old('category_id', $categories->first()?->id ?? '') }}',
@@ -1915,12 +2470,353 @@ function liquidProductUploader() {
                         { key: 'Reason for Selling', value: 'Relocating to New City' },
                     ]
                 }
+            ],
+            footwear: [
+                {
+                    icon: '👟',
+                    title: 'Breathable Knit Sports Running Shoes',
+                    brand: 'AeroStep Footwear',
+                    base_price: '1899.00',
+                    compare_at_price: '2999.00',
+                    gst_rate: '12',
+                    hsn_code: '64041100',
+                    total_stock: '60',
+                    sku: 'SHOE-AERO-RUN',
+                    description: 'Ultralight running and gym trainer shoes featuring memory foam insole, breathable jacquard mesh upper, and shock-absorbing phylon sole.',
+                    specs: [
+                        { key: 'Upper Material', value: 'Breathable Jacquard Knit' },
+                        { key: 'Sole Material', value: 'Phylon EVA High-Rebound Foam' },
+                        { key: 'Sizing Standard', value: 'UK / India Standard Sizing' },
+                        { key: 'Closure', value: 'Lace-Up with Padded Collar' }
+                    ]
+                },
+                {
+                    icon: '👞',
+                    title: 'Handcrafted Genuine Leather Oxford Dress Shoes',
+                    brand: 'Kingsman Leathercraft',
+                    base_price: '3499.00',
+                    compare_at_price: '4999.00',
+                    gst_rate: '12',
+                    hsn_code: '64035910',
+                    total_stock: '30',
+                    sku: 'SHOE-OXFORD-BRN',
+                    description: 'Pure full-grain leather classic Oxford shoes with Goodyear welted construction, cushioned leather lining, and anti-skid rubber traction heel.',
+                    specs: [
+                        { key: 'Material', value: '100% Genuine Full-Grain Crust Leather' },
+                        { key: 'Sole', value: 'Handcrafted Leather Sole with Rubber Insert' },
+                        { key: 'Occasion', value: 'Formal, Wedding, Executive Business' }
+                    ]
+                }
+            ],
+            kirana: [
+                {
+                    icon: '🍚',
+                    title: 'Aged Royal Daawat Basmati Rice (XXL Long Grain)',
+                    brand: 'Daawat / Fortune',
+                    base_price: '145.00',
+                    compare_at_price: '180.00',
+                    gst_rate: '5',
+                    hsn_code: '10063020',
+                    total_stock: '200',
+                    sku: 'GROC-RICE-BASM',
+                    description: '2-year aged Himalayan Basmati rice with extra-long slender grains that elongate up to 24mm upon cooking. Rich natural aroma.',
+                    specs: [
+                        { key: 'Grain Length', value: '8.4mm Raw (Elongates to 24mm cooked)' },
+                        { key: 'Aging Period', value: '2 Years Traditional Aging' },
+                        { key: 'Dietary', value: '100% Pure Vegetarian Grocery Staple' }
+                    ]
+                },
+                {
+                    icon: '🌾',
+                    title: 'Chakki Fresh 100% Whole Wheat Atta',
+                    brand: 'Aashirvaad / MP Sharbati',
+                    base_price: '280.00',
+                    compare_at_price: '340.00',
+                    gst_rate: '0',
+                    hsn_code: '11010000',
+                    total_stock: '150',
+                    sku: 'GROC-ATTA-WHEAT',
+                    description: 'Stone-milled whole wheat flour made from premium golden Sharbati wheat grains from Madhya Pradesh. High fiber for ultra-soft rotis.',
+                    specs: [
+                        { key: 'Ingredient', value: '100% MP Sharbati Whole Wheat' },
+                        { key: 'Milling Process', value: 'Traditional Stone Chakki (0% Maida)' },
+                        { key: 'Shelf Life', value: '3 Months from Packaging Date' }
+                    ]
+                },
+                {
+                    icon: '🧈',
+                    title: 'Pure Desi Cow Ghee (Bilona Vedic Method)',
+                    brand: 'Gir Organic Farms',
+                    base_price: '899.00',
+                    compare_at_price: '1150.00',
+                    gst_rate: '12',
+                    hsn_code: '04059020',
+                    total_stock: '80',
+                    sku: 'GROC-COW-GHEE',
+                    description: 'Traditional Vedic Bilona method A2 cow ghee prepared by churning cultured curd. Granular golden texture and authentic divine aroma.',
+                    specs: [
+                        { key: 'Milk Type', value: 'Pure Indigenous A2 Gir Cow Milk' },
+                        { key: 'Method', value: 'Traditional Wooden Bilona Churning' },
+                        { key: 'Packaging', value: 'Food-Grade Sealed Glass Jar' }
+                    ]
+                }
+            ],
+            groceries: [
+                {
+                    icon: '🍚',
+                    title: 'Aged Royal Basmati Rice (XXL Long Grain)',
+                    brand: 'Fortune / Daawat',
+                    base_price: '145.00',
+                    compare_at_price: '180.00',
+                    gst_rate: '5',
+                    hsn_code: '10063020',
+                    total_stock: '200',
+                    sku: 'GROC-RICE-BASM',
+                    description: '2-year aged Basmati rice with long slender grains.',
+                    specs: [
+                        { key: 'Grain Length', value: '8.4mm Raw' },
+                        { key: 'Dietary', value: '100% Pure Vegetarian' }
+                    ]
+                }
+            ],
+            marble: [
+                {
+                    icon: '🧱',
+                    title: 'Makrana Pure White Marble Slabs Lot (Bulk RFQ)',
+                    brand: 'K71 Makrana Stone Quarries',
+                    base_price: '350.00',
+                    compare_at_price: '450.00',
+                    gst_rate: '18',
+                    hsn_code: '68022110',
+                    total_stock: '10000',
+                    sku: 'MARBLE-MAK-WHT',
+                    description: 'Pure natural Makrana white marble gangsaw slabs for luxury flooring, temples, and palaces. High calcium purity, zero pinholes, mirror finish.',
+                    specs: [
+                        { key: 'Thickness', value: '16mm - 18mm Gangsaw Slabs' },
+                        { key: 'Surface Finish', value: 'Mirror Polished' },
+                        { key: 'Origin', value: 'Makrana, Rajasthan' },
+                        { key: 'Order Workflow', value: 'Enquiry / Custom Quote Request' }
+                    ]
+                }
             ]
         },
 
         get currentSectorPresets() {
             const vType = '{{ $vendorType }}';
             return this.presets[vType] || this.presets['clothing'] || [];
+        },
+
+        init() {
+            this.generateClothingMatrix();
+            this.generateFootwearMatrix();
+            this.generateElecMatrix();
+            this.$watch('form.base_price', (val) => {
+                if (val && parseFloat(val) > 0) {
+                    this.variants.forEach(v => { if (!v.price) v.price = val; });
+                    this.footwearVariants.forEach(v => { if (!v.price) v.price = val; });
+                    this.groceryVariants.forEach(g => { if (!g.price) g.price = val; });
+                    this.elecVariants.forEach(e => { if (!e.price) e.price = val; });
+                    this.foodPortions.forEach(p => { if (!p.price) p.price = val; });
+                }
+            });
+        },
+
+        toggleClothingColor(col) {
+            const idx = this.selectedColors.findIndex(c => c.name === col.name);
+            if (idx > -1) {
+                if (this.selectedColors.length > 1) this.selectedColors.splice(idx, 1);
+            } else {
+                this.selectedColors.push(col);
+            }
+            this.generateClothingMatrix();
+        },
+
+        addCustomClothingColor() {
+            if (!this.customColorName.trim()) return;
+            const newCol = { name: this.customColorName.trim(), hex: this.customColorHex || '#111827' };
+            this.availableColors.push(newCol);
+            this.selectedColors.push(newCol);
+            this.customColorName = '';
+            this.generateClothingMatrix();
+        },
+
+        toggleClothingSize(sz) {
+            const idx = this.selectedSizes.indexOf(sz);
+            if (idx > -1) {
+                if (this.selectedSizes.length > 1) this.selectedSizes.splice(idx, 1);
+            } else {
+                this.selectedSizes.push(sz);
+            }
+            this.generateClothingMatrix();
+        },
+
+        addCustomClothingSize() {
+            if (!this.customSize.trim()) return;
+            const sz = this.customSize.trim();
+            if (!this.availableSizes.includes(sz)) this.availableSizes.push(sz);
+            if (!this.selectedSizes.includes(sz)) this.selectedSizes.push(sz);
+            this.customSize = '';
+            this.generateClothingMatrix();
+        },
+
+        generateClothingMatrix() {
+            const rows = [];
+            const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'CLO') || 'CLO';
+            this.selectedColors.forEach(col => {
+                this.selectedSizes.forEach(sz => {
+                    const cleanCol = col.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+                    const cleanSz = sz.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                    const sku = `${prefix}-${cleanCol}-${cleanSz}`;
+                    const existing = this.variants.find(r => r.color === col.name && r.size === sz);
+                    rows.push(existing || {
+                        name: `${col.name} - ${sz}`,
+                        color: col.name,
+                        color_hex: col.hex,
+                        size: sz,
+                        sku: sku,
+                        price: this.form.base_price || '',
+                        stock: 25
+                    });
+                });
+            });
+            this.variants = rows;
+        },
+
+        applyBulkToClothing() {
+            this.variants.forEach(v => {
+                if (this.bulkPrice) v.price = this.bulkPrice;
+                if (this.bulkStock !== '') v.stock = this.bulkStock;
+            });
+        },
+
+        toggleShoeColor(col) {
+            const idx = this.selectedShoeColors.findIndex(c => c.name === col.name);
+            if (idx > -1) {
+                if (this.selectedShoeColors.length > 1) this.selectedShoeColors.splice(idx, 1);
+            } else {
+                this.selectedShoeColors.push(col);
+            }
+            this.generateFootwearMatrix();
+        },
+
+        toggleShoeSize(sz) {
+            const idx = this.selectedShoeSizes.indexOf(sz);
+            if (idx > -1) {
+                if (this.selectedShoeSizes.length > 1) this.selectedShoeSizes.splice(idx, 1);
+            } else {
+                this.selectedShoeSizes.push(sz);
+            }
+            this.generateFootwearMatrix();
+        },
+
+        generateFootwearMatrix() {
+            const rows = [];
+            const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'SHOE') || 'SHOE';
+            this.selectedShoeColors.forEach(col => {
+                this.selectedShoeSizes.forEach(sz => {
+                    const cleanCol = col.name.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+                    const cleanSz = sz.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+                    const sku = `${prefix}-${cleanCol}-${cleanSz}`;
+                    const existing = this.footwearVariants.find(r => r.color === col.name && r.size === sz);
+                    rows.push(existing || {
+                        name: `${col.name} - ${sz}`,
+                        color: col.name,
+                        color_hex: col.hex,
+                        size: sz,
+                        sku: sku,
+                        price: this.form.base_price || '',
+                        stock: 20
+                    });
+                });
+            });
+            this.footwearVariants = rows;
+        },
+
+        applyBulkToFootwear() {
+            this.footwearVariants.forEach(v => {
+                if (this.bulkShoePrice) v.price = this.bulkShoePrice;
+                if (this.bulkShoeStock !== '') v.stock = this.bulkShoeStock;
+            });
+        },
+
+        addGroceryPack(unit) {
+            if (!this.groceryVariants.some(g => g.name === unit)) {
+                this.groceryVariants.push({
+                    name: unit,
+                    size: unit,
+                    price: this.form.base_price || '',
+                    stock: 50,
+                    sku: 'GROC-' + unit.replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+                });
+            }
+        },
+
+        toggleElecRam(r) {
+            const idx = this.selectedRams.indexOf(r);
+            if (idx > -1) {
+                if (this.selectedRams.length > 1) this.selectedRams.splice(idx, 1);
+            } else {
+                this.selectedRams.push(r);
+            }
+            this.generateElecMatrix();
+        },
+
+        toggleElecStorage(st) {
+            const idx = this.selectedStorages.indexOf(st);
+            if (idx > -1) {
+                if (this.selectedStorages.length > 1) this.selectedStorages.splice(idx, 1);
+            } else {
+                this.selectedStorages.push(st);
+            }
+            this.generateElecMatrix();
+        },
+
+        generateElecMatrix() {
+            const rows = [];
+            const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'ELEC') || 'ELEC';
+            this.selectedRams.forEach(r => {
+                this.selectedStorages.forEach(st => {
+                    const name = `${r} RAM + ${st} Storage`;
+                    const cleanR = r.replace(/[^A-Za-z0-9]/g, '');
+                    const cleanSt = st.replace(/[^A-Za-z0-9]/g, '');
+                    const sku = `${prefix}-${cleanR}-${cleanSt}`;
+                    const existing = this.elecVariants.find(e => e.name === name);
+                    rows.push(existing || {
+                        name: name,
+                        size: name,
+                        sku: sku,
+                        price: this.form.base_price || '',
+                        stock: 20
+                    });
+                });
+            });
+            this.elecVariants = rows;
+        },
+
+        addFoodPortion(name, price = '') {
+            this.foodPortions.push({
+                name: name || 'Portion',
+                price: price || this.form.base_price || '',
+                stock: 50
+            });
+        },
+
+        addFoodModifier(name, delta = 20) {
+            this.foodModifiers.push({
+                group_name: 'Add-ons',
+                modifier_name: name || 'Extra Item',
+                price_delta: delta,
+                is_required: false
+            });
+        },
+
+        insertSpec(key, value) {
+            const existing = this.form.specs.find(s => s.key === key);
+            if (existing) {
+                existing.value = value;
+            } else {
+                this.form.specs.push({ key, value });
+            }
         },
 
         applyPreset(preset) {
@@ -2003,6 +2899,10 @@ function liquidProductUploader() {
             if (!this.form.description.trim()) {
                 alert('Please enter a Product Description.');
                 return;
+            }
+
+            if (this.activeVariantTab === 'enquiry') {
+                this.form.listing_type = 'enquiry';
             }
 
             this.submitting = true;
