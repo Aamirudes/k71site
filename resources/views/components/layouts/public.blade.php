@@ -9,6 +9,7 @@
     'ogDescription' => null,
     'ogType' => 'website',
     'schemaJson' => null,
+    'fullWidth' => false,
 ])
 
 <!DOCTYPE html>
@@ -94,9 +95,15 @@
     <!-- K71 Glass Hamburger Menu Drawer -->
     <x-k71-hamburger />
 
-    <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-24 md:pb-12">
-        {{ $slot }}
-    </main>
+    @if($fullWidth)
+        <main class="flex-1 w-full pb-24 md:pb-16">
+            {{ $slot }}
+        </main>
+    @else
+        <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-24 md:pb-12">
+            {{ $slot }}
+        </main>
+    @endif
     
     <!-- LUXURY EDITORIAL ATELIER FOOTER -->
     @php

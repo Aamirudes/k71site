@@ -130,7 +130,7 @@
                 // Auto-select first in stock variant
                 const first = this.allVariants.find(v => v.stock > 0) || this.allVariants[0];
                 if (first) {
-                    this.activeVariant = first;
+                    this.selectVariant(first);
                     if (first.attributes_hash && first.attributes_hash.color) {
                         this.selectedColor = first.attributes_hash.color;
                     }

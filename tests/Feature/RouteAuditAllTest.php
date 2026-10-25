@@ -113,7 +113,9 @@ class RouteAuditAllTest extends TestCase
 
         $resProduct = $this->get('/product/' . $product->slug);
         $this->assertNotEquals(500, $resProduct->getStatusCode());
-        $this->assertTrue(in_array($resProduct->getStatusCode(), [200, 302]));
+        $resSuggest = $this->getJson('/api/search/suggest?q=Audit');
+        $resSuggest->assertStatus(200);
+        $resSuggest->assertJsonStructure(['results']);
 
         // 2. Used Product
         $usedItem = Product::create([

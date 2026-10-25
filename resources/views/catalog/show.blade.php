@@ -85,6 +85,64 @@
         isEntirelyOutOfStock: {{ $isEntirelyOutOfStock ? 'true' : 'false' }},
         customPriceOverride: null,
         selectedFoodModifiers: [],
+        showEnquiryModal: false,
+        enquirySubmitting: false,
+        enquirySuccess: false,
+        enquiryNumber: '',
+        enquiryError: '',
+        enquiryForm: {
+            name: '{{ addslashes(auth()->user()?->name ?? '') }}',
+            phone: '{{ addslashes(auth()->user()?->phone ?? '') }}',
+            email: '{{ addslashes(auth()->user()?->email ?? '') }}',
+            city: '{{ addslashes(auth()->user()?->city ?? 'Delhi') }}',
+            quantity: '1 Unit / Requirement',
+            budget: '{{ round($product->base_price / 100) }}',
+            description: 'Inquiring regarding {{ addslashes($product->title) }}. Please provide quotation, terms, and availability.'
+        },
+        submitEnquiryModal() {
+            if(!this.enquiryForm.name || !this.enquiryForm.phone || !this.enquiryForm.description) {
+                this.enquiryError = 'Please fill in your name, contact phone, and requirement details.';
+                return;
+            }
+            this.enquirySubmitting = true;
+            this.enquiryError = '';
+            fetch('{{ route('enquiry.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    title: 'Enquiry for: {{ addslashes($product->title) }}',
+                    product_id: {{ $product->id }},
+                    category_id: {{ $product->category_id ?? 'null' }},
+                    vendor_id: {{ $product->vendor_id }},
+                    buyer_name: this.enquiryForm.name,
+                    buyer_phone: this.enquiryForm.phone,
+                    buyer_email: this.enquiryForm.email,
+                    city: this.enquiryForm.city || 'India',
+                    quantity: this.enquiryForm.quantity || '1 Unit',
+                    target_budget: this.enquiryForm.budget || null,
+                    description: this.enquiryForm.description
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.enquirySubmitting = false;
+                if(data.success) {
+                    this.enquirySuccess = true;
+                    this.enquiryNumber = data.enquiry_number || '';
+                } else {
+                    this.enquiryError = data.message || 'Submission failed. Please try again.';
+                }
+            })
+            .catch(err => {
+                this.enquirySubmitting = false;
+                this.enquiryError = 'Unable to send enquiry. Please contact directly on WhatsApp.';
+            });
+        },
         variants: {{ $product->variants->map(function($v) use ($product) { 
             return [
                 'id' => $v->id, 
@@ -268,7 +326,11 @@
                 observer.observe(this.$refs.mainBuyBtn);
             }
         }
-    }" class="relative">
+    }" 
+    @variant-selected.window="if($event.detail) { selectedVariant = $event.detail.id; if($event.detail.price) customPriceOverride = $event.detail.price; }"
+    @swap-product-image.window="if($event.detail && $event.detail.url) { const idx = images.indexOf($event.detail.url); if(idx > -1) { activeImgIndex = idx; } else { images.unshift($event.detail.url); activeImgIndex = 0; } }"
+    @food-selection-updated.window="if($event.detail) { if($event.detail.portion) selectedVariant = $event.detail.portion.id; selectedFoodModifiers = $event.detail.modifiers || []; customPriceOverride = $event.detail.totalPrice; }"
+    class="relative">
 
         <!-- Breadcrumbs Navigation -->
         <nav class="flex items-center gap-1.5 text-xs text-gray-500 mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-1">
@@ -516,6 +578,7 @@
                     <form @submit.prevent="submitAddToCart()" class="mt-5">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="hidden" name="variant_id" :value="selectedVariant">
 
                         @php $verticalType = $product->vertical_type; @endphp
 
@@ -607,21 +670,149 @@
                                 </div>
                             @endif
                         @elseif($product->isEnquiry())
-                            <div class="space-y-3 p-5 rounded-2xl bg-zinc-50/90 border border-zinc-200 shadow-xs">
-                                <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wide">
-                                    <span>📋</span>
-                                    <span>B2B, Real Estate &amp; Wholesale Requirement</span>
+                            <div class="space-y-4 p-5 rounded-2xl bg-zinc-900/5 border border-zinc-200 backdrop-blur-sm shadow-xs">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2 text-xs font-bold text-amber-800 uppercase tracking-wide">
+                                        <span>📋</span>
+                                        <span>B2B, Real Estate &amp; Wholesale Enquiry</span>
+                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">RFQ Mode</span>
                                 </div>
                                 <p class="text-xs text-zinc-600 leading-relaxed">
-                                    Direct manufacturer and verified supplier pricing. Submit your specifications to receive custom quotations, wholesale rates, or arrange site visits.
+                                    Direct verified supplier pricing. Submit your specifications to receive custom quotations, wholesale rates, or schedule inspection.
                                 </p>
 
                                 <div class="space-y-2 pt-1">
-                                    <a href="{{ route('enquiry.create', ['product_id' => $product->id, 'category_id' => $product->category_id]) }}"
-                                       class="w-full py-3 px-5 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold tracking-wide transition shadow-sm flex flex-col items-center justify-center gap-0.5 active:scale-95 text-center">
-                                        <span>⚡ Get Best Price / Post Requirement</span>
+                                    <button type="button" 
+                                            @click="showEnquiryModal = true"
+                                            class="w-full py-3.5 px-5 rounded-2xl bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-bold tracking-wide transition shadow-md flex flex-col items-center justify-center gap-0.5 active:scale-[0.99] cursor-pointer">
+                                        <span>⚡ Request Instant Quotation</span>
                                         <span class="text-[11px] font-normal text-zinc-300">Request Custom Quotation / Bulk Enquiry</span>
-                                    </a>
+                                    </button>
+
+                                    <!-- Instant Frosted Glass RFQ Modal -->
+                                    <div x-show="showEnquiryModal" 
+                                         x-transition:enter="transition ease-out duration-300"
+                                         x-transition:enter-start="opacity-0 backdrop-blur-none"
+                                         x-transition:enter-end="opacity-100 backdrop-blur-md"
+                                         x-transition:leave="transition ease-in duration-200"
+                                         x-transition:leave-start="opacity-100 backdrop-blur-md"
+                                         x-transition:leave-end="opacity-0 backdrop-blur-none"
+                                         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+                                         style="display: none;"
+                                         @keydown.escape.window="showEnquiryModal = false">
+                                        
+                                        <div @click.away="showEnquiryModal = false"
+                                             class="w-full max-w-lg bg-zinc-950 border border-white/20 rounded-3xl p-6 sm:p-8 shadow-2xl text-left text-zinc-100 relative max-h-[92vh] overflow-y-auto">
+                                            
+                                            <button type="button" @click="showEnquiryModal = false" 
+                                                    class="absolute top-5 right-5 text-zinc-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                                                ✕
+                                            </button>
+
+                                            <template x-if="!enquirySuccess">
+                                                <div>
+                                                    <div class="flex items-center gap-3 mb-5">
+                                                        <div class="w-11 h-11 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl shrink-0">
+                                                            ⚡
+                                                        </div>
+                                                        <div>
+                                                            <h3 class="text-lg font-black text-white tracking-tight">Request Instant Quotation</h3>
+                                                            <p class="text-xs text-zinc-400 mt-0.5 truncate max-w-xs">{{ $product->title }}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <template x-if="enquiryError">
+                                                        <div class="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-medium" x-text="enquiryError"></div>
+                                                    </template>
+
+                                                    <form @submit.prevent="submitEnquiryModal()" class="space-y-3.5">
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Your Name *</label>
+                                                                <input type="text" x-model="enquiryForm.name" required placeholder="Your Full Name"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Phone Number *</label>
+                                                                <input type="tel" x-model="enquiryForm.phone" required placeholder="10-digit mobile"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Email (Optional)</label>
+                                                                <input type="email" x-model="enquiryForm.email" placeholder="name@company.com"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">City / Location *</label>
+                                                                <input type="text" x-model="enquiryForm.city" required placeholder="e.g. Mumbai, Delhi"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Quantity / Scope</label>
+                                                                <input type="text" x-model="enquiryForm.quantity" placeholder="e.g. 500 sqft / 10 units"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Target Budget (₹)</label>
+                                                                <input type="number" x-model="enquiryForm.budget" placeholder="Approx budget"
+                                                                       class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition">
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <label class="block text-[11px] font-bold text-zinc-300 uppercase tracking-wider mb-1">Specific Requirements / Message *</label>
+                                                            <textarea x-model="enquiryForm.description" required rows="3" placeholder="Provide specs, delivery timeline, or site visit preference..."
+                                                                      class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-zinc-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 focus:outline-none transition resize-none"></textarea>
+                                                        </div>
+
+                                                        <div class="pt-2 flex flex-col gap-2.5">
+                                                            <button type="submit" :disabled="enquirySubmitting"
+                                                                    class="w-full py-3.5 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
+                                                                <span x-show="!enquirySubmitting">Submit Requirement Directly to Seller</span>
+                                                                <span x-show="enquirySubmitting">Transmitting Quotation Request...</span>
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </template>
+
+                                            <template x-if="enquirySuccess">
+                                                <div class="text-center py-6 space-y-4">
+                                                    <div class="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center text-3xl">
+                                                        ✓
+                                                    </div>
+                                                    <h3 class="text-xl font-black text-white">Quotation Request Dispatched!</h3>
+                                                    <p class="text-xs text-zinc-300 leading-relaxed max-w-sm mx-auto">
+                                                        Your enquiry has been successfully logged with reference:
+                                                        <span class="block mt-1 font-mono font-bold text-amber-400 text-sm" x-text="enquiryNumber"></span>
+                                                    </p>
+                                                    <p class="text-[11px] text-zinc-400">
+                                                        The verified vendor has received notification and will get in touch shortly.
+                                                    </p>
+
+                                                    <div class="pt-4 flex flex-col gap-2 max-w-xs mx-auto">
+                                                        @if(!empty($sellerPhone))
+                                                            <a :href="`https://wa.me/{{ $sellerPhone }}?text=${encodeURIComponent('Hello! I just submitted quotation request ' + enquiryNumber + ' for {{ addslashes($product->title) }} on K71.')}`" target="_blank"
+                                                               class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center gap-2 transition">
+                                                                Open in WhatsApp Now
+                                                            </a>
+                                                        @endif
+                                                        <button type="button" @click="showEnquiryModal = false; enquirySuccess = false;"
+                                                                class="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition">
+                                                            Done
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
 
                                     @if(!empty($sellerPhone))
                                         <a href="https://wa.me/{{ $sellerPhone }}?text={{ rawurlencode('Hello! I would like to inquire about: ' . $product->title . ' on K71.') }}" target="_blank"

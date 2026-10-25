@@ -579,6 +579,14 @@ class Product extends Model
         return asset('images/product-placeholder.svg');
     }
 
+    /**
+     * Get human-formatted base price
+     */
+    public function getFormattedBasePriceAttribute(): string
+    {
+        return '₹' . number_format($this->base_price / 100, 2);
+    }
+
     public function isVeg(): bool
     {
         $cf = json_encode($this->custom_fields ?? []);

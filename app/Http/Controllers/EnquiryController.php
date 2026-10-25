@@ -151,7 +151,7 @@ class EnquiryController extends Controller
     /**
      * Store new buyer requirement / RFQ.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
             'title' => 'required|string|max:200',

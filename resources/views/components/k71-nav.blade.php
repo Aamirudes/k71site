@@ -119,19 +119,82 @@
                 </div>
             </div>
 
-            <!-- Desktop Middle: Clean Integrated Search Bar (No capsules) -->
-            <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8">
+            <!-- Desktop Middle: Clean Integrated Search Bar with Live Autocomplete -->
+            <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8 relative"
+                 x-data="{
+                    q: '',
+                    suggestions: [],
+                    loading: false,
+                    open: false,
+                    fetchSuggest() {
+                        if(this.q.trim().length < 2) {
+                            this.suggestions = [];
+                            this.open = false;
+                            return;
+                        }
+                        this.loading = true;
+                        fetch('/api/search/suggest?q=' + encodeURIComponent(this.q))
+                            .then(r => r.json())
+                            .then(data => {
+                                this.suggestions = data.results || [];
+                                this.open = true;
+                                this.loading = false;
+                            })
+                            .catch(() => { this.loading = false; });
+                    }
+                 }"
+                 @click.away="open = false">
                 <form action="{{ route('catalog.index') }}" method="GET" class="w-full relative">
-                    <input type="text" name="search" 
+                    <input type="text" name="search" x-model="q"
+                           @input.debounce.250ms="fetchSuggest()"
+                           @focus="if(suggestions.length > 0) open = true"
+                           autocomplete="off"
                            placeholder="Search products, verified stores, brands..." 
-                           class="w-full pl-10 pr-20 py-2.5 rounded-full border border-slate-200 bg-slate-50/90 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400 font-medium">
+                           class="w-full pl-10 pr-20 py-2.5 rounded-full border border-slate-200/90 bg-slate-50/90 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
                     <div class="absolute left-3.5 top-3 text-slate-400">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                     </div>
-                    <button type="submit" class="absolute right-1.5 top-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold tracking-wide transition shadow-xs cursor-pointer">
+                    <button type="submit" class="absolute right-1.5 top-1.5 px-3.5 py-1 rounded-full bg-slate-900 hover:bg-black text-white text-[11px] font-bold tracking-wide transition shadow-xs cursor-pointer">
                         Search
                     </button>
                 </form>
+
+                <!-- Desktop Autocomplete Results Dropdown -->
+                <div x-show="open && (suggestions.length > 0 || loading)" 
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100"
+                     style="display: none;">
+                    
+                    <div x-show="loading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                        <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        <span>Searching marketplace...</span>
+                    </div>
+
+                    <template x-for="item in suggestions" :key="item.id">
+                        <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition group">
+                            <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-slate-900 truncate group-hover:text-black" x-text="item.title"></p>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                    <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
+                                    <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
+                                    <span class="truncate text-slate-400" x-text="item.vendor"></span>
+                                </div>
+                            </div>
+                        </a>
+                    </template>
+                    
+                    <div x-show="suggestions.length > 0" class="p-2 bg-slate-50/80 text-center border-t border-slate-100">
+                        <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(q)" class="text-[11px] font-bold text-slate-700 hover:text-black">
+                            See all results for "<span x-text="q"></span>" →
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- Right Actions: Mobile Search + Catalog + Messages + Wishlist + Cart + Account -->
@@ -280,8 +343,27 @@
         </div>
     </div>
 
-    <!-- Search Overlay -->
+    <!-- Search Overlay with Live Autocomplete -->
     <div x-show="searchOpen" 
+         x-data="{
+            mq: '',
+            msuggestions: [],
+            mloading: false,
+            mfetchSuggest() {
+                if(this.mq.trim().length < 2) {
+                    this.msuggestions = [];
+                    return;
+                }
+                this.mloading = true;
+                fetch('/api/search/suggest?q=' + encodeURIComponent(this.mq))
+                    .then(r => r.json())
+                    .then(data => {
+                        this.msuggestions = data.results || [];
+                        this.mloading = false;
+                    })
+                    .catch(() => { this.mloading = false; });
+            }
+         }"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 -translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
@@ -293,17 +375,48 @@
          style="display: none;">
         <div class="max-w-3xl mx-auto relative">
             <form action="{{ route('catalog.index') }}" method="GET">
-                <input type="text" name="search" 
+                <input type="text" name="search" x-model="mq"
+                       @input.debounce.250ms="mfetchSuggest()"
                        placeholder="Search products, brands, services, machinery, cars, thrift..." 
-                       class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:bg-white focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400 font-medium"
+                       class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium"
                        x-ref="navSearchInput"
                        x-init="$watch('searchOpen', val => { if(val) setTimeout(() => $refs.navSearchInput.focus(), 100) })">
                 <div class="absolute left-3.5 top-3.5 text-slate-400">
-                    <svg width="20" height="20" class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg width="20" height="20" class="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
                     </svg>
                 </div>
             </form>
+
+            <!-- Mobile Suggestions List -->
+            <div x-show="msuggestions.length > 0 || mloading" class="mt-3 bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 max-h-72 overflow-y-auto">
+                <div x-show="mloading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <span>Searching...</span>
+                </div>
+
+                <template x-for="item in msuggestions" :key="item.id">
+                    <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition">
+                        <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-slate-900 truncate" x-text="item.title"></p>
+                            <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
+                                <span class="uppercase px-1 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
+                            </div>
+                        </div>
+                    </a>
+                </template>
+
+                <div x-show="msuggestions.length > 0" class="p-2 bg-slate-50 text-center">
+                    <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(mq)" class="text-xs font-bold text-slate-900">
+                        View all results for "<span x-text="mq"></span>" →
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </header>
