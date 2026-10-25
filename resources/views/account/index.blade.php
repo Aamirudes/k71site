@@ -5,8 +5,19 @@
         <div class="bg-gradient-to-r from-brand-sage to-brand-sage/80 rounded-3xl p-8 mb-8 text-white relative overflow-hidden shadow-lg">
             <div class="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
             <div class="relative z-10 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-                <div class="w-20 h-20 bg-white/20 shrink-0 rounded-full flex items-center justify-center text-3xl font-serif backdrop-blur-md border border-white/30 shadow-inner">
-                    {{ strtoupper(substr($user->first_name, 0, 1) . substr($user->last_name, 0, 1)) }}
+                <div class="relative group cursor-pointer" onclick="document.getElementById('accountAvatarFileInput').click()" title="Click to upload/change profile picture">
+                    <div class="w-20 h-20 bg-white/20 shrink-0 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/40 shadow-inner overflow-hidden relative">
+                        <img id="accountHeaderAvatar" 
+                             src="{{ format_user_avatar($user->avatar, $user->first_name . ' ' . $user->last_name) }}" 
+                             alt="{{ $user->username }}" 
+                             class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-1 -right-1 bg-white text-indigo-600 p-1.5 rounded-full shadow-md group-hover:scale-110 transition-transform border border-slate-100">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </div>
                 </div>
                 <div class="mt-2 sm:mt-0">
                     <h1 class="text-3xl sm:text-4xl font-serif font-bold mb-2">Welcome back, {{ $user->first_name }}!</h1>
@@ -110,6 +121,22 @@
                     </div>
                     
                     <div class="space-y-4 relative z-10">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white/60 border border-brand-surface/50 shadow-sm transition-all hover:bg-white gap-3">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-brand-muted mb-1 sm:mb-0">Profile Picture</div>
+                            <div class="flex items-center gap-3">
+                                <img id="accountProfileDetailAvatar" 
+                                     src="{{ format_user_avatar($user->avatar, $user->first_name . ' ' . $user->last_name) }}" 
+                                     alt="{{ $user->username }}" 
+                                     class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-xs">
+                                <button type="button" 
+                                        onclick="document.getElementById('accountAvatarFileInput').click()"
+                                        class="px-3.5 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-full border border-indigo-200 transition cursor-pointer">
+                                    Change Photo
+                                </button>
+                                <input type="file" id="accountAvatarFileInput" accept="image/jpeg,image/png,image/webp,image/jpg" class="hidden">
+                            </div>
+                        </div>
+
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-white/60 border border-brand-surface/50 shadow-sm transition-all hover:bg-white">
                             <div class="text-xs font-semibold uppercase tracking-wider text-brand-muted mb-1 sm:mb-0">Full Name</div>
                             <div class="font-bold text-brand-text">{{ $user->first_name }} {{ $user->last_name }}</div>
@@ -212,4 +239,56 @@
             scrollbar-width: none;
         }
     </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const fileInput = document.getElementById('accountAvatarFileInput');
+        const headerAvatar = document.getElementById('accountHeaderAvatar');
+        const profileDetailAvatar = document.getElementById('accountProfileDetailAvatar');
+
+        if (fileInput) {
+            fileInput.addEventListener('change', function () {
+                const file = fileInput.files[0];
+                if (!file) return;
+
+                // Instant local preview
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (headerAvatar) headerAvatar.src = e.target.result;
+                    if (profileDetailAvatar) profileDetailAvatar.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                const tokenEl = document.querySelector('meta[name="csrf-token"]');
+                const csrfToken = tokenEl ? tokenEl.getAttribute('content') : '{{ csrf_token() }}';
+
+                fetch('{{ route("account.avatar") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.avatar_url) {
+                        if (headerAvatar) headerAvatar.src = data.avatar_url;
+                        if (profileDetailAvatar) profileDetailAvatar.src = data.avatar_url;
+                        alert(data.message || 'Profile picture updated successfully!');
+                    } else {
+                        alert(data.error || 'Failed to update profile picture.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Avatar upload error:', err);
+                    alert('Network error while updating avatar.');
+                });
+            });
+        }
+    });
+    </script>
 </x-layouts.public>

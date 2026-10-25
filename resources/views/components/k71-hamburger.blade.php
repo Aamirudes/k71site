@@ -106,8 +106,12 @@
             <div class="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80">
                 @auth
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-violet-600 text-white font-medium flex items-center justify-center text-sm shadow-xs">
-                            {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                        <div class="w-10 h-10 rounded-full bg-violet-600 text-white font-medium flex items-center justify-center text-sm shadow-xs overflow-hidden border border-violet-200">
+                            @if(auth()->user()->avatar)
+                                <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
+                            @else
+                                {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                            @endif
                         </div>
                         <div class="flex-1 min-w-0">
                             <h4 class="text-sm font-semibold text-zinc-900 dark:text-white truncate">

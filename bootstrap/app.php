@@ -39,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin-ajax.php*',
             'api/chat*',
             'chat/api*',
+            'api/user*',
         ]);
         
         $middleware->web(append: [

@@ -209,6 +209,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
     Route::get('/account', [\App\Http\Controllers\AccountController::class, 'index'])->name('account');
+    Route::post('/account/avatar', [\App\Http\Controllers\AccountController::class, 'updateAvatar'])->name('account.avatar');
+    Route::post('/api/user/avatar', [\App\Http\Controllers\AccountController::class, 'updateAvatar'])->name('api.user.avatar');
     Route::get('/account/export', [\App\Http\Controllers\AccountController::class, 'export'])->name('account.export');
     Route::post('/account/delete', [\App\Http\Controllers\AccountController::class, 'delete'])->name('account.delete');
 });

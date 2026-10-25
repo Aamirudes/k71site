@@ -122,6 +122,34 @@
             border: 1.5px solid var(--glass-border);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             flex-shrink: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .glass-user-avatar-wrap {
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            display: inline-flex;
+        }
+        .glass-user-avatar-wrap:hover .glass-avatar-camera-badge {
+            transform: scale(1.15);
+            background: #4f46e5;
+        }
+        .glass-avatar-camera-badge {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            background: #0600c2;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--glass-card);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .glass-user-name {
@@ -1329,34 +1357,141 @@
 
         /* ---------------- RESPONSIVE BREAKPOINT ---------------- */
         @media (max-width: 768px) {
+            html, body {
+                height: 100%;
+                overflow: hidden;
+            }
             #k71-chat-wrapper {
                 padding: 0;
+                margin: 0;
+                width: 100%;
+                height: calc(100dvh - 108px);
+                height: calc(100svh - 108px);
+                max-height: calc(100dvh - 108px);
+                min-height: 0;
+                overflow: hidden;
+                display: flex;
+                align-items: stretch;
             }
             .glass-chat-frame {
-                border-radius: 0;
-                border: none;
-                height: calc(100vh - 64px);
-                max-height: 100vh;
+                border-radius: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                min-height: 100% !important;
+                max-height: 100% !important;
+                flex: 1 1 0% !important;
+                overflow: hidden !important;
+                position: relative;
             }
             .glass-sidebar {
-                width: 100%;
-                min-width: 100%;
-                border-right: none;
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                height: 100% !important;
+                border-right: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                flex: 1 1 0% !important;
+                min-height: 0 !important;
+                overflow: hidden !important;
+            }
+            .glass-conv-list {
+                flex: 1 1 0% !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
             }
             .glass-chat-pane {
                 display: none;
                 position: absolute;
                 inset: 0;
+                width: 100% !important;
+                height: 100% !important;
                 z-index: 20;
+                overflow: hidden;
+                flex-direction: column;
             }
             .glass-chat-frame.chat-active .glass-sidebar {
-                display: none;
+                display: none !important;
             }
             .glass-chat-frame.chat-active .glass-chat-pane {
-                display: flex;
+                display: flex !important;
+            }
+            #glassActiveChat {
+                height: 100% !important;
+                max-height: 100% !important;
+                min-height: 0 !important;
+                flex: 1 1 0% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+            }
+            .glass-chat-header {
+                height: 58px !important;
+                padding: 0 12px !important;
+                gap: 8px !important;
+                flex-shrink: 0 !important;
+            }
+            .glass-chat-header-user {
+                gap: 8px !important;
+                min-width: 0 !important;
+                flex: 1 1 auto !important;
             }
             .glass-back-btn {
                 display: flex !important;
+                width: 36px !important;
+                height: 36px !important;
+                margin-right: 2px !important;
+            }
+            .glass-chat-header-avatar {
+                width: 36px !important;
+                height: 36px !important;
+            }
+            .glass-chat-header-username {
+                font-size: 13.5px !important;
+                max-width: 160px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+            }
+            .glass-chat-header-status {
+                font-size: 11px !important;
+            }
+            .glass-chat-feed {
+                flex: 1 1 0% !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                padding: 12px 14px !important;
+                gap: 6px !important;
+            }
+            .glass-msg-row {
+                max-width: 88% !important;
+            }
+            .glass-msg-bubble {
+                font-size: 13.5px !important;
+                padding: 8px 14px !important;
+            }
+            .glass-composer-bar {
+                flex-shrink: 0 !important;
+                padding: 8px 10px max(10px, env(safe-area-inset-bottom)) !important;
+                background: var(--glass-surface) !important;
+                z-index: 30 !important;
+            }
+            .glass-composer-pill {
+                padding: 4px 10px !important;
+                gap: 6px !important;
+            }
+            .glass-composer-textarea {
+                font-size: 14px !important;
+                padding: 6px 0 !important;
+                max-height: 80px !important;
+            }
+            .glass-composer-send-btn {
+                padding: 6px 14px !important;
+                font-size: 13px !important;
             }
         }
 
@@ -1387,10 +1522,23 @@
                             $uHandle = $user?->username ?? 'guest';
                             $uAvatar = $user?->avatar ?? null;
                         @endphp
-                        <img src="{{ format_user_avatar($uAvatar, $uName) }}" 
-                             alt="{{ $uHandle }}" 
-                             class="glass-user-avatar">
-                        <span class="glass-user-name">&#64;{{ $uHandle }}</span>
+                        <div class="glass-user-avatar-wrap" id="sidebarAvatarBtn" title="Click to upload profile photo">
+                            <img src="{{ format_user_avatar($uAvatar, $uName) }}" 
+                                 alt="{{ $uHandle }}" 
+                                 class="glass-user-avatar my-user-avatar"
+                                 id="mySidebarAvatar">
+                            <span class="glass-avatar-camera-badge" title="Change photo">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                            </span>
+                            <input type="file" id="sidebarAvatarInput" accept="image/jpeg,image/png,image/webp,image/jpg" style="display: none;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; min-width: 0; cursor: pointer;" onclick="document.getElementById('sidebarAvatarInput').click()">
+                            <span class="glass-user-name">&#64;{{ $uHandle }}</span>
+                            <span style="font-size: 10px; font-weight: 700; color: #4f46e5; letter-spacing: 0.02em;">Edit Photo</span>
+                        </div>
                     </div>
                     <button type="button" class="glass-icon-btn" id="glassNewChatBtn" title="Search user or start message">
                         <!-- Instagram / Pencil Edit Icon -->
@@ -1457,6 +1605,7 @@
                     
                     <!-- Chat Header -->
                     <div class="glass-chat-header">
+                        <div class="glass-chat-header-user">
                             <!-- Instagram-Style Back Button -->
                             <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox" aria-label="Back to Inbox">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -2595,6 +2744,135 @@
                 }
             })
             .catch(err => console.error('Direct chat auto-start error:', err));
+        }
+
+        // ---------------------------------------------------------------------
+        // 9. DYNAMIC MOBILE VIEWPORT & HEIGHT ADJUSTER
+        // ---------------------------------------------------------------------
+        function adjustMobileLayout() {
+            if (window.innerWidth <= 768) {
+                const nav = document.querySelector('header');
+                const navHeight = nav ? nav.getBoundingClientRect().height : 106;
+                const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                const availableHeight = Math.max(260, Math.floor(vh - navHeight));
+                const wrapper = document.getElementById('k71-chat-wrapper');
+                if (wrapper) {
+                    wrapper.style.height = availableHeight + 'px';
+                    wrapper.style.maxHeight = availableHeight + 'px';
+                }
+            } else {
+                const wrapper = document.getElementById('k71-chat-wrapper');
+                if (wrapper) {
+                    wrapper.style.height = '';
+                    wrapper.style.maxHeight = '';
+                }
+            }
+        }
+        window.addEventListener('resize', adjustMobileLayout);
+        window.addEventListener('orientationchange', () => setTimeout(adjustMobileLayout, 100));
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                adjustMobileLayout();
+                if (chatFeed) chatFeed.scrollTop = chatFeed.scrollHeight;
+            });
+        }
+        adjustMobileLayout();
+
+        // ---------------------------------------------------------------------
+        // 10. GLASS TOAST NOTIFICATION SYSTEM
+        // ---------------------------------------------------------------------
+        function showGlassToast(message, type = 'success') {
+            let toast = document.getElementById('glassNotificationToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'glassNotificationToast';
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    left: 50%;
+                    transform: translateX(-50%) translateY(100px);
+                    background: rgba(15, 23, 42, 0.94);
+                    backdrop-filter: blur(16px);
+                    -webkit-backdrop-filter: blur(16px);
+                    color: #ffffff;
+                    padding: 10px 20px;
+                    border-radius: 9999px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+                    border: 1px solid rgba(255,255,255,0.18);
+                    z-index: 9999;
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    pointer-events: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                `;
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = (type === 'success' ? '<span style="color:#10B981;">✓</span> ' : '<span style="color:#EF4444;">⚠️</span> ') + escapeHtml(message);
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.style.transform = 'translateX(-50%) translateY(100px)';
+            }, 3200);
+        }
+
+        // ---------------------------------------------------------------------
+        // 11. PROFILE PICTURE INSTANT UPLOAD
+        // ---------------------------------------------------------------------
+        const sidebarAvatarBtn = document.getElementById('sidebarAvatarBtn');
+        const sidebarAvatarInput = document.getElementById('sidebarAvatarInput');
+        const mySidebarAvatar = document.getElementById('mySidebarAvatar');
+
+        if (sidebarAvatarBtn && sidebarAvatarInput) {
+            sidebarAvatarBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebarAvatarInput.click();
+            });
+
+            sidebarAvatarInput.addEventListener('change', () => {
+                const file = sidebarAvatarInput.files[0];
+                if (!file) return;
+
+                // Preview immediately
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (mySidebarAvatar) mySidebarAvatar.src = e.target.result;
+                    document.querySelectorAll('.my-user-avatar').forEach(img => img.src = e.target.result);
+                };
+                reader.readAsDataURL(file);
+
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                showGlassToast('Uploading profile picture...');
+
+                fetch('/api/user/avatar', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.avatar_url) {
+                        if (mySidebarAvatar) mySidebarAvatar.src = data.avatar_url;
+                        document.querySelectorAll('.my-user-avatar').forEach(img => img.src = data.avatar_url);
+                        showGlassToast(data.message || 'Profile picture updated successfully!');
+                        // Refresh conversations so our avatar is updated if needed
+                        fetchConversations();
+                    } else {
+                        showGlassToast(data.error || 'Failed to upload photo.', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error('Avatar upload error:', err);
+                    showGlassToast('Error uploading photo. Please try again.', 'error');
+                });
+            });
         }
 
     })();

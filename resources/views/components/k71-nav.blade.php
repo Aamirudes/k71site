@@ -274,8 +274,12 @@
                         <div class="relative">
                             <button @click="userMenuOpen = !userMenuOpen" 
                                     @click.away="userMenuOpen = false" 
-                                    class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-indigo-700 transition-colors cursor-pointer">
-                                {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                                    class="w-8 h-8 rounded-full bg-indigo-600 text-white font-black flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-indigo-700 transition-colors cursor-pointer overflow-hidden border border-indigo-200">
+                                @if(auth()->user()->avatar)
+                                    <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
+                                @else
+                                    {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                                @endif
                             </button>
 
                             <div x-show="userMenuOpen" 

@@ -206,5 +206,75 @@ class AccountController extends Controller
 
         return redirect()->route('home')->with('success', 'Your account and personal identifiers have been permanently anonymized and scheduled for erasure under DPDP Act regulations.');
     }
+
+    /**
+     * Upload or update customer profile avatar.
+     */
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        if (!$user) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'error' => 'Unauthorized.'], 401);
+            }
+            return redirect()->route('login');
+        }
+
+        $file = $request->file('avatar');
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $filename = 'avatar_' . $user->id . '_' . time() . '.' . $ext;
+        
+        $storageDir = storage_path('app/public/avatars');
+        if (!file_exists($storageDir)) {
+            @mkdir($storageDir, 0755, true);
+        }
+        $publicDir = public_path('storage/avatars');
+        if (!file_exists($publicDir)) {
+            @mkdir($publicDir, 0755, true);
+        }
+
+        $path = $file->storeAs('avatars', $filename, 'public');
+
+        // Copy to public/storage/avatars directly to ensure accessibility without symlink latency
+        try {
+            $destFile = $publicDir . '/' . $filename;
+            @copy(storage_path('app/public/' . $path), $destFile);
+        } catch (\Throwable $e) {}
+        
+        // Remove old local avatar if exists
+        if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
+            $oldFilename = basename($user->avatar);
+            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            if (file_exists($publicDir . '/' . $oldFilename)) {
+                @unlink($publicDir . '/' . $oldFilename);
+            }
+        }
+
+        $user->avatar = $path;
+        $user->save();
+
+        $displayName = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+        if ($displayName === '') $displayName = $user->username ?? 'User';
+        $avatarUrl = format_user_avatar($path, $displayName);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture updated successfully!',
+                'avatar' => $path,
+                'avatar_url' => $avatarUrl,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Profile picture updated successfully!');
+    }
 }
+
 
