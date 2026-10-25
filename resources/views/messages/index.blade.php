@@ -53,22 +53,25 @@
 
         #k71-chat-wrapper {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: calc(100vh - 72px);
+            height: calc(100vh - 110px);
+            min-height: 580px;
+            max-height: 940px;
             display: flex;
-            align-items: center;
+            align-items: stretch;
             justify-content: center;
-            padding: 16px;
+            padding: 12px 18px;
             box-sizing: border-box;
             background-color: transparent;
+            overflow: hidden;
         }
 
         /* Master Glass Card Container */
         .glass-chat-frame {
             width: 100%;
-            max-width: 1140px;
-            height: calc(100vh - 105px);
-            min-height: 600px;
-            max-height: 860px;
+            max-width: 1200px;
+            height: 100%;
+            min-height: 0;
+            max-height: 100%;
             background: var(--glass-bg);
             backdrop-filter: blur(36px) saturate(200%);
             -webkit-backdrop-filter: blur(36px) saturate(200%);
@@ -1361,17 +1364,27 @@
                 height: 100%;
                 overflow: hidden;
             }
+            body.chat-active header {
+                display: none !important;
+            }
             #k71-chat-wrapper {
-                padding: 0;
-                margin: 0;
-                width: 100%;
-                height: calc(100dvh - 108px);
-                height: calc(100svh - 108px);
-                max-height: calc(100dvh - 108px);
-                min-height: 0;
-                overflow: hidden;
-                display: flex;
-                align-items: stretch;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                height: calc(100dvh - 104px);
+                max-height: calc(100dvh - 104px);
+                min-height: 0 !important;
+                overflow: hidden !important;
+                display: flex !important;
+                align-items: stretch !important;
+            }
+            body.chat-active #k71-chat-wrapper {
+                height: 100dvh !important;
+                height: 100vh !important;
+                max-height: 100dvh !important;
+                position: fixed !important;
+                inset: 0 !important;
+                z-index: 9999 !important;
             }
             .glass-chat-frame {
                 border-radius: 0 !important;
@@ -1413,9 +1426,11 @@
                 overflow: hidden;
                 flex-direction: column;
             }
+            body.chat-active .glass-sidebar,
             .glass-chat-frame.chat-active .glass-sidebar {
                 display: none !important;
             }
+            body.chat-active .glass-chat-pane,
             .glass-chat-frame.chat-active .glass-chat-pane {
                 display: flex !important;
             }
@@ -1429,10 +1444,12 @@
                 overflow: hidden !important;
             }
             .glass-chat-header {
-                height: 58px !important;
+                height: 56px !important;
                 padding: 0 12px !important;
                 gap: 8px !important;
                 flex-shrink: 0 !important;
+                background: var(--glass-surface) !important;
+                border-bottom: 1px solid var(--glass-border) !important;
             }
             .glass-chat-header-user {
                 gap: 8px !important;
@@ -1446,12 +1463,12 @@
                 margin-right: 2px !important;
             }
             .glass-chat-header-avatar {
-                width: 36px !important;
-                height: 36px !important;
+                width: 38px !important;
+                height: 38px !important;
             }
             .glass-chat-header-username {
-                font-size: 13.5px !important;
-                max-width: 160px !important;
+                font-size: 14px !important;
+                max-width: 180px !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
                 white-space: nowrap !important;
@@ -1465,39 +1482,42 @@
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
                 padding: 12px 14px !important;
-                gap: 6px !important;
+                gap: 8px !important;
             }
             .glass-msg-row {
-                max-width: 88% !important;
+                max-width: 86% !important;
             }
             .glass-msg-bubble {
-                font-size: 13.5px !important;
-                padding: 8px 14px !important;
+                font-size: 14px !important;
+                padding: 9px 14px !important;
             }
             .glass-composer-bar {
                 flex-shrink: 0 !important;
-                padding: 8px 10px max(10px, env(safe-area-inset-bottom)) !important;
+                padding: 8px 12px max(10px, env(safe-area-inset-bottom)) !important;
                 background: var(--glass-surface) !important;
                 z-index: 30 !important;
+                border-top: 1px solid var(--glass-border) !important;
             }
             .glass-composer-pill {
-                padding: 4px 10px !important;
+                padding: 4px 12px !important;
                 gap: 6px !important;
+                border-radius: 22px !important;
             }
             .glass-composer-textarea {
-                font-size: 14px !important;
+                font-size: 15px !important;
                 padding: 6px 0 !important;
                 max-height: 80px !important;
+                line-height: 1.4 !important;
             }
             .glass-composer-send-btn {
-                padding: 6px 14px !important;
-                font-size: 13px !important;
+                padding: 6px 12px !important;
+                font-size: 13.5px !important;
             }
         }
 
         @media (min-width: 769px) {
             .glass-chat-frame.chat-active .glass-back-btn {
-                display: flex;
+                display: none;
             }
         }
     </style>
@@ -1748,6 +1768,7 @@
 
         const CURRENT_USER_ID = {{ auth()->id() }};
         const INITIAL_TARGET_USER_ID = {{ !empty($targetUserId) ? (int)$targetUserId : 'null' }};
+        let myCurrentAvatarUrl = '{{ format_user_avatar($uAvatar, $uName) }}';
         let currentTab = 'primary';
         let currentConversationId = null;
         let activeRecipientId = null;
@@ -1948,9 +1969,11 @@
             activeRecipientId = recipientId;
 
             mainContainer.classList.add('chat-active');
+            document.body.classList.add('chat-active');
             emptyState.style.display = 'none';
             activeChat.style.display = 'flex';
 
+            adjustMobileLayout();
             renderConversations(filterInput.value.trim());
 
             chatFeed.innerHTML = `
@@ -2090,7 +2113,7 @@
 
                 html += `
                     <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}" data-is-mine="${isSent ? '1' : '0'}">
-                        ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="glass-msg-avatar">` : ''}
+                        ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="glass-msg-avatar">` : `<img src="${escapeHtml(myCurrentAvatarUrl)}" alt="" class="glass-msg-avatar my-user-avatar">`}
                         <div>
                             ${attachmentHtml}
                             ${bodyHtml}
@@ -2275,10 +2298,11 @@
 
         backBtn.addEventListener('click', () => {
             mainContainer.classList.remove('chat-active');
+            document.body.classList.remove('chat-active');
             currentConversationId = null;
             activeRecipientId = null;
             if (window.innerWidth <= 768) {
-                // On mobile, removing chat-active shows glass-sidebar and hides glass-chat-pane
+                adjustMobileLayout();
             } else {
                 activeChat.style.display = 'none';
                 emptyState.style.display = 'flex';
@@ -2750,22 +2774,29 @@
         // 9. DYNAMIC MOBILE VIEWPORT & HEIGHT ADJUSTER
         // ---------------------------------------------------------------------
         function adjustMobileLayout() {
-            if (window.innerWidth <= 768) {
-                const nav = document.querySelector('header');
-                const navHeight = nav ? nav.getBoundingClientRect().height : 106;
+            const isMobile = window.innerWidth <= 768;
+            const isChatActive = mainContainer && (mainContainer.classList.contains('chat-active') || document.body.classList.contains('chat-active'));
+            const wrapper = document.getElementById('k71-chat-wrapper');
+            if (!wrapper) return;
+
+            if (isMobile) {
                 const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-                const availableHeight = Math.max(260, Math.floor(vh - navHeight));
-                const wrapper = document.getElementById('k71-chat-wrapper');
-                if (wrapper) {
-                    wrapper.style.height = availableHeight + 'px';
-                    wrapper.style.maxHeight = availableHeight + 'px';
+                if (isChatActive) {
+                    document.body.classList.add('chat-active');
+                    wrapper.style.height = `${vh}px`;
+                    wrapper.style.maxHeight = `${vh}px`;
+                } else {
+                    document.body.classList.remove('chat-active');
+                    const nav = document.querySelector('header');
+                    const navHeight = (nav && nav.offsetHeight > 0) ? nav.offsetHeight : 104;
+                    const availableHeight = Math.max(280, Math.floor(vh - navHeight));
+                    wrapper.style.height = `${availableHeight}px`;
+                    wrapper.style.maxHeight = `${availableHeight}px`;
                 }
             } else {
-                const wrapper = document.getElementById('k71-chat-wrapper');
-                if (wrapper) {
-                    wrapper.style.height = '';
-                    wrapper.style.maxHeight = '';
-                }
+                document.body.classList.remove('chat-active');
+                wrapper.style.height = '';
+                wrapper.style.maxHeight = '';
             }
         }
         window.addEventListener('resize', adjustMobileLayout);
@@ -2838,6 +2869,7 @@
                 // Preview immediately
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    myCurrentAvatarUrl = e.target.result;
                     if (mySidebarAvatar) mySidebarAvatar.src = e.target.result;
                     document.querySelectorAll('.my-user-avatar').forEach(img => img.src = e.target.result);
                 };
@@ -2859,6 +2891,7 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.avatar_url) {
+                        myCurrentAvatarUrl = data.avatar_url;
                         if (mySidebarAvatar) mySidebarAvatar.src = data.avatar_url;
                         document.querySelectorAll('.my-user-avatar').forEach(img => img.src = data.avatar_url);
                         showGlassToast(data.message || 'Profile picture updated successfully!');

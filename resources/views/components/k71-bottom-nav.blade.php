@@ -11,6 +11,7 @@
         || request()->routeIs('services.show') 
         || request()->routeIs('checkout.*')
         || request()->routeIs('cart.*')
+        || request()->routeIs('messages.*')
         || request()->routeIs('services.order.*');
     if ($hideOnDetail) {
         return;

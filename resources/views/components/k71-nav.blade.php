@@ -291,9 +291,14 @@
                                  x-transition:leave-end="opacity-0 scale-95"
                                  class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-2 border border-slate-200 z-50 origin-top-right text-slate-900"
                                  style="display: none;">
-                                <div class="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
-                                    <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
-                                    <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                                <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-xs bg-slate-100">
+                                        <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
+                                        <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                                    </div>
                                 </div>
                                 <div class="py-1">
                                     <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
