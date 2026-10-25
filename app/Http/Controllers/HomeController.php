@@ -259,10 +259,7 @@ class HomeController extends Controller
         }
 
         $foodRestaurants = \App\Models\Vendor::where('status', 'approved')
-            ->where(function($q) {
-                $q->where('business_type', 'food')
-                  ->orWhere('vendor_type', 'food');
-            })
+            ->where('vendor_type', 'food')
             ->take(4)
             ->get();
 
