@@ -84,6 +84,11 @@
     <script type="application/json" id="product-variants-data">
         {!! json_encode($product->variants->map(function($v) use ($product, $formatSizeLabel) { 
             $rawSize = $v->attributes_hash['size'] ?? ($v->size ?? $v->sku);
+            $baseRs = $product->base_price / 100;
+            $calcPrice = $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : $baseRs);
+            if ($calcPrice <= 10 && $baseRs > 50) {
+                $calcPrice = $baseRs;
+            }
             return [
                 'id' => $v->id, 
                 'sku' => $v->sku ?: 'Default',
@@ -92,13 +97,6 @@
                 'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
                 'size' => $formatSizeLabel($rawSize, $v->sku),
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
-                @php
-                    $baseRs = $product->base_price / 100;
-                    $calcPrice = $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : $baseRs);
-                    if ($calcPrice <= 10 && $baseRs > 50) {
-                        $calcPrice = $baseRs;
-                    }
-                @endphp
                 'price' => number_format($calcPrice, 2, '.', ''),
                 'image_url' => $v->image_url,
                 'attributes_hash' => $v->attributes_hash ?: []
