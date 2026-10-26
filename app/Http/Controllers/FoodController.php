@@ -58,19 +58,19 @@ class FoodController extends Controller
         // Search filter
         if ($search) {
             $restaurantsQuery->where(function ($q) use ($search) {
-                $q->where('shop_name', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('products', fn($pq) => $pq->where('title', 'like', "%{$search}%")->orWhere('description', 'like', "%{$search}%"));
+                $q->where('vendors.shop_name', 'like', "%{$search}%")
+                  ->orWhere('vendors.city', 'like', "%{$search}%")
+                  ->orWhere('vendors.description', 'like', "%{$search}%")
+                  ->orWhereHas('products', fn($pq) => $pq->where('products.title', 'like', "%{$search}%")->orWhere('products.description', 'like', "%{$search}%"));
             });
         }
 
         // Cuisine filter
         if ($cuisine) {
             $restaurantsQuery->where(function ($q) use ($cuisine) {
-                $q->where('description', 'like', "%{$cuisine}%")
+                $q->where('vendors.description', 'like', "%{$cuisine}%")
                   ->orWhereHas('settings', fn($sq) => $sq->where('cuisine_types', 'like', "%{$cuisine}%"))
-                  ->orWhereHas('products', fn($pq) => $pq->where('custom_fields->cuisine', 'like', "%{$cuisine}%"));
+                  ->orWhereHas('products', fn($pq) => $pq->where('products.custom_fields->cuisine', 'like', "%{$cuisine}%"));
             });
         }
 
@@ -96,7 +96,7 @@ class FoodController extends Controller
                      ->where('products.status', '=', 'active');
             })->orderBy('products.base_price', 'asc')->select('vendors.*')->distinct();
         } else {
-            $restaurantsQuery->latest();
+            $restaurantsQuery->orderBy('vendors.created_at', 'desc')->select('vendors.*');
         }
 
         $restaurants = $restaurantsQuery->paginate(12)->withQueryString();
