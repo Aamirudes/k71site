@@ -5,12 +5,14 @@
     $currentPath = request()->path();
     $currentRoute = request()->route() ? request()->route()->getName() : '';
 
-    // Hide mobile bottom tab nav on detail and checkout pages to prioritize sticky buy and order bars
+    // Hide mobile bottom tab nav on detail, checkout, and direct messages to prioritize sticky buy and chat composer bars
     $hideOnDetail = request()->routeIs('product.show') 
         || request()->routeIs('catalog.show') 
         || request()->routeIs('services.show') 
         || request()->routeIs('checkout.*')
         || request()->routeIs('cart.*')
+        || request()->routeIs('messages.*')
+        || request()->is('messages*')
         || request()->routeIs('services.order.*');
     if ($hideOnDetail) {
         return;
@@ -210,10 +212,7 @@
                         @endif
 
                         @if($isMessages)
-                            <span class="bottom-nav-messages-dot absolute -top-1 -right-1 flex h-2.5 w-2.5 {{ $bottomUnreadMessagesCount > 0 ? '' : 'hidden' }}">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80"></span>
-                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EF4444] ring-2 ring-white shadow-sm"></span>
-                            </span>
+                            <span class="bottom-nav-messages-dot absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#FF3040] ring-1.5 ring-white shadow-xs {{ $bottomUnreadMessagesCount > 0 ? '' : 'hidden' }}"></span>
                         @endif
 
                         @if($item->badge)

@@ -844,62 +844,78 @@
             transform: scale(1.2);
         }
 
-        /* Sticky Bottom Composer */
+        /* Sticky Bottom Composer (Instagram Style Elevation & Responsiveness) */
         .glass-composer-bar {
-            padding: 14px 20px;
+            padding: 14px 20px max(18px, env(safe-area-inset-bottom, 16px));
             background: var(--glass-surface);
             border-top: 1px solid var(--glass-border);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             flex-shrink: 0;
+            position: relative;
+            z-index: 40;
         }
 
         .glass-composer-pill {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             background: var(--glass-card);
             border: 1px solid var(--glass-border);
-            border-radius: 26px;
-            padding: 6px 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), inset 0 1px 1px var(--glass-specular);
+            border-radius: 28px;
+            padding: 6px 12px;
+            min-height: 52px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04), inset 0 1px 1px var(--glass-specular);
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .glass-composer-pill:focus-within {
-            border-color: #0600c2;
-            box-shadow: 0 0 0 3px var(--glass-glow), inset 0 1px 1px var(--glass-specular);
+            border-color: #0095f6;
+            box-shadow: 0 0 0 3px rgba(0, 149, 246, 0.15), inset 0 1px 1px var(--glass-specular);
         }
 
         .glass-composer-emoji-btn {
             background: none;
             border: none;
-            padding: 2px;
-            font-size: 19px;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            font-size: 20px;
             cursor: pointer;
             line-height: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.75;
-            transition: opacity 0.15s ease;
+            opacity: 0.8;
+            border-radius: 50%;
+            transition: all 0.15s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
         }
         .glass-composer-emoji-btn:hover {
             opacity: 1;
+            transform: scale(1.1);
+        }
+        .glass-composer-emoji-btn:active {
+            transform: scale(0.92);
         }
 
         .glass-composer-textarea {
             flex: 1;
             border: none;
             outline: none;
-            font-size: 13.5px;
+            font-size: 15px;
             font-family: inherit;
             color: var(--color-text-main);
             background: transparent;
             max-height: 100px;
             resize: none;
-            padding: 6px 0;
+            padding: 8px 6px;
             line-height: 1.4;
+            min-height: 24px;
         }
 
         .glass-composer-textarea::placeholder {
@@ -907,29 +923,40 @@
         }
 
         .glass-composer-send-btn {
-            background: none;
+            background: #0095f6;
+            color: #ffffff;
             border: none;
-            color: #0600c2;
-            font-size: 13.5px;
-            font-weight: 800;
+            font-size: 14px;
+            font-weight: 700;
             cursor: pointer;
-            padding: 4px 8px;
-            opacity: 0.35;
-            pointer-events: none;
-            transition: all 0.15s ease;
+            padding: 8px 18px;
+            min-height: 38px;
+            border-radius: 20px;
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 149, 246, 0.3);
+            white-space: nowrap;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
         }
 
-        .dark .glass-composer-send-btn {
-            color: #38BDF8;
+        .glass-composer-send-btn:hover {
+            background: #0081d6;
+            transform: scale(1.04);
         }
 
-        .glass-composer-send-btn.active {
-            opacity: 1;
-            pointer-events: auto;
+        .glass-composer-send-btn:active {
+            transform: scale(0.94);
         }
 
-        .glass-composer-send-btn.active:hover {
-            transform: scale(1.05);
+        .glass-composer-send-btn.disabled {
+            opacity: 0.45;
+            background: transparent;
+            color: #0095f6;
+            box-shadow: none;
         }
 
         /* ---------------- SEARCH USER MODAL ---------------- */
@@ -1184,50 +1211,56 @@
             40% { transform: translateY(-6px); opacity: 1; background: #0095f6; }
         }
 
-        /* Instagram Voice Message Elements */
+        /* Instagram Voice Message Elements (Exact Parity) */
         .glass-composer-voice-btn {
             background: transparent;
             border: none;
             color: var(--color-text-muted);
             cursor: pointer;
-            padding: 6px;
+            width: 38px;
+            height: 38px;
+            min-width: 38px;
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             user-select: none;
             -webkit-user-select: none;
-            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .glass-composer-voice-btn:hover {
             color: #0095f6;
             background: rgba(0, 149, 246, 0.08);
             transform: scale(1.08);
         }
+        .glass-composer-voice-btn:active {
+            transform: scale(0.92);
+        }
         .glass-composer-voice-btn.recording {
-            color: #ef4444 !important;
-            background: rgba(239, 68, 68, 0.15) !important;
+            color: #ffffff !important;
+            background: #ef4444 !important;
             animation: pulseRecord 1s infinite alternate;
-            transform: scale(1.18);
+            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
         }
         @keyframes pulseRecord {
-            from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
             to { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
         }
         .glass-voice-recording-overlay {
             position: absolute;
-            left: 8px;
-            right: 48px;
-            top: 0;
-            bottom: 0;
+            inset: 3px;
             background: var(--color-panel-bg);
-            border-radius: 24px;
+            border-radius: 26px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
-            padding: 0 14px;
-            z-index: 10;
+            padding: 0 8px 0 12px;
+            z-index: 25;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            border: 1.5px solid #ef4444;
         }
         .glass-voice-recording-dot {
             width: 10px;
@@ -1238,7 +1271,7 @@
             flex-shrink: 0;
         }
         .glass-voice-timer {
-            font-size: 13px;
+            font-size: 13.5px;
             font-weight: 800;
             color: #ef4444;
             font-variant-numeric: tabular-nums;
@@ -1247,12 +1280,13 @@
         .glass-voice-waveform {
             display: flex;
             align-items: center;
-            gap: 3px;
+            gap: 2.5px;
             flex: 1;
             height: 22px;
+            padding: 0 4px;
         }
         .glass-voice-waveform span {
-            width: 3px;
+            width: 2.5px;
             background: #ef4444;
             border-radius: 2px;
             animation: waveBounce 0.8s ease-in-out infinite alternate;
@@ -1265,47 +1299,55 @@
         .glass-voice-waveform span:nth-child(6) { height: 14px; animation-delay: 0.35s; }
         .glass-voice-waveform span:nth-child(7) { height: 20px; animation-delay: 0.25s; }
         .glass-voice-waveform span:nth-child(8) { height: 8px; animation-delay: 0.45s; }
-        @keyframes waveBounce {
-            0% { transform: scaleY(0.3); }
-            100% { transform: scaleY(1); }
-        }
-        .glass-voice-hint {
-            font-size: 11px;
-            color: var(--color-text-muted);
-            white-space: nowrap;
-        }
+        .glass-voice-waveform span:nth-child(9) { height: 16px; animation-delay: 0.2s; }
+        .glass-voice-waveform span:nth-child(10) { height: 10px; animation-delay: 0.35s; }
         .glass-voice-cancel-btn {
-            background: transparent;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
             border: none;
+            background: rgba(239, 68, 68, 0.12);
             color: #ef4444;
             cursor: pointer;
-            padding: 4px;
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .glass-voice-cancel-btn:hover {
-            background: rgba(239, 68, 68, 0.1);
+            background: #ef4444;
+            color: #ffffff;
+            transform: scale(1.08);
+        }
+        .glass-voice-cancel-btn:active {
+            transform: scale(0.92);
         }
         .glass-voice-confirm-btn {
-            background: #10b981;
-            color: #ffffff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
             border: none;
+            background: #0095f6;
+            color: #ffffff;
             cursor: pointer;
-            padding: 5px 12px;
-            border-radius: 14px;
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 11.5px;
-            font-weight: 700;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 149, 246, 0.4);
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .glass-voice-confirm-btn:hover {
-            background: #059669;
-            transform: scale(1.04);
+            background: #0081d6;
+            transform: scale(1.08);
+        }
+        .glass-voice-confirm-btn:active {
+            transform: scale(0.92);
         }
 
         /* Voice Player Message Bubble */
@@ -1637,20 +1679,20 @@
         /* ---------------- RESPONSIVE BREAKPOINT ---------------- */
         @media (max-width: 768px) {
             #k71-chat-wrapper {
-                padding: 4px 6px !important;
+                padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
-                height: calc(100dvh - 128px);
-                max-height: calc(100dvh - 128px);
+                height: calc(100dvh - 56px) !important;
+                max-height: calc(100dvh - 56px) !important;
                 min-height: 480px !important;
                 overflow: hidden !important;
                 display: flex !important;
                 align-items: stretch !important;
-                margin-bottom: 64px !important;
+                margin-bottom: 0 !important;
             }
             body.chat-active #k71-chat-wrapper {
-                height: calc(100dvh - 128px) !important;
-                max-height: calc(100dvh - 128px) !important;
+                height: calc(100dvh - 56px) !important;
+                max-height: calc(100dvh - 56px) !important;
                 position: relative !important;
                 inset: auto !important;
                 z-index: 1 !important;
@@ -1762,25 +1804,27 @@
             }
             .glass-composer-bar {
                 flex-shrink: 0 !important;
-                padding: 8px 12px max(10px, env(safe-area-inset-bottom)) !important;
+                padding: 10px 14px max(20px, env(safe-area-inset-bottom, 20px)) !important;
                 background: var(--glass-surface) !important;
-                z-index: 30 !important;
+                z-index: 50 !important;
                 border-top: 1px solid var(--glass-border) !important;
             }
             .glass-composer-pill {
-                padding: 4px 12px !important;
+                padding: 5px 12px !important;
                 gap: 6px !important;
-                border-radius: 22px !important;
+                border-radius: 26px !important;
+                min-height: 50px !important;
             }
             .glass-composer-textarea {
                 font-size: 15px !important;
-                padding: 6px 0 !important;
+                padding: 6px 4px !important;
                 max-height: 80px !important;
                 line-height: 1.4 !important;
             }
             .glass-composer-send-btn {
-                padding: 6px 12px !important;
-                font-size: 13.5px !important;
+                padding: 6px 16px !important;
+                font-size: 14px !important;
+                min-height: 38px !important;
             }
         }
 
@@ -1975,26 +2019,24 @@
                                       placeholder="Message..." 
                                       autocomplete="off"></textarea>
 
-                            <!-- Voice Recording Active Overlay -->
+                            <!-- Voice Recording Active Overlay (Instagram Direct Exact Layout) -->
                             <div class="glass-voice-recording-overlay" id="glassVoiceOverlay" style="display: none;">
+                                <button type="button" class="glass-voice-cancel-btn" id="glassVoiceCancelBtn" title="Discard voice note">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                </button>
                                 <div class="glass-voice-recording-dot"></div>
                                 <span class="glass-voice-timer" id="glassVoiceTimer">0:00</span>
                                 <div class="glass-voice-waveform">
-                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                                 </div>
-                                <span class="glass-voice-hint" id="glassVoiceHint">Recording...</span>
-                                <button type="button" class="glass-voice-confirm-btn" id="glassVoiceConfirmBtn" title="Send voice message">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Send
-                                </button>
-                                <button type="button" class="glass-voice-cancel-btn" id="glassVoiceCancelBtn" title="Cancel recording">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                <button type="button" class="glass-voice-confirm-btn" id="glassVoiceConfirmBtn" title="Send voice note">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                                 </button>
                             </div>
 
-                            <!-- Voice Note Mic Button (Hold to speak, release to send) -->
-                            <button type="button" class="glass-composer-voice-btn" id="glassVoiceBtn" title="Hold to record voice message (Instagram style)">
-                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <!-- Voice Note Mic Button (Tap to record) -->
+                            <button type="button" class="glass-composer-voice-btn" id="glassVoiceBtn" title="Tap to record voice message (Instagram style)">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path>
                                     <path d="M19 10v2a7 7 0 01-14 0v-2"></path>
                                     <line x1="12" y1="19" x2="12" y2="23"></line>
@@ -2002,7 +2044,7 @@
                                 </svg>
                             </button>
 
-                            <button type="button" class="glass-composer-send-btn" id="glassSendBtn">
+                            <button type="button" class="glass-composer-send-btn" id="glassSendBtn" title="Send" style="display: none;">
                                 Send
                             </button>
                         </div>
@@ -2275,6 +2317,7 @@
 
             adjustMobileLayout();
             renderConversations(filterInput.value.trim());
+            updateSendButtonState();
 
             // Instant thread restore from in-memory cache
             if (threadMemoryCache[convId] && threadMemoryCache[convId].messages && threadMemoryCache[convId].recipient) {
@@ -2767,10 +2810,24 @@
         }
 
         function updateSendButtonState() {
-            if (messageInput.value.trim().length > 0) {
-                sendBtn.classList.add('active');
+            const hasText = messageInput && messageInput.value.trim().length > 0;
+            if (hasText) {
+                if (sendBtn) {
+                    sendBtn.style.display = 'inline-flex';
+                    sendBtn.classList.add('active');
+                    sendBtn.classList.remove('disabled');
+                }
+                if (typeof voiceBtn !== 'undefined' && voiceBtn) {
+                    voiceBtn.style.display = 'none';
+                }
             } else {
-                sendBtn.classList.remove('active');
+                if (sendBtn) {
+                    sendBtn.style.display = 'none';
+                    sendBtn.classList.remove('active');
+                }
+                if (typeof voiceBtn !== 'undefined' && voiceBtn) {
+                    voiceBtn.style.display = 'inline-flex';
+                }
             }
         }
 
@@ -2804,6 +2861,11 @@
 
         sendBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            const text = messageInput.value.trim();
+            if (!text) {
+                messageInput.focus();
+                return;
+            }
             sendMessage();
         });
 
@@ -3435,8 +3497,6 @@
         let recordTimerInterval = null;
         let isRecordingActive = false;
         let isRecordCancelled = false;
-        let isHoldGesture = false;
-        let holdTimer = null;
 
         function formatRecordDuration(seconds) {
             const m = Math.floor(seconds / 60);
@@ -3444,8 +3504,8 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        async function startVoiceRecording(e, isHold = false) {
-            if (e && e.cancelable && e.type !== 'touchstart') e.preventDefault();
+        async function startVoiceRecording(e) {
+            if (e && e.cancelable) e.preventDefault();
             if (!currentConversationId) {
                 showGlassToast('Please open or start a chat first before recording a voice message.', 'error');
                 return;
@@ -3472,7 +3532,6 @@
                 audioChunks = [];
                 isRecordingActive = true;
                 isRecordCancelled = false;
-                isHoldGesture = isHold;
                 recordStartTime = Date.now();
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -3498,10 +3557,10 @@
                     }
 
                     const elapsedSec = (Date.now() - recordStartTime) / 1000;
-                    if (elapsedSec < 0.6) {
+                    if (elapsedSec < 0.3) {
                         audioChunks = [];
                         isRecordingActive = false;
-                        showGlassToast('Hold or tap Send to record voice message', 'error');
+                        showGlassToast('Recording too short', 'error');
                         return;
                     }
 
@@ -3628,72 +3687,35 @@
         }
 
         if (voiceBtn) {
-            // Instant Click Event (Triggers browser native permission prompt like OmeTV)
+            // Tap / Click to record (Exact Instagram Direct parity)
             voiceBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 if (!isRecordingActive) {
-                    startVoiceRecording(e, false);
+                    startVoiceRecording(e);
                 } else {
                     stopVoiceRecording(e);
-                }
-            });
-
-            // Touch Events for Mobile (Instagram hold to speak or tap to record)
-            voiceBtn.addEventListener('touchstart', (e) => {
-                holdTimer = setTimeout(() => {
-                    isHoldGesture = true;
-                }, 300);
-                startVoiceRecording(e, true);
-            }, { passive: false });
-
-            voiceBtn.addEventListener('touchend', (e) => {
-                clearTimeout(holdTimer);
-                if (isRecordingActive && isHoldGesture) {
-                    const elapsedSec = (Date.now() - recordStartTime) / 1000;
-                    if (elapsedSec >= 0.8) {
-                        stopVoiceRecording(e);
-                    }
-                }
-            }, { passive: false });
-
-            // Pointer / Mouse Events for Desktop
-            voiceBtn.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // Left click only
-                    holdTimer = setTimeout(() => {
-                        isHoldGesture = true;
-                    }, 300);
-                    startVoiceRecording(e, true);
-                }
-            });
-
-            window.addEventListener('mouseup', (e) => {
-                clearTimeout(holdTimer);
-                if (isRecordingActive && isHoldGesture) {
-                    const elapsedSec = (Date.now() - recordStartTime) / 1000;
-                    if (elapsedSec >= 0.8) {
-                        stopVoiceRecording(e);
-                    }
                 }
             });
         }
 
         if (voiceConfirmBtn) {
             voiceConfirmBtn.addEventListener('click', (e) => {
-                stopVoiceRecording(e);
-            });
-            voiceConfirmBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 stopVoiceRecording(e);
             });
         }
 
         if (voiceCancelBtn) {
-            voiceCancelBtn.addEventListener('click', cancelVoiceRecording);
-            voiceCancelBtn.addEventListener('touchend', (e) => {
+            voiceCancelBtn.addEventListener('click', (e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 cancelVoiceRecording(e);
             });
         }
+
+        updateSendButtonState();
 
     })();
     </script>

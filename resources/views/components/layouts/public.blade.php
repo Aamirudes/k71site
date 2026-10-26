@@ -539,9 +539,6 @@
             }, true);
         })();
     </script>
-    
-    <!-- Universal Liquid Glass Quick-Chat Launcher -->
-    <x-k71-floating-chat />
 
     @stack('scripts')
 </body>

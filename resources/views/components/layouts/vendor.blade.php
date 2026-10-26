@@ -296,9 +296,6 @@
         })();
     </script>
 
-    <!-- Universal Floating Quick-Chat Launcher -->
-    <x-k71-floating-chat />
-
     <!-- Incoming Order Bell Notification System -->
     <x-vendor-order-bell />
 </body>
