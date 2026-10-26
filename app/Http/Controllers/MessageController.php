@@ -292,11 +292,9 @@ class MessageController extends Controller
             'users.last_name',
             'users.avatar',
             'users.email',
+            'users.last_seen_at',
             'vendors.shop_name'
         ];
-        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_seen_at')) {
-            $selectCols[] = 'users.last_seen_at';
-        }
 
         $u = \Illuminate\Support\Facades\DB::table('users')
             ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
@@ -334,80 +332,15 @@ class MessageController extends Controller
     }
 
     /**
-     * Self-healing table check: ensure chat_conversations, chat_messages, user_follows exist with attachments & activity.
+     * Self-healing table check: bypassed during runtime for maximum speed.
      */
     private function ensureChatSchema(): void
     {
-        try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('users')) {
-                if (!\Illuminate\Support\Facades\Schema::hasColumn('users', 'last_seen_at')) {
-                    \Illuminate\Support\Facades\Schema::table('users', function ($t) {
-                        $t->timestamp('last_seen_at')->nullable()->after('email_verified_at');
-                    });
-                }
-            }
-
-            if (!\Illuminate\Support\Facades\Schema::hasTable('chat_conversations')) {
-                \Illuminate\Support\Facades\Schema::create('chat_conversations', function ($table) {
-                    $table->id();
-                    $table->unsignedBigInteger('user_one_id');
-                    $table->unsignedBigInteger('user_two_id');
-                    $table->string('status', 20)->default('accepted');
-                    $table->unsignedBigInteger('requested_by')->nullable();
-                    $table->timestamp('last_message_at')->useCurrent();
-                    $table->index('user_one_id');
-                    $table->index('user_two_id');
-                    $table->index('last_message_at');
-                });
-            } else {
-                if (!\Illuminate\Support\Facades\Schema::hasColumn('chat_conversations', 'status')) {
-                    \Illuminate\Support\Facades\Schema::table('chat_conversations', function ($t) {
-                        $t->string('status', 20)->default('accepted')->after('user_two_id');
-                    });
-                }
-                if (!\Illuminate\Support\Facades\Schema::hasColumn('chat_conversations', 'requested_by')) {
-                    \Illuminate\Support\Facades\Schema::table('chat_conversations', function ($t) {
-                        $t->unsignedBigInteger('requested_by')->nullable()->after('status');
-                    });
-                }
-            }
-
-            if (!\Illuminate\Support\Facades\Schema::hasTable('chat_messages')) {
-                \Illuminate\Support\Facades\Schema::create('chat_messages', function ($table) {
-                    $table->id();
-                    $table->unsignedBigInteger('conversation_id');
-                    $table->unsignedBigInteger('sender_id');
-                    $table->text('body');
-                    $table->string('attachment_url', 1000)->nullable();
-                    $table->string('attachment_type', 50)->nullable();
-                    $table->boolean('is_read')->default(false);
-                    $table->timestamp('created_at')->useCurrent();
-                    $table->index('conversation_id');
-                    $table->index('sender_id');
-                });
-            } else {
-                if (!\Illuminate\Support\Facades\Schema::hasColumn('chat_messages', 'attachment_url')) {
-                    \Illuminate\Support\Facades\Schema::table('chat_messages', function ($t) {
-                        $t->string('attachment_url', 1000)->nullable()->after('body');
-                        $t->string('attachment_type', 50)->nullable()->after('attachment_url');
-                    });
-                }
-            }
-
-            if (!\Illuminate\Support\Facades\Schema::hasTable('user_follows')) {
-                \Illuminate\Support\Facades\Schema::create('user_follows', function ($table) {
-                    $table->id();
-                    $table->unsignedBigInteger('follower_id');
-                    $table->unsignedBigInteger('following_id');
-                    $table->string('status', 20)->default('accepted');
-                    $table->timestamps();
-                });
-            }
-        } catch (\Throwable $e) {}
+        // Tables are verified through migrations; no-op during runtime requests
     }
 
     /**
-     * API: Get all active conversations for current user.
+     * API: Get all active conversations for current user with high-performance batching.
      */
     public function apiGetConversations(Request $request)
     {
@@ -416,31 +349,100 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in to access messages.'], 401);
         }
 
-        $this->ensureChatSchema();
-
         try {
             $rawConversations = \Illuminate\Support\Facades\DB::table('chat_conversations')
                 ->where('user_one_id', $userId)
                 ->orWhere('user_two_id', $userId)
                 ->orderByDesc('last_message_at')
+                ->limit(50)
                 ->get();
 
+            if ($rawConversations->isEmpty()) {
+                return response()->json(['success' => true, 'data' => [], 'requests_count' => 0]);
+            }
+
+            $convIds = $rawConversations->pluck('id')->toArray();
+            $recipientIds = $rawConversations->map(function($c) use ($userId) {
+                return ($c->user_one_id == $userId) ? (int)$c->user_two_id : (int)$c->user_one_id;
+            })->unique()->filter()->values()->toArray();
+
+            // 1. Batch fetch all recipients in ONE query
+            $usersMap = [];
+            if (!empty($recipientIds)) {
+                $users = \Illuminate\Support\Facades\DB::table('users')
+                    ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
+                    ->whereIn('users.id', $recipientIds)
+                    ->whereNull('users.deleted_at')
+                    ->get([
+                        'users.id', 'users.username', 'users.first_name', 'users.last_name',
+                        'users.avatar', 'users.email', 'users.last_seen_at', 'vendors.shop_name'
+                    ]);
+
+                foreach ($users as $u) {
+                    $personName = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
+                    if ($personName === '') $personName = $u->username ?? ('User #' . $u->id);
+                    $displayName = !empty($u->shop_name) ? ($u->shop_name . ' (' . $personName . ')') : $personName;
+
+                    $lastSeenTime = !empty($u->last_seen_at) ? strtotime($u->last_seen_at) : (int)\Illuminate\Support\Facades\Cache::get("user_last_seen_{$u->id}", 0);
+                    $isOnline = ($lastSeenTime > (time() - 180));
+
+                    $usersMap[$u->id] = [
+                        'id' => (int) $u->id,
+                        'username' => $u->username ?? ('user_' . $u->id),
+                        'name' => $displayName,
+                        'shop_name' => $u->shop_name ?? null,
+                        'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
+                        'email' => $u->email ?? '',
+                        'is_online' => $isOnline,
+                        'last_seen_at' => $u->last_seen_at ?? null,
+                        'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : ''),
+                    ];
+                }
+            }
+
+            // 2. Batch fetch unread counts in ONE query
+            $unreadCounts = \Illuminate\Support\Facades\DB::table('chat_messages')
+                ->select('conversation_id', \Illuminate\Support\Facades\DB::raw('count(*) as aggregate'))
+                ->whereIn('conversation_id', $convIds)
+                ->where('sender_id', '!=', $userId)
+                ->where('is_read', 0)
+                ->groupBy('conversation_id')
+                ->pluck('aggregate', 'conversation_id')
+                ->toArray();
+
+            // 3. Batch fetch latest messages using max id
+            $maxMsgIds = \Illuminate\Support\Facades\DB::table('chat_messages')
+                ->select(\Illuminate\Support\Facades\DB::raw('MAX(id) as max_id'))
+                ->whereIn('conversation_id', $convIds)
+                ->groupBy('conversation_id')
+                ->pluck('max_id')
+                ->filter()
+                ->toArray();
+
+            $latestMessages = [];
+            if (!empty($maxMsgIds)) {
+                $latestMsgs = \Illuminate\Support\Facades\DB::table('chat_messages')
+                    ->whereIn('id', $maxMsgIds)
+                    ->get();
+                foreach ($latestMsgs as $lm) {
+                    $latestMessages[$lm->conversation_id] = $lm;
+                }
+            }
+
+            $requestsCount = 0;
             $conversations = [];
             foreach ($rawConversations as $conv) {
                 $recipientId = ($conv->user_one_id == $userId) ? (int)$conv->user_two_id : (int)$conv->user_one_id;
-                $recipientInfo = $this->getChatUserInfo($recipientId);
+                $recipientInfo = $usersMap[$recipientId] ?? null;
                 if (!$recipientInfo) continue;
 
-                $latestMsg = \Illuminate\Support\Facades\DB::table('chat_messages')
-                    ->where('conversation_id', $conv->id)
-                    ->orderByDesc('id')
-                    ->first();
+                $latestMsg = $latestMessages[$conv->id] ?? null;
+                $unreadCount = $unreadCounts[$conv->id] ?? 0;
 
-                $unreadCount = \Illuminate\Support\Facades\DB::table('chat_messages')
-                    ->where('conversation_id', $conv->id)
-                    ->where('sender_id', '!=', $userId)
-                    ->where('is_read', 0)
-                    ->count();
+                $isIncomingRequest = (($conv->status ?? 'accepted') === 'pending' && (int)($conv->requested_by ?? 0) !== $userId);
+                if ($isIncomingRequest) {
+                    $requestsCount++;
+                }
 
                 $conversations[] = [
                     'id' => (int) $conv->id,
@@ -458,14 +460,18 @@ class MessageController extends Controller
                 ];
             }
 
-            return response()->json(['success' => true, 'data' => $conversations]);
+            return response()->json([
+                'success' => true,
+                'data' => $conversations,
+                'requests_count' => $requestsCount
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
         }
     }
 
     /**
-     * API: Get messages for a specific conversation.
+     * API: Get messages for a specific conversation (Ultra-fast & indexed).
      */
     public function apiGetMessages(Request $request)
     {
@@ -478,8 +484,6 @@ class MessageController extends Controller
         if ($conversationId <= 0) {
             return response()->json(['success' => false, 'error' => 'Valid conversation_id is required.'], 400);
         }
-
-        $this->ensureChatSchema();
 
         try {
             $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
@@ -495,17 +499,21 @@ class MessageController extends Controller
 
             $recipientId = ($conv->user_one_id == $userId) ? (int)$conv->user_two_id : (int)$conv->user_one_id;
 
-            // Mark incoming messages as read
+            // Mark incoming messages as read only if unread exist
             \Illuminate\Support\Facades\DB::table('chat_messages')
                 ->where('conversation_id', $conversationId)
                 ->where('sender_id', '!=', $userId)
                 ->where('is_read', 0)
                 ->update(['is_read' => 1]);
 
+            // Fetch last 100 messages
             $rawMessages = \Illuminate\Support\Facades\DB::table('chat_messages')
                 ->where('conversation_id', $conversationId)
-                ->orderBy('id', 'asc')
-                ->get();
+                ->orderBy('id', 'desc')
+                ->limit(100)
+                ->get()
+                ->reverse()
+                ->values();
 
             $formatted = [];
             foreach ($rawMessages as $m) {
@@ -570,8 +578,6 @@ class MessageController extends Controller
         if ($conversationId <= 0 || $cleanBody === '') {
             return response()->json(['success' => false, 'error' => 'Invalid conversation or message body.'], 400);
         }
-
-        $this->ensureChatSchema();
 
         try {
             $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')

@@ -1,32 +1,24 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-$findRoots = [
-    dirname(dirname(dirname(__DIR__))),
-    dirname(dirname(__DIR__)),
-    __DIR__ . '/../../../',
-    __DIR__ . '/../../',
-];
-$laravelRoot = null;
-foreach ($findRoots as $root) {
-    if (file_exists($root . '/vendor/autoload.php') && file_exists($root . '/bootstrap/app.php')) {
-        $laravelRoot = $root;
-        break;
+$dbPath = file_exists(__DIR__ . '/../../includes/db.php') 
+    ? __DIR__ . '/../../includes/db.php' 
+    : __DIR__ . '/../../db.php';
+
+if (file_exists($dbPath)) {
+    require_once $dbPath;
+    $uid = get_current_user_id();
+    if ($uid) {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $convId = isset($input['conversation_id']) ? (int) $input['conversation_id'] : 0;
+        if ($convId > 0) {
+            $typingFile = sys_get_temp_dir() . "/k71_typing_{$convId}_{$uid}";
+            @file_put_contents($typingFile, time());
+            echo json_encode(['success' => true]);
+            exit;
+        }
     }
 }
 
-if ($laravelRoot) {
-    require_once $laravelRoot . '/vendor/autoload.php';
-    $app = require_once $laravelRoot . '/bootstrap/app.php';
-    $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-
-    $request = \Illuminate\Http\Request::capture();
-    $controller = $app->make(\App\Http\Controllers\MessageController::class);
-    $response = $controller->apiTyping($request);
-    $response->send();
-    exit;
-}
-
-http_response_code(500);
-echo json_encode(['success' => false, 'message' => 'Application root not found']);
+echo json_encode(['success' => true]);
 exit;

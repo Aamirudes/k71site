@@ -177,21 +177,6 @@ foreach ($staleCacheFiles as $f) {
     }
 }
 
-// Clear compiled views
-$viewCacheFiles = glob($baseDir . '/storage/framework/views/*');
-if ($viewCacheFiles) {
-    foreach ($viewCacheFiles as $vf) {
-        if (is_file($vf)) {
-            @unlink($vf);
-        }
-    }
-}
-
-// Reset OPcache for instantaneous bytecode reload
-if (function_exists('opcache_reset')) {
-    @opcache_reset();
-}
-
 // 2. Ensure root index.php forwards cleanly to public/index.php
 $rootIndex = $baseDir . '/index.php';
 $rootIndexContent = "<?php\n\n/**\n * Laravel - Shared Hosting Gateway\n */\nif (!defined('LARAVEL_START')) {\n    define('LARAVEL_START', microtime(true));\n}\nrequire_once __DIR__ . '/public/index.php';\n";
@@ -433,51 +418,29 @@ try {
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-
-    // Chat Instagram Direct Schema Hardening
-    try {
-        DB::statement("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `last_seen_at` TIMESTAMP NULL AFTER `email_verified_at`");
-    } catch (\Throwable $ue) {
-        try { DB::statement("ALTER TABLE `users` ADD `last_seen_at` TIMESTAMP NULL AFTER `email_verified_at`"); } catch (\Throwable $ue2) {}
-    }
-
-    try {
-        DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN IF NOT EXISTS `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'");
-        DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN IF NOT EXISTS `requested_by` BIGINT UNSIGNED NULL");
-    } catch (\Throwable $ce) {
-        try { DB::statement("ALTER TABLE `chat_conversations` ADD `status` VARCHAR(20) NOT NULL DEFAULT 'accepted'"); } catch (\Throwable $ce2) {}
-        try { DB::statement("ALTER TABLE `chat_conversations` ADD `requested_by` BIGINT UNSIGNED NULL"); } catch (\Throwable $ce3) {}
-    }
-
-    try {
-        DB::statement("ALTER TABLE `chat_messages` ADD COLUMN IF NOT EXISTS `attachment_url` VARCHAR(1000) NULL AFTER `body`");
-        DB::statement("ALTER TABLE `chat_messages` ADD COLUMN IF NOT EXISTS `attachment_type` VARCHAR(50) NULL AFTER `attachment_url`");
-    } catch (\Throwable $me) {
-        try { DB::statement("ALTER TABLE `chat_messages` ADD `attachment_url` VARCHAR(1000) NULL AFTER `body`"); } catch (\Throwable $me2) {}
-        try { DB::statement("ALTER TABLE `chat_messages` ADD `attachment_type` VARCHAR(50) NULL AFTER `attachment_url`"); } catch (\Throwable $me3) {}
-    }
-
-    $chatAttachDir = $baseDir . '/public/storage/chat_attachments';
-    if (!file_exists($chatAttachDir)) {
-        @mkdir($chatAttachDir, 0775, true);
-    }
-
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO & Chat columns verified (truncation-proof, last_seen_at active status, and attachment-enabled).</pre></div>";
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns in categories, products, vendors, and pages expanded to VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
-// 10. Run Migrations, Purge Old Mock Data, Seed Master Production Catalog & Clear Caches
+// 10. Production Safe Deployment Tasks (NEVER resets vendors or database)
 $tasks = [
-    'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
-    'Purge All Stale / Mock Dummy Data' => ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]],
-    'Seed Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]],
-    'Seed Verified Production Platform Catalog (Stores, Dishes, Services, Shorts, RFQ)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'MasterProductionPlatformSeeder', '--force' => true]],
-    'Seed K71 Food Dedicated Platform (8 Restaurants, Cloud Kitchens & Menus)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'FoodPlatformSeeder', '--force' => true]],
-    'Seed K71 Used Dedicated Platform (Cars, Mobiles, Electronics, Furniture, Appliances)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'RealUsedMarketplaceSeeder', '--force' => true]],
-    'Seed K71 Shoppable Video Commerce (12 Verified Shoppable Shorts & Real Catalog Products)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'RealShoppableShortsSeeder', '--force' => true]],
-    'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
+    'Database Migration (Safe schema updates)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
 ];
+
+// Ensure multi-panel navigation items exist if table is fresh
+try {
+    if (Schema::hasTable('navigation_items') && DB::table('navigation_items')->count() === 0) {
+        $tasks['Seed Multi-Panel Navigation Structure'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]];
+    }
+} catch (\Throwable $e) {}
+
+// One-time manual reset trigger: ONLY executed if ?reset_marketplace=yes is explicitly passed in URL
+if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') {
+    $tasks['Purge All Stale / Mock Dummy Data (One-Time Reset)'] = ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]];
+}
+
+$tasks['Clear All Stale Caches'] = ['cmd' => 'optimize:clear', 'args' => []];
 
 foreach ($tasks as $label => $task) {
     echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";

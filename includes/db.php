@@ -247,6 +247,7 @@ function get_chat_user_info(\PDO $pdo, int $userId): ?array
             u.last_name, 
             u.avatar, 
             u.email,
+            u.last_seen_at,
             v.shop_name
         FROM users u
         LEFT JOIN vendors v ON v.user_id = u.id
@@ -269,6 +270,9 @@ function get_chat_user_info(\PDO $pdo, int $userId): ?array
         $displayName = $row['shop_name'] . ' (' . $personName . ')';
     }
 
+    $lastSeenTime = !empty($row['last_seen_at']) ? strtotime($row['last_seen_at']) : 0;
+    $isOnline = ($lastSeenTime > (time() - 180));
+
     return [
         'id' => (int) $row['id'],
         'username' => $row['username'] ?? ('user_' . $row['id']),
@@ -276,7 +280,35 @@ function get_chat_user_info(\PDO $pdo, int $userId): ?array
         'shop_name' => $row['shop_name'] ?? null,
         'profile_pic' => format_user_avatar($row['avatar'] ?? null, $displayName),
         'email' => $row['email'] ?? '',
+        'is_online' => $isOnline,
+        'last_seen_at' => $row['last_seen_at'] ?? null,
+        'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . format_chat_time_ago(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : ''),
     ];
+}
+}
+
+if (!function_exists('get_or_create_conversation')) {
+function get_or_create_conversation(\PDO $pdo, int $userOneId, int $userTwoId): int
+{
+    $stmt = $pdo->prepare("
+        SELECT id FROM chat_conversations 
+        WHERE (user_one_id = ? AND user_two_id = ?) 
+           OR (user_one_id = ? AND user_two_id = ?) 
+        LIMIT 1
+    ");
+    $stmt->execute([$userOneId, $userTwoId, $userTwoId, $userOneId]);
+    $existingId = $stmt->fetchColumn();
+    if ($existingId) {
+        return (int) $existingId;
+    }
+
+    $now = date('Y-m-d H:i:s');
+    $insertStmt = $pdo->prepare("
+        INSERT INTO chat_conversations (user_one_id, user_two_id, status, requested_by, last_message_at) 
+        VALUES (?, ?, 'accepted', NULL, ?)
+    ");
+    $insertStmt->execute([$userOneId, $userTwoId, $now]);
+    return (int) $pdo->lastInsertId();
 }
 }
 

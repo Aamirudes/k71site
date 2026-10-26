@@ -1771,6 +1771,7 @@
         let activeConversationStatus = 'accepted';
         let conversationsCache = [];
         let messagesCache = [];
+        let threadMemoryCache = {};
         let isPollingActive = true;
         let searchDebounceTimer = null;
         let messagePollTimer = null;
@@ -1972,10 +1973,22 @@
             adjustMobileLayout();
             renderConversations(filterInput.value.trim());
 
-            chatFeed.innerHTML = `
-                <div style="padding: 40px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
-                    Loading messages...
-                </div>`;
+            // Instant thread restore from in-memory cache
+            if (threadMemoryCache[convId] && threadMemoryCache[convId].messages && threadMemoryCache[convId].recipient) {
+                const cached = threadMemoryCache[convId];
+                messagesCache = cached.messages;
+                headerAvatar.src = cached.recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                headerAvatar.alt = cached.recipient.name || 'User';
+                headerUsername.textContent = '@' + (cached.recipient.username || 'user');
+                renderMessages(messagesCache, cached.recipient);
+                scrollFeedToBottom(false);
+            } else {
+                chatFeed.innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: var(--color-text-muted); font-size: 13px;" class="flex flex-col items-center justify-center gap-2">
+                        <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        <span>Loading messages...</span>
+                    </div>`;
+            }
 
             fetchMessages(true);
         }
@@ -2023,11 +2036,17 @@
                     const newMessages = result.messages || (result.data ? result.data.messages : []);
                     const wasNearBottom = isUserNearBottom();
 
+                    // Update in-memory thread cache
+                    threadMemoryCache[currentConversationId] = {
+                        messages: newMessages,
+                        recipient: recipient
+                    };
+
                     if (JSON.stringify(newMessages) !== JSON.stringify(messagesCache)) {
                         messagesCache = newMessages;
                         renderMessages(newMessages, recipient);
                         if (scrollToBottom || wasNearBottom) {
-                            scrollFeedToBottom();
+                            scrollFeedToBottom(scrollToBottom);
                         }
                     }
 

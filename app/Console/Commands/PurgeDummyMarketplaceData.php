@@ -55,6 +55,18 @@ class PurgeDummyMarketplaceData extends Command
             'products',
             'vendor_settings',
             'vendors',
+            'chat_messages',
+            'chat_conversations',
+            'user_follows',
+            'wishlists',
+            'notifications',
+            'messages',
+            'conversations',
+            'shipments',
+            'settlements',
+            'vendor_payouts',
+            'auctions',
+            'auction_bids',
         ];
 
         foreach ($tablesToWipe as $table) {
@@ -87,6 +99,10 @@ class PurgeDummyMarketplaceData extends Command
             $deletedCount = DB::table('users')
                 ->whereNotIn('id', $adminUserIds)
                 ->delete();
+
+            if (Schema::hasTable('role_user')) {
+                DB::table('role_user')->whereNotIn('user_id', $adminUserIds)->delete();
+            }
 
             $this->info("✓ Removed {$deletedCount} non-admin / test user accounts.");
         }

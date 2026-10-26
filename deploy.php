@@ -423,18 +423,24 @@ try {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
 
-// 10. Run Migrations, Purge Old Mock Data, Seed Master Production Catalog & Clear Caches
+// 10. Production Safe Deployment Tasks (NEVER resets vendors or database)
 $tasks = [
-    'Database Migration (Creates & updates tables)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
-    'Purge All Stale / Mock Dummy Data' => ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]],
-    'Seed Multi-Panel Navigation' => ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]],
-    'Seed Verified Production Platform Catalog (Stores, Dishes, Services, Shorts, RFQ)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'MasterProductionPlatformSeeder', '--force' => true]],
-    'Seed K71 Food Dedicated Platform (8 Restaurants, Cloud Kitchens & Menus)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'FoodPlatformSeeder', '--force' => true]],
-    'Seed K71 Used Dedicated Platform (Cars, Mobiles, Electronics, Furniture, Appliances)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'RealUsedMarketplaceSeeder', '--force' => true]],
-    'Seed K71 Shoppable Video Commerce (12 Verified Shoppable Shorts & Real Catalog Products)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'RealShoppableShortsSeeder', '--force' => true]],
-    'Seed K71 Freelance & Professional Services Marketplace (Categories, Verified Pros, 3-Tier Gigs)' => ['cmd' => 'db:seed', 'args' => ['--class' => 'FreelanceMarketplaceSeeder', '--force' => true]],
-    'Clear All Stale Caches' => ['cmd' => 'optimize:clear', 'args' => []],
+    'Database Migration (Safe schema updates)' => ['cmd' => 'migrate', 'args' => ['--force' => true]],
 ];
+
+// Ensure multi-panel navigation items exist if table is fresh
+try {
+    if (Schema::hasTable('navigation_items') && DB::table('navigation_items')->count() === 0) {
+        $tasks['Seed Multi-Panel Navigation Structure'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]];
+    }
+} catch (\Throwable $e) {}
+
+// One-time manual reset trigger: ONLY executed if ?reset_marketplace=yes is explicitly passed in URL
+if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') {
+    $tasks['Purge All Stale / Mock Dummy Data (One-Time Reset)'] = ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]];
+}
+
+$tasks['Clear All Stale Caches'] = ['cmd' => 'optimize:clear', 'args' => []];
 
 foreach ($tasks as $label => $task) {
     echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";
