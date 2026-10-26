@@ -383,6 +383,9 @@
                             <h3 class="text-sm sm:text-base font-extrabold text-slate-950 dark:text-white mt-0.5 group-hover:text-black">Flat 50-80% OFF</h3>
                             <p class="text-[11px] text-slate-500 dark:text-zinc-400 mt-1 line-clamp-1">Verified factory clearance stock</p>
                         </a>
+                    </div>
+                </div>
+            </section>
 
             <!-- ==========================================
                  3. LATEST PRODUCTS (20 ITEMS WITH LOAD MORE)
@@ -720,7 +723,7 @@
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-3 shrink-0 w-full md:w-auto">
+                    <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
                         <a href="{{ route('vendor.register') }}" 
                            class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95">
                             Open Your Store &rarr;
