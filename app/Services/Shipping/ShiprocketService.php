@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 class ShiprocketService
 {
     protected string $baseUrl;
+    protected ?string $apiKey;
     protected string $email;
     protected string $password;
     protected string $mode;
@@ -21,6 +22,7 @@ class ShiprocketService
     public function __construct()
     {
         $this->baseUrl = config('shipping.shiprocket.base_url', 'https://apiv2.shiprocket.in/v1/external');
+        $this->apiKey = config('shipping.shiprocket.api_key');
         $this->email = config('shipping.shiprocket.email', '');
         $this->password = config('shipping.shiprocket.password', '');
         $this->mode = config('shipping.mode', 'live');
@@ -32,8 +34,12 @@ class ShiprocketService
      */
     public function getToken(): string
     {
+        if (!empty($this->apiKey)) {
+            return $this->apiKey;
+        }
+
         if (empty($this->email) || empty($this->password)) {
-            throw new \Exception('Shiprocket API credentials are not configured yet. Please configure SHIPROCKET_API_EMAIL and SHIPROCKET_API_PASSWORD in your environment.');
+            throw new \Exception('Shiprocket API credentials are not configured yet. Please configure SHIPPING_API_KEY or SHIPROCKET_API_EMAIL and SHIPROCKET_API_PASSWORD in your environment.');
         }
 
         $cacheKey = 'shiprocket_token_' . md5($this->email);

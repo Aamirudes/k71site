@@ -53,18 +53,42 @@
         $isMarble = str_contains($catSlug, 'marble') || str_contains($catName, 'marble') || str_contains($titleLower, 'marble') || str_contains($catSlug, 'granite') || str_contains($titleLower, 'granite') || str_contains($catSlug, 'stone') || str_contains($titleLower, 'slab') || str_contains($titleLower, 'tiles');
         $isMachinery = str_contains($catSlug, 'machin') || str_contains($catName, 'machin') || str_contains($titleLower, 'machin') || str_contains($titleLower, 'equipment') || str_contains($catSlug, 'industrial') || str_contains($titleLower, 'cnc') || str_contains($titleLower, 'lathe');
         $isEnquiryBased = $product->isEnquiry() || $isMarble || $isMachinery || ($product->vertical_type === 'b2b_machinery');
+
+        $formatSizeLabel = function($val, $sku = '') {
+            $raw = trim((string)($val ?: $sku));
+            if (empty($raw) || strcasecmp($raw, 'Default') === 0) return 'Standard';
+            if (str_contains($raw, '-')) {
+                $parts = explode('-', $raw);
+                $last = trim(end($parts));
+                if (!empty($last)) {
+                    $count = count($parts);
+                    if ($count >= 2 && strcasecmp($parts[$count - 2], 'UK') === 0) {
+                        return 'UK ' . strtoupper($last);
+                    }
+                    if (preg_match('/^UK\s*([0-9]+)$/i', $last, $m)) {
+                        return 'UK ' . $m[1];
+                    }
+                    return strtoupper($last);
+                }
+            }
+            if (preg_match('/^UK\s*([0-9]+)$/i', $raw, $m)) {
+                return 'UK ' . $m[1];
+            }
+            return strtoupper($raw);
+        };
     @endphp
 
     <!-- Universal Blueprint Variants JSON Repository -->
     <script type="application/json" id="product-variants-data">
-        {!! json_encode($product->variants->map(function($v) use ($product) { 
+        {!! json_encode($product->variants->map(function($v) use ($product, $formatSizeLabel) { 
+            $rawSize = $v->attributes_hash['size'] ?? ($v->size ?? $v->sku);
             return [
                 'id' => $v->id, 
                 'sku' => $v->sku ?: 'Default',
                 'name' => $v->sku ?: 'Default',
                 'color' => $v->attributes_hash['color'] ?? ($v->color ?? ''),
                 'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
-                'size' => $v->attributes_hash['size'] ?? ($v->size ?? $v->sku),
+                'size' => $formatSizeLabel($rawSize, $v->sku),
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
                 'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
                 'image_url' => $v->image_url,
@@ -164,14 +188,15 @@
                 this.enquiryError = 'Unable to send enquiry. Please contact seller directly on WhatsApp.';
             });
         },
-        variants: {{ $product->variants->map(function($v) use ($product) { 
+        variants: {{ $product->variants->map(function($v) use ($product, $formatSizeLabel) { 
+            $rawSize = $v->attributes_hash['size'] ?? ($v->size ?? $v->sku);
             return [
                 'id' => $v->id, 
                 'sku' => $v->sku ?: 'Default',
                 'name' => $v->sku ?: 'Default',
                 'color' => $v->attributes_hash['color'] ?? ($v->color ?? ''),
                 'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
-                'size' => $v->attributes_hash['size'] ?? ($v->size ?? $v->sku),
+                'size' => $formatSizeLabel($rawSize, $v->sku),
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
                 'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
                 'image_url' => $v->image_url,

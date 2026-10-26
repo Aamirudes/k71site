@@ -169,6 +169,8 @@ Route::middleware('web')->group(function () {
     Route::post('/api/chat/unsend_message.php', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage']);
     Route::post('/api/chat/delete_conversation.php', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation']);
     Route::post('/api/chat/upload_photo.php', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto']);
+    Route::post('/api/chat/upload_voice.php', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice']);
+    Route::post('/chat/api/upload-voice', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice'])->name('chat.api.upload_voice');
 
     Route::get('/chat/api/conversations', [\App\Http\Controllers\MessageController::class, 'apiGetConversations'])->name('chat.api.conversations');
     Route::get('/chat/api/messages', [\App\Http\Controllers\MessageController::class, 'apiGetMessages'])->name('chat.api.messages');

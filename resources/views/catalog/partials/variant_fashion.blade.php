@@ -82,7 +82,7 @@
                                 ? 'opacity-40 cursor-not-allowed border-dashed border-stone-200 bg-stone-100 text-stone-400 line-through' 
                                 : 'border-stone-200 bg-white hover:border-stone-900 text-stone-800')"
                         class="min-w-[54px] px-3.5 py-2 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer relative">
-                    <span x-text="v.size || v.sku"></span>
+                    <span x-text="formatSizeLabel(v.size || v.sku)"></span>
                     <template x-if="v.stock > 0 && v.stock <= 3">
                         <span class="block text-[8px] font-black uppercase text-amber-500 leading-none mt-0.5" x-text="`${v.stock} left`"></span>
                     </template>
@@ -94,12 +94,12 @@
         </div>
     </div>
 
-    <!-- 3. Dynamic Price & SKU Feedback Strip -->
+    <!-- 3. Dynamic Price & Size Feedback Strip -->
     <template x-if="activeVariant">
         <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 border border-stone-200/60 text-xs">
-            <div class="flex items-center gap-1.5 font-mono text-[11px] text-stone-500">
-                <span>SKU:</span>
-                <span class="font-bold text-stone-800" x-text="activeVariant.sku"></span>
+            <div class="flex items-center gap-2 text-[11px] text-stone-500">
+                <span class="font-medium">Selected Size:</span>
+                <span class="font-extrabold text-stone-900 px-2 py-0.5 rounded-md bg-white border border-stone-200 shadow-2xs" x-text="formatSizeLabel(activeVariant.size || activeVariant.sku)"></span>
             </div>
             <div class="flex items-center gap-1.5 font-semibold text-emerald-700">
                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -174,6 +174,27 @@
                 if (v.image_url) {
                     window.dispatchEvent(new CustomEvent('swap-product-image', { detail: { url: v.image_url } }));
                 }
+            },
+
+            formatSizeLabel(val) {
+                if (!val) return 'Standard';
+                let s = String(val).trim();
+                if (s.toLowerCase() === 'default') return 'Standard';
+                if (s.includes('-')) {
+                    const parts = s.split('-');
+                    const last = parts[parts.length - 1].trim();
+                    if (parts.length >= 2 && parts[parts.length - 2].trim().toUpperCase() === 'UK') {
+                        return 'UK ' + last.toUpperCase();
+                    }
+                    if (/^UK\s*[0-9]+/i.test(last)) {
+                        return last.toUpperCase().replace(/^UK\s*/i, 'UK ');
+                    }
+                    if (last.length > 0) return last.toUpperCase();
+                }
+                if (/^UK\s*[0-9]+/i.test(s)) {
+                    return s.toUpperCase().replace(/^UK\s*/i, 'UK ');
+                }
+                return s.toUpperCase();
             },
 
             isColorDark(hex) {

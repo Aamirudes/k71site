@@ -336,7 +336,14 @@ class MessageController extends Controller
      */
     private function ensureChatSchema(): void
     {
-        // Tables are verified through migrations; no-op during runtime requests
+        if (!\Illuminate\Support\Facades\Schema::hasColumn('chat_messages', 'attachment_url')) {
+            try {
+                \Illuminate\Support\Facades\Schema::table('chat_messages', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->string('attachment_url')->nullable();
+                    $table->string('attachment_type')->nullable();
+                });
+            } catch (\Throwable $e) {}
+        }
     }
 
     /**
@@ -824,7 +831,7 @@ class MessageController extends Controller
 
         $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
         if ($conversationId > 0) {
-            \Illuminate\Support\Facades\Cache::put("chat_typing_{$conversationId}_{$userId}", time(), 4);
+            \Illuminate\Support\Facades\Cache::put("chat_typing_{$conversationId}_{$userId}", time(), now()->addSeconds(8));
         }
 
         return response()->json(['success' => true]);
@@ -990,6 +997,103 @@ class MessageController extends Controller
             'body' => $body,
             'attachment_url' => $attachmentUrl,
             'attachment_type' => 'image',
+            'sender_id' => $userId,
+            'is_mine' => true,
+            'is_read' => false,
+            'created_at' => $now,
+            'time_formatted' => date('g:i A', strtotime($now))
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $msgPayload,
+            'message' => $msgPayload,
+            'conversation_status' => 'accepted'
+        ]);
+    }
+
+    /**
+     * API: Upload Voice Note / Audio Message (Instagram-style hold-to-speak).
+     */
+    public function apiUploadVoice(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in.'], 401);
+        }
+
+        $conversationId = (int) $request->input('conversation_id');
+        if ($conversationId <= 0) {
+            return response()->json(['success' => false, 'error' => 'Invalid conversation.'], 400);
+        }
+
+        $this->ensureChatSchema();
+
+        $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->where(function($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if (!$request->hasFile('audio') && !$request->hasFile('voice')) {
+            return response()->json(['success' => false, 'error' => 'No voice recording received.'], 400);
+        }
+
+        $file = $request->file('audio') ?: $request->file('voice');
+        if (!$file->isValid()) {
+            return response()->json(['success' => false, 'error' => 'Uploaded audio is invalid.'], 400);
+        }
+
+        if ($file->getSize() > 25 * 1024 * 1024) {
+            return response()->json(['success' => false, 'error' => 'Audio file exceeds limit of 25MB.'], 400);
+        }
+
+        $ext = $file->getClientOriginalExtension() ?: 'webm';
+        if (!in_array(strtolower($ext), ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'aac', 'mp4'])) {
+            $ext = 'webm';
+        }
+        $fileName = 'voice_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
+
+        $targetDir = public_path('storage/chat_voice');
+        if (!file_exists($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        $file->move($targetDir, $fileName);
+        $attachmentUrl = asset('storage/chat_voice/' . $fileName);
+
+        $duration = (int) $request->input('duration', 0);
+        $durationFormatted = $duration > 0 ? sprintf('%d:%02d', floor($duration / 60), $duration % 60) : '0:05';
+        $body = '🎤 Voice message (' . $durationFormatted . ')';
+        $now = now()->toDateTimeString();
+
+        $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $conversationId,
+            'sender_id' => $userId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'voice',
+            'is_read' => 0,
+            'created_at' => $now,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+
+        \Illuminate\Support\Facades\Cache::forget("chat_typing_{$conversationId}_{$userId}");
+
+        $msgPayload = [
+            'id' => (int) $messageId,
+            'conversation_id' => $conversationId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'voice',
             'sender_id' => $userId,
             'is_mine' => true,
             'is_read' => false,

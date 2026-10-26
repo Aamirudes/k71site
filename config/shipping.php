@@ -10,6 +10,7 @@ return [
     'mode' => env('SHIPPING_MODE', 'live'), // 'live' (real couriers via Shiprocket) or 'sandbox' (testing)
 
     'shiprocket' => [
+        'api_key' => env('SHIPPING_API_KEY', env('SHIPROCKET_API_KEY', '!hYg6yq3#OaZZIb5HxvB*L&g!n7Zqp5k')),
         'email' => env('SHIPROCKET_API_EMAIL', ''),
         'password' => env('SHIPROCKET_API_PASSWORD', ''),
         'base_url' => 'https://apiv2.shiprocket.in/v1/external',

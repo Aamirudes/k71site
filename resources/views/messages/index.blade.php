@@ -1146,7 +1146,7 @@
         .glass-typing-bubble {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             padding: 10px 16px;
             background: var(--color-bubble-received);
             border: 1px solid var(--glass-border);
@@ -1154,23 +1154,235 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
         .typing-dot {
-            width: 6.5px;
-            height: 6.5px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: #8e8e93;
             display: inline-block;
-            animation: igTypingBounce 1.4s infinite ease-in-out both;
+            animation: igTypingBounce 1.2s infinite ease-in-out both;
+        }
+        .dark .typing-dot {
+            background: #94a3b8;
         }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         .typing-dot:nth-child(3) { animation-delay: 0s; }
         @keyframes igTypingBounce {
-            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-            40% { transform: translateY(-5px); opacity: 1; background: #0600c2; }
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+            40% { transform: translateY(-6px); opacity: 1; background: #0095f6; }
         }
-        .dark @keyframes igTypingBounce {
-            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-            40% { transform: translateY(-5px); opacity: 1; background: #38BDF8; }
+
+        /* Instagram Voice Message Elements */
+        .glass-composer-voice-btn {
+            background: transparent;
+            border: none;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .glass-composer-voice-btn:hover {
+            color: #0095f6;
+            background: rgba(0, 149, 246, 0.08);
+            transform: scale(1.08);
+        }
+        .glass-composer-voice-btn.recording {
+            color: #ef4444 !important;
+            background: rgba(239, 68, 68, 0.15) !important;
+            animation: pulseRecord 1s infinite alternate;
+            transform: scale(1.18);
+        }
+        @keyframes pulseRecord {
+            from { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            to { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        .glass-voice-recording-overlay {
+            position: absolute;
+            left: 8px;
+            right: 48px;
+            top: 0;
+            bottom: 0;
+            background: var(--color-panel-bg);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 14px;
+            z-index: 10;
+        }
+        .glass-voice-recording-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulseDot 1s infinite;
+            flex-shrink: 0;
+        }
+        .glass-voice-timer {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ef4444;
+            font-variant-numeric: tabular-nums;
+            min-width: 32px;
+        }
+        .glass-voice-waveform {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            flex: 1;
+            height: 22px;
+        }
+        .glass-voice-waveform span {
+            width: 3px;
+            background: #ef4444;
+            border-radius: 2px;
+            animation: waveBounce 0.8s ease-in-out infinite alternate;
+        }
+        .glass-voice-waveform span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+        .glass-voice-waveform span:nth-child(2) { height: 16px; animation-delay: 0.3s; }
+        .glass-voice-waveform span:nth-child(3) { height: 22px; animation-delay: 0.2s; }
+        .glass-voice-waveform span:nth-child(4) { height: 10px; animation-delay: 0.4s; }
+        .glass-voice-waveform span:nth-child(5) { height: 18px; animation-delay: 0.15s; }
+        .glass-voice-waveform span:nth-child(6) { height: 14px; animation-delay: 0.35s; }
+        .glass-voice-waveform span:nth-child(7) { height: 20px; animation-delay: 0.25s; }
+        .glass-voice-waveform span:nth-child(8) { height: 8px; animation-delay: 0.45s; }
+        @keyframes waveBounce {
+            0% { transform: scaleY(0.3); }
+            100% { transform: scaleY(1); }
+        }
+        .glass-voice-hint {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+        .glass-voice-cancel-btn {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass-voice-cancel-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Voice Player Message Bubble */
+        .glass-voice-player {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 22px;
+            min-width: 220px;
+            max-width: 320px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            user-select: none;
+        }
+        .glass-voice-player.sent {
+            background: linear-gradient(135deg, #0095f6 0%, #0077e6 100%);
+            color: #ffffff;
+            border-bottom-right-radius: 6px;
+        }
+        .glass-voice-player.received {
+            background: var(--color-bubble-received);
+            color: var(--color-text-main);
+            border: 1px solid var(--glass-border);
+            border-bottom-left-radius: 6px;
+        }
+        .glass-voice-play-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .glass-voice-player.sent .glass-voice-play-btn {
+            background: #ffffff;
+            color: #0095f6;
+        }
+        .glass-voice-player.received .glass-voice-play-btn {
+            background: #0095f6;
+            color: #ffffff;
+        }
+        .glass-voice-play-btn:hover {
+            transform: scale(1.08);
+        }
+        .glass-voice-play-btn:active {
+            transform: scale(0.95);
+        }
+        .glass-voice-wave-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .glass-voice-bars {
+            display: flex;
+            align-items: center;
+            gap: 2.5px;
+            height: 18px;
+        }
+        .glass-voice-bars span {
+            width: 2.5px;
+            border-radius: 2px;
+            transition: height 0.15s ease;
+        }
+        .glass-voice-player.sent .glass-voice-bars span {
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .glass-voice-player.received .glass-voice-bars span {
+            background: var(--color-text-muted);
+        }
+        .glass-voice-progress-track {
+            width: 100%;
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .glass-voice-player.sent .glass-voice-progress-track {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .glass-voice-progress-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+        .glass-voice-player.sent .glass-voice-progress-fill {
+            background: #ffffff;
+        }
+        .glass-voice-player.received .glass-voice-progress-fill {
+            background: #0095f6;
+        }
+        .glass-voice-duration {
+            font-size: 11.5px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+        .glass-voice-player.sent .glass-voice-duration {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .glass-voice-player.received .glass-voice-duration {
+            color: var(--color-text-muted);
         }
 
         /* Chat Photo / Image Bubble */
@@ -1695,11 +1907,36 @@
                                 📷
                             </button>
                             <input type="file" id="glassPhotoInput" accept="image/*" style="display: none;">
+                            
                             <textarea id="glassMessageInput" 
                                       class="glass-composer-textarea" 
                                       rows="1" 
                                       placeholder="Message..." 
                                       autocomplete="off"></textarea>
+
+                            <!-- Voice Recording Active Overlay -->
+                            <div class="glass-voice-recording-overlay" id="glassVoiceOverlay" style="display: none;">
+                                <div class="glass-voice-recording-dot"></div>
+                                <span class="glass-voice-timer" id="glassVoiceTimer">0:00</span>
+                                <div class="glass-voice-waveform">
+                                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                                <span class="glass-voice-hint">Release to send • Click ✕ to cancel</span>
+                                <button type="button" class="glass-voice-cancel-btn" id="glassVoiceCancelBtn" title="Cancel recording">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- Voice Note Mic Button (Hold to speak, release to send) -->
+                            <button type="button" class="glass-composer-voice-btn" id="glassVoiceBtn" title="Hold to record voice message (Instagram style)">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 01-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </button>
+
                             <button type="button" class="glass-composer-send-btn" id="glassSendBtn">
                                 Send
                             </button>
@@ -2055,11 +2292,12 @@
                     const existingTyping = document.getElementById('glassTypingRow');
                     if (isTyping) {
                         if (!existingTyping) {
+                            const recipientAvatar = recipient.profile_pic || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(recipient.name || 'User') + '&background=0095F6&color=fff');
                             const typingEl = document.createElement('div');
                             typingEl.id = 'glassTypingRow';
                             typingEl.className = 'glass-typing-row';
                             typingEl.innerHTML = `
-                                <img src="${escapeHtml(recipient.profile_pic)}" class="glass-msg-avatar" alt="">
+                                <img src="${escapeHtml(recipientAvatar)}" class="glass-msg-avatar" alt="">
                                 <div class="glass-typing-bubble">
                                     <span class="typing-dot"></span>
                                     <span class="typing-dot"></span>
@@ -2086,14 +2324,18 @@
         }
 
         function renderMessages(messages, recipient) {
+            const recipientAvatar = (recipient && recipient.profile_pic) 
+                ? recipient.profile_pic 
+                : ('https://ui-avatars.com/api/?name=' + encodeURIComponent((recipient && recipient.name) ? recipient.name : 'User') + '&background=0095F6&color=fff');
+
             if (messages.length === 0) {
                 chatFeed.innerHTML = `
                     <div style="padding: 60px 20px; text-align: center; color: var(--color-text-muted);">
                         <div style="width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; overflow: hidden; border: 1.5px solid var(--glass-border);">
-                            <img src="${escapeHtml(recipient.profile_pic)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="${escapeHtml(recipientAvatar)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                         </div>
-                        <h3 style="margin: 0; font-size: 16px; color: var(--color-text-main); font-weight: 800;">&#64;${escapeHtml(recipient.username)}</h3>
-                        <p style="margin: 4px 0 16px; font-size: 12.5px;">${escapeHtml(recipient.name)} • Direct Messages</p>
+                        <h3 style="margin: 0; font-size: 16px; color: var(--color-text-main); font-weight: 800;">&#64;${escapeHtml((recipient && recipient.username) ? recipient.username : 'user')}</h3>
+                        <p style="margin: 4px 0 16px; font-size: 12.5px;">${escapeHtml((recipient && recipient.name) ? recipient.name : 'User')} • Direct Messages</p>
                         <p style="font-size: 13px; color: var(--color-text-muted);">Say hello to start the conversation!</p>
                     </div>`;
                 return;
@@ -2109,8 +2351,45 @@
                 }
 
                 const isSent = msg.is_mine;
+                const isVoice = (msg.attachment_type === 'voice') || (msg.attachment_url && (msg.attachment_url.includes('/chat_voice/') || /\.(webm|ogg|wav|mp3|m4a|aac)$/i.test(msg.attachment_url)));
                 let attachmentHtml = '';
-                if (msg.attachment_url) {
+
+                if (isVoice) {
+                    let durationLabel = '0:05';
+                    if (msg.body && msg.body.includes(':')) {
+                        const match = msg.body.match(/\((\d+:\d+)\)/);
+                        if (match) durationLabel = match[1];
+                    }
+                    attachmentHtml = `
+                        <div class="glass-voice-player ${isSent ? 'sent' : 'received'}" data-audio-url="${escapeHtml(msg.attachment_url)}">
+                            <button type="button" class="glass-voice-play-btn" title="Play Voice Message" aria-label="Play Voice Message">
+                                <svg class="play-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                                <svg class="pause-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                            </button>
+                            <div class="glass-voice-wave-container">
+                                <div class="glass-voice-bars">
+                                    <span style="height: 6px;"></span>
+                                    <span style="height: 14px;"></span>
+                                    <span style="height: 18px;"></span>
+                                    <span style="height: 10px;"></span>
+                                    <span style="height: 16px;"></span>
+                                    <span style="height: 12px;"></span>
+                                    <span style="height: 20px;"></span>
+                                    <span style="height: 8px;"></span>
+                                    <span style="height: 15px;"></span>
+                                    <span style="height: 11px;"></span>
+                                    <span style="height: 17px;"></span>
+                                    <span style="height: 7px;"></span>
+                                </div>
+                                <div class="glass-voice-progress-track">
+                                    <div class="glass-voice-progress-fill" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <span class="glass-voice-duration">${escapeHtml(durationLabel)}</span>
+                            <audio preload="metadata" src="${escapeHtml(msg.attachment_url)}"></audio>
+                        </div>
+                    `;
+                } else if (msg.attachment_url) {
                     attachmentHtml = `
                         <div class="glass-msg-image-wrap" data-img-url="${escapeHtml(msg.attachment_url)}">
                             <img src="${escapeHtml(msg.attachment_url)}" alt="Photo" loading="lazy">
@@ -2118,9 +2397,17 @@
                     `;
                 }
 
-                const bodyHtml = (msg.body && msg.body !== '📷 Photo')
-                    ? `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`
-                    : (attachmentHtml ? '' : `<div class="glass-msg-bubble">📷 Photo</div>`);
+                let bodyHtml = '';
+                if (isVoice) {
+                    // Do not show duplicated text bubble if body is voice note indicator
+                    if (msg.body && !msg.body.startsWith('🎤 Voice message') && !msg.body.startsWith('🎤 Voice note')) {
+                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                    }
+                } else if (msg.body && msg.body !== '📷 Photo') {
+                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                } else if (!attachmentHtml) {
+                    bodyHtml = `<div class="glass-msg-bubble">📷 Photo</div>`;
+                }
 
                 const unsendBtnHtml = (isSent && !msg.is_optimistic)
                     ? `<button type="button" class="glass-msg-unsend-btn" data-msg-id="${msg.id}" title="Unsend message">&times;</button>`
@@ -2128,7 +2415,7 @@
 
                 html += `
                     <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}" data-is-mine="${isSent ? '1' : '0'}">
-                        ${!isSent ? `<img src="${escapeHtml(recipient.profile_pic)}" alt="" class="glass-msg-avatar">` : `<img src="${escapeHtml(myCurrentAvatarUrl)}" alt="" class="glass-msg-avatar my-user-avatar">`}
+                        ${!isSent ? `<img src="${escapeHtml(recipientAvatar)}" alt="" class="glass-msg-avatar">` : `<img src="${escapeHtml(myCurrentAvatarUrl)}" alt="" class="glass-msg-avatar my-user-avatar">`}
                         <div>
                             ${attachmentHtml}
                             ${bodyHtml}
@@ -2147,6 +2434,86 @@
                     const url = wrap.getAttribute('data-img-url');
                     if (url) window.openLightbox(url);
                 });
+            });
+
+            // Bind Voice Player audio playback controls
+            chatFeed.querySelectorAll('.glass-voice-player').forEach(player => {
+                const audio = player.querySelector('audio');
+                const playBtn = player.querySelector('.glass-voice-play-btn');
+                const playIcon = playBtn ? playBtn.querySelector('.play-icon') : null;
+                const pauseIcon = playBtn ? playBtn.querySelector('.pause-icon') : null;
+                const progressFill = player.querySelector('.glass-voice-progress-fill');
+                const durationSpan = player.querySelector('.glass-voice-duration');
+                const originalDurationText = durationSpan ? durationSpan.textContent : '0:00';
+
+                if (!audio || !playBtn) return;
+
+                audio.addEventListener('loadedmetadata', () => {
+                    if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+                        const m = Math.floor(audio.duration / 60);
+                        const s = Math.floor(audio.duration % 60);
+                        if (durationSpan && (originalDurationText === '0:00' || originalDurationText === '0:05')) {
+                            durationSpan.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                        }
+                    }
+                });
+
+                audio.addEventListener('timeupdate', () => {
+                    if (!audio.duration) return;
+                    const pct = (audio.currentTime / audio.duration) * 100;
+                    if (progressFill) progressFill.style.width = `${pct}%`;
+                    const rem = Math.max(0, audio.duration - audio.currentTime);
+                    const m = Math.floor(rem / 60);
+                    const s = Math.floor(rem % 60);
+                    if (durationSpan) {
+                        durationSpan.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                    }
+                });
+
+                audio.addEventListener('ended', () => {
+                    if (playIcon) playIcon.style.display = 'block';
+                    if (pauseIcon) pauseIcon.style.display = 'none';
+                    if (progressFill) progressFill.style.width = '0%';
+                    if (durationSpan) durationSpan.textContent = originalDurationText;
+                });
+
+                audio.addEventListener('pause', () => {
+                    if (playIcon) playIcon.style.display = 'block';
+                    if (pauseIcon) pauseIcon.style.display = 'none';
+                });
+
+                audio.addEventListener('play', () => {
+                    // Pause all other voice players
+                    document.querySelectorAll('.glass-voice-player audio').forEach(otherAudio => {
+                        if (otherAudio !== audio && !otherAudio.paused) {
+                            otherAudio.pause();
+                            otherAudio.currentTime = 0;
+                        }
+                    });
+                    if (playIcon) playIcon.style.display = 'none';
+                    if (pauseIcon) pauseIcon.style.display = 'block';
+                });
+
+                playBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (audio.paused) {
+                        audio.play().catch(e => console.log('Audio playback prevented:', e));
+                    } else {
+                        audio.pause();
+                    }
+                });
+
+                const track = player.querySelector('.glass-voice-progress-track');
+                if (track) {
+                    track.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (!audio.duration) return;
+                        const rect = track.getBoundingClientRect();
+                        const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        audio.currentTime = pos * audio.duration;
+                        if (audio.paused) audio.play().catch(() => {});
+                    });
+                }
             });
 
             // Bind Unsend Button clicks
@@ -2920,6 +3287,239 @@
                     console.error('Avatar upload error:', err);
                     showGlassToast('Error uploading photo. Please try again.', 'error');
                 });
+            });
+        }
+
+        // ---------------------------------------------------------------------
+        // 12. INSTAGRAM-STYLE HOLD-TO-RECORD VOICE MESSAGES
+        // ---------------------------------------------------------------------
+        const voiceBtn = document.getElementById('glassVoiceBtn');
+        const voiceOverlay = document.getElementById('glassVoiceOverlay');
+        const voiceTimer = document.getElementById('glassVoiceTimer');
+        const voiceCancelBtn = document.getElementById('glassVoiceCancelBtn');
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordingStream = null;
+        let recordStartTime = 0;
+        let recordTimerInterval = null;
+        let isRecordingActive = false;
+        let isRecordCancelled = false;
+
+        function formatRecordDuration(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        async function startVoiceRecording(e) {
+            if (e && e.cancelable && e.type !== 'touchstart') e.preventDefault();
+            if (!currentConversationId) {
+                alert('Please open or start a chat first before recording a voice message.');
+                return;
+            }
+            if (isRecordingActive) return;
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Microphone access is not supported on this browser or requires HTTPS.');
+                return;
+            }
+
+            try {
+                recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                let mimeType = 'audio/webm;codecs=opus';
+                if (!window.MediaRecorder || !MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/mp4')) 
+                        ? 'audio/mp4' 
+                        : ((window.MediaRecorder && MediaRecorder.isTypeSupported('audio/ogg')) ? 'audio/ogg' : '');
+                }
+
+                const options = mimeType ? { mimeType } : {};
+                mediaRecorder = new MediaRecorder(recordingStream, options);
+                audioChunks = [];
+                isRecordingActive = true;
+                isRecordCancelled = false;
+                recordStartTime = Date.now();
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    clearInterval(recordTimerInterval);
+                    if (voiceOverlay) voiceOverlay.style.display = 'none';
+                    if (voiceBtn) voiceBtn.classList.remove('recording');
+
+                    if (recordingStream) {
+                        recordingStream.getTracks().forEach(t => t.stop());
+                        recordingStream = null;
+                    }
+
+                    if (isRecordCancelled) {
+                        audioChunks = [];
+                        isRecordingActive = false;
+                        return;
+                    }
+
+                    const elapsedSec = (Date.now() - recordStartTime) / 1000;
+                    if (elapsedSec < 0.6) {
+                        // Instagram behavior: too brief tap is discarded
+                        audioChunks = [];
+                        isRecordingActive = false;
+                        showGlassToast('Hold to record voice message', 'error');
+                        return;
+                    }
+
+                    const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    audioChunks = [];
+                    isRecordingActive = false;
+                    sendVoiceMessage(audioBlob, elapsedSec);
+                };
+
+                mediaRecorder.start(100);
+                if (voiceOverlay) voiceOverlay.style.display = 'flex';
+                if (voiceBtn) voiceBtn.classList.add('recording');
+                if (voiceTimer) voiceTimer.textContent = '0:00';
+
+                recordTimerInterval = setInterval(() => {
+                    const elapsed = (Date.now() - recordStartTime) / 1000;
+                    if (voiceTimer) voiceTimer.textContent = formatRecordDuration(elapsed);
+                }, 250);
+
+                if (navigator.vibrate) navigator.vibrate(40);
+
+            } catch (err) {
+                console.error('Microphone access error:', err);
+                isRecordingActive = false;
+                alert('Microphone access error: ' + (err.message || 'Please check mic permissions.'));
+            }
+        }
+
+        function stopVoiceRecording(e) {
+            if (e && e.cancelable && e.type !== 'touchend') e.preventDefault();
+            if (!isRecordingActive || !mediaRecorder) return;
+            if (mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        }
+
+        function cancelVoiceRecording(e) {
+            if (e) {
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+            }
+            if (!isRecordingActive) return;
+            isRecordCancelled = true;
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            showGlassToast('Voice recording cancelled');
+        }
+
+        function sendVoiceMessage(blob, durationSec) {
+            if (!currentConversationId) return;
+
+            const formattedDuration = formatRecordDuration(durationSec);
+            const optId = 'opt_voice_' + Date.now();
+            const tempUrl = URL.createObjectURL(blob);
+
+            const optimisticMsg = {
+                id: optId,
+                body: `🎤 Voice message (${formattedDuration})`,
+                attachment_url: tempUrl,
+                attachment_type: 'voice',
+                sender_id: CURRENT_USER_ID,
+                is_mine: true,
+                is_optimistic: true,
+                created_at: new Date().toISOString(),
+                time_formatted: 'Sending voice...'
+            };
+
+            messagesCache.push(optimisticMsg);
+            renderMessages(messagesCache, {
+                username: headerUsername.textContent.replace('@', ''),
+                name: headerStatus.textContent,
+                profile_pic: headerAvatar.src
+            });
+            scrollFeedToBottom(true);
+
+            const formData = new FormData();
+            formData.append('conversation_id', currentConversationId);
+            formData.append('duration', Math.round(durationSec));
+            formData.append('voice', blob, `voice_${Date.now()}.webm`);
+            formData.append('_token', '{{ csrf_token() }}');
+
+            fetch('/api/chat/upload_voice.php', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(result => {
+                const sentMsg = result.data || result.message;
+                if (result.success && sentMsg) {
+                    const idx = messagesCache.findIndex(m => m.id === optId);
+                    if (idx !== -1) {
+                        messagesCache[idx] = sentMsg;
+                    }
+                    renderMessages(messagesCache, {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                    scrollFeedToBottom(true);
+                    fetchConversations(true);
+                } else {
+                    alert(result.error || 'Failed to send voice message.');
+                    messagesCache = messagesCache.filter(m => m.id !== optId);
+                    renderMessages(messagesCache, {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Voice send error:', err);
+                alert('Network error while uploading voice note.');
+            });
+        }
+
+        if (voiceBtn) {
+            // Touch Events for Mobile (Instagram hold to speak, release to send)
+            voiceBtn.addEventListener('touchstart', (e) => {
+                startVoiceRecording(e);
+            }, { passive: false });
+
+            voiceBtn.addEventListener('touchend', (e) => {
+                stopVoiceRecording(e);
+            }, { passive: false });
+
+            // Pointer / Mouse Events for Desktop
+            voiceBtn.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // Left click only
+                    startVoiceRecording(e);
+                }
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (isRecordingActive) {
+                    stopVoiceRecording(e);
+                }
+            });
+        }
+
+        if (voiceCancelBtn) {
+            voiceCancelBtn.addEventListener('click', cancelVoiceRecording);
+            voiceCancelBtn.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                cancelVoiceRecording(e);
             });
         }
 

@@ -990,10 +990,10 @@ function liquidProductUploader() {
         previewImages: [],
         activeVariantTab: '{{ in_array($vendorType, ["clothing"]) ? "clothing" : (in_array($vendorType, ["footwear"]) ? "footwear" : (in_array($vendorType, ["kirana", "groceries"]) ? "kirana" : (in_array($vendorType, ["electronics"]) ? "electronics" : (in_array($vendorType, ["food"]) ? "food" : (in_array($vendorType, ["marble", "machinery", "b2b"]) ? "enquiry" : "clothing"))))) }}',
 
-        // 👗 Clothing Variations State
-        selectedSizes: ['M', 'L', 'XL'],
+        // 👗 Clothing Variations State (Default Empty - No Auto-Selection)
+        selectedSizes: [],
         availableSizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', 'Free Size'],
-        selectedColors: [{name: 'Black', hex: '#000000'}, {name: 'White', hex: '#FFFFFF'}, {name: 'Navy Blue', hex: '#0B192C'}],
+        selectedColors: [],
         availableColors: [
             {name: 'Black', hex: '#000000'},
             {name: 'White', hex: '#FFFFFF'},
@@ -1011,10 +1011,10 @@ function liquidProductUploader() {
         bulkPrice: '',
         bulkStock: '',
 
-        // 👟 Footwear Variations State
-        selectedShoeSizes: ['UK 7', 'UK 8', 'UK 9'],
+        // 👟 Footwear Variations State (Default Empty - No Auto-Selection)
+        selectedShoeSizes: [],
         availableShoeSizes: ['UK 5', 'UK 6', 'UK 7', 'UK 8', 'UK 9', 'UK 10', 'UK 11', 'UK 12'],
-        selectedShoeColors: [{name: 'Black', hex: '#000000'}, {name: 'Brown', hex: '#8B4513'}, {name: 'White', hex: '#FFFFFF'}],
+        selectedShoeColors: [],
         availableShoeColors: [
             {name: 'Black', hex: '#000000'},
             {name: 'Brown', hex: '#8B4513'},
@@ -1029,27 +1029,18 @@ function liquidProductUploader() {
 
         // 🛒 Kirana & Grocery Pack Units State (D-Mart Style)
         availableGroceryUnits: ['100 g', '250 g', '500 g', '1 kg', '2 kg', '5 kg', '10 kg', '1 Packet', '1 Bottle', '1 Piece', 'Combo Pack'],
-        groceryVariants: [
-            { name: '500 g', size: '500 g', price: '', stock: 50, sku: '' },
-            { name: '1 kg', size: '1 kg', price: '', stock: 50, sku: '' }
-        ],
+        groceryVariants: [],
 
-        // 📱 Electronics & Mobiles Specs State
+        // 📱 Electronics & Mobiles Specs State (Default Empty - No Auto-Selection)
         availableRams: ['4 GB', '6 GB', '8 GB', '12 GB', '16 GB', '32 GB'],
-        selectedRams: ['8 GB'],
+        selectedRams: [],
         availableStorages: ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB'],
-        selectedStorages: ['128 GB', '256 GB'],
+        selectedStorages: [],
         elecVariants: [],
 
-        // 🍽️ Food Portions & Modifiers State
-        foodPortions: [
-            { name: 'Full Portion', price: '', stock: 50 },
-            { name: 'Half Portion', price: '', stock: 50 }
-        ],
-        foodModifiers: [
-            { group_name: 'Add-ons', modifier_name: 'Extra Pav', price_delta: 20, is_required: false },
-            { group_name: 'Add-ons', modifier_name: 'Extra Chole', price_delta: 40, is_required: false }
-        ],
+        // 🍽️ Food Portions & Modifiers State (Default Empty - No Auto-Selection)
+        foodPortions: [],
+        foodModifiers: [],
 
         // 📋 Marble / Machinery RFQ Mode
         enableRfq: {{ in_array($vendorType, ['marble', 'machinery', 'b2b']) ? 'true' : 'false' }},
@@ -2624,7 +2615,7 @@ function liquidProductUploader() {
         toggleClothingColor(col) {
             const idx = this.selectedColors.findIndex(c => c.name === col.name);
             if (idx > -1) {
-                if (this.selectedColors.length > 1) this.selectedColors.splice(idx, 1);
+                this.selectedColors.splice(idx, 1);
             } else {
                 this.selectedColors.push(col);
             }
@@ -2643,7 +2634,7 @@ function liquidProductUploader() {
         toggleClothingSize(sz) {
             const idx = this.selectedSizes.indexOf(sz);
             if (idx > -1) {
-                if (this.selectedSizes.length > 1) this.selectedSizes.splice(idx, 1);
+                this.selectedSizes.splice(idx, 1);
             } else {
                 this.selectedSizes.push(sz);
             }
@@ -2660,6 +2651,10 @@ function liquidProductUploader() {
         },
 
         generateClothingMatrix() {
+            if (!this.selectedColors.length || !this.selectedSizes.length) {
+                this.variants = [];
+                return;
+            }
             const rows = [];
             const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'CLO') || 'CLO';
             this.selectedColors.forEach(col => {
@@ -2692,7 +2687,7 @@ function liquidProductUploader() {
         toggleShoeColor(col) {
             const idx = this.selectedShoeColors.findIndex(c => c.name === col.name);
             if (idx > -1) {
-                if (this.selectedShoeColors.length > 1) this.selectedShoeColors.splice(idx, 1);
+                this.selectedShoeColors.splice(idx, 1);
             } else {
                 this.selectedShoeColors.push(col);
             }
@@ -2702,7 +2697,7 @@ function liquidProductUploader() {
         toggleShoeSize(sz) {
             const idx = this.selectedShoeSizes.indexOf(sz);
             if (idx > -1) {
-                if (this.selectedShoeSizes.length > 1) this.selectedShoeSizes.splice(idx, 1);
+                this.selectedShoeSizes.splice(idx, 1);
             } else {
                 this.selectedShoeSizes.push(sz);
             }
@@ -2710,6 +2705,10 @@ function liquidProductUploader() {
         },
 
         generateFootwearMatrix() {
+            if (!this.selectedShoeColors.length || !this.selectedShoeSizes.length) {
+                this.footwearVariants = [];
+                return;
+            }
             const rows = [];
             const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'SHOE') || 'SHOE';
             this.selectedShoeColors.forEach(col => {
@@ -2754,7 +2753,7 @@ function liquidProductUploader() {
         toggleElecRam(r) {
             const idx = this.selectedRams.indexOf(r);
             if (idx > -1) {
-                if (this.selectedRams.length > 1) this.selectedRams.splice(idx, 1);
+                this.selectedRams.splice(idx, 1);
             } else {
                 this.selectedRams.push(r);
             }
@@ -2764,7 +2763,7 @@ function liquidProductUploader() {
         toggleElecStorage(st) {
             const idx = this.selectedStorages.indexOf(st);
             if (idx > -1) {
-                if (this.selectedStorages.length > 1) this.selectedStorages.splice(idx, 1);
+                this.selectedStorages.splice(idx, 1);
             } else {
                 this.selectedStorages.push(st);
             }
@@ -2772,6 +2771,10 @@ function liquidProductUploader() {
         },
 
         generateElecMatrix() {
+            if (!this.selectedRams.length || !this.selectedStorages.length) {
+                this.elecVariants = [];
+                return;
+            }
             const rows = [];
             const prefix = (this.form.title ? this.form.title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') : 'ELEC') || 'ELEC';
             this.selectedRams.forEach(r => {
