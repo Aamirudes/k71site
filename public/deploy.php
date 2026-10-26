@@ -319,15 +319,20 @@ if (!file_exists($link) && function_exists('symlink')) {
 }
 
 // 8. Bootstrap Laravel
-if (!file_exists($baseDir . '/vendor/autoload.php')) {
-    echo '<div class="error">Error: vendor/autoload.php not found. Composer dependencies missing.</div></div></body></html>';
-    exit;
-}
+if (file_exists($baseDir . '/vendor/autoload.php')) {
+    require $baseDir . '/vendor/autoload.php';
+    $bootstrapApp = file_exists($baseDir . '/bootstrap/app.php') 
+        ? $baseDir . '/bootstrap/app.php' 
+        : (file_exists(dirname($baseDir) . '/bootstrap/app.php') ? dirname($baseDir) . '/bootstrap/app.php' : null);
 
-require $baseDir . '/vendor/autoload.php';
-$app = require_once $baseDir . '/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
+    if ($bootstrapApp) {
+        try {
+            $app = require_once $bootstrapApp;
+            $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+            $kernel->bootstrap();
+        } catch (\Throwable $e) {}
+    }
+}
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
