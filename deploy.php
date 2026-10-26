@@ -412,13 +412,14 @@ try {
 }
 echo "</div>";
 
-// 9. Harden Database Schema Directly (Expands SEO columns to avoid MySQL String Truncation 1406 errors)
+// 9. Harden Database Schema Directly (Expands SEO columns & username to avoid MySQL String Truncation 1406 errors)
 try {
+    DB::statement("ALTER TABLE `users` MODIFY `username` VARCHAR(60) NOT NULL");
     DB::statement("ALTER TABLE `categories` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns in categories, products, vendors, and pages expanded to VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns & username expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
@@ -493,10 +494,10 @@ echo "</div>";
 // 11b. Active Vendors In Database Verification
 echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
 try {
-    $allVendors = DB::table('vendors')->select('id', 'name', 'store_name', 'email', 'status')->get();
+    $allVendors = DB::table('vendors')->select('id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
     echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\nDefault Password for Demo Vendors: Vendor@123#K71\n\n";
     foreach ($allVendors as $v) {
-        echo "• ID {$v->id} | {$v->store_name} ({$v->name})\n  Email: {$v->email} | Status: {$v->status}\n";
+        echo "• ID {$v->id} | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
     }
     echo "</pre>";
 } catch (\Throwable $e) {

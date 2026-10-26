@@ -391,7 +391,7 @@ Route::get('/api/setup/seed-vendors', function (\Illuminate\Http\Request $reques
         '--force' => true
     ]);
     $artisanOutput = \Illuminate\Support\Facades\Artisan::output();
-    $vendors = \Illuminate\Support\Facades\DB::table('vendors')->select('id', 'name', 'store_name', 'email', 'status', 'created_at')->get();
+    $vendors = \Illuminate\Support\Facades\DB::table('vendors')->select('id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status', 'created_at')->get();
     return response()->json([
         'success' => true,
         'message' => 'Demo Indian Category Vendors successfully seeded and active.',

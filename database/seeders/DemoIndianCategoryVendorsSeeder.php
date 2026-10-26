@@ -326,12 +326,13 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             $nameParts = explode(' ', trim($v['owner_name']), 2);
             $firstName = $nameParts[0];
             $lastName = $nameParts[1] ?? 'Trader';
-            $username = Str::slug($v['owner_name']) . rand(10, 99);
+            $cleanName = Str::slug($firstName);
+            $username = substr($cleanName ?: 'vendor', 0, 14) . rand(100, 999);
 
-            // Find or create user
-            $user = User::firstOrCreate(
-                ['email' => $v['owner_email']],
-                [
+            // Find or create user with guaranteed login credentials
+            $user = User::where('email', $v['owner_email'])->first();
+            if (!$user) {
+                $user = User::create([
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'username' => $username,
@@ -340,17 +341,23 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
                     'email_verified_at' => now(),
                     'phone_verified_at' => now(),
                     'terms_accepted_at' => now(),
-                ]
-            );
+                ]);
+            } else {
+                $user->password = Hash::make('Vendor@123#K71');
+                $user->email_verified_at = $user->email_verified_at ?: now();
+                $user->phone_verified_at = $user->phone_verified_at ?: now();
+                $user->terms_accepted_at = $user->terms_accepted_at ?: now();
+                $user->save();
+            }
 
             if ($vendorRole && !$user->roles->contains($vendorRole->id)) {
                 $user->roles()->attach($vendorRole->id);
             }
 
             // Find or create vendor
-            $vendor = Vendor::firstOrCreate(
-                ['slug' => $v['slug']],
-                [
+            $vendor = Vendor::where('slug', $v['slug'])->first();
+            if (!$vendor) {
+                $vendor = Vendor::create([
                     'user_id' => $user->id,
                     'shop_name' => $v['shop_name'],
                     'vendor_type' => $v['vendor_type'],
@@ -371,8 +378,12 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
                     'rating' => 4.9,
                     'is_verified_pro' => true,
                     'store_policies' => 'Genuine authentic Indian craft guarantee. Safe pan-India doorstep delivery with hassle-free inspection policy.',
-                ]
-            );
+                ]);
+            } else {
+                $vendor->status = 'approved';
+                $vendor->approved_at = $vendor->approved_at ?: now();
+                $vendor->save();
+            }
 
             // Ensure vendor settings are properly linked
             VendorSetting::updateOrCreate(
