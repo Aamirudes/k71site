@@ -508,11 +508,7 @@
                     @endforeach
                 </div>
             </section>
-            @endifn>&rarr;</span>
-                    </a>
-                </div>
-
-            </section>
+            @endif
 
             <!-- ==========================================
                  6. CLOUD DINING & RESTAURANTS (CLEAN VISUAL TILES)
