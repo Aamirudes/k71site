@@ -333,6 +333,7 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             $user = User::where('email', $v['owner_email'])->first();
             if (!$user) {
                 $user = User::create([
+                    'email' => $v['owner_email'],
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'username' => $username,
