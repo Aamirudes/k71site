@@ -415,11 +415,12 @@ echo "</div>";
 // 9. Harden Database Schema Directly (Expands SEO columns & username to avoid MySQL String Truncation 1406 errors)
 try {
     DB::statement("ALTER TABLE `users` MODIFY `username` VARCHAR(60) NOT NULL");
+    DB::statement("ALTER TABLE `vendors` MODIFY `slug` VARCHAR(60) NOT NULL");
     DB::statement("ALTER TABLE `categories` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns & username expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }

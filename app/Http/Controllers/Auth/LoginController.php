@@ -113,7 +113,9 @@ class LoginController extends Controller
             }
 
             // Merge guest cart items into authenticated user
-            \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
+            if (class_exists(\App\Models\Cart::class) && method_exists(\App\Models\Cart::class, 'mergeGuestCart')) {
+                \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
+            }
 
             if (!$user->email_verified_at) {
                 $user->update(['email_verified_at' => now()]);

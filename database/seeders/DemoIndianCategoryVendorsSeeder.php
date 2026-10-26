@@ -221,7 +221,7 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             [
                 'vendor_type' => 'home_living',
                 'shop_name' => 'Shekhawati Teak & Royal Furniture',
-                'slug' => 'shekhawati-teak-royal-furniture',
+                'slug' => 'shekhawati-royal-furniture',
                 'owner_name' => 'Ratanlal Jangid',
                 'owner_email' => 'shekhawati.teak@k71.in',
                 'owner_phone' => '9821112233',
