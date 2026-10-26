@@ -1276,6 +1276,25 @@
         .glass-voice-cancel-btn:hover {
             background: rgba(239, 68, 68, 0.1);
         }
+        .glass-voice-confirm-btn {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            padding: 5px 12px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11.5px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .glass-voice-confirm-btn:hover {
+            background: #059669;
+            transform: scale(1.04);
+        }
 
         /* Voice Player Message Bubble */
         .glass-voice-player {
@@ -1921,7 +1940,11 @@
                                 <div class="glass-voice-waveform">
                                     <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                                 </div>
-                                <span class="glass-voice-hint">Release to send • Click ✕ to cancel</span>
+                                <span class="glass-voice-hint" id="glassVoiceHint">Recording...</span>
+                                <button type="button" class="glass-voice-confirm-btn" id="glassVoiceConfirmBtn" title="Send voice message">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    Send
+                                </button>
                                 <button type="button" class="glass-voice-cancel-btn" id="glassVoiceCancelBtn" title="Cancel recording">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
                                 </button>
@@ -1991,6 +2014,39 @@
         <div class="glass-lightbox-overlay" id="glassImageLightbox" style="display: none;">
             <button type="button" class="glass-lightbox-close" id="glassLightboxClose">&times;</button>
             <img id="lightboxImg" src="" alt="Enlarged photo">
+        </div>
+
+        <!-- ==============================================================
+             MICROPHONE PERMISSION ONBOARDING MODAL
+             ============================================================== -->
+        <div class="glass-modal-backdrop" id="glassMicModal" style="display: none; align-items: center; justify-content: center; z-index: 11000;">
+            <div class="glass-modal-card" style="max-width: 400px; text-align: center; padding: 28px 24px;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(249, 115, 22, 0.15)); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: #ef4444;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 01-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px; color: var(--color-text-main);">Allow Microphone Access</h3>
+                <p style="font-size: 13.5px; color: var(--color-text-muted); line-height: 1.5; margin-bottom: 18px;">
+                    To record voice messages like Instagram, K71 needs your permission. Tap <strong>Enable Microphone</strong> below and allow permission in your browser prompt.
+                </p>
+
+                <div id="glassMicStatusNote" style="display: none; margin-bottom: 16px; padding: 10px 12px; border-radius: 12px; font-size: 12px; line-height: 1.4; text-align: left; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="button" id="glassEnableMicBtn" style="width: 100%; padding: 13px; border-radius: 14px; background: linear-gradient(135deg, #0095f6 0%, #0077e6 100%); color: #fff; font-weight: 700; font-size: 14px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(0, 149, 246, 0.35);">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Enable Microphone
+                    </button>
+                    <button type="button" id="glassCloseMicModalBtn" style="width: 100%; padding: 11px; border-radius: 14px; background: transparent; color: var(--color-text-muted); font-size: 13px; border: 1px solid var(--glass-border); cursor: pointer;">
+                        Not Now
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3291,12 +3347,17 @@
         }
 
         // ---------------------------------------------------------------------
-        // 12. INSTAGRAM-STYLE HOLD-TO-RECORD VOICE MESSAGES
+        // 12. INSTAGRAM-STYLE HOLD/TAP VOICE MESSAGES & PERMISSION ONBOARDING
         // ---------------------------------------------------------------------
         const voiceBtn = document.getElementById('glassVoiceBtn');
         const voiceOverlay = document.getElementById('glassVoiceOverlay');
         const voiceTimer = document.getElementById('glassVoiceTimer');
+        const voiceConfirmBtn = document.getElementById('glassVoiceConfirmBtn');
         const voiceCancelBtn = document.getElementById('glassVoiceCancelBtn');
+        const micModal = document.getElementById('glassMicModal');
+        const enableMicBtn = document.getElementById('glassEnableMicBtn');
+        const closeMicModalBtn = document.getElementById('glassCloseMicModalBtn');
+        const micStatusNote = document.getElementById('glassMicStatusNote');
 
         let mediaRecorder = null;
         let audioChunks = [];
@@ -3305,6 +3366,8 @@
         let recordTimerInterval = null;
         let isRecordingActive = false;
         let isRecordCancelled = false;
+        let isHoldGesture = false;
+        let holdTimer = null;
 
         function formatRecordDuration(seconds) {
             const m = Math.floor(seconds / 60);
@@ -3312,16 +3375,77 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        async function startVoiceRecording(e) {
+        function showMicPermissionModal() {
+            if (micStatusNote) {
+                micStatusNote.style.display = 'none';
+                micStatusNote.innerHTML = '';
+            }
+            if (micModal) micModal.style.display = 'flex';
+        }
+
+        if (closeMicModalBtn) {
+            closeMicModalBtn.addEventListener('click', () => {
+                if (micModal) micModal.style.display = 'none';
+            });
+        }
+
+        if (enableMicBtn) {
+            enableMicBtn.addEventListener('click', async () => {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    if (micStatusNote) {
+                        micStatusNote.style.display = 'block';
+                        micStatusNote.innerHTML = '<strong>Not Supported:</strong> Microphone access is not supported on this browser or requires HTTPS.';
+                    }
+                    return;
+                }
+
+                enableMicBtn.disabled = true;
+                enableMicBtn.textContent = 'Requesting access...';
+
+                try {
+                    const testStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Immediately release the test tracks
+                    testStream.getTracks().forEach(track => track.stop());
+                    
+                    localStorage.setItem('k71_mic_allowed', 'true');
+                    enableMicBtn.disabled = false;
+                    enableMicBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Enable Microphone';
+                    
+                    if (micModal) micModal.style.display = 'none';
+                    showGlassToast('Microphone enabled! You can now send voice notes.', 'success');
+                } catch (err) {
+                    console.error('Microphone permission error:', err);
+                    enableMicBtn.disabled = false;
+                    enableMicBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Try Again';
+                    
+                    if (micStatusNote) {
+                        micStatusNote.style.display = 'block';
+                        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                            micStatusNote.innerHTML = '<strong>Access Denied:</strong> Permission was denied in browser. Please tap the lock / settings icon in your browser URL bar, set <em>Microphone</em> to <strong>Allow</strong>, and then tap <em>Try Again</em>.';
+                        } else {
+                            micStatusNote.innerHTML = '<strong>Access Error:</strong> ' + (err.message || 'Microphone could not be accessed. Check system audio permissions.');
+                        }
+                    }
+                }
+            });
+        }
+
+        async function startVoiceRecording(e, isHold = false) {
             if (e && e.cancelable && e.type !== 'touchstart') e.preventDefault();
             if (!currentConversationId) {
-                alert('Please open or start a chat first before recording a voice message.');
+                showGlassToast('Please open or start a chat first before recording a voice message.', 'error');
                 return;
             }
             if (isRecordingActive) return;
 
+            // Check permission onboarding first!
+            if (localStorage.getItem('k71_mic_allowed') !== 'true') {
+                showMicPermissionModal();
+                return;
+            }
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Microphone access is not supported on this browser or requires HTTPS.');
+                showGlassToast('Microphone access is not supported on this browser or requires HTTPS.', 'error');
                 return;
             }
 
@@ -3340,6 +3464,7 @@
                 audioChunks = [];
                 isRecordingActive = true;
                 isRecordCancelled = false;
+                isHoldGesture = isHold;
                 recordStartTime = Date.now();
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -3366,10 +3491,9 @@
 
                     const elapsedSec = (Date.now() - recordStartTime) / 1000;
                     if (elapsedSec < 0.6) {
-                        // Instagram behavior: too brief tap is discarded
                         audioChunks = [];
                         isRecordingActive = false;
-                        showGlassToast('Hold to record voice message', 'error');
+                        showGlassToast('Hold or tap Send to record voice message', 'error');
                         return;
                     }
 
@@ -3394,7 +3518,12 @@
             } catch (err) {
                 console.error('Microphone access error:', err);
                 isRecordingActive = false;
-                alert('Microphone access error: ' + (err.message || 'Please check mic permissions.'));
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    localStorage.removeItem('k71_mic_allowed');
+                    showMicPermissionModal();
+                } else {
+                    showGlassToast('Microphone access error: ' + (err.message || 'Please check mic permissions.'), 'error');
+                }
             }
         }
 
@@ -3476,7 +3605,7 @@
                     scrollFeedToBottom(true);
                     fetchConversations(true);
                 } else {
-                    alert(result.error || 'Failed to send voice message.');
+                    showGlassToast(result.error || 'Failed to send voice message.', 'error');
                     messagesCache = messagesCache.filter(m => m.id !== optId);
                     renderMessages(messagesCache, {
                         username: headerUsername.textContent.replace('@', ''),
@@ -3487,31 +3616,67 @@
             })
             .catch(err => {
                 console.error('Voice send error:', err);
-                alert('Network error while uploading voice note.');
+                showGlassToast('Network error while uploading voice note.', 'error');
             });
         }
 
         if (voiceBtn) {
-            // Touch Events for Mobile (Instagram hold to speak, release to send)
+            // Touch Events for Mobile (Instagram hold to speak or tap to record)
             voiceBtn.addEventListener('touchstart', (e) => {
-                startVoiceRecording(e);
+                if (localStorage.getItem('k71_mic_allowed') !== 'true') {
+                    e.preventDefault();
+                    showMicPermissionModal();
+                    return;
+                }
+                holdTimer = setTimeout(() => {
+                    isHoldGesture = true;
+                }, 300);
+                startVoiceRecording(e, true);
             }, { passive: false });
 
             voiceBtn.addEventListener('touchend', (e) => {
-                stopVoiceRecording(e);
+                clearTimeout(holdTimer);
+                if (isRecordingActive && isHoldGesture) {
+                    const elapsedSec = (Date.now() - recordStartTime) / 1000;
+                    if (elapsedSec >= 0.8) {
+                        stopVoiceRecording(e);
+                    }
+                }
             }, { passive: false });
 
             // Pointer / Mouse Events for Desktop
             voiceBtn.addEventListener('mousedown', (e) => {
                 if (e.button === 0) { // Left click only
-                    startVoiceRecording(e);
+                    if (localStorage.getItem('k71_mic_allowed') !== 'true') {
+                        e.preventDefault();
+                        showMicPermissionModal();
+                        return;
+                    }
+                    holdTimer = setTimeout(() => {
+                        isHoldGesture = true;
+                    }, 300);
+                    startVoiceRecording(e, true);
                 }
             });
 
             window.addEventListener('mouseup', (e) => {
-                if (isRecordingActive) {
-                    stopVoiceRecording(e);
+                clearTimeout(holdTimer);
+                if (isRecordingActive && isHoldGesture) {
+                    const elapsedSec = (Date.now() - recordStartTime) / 1000;
+                    if (elapsedSec >= 0.8) {
+                        stopVoiceRecording(e);
+                    }
                 }
+            });
+        }
+
+        if (voiceConfirmBtn) {
+            voiceConfirmBtn.addEventListener('click', (e) => {
+                stopVoiceRecording(e);
+            });
+            voiceConfirmBtn.addEventListener('touchend', (e) => {
+                e.stopPropagation();
+                stopVoiceRecording(e);
             });
         }
 

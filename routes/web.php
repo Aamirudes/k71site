@@ -381,5 +381,26 @@ Route::get('/storage/{path}', function ($path) {
     abort(404);
 })->where('path', '.*');
 
+// Safe Vendor Seeding Web Endpoint (Protected by secret token)
+Route::get('/api/setup/seed-vendors', function (\Illuminate\Http\Request $request) {
+    if ($request->query('token') !== 'marblemandi2026') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+    \Illuminate\Support\Facades\Artisan::call('db:seed', [
+        '--class' => 'DemoIndianCategoryVendorsSeeder',
+        '--force' => true
+    ]);
+    $artisanOutput = \Illuminate\Support\Facades\Artisan::output();
+    $vendors = \Illuminate\Support\Facades\DB::table('vendors')->select('id', 'name', 'store_name', 'email', 'status', 'created_at')->get();
+    return response()->json([
+        'success' => true,
+        'message' => 'Demo Indian Category Vendors successfully seeded and active.',
+        'artisan_output' => $artisanOutput,
+        'total_vendors' => $vendors->count(),
+        'default_password' => 'Vendor@123#K71',
+        'vendors' => $vendors
+    ]);
+});
+
 
 

@@ -435,6 +435,14 @@ try {
     }
 } catch (\Throwable $e) {}
 
+// Ensure all 15 Indian Category Demo Vendors exist on live site (auto-seed if less than 10 or requested)
+try {
+    $existingVendorsCount = Schema::hasTable('vendors') ? DB::table('vendors')->count() : 0;
+    if ($existingVendorsCount < 10 || !empty($_GET['seed_vendors'])) {
+        $tasks['Seed All 15 Indian Demo Category Vendors'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'DemoIndianCategoryVendorsSeeder', '--force' => true]];
+    }
+} catch (\Throwable $e) {}
+
 // One-time manual reset trigger: ONLY executed if ?reset_marketplace=yes is explicitly passed in URL
 if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') {
     $tasks['Purge All Stale / Mock Dummy Data (One-Time Reset)'] = ['cmd' => 'marketplace:purge-dummy', 'args' => ['--force' => true]];
@@ -479,6 +487,20 @@ try {
     echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   Password: Hashir1284@0\n   User ID: {$admin->id}</pre>";
 } catch (\Throwable $e) {
     echo "<pre class='error'>Failed to enforce admin account: " . htmlspecialchars($e->getMessage()) . "</pre>";
+}
+echo "</div>";
+
+// 11b. Active Vendors In Database Verification
+echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
+try {
+    $allVendors = DB::table('vendors')->select('id', 'name', 'store_name', 'email', 'status')->get();
+    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\nDefault Password for Demo Vendors: Vendor@123#K71\n\n";
+    foreach ($allVendors as $v) {
+        echo "• ID {$v->id} | {$v->store_name} ({$v->name})\n  Email: {$v->email} | Status: {$v->status}\n";
+    }
+    echo "</pre>";
+} catch (\Throwable $e) {
+    echo "<pre class='error'>Vendors query error: " . htmlspecialchars($e->getMessage()) . "</pre>";
 }
 echo "</div>";
 
@@ -538,6 +560,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&sync=1&seed_vendors=1' class='btn btn-purple'>🌱 Pull & Seed Demo Vendors</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";

@@ -511,19 +511,19 @@
                 @endif
             </section>
 
-            <!-- 6. TRENDING CHEF SPECIALS & SIGNATURE FLAVORS SHOWCASE -->
-            <section class="space-y-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl sm:text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
-                            <span>Chef's Signature Dishes &amp; Specialties</span>
-                            <span class="text-2xl">🔥</span>
-                        </h2>
-                        <p class="text-xs sm:text-sm text-stone-500 font-medium">Curated customer favorites freshly prepared in verified cloud kitchens.</p>
+            <!-- 6. TRENDING DISHES (Only shown if real dishes exist in database) -->
+            @if($dishes->isNotEmpty())
+                <section class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-black text-stone-900 tracking-tight flex items-center gap-2">
+                                <span>Trending Dishes &amp; Chef Specials</span>
+                                <span class="text-2xl">🔥</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-stone-500 font-medium">Curated customer favorites freshly prepared in verified cloud kitchens.</p>
+                        </div>
                     </div>
-                </div>
 
-                @if($dishes->isNotEmpty())
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         @foreach($dishes as $dish)
                             @php
@@ -591,117 +591,8 @@
                             </div>
                         @endforeach
                     </div>
-                @else
-                    <!-- High-Converting Curated Specials Menu when Vendor Storefront is Active -->
-                    @php
-                        $curatedSpecials = [
-                            [
-                                'title' => 'Royal Dum Gosht Biryani (Handi)',
-                                'cuisine' => 'Awadhi & Mughlai',
-                                'desc' => 'Slow cooked tender mutton cuts layered with long-grain aged basmati rice, saffron, and aromatic rose attar. Served with burani raita & mirchi salan.',
-                                'price' => 380,
-                                'veg' => false,
-                                'spice' => 'Medium Spicy',
-                                'img' => 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=600&q=80',
-                                'rating' => '4.9 (420+)',
-                            ],
-                            [
-                                'title' => 'Paneer Tikka Angara Sizzler',
-                                'cuisine' => 'Tandoori Starters',
-                                'desc' => 'Plump Malai paneer cubes marinated in Kashmiri chili, crushed coriander seeds, and hung curd, roasted over live charcoal with charred bell peppers.',
-                                'price' => 290,
-                                'veg' => true,
-                                'spice' => 'Mild & Smokey',
-                                'img' => 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?auto=format&fit=crop&w=600&q=80',
-                                'rating' => '4.8 (310+)',
-                            ],
-                            [
-                                'title' => '18-Hour Slow Cooked Dal Bukhara',
-                                'cuisine' => 'North Indian Specialty',
-                                'desc' => 'Black urad lentils simmered overnight over slow tandoor embers with organic tomatoes, ginger, and churned white butter. Velvet texture.',
-                                'price' => 260,
-                                'veg' => true,
-                                'spice' => 'Rich & Buttery',
-                                'img' => 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=600&q=80',
-                                'rating' => '4.9 (540+)',
-                            ],
-                            [
-                                'title' => 'Amritsari Chur-Chur Kulcha Meal',
-                                'cuisine' => 'Punjabi Street Feast',
-                                'desc' => 'Layered crispy tandoori kulcha stuffed with spiced potatoes, onions, and fresh pomegranate seeds. Served with pindi chole and raw mango pickle.',
-                                'price' => 180,
-                                'veg' => true,
-                                'spice' => 'Tangy & Crisp',
-                                'img' => 'https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=600&q=80',
-                                'rating' => '4.9 (290+)',
-                            ]
-                        ];
-                    @endphp
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        @foreach($curatedSpecials as $item)
-                            <div class="bg-white rounded-3xl border border-stone-200/90 hover:border-orange-300 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group overflow-hidden">
-                                <div>
-                                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-stone-100">
-                                        <img src="{{ $item['img'] }}" alt="{{ $item['title'] }}" class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500">
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                                        
-                                        <!-- Diet Icon (Green / Red) -->
-                                        <div class="absolute top-3 left-3 bg-white/95 backdrop-blur-sm p-1 rounded-md shadow-xs flex items-center justify-center">
-                                            @if($item['veg'])
-                                                <div class="w-4 h-4 border-2 border-emerald-600 flex items-center justify-center rounded-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-emerald-600"></div>
-                                                </div>
-                                            @else
-                                                <div class="w-4 h-4 border-2 border-rose-700 flex items-center justify-center rounded-xs">
-                                                    <div class="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[8px] border-b-rose-700"></div>
-                                                </div>
-                                            @endif
-                                        </div>
-
-                                        <div class="absolute top-3 right-3 z-10">
-                                            <span class="px-2.5 py-0.5 rounded-full bg-orange-600 text-white text-[9px] font-black uppercase tracking-wider shadow-md">
-                                                CHEF SPECIAL
-                                            </span>
-                                        </div>
-
-                                        <div class="absolute bottom-2.5 left-3 px-2 py-0.5 rounded-md bg-stone-950/80 backdrop-blur-sm text-white text-[10px] font-black flex items-center gap-1">
-                                            <span class="text-amber-400">★</span> {{ $item['rating'] }}
-                                        </div>
-                                    </div>
-
-                                    <div class="p-4 space-y-2">
-                                        <div>
-                                            <h3 class="text-sm font-black text-stone-900 group-hover:text-[#ea580c] transition-colors line-clamp-1">
-                                                {{ $item['title'] }}
-                                            </h3>
-                                            <span class="text-[11px] text-orange-600 font-bold block">
-                                                {{ $item['cuisine'] }}
-                                            </span>
-                                        </div>
-                                        
-                                        <p class="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                                            {{ $item['desc'] }}
-                                        </p>
-
-                                        <div class="text-[10px] font-black text-stone-400">
-                                            🌶️ {{ $item['spice'] }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="p-4 pt-0 flex items-center justify-between border-t border-stone-100 mt-2">
-                                    <span class="text-base font-black text-stone-900">₹{{ $item['price'] }}</span>
-                                    <a href="{{ route('food.restaurant', $restaurantMenuSlug) }}" 
-                                       class="px-3.5 py-1.5 rounded-xl bg-orange-50 hover:bg-[#ea580c] text-[#ea580c] hover:text-white text-xs font-black transition-all cursor-pointer shadow-2xs">
-                                        Order Dish ›
-                                    </a>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </section>
+                </section>
+            @endif
 
             <!-- 7. THE K71 FOOD PROMISE & TRUST BADGES -->
             <section class="space-y-4">
