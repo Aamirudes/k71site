@@ -336,8 +336,10 @@ if (isset($_GET['read_log'])) {
     header('Content-Type: text/plain');
     $logFile = $baseDir . '/storage/logs/laravel.log';
     if (file_exists($logFile)) {
-        $lines = file($logFile);
-        echo implode("", array_slice($lines, -50));
+        $content = file_get_contents($logFile);
+        $entries = preg_split('/(?=\[\d{4}-\d{2}-\d{2})/', $content);
+        $lastEntry = trim(end($entries));
+        echo substr($lastEntry, 0, 4000);
     } else {
         echo "Log file does not exist\n";
     }
