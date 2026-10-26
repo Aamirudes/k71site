@@ -360,6 +360,7 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             if (!$vendor) {
                 $vendor = Vendor::create([
                     'user_id' => $user->id,
+                    'slug' => $v['slug'],
                     'shop_name' => $v['shop_name'],
                     'vendor_type' => $v['vendor_type'],
                     'tagline' => $v['tagline'],
