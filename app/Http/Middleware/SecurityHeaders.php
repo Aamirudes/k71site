@@ -19,7 +19,7 @@ class SecurityHeaders
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('X-XSS-Protection', '1; mode=block');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self)');
+        $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)');
 
         if (auth()->check() || $request->is('vendor*', 'admin*', 'cart*', 'checkout*', 'login*', 'register*', 'sell*', 'messages*', 'direct*', 'dm*', 'api*')) {
             $response->headers->set('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, private');

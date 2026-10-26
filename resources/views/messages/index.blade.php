@@ -3523,6 +3523,16 @@
         }
 
         if (voiceBtn) {
+            // Instant Click Event (Triggers browser native permission prompt like OmeTV)
+            voiceBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (!isRecordingActive) {
+                    startVoiceRecording(e, false);
+                } else {
+                    stopVoiceRecording(e);
+                }
+            });
+
             // Touch Events for Mobile (Instagram hold to speak or tap to record)
             voiceBtn.addEventListener('touchstart', (e) => {
                 holdTimer = setTimeout(() => {
