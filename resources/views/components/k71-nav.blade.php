@@ -58,9 +58,20 @@
     $navUnreadMessagesCount = 0;
     if (auth()->check()) {
         try {
-            $navUnreadMessagesCount = \App\Models\Message::where('recipient_id', auth()->id())->whereNull('read_at')->count();
-            if ($navUnreadMessagesCount === 0 && \Illuminate\Support\Facades\Schema::hasTable('chat_messages')) {
-                $navUnreadMessagesCount = \Illuminate\Support\Facades\DB::table('chat_messages')->where('recipient_id', auth()->id())->where('is_read', 0)->count();
+            $uid = (int) auth()->id();
+            if (\Illuminate\Support\Facades\Schema::hasTable('chat_messages') && \Illuminate\Support\Facades\Schema::hasTable('chat_conversations')) {
+                $navUnreadMessagesCount = (int) \Illuminate\Support\Facades\DB::table('chat_messages')
+                    ->join('chat_conversations', 'chat_messages.conversation_id', '=', 'chat_conversations.id')
+                    ->where(function ($q) use ($uid) {
+                        $q->where('chat_conversations.user_one_id', $uid)
+                          ->orWhere('chat_conversations.user_two_id', $uid);
+                    })
+                    ->where('chat_messages.sender_id', '!=', $uid)
+                    ->where('chat_messages.is_read', 0)
+                    ->count();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('messages')) {
+                $navUnreadMessagesCount += (int) \App\Models\Message::where('recipient_id', $uid)->whereNull('read_at')->count();
             }
         } catch (\Throwable $e) {
             $navUnreadMessagesCount = 0;
@@ -209,18 +220,26 @@
                     <span>Catalog</span>
                 </a>
 
-                <!-- Direct Messages Quick Access -->
+                <!-- Direct Messages Quick Access (Instagram Red Dot Indicator) -->
                 <a href="{{ route('messages.index') }}" 
+                   id="nav-messages-link"
                    class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
                    title="Direct Messages"
                    aria-label="Direct Messages">
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                     </svg>
+                    <!-- Instagram-Style Red Dot -->
+                    <span id="nav-messages-red-dot" class="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 {{ $navUnreadMessagesCount > 0 ? '' : 'hidden' }}">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EF4444] ring-2 ring-white shadow-sm"></span>
+                    </span>
                     @if($navUnreadMessagesCount > 0)
-                        <span class="absolute top-1 right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs">
+                        <span id="nav-messages-badge" class="absolute -top-1 -right-1 bg-[#EF4444] text-white text-[9px] font-black px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs">
                             {{ $navUnreadMessagesCount > 99 ? '99+' : $navUnreadMessagesCount }}
                         </span>
+                    @else
+                        <span id="nav-messages-badge" class="hidden absolute -top-1 -right-1 bg-[#EF4444] text-white text-[9px] font-black px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
                     @endif
                 </a>
 
@@ -425,3 +444,56 @@
         </div>
     </div>
 </header>
+
+<script>
+(function() {
+    function refreshNavUnreadDot() {
+        fetch('/api/chat/get_unread_count.php', { 
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store' 
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.success) return;
+            const unread = parseInt(data.unread, 10) || 0;
+            const dots = document.querySelectorAll('#nav-messages-red-dot, .bottom-nav-messages-dot, #floating-chat-red-dot');
+            const badges = document.querySelectorAll('#nav-messages-badge');
+            
+            dots.forEach(dot => {
+                if (unread > 0) {
+                    dot.classList.remove('hidden');
+                    dot.style.display = 'flex';
+                } else {
+                    dot.classList.add('hidden');
+                    dot.style.display = 'none';
+                }
+            });
+
+            badges.forEach(badge => {
+                if (unread > 0) {
+                    badge.textContent = unread > 99 ? '99+' : unread;
+                    badge.classList.remove('hidden');
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.classList.add('hidden');
+                    badge.style.display = 'none';
+                }
+            });
+        })
+        .catch(() => {});
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(refreshNavUnreadDot, 1500);
+            setInterval(refreshNavUnreadDot, 8000);
+        });
+    } else {
+        setTimeout(refreshNavUnreadDot, 1500);
+        setInterval(refreshNavUnreadDot, 8000);
+    }
+
+    window.addEventListener('k71-messages-read', refreshNavUnreadDot);
+})();
+</script>

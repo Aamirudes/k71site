@@ -52,6 +52,29 @@
         $guestCart = \App\Models\Cart::where('session_id', session()->getId())->first();
         $initialCartCount = $guestCart ? $guestCart->items()->sum('quantity') : 0;
     }
+
+    $bottomUnreadMessagesCount = 0;
+    if (auth()->check()) {
+        try {
+            $bUid = (int) auth()->id();
+            if (\Illuminate\Support\Facades\Schema::hasTable('chat_messages') && \Illuminate\Support\Facades\Schema::hasTable('chat_conversations')) {
+                $bottomUnreadMessagesCount = (int) \Illuminate\Support\Facades\DB::table('chat_messages')
+                    ->join('chat_conversations', 'chat_messages.conversation_id', '=', 'chat_conversations.id')
+                    ->where(function ($q) use ($bUid) {
+                        $q->where('chat_conversations.user_one_id', $bUid)
+                          ->orWhere('chat_conversations.user_two_id', $bUid);
+                    })
+                    ->where('chat_messages.sender_id', '!=', $bUid)
+                    ->where('chat_messages.is_read', 0)
+                    ->count();
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('messages')) {
+                $bottomUnreadMessagesCount += (int) \App\Models\Message::where('recipient_id', $bUid)->whereNull('read_at')->count();
+            }
+        } catch (\Throwable $e) {
+            $bottomUnreadMessagesCount = 0;
+        }
+    }
 @endphp
 
 <!-- Bottom Nav Container with Theme-Specific Styles -->
@@ -75,6 +98,7 @@
                 $isCenterElevated = str_contains(strtolower($item->badge ?? ''), 'live') || str_contains(strtolower($item->badge ?? ''), 'sell') || str_contains(strtolower($item->title), 'shorts');
                 $isWishlist = str_contains(strtolower($item->title), 'wishlist') || str_contains(strtolower($item->title), 'saved');
                 $isCart = str_contains(strtolower($item->title), 'cart') || str_contains(strtolower($item->title), 'bag') || $item->url === '/cart' || str_starts_with($item->url, '/cart');
+                $isMessages = str_contains(strtolower($item->title), 'message') || str_contains(strtolower($item->title), 'chat') || $item->url === '/messages' || str_starts_with($item->url, '/messages');
             @endphp
 
             @if($isCenterElevated && ($theme === 'universal' || $theme === 'used' || $theme === 'shorts'))
@@ -183,6 +207,13 @@
                             </svg>
                         @else
                             <div class="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold">★</div>
+                        @endif
+
+                        @if($isMessages)
+                            <span class="bottom-nav-messages-dot absolute -top-1 -right-1 flex h-2.5 w-2.5 {{ $bottomUnreadMessagesCount > 0 ? '' : 'hidden' }}">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EF4444] ring-2 ring-white shadow-sm"></span>
+                            </span>
                         @endif
 
                         @if($item->badge)

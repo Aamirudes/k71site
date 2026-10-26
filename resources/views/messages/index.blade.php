@@ -356,20 +356,32 @@
 
         .glass-unread-dot {
             position: absolute;
-            bottom: 1px;
-            right: 1px;
-            width: 12px;
-            height: 12px;
-            background: #0600c2;
+            bottom: 0px;
+            right: 0px;
+            width: 11px;
+            height: 11px;
+            background: #EF4444;
             border: 2px solid #FFFFFF;
             border-radius: 50%;
-            box-shadow: 0 0 8px #0600c2;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.75);
+            animation: instagramRedDotPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
 
         .dark .glass-unread-dot {
-            background: #38BDF8;
+            background: #EF4444;
             border-color: #0E172A;
-            box-shadow: 0 0 8px #38BDF8;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.9);
+        }
+
+        @keyframes instagramRedDotPing {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% {
+                transform: scale(1.15);
+                box-shadow: 0 0 0 5px rgba(239, 68, 68, 0);
+            }
         }
 
         .glass-conv-details {
@@ -1307,6 +1319,12 @@
             max-width: 320px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
             user-select: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.12s ease, box-shadow 0.15s ease;
+        }
+        .glass-voice-player:active {
+            transform: scale(0.985);
         }
         .glass-voice-player.sent {
             background: linear-gradient(135deg, #0095f6 0%, #0077e6 100%);
@@ -1320,8 +1338,8 @@
             border-bottom-left-radius: 6px;
         }
         .glass-voice-play-btn {
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
@@ -1329,53 +1347,77 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .glass-voice-player.sent .glass-voice-play-btn {
             background: #ffffff;
             color: #0095f6;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         }
         .glass-voice-player.received .glass-voice-play-btn {
             background: #0095f6;
             color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 149, 246, 0.25);
         }
         .glass-voice-play-btn:hover {
             transform: scale(1.08);
         }
         .glass-voice-play-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
         .glass-voice-wave-container {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 5px;
             cursor: pointer;
         }
         .glass-voice-bars {
             display: flex;
             align-items: center;
             gap: 2.5px;
-            height: 18px;
+            height: 20px;
         }
         .glass-voice-bars span {
             width: 2.5px;
             border-radius: 2px;
-            transition: height 0.15s ease;
+            transform-origin: bottom;
+            transition: height 0.15s ease, opacity 0.2s ease;
         }
         .glass-voice-player.sent .glass-voice-bars span {
-            background: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.75);
         }
         .glass-voice-player.received .glass-voice-bars span {
             background: var(--color-text-muted);
         }
+        @keyframes waveBounce {
+            0% { transform: scaleY(0.35); opacity: 0.55; }
+            50% { transform: scaleY(1.35); opacity: 1; }
+            100% { transform: scaleY(0.35); opacity: 0.55; }
+        }
+        .glass-voice-player.is-playing .glass-voice-bars span {
+            animation: waveBounce 0.9s ease-in-out infinite;
+        }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(1) { animation-delay: 0.05s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(2) { animation-delay: 0.25s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(3) { animation-delay: 0.45s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(4) { animation-delay: 0.15s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(5) { animation-delay: 0.35s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(6) { animation-delay: 0.55s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(7) { animation-delay: 0.1s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(8) { animation-delay: 0.3s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(9) { animation-delay: 0.5s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(10) { animation-delay: 0.2s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(11) { animation-delay: 0.4s; }
+        .glass-voice-player.is-playing .glass-voice-bars span:nth-child(12) { animation-delay: 0.6s; }
         .glass-voice-progress-track {
             width: 100%;
-            height: 3px;
+            height: 4px;
             border-radius: 2px;
             background: rgba(0, 0, 0, 0.1);
             overflow: hidden;
             position: relative;
+            cursor: pointer;
         }
         .glass-voice-player.sent .glass-voice-progress-track {
             background: rgba(255, 255, 255, 0.3);
@@ -1383,7 +1425,7 @@
         .glass-voice-progress-fill {
             height: 100%;
             border-radius: 2px;
-            transition: width 0.1s linear;
+            transition: width 0.08s linear;
         }
         .glass-voice-player.sent .glass-voice-progress-fill {
             background: #ffffff;
@@ -2311,6 +2353,9 @@
                         }
                     }
 
+                    // Dispatch unread update event for instant red-dot clearance
+                    window.dispatchEvent(new CustomEvent('k71-messages-read'));
+
                     // Instagram-Style 3-Dot Bouncing Typing Indicator
                     const isTyping = Boolean(result.is_typing);
                     const existingTyping = document.getElementById('glassTypingRow');
@@ -2410,7 +2455,7 @@
                                 </div>
                             </div>
                             <span class="glass-voice-duration">${escapeHtml(durationLabel)}</span>
-                            <audio preload="metadata" src="${escapeHtml(msg.attachment_url)}"></audio>
+                            <audio preload="auto" playsinline src="${escapeHtml(msg.attachment_url)}"></audio>
                         </div>
                     `;
                 } else if (msg.attachment_url) {
@@ -2460,7 +2505,7 @@
                 });
             });
 
-            // Bind Voice Player audio playback controls
+            // Bind Voice Player audio playback controls (Fast Responsive Tap & Clean Replay)
             chatFeed.querySelectorAll('.glass-voice-player').forEach(player => {
                 const audio = player.querySelector('audio');
                 const playBtn = player.querySelector('.glass-voice-play-btn');
@@ -2468,74 +2513,134 @@
                 const pauseIcon = playBtn ? playBtn.querySelector('.pause-icon') : null;
                 const progressFill = player.querySelector('.glass-voice-progress-fill');
                 const durationSpan = player.querySelector('.glass-voice-duration');
-                const originalDurationText = durationSpan ? durationSpan.textContent : '0:00';
+                const originalDurationText = durationSpan ? durationSpan.textContent : '0:05';
 
-                if (!audio || !playBtn) return;
+                if (!audio) return;
+
+                function formatTime(secs) {
+                    if (isNaN(secs) || !isFinite(secs) || secs < 0) return '0:00';
+                    const m = Math.floor(secs / 60);
+                    const s = Math.floor(secs % 60);
+                    return `${m}:${s < 10 ? '0' : ''}${s}`;
+                }
 
                 audio.addEventListener('loadedmetadata', () => {
                     if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
-                        const m = Math.floor(audio.duration / 60);
-                        const s = Math.floor(audio.duration % 60);
                         if (durationSpan && (originalDurationText === '0:00' || originalDurationText === '0:05')) {
-                            durationSpan.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                            durationSpan.textContent = formatTime(audio.duration);
                         }
                     }
                 });
 
                 audio.addEventListener('timeupdate', () => {
-                    if (!audio.duration) return;
-                    const pct = (audio.currentTime / audio.duration) * 100;
+                    if (!audio.duration || isNaN(audio.duration)) return;
+                    const pct = Math.min(100, Math.max(0, (audio.currentTime / audio.duration) * 100));
                     if (progressFill) progressFill.style.width = `${pct}%`;
                     const rem = Math.max(0, audio.duration - audio.currentTime);
-                    const m = Math.floor(rem / 60);
-                    const s = Math.floor(rem % 60);
                     if (durationSpan) {
-                        durationSpan.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+                        durationSpan.textContent = formatTime(rem);
                     }
                 });
 
-                audio.addEventListener('ended', () => {
+                function resetToStart() {
+                    player.classList.remove('is-playing');
                     if (playIcon) playIcon.style.display = 'block';
                     if (pauseIcon) pauseIcon.style.display = 'none';
                     if (progressFill) progressFill.style.width = '0%';
                     if (durationSpan) durationSpan.textContent = originalDurationText;
+                }
+
+                audio.addEventListener('ended', () => {
+                    audio.currentTime = 0;
+                    resetToStart();
                 });
 
                 audio.addEventListener('pause', () => {
+                    player.classList.remove('is-playing');
                     if (playIcon) playIcon.style.display = 'block';
                     if (pauseIcon) pauseIcon.style.display = 'none';
                 });
 
                 audio.addEventListener('play', () => {
-                    // Pause all other voice players
+                    // Pause any other playing voice notes across the page
                     document.querySelectorAll('.glass-voice-player audio').forEach(otherAudio => {
                         if (otherAudio !== audio && !otherAudio.paused) {
                             otherAudio.pause();
                             otherAudio.currentTime = 0;
                         }
                     });
+                    player.classList.add('is-playing');
                     if (playIcon) playIcon.style.display = 'none';
                     if (pauseIcon) pauseIcon.style.display = 'block';
                 });
 
-                playBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
+                // Toggle Playback: Play once -> Tap again pause -> Tap again replay
+                function togglePlay(e) {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+
+                    // If audio finished or near the end, reset to 0 so it cleanly plays again from start
+                    if (audio.ended || (audio.duration && audio.currentTime >= audio.duration - 0.2)) {
+                        audio.currentTime = 0;
+                        if (progressFill) progressFill.style.width = '0%';
+                    }
+
                     if (audio.paused) {
-                        audio.play().catch(e => console.log('Audio playback prevented:', e));
+                        // Pause all others first
+                        document.querySelectorAll('.glass-voice-player audio').forEach(otherAudio => {
+                            if (otherAudio !== audio && !otherAudio.paused) {
+                                otherAudio.pause();
+                                otherAudio.currentTime = 0;
+                            }
+                        });
+
+                        const playPromise = audio.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(() => {
+                                player.classList.add('is-playing');
+                                if (playIcon) playIcon.style.display = 'none';
+                                if (pauseIcon) pauseIcon.style.display = 'block';
+                            }).catch(err => {
+                                console.warn('Audio playback error, retrying with load():', err);
+                                audio.load();
+                                audio.play().catch(e2 => console.error('Audio play retry error:', e2));
+                            });
+                        }
                     } else {
                         audio.pause();
+                        player.classList.remove('is-playing');
+                        if (playIcon) playIcon.style.display = 'block';
+                        if (pauseIcon) pauseIcon.style.display = 'none';
                     }
+                }
+
+                // Attach to Play Button
+                if (playBtn) {
+                    playBtn.addEventListener('click', togglePlay);
+                }
+
+                // Attach to entire voice bubble for ultra-responsive mobile tap
+                player.addEventListener('click', (e) => {
+                    if (e.target.closest('.glass-voice-progress-track') || e.target.closest('.glass-msg-unsend-btn')) {
+                        return; // Let progress scrubbing or unsend action handle its own click
+                    }
+                    togglePlay(e);
                 });
 
                 const track = player.querySelector('.glass-voice-progress-track');
                 if (track) {
                     track.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        if (!audio.duration) return;
+                        if (!audio.duration || isNaN(audio.duration)) return;
                         const rect = track.getBoundingClientRect();
                         const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                         audio.currentTime = pos * audio.duration;
-                        if (audio.paused) audio.play().catch(() => {});
+                        if (progressFill) progressFill.style.width = `${pos * 100}%`;
+                        if (audio.paused) {
+                            audio.play().catch(() => {});
+                        }
                     });
                 }
             });

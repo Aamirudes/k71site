@@ -94,8 +94,14 @@
 
             <a href="{{ route('messages.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('messages.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
-                <span class="flex items-center gap-2.5">
-                    <span class="text-base">💬</span>
+                <span class="flex items-center gap-2.5 relative">
+                    <span class="text-base relative inline-flex items-center">
+                        💬
+                        <span class="bottom-nav-messages-dot absolute -top-1 -right-1.5 flex h-2.5 w-2.5 hidden">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EF4444] ring-1.5 ring-white shadow-sm"></span>
+                        </span>
+                    </span>
                     <span>Direct Messages</span>
                 </span>
                 <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 dark:bg-white/10 dark:text-stone-200 border border-stone-200 dark:border-white/15">
