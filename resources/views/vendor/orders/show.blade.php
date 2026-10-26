@@ -41,6 +41,7 @@
     @endif
 
     @php
+        $totalConsignmentWeight = (int) round(($weightKg ?? 0.5) * 1000);
         $productNetSubtotal = max(0, $order->subtotal - $order->discount_amount);
         $platformCommissionPaise = (int) round($productNetSubtotal * 0.05);
         $vendorNetPayoutPaise = $order->vendor_payout_amount ?: ($productNetSubtotal - $platformCommissionPaise);

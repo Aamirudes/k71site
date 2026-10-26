@@ -13,8 +13,10 @@
         }
         $savings = max(0, ($product->compare_at_price - $product->base_price) / 100);
         
-        $sellerPhone = preg_replace('/[^0-9]/', '', $product->vendor->contact_phone ?? '');
+        $rawPhone = $product->vendor->contact_phone ?: ($product->vendor->user->phone ?? '');
+        $sellerPhone = preg_replace('/[^0-9]/', '', $rawPhone);
         if (strlen($sellerPhone) === 10) { $sellerPhone = '91' . $sellerPhone; }
+        if (empty($sellerPhone)) { $sellerPhone = '919876543210'; }
         $waProductMsg = rawurlencode("Hello {$product->vendor->shop_name}! I am interested in {$product->title} (₹" . number_format($product->base_price / 100, 2) . ") on K71 Marketplace. Could you please share more details or availability?");
 
         $isWishlisted = in_array($product->id, \App\Models\Wishlist::getUserWishlistIds());
@@ -90,7 +92,14 @@
                 'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
                 'size' => $formatSizeLabel($rawSize, $v->sku),
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
-                'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
+                @php
+                    $baseRs = $product->base_price / 100;
+                    $calcPrice = $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : $baseRs);
+                    if ($calcPrice <= 10 && $baseRs > 50) {
+                        $calcPrice = $baseRs;
+                    }
+                @endphp
+                'price' => number_format($calcPrice, 2, '.', ''),
                 'image_url' => $v->image_url,
                 'attributes_hash' => $v->attributes_hash ?: []
             ]; 
@@ -198,7 +207,14 @@
                 'color_hex' => $v->attributes_hash['color_hex'] ?? ($v->color_hex ?? '#111827'),
                 'size' => $formatSizeLabel($rawSize, $v->sku),
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
-                'price' => $v->price ? number_format((float)$v->price, 2, '.', '') : ($v->price_override ? number_format($v->price_override / 100, 2, '.', '') : number_format($product->base_price / 100, 2, '.', '')),
+                'price' => (function() use ($v, $product) {
+                    $baseRs = $product->base_price / 100;
+                    $calcPrice = $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : $baseRs);
+                    if ($calcPrice <= 10 && $baseRs > 50) {
+                        $calcPrice = $baseRs;
+                    }
+                    return number_format($calcPrice, 2, '.', '');
+                })(),
                 'image_url' => $v->image_url,
                 'attributes_hash' => $v->attributes_hash ?: []
             ]; 

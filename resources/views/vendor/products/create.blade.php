@@ -2603,11 +2603,36 @@ function liquidProductUploader() {
             this.generateElecMatrix();
             this.$watch('form.base_price', (val) => {
                 if (val && parseFloat(val) > 0) {
-                    this.variants.forEach(v => { if (!v.price) v.price = val; });
-                    this.footwearVariants.forEach(v => { if (!v.price) v.price = val; });
-                    this.groceryVariants.forEach(g => { if (!g.price) g.price = val; });
-                    this.elecVariants.forEach(e => { if (!e.price) e.price = val; });
-                    this.foodPortions.forEach(p => { if (!p.price) p.price = val; });
+                    this.variants.forEach(v => {
+                        if (!v.price || parseFloat(v.price) <= 10 || v._autoPrice) {
+                            v.price = val;
+                            v._autoPrice = true;
+                        }
+                    });
+                    this.footwearVariants.forEach(v => {
+                        if (!v.price || parseFloat(v.price) <= 10 || v._autoPrice) {
+                            v.price = val;
+                            v._autoPrice = true;
+                        }
+                    });
+                    this.groceryVariants.forEach(g => {
+                        if (!g.price || parseFloat(g.price) <= 10 || g._autoPrice) {
+                            g.price = val;
+                            g._autoPrice = true;
+                        }
+                    });
+                    this.elecVariants.forEach(e => {
+                        if (!e.price || parseFloat(e.price) <= 10 || e._autoPrice) {
+                            e.price = val;
+                            e._autoPrice = true;
+                        }
+                    });
+                    this.foodPortions.forEach(p => {
+                        if (!p.price || parseFloat(p.price) <= 10 || p._autoPrice) {
+                            p.price = val;
+                            p._autoPrice = true;
+                        }
+                    });
                 }
             });
         },
@@ -2902,6 +2927,23 @@ function liquidProductUploader() {
             if (!this.form.description.trim()) {
                 alert('Please enter a Product Description.');
                 return;
+            }
+
+            // Fallback any empty or truncated variant price to form.base_price
+            const baseP = parseFloat(this.form.base_price) || 0;
+            if (this.variants && this.variants.length) {
+                this.variants.forEach(v => {
+                    if (!v.price || parseFloat(v.price) <= 0 || (parseFloat(v.price) <= 10 && baseP > 50)) {
+                        v.price = this.form.base_price;
+                    }
+                });
+            }
+            if (this.footwearVariants && this.footwearVariants.length) {
+                this.footwearVariants.forEach(v => {
+                    if (!v.price || parseFloat(v.price) <= 0 || (parseFloat(v.price) <= 10 && baseP > 50)) {
+                        v.price = this.form.base_price;
+                    }
+                });
             }
 
             if (this.activeVariantTab === 'enquiry') {

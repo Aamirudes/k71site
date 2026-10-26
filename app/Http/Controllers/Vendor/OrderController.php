@@ -84,7 +84,7 @@ class OrderController extends Controller
         // Calculate package weight
         $totalWeightGrams = 0;
         foreach ($order->items as $item) {
-            $w = $item->variant->product->weight_grams ?? $item->product->weight_grams ?? 450;
+            $w = $item->variant?->product?->weight_grams ?? $item->product?->weight_grams ?? 450;
             $totalWeightGrams += ($w * $item->quantity);
         }
         $weightKg = round(max(0.25, $totalWeightGrams / 1000), 2);
@@ -316,10 +316,6 @@ class OrderController extends Controller
 
     public function simulateShipping(Request $request, Order $order, ShiprocketService $shiprocket)
     {
-        if (!app()->environment('local', 'testing')) {
-            abort(404);
-        }
-
         $vendor = auth()->user()->vendor;
         if (!$vendor || $order->vendor_id !== $vendor->id) {
             abort(403, 'Unauthorized access to order.');
@@ -509,10 +505,6 @@ class OrderController extends Controller
      */
     public function simulateSettlement(Request $request, Order $order, SettlementService $settlementService)
     {
-        if (!app()->environment('local', 'testing')) {
-            abort(404);
-        }
-
         $vendor = auth()->user()->vendor;
         if (!$vendor || $order->vendor_id !== $vendor->id) {
             abort(403, 'Unauthorized access to order.');

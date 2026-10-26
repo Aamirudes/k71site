@@ -471,31 +471,55 @@
                 },
 
                 uploadVideo(file) {
+                    if (!file) return;
                     this.uploading = true;
-                    this.uploadProgress = 10;
+                    this.uploadProgress = 15;
                     const formData = new FormData();
                     formData.append('video', file);
                     formData.append('_token', '{{ csrf_token() }}');
 
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', '{{ route("vendor.shorts.upload") }}', true);
+                    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
-                            this.uploadProgress = Math.round((e.loaded / e.total) * 90);
+                            this.uploadProgress = Math.max(15, Math.round((e.loaded / e.total) * 95));
                         }
                     };
 
                     xhr.onload = () => {
                         this.uploading = false;
                         if (xhr.status === 200) {
-                            const res = JSON.parse(xhr.responseText);
-                            this.videoUrl = res.url;
-                            this.videoPath = res.video_path;
-                            this.uploadProgress = 100;
-                        } else {
-                            alert('Failed to upload video. Please ensure file is valid MP4 or WebM under 100MB.');
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                if (res.success) {
+                                    this.videoUrl = res.url;
+                                    this.videoPath = res.video_path;
+                                    this.uploadProgress = 100;
+                                    this.$nextTick(() => {
+                                        const vEl = document.getElementById('videoPreview');
+                                        if (vEl) {
+                                            vEl.onloadeddata = () => {
+                                                setTimeout(() => this.captureFrame(), 400);
+                                            };
+                                        }
+                                    });
+                                    return;
+                                } else {
+                                    alert(res.message || 'Failed to upload video.');
+                                    return;
+                                }
+                            } catch (e) {}
                         }
+
+                        let errMsg = 'Failed to upload video. Please ensure file is valid MP4 or WebM under 100MB.';
+                        try {
+                            const errRes = JSON.parse(xhr.responseText);
+                            if (errRes.message) errMsg = errRes.message;
+                            else if (errRes.error) errMsg = errRes.error;
+                        } catch (e) {}
+                        alert(errMsg);
                     };
 
                     xhr.onerror = () => {

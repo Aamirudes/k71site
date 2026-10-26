@@ -139,7 +139,7 @@ if ($syncRequested) {
                 if (file_exists($sourceDir . '/public/index.php')) {
                     @copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php');
                 }
-                $standaloneFiles = ['deploy.php', 'messages.php', 'db.php'];
+                $standaloneFiles = ['deploy.php', 'messages.php', 'db.php', '.user.ini', '.htaccess'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
                         @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
@@ -412,16 +412,43 @@ try {
 }
 echo "</div>";
 
-// 9. Harden Database Schema Directly (Expands SEO columns to avoid MySQL String Truncation 1406 errors)
+// 9. Harden Database Schema Directly (Expands SEO columns & username to avoid MySQL String Truncation 1406 errors)
 try {
+    DB::statement("ALTER TABLE `users` MODIFY `username` VARCHAR(60) NOT NULL");
+    DB::statement("ALTER TABLE `vendors` MODIFY `slug` VARCHAR(60) NOT NULL");
     DB::statement("ALTER TABLE `categories` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns in categories, products, vendors, and pages expanded to VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
+
+// 9b. Auto-Repair Product Variants with Incorrect or Truncated Prices (e.g. 5.00 when base price is 599.00)
+try {
+    $affectedProducts = DB::table('products')->where('base_price', '>=', 5000)->pluck('base_price', 'id');
+    $fixedCount = 0;
+    foreach ($affectedProducts as $pId => $basePrice) {
+        $properPrice = $basePrice / 100;
+        $updated = DB::table('product_variants')
+            ->where('product_id', $pId)
+            ->where(function($q) {
+                $q->whereNull('price')
+                  ->orWhere('price', '<=', 10.00)
+                  ->orWhere('price_override', '<=', 1000);
+            })
+            ->update([
+                'price' => $properPrice,
+                'price_override' => $basePrice,
+                'updated_at' => now(),
+            ]);
+        $fixedCount += $updated;
+    }
+    if ($fixedCount > 0) {
+        echo "<div class='step'><div class='step-title'>🏷️ Product Price Auto-Correction:</div><pre class='success'>Fixed {$fixedCount} product variant(s) where price was incorrectly stored as <= ₹10 to match their product base price (e.g. ₹599.00).</pre></div>";
+    }
+} catch (\Throwable $e) {}
 
 // 10. Production Safe Deployment Tasks (NEVER resets vendors or database)
 $tasks = [
@@ -432,6 +459,14 @@ $tasks = [
 try {
     if (Schema::hasTable('navigation_items') && DB::table('navigation_items')->count() === 0) {
         $tasks['Seed Multi-Panel Navigation Structure'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'NavigationSeeder', '--force' => true]];
+    }
+} catch (\Throwable $e) {}
+
+// Ensure all 15 Indian Category Demo Vendors exist on live site (auto-seed if less than 10 or requested)
+try {
+    $existingVendorsCount = Schema::hasTable('vendors') ? DB::table('vendors')->count() : 0;
+    if ($existingVendorsCount < 10 || !empty($_GET['seed_vendors'])) {
+        $tasks['Seed All 15 Indian Demo Category Vendors'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'DemoIndianCategoryVendorsSeeder', '--force' => true]];
     }
 } catch (\Throwable $e) {}
 
@@ -479,6 +514,20 @@ try {
     echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   Password: Hashir1284@0\n   User ID: {$admin->id}</pre>";
 } catch (\Throwable $e) {
     echo "<pre class='error'>Failed to enforce admin account: " . htmlspecialchars($e->getMessage()) . "</pre>";
+}
+echo "</div>";
+
+// 11b. Active Vendors In Database Verification
+echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
+try {
+    $allVendors = DB::table('vendors')->select('id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
+    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\nDefault Password for Demo Vendors: Vendor@123#K71\n\n";
+    foreach ($allVendors as $v) {
+        echo "• ID {$v->id} | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
+    }
+    echo "</pre>";
+} catch (\Throwable $e) {
+    echo "<pre class='error'>Vendors query error: " . htmlspecialchars($e->getMessage()) . "</pre>";
 }
 echo "</div>";
 
@@ -538,6 +587,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&sync=1&seed_vendors=1' class='btn btn-purple'>🌱 Pull & Seed Demo Vendors</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";

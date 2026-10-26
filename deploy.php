@@ -139,7 +139,7 @@ if ($syncRequested) {
                 if (file_exists($sourceDir . '/public/index.php')) {
                     @copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php');
                 }
-                $standaloneFiles = ['deploy.php', 'messages.php', 'db.php'];
+                $standaloneFiles = ['deploy.php', 'messages.php', 'db.php', '.user.ini', '.htaccess'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
                         @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
@@ -424,6 +424,31 @@ try {
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
+
+// 9b. Auto-Repair Product Variants with Incorrect or Truncated Prices (e.g. 5.00 when base price is 599.00)
+try {
+    $affectedProducts = DB::table('products')->where('base_price', '>=', 5000)->pluck('base_price', 'id');
+    $fixedCount = 0;
+    foreach ($affectedProducts as $pId => $basePrice) {
+        $properPrice = $basePrice / 100;
+        $updated = DB::table('product_variants')
+            ->where('product_id', $pId)
+            ->where(function($q) {
+                $q->whereNull('price')
+                  ->orWhere('price', '<=', 10.00)
+                  ->orWhere('price_override', '<=', 1000);
+            })
+            ->update([
+                'price' => $properPrice,
+                'price_override' => $basePrice,
+                'updated_at' => now(),
+            ]);
+        $fixedCount += $updated;
+    }
+    if ($fixedCount > 0) {
+        echo "<div class='step'><div class='step-title'>🏷️ Product Price Auto-Correction:</div><pre class='success'>Fixed {$fixedCount} product variant(s) where price was incorrectly stored as <= ₹10 to match their product base price (e.g. ₹599.00).</pre></div>";
+    }
+} catch (\Throwable $e) {}
 
 // 10. Production Safe Deployment Tasks (NEVER resets vendors or database)
 $tasks = [

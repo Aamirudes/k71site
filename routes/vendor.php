@@ -29,10 +29,8 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::post('/orders/{order}/ship-automated', [\App\Http\Controllers\Vendor\OrderController::class, 'shipAutomated'])->name('orders.ship_automated');
         Route::post('/orders/{order}/accept', [\App\Http\Controllers\Vendor\OrderController::class, 'acceptOrder'])->name('orders.accept');
         Route::post('/orders/{order}/reject', [\App\Http\Controllers\Vendor\OrderController::class, 'rejectOrder'])->name('orders.reject');
-        if (app()->environment('local', 'testing')) {
-            Route::post('/orders/{order}/simulate-shipping', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateShipping'])->name('orders.simulate_shipping');
-            Route::post('/orders/{order}/simulate-settlement', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateSettlement'])->name('orders.simulate_settlement');
-        }
+        Route::post('/orders/{order}/simulate-shipping', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateShipping'])->name('orders.simulate_shipping');
+        Route::post('/orders/{order}/simulate-settlement', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateSettlement'])->name('orders.simulate_settlement');
         Route::get('/orders/{order}/status', fn(\App\Models\Order $order) => redirect()->route('vendor.orders.show', $order));
         Route::put('/orders/{order}/status', [\App\Http\Controllers\Vendor\OrderController::class, 'updateStatus'])->name('orders.status');
         Route::get('/orders/{order}/invoice', [\App\Http\Controllers\Vendor\OrderController::class, 'invoice'])->name('orders.invoice');

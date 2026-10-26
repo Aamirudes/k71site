@@ -22,6 +22,13 @@
                 <h1 class="text-base sm:text-2xl font-bold text-gray-900 tracking-tight truncate">Edit Product: {{ $product->title }}</h1>
             </div>
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                <button type="button" 
+                        onclick="if(confirm('Are you sure you want to delete this product? This will remove it from your live store.')) { document.getElementById('deleteProductForm').submit(); }"
+                        class="px-3 sm:px-4 py-2 sm:py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-bold rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
+                        title="Delete this product">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <span class="hidden sm:inline">Delete</span>
+                </button>
                 <a href="{{ route('vendor.products.index') }}" class="text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 px-2 sm:px-4 py-2">Discard</a>
                 <button type="submit" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-brand-text text-white text-xs sm:text-sm font-bold rounded-xl shadow hover:bg-black transition-colors flex items-center gap-1.5 sm:gap-2 active:scale-95 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
@@ -834,6 +841,11 @@
                 <span>Update Product</span>
             </button>
         </div>
+    </form>
+    
+    <form id="deleteProductForm" action="{{ route('vendor.products.destroy', $product) }}" method="POST" style="display:none;">
+        @csrf
+        @method('DELETE')
     </form>
     
     <script>

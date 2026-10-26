@@ -430,8 +430,12 @@ class ProductController extends Controller
                 foreach ($request->variants as $index => $variantData) {
                     $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
                     
-                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : null;
-                    $priceOverride = $priceDecimal ? (int) ($priceDecimal * 100) : null;
+                    $baseRupees = round($validated['base_price'] / 100, 2);
+                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : $baseRupees;
+                    if ($priceDecimal <= 0) {
+                        $priceDecimal = $baseRupees;
+                    }
+                    $priceOverride = (int) round($priceDecimal * 100);
 
                     $attributesHash = [];
                     if (!empty($variantData['color'])) $attributesHash['color'] = $variantData['color'];
@@ -556,17 +560,23 @@ class ProductController extends Controller
 
         $product->load(['variants', 'images', 'modifiers', 'gigPackages', 'category']);
 
-        $existingVariants = $product->variants->map(function ($v) {
+        $existingVariants = $product->variants->map(function ($v) use ($product) {
+            $attr = is_array($v->attributes_hash) ? $v->attributes_hash : (json_decode($v->attributes_hash ?? '[]', true) ?: []);
+            $baseRupees = round($product->base_price / 100, 2);
+            $varPrice = $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : $baseRupees);
+            if ((empty($varPrice) || $varPrice <= 10) && $baseRupees > 50) {
+                $varPrice = $baseRupees;
+            }
             return [
                 'name' => $v->sku ?: 'Default',
-                'price' => $v->price ? (float)$v->price : ($v->price_override ? $v->price_override / 100 : ''),
+                'price' => $varPrice,
                 'stock' => (int) ($v->stock_quantity ?: $v->stock),
                 'sku' => $v->sku ?: '',
-                'color' => $v->attributes_hash['color'] ?? '',
-                'color_hex' => $v->attributes_hash['color_hex'] ?? '#000000',
-                'size' => $v->attributes_hash['size'] ?? '',
+                'color' => $attr['color'] ?? '',
+                'color_hex' => $attr['color_hex'] ?? '#000000',
+                'size' => $attr['size'] ?? '',
                 'image_url' => $v->image_url ?? '',
-                'attributes_hash' => $v->attributes_hash,
+                'attributes_hash' => $attr,
             ];
         })->values()->toArray();
 
@@ -740,8 +750,12 @@ class ProductController extends Controller
                     $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
                     $activeSkus[] = $sku;
                     
-                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : null;
-                    $priceOverride = $priceDecimal ? (int) ($priceDecimal * 100) : null;
+                    $baseRupees = round($validated['base_price'] / 100, 2);
+                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : $baseRupees;
+                    if ($priceDecimal <= 0) {
+                        $priceDecimal = $baseRupees;
+                    }
+                    $priceOverride = (int) round($priceDecimal * 100);
 
                     $attributesHash = [];
                     if (!empty($variantData['color'])) $attributesHash['color'] = $variantData['color'];
@@ -951,8 +965,15 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
-        $product->delete();
-        return redirect()->route('vendor.products.index')->with('success', 'Product deleted successfully.');
+        try {
+            $productTitle = $product->title;
+            // Cleanly delete associated variants and product
+            $product->variants()->delete();
+            $product->delete();
+            return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has been successfully deleted.");
+        } catch (\Throwable $e) {
+            return redirect()->route('vendor.products.index')->with('error', 'Could not delete product: ' . $e->getMessage());
+        }
     }
 
     public function toggleStatus(Product $product)

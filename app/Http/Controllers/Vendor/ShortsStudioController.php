@@ -112,18 +112,61 @@ class ShortsStudioController extends Controller
      */
     public function upload(Request $request): JsonResponse
     {
-        $request->validate([
-            'video' => 'required|file|mimes:mp4,webm,mov,quicktime|max:102400', // max 100MB
-        ]);
-
         $vendor = $this->getVendor();
         if (!$vendor) {
-            return response()->json(['success' => false, 'message' => 'Vendor not found.'], 403);
+            return response()->json(['success' => false, 'message' => 'Vendor profile not found. Please log in as a vendor.'], 403);
+        }
+
+        if (!$request->hasFile('video')) {
+            $err = 'No video file was received. Please check if file exceeds maximum size or retry.';
+            if (isset($_FILES['video']['error'])) {
+                $code = $_FILES['video']['error'];
+                $err = match($code) {
+                    UPLOAD_ERR_INI_SIZE => 'Video file exceeds the server upload_max_filesize limit.',
+                    UPLOAD_ERR_FORM_SIZE => 'Video file exceeds the form maximum file size.',
+                    UPLOAD_ERR_PARTIAL => 'The uploaded video file was only partially uploaded. Please try again.',
+                    UPLOAD_ERR_NO_FILE => 'No file was uploaded.',
+                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder on server.',
+                    UPLOAD_ERR_CANT_WRITE => 'Failed to write video file to disk.',
+                    default => 'Upload error code: ' . $code,
+                };
+            }
+            return response()->json(['success' => false, 'message' => $err], 422);
         }
 
         $file = $request->file('video');
-        $filename = 'short_' . time() . '_' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+        if (!$file->isValid()) {
+            return response()->json(['success' => false, 'message' => 'Uploaded file is not valid: ' . $file->getErrorMessage()], 422);
+        }
+
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'mp4');
+        $allowedExts = ['mp4', 'webm', 'mov', 'quicktime', 'm4v', 'mkv', 'avi', '3gp'];
+        if (!in_array($ext, $allowedExts)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Unsupported video format (.{$ext}). Please upload an MP4, WebM, or MOV video reel."
+            ], 422);
+        }
+
+        if ($file->getSize() > 200 * 1024 * 1024) { // 200MB limit
+            return response()->json([
+                'success' => false,
+                'message' => 'Video size exceeds 200MB. Please trim or compress your reel before uploading.'
+            ], 422);
+        }
+
+        $filename = 'short_' . time() . '_' . Str::random(8) . '.' . $ext;
         $path = $file->storeAs('shorts/videos', $filename, 'public');
+
+        // Ensure public copy exists for instant direct access on Hostinger
+        $publicDir = public_path('storage/shorts/videos');
+        if (!file_exists($publicDir)) {
+            @mkdir($publicDir, 0755, true);
+        }
+        try {
+            $destFile = $publicDir . '/' . $filename;
+            @copy(storage_path('app/public/' . $path), $destFile);
+        } catch (\Throwable $e) {}
 
         return response()->json([
             'success' => true,
@@ -484,6 +527,14 @@ class ShortsStudioController extends Controller
         $path = 'shorts/thumbnails/' . $filename;
 
         Storage::disk('public')->put($path, $decoded);
+
+        $publicDir = public_path('storage/shorts/thumbnails');
+        if (!file_exists($publicDir)) {
+            @mkdir($publicDir, 0755, true);
+        }
+        try {
+            @file_put_contents($publicDir . '/' . $filename, $decoded);
+        } catch (\Throwable $e) {}
 
         return asset('storage/' . $path);
     }
