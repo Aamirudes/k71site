@@ -425,8 +425,27 @@ class ProductController extends Controller
             $validated['total_stock'] = $sumStock;
         }
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated) {
-            $product = Product::create($validated);
+        $productAttributes = collect($validated)->except([
+            'images',
+            'cover_image_index',
+            'video',
+            'video_url',
+            'video_path',
+            'variants',
+            'food_portions',
+            'modifiers',
+            'gig_packages',
+            'b2b_tiers',
+            'service_config',
+            'specifications',
+            'enable_rfq',
+        ])->toArray();
+
+        $productAttributes['vendor_id'] = $vendor->id;
+
+        try {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $vendor) {
+                $product = Product::create($productAttributes);
 
             // 1. Process standard / fashion matrix variants
             if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
@@ -536,9 +555,13 @@ class ProductController extends Controller
                 $targetVideo = public_path('storage/' . $videoPath);
                 @mkdir(dirname($targetVideo), 0755, true);
                 @copy(storage_path('app/public/' . $videoPath), $targetVideo);
-                $product->update(['video_path' => $videoPath]);
+                if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'video_path')) {
+                    $product->update(['video_path' => $videoPath]);
+                }
             } elseif ($request->filled('video_url')) {
-                $product->update(['video_url' => trim($request->input('video_url'))]);
+                if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'video_url')) {
+                    $product->update(['video_url' => trim($request->input('video_url'))]);
+                }
             }
 
             if ($request->hasFile('images')) {
@@ -573,7 +596,13 @@ class ProductController extends Controller
 
             return redirect()->route('vendor.products.index')->with('success', 'Product created successfully.');
         });
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Product creation failed: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString()
+        ]);
+        return back()->withInput()->with('error', 'Unable to publish product: ' . $e->getMessage());
     }
+}
 
     public function edit(Product $product)
     {
@@ -771,8 +800,26 @@ class ProductController extends Controller
             $validated['total_stock'] = $sumStock;
         }
 
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $product) {
-            $product->update($validated);
+        $productAttributes = collect($validated)->except([
+            'images',
+            'cover_image_index',
+            'video',
+            'remove_video',
+            'video_url',
+            'video_path',
+            'variants',
+            'food_portions',
+            'modifiers',
+            'gig_packages',
+            'b2b_tiers',
+            'service_config',
+            'specifications',
+            'enable_rfq',
+        ])->toArray();
+
+        try {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $product) {
+                $product->update($productAttributes);
 
             // 1. Process standard / fashion matrix variants
             if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
@@ -988,15 +1035,22 @@ class ProductController extends Controller
             }
 
             // 4. Process product video (optional)
+            $hasVideoUrl = \Illuminate\Support\Facades\Schema::hasColumn('products', 'video_url');
+            $hasVideoPath = \Illuminate\Support\Facades\Schema::hasColumn('products', 'video_path');
             if ($request->has('remove_video') && $request->boolean('remove_video')) {
-                if ($product->video_path) {
+                if ($hasVideoPath && $product->video_path) {
                     @unlink(storage_path('app/public/' . $product->video_path));
                     @unlink(public_path('storage/' . $product->video_path));
                 }
-                $product->update(['video_path' => null, 'video_url' => null]);
+                $updates = [];
+                if ($hasVideoPath) $updates['video_path'] = null;
+                if ($hasVideoUrl) $updates['video_url'] = null;
+                if (!empty($updates)) {
+                    $product->update($updates);
+                }
             } else {
                 if ($request->hasFile('video')) {
-                    if ($product->video_path) {
+                    if ($hasVideoPath && $product->video_path) {
                         @unlink(storage_path('app/public/' . $product->video_path));
                         @unlink(public_path('storage/' . $product->video_path));
                     }
@@ -1004,16 +1058,25 @@ class ProductController extends Controller
                     $targetVideo = public_path('storage/' . $videoPath);
                     @mkdir(dirname($targetVideo), 0755, true);
                     @copy(storage_path('app/public/' . $videoPath), $targetVideo);
-                    $product->update(['video_path' => $videoPath]);
+                    if ($hasVideoPath) {
+                        $product->update(['video_path' => $videoPath]);
+                    }
                 }
-                if ($request->has('video_url')) {
+                if ($request->has('video_url') && $hasVideoUrl) {
                     $product->update(['video_url' => trim($request->input('video_url')) ?: null]);
                 }
             }
 
             return redirect()->route('vendor.products.index')->with('success', 'Product updated successfully.');
         });
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Product update failed: ' . $e->getMessage(), [
+            'trace' => $e->getTraceAsString(),
+            'product_id' => $product->id,
+        ]);
+        return back()->withInput()->with('error', 'Unable to update product: ' . $e->getMessage());
     }
+}
 
     public function destroy(Product $product)
     {

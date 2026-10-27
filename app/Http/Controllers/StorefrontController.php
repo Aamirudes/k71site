@@ -134,9 +134,17 @@ class StorefrontController extends Controller
         $vendor = Vendor::with('settings')->where('slug', $slug)->firstOrFail();
         app()->instance('current_vendor', $vendor);
 
-        $requestHost = request()->getHost();
+        $requestHost = strtolower(request()->getHost());
+        $currentSubdomain = k71_extract_subdomain($requestHost);
         $isIp = in_array($requestHost, ['127.0.0.1', '::1']) || filter_var($requestHost, FILTER_VALIDATE_IP);
-        if (config('marketplace.use_subdomains', true) && !$isIp) {
+
+        // If accessed as /s/{slug} on the vendor's own subdomain, cleanly redirect to root /
+        if ($currentSubdomain === $vendor->slug && $request->is('s/*')) {
+            return redirect()->to('/', 301);
+        }
+
+        // If accessed on main domain (e.g. marblemandi.org/s/{slug}), redirect to vendor subdomain
+        if (config('marketplace.use_subdomains', true) && !$isIp && $currentSubdomain !== $vendor->slug) {
             $qs = request()->getQueryString();
             $targetUrl = $vendor->storefront_url . ($qs ? ('?' . $qs) : '');
             return redirect()->to($targetUrl, 301);

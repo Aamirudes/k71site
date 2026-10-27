@@ -45,6 +45,18 @@ class AppServiceProvider extends ServiceProvider
         Coupon::addGlobalScope(new VendorScope);
         Order::addGlobalScope(new VendorScope);
 
+        // Self-healing schema verification for products video columns
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('products') && !\Illuminate\Support\Facades\Schema::hasColumn('products', 'video_url')) {
+                \Illuminate\Support\Facades\Schema::table('products', function (\Illuminate\Database\Schema\Blueprint $table) {
+                    $table->string('video_url', 500)->nullable();
+                    $table->string('video_path', 500)->nullable();
+                });
+            }
+        } catch (\Throwable $e) {
+            // Silently ignore during migration or CLI bootstrap
+        }
+
         // Security: Rate Limiters
         \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $request) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());

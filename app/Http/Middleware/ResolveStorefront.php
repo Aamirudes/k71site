@@ -91,7 +91,7 @@ class ResolveStorefront
             }
 
             // Check if vendor is active
-            if ($vendor->status !== 'approved') {
+            if (!in_array($vendor->status, ['approved', 'active'])) {
                 return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
             }
 
