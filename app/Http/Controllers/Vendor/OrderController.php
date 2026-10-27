@@ -71,21 +71,25 @@ class OrderController extends Controller
 
     public function show(Order $order, ShiprocketService $shiprocket)
     {
-        $vendor = auth()->user()->vendor;
+        $vendor = auth()->user()?->vendor;
         if (!$vendor || $order->vendor_id !== $vendor->id) {
             abort(403, 'Unauthorized access to order.');
         }
 
-        app(\App\Services\SettlementService::class)->autoClearDueOrders();
+        try {
+            app(\App\Services\SettlementService::class)->autoClearDueOrders();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Settlement autoClearDueOrders error: ' . $e->getMessage());
+        }
+
         $order->refresh();
+        $order->load(['user', 'vendor.settings', 'items.product.images', 'items.variant.product', 'paymentClaim', 'shipment', 'statusLogs']);
 
-        $order->load(['user', 'items.product.images', 'items.variant', 'paymentClaim', 'shipment', 'statusLogs']);
-
-        // Calculate package weight
+        // Calculate package weight safely
         $totalWeightGrams = 0;
         foreach ($order->items as $item) {
             $w = $item->variant?->product?->weight_grams ?? $item->product?->weight_grams ?? 450;
-            $totalWeightGrams += ($w * $item->quantity);
+            $totalWeightGrams += ($w * ($item->quantity ?? 1));
         }
         $weightKg = round(max(0.25, $totalWeightGrams / 1000), 2);
 
@@ -94,16 +98,19 @@ class OrderController extends Controller
         if (!$order->isFoodOrder()) {
             try {
                 $rawAddr = $vendor->pickup_address;
-                $pickupAddr = is_array($rawAddr) ? $rawAddr : (json_decode($rawAddr, true) ?: []);
+                $pickupAddr = is_array($rawAddr) ? $rawAddr : (json_decode($rawAddr ?? '[]', true) ?: []);
                 $pickupPincode = $pickupAddr['pincode'] ?? $pickupAddr['pin_code'] ?? '305801';
 
                 $rawCustAddr = $order->address_snapshot;
-                $custAddr = is_array($rawCustAddr) ? $rawCustAddr : (json_decode($rawCustAddr, true) ?: []);
+                $custAddr = is_array($rawCustAddr) ? $rawCustAddr : (json_decode($rawCustAddr ?? '[]', true) ?: []);
                 $deliveryPincode = $custAddr['pincode'] ?? $custAddr['pin_code'] ?? '400050';
 
-                $ratesData = $shiprocket->checkRates($pickupPincode, $deliveryPincode, $weightKg, $order->payment_method === 'cod');
+                $res = $shiprocket->checkRates($pickupPincode, $deliveryPincode, $weightKg, $order->payment_method === 'cod');
+                if (is_array($res) && isset($res['available_couriers']) && is_array($res['available_couriers'])) {
+                    $ratesData = $res;
+                }
             } catch (\Throwable $e) {
-                // Silently fallback if rate query fails
+                \Illuminate\Support\Facades\Log::info('Shiprocket checkRates fallback: ' . $e->getMessage());
             }
         }
 

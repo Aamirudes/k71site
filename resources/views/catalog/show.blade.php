@@ -414,7 +414,7 @@
                         <div class="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4">
                             
                             <!-- Thumbnail Rail (Vertical on Desktop, Horizontal on Mobile) -->
-                            @if($product->images->count() > 1)
+                            @if($product->images->count() > 1 || $product->has_video)
                                 <div class="flex lg:flex-col gap-2.5 overflow-x-auto lg:overflow-y-auto max-h-[580px] no-scrollbar py-1 px-0.5 shrink-0">
                                     @foreach($product->images as $index => $image)
                                         <button type="button" 
@@ -427,6 +427,16 @@
                                                  onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                         </button>
                                     @endforeach
+
+                                    @if($product->has_video)
+                                        <button type="button" 
+                                                @click="activeImgIndex = 'video'"
+                                                :class="activeImgIndex === 'video' ? 'ring-2 ring-rose-500 ring-offset-2 border-transparent shadow-sm' : 'border-stone-200/80 opacity-70 hover:opacity-100'"
+                                                class="relative w-14 h-18 sm:w-16 sm:h-22 rounded-xl overflow-hidden bg-stone-900 text-white border transition-all duration-200 shrink-0 group focus:outline-none flex flex-col items-center justify-center cursor-pointer">
+                                            <svg class="w-6 h-6 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                                            <span class="text-[9px] font-bold uppercase tracking-wider mt-1 text-rose-400">Video</span>
+                                        </button>
+                                    @endif
                                 </div>
                             @endif
 
@@ -435,6 +445,16 @@
                                  @touchstart="handleTouchStart($event)"
                                  @touchend="handleTouchEnd($event)">
                                 
+                                @if($product->has_video)
+                                    <div x-show="activeImgIndex === 'video'" class="absolute inset-0 w-full h-full bg-black flex items-center justify-center z-5">
+                                        @if(str_contains($product->video_player_url, 'youtube.com') || str_contains($product->video_player_url, 'youtu.be'))
+                                            <iframe src="{{ str_replace('watch?v=', 'embed/', $product->video_player_url) }}" class="w-full h-full" frameborder="0" allowfullscreen allow="autoplay"></iframe>
+                                        @else
+                                            <video src="{{ $product->video_player_url }}" controls playsinline class="w-full h-full object-contain"></video>
+                                        @endif
+                                    </div>
+                                @endif
+
                                 @if($product->images->count() > 0)
                                     <!-- Dynamic Main Image -->
                                     <template x-for="(imgSrc, idx) in images" :key="idx">

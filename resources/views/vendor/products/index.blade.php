@@ -52,64 +52,70 @@
         <!-- Mobile View (Cards) -->
         <div class="block sm:hidden space-y-4">
             @foreach($products as $product)
-                <div class="bg-white/80 backdrop-blur-xl shadow-sm border border-gray-100 rounded-3xl p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div class="bg-white/80 backdrop-blur-xl shadow-sm border border-gray-100 rounded-3xl p-4 hover:shadow-md transition-shadow relative overflow-hidden group">
                     <div class="absolute top-0 left-0 w-1.5 h-full 
-                        {{ $product->status === 'active' ? 'bg-green-400' : '' }}
-                        {{ $product->status === 'draft' ? 'bg-yellow-400' : '' }}
+                        {{ $product->status === 'active' ? 'bg-green-500' : '' }}
+                        {{ $product->status === 'draft' ? 'bg-amber-400' : '' }}
                         {{ $product->status === 'archived' ? 'bg-gray-400' : '' }}
                     "></div>
                     
-                    <div class="flex gap-4">
-                        <div class="w-20 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
+                    <div class="flex gap-3.5">
+                        <div class="w-20 h-24 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100 shadow-2xs">
                             <img src="{{ $product->primary_image_url }}" 
                                  alt="{{ $product->title }}" 
                                  class="w-full h-full object-cover"
                                  onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                         </div>
                         
-                        <div class="flex-1 min-w-0 flex flex-col justify-between">
+                        <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                             <div>
-                                <h3 class="font-bold text-gray-900 truncate">{{ $product->title }}</h3>
+                                <h3 class="font-bold text-gray-900 text-sm sm:text-base truncate">{{ $product->title }}</h3>
                                 <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $product->category->name ?? 'Uncategorized' }} • SKU: {{ $product->sku ?? 'N/A' }}</p>
                             </div>
                             
-                            <div class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                                <div>
-                                    <p class="text-base font-black text-brand-text">₹{{ number_format($product->base_price / 100, 2) }}</p>
-                                    <p class="text-[11px] font-medium {{ $product->total_stock < 5 ? 'text-red-500' : 'text-gray-500' }}">Stock: {{ $product->total_stock }}</p>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <form action="{{ route('vendor.products.toggle_status', $product) }}" method="POST" class="inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" 
-                                                class="px-2.5 py-1 text-[11px] font-bold rounded-full border {{ $product->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200' }}">
-                                            {{ $product->status === 'active' ? '● Live' : '○ Draft' }}
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('vendor.products.duplicate', $product) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" 
-                                                title="Duplicate product"
-                                                onclick="return confirm('Duplicate this product to create a draft copy?');"
-                                                class="inline-flex items-center justify-center bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 rounded-xl px-2.5 py-1 text-xs font-bold shadow-2xs transition-colors cursor-pointer">
-                                            <span>📋 Clone</span>
-                                        </button>
-                                    </form>
-                                    <a href="{{ route('vendor.products.edit', $product) }}" class="inline-flex items-center justify-center bg-gray-900 text-white rounded-xl px-3 py-1 text-xs font-bold shadow-xs hover:bg-black transition-colors">
-                                        Edit
-                                    </a>
-                                    <form action="{{ route('vendor.products.destroy', $product) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product? This will remove it from your store.');" class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/80 rounded-xl px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer" title="Delete Product">
-                                            <svg class="w-3.5 h-3.5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            <span>Delete</span>
-                                        </button>
-                                    </form>
-                                </div>
+                            <div class="flex items-baseline gap-3 mt-2">
+                                <span class="text-base font-black text-brand-text">₹{{ number_format($product->base_price / 100, 2) }}</span>
+                                <span class="text-xs font-semibold {{ $product->total_stock < 5 ? 'text-red-500' : 'text-gray-500' }}">Stock: {{ $product->total_stock }}</span>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Dedicated Responsive Mobile Action Toolbar (All 4 buttons visible) -->
+                    <div class="grid grid-cols-4 gap-1.5 mt-3 pt-3 border-t border-gray-100/80">
+                        <form action="{{ route('vendor.products.toggle_status', $product) }}" method="POST" class="w-full m-0">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" 
+                                    title="Toggle between Live and Draft"
+                                    class="w-full py-1.5 px-1 text-[11px] font-bold rounded-xl border flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs {{ $product->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200' }}">
+                                <span class="truncate">{{ $product->status === 'active' ? '● Live' : '○ Draft' }}</span>
+                            </button>
+                        </form>
+
+                        <form action="{{ route('vendor.products.duplicate', $product) }}" method="POST" class="w-full m-0">
+                            @csrf
+                            <button type="submit" 
+                                    title="Duplicate product"
+                                    onclick="return confirm('Duplicate this product to create a draft copy?');"
+                                    class="w-full py-1.5 px-1 text-[11px] font-bold rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs">
+                                <span class="truncate">📋 Clone</span>
+                            </button>
+                        </form>
+
+                        <a href="{{ route('vendor.products.edit', $product) }}" 
+                           class="w-full py-1.5 px-1 text-[11px] font-bold rounded-xl bg-gray-900 text-white hover:bg-black flex items-center justify-center transition-all active:scale-95 shadow-2xs">
+                            <span class="truncate">✏️ Edit</span>
+                        </a>
+
+                        <form action="{{ route('vendor.products.destroy', $product) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product? This will remove it from your store.');" class="w-full m-0">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" 
+                                    title="Delete Product"
+                                    class="w-full py-1.5 px-1 text-[11px] font-bold rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-2xs">
+                                <span class="truncate">🗑️ Delete</span>
+                            </button>
+                        </form>
                     </div>
                 </div>
             @endforeach

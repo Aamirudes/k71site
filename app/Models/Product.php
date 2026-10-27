@@ -45,6 +45,8 @@ class Product extends Model
         'seo_title',
         'seo_description',
         'og_image',
+        'video_url',
+        'video_path',
         'published_at',
         'weight_grams',
         'is_returnable',
@@ -381,7 +383,7 @@ class Product extends Model
                 'dot_color' => 'bg-amber-500',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
-                'card_border_hover' => 'hover:border-amber-600',
+                'card_border_hover' => 'hover:border-orange-500',
                 'accent_text' => 'text-amber-800 dark:text-amber-400',
                 'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
                 'btn_pill' => 'bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white border border-amber-200',
@@ -544,6 +546,19 @@ class Product extends Model
     public function getCoverImageUrlAttribute(): string
     {
         return $this->primary_image_url;
+    }
+
+    public function getHasVideoAttribute(): bool
+    {
+        return !empty($this->video_path) || !empty($this->video_url);
+    }
+
+    public function getVideoPlayerUrlAttribute(): ?string
+    {
+        if (!empty($this->video_path)) {
+            return format_image_url($this->video_path);
+        }
+        return $this->video_url ?: null;
     }
 
     public function serviceOrders(): HasMany

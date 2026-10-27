@@ -40,7 +40,7 @@ class Cart extends Model
         if (!$userCart) {
             $guestCart->update([
                 'user_id' => $userId,
-                'session_id' => null,
+                'session_id' => $sessionId,
             ]);
             return;
         }

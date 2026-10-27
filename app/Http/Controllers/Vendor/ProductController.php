@@ -338,6 +338,9 @@ class ProductController extends Controller
             'specifications' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'cover_image_index' => ['nullable', 'integer', 'min:0'],
+            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg', 'max:51200'],
+            'video_url' => ['nullable', 'string', 'max:500'],
         ]);
 
         // Enforce strict vertical isolation from vendor profile with request input
@@ -527,8 +530,35 @@ class ProductController extends Controller
 
             $product->update(['has_variants' => $hasMultiple]);
 
+            // Process optional product video
+            if ($request->hasFile('video')) {
+                $videoPath = $request->file('video')->store('products/videos', 'public');
+                $targetVideo = public_path('storage/' . $videoPath);
+                @mkdir(dirname($targetVideo), 0755, true);
+                @copy(storage_path('app/public/' . $videoPath), $targetVideo);
+                $product->update(['video_path' => $videoPath]);
+            } elseif ($request->filled('video_url')) {
+                $product->update(['video_url' => trim($request->input('video_url'))]);
+            }
+
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
+                $uploadedFiles = $request->file('images');
+                $coverIdx = (int) $request->input('cover_image_index', 0);
+
+                // Prioritize chosen cover image at sort_order 0
+                $orderedFiles = [];
+                if (isset($uploadedFiles[$coverIdx])) {
+                    $orderedFiles[] = $uploadedFiles[$coverIdx];
+                    foreach ($uploadedFiles as $idx => $f) {
+                        if ($idx !== $coverIdx) {
+                            $orderedFiles[] = $f;
+                        }
+                    }
+                } else {
+                    $orderedFiles = $uploadedFiles;
+                }
+
+                foreach ($orderedFiles as $sortOrder => $image) {
                     $path = $image->store('products', 'public');
                     $target = public_path('storage/' . $path);
                     @mkdir(dirname($target), 0755, true);
@@ -536,7 +566,7 @@ class ProductController extends Controller
                     $product->images()->create([
                         'path' => $path,
                         'alt_text' => $product->title,
-                        'sort_order' => $index,
+                        'sort_order' => $sortOrder,
                     ]);
                 }
             }
@@ -664,6 +694,9 @@ class ProductController extends Controller
             'specifications' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg', 'max:51200'],
+            'video_url' => ['nullable', 'string', 'max:500'],
+            'remove_video' => ['nullable', 'boolean'],
         ]);
 
         // Enforce strict vertical isolation from vendor profile with request input
@@ -951,6 +984,30 @@ class ProductController extends Controller
                             $product->images()->where('id', $newImagesMap[$newIdx])->update(['sort_order' => $sortIdx]);
                         }
                     }
+                }
+            }
+
+            // 4. Process product video (optional)
+            if ($request->has('remove_video') && $request->boolean('remove_video')) {
+                if ($product->video_path) {
+                    @unlink(storage_path('app/public/' . $product->video_path));
+                    @unlink(public_path('storage/' . $product->video_path));
+                }
+                $product->update(['video_path' => null, 'video_url' => null]);
+            } else {
+                if ($request->hasFile('video')) {
+                    if ($product->video_path) {
+                        @unlink(storage_path('app/public/' . $product->video_path));
+                        @unlink(public_path('storage/' . $product->video_path));
+                    }
+                    $videoPath = $request->file('video')->store('products/videos', 'public');
+                    $targetVideo = public_path('storage/' . $videoPath);
+                    @mkdir(dirname($targetVideo), 0755, true);
+                    @copy(storage_path('app/public/' . $videoPath), $targetVideo);
+                    $product->update(['video_path' => $videoPath]);
+                }
+                if ($request->has('video_url')) {
+                    $product->update(['video_url' => trim($request->input('video_url')) ?: null]);
                 }
             }
 

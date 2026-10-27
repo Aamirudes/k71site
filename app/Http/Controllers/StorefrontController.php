@@ -133,6 +133,14 @@ class StorefrontController extends Controller
 
         $vendor = Vendor::with('settings')->where('slug', $slug)->firstOrFail();
         app()->instance('current_vendor', $vendor);
+
+        $requestHost = request()->getHost();
+        $isIp = in_array($requestHost, ['127.0.0.1', '::1']) || filter_var($requestHost, FILTER_VALIDATE_IP);
+        if (config('marketplace.use_subdomains', true) && !$isIp) {
+            $qs = request()->getQueryString();
+            $targetUrl = $vendor->storefront_url . ($qs ? ('?' . $qs) : '');
+            return redirect()->to($targetUrl, 301);
+        }
         
         $query = Product::with(['images', 'category', 'variants'])
             ->where('vendor_id', $vendor->id)

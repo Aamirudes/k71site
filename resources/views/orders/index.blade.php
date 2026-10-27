@@ -474,7 +474,7 @@
 
                                     <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
                                         <span class="text-gray-400 font-medium">Vendor Store:</span>
-                                        <a href="{{ route('storefront.show', $order->vendor->slug) }}" @click.stop class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
+                                        <a href="{{ $order->vendor->storefront_url }}" @click.stop class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
                                             {{ $order->vendor->shop_name }} ↗
                                         </a>
                                     </div>

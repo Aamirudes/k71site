@@ -739,10 +739,15 @@
                     <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
                         <div class="flex items-center gap-2.5">
                             <span class="w-7 h-7 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold text-xs">3</span>
-                            <h2 class="text-base font-bold text-slate-900 dark:text-white">Product Gallery &amp; Photos</h2>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900 dark:text-white">Product Gallery &amp; Photos</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">The first photo is your <strong>Primary Cover Image</strong>. Click "Set as Cover" on any photo to change.</p>
+                            </div>
                         </div>
-                        <span class="text-xs text-slate-500">JPG, PNG, WEBP up to 5MB</span>
+                        <span class="text-xs text-slate-500 font-medium">JPG, PNG, WEBP up to 5MB</span>
                     </div>
+
+                    <input type="hidden" name="cover_image_index" value="0">
 
                     <!-- Dropzone -->
                     <div 
@@ -750,7 +755,7 @@
                         @dragleave.prevent="dragOver = false" 
                         @drop.prevent="handleDrop($event)"
                         :class="dragOver ? 'border-indigo-500 bg-indigo-500/10' : 'border-dashed border-slate-300 dark:border-white/20 bg-slate-50/50 dark:bg-slate-950/40 hover:border-indigo-400'"
-                        class="border-2 rounded-2xl p-8 text-center transition-all cursor-pointer relative"
+                        class="border-2 rounded-2xl p-7 text-center transition-all cursor-pointer relative"
                         @click="$refs.fileInput.click()"
                     >
                         <input 
@@ -763,33 +768,135 @@
                             @change="handleFiles($event)"
                         >
                         <div class="flex flex-col items-center justify-center">
-                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2.5">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             </div>
                             <p class="text-sm font-bold text-slate-800 dark:text-slate-200">
                                 Click to select images or drag and drop here
                             </p>
                             <p class="text-xs text-slate-400 mt-1">
-                                High-resolution images showcase your item best on mobile and desktop.
+                                First image selected will be Cover. Additional images will show in catalog gallery.
                             </p>
                         </div>
                     </div>
 
-                    <!-- Image Thumbnails Grid Preview -->
-                    <div x-show="previewImages.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <!-- Image Thumbnails Grid Preview with Cover Selector -->
+                    <div x-show="previewImages.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
                         <template x-for="(img, idx) in previewImages" :key="idx">
-                            <div class="relative rounded-xl overflow-hidden border border-white/20 shadow-md group aspect-square bg-slate-950">
-                                <img :src="img.url" class="w-full h-full object-cover">
-                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <button type="button" @click.stop="removeImage(idx)" class="p-1.5 rounded-full bg-rose-600 text-white hover:bg-rose-500 transition-colors shadow">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            <div class="relative rounded-2xl overflow-hidden border-2 shadow-sm group bg-slate-950 flex flex-col transition-all"
+                                 :class="idx === 0 ? 'border-amber-500 ring-2 ring-amber-400/40 shadow-md' : 'border-slate-200 dark:border-white/10'">
+                                
+                                <div class="relative aspect-square w-full overflow-hidden bg-slate-900">
+                                    <img :src="img.url" class="w-full h-full object-cover">
+                                    
+                                    <!-- Badges -->
+                                    <div class="absolute top-2 left-2 z-10">
+                                        <template x-if="idx === 0">
+                                            <span class="inline-flex items-center gap-1 bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow uppercase tracking-wider">
+                                                ★ Cover
+                                            </span>
+                                        </template>
+                                        <template x-if="idx > 0">
+                                            <span class="inline-flex items-center bg-black/75 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded-md" x-text="'#' + (idx + 1)"></span>
+                                        </template>
+                                    </div>
+
+                                    <!-- Remove Button -->
+                                    <button type="button" 
+                                            @click.stop="removeImage(idx)" 
+                                            class="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center transition-colors shadow z-10 cursor-pointer"
+                                            title="Remove Image">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
                                 </div>
-                                <span x-show="idx === 0" class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-indigo-600/90 text-white text-[9px] font-bold uppercase tracking-wider">
-                                    Cover
-                                </span>
+
+                                <!-- Action Toolbar below thumbnail -->
+                                <div class="p-2 bg-white dark:bg-slate-900 flex items-center justify-between border-t border-slate-100 dark:border-white/10 text-xs">
+                                    <template x-if="idx === 0">
+                                        <span class="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider pl-1">Primary Cover</span>
+                                    </template>
+                                    <template x-if="idx > 0">
+                                        <button type="button" 
+                                                @click.stop="makeCover(idx)" 
+                                                class="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 px-2 py-1 rounded-md transition-colors cursor-pointer border border-amber-200 dark:border-amber-800"
+                                                title="Make this photo the main product cover">
+                                            Set as Cover
+                                        </button>
+                                    </template>
+
+                                    <div class="flex items-center gap-1 ml-auto">
+                                        <button type="button" 
+                                                @click.stop="moveImage(idx, -1)" 
+                                                :disabled="idx === 0"
+                                                :class="idx === 0 ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer'"
+                                                class="p-1 rounded transition-colors"
+                                                title="Move left">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                        </button>
+                                        <button type="button" 
+                                                @click.stop="moveImage(idx, 1)" 
+                                                :disabled="idx === previewImages.length - 1"
+                                                :class="idx === previewImages.length - 1 ? 'opacity-25 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer'"
+                                                class="p-1 rounded transition-colors"
+                                                title="Move right">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </template>
+                    </div>
+                </div>
+
+                <!-- 3b. Product Video (Optional) -->
+                <div class="p-5 sm:p-7 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-white/40 dark:border-white/10 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center font-bold text-xs">🎬</span>
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white">Product Video <span class="text-xs font-normal text-slate-400 dark:text-slate-500">(Optional)</span></h2>
+                        </div>
+                        <span class="text-xs text-slate-500 font-medium">MP4, WEBM up to 50MB</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Video Upload -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                                Upload Video File
+                            </label>
+                            <input 
+                                type="file" 
+                                name="video" 
+                                accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                                @change="handleVideoFile($event)"
+                                class="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-rose-50 dark:file:bg-rose-950/60 file:text-rose-700 dark:file:text-rose-300 hover:file:bg-rose-100 cursor-pointer"
+                            >
+                            <p class="text-[11px] text-slate-400 mt-1">Short clips (10-60s) showing the product in motion.</p>
+                        </div>
+
+                        <!-- External Video Link -->
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                                Or Video URL
+                            </label>
+                            <input 
+                                type="url" 
+                                name="video_url" 
+                                x-model="videoUrl"
+                                placeholder="https://youtube.com/watch?v=... or direct MP4 link" 
+                                class="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white text-xs focus:ring-2 focus:ring-rose-500 shadow-inner"
+                            >
+                            <p class="text-[11px] text-slate-400 mt-1">Direct video link or YouTube embed link.</p>
+                        </div>
+                    </div>
+
+                    <!-- Video Preview if loaded -->
+                    <div x-show="videoPreviewUrl" class="mt-3 rounded-2xl overflow-hidden border border-rose-200/50 bg-black max-w-md">
+                        <video :src="videoPreviewUrl" controls class="w-full max-h-56 object-contain"></video>
+                        <div class="p-2 bg-slate-900 flex items-center justify-between text-xs text-white">
+                            <span class="truncate">Video Preview</span>
+                            <button type="button" @click="clearVideo()" class="text-rose-400 hover:text-rose-300 font-bold cursor-pointer">Remove Video</button>
+                        </div>
                     </div>
                 </div>
 
@@ -988,6 +1095,8 @@ function liquidProductUploader() {
         dragOver: false,
         appliedPreset: null,
         previewImages: [],
+        videoPreviewUrl: '',
+        videoUrl: '',
         activeVariantTab: '{{ in_array($vendorType, ["clothing"]) ? "clothing" : (in_array($vendorType, ["footwear"]) ? "footwear" : (in_array($vendorType, ["kirana", "groceries"]) ? "kirana" : (in_array($vendorType, ["electronics"]) ? "electronics" : (in_array($vendorType, ["food"]) ? "food" : (in_array($vendorType, ["marble", "machinery", "b2b"]) ? "enquiry" : "clothing"))))) }}',
 
         // 👗 Clothing Variations State (Default Empty - No Auto-Selection)
@@ -2881,6 +2990,24 @@ function liquidProductUploader() {
             this.form.specs.splice(index, 1);
         },
 
+        handleVideoFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 50 * 1024 * 1024) {
+                alert('Video must be under 50MB.');
+                event.target.value = '';
+                return;
+            }
+            this.videoPreviewUrl = URL.createObjectURL(file);
+        },
+
+        clearVideo() {
+            this.videoPreviewUrl = '';
+            this.videoUrl = '';
+            const vidInput = document.querySelector('input[name="video"]');
+            if (vidInput) vidInput.value = '';
+        },
+
         handleFiles(event) {
             const files = event.target.files;
             this.processFiles(files);
@@ -2893,22 +3020,57 @@ function liquidProductUploader() {
         },
 
         processFiles(files) {
+            if (!files || files.length === 0) return;
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 if (!file.type.match('image.*')) continue;
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    this.previewImages.push({
-                        url: e.target.result,
-                        name: file.name
-                    });
-                };
-                reader.readAsDataURL(file);
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`"${file.name}" is larger than 5MB. Please choose an image under 5MB.`);
+                    continue;
+                }
+                this.previewImages.push({
+                    file: file,
+                    url: URL.createObjectURL(file),
+                    name: file.name
+                });
             }
+            this.syncFiles();
+        },
+
+        makeCover(index) {
+            if (index === 0 || !this.previewImages[index]) return;
+            const item = this.previewImages.splice(index, 1)[0];
+            this.previewImages.unshift(item);
+            this.syncFiles();
+        },
+
+        moveImage(index, direction) {
+            const newIndex = index + direction;
+            if (newIndex < 0 || newIndex >= this.previewImages.length) return;
+            const item = this.previewImages.splice(index, 1)[0];
+            this.previewImages.splice(newIndex, 0, item);
+            this.syncFiles();
         },
 
         removeImage(index) {
             this.previewImages.splice(index, 1);
+            this.syncFiles();
+        },
+
+        syncFiles() {
+            try {
+                const dt = new DataTransfer();
+                this.previewImages.forEach(img => {
+                    if (img.file) {
+                        dt.items.add(img.file);
+                    }
+                });
+                if (this.$refs.fileInput) {
+                    this.$refs.fileInput.files = dt.files;
+                }
+            } catch (e) {
+                console.error("DataTransfer error", e);
+            }
         },
 
         submitForm() {

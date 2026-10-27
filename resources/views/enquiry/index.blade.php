@@ -239,7 +239,9 @@
                                         <span class="text-base font-black text-slate-950">
                                             ₹{{ number_format($prod->base_price / 100, 2) }}
                                         </span>
-                                        <span class="text-[10px] text-slate-400 font-semibold uppercase">Per Unit / Slab</span>
+                                        <span class="text-[10px] text-slate-400 font-semibold uppercase">
+                                            {{ $prod->custom_fields['unit'] ?? ($prod->isMarble() ? 'Per Sq Ft / Slab' : 'Per Piece / Unit') }}
+                                        </span>
                                     </div>
 
                                     <!-- Specs Snippet -->

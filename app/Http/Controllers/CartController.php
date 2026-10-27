@@ -319,22 +319,50 @@ class CartController extends Controller
 
     private function getCart()
     {
+        $cart = null;
         if (Auth::check()) {
             Cart::mergeGuestCart(Auth::id(), Session::getId());
-            return Cart::where('user_id', Auth::id())->first();
+            $cart = Cart::where('user_id', Auth::id())->first();
         }
         
-        return Cart::where('session_id', Session::getId())->first();
+        if (!$cart) {
+            $cart = Cart::where('session_id', Session::getId())->first();
+        }
+
+        $cookieCartId = request()->cookie('k71_cart_id');
+        if (!$cart && $cookieCartId) {
+            $cart = Cart::where('id', $cookieCartId)->first();
+            if ($cart && Auth::check() && !$cart->user_id) {
+                $cart->update(['user_id' => Auth::id()]);
+            }
+        }
+
+        if ($cart) {
+            cookie()->queue(cookie('k71_cart_id', $cart->id, 60 * 24 * 30, '/', config('session.domain'), null, false));
+        }
+
+        return $cart;
     }
 
     private function getOrCreateCart()
     {
+        $cart = null;
         if (Auth::check()) {
             Cart::mergeGuestCart(Auth::id(), Session::getId());
-            return Cart::firstOrCreate(['user_id' => Auth::id()]);
+            $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
+        } else {
+            Session::put('cart_initialized', true); // Force Laravel to persist the session cookie for guests
+            $cookieCartId = request()->cookie('k71_cart_id');
+            if ($cookieCartId) {
+                $cart = Cart::where('id', $cookieCartId)->first();
+            }
+            if (!$cart) {
+                $cart = Cart::firstOrCreate(['session_id' => Session::getId()]);
+            }
         }
-        
-        Session::put('cart_initialized', true); // Force Laravel to persist the session cookie for guests
-        return Cart::firstOrCreate(['session_id' => Session::getId()]);
+
+        cookie()->queue(cookie('k71_cart_id', $cart->id, 60 * 24 * 30, '/', config('session.domain'), null, false));
+
+        return $cart;
     }
 }

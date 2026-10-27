@@ -64,7 +64,7 @@
             <div class="bg-gradient-to-r from-stone-50/90 via-white to-stone-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-gray-400 font-medium">Sold by</span>
-                    <a href="{{ route('storefront.show', $order->vendor->slug) }}" class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
+                    <a href="{{ $order->vendor->storefront_url }}" class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
                         {{ $order->vendor->shop_name }}
                     </a>
                 </div>

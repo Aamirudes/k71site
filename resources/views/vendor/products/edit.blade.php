@@ -502,6 +502,63 @@
                     @error('images.*') <p class="text-xs text-red-600 mt-2">{{ $message }}</p> @enderror
                 </div>
 
+                <!-- 2b. Product Video (Optional) -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4" x-data="{ videoUrl: '{{ addslashes($product->video_url ?? '') }}', videoPreviewUrl: '{{ $product->video_player_url ?? '' }}', removeVideo: false }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Product Video <span class="text-xs font-normal text-gray-500">(Optional)</span></h2>
+                                <p class="text-xs text-gray-500">Show your product in real-time motion to boost customer trust.</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-400 font-medium">MP4, WEBM up to 50MB</span>
+                    </div>
+
+                    <input type="hidden" name="remove_video" :value="removeVideo ? '1' : '0'">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+                                Upload New Video File
+                            </label>
+                            <input 
+                                type="file" 
+                                name="video" 
+                                accept="video/mp4,video/webm,video/ogg,video/quicktime"
+                                @change="removeVideo = false; if ($event.target.files[0]) videoPreviewUrl = URL.createObjectURL($event.target.files[0]);"
+                                class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-rose-50 file:text-rose-700 hover:file:bg-rose-100 cursor-pointer"
+                            >
+                            <p class="text-[11px] text-gray-400 mt-1">Replacing will remove the previous video.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">
+                                Or Video URL
+                            </label>
+                            <input 
+                                type="url" 
+                                name="video_url" 
+                                x-model="videoUrl"
+                                @input="removeVideo = false"
+                                placeholder="https://youtube.com/watch?v=... or direct MP4 link" 
+                                class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-gray-900 text-xs focus:ring-2 focus:ring-rose-500 shadow-inner"
+                            >
+                            <p class="text-[11px] text-gray-400 mt-1">Direct video link or YouTube embed link.</p>
+                        </div>
+                    </div>
+
+                    <div x-show="videoPreviewUrl && !removeVideo" class="mt-3 rounded-2xl overflow-hidden border border-rose-200/50 bg-black max-w-md">
+                        <video :src="videoPreviewUrl" controls class="w-full max-h-56 object-contain"></video>
+                        <div class="p-2.5 bg-gray-900 flex items-center justify-between text-xs text-white">
+                            <span class="truncate">Active Video Preview</span>
+                            <button type="button" @click="removeVideo = true; videoPreviewUrl = ''; videoUrl = '';" class="text-rose-400 hover:text-rose-300 font-bold cursor-pointer">Remove Video</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 3. Universal Dynamic Variant & Attribute Engine -->
                 @include('vendor.products.partials.dynamic_variant_engine')
 

@@ -18,14 +18,26 @@ class CheckoutController extends Controller
     {
         \App\Services\StockManagerService::releaseExpiredOrders(45);
 
+        $cart = null;
         if (Auth::check()) {
             Cart::mergeGuestCart(Auth::id(), session()->getId());
             $cart = Cart::where('user_id', Auth::id())->first();
-        } else {
+        }
+        if (!$cart) {
             $cart = Cart::where('session_id', session()->getId())->first();
-            if (!$cart && app()->environment('testing')) {
-                $cart = Cart::whereNotNull('session_id')->latest()->first();
+        }
+        $cookieCartId = request()->cookie('k71_cart_id');
+        if (!$cart && $cookieCartId) {
+            $cart = Cart::where('id', $cookieCartId)->first();
+            if ($cart && Auth::check() && !$cart->user_id) {
+                $cart->update(['user_id' => Auth::id()]);
             }
+        }
+        if (!$cart && app()->environment('testing')) {
+            $cart = Cart::whereNotNull('session_id')->latest()->first();
+        }
+        if ($cart) {
+            cookie()->queue(cookie('k71_cart_id', $cart->id, 60 * 24 * 30, '/', config('session.domain'), null, false));
         }
         
         if (!$cart) {
@@ -197,10 +209,21 @@ class CheckoutController extends Controller
             'kitchen_notes' => 'nullable|string|max:500',
         ]);
 
-        // Seamless Guest Checkout User Resolution with 2-Step Email Verification:
+        // 1. Capture pre-login session and cart references BEFORE Auth::login() regenerates session
+        $preLoginSessionId = session()->getId();
+        $cookieCartId = request()->cookie('k71_cart_id');
+        $preLoginCart = Cart::where('session_id', $preLoginSessionId)
+            ->orWhere(function($q) use ($cookieCartId) {
+                if ($cookieCartId) {
+                    $q->where('id', $cookieCartId);
+                }
+            })
+            ->first();
+
+        // Seamless Guest Checkout User Resolution:
         if (!Auth::check()) {
             $providedEmail = strtolower(trim($validated['email'] ?? ''));
-            if (!empty($providedEmail)) {
+            if (!empty($providedEmail) && config('k71.require_checkout_otp', false)) {
                 $isEmailVerified = session('checkout_verified_email') === $providedEmail;
                 
                 // If user provided email_otp in form submission, verify it
@@ -216,7 +239,7 @@ class CheckoutController extends Controller
                     }
                 }
 
-                // If email is still not verified, send OTP and prompt customer to enter code
+                // If email is still not verified and platform explicitly enforces it
                 if (!$isEmailVerified) {
                     try {
                         app(\App\Services\OtpService::class)->generateAndSend($providedEmail, 'checkout');
@@ -286,16 +309,29 @@ class CheckoutController extends Controller
             }
 
             Auth::login($user, true);
-            Cart::mergeGuestCart($user->id, session()->getId());
+            // Merge using PRE-LOGIN session ID
+            Cart::mergeGuestCart($user->id, $preLoginSessionId);
+            if ($preLoginCart && !$preLoginCart->user_id) {
+                $preLoginCart->update(['user_id' => $user->id]);
+            }
         }
 
-        // Robust Cart Retrieval across user_id and session_id
+        // Robust Cart Retrieval across user_id, session_id, and pre-login references
         $cart = null;
         if (Auth::check()) {
             $cart = Cart::where('user_id', Auth::id())->first();
         }
         if (!$cart) {
             $cart = Cart::where('session_id', session()->getId())->first();
+        }
+        if (!$cart && !empty($preLoginSessionId)) {
+            $cart = Cart::where('session_id', $preLoginSessionId)->first();
+        }
+        if (!$cart && $cookieCartId) {
+            $cart = Cart::where('id', $cookieCartId)->first();
+        }
+        if (!$cart && $preLoginCart) {
+            $cart = $preLoginCart;
         }
         if (!$cart && app()->environment('testing')) {
             $cart = Cart::whereNotNull('session_id')->latest()->first();
@@ -616,15 +652,17 @@ class CheckoutController extends Controller
             return redirect()->route('orders.success', $order->id);
         }
 
+        $order->loadMissing(['items.product', 'vendor.settings']);
         $vendor = $order->vendor;
-        $settings = VendorSetting::where('vendor_id', $vendor->id)->first();
+        $settings = $vendor?->settings ?: VendorSetting::where('vendor_id', $vendor->id)->first();
         $fallbackVpa = preg_replace('/[^0-9]/', '', $vendor->phone ?? '') ? (preg_replace('/[^0-9]/', '', $vendor->phone) . '@upi') : 'k71@upi';
         $vpa = !empty($settings?->upi_id) ? $settings->upi_id : $fallbackVpa;
         
-        $upiUrl = "upi://pay?pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am=" . ($order->total_amount / 100) . "&cu=INR";
-        $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" . urlencode($upiUrl);
+        $amountFormatted = number_format($order->total_amount / 100, 2, '.', '');
+        $upiUrl = "upi://pay?pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am={$amountFormatted}&cu=INR&tn=" . urlencode("Order_{$order->order_number}") . "&tr={$order->order_number}";
+        $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=" . urlencode($upiUrl);
 
-        return view('checkout.payment', compact('order', 'vendor', 'settings', 'upiUrl', 'qr_url', 'vpa'));
+        return view('checkout.payment', compact('order', 'vendor', 'settings', 'upiUrl', 'qr_url', 'vpa', 'amountFormatted'));
     }
 
     public function processPayment(Request $request, Order $order)

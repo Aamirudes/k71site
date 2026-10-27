@@ -75,28 +75,47 @@ class EnquiryController extends Controller
 
         $enquiries = $query->latest()->paginate(12)->withQueryString();
 
-        // Fetch recommended B2B & Wholesale products
+        // Fetch strictly recommended B2B & Wholesale products (excluding retail, food, footwear, clothing, services)
         $b2bProducts = Product::with(['vendor', 'images', 'category'])
+            ->where('status', 'active')
             ->where(function($q) {
                 $q->where('vertical', 'enquiry')
                   ->orWhere('listing_type', 'enquiry')
                   ->orWhere('listing_type', 'quote_only')
-                  ->orWhereIn('id', [6, 7, 11, 71]);
+                  ->orWhereHas('category', function($cq) {
+                      $cq->where('vertical', 'enquiry')
+                         ->orWhere('slug', 'like', '%marble%')
+                         ->orWhere('slug', 'like', '%granite%')
+                         ->orWhere('slug', 'like', '%machin%')
+                         ->orWhere('slug', 'like', '%stone%')
+                         ->orWhere('slug', 'like', '%industrial%');
+                  });
             })
-            ->where('status', 'active')
+            ->whereNotIn('vertical', ['food', 'services', 'used'])
+            ->whereDoesntHave('category', function($cq) {
+                $cq->whereIn('vertical', ['food', 'services', 'used', 'footwear', 'clothing'])
+                   ->orWhere('slug', 'like', '%food%')
+                   ->orWhere('slug', 'like', '%burger%')
+                   ->orWhere('slug', 'like', '%restaurant%')
+                   ->orWhere('slug', 'like', '%shoe%')
+                   ->orWhere('slug', 'like', '%footwear%')
+                   ->orWhere('slug', 'like', '%cloth%')
+                   ->orWhere('slug', 'like', '%apparel%')
+                   ->orWhere('slug', 'like', '%shirt%');
+            })
             ->take(8)
             ->get();
 
-        if ($b2bProducts->isEmpty()) {
-            $b2bProducts = Product::with(['vendor', 'images', 'category'])
-                ->where('status', 'active')
-                ->where('base_price', '>=', 50000)
-                ->take(8)
-                ->get();
-        }
-
-        // Fetch verified suppliers
+        // Fetch verified B2B / Industrial / Marble / Machinery suppliers strictly
         $verifiedSuppliers = Vendor::where('status', 'approved')
+            ->where(function($q) {
+                $q->whereIn('vendor_type', ['marble', 'machinery', 'b2b', 'wholesale', 'industrial', 'manufacturer'])
+                  ->orWhereHas('products', function($pq) {
+                      $pq->where('vertical', 'enquiry')
+                         ->orWhere('listing_type', 'enquiry');
+                  });
+            })
+            ->whereNotIn('vendor_type', ['food', 'restaurant', 'clothing', 'footwear', 'services'])
             ->withCount(['products' => fn($q) => $q->where('status', 'active')])
             ->orderByDesc('products_count')
             ->take(6)

@@ -48,7 +48,7 @@
                             </div>
                             <div>
                                 <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Sold by</span>
-                                <a href="{{ route('storefront.show', $vendor->slug) }}" class="block font-serif font-bold text-lg text-brand-text hover:text-brand-sage transition-colors leading-tight">{{ $vendor->shop_name }}</a>
+                                <a href="{{ $vendor->storefront_url }}" class="block font-serif font-bold text-lg text-brand-text hover:text-brand-sage transition-colors leading-tight">{{ $vendor->shop_name }}</a>
                             </div>
                         </div>
                     </div>

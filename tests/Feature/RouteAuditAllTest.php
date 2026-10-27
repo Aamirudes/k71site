@@ -158,7 +158,7 @@ class RouteAuditAllTest extends TestCase
         // 4. Storefront
         $resStore = $this->get('/s/' . $this->vendor->slug);
         $this->assertNotEquals(500, $resStore->getStatusCode());
-        $this->assertTrue(in_array($resStore->getStatusCode(), [200, 302]));
+        $this->assertTrue(in_array($resStore->getStatusCode(), [200, 301, 302]));
 
         // 5. Food Restaurant Menu Page
         $foodVendorUser = User::factory()->create();

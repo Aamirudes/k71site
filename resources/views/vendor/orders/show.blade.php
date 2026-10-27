@@ -110,7 +110,7 @@
                         <p class="text-sm leading-relaxed max-w-2xl" style="color: #ecfdf5 !important;">
                             Payment settlement has cleared into the platform Current Account. Tap <strong style="color: #ffffff !important;">Accept Order</strong> below to immediately receive 
                             <strong style="color: #a7f3d0 !important; font-family: monospace; font-size: 1.15rem;">₹{{ number_format($vendorNetPayoutPaise / 100, 2) }}</strong> directly into your UPI ID 
-                            (<strong style="color: #fef08a !important; font-family: monospace;">{{ $order->vendor->settings->upi_id ?? 'UPI not set' }}</strong>) in 2 seconds.
+                            (<strong style="color: #fef08a !important; font-family: monospace;">{{ $order->vendor?->settings?->upi_id ?? 'UPI not set' }}</strong>) in 2 seconds.
                         </p>
                     </div>
 
@@ -144,11 +144,11 @@
                             <span class="text-xs" style="color: #bfdbfe !important;">Instant UPI Disbursal Complete</span>
                         </div>
                         <h2 class="text-xl font-bold font-serif" style="color: #ffffff !important;">
-                            ₹{{ number_format($vendorNetPayoutPaise / 100, 2) }} Sent to {{ $order->vendor->settings->upi_id ?? 'your UPI' }}
+                            ₹{{ number_format($vendorNetPayoutPaise / 100, 2) }} Sent to {{ $order->vendor?->settings?->upi_id ?? 'your UPI' }}
                         </h2>
                         <p class="text-xs font-mono" style="color: #93c5fd !important;">
                             Bank UTR: <strong style="color: #ffffff !important;">{{ $order->vendor_payout_utr }}</strong> 
-                            • Settled at {{ $order->vendor_payout_at ? $order->vendor_payout_at->format('M d, Y h:i A') : $order->updated_at->format('M d, Y') }}
+                            • Settled at {{ $order->vendor_payout_at ? $order->vendor_payout_at->format('M d, Y h:i A') : ($order->updated_at ? $order->updated_at->format('M d, Y') : now()->format('M d, Y')) }}
                         </p>
                     </div>
                     <div class="text-right">
@@ -554,13 +554,17 @@
                                 <div>
                                     <span class="text-gray-500 block mb-0.5">Pickup Location</span>
                                     <span class="font-semibold text-gray-900 truncate block">
-                                        {{ $order->vendor->shop_name }} ({{ is_array($order->vendor->pickup_address) ? ($order->vendor->pickup_address['city'] ?? 'Ajmer') : 'Ajmer' }})
+                                        {{ $order->vendor?->shop_name ?? 'Store' }} ({{ is_array($order->vendor?->pickup_address) ? ($order->vendor->pickup_address['city'] ?? 'Ajmer') : 'Ajmer' }})
                                     </span>
                                 </div>
                                 <div>
                                     <span class="text-gray-500 block mb-0.5">Destination Pincode</span>
                                     <span class="font-semibold text-gray-900 block">
-                                        {{ $order->address_snapshot['city'] ?? 'City' }} ({{ $order->address_snapshot['pincode'] ?? '400001' }})
+                                        @php
+                                            $destCity = is_array($order->address_snapshot) ? ($order->address_snapshot['city'] ?? 'City') : 'City';
+                                            $destPin = is_array($order->address_snapshot) ? ($order->address_snapshot['pincode'] ?? '400001') : '400001';
+                                        @endphp
+                                        {{ $destCity }} ({{ $destPin }})
                                     </span>
                                 </div>
                                 <div>
@@ -875,7 +879,11 @@
                     @if($order->payment_method === 'phonepe' && $order->settlement_status === 'pending')
                         <!-- STAGE 1: MASKED PRIVACY VIEW (BANK CLEARING IN PROGRESS) -->
                         <div class="mb-4">
-                            <p class="font-bold text-gray-900">{{ substr($order->user->first_name ?? 'Customer', 0, 1) }}**** {{ substr($order->user->last_name ?? '', 0, 1) }}****</p>
+                            @php
+                                $maskedFirstName = $order->user?->first_name ?? (is_array($order->address_snapshot) ? ($order->address_snapshot['name'] ?? 'Customer') : 'Customer');
+                                $maskedLastName = $order->user?->last_name ?? '';
+                            @endphp
+                            <p class="font-bold text-gray-900">{{ substr($maskedFirstName, 0, 1) }}**** {{ substr($maskedLastName, 0, 1) }}****</p>
                             <p class="text-xs text-gray-400">Email hidden until payment clears in bank</p>
                         </div>
                         
@@ -884,7 +892,7 @@
                                 <span>🔒 Shipping Address Locked</span>
                             </div>
                             <p class="text-xs text-amber-800">
-                                Destination: <strong>{{ $order->address_snapshot['city'] ?? 'City' }}, {{ $order->address_snapshot['state'] ?? 'State' }} ({{ $order->address_snapshot['pincode'] ?? 'Pincode' }})</strong>
+                                Destination: <strong>{{ is_array($order->address_snapshot) ? ($order->address_snapshot['city'] ?? 'City') : 'City' }}, {{ is_array($order->address_snapshot) ? ($order->address_snapshot['state'] ?? 'State') : 'State' }} ({{ is_array($order->address_snapshot) ? ($order->address_snapshot['pincode'] ?? 'Pincode') : 'Pincode' }})</strong>
                             </p>
                             <p class="text-[11px] text-amber-700 leading-relaxed pt-1 border-t border-amber-200/60">
                                 Full street address and contact phone will unlock automatically tomorrow on 
@@ -894,27 +902,36 @@
                         </div>
                     @else
                         <!-- STAGE 2 & 3: UNLOCKED FULL CUSTOMER DETAILS -->
+                        @php
+                            $custAddr = is_array($order->address_snapshot) ? $order->address_snapshot : (json_decode($order->address_snapshot ?? '[]', true) ?: []);
+                            $customerFullName = trim(($order->user?->first_name ?? '') . ' ' . ($order->user?->last_name ?? ''));
+                            if (empty($customerFullName)) {
+                                $customerFullName = $order->user?->name ?? ($custAddr['name'] ?? 'Guest Customer');
+                            }
+                            $customerEmail = $order->user?->email ?? ($custAddr['email'] ?? null);
+                            $rawPhone = $custAddr['phone'] ?? $order->user?->phone ?? '';
+                            $cleanPhone = preg_replace('/[^0-9]/', '', (string)$rawPhone);
+                            if (strlen($cleanPhone) === 10) {
+                                $cleanPhone = '91' . $cleanPhone;
+                            }
+                            $customerGreeting = $order->user?->first_name ?? $order->user?->name ?? ($custAddr['name'] ?? 'Customer');
+                            $shopName = $order->vendor?->shop_name ?? 'Store';
+                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$shopName} regarding your Order #{$order->order_number}. We are preparing your garment for dispatch.");
+                        @endphp
+
                         <div class="mb-4">
-                            <p class="font-medium text-gray-900">{{ $order->user->first_name }} {{ $order->user->last_name }}</p>
-                            <p class="text-gray-500"><a href="mailto:{{ $order->user->email }}" class="hover:underline">{{ $order->user->email }}</a></p>
+                            <p class="font-medium text-gray-900">{{ $customerFullName }}</p>
+                            @if($customerEmail)
+                                <p class="text-gray-500"><a href="mailto:{{ $customerEmail }}" class="hover:underline">{{ $customerEmail }}</a></p>
+                            @endif
                         </div>
                         
                         <h4 class="font-medium text-gray-900 mb-1 mt-6">Shipping Address</h4>
                         <address class="text-gray-600 not-italic">
-                            {{ $order->address_snapshot['line_1'] ?? '' }}<br>
-                            {{ $order->address_snapshot['city'] ?? '' }}, {{ $order->address_snapshot['state'] ?? '' }} - {{ $order->address_snapshot['pincode'] ?? '' }}<br>
-                            <abbr title="Phone" class="font-bold">Phone:</abbr> {{ $order->address_snapshot['phone'] ?? $order->user->phone ?? 'N/A' }}
+                            {{ $custAddr['line_1'] ?? ($custAddr['address_line_1'] ?? ($custAddr['address'] ?? '')) }}<br>
+                            {{ $custAddr['city'] ?? '' }}{{ !empty($custAddr['city']) && !empty($custAddr['state']) ? ', ' : '' }}{{ $custAddr['state'] ?? '' }}{{ !empty($custAddr['pincode']) ? ' - ' . $custAddr['pincode'] : '' }}<br>
+                            <abbr title="Phone" class="font-bold">Phone:</abbr> {{ $rawPhone ?: 'N/A' }}
                         </address>
-
-                        @php
-                            $rawPhone = $order->address_snapshot['phone'] ?? $order->user->phone ?? '';
-                            $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
-                            if (strlen($cleanPhone) === 10) {
-                                $cleanPhone = '91' . $cleanPhone;
-                            }
-                            $customerGreeting = $order->user->first_name ?? $order->user->name ?? 'Customer';
-                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$order->vendor->shop_name} regarding your Order #{$order->order_number}. We are preparing your garment for dispatch.");
-                        @endphp
 
                         @if(!empty($cleanPhone))
                             <div class="mt-4 pt-4 border-t border-gray-100">

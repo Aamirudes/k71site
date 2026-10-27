@@ -226,7 +226,7 @@
                             <div class="p-5 pt-8">
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="min-w-0">
-                                        <a href="{{ route('storefront.show', $vendor->slug) }}" class="block">
+                                        <a href="{{ $vendor->storefront_url }}" class="block">
                                             <h3 class="text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
                                                 {{ $vendor->shop_name }}
                                             </h3>
@@ -301,7 +301,7 @@
                         <div class="p-4 pt-0">
                             <div class="pt-3 border-t border-slate-100 flex items-center gap-2">
                                 <a 
-                                    href="{{ route('storefront.show', $vendor->slug) }}" 
+                                    href="{{ $vendor->storefront_url }}" 
                                     class="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-bold text-center transition-all shadow-xs flex items-center justify-center gap-1.5"
                                 >
                                     <span>Visit Storefront</span>
