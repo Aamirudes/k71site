@@ -1938,9 +1938,9 @@
                     
                     <!-- Chat Header -->
                     <div class="glass-chat-header">
-                        <div class="glass-chat-header-user">
+                        <div class="glass-chat-header-user" id="headerUserClickable" style="cursor: pointer;" title="Click to view profile details">
                             <!-- Instagram-Style Back Button -->
-                            <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox" aria-label="Back to Inbox">
+                            <button type="button" class="glass-back-btn" id="glassBackBtn" title="Back to Inbox" aria-label="Back to Inbox" onclick="event.stopPropagation();">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="19" y1="12" x2="5" y2="12"></line>
                                     <polyline points="12 19 5 12 12 5"></polyline>
@@ -1960,7 +1960,7 @@
                         </div>
 
                         <div>
-                            <button type="button" class="glass-icon-btn" id="headerInfoBtn" title="Conversation Details">
+                            <button type="button" class="glass-icon-btn" id="headerInfoBtn" title="View Profile Details">
                                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -2100,6 +2100,90 @@
             <img id="lightboxImg" src="" alt="Enlarged photo">
         </div>
 
+        <!-- ==============================================================
+             USER / VENDOR PROFILE POPUP MODAL (Glassmorphic)
+             ============================================================== -->
+        <div class="glass-modal-backdrop" id="glassUserProfileModal" style="display: none; z-index: 1050; align-items: center; justify-content: center; backdrop-filter: blur(12px);">
+            <div class="glass-modal-card" style="max-height: 90vh; overflow-y: auto; overflow-x: hidden; border-radius: 28px; width: 100%; max-width: 440px; box-shadow: 0 32px 80px rgba(0,0,0,0.32);">
+                <!-- Header with Close Button -->
+                <div class="glass-modal-header" style="position: relative; border-bottom: none; padding: 16px 20px 8px;">
+                    <div style="width: 24px;"></div>
+                    <div class="glass-modal-title" style="font-size: 15px; font-weight: 800; letter-spacing: -0.01em;">Profile Information</div>
+                    <button type="button" class="glass-modal-close" id="profileModalCloseBtn" style="cursor: pointer; font-size: 24px; line-height: 1;">&times;</button>
+                </div>
+
+                <!-- Profile Banner / Header Cover -->
+                <div style="position: relative; margin: 8px 16px 0; border-radius: 20px; overflow: hidden; height: 110px; background: linear-gradient(135deg, #0600c2 0%, #4f46e5 50%, #7c3aed 100%);">
+                    <img id="profileModalBanner" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.45));"></div>
+                </div>
+
+                <!-- Avatar and Details -->
+                <div style="padding: 0 20px; position: relative; margin-top: -46px; text-align: center;">
+                    <div style="position: relative; display: inline-block;">
+                        <img id="profileModalAvatar" src="" alt="" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 4px solid var(--glass-card); box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+                        <span id="profileModalOnlineBadge" style="position: absolute; bottom: 4px; right: 4px; width: 18px; height: 18px; border-radius: 50%; background: #10B981; border: 3px solid var(--glass-card);" title="Active now"></span>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <h3 id="profileModalName" style="font-size: 18px; font-weight: 800; color: var(--color-text-main); margin: 0; letter-spacing: -0.02em;">User Name</h3>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;">
+                            <span id="profileModalUsername" style="font-size: 13.5px; font-weight: 600; color: var(--color-text-muted);">&#64;user</span>
+                            <span id="profileModalRoleBadge" style="font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 9999px; background: rgba(6, 0, 194, 0.1); color: #0600c2; border: 1px solid rgba(6, 0, 194, 0.2);">Verified</span>
+                        </div>
+                    </div>
+
+                    <!-- Online Status & Member Info -->
+                    <div id="profileModalStatusPill" style="margin-top: 8px; font-size: 12px; color: var(--color-text-muted); font-weight: 600;">
+                        Active now
+                    </div>
+
+                    <!-- Bio / Tagline Quote -->
+                    <div id="profileModalBioWrap" style="margin-top: 14px; padding: 12px 14px; background: rgba(255, 255, 255, 0.4); border: 1px solid var(--glass-border); border-radius: 14px; font-size: 12.5px; color: var(--color-text-main); line-height: 1.45; text-align: left;">
+                        <span id="profileModalBio">Member of K71 Direct Commerce community.</span>
+                    </div>
+
+                    <!-- Vendor Specific Storefront Card -->
+                    <div id="profileModalVendorBox" style="margin-top: 14px; padding: 14px; background: linear-gradient(135deg, rgba(6,0,194,0.05) 0%, rgba(99,102,241,0.09) 100%); border: 1px solid rgba(99,102,241,0.25); border-radius: 16px; text-align: left; display: none;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                            <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #4f46e5;">Official Storefront</span>
+                            <span id="profileModalRating" style="font-size: 12px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 3px;">
+                                ★ 4.9
+                            </span>
+                        </div>
+                        <div id="profileModalStoreName" style="font-size: 15.5px; font-weight: 800; color: var(--color-text-main); margin-bottom: 2px;">Store Name</div>
+                        <div id="profileModalLocation" style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 10px;">Location</div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-card); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 12px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                <span id="profileModalSubdomain" style="font-size: 12px; font-weight: 700; color: #4f46e5; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">store.marblemandi.org</span>
+                            </div>
+                            <button type="button" id="profileModalCopySubdomainBtn" title="Copy URL" style="background: none; border: none; cursor: pointer; color: var(--color-text-muted); padding: 2px;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+
+                        <a id="profileModalStoreBtn" href="#" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; background: linear-gradient(135deg, #0600c2 0%, #4f46e5 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(6, 0, 194, 0.25); transition: transform 0.15s ease;">
+                            <span>Visit Official Store</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                    </div>
+
+                    <!-- Footer Action Buttons -->
+                    <div style="display: flex; gap: 10px; margin: 18px 0 20px;">
+                        <button type="button" id="profileModalShareBtn" style="flex: 1; padding: 10px 14px; background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 12px; font-size: 12.5px; font-weight: 700; color: var(--color-text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                            <span id="profileModalShareBtnText">Share Profile</span>
+                        </button>
+                        <button type="button" id="profileModalCloseBottomBtn" style="flex: 1; padding: 10px 14px; background: rgba(241, 245, 249, 0.85); border: 1px solid var(--glass-border); border-radius: 12px; font-size: 12.5px; font-weight: 700; color: var(--color-text-muted); cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Real-time Direct Messaging Engine -->
@@ -2117,6 +2201,7 @@
         let conversationsCache = [];
         let messagesCache = [];
         let threadMemoryCache = {};
+        let currentRecipientData = null;
         let isPollingActive = true;
         let searchDebounceTimer = null;
         let messagePollTimer = null;
@@ -2322,6 +2407,7 @@
             // Instant thread restore from in-memory cache
             if (threadMemoryCache[convId] && threadMemoryCache[convId].messages && threadMemoryCache[convId].recipient) {
                 const cached = threadMemoryCache[convId];
+                currentRecipientData = cached.recipient;
                 messagesCache = cached.messages;
                 headerAvatar.src = cached.recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
                 headerAvatar.alt = cached.recipient.name || 'User';
@@ -2350,6 +2436,7 @@
             .then(result => {
                 const recipient = result.recipient || (result.data ? result.data.recipient : null);
                 if (result.success && recipient) {
+                    currentRecipientData = recipient;
                     const convInfo = result.conversation || (result.data ? result.data.conversation : {});
                     activeConversationStatus = convInfo.status || 'accepted';
 
@@ -3184,6 +3271,160 @@
         searchModal.addEventListener('click', (e) => {
             if (e.target === searchModal) closeModal();
         });
+
+        // ---------------------------------------------------------------------
+        // USER / VENDOR PROFILE POPUP MODAL LOGIC
+        // ---------------------------------------------------------------------
+        const userProfileModal = document.getElementById('glassUserProfileModal');
+        const headerInfoBtn = document.getElementById('headerInfoBtn');
+        const headerUserClickable = document.getElementById('headerUserClickable');
+        const profileModalCloseBtn = document.getElementById('profileModalCloseBtn');
+        const profileModalCloseBottomBtn = document.getElementById('profileModalCloseBottomBtn');
+        const profileModalShareBtn = document.getElementById('profileModalShareBtn');
+        const profileModalCopySubdomainBtn = document.getElementById('profileModalCopySubdomainBtn');
+
+        function openUserProfileModal(data) {
+            if (!data && currentRecipientData) {
+                data = currentRecipientData;
+            }
+            if (!data) return;
+
+            const modal = document.getElementById('glassUserProfileModal');
+            if (!modal) return;
+
+            const avatarEl = document.getElementById('profileModalAvatar');
+            if (avatarEl) {
+                avatarEl.src = data.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                avatarEl.alt = data.raw_name || data.name || 'User';
+            }
+
+            const nameEl = document.getElementById('profileModalName');
+            if (nameEl) nameEl.textContent = data.raw_name || data.name || 'User';
+
+            const usernameEl = document.getElementById('profileModalUsername');
+            if (usernameEl) usernameEl.textContent = '@' + (data.username || 'user');
+
+            const roleBadgeEl = document.getElementById('profileModalRoleBadge');
+            if (roleBadgeEl) roleBadgeEl.textContent = data.role_label || (data.is_vendor ? 'Verified Merchant' : 'K71 Member');
+
+            const bioEl = document.getElementById('profileModalBio');
+            if (bioEl) bioEl.textContent = data.bio || 'Member of K71 Direct Commerce community.';
+
+            const bannerImg = document.getElementById('profileModalBanner');
+            if (bannerImg) {
+                if (data.banner_url) {
+                    bannerImg.src = data.banner_url;
+                    bannerImg.style.display = 'block';
+                } else {
+                    bannerImg.style.display = 'none';
+                }
+            }
+
+            const onlineDot = document.getElementById('profileModalOnlineBadge');
+            if (onlineDot) {
+                onlineDot.style.background = data.is_online ? '#10B981' : '#94A3B8';
+                onlineDot.title = data.is_online ? 'Active now' : 'Offline';
+            }
+
+            const statusPill = document.getElementById('profileModalStatusPill');
+            if (statusPill) {
+                let statusHtml = data.is_online 
+                    ? '<span style="color:#10B981; font-weight:700;">● Active now</span>' 
+                    : `<span style="color:var(--color-text-muted);">${escapeHtml(data.status_label || 'Offline')}</span>`;
+                if (data.member_since) {
+                    statusHtml += ` • Member since ${escapeHtml(data.member_since)}`;
+                }
+                statusPill.innerHTML = statusHtml;
+            }
+
+            const vendorBox = document.getElementById('profileModalVendorBox');
+            if (vendorBox) {
+                if (data.is_vendor && (data.store_url || data.vendor_slug)) {
+                    vendorBox.style.display = 'block';
+                    const storeNameEl = document.getElementById('profileModalStoreName');
+                    if (storeNameEl) storeNameEl.textContent = data.shop_name || data.name;
+
+                    const ratingEl = document.getElementById('profileModalRating');
+                    if (ratingEl) ratingEl.textContent = '★ ' + (data.vendor_rating || '4.9');
+
+                    const locationEl = document.getElementById('profileModalLocation');
+                    if (locationEl) locationEl.textContent = (data.vendor_city || 'India') + (data.vendor_state ? ', ' + data.vendor_state : '');
+
+                    const subdomainEl = document.getElementById('profileModalSubdomain');
+                    const storeDomainText = data.store_domain || (data.vendor_slug + '.marblemandi.org');
+                    if (subdomainEl) subdomainEl.textContent = storeDomainText;
+
+                    const storeBtn = document.getElementById('profileModalStoreBtn');
+                    if (storeBtn) storeBtn.href = data.store_url || ('https://' + storeDomainText);
+                } else {
+                    vendorBox.style.display = 'none';
+                }
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function closeUserProfileModal() {
+            if (userProfileModal) {
+                userProfileModal.style.display = 'none';
+            }
+        }
+
+        if (headerInfoBtn) {
+            headerInfoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openUserProfileModal(currentRecipientData);
+            });
+        }
+
+        if (headerUserClickable) {
+            headerUserClickable.addEventListener('click', (e) => {
+                if (e.target.closest('#glassBackBtn')) return;
+                openUserProfileModal(currentRecipientData);
+            });
+        }
+
+        if (profileModalCloseBtn) {
+            profileModalCloseBtn.addEventListener('click', closeUserProfileModal);
+        }
+        if (profileModalCloseBottomBtn) {
+            profileModalCloseBottomBtn.addEventListener('click', closeUserProfileModal);
+        }
+        if (userProfileModal) {
+            userProfileModal.addEventListener('click', (e) => {
+                if (e.target === userProfileModal) closeUserProfileModal();
+            });
+        }
+
+        if (profileModalCopySubdomainBtn) {
+            profileModalCopySubdomainBtn.addEventListener('click', () => {
+                const storeDomain = document.getElementById('profileModalSubdomain')?.textContent?.trim();
+                if (storeDomain) {
+                    const fullUrl = storeDomain.startsWith('http') ? storeDomain : 'https://' + storeDomain;
+                    navigator.clipboard.writeText(fullUrl).then(() => {
+                        const originalSvg = profileModalCopySubdomainBtn.innerHTML;
+                        profileModalCopySubdomainBtn.innerHTML = '<span style="font-size:10px; font-weight:800; color:#10B981;">Copied!</span>';
+                        setTimeout(() => { profileModalCopySubdomainBtn.innerHTML = originalSvg; }, 2000);
+                    });
+                }
+            });
+        }
+
+        if (profileModalShareBtn) {
+            profileModalShareBtn.addEventListener('click', () => {
+                const shareText = currentRecipientData?.is_vendor && currentRecipientData.store_url 
+                    ? currentRecipientData.store_url 
+                    : window.location.origin + '/messages?target_user_id=' + (currentRecipientData?.id || '');
+                navigator.clipboard.writeText(shareText).then(() => {
+                    const shareTextEl = document.getElementById('profileModalShareBtnText');
+                    if (shareTextEl) {
+                        const prev = shareTextEl.textContent;
+                        shareTextEl.textContent = 'Link Copied!';
+                        setTimeout(() => { shareTextEl.textContent = prev; }, 2000);
+                    }
+                });
+            });
+        }
 
         userSearchInput.addEventListener('input', (e) => {
             clearTimeout(searchDebounceTimer);

@@ -364,7 +364,7 @@ class AdminController extends Controller
      */
     public function products(Request $request)
     {
-        $query = Product::withoutGlobalScopes()->with(['vendor', 'category', 'images']);
+        $query = Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->with(['vendor', 'category', 'images']);
 
         if ($search = trim($request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
@@ -391,13 +391,35 @@ class AdminController extends Controller
         $products = $query->latest()->paginate(20)->withQueryString();
 
         $counts = [
-            'all' => Product::withoutGlobalScopes()->count(),
-            'active' => Product::withoutGlobalScopes()->where('status', 'active')->count(),
-            'low_stock' => Product::withoutGlobalScopes()->where('total_stock', '<=', 3)->where('total_stock', '>', 0)->count(),
-            'out_of_stock' => Product::withoutGlobalScopes()->where('total_stock', '<=', 0)->count(),
+            'all' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->count(),
+            'active' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('status', 'active')->count(),
+            'low_stock' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('total_stock', '<=', 3)->where('total_stock', '>', 0)->count(),
+            'out_of_stock' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('total_stock', '<=', 0)->count(),
         ];
 
         return view('admin.products.index', compact('products', 'counts'));
+    }
+
+    public function deleteProduct(Product $product)
+    {
+        $title = $product->title;
+        $product->variants()->forceDelete();
+        if (method_exists($product, 'images')) {
+            foreach ($product->images as $img) {
+                if ($img->path) {
+                    @unlink(storage_path('app/public/' . $img->path));
+                    @unlink(public_path('storage/' . $img->path));
+                }
+            }
+            $product->images()->delete();
+        }
+        if ($product->video_path) {
+            @unlink(storage_path('app/public/' . $product->video_path));
+            @unlink(public_path('storage/' . $product->video_path));
+        }
+        $product->forceDelete();
+
+        return back()->with('success', "Product '{$title}' has been completely removed from site.");
     }
 
     /**
@@ -628,21 +650,6 @@ class AdminController extends Controller
     }
 
     /**
-     * Delete Product by Master Admin
-     */
-    public function deleteProduct(Request $request, Product $product)
-    {
-        $title = $product->title;
-        $id = $product->id;
-
-        // Delete related images & records
-        $product->images()->delete();
-        $product->delete();
-
-        return back()->with('success', "Product #{$id} '{$title}' was successfully deleted from the marketplace.");
-    }
-
-    /**
      * Delete Vendor by Master Admin
      */
     public function deleteVendor(Request $request, Vendor $vendor)
@@ -650,11 +657,32 @@ class AdminController extends Controller
         $shop = $vendor->shop_name;
         $id = $vendor->id;
 
-        // Delete associated products & delete vendor
-        Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->delete();
-        $vendor->delete();
+        // Force delete associated products, variants, images, shorts & vendor
+        $products = Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->get();
+        foreach ($products as $p) {
+            $p->variants()->forceDelete();
+            if (method_exists($p, 'images')) {
+                foreach ($p->images as $img) {
+                    if ($img->path) {
+                        @unlink(storage_path('app/public/' . $img->path));
+                        @unlink(public_path('storage/' . $img->path));
+                    }
+                }
+                $p->images()->delete();
+            }
+            if ($p->video_path) {
+                @unlink(storage_path('app/public/' . $p->video_path));
+                @unlink(public_path('storage/' . $p->video_path));
+            }
+            $p->forceDelete();
+        }
 
-        return back()->with('success', "Vendor boutique '{$shop}' (ID #{$id}) and all associated catalog items have been deleted.");
+        // Delete associated shorts
+        \App\Models\Short::withoutGlobalScopes()->where('vendor_id', $vendor->id)->forceDelete();
+
+        $vendor->forceDelete();
+
+        return back()->with('success', "Vendor boutique '{$shop}' (ID #{$id}) and all associated catalog items have been permanently removed.");
     }
 
     /**

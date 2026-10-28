@@ -128,7 +128,7 @@ class Short extends Model
         $vendorName = $vendor?->shop_name ?? 'Creator';
         $vendorStore = $vendor?->shop_name ?? '';
         $vendorAvatar = $vendor?->logo ? format_image_url($vendor->logo, asset('images/default-avatar.png')) : asset('images/default-avatar.png');
-        $vendorStoreUrl = $vendor ? route('storefront.show', $vendor->slug) : '#';
+        $vendorStoreUrl = $vendor ? $vendor->storefront_url : '#';
 
         $categories = $this->category ? [$this->category->name] : [];
 

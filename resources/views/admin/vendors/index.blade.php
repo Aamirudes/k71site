@@ -105,8 +105,8 @@
                                         </div>
                                         <div>
                                             <span class="font-bold text-slate-900 block text-sm">{{ $vendor->shop_name }}</span>
-                                            <a href="{{ route('storefront.show', $vendor->slug) }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
-                                                /s/{{ $vendor->slug }} ↗
+                                            <a href="{{ $vendor->storefront_url }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
+                                                {{ $vendor->slug }}.{{ config('marketplace.domain', 'marblemandi.org') }} ↗
                                             </a>
                                             <span class="text-[10px] text-slate-400 block font-mono">Joined {{ $vendor->created_at->format('d M, Y') }}</span>
                                         </div>
@@ -170,7 +170,7 @@
                                         <a href="{{ route('admin.orders', ['vendor_id' => $vendor->id]) }}" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors">
                                             Orders ({{ $vendor->orders_count }})
                                         </a>
-                                        <a href="{{ route('storefront.show', $vendor->slug) }}" target="_blank" class="p-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 transition-colors" title="View Storefront">
+                                        <a href="{{ $vendor->storefront_url }}" target="_blank" class="p-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-900 border border-slate-200 transition-colors" title="View Storefront">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                         </a>
 

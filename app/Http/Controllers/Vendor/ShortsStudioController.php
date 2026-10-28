@@ -538,4 +538,42 @@ class ShortsStudioController extends Controller
 
         return asset('storage/' . $path);
     }
+
+    /**
+     * Delete short permanently by vendor.
+     */
+    public function deleteShort(Short $short)
+    {
+        $user = auth()->user();
+        $vendor = $user?->vendor;
+        if (!$vendor || $short->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to short.');
+        }
+
+        $id = $short->id;
+        $title = $short->title;
+
+        // Clean up video and thumb files if stored locally
+        if ($short->video_url && str_contains($short->video_url, 'storage/shorts/')) {
+            $rel = str_replace(asset('storage/'), '', $short->video_url);
+            @unlink(storage_path('app/public/' . $rel));
+            @unlink(public_path('storage/' . $rel));
+        }
+        if ($short->thumb_url && str_contains($short->thumb_url, 'storage/shorts/')) {
+            $rel = str_replace(asset('storage/'), '', $short->thumb_url);
+            @unlink(storage_path('app/public/' . $rel));
+            @unlink(public_path('storage/' . $rel));
+        }
+
+        $short->forceDelete();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Short #{$id} ('{$title}') permanently removed.",
+            ]);
+        }
+
+        return back()->with('success', "Short #{$id} deleted successfully.");
+    }
 }

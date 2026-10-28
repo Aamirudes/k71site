@@ -791,18 +791,19 @@ class Vendor extends Model
 
     public function getStorefrontUrlAttribute(): string
     {
-        $requestHost = request()->getHost();
-        $isIp = in_array($requestHost, ['127.0.0.1', '::1']) || filter_var($requestHost, FILTER_VALIDATE_IP);
+        $domain = config('marketplace.domain', 'marblemandi.org');
+        $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
+        $requestHost = strtolower(request()->getHost());
+        
+        $isLocal = in_array($requestHost, ['localhost', '127.0.0.1', '::1']) || str_contains($requestHost, 'localhost') || filter_var($requestHost, FILTER_VALIDATE_IP);
+        $port = request()->getPort();
+        $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
 
-        if (config('marketplace.use_subdomains', true) && !$isIp) {
-            $rootDomain = k71_root_domain($requestHost);
-            $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
-            $port = request()->getPort();
-            $portSuffix = ($port && !in_array($port, [80, 443])) ? ':' . $port : '';
-            return "{$scheme}://{$this->slug}.{$rootDomain}{$portSuffix}";
+        if ($isLocal && (str_contains($requestHost, 'localhost') || $requestHost === '127.0.0.1')) {
+            return "{$scheme}://{$this->slug}.localhost{$portSuffix}";
         }
 
-        return route('storefront.show', $this->slug);
+        return "{$scheme}://{$this->slug}.{$domain}{$portSuffix}";
     }
 
     public function conversations(): HasMany

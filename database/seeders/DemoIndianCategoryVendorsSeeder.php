@@ -318,11 +318,39 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
                 'avg_prep_time' => 0,
                 'cuisine' => null,
             ],
+            [
+                'vendor_type' => 'clothing',
+                'shop_name' => 'HashFashion Couture',
+                'slug' => 'hashfashion',
+                'owner_name' => 'Hashir Khan',
+                'owner_email' => 'hashir@k71.in',
+                'owner_phone' => '9820998877',
+                'city' => 'Mumbai',
+                'state' => 'Maharashtra',
+                'pincode' => '400001',
+                'address' => 'Colaba Boutique Arcade, Shop 7',
+                'tagline' => 'Handcrafted Haute Couture, Pure Silk Sherwanis & Designer Anarkalis',
+                'description' => 'Bespoke high-fashion atelier crafting luxurious wedding ensembles, designer handlooms, and contemporary festive silhouettes with master zardozi embroidery.',
+                'logo' => 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=300&q=80',
+                'banner' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80',
+                'is_restaurant' => false,
+                'is_pure_veg' => false,
+                'avg_prep_time' => 0,
+                'cuisine' => null,
+            ],
         ];
 
         $vendorRole = \App\Models\Role::where('name', 'vendor')->first();
 
-        foreach ($vendorsData as $v) {
+        $palettes = ['sage', 'midnight', 'sunset'];
+        $layouts = ['classic', 'editorial', 'minimal'];
+        $presets = ['gallery', 'immersive', 'showcase'];
+
+        foreach ($vendorsData as $index => $v) {
+            $colourPalette = $palettes[$index % 3];
+            $layoutPreset = $layouts[intdiv($index, 3) % 3];
+            $productPreset = $presets[$index % 3];
+
             $nameParts = explode(' ', trim($v['owner_name']), 2);
             $firstName = $nameParts[0];
             $lastName = $nameParts[1] ?? 'Trader';
@@ -356,7 +384,7 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             }
 
             // Find or create vendor
-            $vendor = Vendor::where('slug', $v['slug'])->first();
+            $vendor = Vendor::where('user_id', $user->id)->orWhere('slug', $v['slug'])->first();
             if (!$vendor) {
                 $vendor = Vendor::create([
                     'user_id' => $user->id,
@@ -367,6 +395,9 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
                     'description' => $v['description'],
                     'logo' => $v['logo'],
                     'banner' => $v['banner'],
+                    'colour_palette' => $colourPalette,
+                    'layout_preset' => $layoutPreset,
+                    'product_preset' => $productPreset,
                     'city' => $v['city'],
                     'state' => $v['state'],
                     'pincode' => $v['pincode'],
@@ -382,10 +413,26 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
                     'store_policies' => 'Genuine authentic Indian craft guarantee. Safe pan-India doorstep delivery with hassle-free inspection policy.',
                 ]);
             } else {
+                $vendor->user_id = $user->id;
+                $vendor->slug = $v['slug'];
+                $vendor->shop_name = $v['shop_name'];
                 $vendor->status = 'approved';
                 $vendor->approved_at = $vendor->approved_at ?: now();
+                $vendor->colour_palette = $colourPalette;
+                $vendor->layout_preset = $layoutPreset;
+                $vendor->product_preset = $productPreset;
+                $vendor->logo = $v['logo'];
+                $vendor->banner = $v['banner'];
+                $vendor->tagline = $v['tagline'];
+                $vendor->description = $v['description'];
                 $vendor->save();
             }
+
+            // Ensure vendor has NO products (only logo and banner)
+            \App\Models\Product::where('vendor_id', $vendor->id)->each(function($p) {
+                $p->variants()->forceDelete();
+                $p->forceDelete();
+            });
 
             // Ensure vendor settings are properly linked
             VendorSetting::updateOrCreate(
@@ -401,6 +448,6 @@ class DemoIndianCategoryVendorsSeeder extends Seeder
             );
         }
 
-        $this->command?->info('Created ' . count($vendorsData) . ' demo Indian category vendors (without products).');
+        $this->command?->info('Created ' . count($vendorsData) . ' demo Indian category vendors (with logo & banner only, 0 products).');
     }
 }

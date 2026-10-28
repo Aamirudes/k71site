@@ -659,10 +659,16 @@ class CheckoutController extends Controller
         $vpa = !empty($settings?->upi_id) ? $settings->upi_id : $fallbackVpa;
         
         $amountFormatted = number_format($order->total_amount / 100, 2, '.', '');
-        $upiUrl = "upi://pay?pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am={$amountFormatted}&cu=INR&tn=" . urlencode("Order_{$order->order_number}") . "&tr={$order->order_number}";
+        $baseParams = "pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am={$amountFormatted}&cu=INR&tn=" . urlencode("Order_{$order->order_number}") . "&tr={$order->order_number}";
+        
+        $upiUrl = "upi://pay?{$baseParams}";
+        $gpayUrl = "tez://upi/pay?{$baseParams}";
+        $phonepeUrl = "phonepe://pay?{$baseParams}";
+        $paytmUrl = "paytmmp://pay?{$baseParams}";
+        
         $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=" . urlencode($upiUrl);
 
-        return view('checkout.payment', compact('order', 'vendor', 'settings', 'upiUrl', 'qr_url', 'vpa', 'amountFormatted'));
+        return view('checkout.payment', compact('order', 'vendor', 'settings', 'upiUrl', 'gpayUrl', 'phonepeUrl', 'paytmUrl', 'qr_url', 'vpa', 'amountFormatted'));
     }
 
     public function processPayment(Request $request, Order $order)

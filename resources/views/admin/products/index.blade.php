@@ -116,8 +116,8 @@
                                         <a href="{{ route('admin.orders', ['vendor_id' => $product->vendor->id]) }}" class="font-bold text-slate-900 hover:text-amber-600 block">
                                             {{ $product->vendor->shop_name }}
                                         </a>
-                                        <a href="{{ route('storefront.show', $product->vendor->slug) }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
-                                            /s/{{ $product->vendor->slug }} ↗
+                                        <a href="{{ $product->vendor->storefront_url }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
+                                            {{ $product->vendor->slug }}.{{ config('marketplace.domain', 'marblemandi.org') }} ↗
                                         </a>
                                     @else
                                         <span class="text-slate-400 font-medium">Direct Marketplace</span>

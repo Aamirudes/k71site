@@ -102,107 +102,62 @@
             $whatsappUrl = null;
         }
 
-        $palette = $vendor->colour_palette ?? 'linen';
-        if ($palette === 'default') { $palette = 'linen'; }
+        $palette = $vendor->colour_palette ?? 'sage';
+        if ($palette === 'default') { $palette = 'sage'; }
         $layout = $vendor->layout_preset ?? 'classic';
+        $productPreset = $vendor->product_preset ?? 'gallery';
 
-        // Theme Palette Tokens
+        // 3-3-3 Rich Theme Palette & Glassmorphic Tokens
         $theme = match($palette) {
             'sage' => [
-                'accentText' => 'text-[#2D4A3E]',
-                'accentBg' => 'bg-[#2D4A3E]',
-                'accentBorder' => 'border-[#2D4A3E]',
-                'accentHover' => 'hover:bg-[#1E332B]',
-                'pillActive' => 'bg-[#2D4A3E] text-white',
-                'badge' => 'bg-emerald-50 text-emerald-900 border-emerald-200/80',
-                'badgeSecondary' => 'bg-stone-100 text-stone-800 border-stone-200',
-                'announcementGradient' => 'from-[#1B2F27] via-[#2D4A3E] to-[#1B2F27]',
-                'heroFallback' => 'from-[#172821] via-[#2D4A3E] to-[#1B2E26]',
-                'ringColor' => 'ring-[#2D4A3E]/20',
-                'buttonPrimary' => 'bg-[#2D4A3E] hover:bg-[#1E332B] text-white',
+                'accentText' => 'text-emerald-800 dark:text-emerald-300',
+                'accentBg' => 'bg-emerald-800 dark:bg-emerald-600',
+                'accentBorder' => 'border-emerald-300/60 dark:border-emerald-500/30',
+                'accentHover' => 'hover:bg-emerald-900 dark:hover:bg-emerald-500',
+                'pillActive' => 'bg-emerald-800 text-white shadow-md shadow-emerald-800/25',
+                'badge' => 'bg-emerald-50/90 text-emerald-900 border-emerald-300/80 backdrop-blur-md',
+                'badgeSecondary' => 'bg-stone-100/80 text-stone-800 border-stone-200/80 backdrop-blur-md',
+                'announcementGradient' => 'from-emerald-950 via-emerald-800 to-teal-950',
+                'heroFallback' => 'from-[#0A1A14] via-[#143428] to-[#0A1A14]',
+                'ringColor' => 'ring-emerald-500/30',
+                'buttonPrimary' => 'bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 hover:from-emerald-900 hover:to-teal-900 text-white shadow-lg shadow-emerald-800/25 border border-emerald-600/30',
+                'glassCard' => 'backdrop-blur-2xl bg-white/80 dark:bg-[#07130E]/85 border border-emerald-200/60 dark:border-emerald-500/20 shadow-[0_16px_40px_rgba(6,78,59,0.08)]',
+                'glowBadge' => 'bg-emerald-50/90 text-emerald-900 border-emerald-300 shadow-sm shadow-emerald-500/15',
             ],
             'midnight' => [
-                'accentText' => 'text-[#1E293B]',
-                'accentBg' => 'bg-[#1E293B]',
-                'accentBorder' => 'border-[#1E293B]',
-                'accentHover' => 'hover:bg-[#0F172A]',
-                'pillActive' => 'bg-[#1E293B] text-white',
-                'badge' => 'bg-sky-50 text-sky-900 border-sky-200/80',
-                'badgeSecondary' => 'bg-slate-100 text-slate-800 border-slate-200',
-                'announcementGradient' => 'from-[#0F172A] via-[#1E293B] to-[#0F172A]',
-                'heroFallback' => 'from-[#0B1120] via-[#1E293B] to-[#0F172A]',
-                'ringColor' => 'ring-sky-500/20',
-                'buttonPrimary' => 'bg-[#1E293B] hover:bg-[#0F172A] text-white',
+                'accentText' => 'text-indigo-400 dark:text-cyan-300',
+                'accentBg' => 'bg-slate-900 dark:bg-indigo-600',
+                'accentBorder' => 'border-indigo-400/30 dark:border-cyan-500/30',
+                'accentHover' => 'hover:bg-black dark:hover:bg-indigo-500',
+                'pillActive' => 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30',
+                'badge' => 'bg-indigo-950/70 text-indigo-200 border-indigo-500/40 backdrop-blur-md',
+                'badgeSecondary' => 'bg-slate-800/70 text-slate-200 border-slate-700/60 backdrop-blur-md',
+                'announcementGradient' => 'from-[#030712] via-[#0F172A] to-[#1E1B4B]',
+                'heroFallback' => 'from-[#020617] via-[#0F172A] to-[#1E1B4B]',
+                'ringColor' => 'ring-cyan-500/30',
+                'buttonPrimary' => 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/30 border border-cyan-400/30',
+                'glassCard' => 'backdrop-blur-2xl bg-slate-900/90 text-slate-100 border border-slate-700/60 shadow-[0_20px_50px_rgba(2,6,23,0.45)]',
+                'glowBadge' => 'bg-indigo-950/80 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-500/20',
             ],
             'sunset' => [
-                'accentText' => 'text-[#C85A32]',
-                'accentBg' => 'bg-[#C85A32]',
-                'accentBorder' => 'border-[#C85A32]',
-                'accentHover' => 'hover:bg-[#AC4721]',
-                'pillActive' => 'bg-[#C85A32] text-white',
-                'badge' => 'bg-amber-50 text-amber-900 border-amber-200/80',
-                'badgeSecondary' => 'bg-stone-100 text-stone-800 border-stone-200',
-                'announcementGradient' => 'from-[#4D1C0D] via-[#C85A32] to-[#4D1C0D]',
-                'heroFallback' => 'from-[#3A1409] via-[#8C3A1C] to-[#3A1409]',
-                'ringColor' => 'ring-[#C85A32]/20',
-                'buttonPrimary' => 'bg-[#C85A32] hover:bg-[#AC4721] text-white',
+                'accentText' => 'text-[#C85A32] dark:text-amber-300',
+                'accentBg' => 'bg-[#C85A32] dark:bg-orange-600',
+                'accentBorder' => 'border-amber-300/60 dark:border-amber-500/30',
+                'accentHover' => 'hover:bg-[#AC4721] dark:hover:bg-orange-500',
+                'pillActive' => 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-md shadow-orange-500/30',
+                'badge' => 'bg-amber-50/90 text-amber-950 border-amber-300/80 backdrop-blur-md',
+                'badgeSecondary' => 'bg-stone-100/80 text-stone-800 border-stone-200/80 backdrop-blur-md',
+                'announcementGradient' => 'from-[#4D1C0D] via-[#C85A32] to-[#78350F]',
+                'heroFallback' => 'from-[#2C1007] via-[#5C2310] to-[#2C1007]',
+                'ringColor' => 'ring-amber-500/30',
+                'buttonPrimary' => 'bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white shadow-lg shadow-orange-600/25 border border-amber-400/30',
+                'glassCard' => 'backdrop-blur-2xl bg-white/85 dark:bg-[#1A0C06]/85 border border-amber-200/70 dark:border-amber-500/20 shadow-[0_16px_40px_rgba(194,65,12,0.08)]',
+                'glowBadge' => 'bg-amber-50/90 text-amber-950 border-amber-300 shadow-sm shadow-amber-500/15',
             ],
-            'emerald' => [
-                'accentText' => 'text-[#12261E]',
-                'accentBg' => 'bg-[#12261E]',
-                'accentBorder' => 'border-[#12261E]',
-                'accentHover' => 'hover:bg-[#0B1A14]',
-                'pillActive' => 'bg-[#12261E] text-[#F3EFE0]',
-                'badge' => 'bg-emerald-50 text-emerald-900 border-emerald-200/80',
-                'badgeSecondary' => 'bg-amber-50 text-amber-900 border-amber-200/60',
-                'announcementGradient' => 'from-[#0C1A14] via-[#152F25] to-[#0C1A14]',
-                'heroFallback' => 'from-[#0A1812] via-[#162D24] to-[#0D1F17]',
-                'ringColor' => 'ring-[#12261E]/20',
-                'buttonPrimary' => 'bg-[#12261E] hover:bg-[#0B1A14] text-[#F3EFE0]',
-            ],
-            'rose' => [
-                'accentText' => 'text-[#8A3324]',
-                'accentBg' => 'bg-[#8A3324]',
-                'accentBorder' => 'border-[#8A3324]',
-                'accentHover' => 'hover:bg-[#72271A]',
-                'pillActive' => 'bg-[#8A3324] text-white',
-                'badge' => 'bg-rose-50 text-rose-900 border-rose-200/80',
-                'badgeSecondary' => 'bg-stone-100 text-stone-800 border-stone-200',
-                'announcementGradient' => 'from-[#3B1916] via-[#752D21] to-[#3B1916]',
-                'heroFallback' => 'from-[#2B1513] via-[#4A2420] to-[#2B1513]',
-                'ringColor' => 'ring-[#8A3324]/20',
-                'buttonPrimary' => 'bg-[#8A3324] hover:bg-[#72271A] text-white',
-            ],
-            'noir' => [
-                'accentText' => 'text-[#09090B]',
-                'accentBg' => 'bg-[#09090B]',
-                'accentBorder' => 'border-[#09090B]',
-                'accentHover' => 'hover:bg-black',
-                'pillActive' => 'bg-[#09090B] text-white',
-                'badge' => 'bg-stone-100 text-stone-900 border-stone-300',
-                'badgeSecondary' => 'bg-stone-100 text-stone-700 border-stone-200',
-                'announcementGradient' => 'from-black via-[#1E293B] to-black',
-                'heroFallback' => 'from-[#09090B] via-[#1E2024] to-[#09090B]',
-                'ringColor' => 'ring-stone-900/20',
-                'buttonPrimary' => 'bg-[#09090B] hover:bg-black text-white',
-            ],
-            'terracotta' => [
-                'accentText' => 'text-[#9C4325]',
-                'accentBg' => 'bg-[#9C4325]',
-                'accentBorder' => 'border-[#9C4325]',
-                'accentHover' => 'hover:bg-[#83351C]',
-                'pillActive' => 'bg-[#9C4325] text-white',
-                'badge' => 'bg-amber-50 text-amber-950 border-amber-200',
-                'badgeSecondary' => 'bg-stone-100 text-stone-800 border-stone-200',
-                'announcementGradient' => 'from-[#3B190E] via-[#85371D] to-[#3B190E]',
-                'heroFallback' => 'from-[#2C1810] via-[#4A281A] to-[#26150D]',
-                'ringColor' => 'ring-[#9C4325]/20',
-                'buttonPrimary' => 'bg-[#9C4325] hover:bg-[#83351C] text-white',
-            ],
-            default => [ // linen
+            default => [ // linen fallback
                 'accentText' => 'text-[#2B3E36]',
                 'accentBg' => 'bg-[#2B3E36]',
-                'accentBorder' => 'border-[#2B3E36]',
+                'accentBorder' => 'border-[#2B3E36]/30',
                 'accentHover' => 'hover:bg-[#1E2E28]',
                 'pillActive' => 'bg-[#2B3E36] text-white',
                 'badge' => 'bg-[#F2ECE1] text-[#2B3E36] border-[#DFD5C4]',
@@ -211,6 +166,8 @@
                 'heroFallback' => 'from-[#1A2621] via-[#2F483E] to-[#18231F]',
                 'ringColor' => 'ring-[#2B3E36]/20',
                 'buttonPrimary' => 'bg-[#2B3E36] hover:bg-[#1E2E28] text-white',
+                'glassCard' => 'backdrop-blur-xl bg-white/80 border border-stone-200/80 shadow-md',
+                'glowBadge' => 'bg-[#F2ECE1] text-[#2B3E36] border-[#DFD5C4]',
             ],
         };
     @endphp
@@ -1161,23 +1118,87 @@
                             ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6' 
                             : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6'">
                         @forelse($products as $product)
-                            <x-product-card :product="$product" />
+                            <div class="scroll-reveal glass-tilt-card transition-all duration-300">
+                                @if($productPreset === 'immersive')
+                                    <!-- Immersive Full-Bleed Preset -->
+                                    <div class="relative rounded-3xl overflow-hidden {{ $theme['glassCard'] }} group shadow-md hover:shadow-2xl transition-all duration-500">
+                                        <x-product-card :product="$product" />
+                                    </div>
+                                @elseif($productPreset === 'showcase')
+                                    <!-- Technical Showcase Preset -->
+                                    <div class="relative rounded-3xl overflow-hidden {{ $theme['glassCard'] }} border-2 p-1.5 shadow-md hover:shadow-xl transition-all duration-300">
+                                        <x-product-card :product="$product" />
+                                    </div>
+                                @else
+                                    <!-- Gallery 3D Tilt Card Preset (Default) -->
+                                    <div class="relative rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5">
+                                        <x-product-card :product="$product" />
+                                    </div>
+                                @endif
+                            </div>
                         @empty
-                            <div class="col-span-full py-16 px-4 bg-white rounded-3xl border border-stone-200/80 text-center shadow-xs">
-                                <div class="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-4 text-stone-400">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            <div class="col-span-full py-14 px-6 sm:px-12 rounded-3xl {{ $theme['glassCard'] }} text-center relative overflow-hidden my-4 border">
+                                <!-- Ambient Glass Specular Glow -->
+                                <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-b from-indigo-500/10 via-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+
+                                <div class="relative z-10 max-w-xl mx-auto">
+                                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full {{ $theme['glowBadge'] }} text-xs font-bold mb-4 tracking-wide border">
+                                        <span class="animate-pulse">✨</span>
+                                        <span>Bespoke Private Atelier • Collection Drop Imminent</span>
+                                    </div>
+
+                                    <h3 class="text-2xl sm:text-3xl font-serif font-bold text-stone-900 dark:text-white tracking-tight mb-3">
+                                        Handcrafted Treasures in Curation
+                                    </h3>
+
+                                    <p class="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-8">
+                                        <span x-show="search || category">No pieces match your active live filter. Reset filters to explore available collections.</span>
+                                        <span x-show="!search && !category">{{ $vendor->shop_name }} is currently curating their next exclusive seasonal drop. Connect directly with the boutique master stylist for bespoke commissions, private catalog previews, or custom sizing!</span>
+                                    </p>
+
+                                    <!-- 3 Interactive Feature Tiles -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-8 text-left">
+                                        <div class="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-stone-200/60 dark:border-white/10 backdrop-blur-md shadow-2xs">
+                                            <div class="text-xl mb-1.5">🧵</div>
+                                            <div class="text-xs font-bold text-stone-900 dark:text-white">Made-To-Order</div>
+                                            <div class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">Bespoke sizing & tailored consultations.</div>
+                                        </div>
+                                        <div class="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-stone-200/60 dark:border-white/10 backdrop-blur-md shadow-2xs">
+                                            <div class="text-xl mb-1.5">🛡️</div>
+                                            <div class="text-xs font-bold text-stone-900 dark:text-white">Authentic Artisan</div>
+                                            <div class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">Direct boutique dispatch & quality seal.</div>
+                                        </div>
+                                        <div class="p-4 rounded-2xl bg-white/70 dark:bg-white/5 border border-stone-200/60 dark:border-white/10 backdrop-blur-md shadow-2xs">
+                                            <div class="text-xl mb-1.5">⚡</div>
+                                            <div class="text-xs font-bold text-stone-900 dark:text-white">Priority Concierge</div>
+                                            <div class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">Direct WhatsApp response within hours.</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Action CTAs -->
+                                    <div class="flex flex-wrap items-center justify-center gap-3">
+                                        @if($whatsappUrl)
+                                            <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener"
+                                               class="px-6 py-3 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/30 flex items-center gap-2 hover:scale-105 active:scale-95">
+                                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                                                <span>Chat on WhatsApp</span>
+                                            </a>
+                                        @endif
+
+                                        <a href="{{ route('messages.index', ['target_user_id' => $vendor->user_id]) }}"
+                                           class="px-6 py-3 rounded-full {{ $theme['buttonPrimary'] }} text-xs font-bold transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                            <span>Message Boutique Stylist</span>
+                                        </a>
+
+                                        <button type="button" 
+                                                x-show="search || category"
+                                                @click="clearFilters()" 
+                                                class="px-5 py-3 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition-colors">
+                                            Reset All Filters
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3 class="text-xl font-serif font-bold text-stone-900 mb-1">No pieces found</h3>
-                                <p class="text-xs text-stone-500 max-w-sm mx-auto mb-4">
-                                    <span x-show="search || category">No designs match your active live filters. Try clearing your search or category filter.</span>
-                                    <span x-show="!search && !category">{{ $vendor->shop_name }} has not published any active items yet. Check back soon!</span>
-                                </p>
-                                <button type="button" 
-                                        x-show="search || category"
-                                        @click="clearFilters()" 
-                                        class="px-5 py-2.5 rounded-full {{ $theme['buttonPrimary'] }} text-xs font-bold transition-colors inline-block cursor-pointer">
-                                    Reset All Filters
-                                </button>
                             </div>
                         @endforelse
                     </div>
@@ -1346,7 +1367,71 @@
                     </button>
                 </div>
             </div>
-        </div>
+        <!-- Floating WhatsApp Concierge FAB with radar ripple pulses -->
+        @if($whatsappUrl)
+            <div class="fixed bottom-6 right-6 z-40">
+                <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener"
+                   aria-label="Direct WhatsApp Concierge"
+                   class="relative flex items-center justify-center w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 group">
+                    <!-- Radar Ping Waves -->
+                    <span class="absolute inset-0 rounded-full bg-emerald-400 opacity-75 animate-ping pointer-events-none"></span>
+                    <svg class="w-7 h-7 fill-current relative z-10" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/></svg>
+                    <!-- Floating Hover Tooltip -->
+                    <span class="absolute right-16 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-xl bg-stone-900/90 text-white text-[11px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg">
+                        Chat with {{ $vendor->shop_name }}
+                    </span>
+                </a>
+            </div>
+        @endif
+
+        <style>
+            .scroll-reveal {
+                opacity: 0;
+                transform: translateY(22px);
+                transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+                will-change: opacity, transform;
+            }
+            .scroll-reveal.is-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .glass-tilt-card {
+                position: relative;
+                overflow: hidden;
+                border-radius: 24px;
+            }
+            .glass-tilt-card::after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -120%;
+                width: 60%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+                transform: skewX(-20deg);
+                transition: left 0.8s ease;
+                pointer-events: none;
+                z-index: 2;
+            }
+            .glass-tilt-card:hover::after {
+                left: 160%;
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.08 });
+
+                document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+            });
+        </script>
 
     </div>
 </x-layouts.public>

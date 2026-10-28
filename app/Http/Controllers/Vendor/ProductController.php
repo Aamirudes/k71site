@@ -339,7 +339,7 @@ class ProductController extends Controller
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'cover_image_index' => ['nullable', 'integer', 'min:0'],
-            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg', 'max:51200'],
+            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg,m4v,qt,avi', 'max:51200'],
             'video_url' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -723,7 +723,8 @@ class ProductController extends Controller
             'specifications' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg', 'max:51200'],
+            'cover_image_index' => ['nullable', 'integer', 'min:0'],
+            'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg,m4v,qt,avi', 'max:51200'],
             'video_url' => ['nullable', 'string', 'max:500'],
             'remove_video' => ['nullable', 'boolean'],
         ]);
@@ -1087,10 +1088,23 @@ class ProductController extends Controller
 
         try {
             $productTitle = $product->title;
-            // Cleanly delete associated variants and product
-            $product->variants()->delete();
-            $product->delete();
-            return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has been successfully deleted.");
+            // Cleanly delete associated variants, images, and permanently remove product from site
+            $product->variants()->forceDelete();
+            if (method_exists($product, 'images')) {
+                foreach ($product->images as $img) {
+                    if ($img->path) {
+                        @unlink(storage_path('app/public/' . $img->path));
+                        @unlink(public_path('storage/' . $img->path));
+                    }
+                }
+                $product->images()->delete();
+            }
+            if ($product->video_path) {
+                @unlink(storage_path('app/public/' . $product->video_path));
+                @unlink(public_path('storage/' . $product->video_path));
+            }
+            $product->forceDelete();
+            return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has been completely removed from site.");
         } catch (\Throwable $e) {
             return redirect()->route('vendor.products.index')->with('error', 'Could not delete product: ' . $e->getMessage());
         }

@@ -285,23 +285,7 @@ class MessageController extends Controller
 
     private function getChatUserInfo(int $userId): ?array
     {
-        $selectCols = [
-            'users.id',
-            'users.username',
-            'users.first_name',
-            'users.last_name',
-            'users.avatar',
-            'users.email',
-            'users.last_seen_at',
-            'vendors.shop_name'
-        ];
-
-        $u = \Illuminate\Support\Facades\DB::table('users')
-            ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
-            ->where('users.id', $userId)
-            ->whereNull('users.deleted_at')
-            ->first($selectCols);
-
+        $u = \App\Models\User::with(['vendor', 'roles'])->find($userId);
         if (!$u) return null;
 
         $personName = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
@@ -309,25 +293,51 @@ class MessageController extends Controller
             $personName = $u->username ?? ('User #' . $u->id);
         }
 
+        $vendor = $u->vendor;
         $displayName = $personName;
-        if (!empty($u->shop_name)) {
-            $displayName = $u->shop_name . ' (' . $personName . ')';
+        if ($vendor && !empty($vendor->shop_name)) {
+            $displayName = $vendor->shop_name . ' (' . $personName . ')';
         }
 
-        // Real-time activity status (Online if active within last 3 minutes)
         $lastSeenTime = !empty($u->last_seen_at) ? strtotime($u->last_seen_at) : (int)\Illuminate\Support\Facades\Cache::get("user_last_seen_{$u->id}", 0);
         $isOnline = ($lastSeenTime > (time() - 180));
+
+        $isVendor = ($vendor && in_array($vendor->status, ['approved', 'active']));
+        $storeUrl = $isVendor ? $vendor->storefront_url : null;
+        $subdomain = $isVendor ? "{$vendor->slug}." . config('marketplace.domain') : null;
+
+        $logoUrl = null;
+        if ($vendor?->logo) {
+            $logoUrl = str_starts_with($vendor->logo, 'http') ? $vendor->logo : \Illuminate\Support\Facades\Storage::url($vendor->logo);
+        }
+        $bannerUrl = null;
+        if ($vendor?->banner) {
+            $bannerUrl = str_starts_with($vendor->banner, 'http') ? $vendor->banner : \Illuminate\Support\Facades\Storage::url($vendor->banner);
+        }
 
         return [
             'id' => (int) $u->id,
             'username' => $u->username ?? ('user_' . $u->id),
             'name' => $displayName,
-            'shop_name' => $u->shop_name ?? null,
+            'raw_name' => $personName,
+            'shop_name' => $vendor?->shop_name,
             'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
             'email' => $u->email ?? '',
             'is_online' => $isOnline,
             'last_seen_at' => $u->last_seen_at ?? null,
-            'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : ''),
+            'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : 'Offline'),
+            'is_vendor' => $isVendor,
+            'vendor_slug' => $vendor?->slug,
+            'vendor_city' => $vendor?->city ?? 'India',
+            'vendor_state' => $vendor?->state,
+            'vendor_rating' => $vendor?->rating ?? 4.9,
+            'store_url' => $storeUrl,
+            'store_domain' => $subdomain,
+            'banner_url' => $bannerUrl,
+            'logo_url' => $logoUrl,
+            'bio' => $vendor?->description ?? 'Member of K71 Direct Commerce community.',
+            'member_since' => $u->created_at ? $u->created_at->format('M Y') : '2026',
+            'role_label' => $isVendor ? 'Verified Merchant' : ($u->roles && $u->roles->contains('slug', 'admin') ? 'Staff Admin' : 'K71 Member'),
         ];
     }
 
@@ -373,36 +383,55 @@ class MessageController extends Controller
                 return ($c->user_one_id == $userId) ? (int)$c->user_two_id : (int)$c->user_one_id;
             })->unique()->filter()->values()->toArray();
 
-            // 1. Batch fetch all recipients in ONE query
+            // 1. Batch fetch all recipients with Eloquent to load vendor details
             $usersMap = [];
             if (!empty($recipientIds)) {
-                $users = \Illuminate\Support\Facades\DB::table('users')
-                    ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
-                    ->whereIn('users.id', $recipientIds)
-                    ->whereNull('users.deleted_at')
-                    ->get([
-                        'users.id', 'users.username', 'users.first_name', 'users.last_name',
-                        'users.avatar', 'users.email', 'users.last_seen_at', 'vendors.shop_name'
-                    ]);
+                $users = \App\Models\User::with(['vendor', 'roles'])
+                    ->whereIn('id', $recipientIds)
+                    ->get();
 
                 foreach ($users as $u) {
                     $personName = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
                     if ($personName === '') $personName = $u->username ?? ('User #' . $u->id);
-                    $displayName = !empty($u->shop_name) ? ($u->shop_name . ' (' . $personName . ')') : $personName;
+                    $vendor = $u->vendor;
+                    $displayName = ($vendor && !empty($vendor->shop_name)) ? ($vendor->shop_name . ' (' . $personName . ')') : $personName;
 
                     $lastSeenTime = !empty($u->last_seen_at) ? strtotime($u->last_seen_at) : (int)\Illuminate\Support\Facades\Cache::get("user_last_seen_{$u->id}", 0);
                     $isOnline = ($lastSeenTime > (time() - 180));
+                    $isVendor = ($vendor && in_array($vendor->status, ['approved', 'active']));
+
+                    $logoUrl = null;
+                    if ($vendor?->logo) {
+                        $logoUrl = str_starts_with($vendor->logo, 'http') ? $vendor->logo : \Illuminate\Support\Facades\Storage::url($vendor->logo);
+                    }
+                    $bannerUrl = null;
+                    if ($vendor?->banner) {
+                        $bannerUrl = str_starts_with($vendor->banner, 'http') ? $vendor->banner : \Illuminate\Support\Facades\Storage::url($vendor->banner);
+                    }
 
                     $usersMap[$u->id] = [
                         'id' => (int) $u->id,
                         'username' => $u->username ?? ('user_' . $u->id),
                         'name' => $displayName,
-                        'shop_name' => $u->shop_name ?? null,
+                        'raw_name' => $personName,
+                        'shop_name' => $vendor?->shop_name,
                         'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
                         'email' => $u->email ?? '',
                         'is_online' => $isOnline,
                         'last_seen_at' => $u->last_seen_at ?? null,
-                        'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : ''),
+                        'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : 'Offline'),
+                        'is_vendor' => $isVendor,
+                        'vendor_slug' => $vendor?->slug,
+                        'vendor_city' => $vendor?->city ?? 'India',
+                        'vendor_state' => $vendor?->state,
+                        'vendor_rating' => $vendor?->rating ?? 4.9,
+                        'store_url' => $isVendor ? $vendor->storefront_url : null,
+                        'store_domain' => $isVendor ? "{$vendor->slug}." . config('marketplace.domain') : null,
+                        'banner_url' => $bannerUrl,
+                        'logo_url' => $logoUrl,
+                        'bio' => $vendor?->description ?? 'Member of K71 Direct Commerce community.',
+                        'member_since' => $u->created_at ? $u->created_at->format('M Y') : '2026',
+                        'role_label' => $isVendor ? 'Verified Merchant' : ($u->roles && $u->roles->contains('slug', 'admin') ? 'Staff Admin' : 'K71 Member'),
                     ];
                 }
             }

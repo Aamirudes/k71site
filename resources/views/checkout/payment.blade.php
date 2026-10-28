@@ -94,19 +94,131 @@
                     </button>
                 </div>
 
-                <!-- Open UPI App Button (Full-width, prominent black) -->
-                <div x-data>
-                    <a href="{{ $upiUrl }}" 
-                       id="openUpiAppBtn"
-                       @click="
-                           setTimeout(function() {
-                               navigator.clipboard.writeText('{{ $vpa }}');
-                           }, 300);
-                       "
-                       class="w-full py-3.5 px-4 bg-black hover:bg-stone-900 active:scale-98 text-white font-bold rounded-xl text-center text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
+                <!-- Open UPI App Button with Interactive 3-App Popup Modal (GPay, PhonePe, Paytm) -->
+                <div x-data="{ showUpiModal: false }">
+                    <button type="button" 
+                            id="openUpiAppBtn"
+                            @click="showUpiModal = true; navigator.clipboard.writeText('{{ $vpa }}');"
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-slate-900 via-stone-900 to-black hover:from-black hover:to-stone-950 active:scale-98 text-white font-bold rounded-2xl text-center text-sm flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer border border-white/10">
                         <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        <span>Open UPI App</span>
-                    </a>
+                        <span>Tap to Open UPI App (GPay / PhonePe / Paytm)</span>
+                    </button>
+
+                    <!-- Interactive UPI App Chooser Modal -->
+                    <div x-show="showUpiModal" 
+                         x-cloak
+                         @keydown.escape.window="showUpiModal = false"
+                         class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-md transition-all">
+                        
+                        <div @click.outside="showUpiModal = false"
+                             x-show="showUpiModal"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-8 sm:scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-8 sm:scale-95"
+                             class="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border border-gray-100 relative">
+                            
+                            <!-- Modal Header -->
+                            <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+                                <div>
+                                    <h3 class="text-lg font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                                        <span>Choose Your UPI App</span>
+                                        <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">1-Tap Pay</span>
+                                    </h3>
+                                    <p class="text-xs text-gray-500 mt-0.5">Amount ₹{{ $amountFormatted }} will be pre-filled automatically</p>
+                                </div>
+                                <button type="button" @click="showUpiModal = false" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-colors cursor-pointer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+
+                            <!-- 3 Payment Apps Grid -->
+                            <div class="space-y-3">
+                                
+                                <!-- 1. Google Pay (GPay) -->
+                                <a href="{{ $gpayUrl }}" 
+                                   @click="showUpiModal = false"
+                                   class="group flex items-center justify-between p-3.5 rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50/40 bg-white transition-all shadow-xs hover:shadow-md cursor-pointer">
+                                    <div class="flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-white border border-gray-200 p-2 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                                            <svg viewBox="0 0 48 48" class="w-8 h-8">
+                                                <path fill="#4285F4" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/>
+                                                <path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 16.7 2 10.3 7.3 6.3 14.7z"/>
+                                                <path fill="#FBBC05" d="M24 46c5.9 0 11-2.1 14.8-5.7l-6.8-5.5c-2.1 1.4-4.8 2.2-8 2.2-6 0-10.7-3.9-12.2-9.4l-6.6 5.1C9.2 40.5 16 46 24 46z"/>
+                                                <path fill="#EA4335" d="M44.5 20H24v8.5h11.8c-1.1 3.1-3.1 5.7-5.8 7.3l6.8 5.5C41.8 37.6 45 31.4 45 24c0-1.3-.2-2.7-.5-4z"/>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-gray-900 block text-sm">Google Pay (GPay)</span>
+                                            <span class="text-xs text-gray-500 font-medium">Pay ₹{{ $amountFormatted }} via tez://</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-600 text-white group-hover:bg-blue-700 transition-colors shadow-xs">Pay</span>
+                                    </div>
+                                </a>
+
+                                <!-- 2. PhonePe -->
+                                <a href="{{ $phonepeUrl }}" 
+                                   @click="showUpiModal = false"
+                                   class="group flex items-center justify-between p-3.5 rounded-2xl border-2 border-gray-100 hover:border-purple-600 hover:bg-purple-50/40 bg-white transition-all shadow-xs hover:shadow-md cursor-pointer">
+                                    <div class="flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-[#5F259F] p-2 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform text-white font-extrabold text-xl">
+                                            पे
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-gray-900 block text-sm">PhonePe</span>
+                                            <span class="text-xs text-gray-500 font-medium">Pay ₹{{ $amountFormatted }} via phonepe://</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#5F259F] text-white group-hover:bg-purple-800 transition-colors shadow-xs">Pay</span>
+                                    </div>
+                                </a>
+
+                                <!-- 3. Paytm -->
+                                <a href="{{ $paytmUrl }}" 
+                                   @click="showUpiModal = false"
+                                   class="group flex items-center justify-between p-3.5 rounded-2xl border-2 border-gray-100 hover:border-sky-500 hover:bg-sky-50/40 bg-white transition-all shadow-xs hover:shadow-md cursor-pointer">
+                                    <div class="flex items-center gap-3.5">
+                                        <div class="w-12 h-12 rounded-2xl bg-[#002E6E] p-2 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
+                                            <span class="text-white font-black text-xs tracking-tighter">Pay<span class="text-[#00BAF2]">tm</span></span>
+                                        </div>
+                                        <div>
+                                            <span class="font-bold text-gray-900 block text-sm">Paytm UPI</span>
+                                            <span class="text-xs text-gray-500 font-medium">Pay ₹{{ $amountFormatted }} via paytmmp://</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#00BAF2] text-slate-950 font-black group-hover:bg-[#009FD0] transition-colors shadow-xs">Pay</span>
+                                    </div>
+                                </a>
+
+                                <!-- 4. Generic / Any other UPI App (BHIM, Cred, Amazon Pay) -->
+                                <a href="{{ $upiUrl }}" 
+                                   @click="showUpiModal = false"
+                                   class="group flex items-center justify-between p-3 rounded-2xl border border-gray-200 hover:border-gray-400 bg-gray-50/60 transition-all cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-xl bg-gray-200 flex items-center justify-center font-bold text-xs text-gray-700">
+                                            UPI
+                                        </div>
+                                        <div>
+                                            <span class="font-semibold text-gray-800 block text-xs">Other UPI App</span>
+                                            <span class="text-[11px] text-gray-500">BHIM, CRED, Navi, Bank App</span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs font-semibold text-gray-600">Open ↗</span>
+                                </a>
+
+                            </div>
+
+                            <p class="text-[11px] text-gray-400 text-center mt-4">
+                                Note: If clicking doesn't open the app, please scan the QR code above or copy UPI ID <span class="font-mono text-gray-700 font-semibold">{{ $vpa }}</span>.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Green Notification Banner (EXACT User Text) -->
