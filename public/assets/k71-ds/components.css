@@ -222,6 +222,18 @@
         display: none !important;
     }
 
+    /* 10. Sticky Headers & Tabs (T9) */
+    .k71-sticky-head {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+    }
+    .k71-sticky-tabs {
+        position: sticky;
+        top: 56px;
+        z-index: 30;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .k71-js [data-k71-reveal] {
             opacity: 1 !important;

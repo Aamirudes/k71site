@@ -25,7 +25,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════
              1. STICKY TOP HEADER (56px, Z-40, SHADOW ON SCROLL)
              ═══════════════════════════════════════════════════════════════════ -->
-        <header class="sticky top-0 z-40 h-14 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800 px-4 flex items-center justify-between transition-shadow duration-200"
+        <header class="k71-sticky-head sticky top-0 z-40 h-14 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-zinc-800 px-4 flex items-center justify-between transition-shadow duration-200"
                 :class="scrolledPastSummary ? 'shadow-sm' : ''">
             <!-- Back Button Left -->
             <a href="{{ url('/') }}" 
@@ -120,7 +120,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════
              3. STICKY TABS (DIRECTLY BELOW 56px HEADER: top-14, SOLID BG, NEVER FLOAT)
              ═══════════════════════════════════════════════════════════════════ -->
-        <div class="sticky top-14 z-30 bg-white dark:bg-zinc-900 border-y border-slate-200/90 dark:border-zinc-800 shadow-2xs">
+        <div class="k71-sticky-tabs sticky top-14 z-30 bg-white dark:bg-zinc-900 border-y border-slate-200/90 dark:border-zinc-800 shadow-2xs">
             <div class="max-w-4xl mx-auto px-4 flex items-center gap-6 overflow-x-auto no-scrollbar">
                 <button type="button" 
                         @click="setTab('profile')"
