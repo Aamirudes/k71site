@@ -43,7 +43,7 @@
         // Food Hub Live State
         food_hero_badge: '{{ addslashes($fp['food_hero_badge'] ?? '25-30 MINUTE EXPRESS DOORSTEP DISPATCH') }}',
         food_hero_title: '{{ addslashes($fp['food_hero_title'] ?? 'Crave it? Get it hot & fresh from top cloud kitchens.') }}',
-        food_hero_sub: '{{ addslashes($fp['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, gourmet burgers, and pure veg royal thalis.') }}',
+        food_hero_sub: '{{ addslashes($fp['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, fresh burgers, and pure veg royal thalis.') }}',
 
         // Used Market Live State
         used_hero_badge: '{{ addslashes($up['used_hero_badge'] ?? 'K71 VERIFIED PRE-LOVED & RE-COMMERCE') }}',
@@ -306,7 +306,7 @@
                         <div>
                             <label class="block font-semibold text-zinc-800 mb-1">Subtitle / Description</label>
                             <textarea name="slide2_subtitle" rows="2"
-                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.' }}</textarea>
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, fresh chef treats, and hygienic contactless doorstep delivery.' }}</textarea>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

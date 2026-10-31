@@ -42,7 +42,7 @@
         $tabs = [
             ['label' => 'Feed', 'url' => route('used.index'), 'active' => request()->routeIs('used.index') && !request()->routeIs('used.edit'), 'icon' => 'sparkles'],
             ['label' => 'Deals', 'url' => route('used.index') . '?filter=deals', 'active' => request()->query('filter') === 'deals', 'icon' => 'tag'],
-            ['label' => 'Sell', 'url' => route('used.index') . '#post-ad', 'action' => 'open-used-post', 'center_cta' => true, 'active' => false, 'icon' => 'camera'],
+            ['label' => 'Sell', 'url' => '#post-ad', 'action' => 'open-post-ad', 'center_cta' => true, 'active' => false, 'icon' => 'camera'],
             ['label' => 'Chat', 'url' => route('messages.index'), 'active' => request()->routeIs('messages.*'), 'icon' => 'chat'],
             ['label' => 'More', 'url' => '#more', 'action' => 'open-hamburger', 'active' => false, 'icon' => 'menu'],
         ];

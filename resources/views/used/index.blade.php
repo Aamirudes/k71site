@@ -77,11 +77,11 @@
                     @endphp
                     <button type="button" 
                             @click="applyCategory('{{ $catKey }}')"
-                            class="px-3.5 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 {{ $isCatActive ? 'bg-blue-600 text-white shadow-sm' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200' }}">
+                            class="px-3.5 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shrink-0 {{ $isCatActive ? 'bg-stone-900 text-white shadow-sm' : 'bg-white hover:bg-stone-50 text-stone-700 border border-stone-200' }}">
                         <span>{{ $catData['icon'] }}</span>
                         <span>{{ $catData['name'] }}</span>
                         @if($catKey === 'all')
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $isCatActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">{{ $items->total() }}</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $isCatActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600' }}">{{ $items->total() }}</span>
                         @endif
                     </button>
                 @endforeach
@@ -99,28 +99,28 @@
                 
                 <button type="button" 
                         @click="applyCondition('all')"
-                        :class="selectedCondition === 'all' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-blue-50'"
+                        :class="selectedCondition === 'all' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
                     All
                 </button>
 
                 <button type="button" 
                         @click="applyCondition('Like New')"
-                        :class="selectedCondition === 'Like New' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-blue-50'"
+                        :class="selectedCondition === 'Like New' ? 'bg-[#15803D] text-white' : 'bg-stone-100 text-stone-700 hover:bg-emerald-50'"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
                     Like New
                 </button>
 
                 <button type="button" 
                         @click="applyCondition('Brand New')"
-                        :class="selectedCondition === 'Brand New' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-blue-50'"
+                        :class="selectedCondition === 'Brand New' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
                     Brand New
                 </button>
 
                 <button type="button" 
                         @click="applyCondition('Good Condition')"
-                        :class="selectedCondition === 'Good Condition' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-blue-50'"
+                        :class="selectedCondition === 'Good Condition' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
                     Good Condition
                 </button>
@@ -156,19 +156,19 @@
             <div class="flex items-center gap-3">
                 <button type="button" 
                         @click="activeTab = 'explore'; window.location.hash = 'explore';" 
-                        :class="activeTab === 'explore' ? 'text-blue-700 border-b-2 border-blue-600 font-black' : 'text-slate-500 font-bold hover:text-slate-900'"
+                        :class="activeTab === 'explore' ? 'text-stone-900 border-b-2 border-stone-900 font-bold' : 'text-stone-500 font-medium hover:text-stone-900'"
                         class="pb-2 text-sm sm:text-base tracking-tight transition cursor-pointer flex items-center gap-1.5">
                     <span>Fresh Recommendations in {{ explode(',', $currentCity)[0] }}</span>
-                    <span class="text-xs text-slate-400 font-normal">({{ $items->total() }})</span>
+                    <span class="text-xs text-stone-400 font-normal">({{ $items->total() }})</span>
                 </button>
 
                 @auth
                     <button type="button" 
                             @click="activeTab = 'myads'; window.location.hash = 'my-ads';" 
-                            :class="activeTab === 'myads' ? 'text-blue-700 border-b-2 border-blue-600 font-black' : 'text-slate-500 font-bold hover:text-slate-900'"
+                            :class="activeTab === 'myads' ? 'text-stone-900 border-b-2 border-stone-900 font-bold' : 'text-stone-500 font-medium hover:text-stone-900'"
                             class="pb-2 text-sm sm:text-base tracking-tight transition cursor-pointer flex items-center gap-1.5">
                         <span>My Posted Ads</span>
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $myAds->count() > 0 ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700' }}">{{ $myAds->count() }}</span>
+                        <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $myAds->count() > 0 ? 'bg-stone-900 text-white' : 'bg-stone-200 text-stone-700' }}">{{ $myAds->count() }}</span>
                     </button>
                 @endauth
             </div>
@@ -197,7 +197,7 @@
                         <a href="{{ route('used.index') }}" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition">
                             Reset Filters
                         </a>
-                        <button type="button" @click="$dispatch('open-post-ad')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition">
+                        <button type="button" @click="$dispatch('open-post-ad')" class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black transition">
                             + Post Free Ad
                         </button>
                     </div>
@@ -213,12 +213,13 @@
                             $location = $custom['location'] ?? ($item->vendor->city ?? 'Kishangarh, Rajasthan');
                             $itemCond = $custom['condition'] ?? ($custom['specs']['Condition'] ?? 'Good Condition');
                             $isNegotiable = $item->is_negotiable ?? true;
+                            $isLikeNew = (stripos($itemCond, 'like new') !== false);
                         @endphp
 
-                        <div class="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-500 hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group">
+                        <div class="k71-card bg-white rounded-2xl border border-stone-200/90 hover:border-stone-400 hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group">
                             
                             <!-- Image Container -->
-                            <div class="relative w-full aspect-[4/3] bg-slate-100 overflow-hidden">
+                            <div class="relative w-full aspect-[4/3] bg-stone-100 overflow-hidden">
                                 <a href="{{ route('used.show', $item->slug) }}" class="block w-full h-full">
                                     <img src="{{ $firstImg }}" 
                                          alt="{{ $item->title }}" 
@@ -228,19 +229,19 @@
 
                                 <!-- Badges -->
                                 @if($badge)
-                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-blue-600 text-white font-black text-[9px] uppercase tracking-wider shadow-xs z-10">
+                                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-stone-900 text-white font-black text-[9px] uppercase tracking-wider shadow-xs z-10">
                                         {{ $badge }}
                                     </span>
                                 @endif
 
-                                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-slate-900/80 backdrop-blur-xs text-white font-black text-[9px] uppercase tracking-wider z-10">
+                                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md {{ $isLikeNew ? 'bg-[#15803D] text-white' : 'bg-stone-900/80 text-white' }} font-bold text-[10px] uppercase tracking-wider z-10">
                                     {{ $itemCond }}
                                 </span>
 
                                 <!-- Wishlist Heart Button -->
                                 <button type="button" 
                                         @click="toggleWishlist({{ $item->id }})"
-                                        class="absolute top-2 right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center text-slate-600 hover:text-rose-500 shadow-sm transition cursor-pointer"
+                                        class="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center text-stone-600 hover:text-rose-500 shadow-sm transition cursor-pointer"
                                         aria-label="Add to favorites">
                                     <svg class="w-4 h-4" :class="isWishlisted({{ $item->id }}) ? 'fill-rose-500 text-rose-500' : 'fill-none stroke-current'" stroke-width="2" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
@@ -253,40 +254,43 @@
                                 <div>
                                     <!-- Price + Negotiable Pill -->
                                     <div class="flex items-center justify-between gap-1">
-                                        <div class="text-base sm:text-lg font-black text-slate-950 tracking-tight">
+                                        <div class="text-[16px] font-bold text-stone-900 tracking-tight">
                                             ₹ {{ number_format($item->base_price / 100) }}
                                         </div>
                                         @if($isNegotiable)
-                                            <span class="text-[9.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                            <span class="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                                                 Negotiable
                                             </span>
                                         @endif
                                     </div>
 
-                                    <!-- Title -->
+                                    <!-- Title (2-line clamp, 14px font-semibold) -->
                                     <a href="{{ route('used.show', $item->slug) }}" class="block mt-1">
-                                        <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-blue-700 transition line-clamp-1">
+                                        <h4 class="text-[14px] leading-snug font-semibold text-stone-900 group-hover:text-amber-700 transition line-clamp-2 min-h-[2.4rem]">
                                             {{ $item->title }}
                                         </h4>
                                     </a>
 
-                                    <!-- Location & Time -->
-                                    <div class="mt-2 text-[10px] text-slate-500 flex items-center justify-between">
-                                        <span class="truncate">📍 {{ explode(',', $location)[0] }}</span>
-                                        <span class="shrink-0 text-slate-400">{{ $item->created_at ? $item->created_at->diffForHumans(null, true) : '2d' }}</span>
+                                    <!-- Distance Chip & Time Posted -->
+                                    <div class="mt-2 text-[11px] text-stone-500 flex items-center justify-between gap-1">
+                                        <span class="truncate inline-flex items-center gap-1 bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded text-[10px] font-medium">
+                                            <svg class="w-3 h-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                            <span class="truncate">{{ explode(',', $location)[0] }}</span>
+                                        </span>
+                                        <span class="shrink-0 text-stone-400 font-medium">{{ $item->created_at ? $item->created_at->diffForHumans(null, true) : '2d' }}</span>
                                     </div>
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="mt-3 pt-2.5 border-t border-slate-100 grid grid-cols-2 gap-1.5">
+                                <div class="mt-3 pt-2.5 border-t border-stone-100 grid grid-cols-2 gap-1.5">
                                     <button type="button" 
                                             @click="$dispatch('open-offer-modal', { id: {{ $item->id }}, title: '{{ addslashes($item->title) }}', price: {{ $item->base_price / 100 }}, image: '{{ $firstImg }}' })"
-                                            class="py-1.5 px-2 rounded-xl bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 text-[11px] font-black transition text-center cursor-pointer">
+                                            class="py-2 px-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-950 text-xs font-bold transition text-center cursor-pointer">
                                         🤝 Offer
                                     </button>
 
                                     <a href="{{ route('used.show', $item->slug) }}" 
-                                       class="py-1.5 px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition text-center">
+                                       class="py-2 px-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-semibold transition text-center">
                                         View
                                     </a>
                                 </div>
@@ -316,7 +320,7 @@
                     </div>
                     <button type="button" 
                             @click="$dispatch('open-post-ad')" 
-                            class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition self-start sm:self-auto cursor-pointer">
+                            class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-black transition self-start sm:self-auto cursor-pointer">
                         + Post New Ad
                     </button>
                 </div>
@@ -326,7 +330,7 @@
                         <div class="text-4xl">📦</div>
                         <h4 class="text-sm font-black text-slate-800">You haven't posted any ads yet</h4>
                         <p class="text-xs text-slate-500">Have an old iPhone, bike, or furniture to sell? Post your ad with real photos now.</p>
-                        <button type="button" @click="$dispatch('open-post-ad')" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-black">
+                        <button type="button" @click="$dispatch('open-post-ad')" class="px-4 py-2 rounded-xl bg-stone-900 text-white text-xs font-black">
                             + Post Free Ad
                         </button>
                     </div>

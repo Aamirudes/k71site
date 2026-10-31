@@ -173,7 +173,7 @@
                             [
                                 'badge' => $hp['slide2_badge'] ?? '⚡ Cloud Kitchen Dining • 30 Min Express',
                                 'title' => $hp['slide2_title'] ?? 'Authentic Flavors. Delivered Hot & Fresh.',
-                                'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.',
+                                'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, fresh chef treats, and hygienic contactless doorstep delivery.',
                                 'btn1_text' => $hp['slide2_btn1_text'] ?? 'Order Food Online',
                                 'btn1_link' => $hp['slide2_btn1_link'] ?? '/food',
                                 'btn2_text' => $hp['slide2_btn2_text'] ?? 'View Restaurants',

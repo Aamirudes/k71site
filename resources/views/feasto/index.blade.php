@@ -108,15 +108,14 @@
             </div>
         </header>
 
-        <!-- Mobile Location Strip -->
-        <div class="sm:hidden bg-slate-100 px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs cursor-pointer"
+        <!-- Mobile Location Strip (Sticky Address & 10 Min Delivery Pill) -->
+        <div class="sm:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md px-3 py-2 border-b border-slate-200 flex items-center justify-between text-xs cursor-pointer shadow-xs"
              @click="showLocationModal = true">
             <div class="flex items-center gap-1.5 font-bold text-slate-900 truncate">
-                <span class="text-amber-500">⚡</span>
-                <span>Delivery to:</span>
-                <span class="font-normal underline truncate" x-text="selectedLocation">Makrana Central, Rajasthan</span>
+                <span class="px-2 py-0.5 rounded-full bg-[#0C831F] text-white font-black text-[10px] tracking-wide shrink-0">⚡ 10 MIN</span>
+                <span class="truncate text-slate-800 font-semibold" x-text="selectedLocation">Makrana Central, Rajasthan</span>
             </div>
-            <span class="text-slate-400 font-bold">Change ▾</span>
+            <span class="text-emerald-700 font-bold shrink-0 text-[11px]">Change ▾</span>
         </div>
 
         <!-- ====================================================================
@@ -170,26 +169,26 @@
                         </div>
                     </div>
 
-                    <!-- Products Grid (Blinkit Card Layout) -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <!-- Products Grid (3-Column Compact Tiles on Mobile per Section E) -->
+                    <div class="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3.5">
                         <template x-for="product in filteredProducts" :key="product.id">
-                            <div class="bg-white rounded-3xl p-3 border border-slate-200 hover:border-slate-400 hover:shadow-lg transition-all duration-200 flex flex-col justify-between group relative cursor-pointer"
+                            <div class="k71-card bg-white rounded-2xl p-2 sm:p-3 border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between group relative cursor-pointer"
                                  @click="openProductModal(product)">
                                 
                                 <!-- Top Badges: 10 MINS & Discount -->
-                                <div class="relative aspect-square rounded-2xl overflow-hidden bg-slate-50 mb-2.5 p-2 flex items-center justify-center">
-                                    <img :src="product.featured_image" :alt="product.title" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300">
+                                <div class="relative aspect-square rounded-xl overflow-hidden bg-slate-50 mb-1.5 p-1 sm:p-2 flex items-center justify-center">
+                                    <img :src="product.featured_image" :alt="product.title" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
                                     
-                                    <!-- 10 MINS Pill Badge (Blinkit Signature) -->
-                                    <div class="absolute top-2 left-2 bg-[#0C831F] text-white px-2 py-0.5 rounded-md text-[9px] font-black tracking-tight uppercase flex items-center gap-0.5 shadow-xs">
+                                    <!-- 10 MINS Pill Badge -->
+                                    <div class="absolute top-1 left-1 bg-[#0C831F] text-white px-1.5 py-0.2 rounded text-[8px] sm:text-[9px] font-bold tracking-tight uppercase flex items-center gap-0.5 shadow-xs">
                                         <span>⚡</span>
-                                        <span x-text="product.delivery_minutes || '10 MINS'">10 MINS</span>
+                                        <span x-text="product.delivery_minutes || '10m'">10m</span>
                                     </div>
 
                                     <!-- Discount Pill -->
                                     <template x-if="product.compare_at_price > product.base_price">
-                                        <div class="absolute bottom-2 left-2 bg-slate-900 text-white px-1.5 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider"
-                                              x-text="`${Math.round(((product.compare_at_price - product.base_price) / product.compare_at_price) * 100)}% OFF`">
+                                        <div class="absolute bottom-1 left-1 bg-slate-900 text-white px-1 py-0.2 rounded text-[7.5px] sm:text-[8.5px] font-black uppercase tracking-wider"
+                                              x-text="`${Math.round(((product.compare_at_price - product.base_price) / product.compare_at_price) * 100)}%`">
                                         </div>
                                     </template>
                                 </div>
@@ -197,46 +196,45 @@
                                 <!-- Body -->
                                 <div class="space-y-1 flex-1 flex flex-col justify-between">
                                     <div>
-                                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate" x-text="product.brand || 'Fresh'"></span>
-                                        <h3 class="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2" :title="product.title" x-text="product.title"></h3>
-                                        <div class="text-[11px] text-slate-500 font-medium mt-0.5" x-text="product.weight || '1 unit'"></div>
+                                        <span class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider block truncate" x-text="product.brand || 'Fresh'"></span>
+                                        <h3 class="text-[11px] sm:text-xs font-semibold text-slate-900 leading-tight line-clamp-2 min-h-[1.9rem]" :title="product.title" x-text="product.title"></h3>
+                                        <div class="text-[10px] text-slate-500 font-medium mt-0.5 truncate" x-text="product.weight || '1 unit'"></div>
                                     </div>
 
                                     <!-- Price & Blinkit ADD Button Row -->
-                                    <div class="pt-2.5 mt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
-                                        <div class="flex flex-col">
+                                    <div class="pt-2 mt-1.5 border-t border-slate-100 flex items-center justify-between gap-1">
+                                        <div class="flex flex-col min-w-0">
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-sm sm:text-base font-black text-slate-950" x-text="`₹${Math.round(product.base_price)}`"></span>
-                                                <template x-if="product.compare_at_price > product.base_price">
-                                                    <span class="text-[10px] text-slate-400 line-through font-semibold" x-text="`₹${Math.round(product.compare_at_price)}`"></span>
-                                                </template>
+                                                <span class="text-xs sm:text-sm font-bold text-slate-950 truncate" x-text="`₹${Math.round(product.base_price)}`"></span>
                                             </div>
                                         </div>
 
-                                        <!-- ADD Button / Stepper (Blinkit Pattern) -->
+                                        <!-- ADD Button / Stepper (+ becomes − 1 + stepper) -->
                                         <div class="shrink-0" @click.stop>
-                                            <!-- Not in cart: White Button with Green Border -->
+                                            <!-- Not in cart: Compact + Button -->
                                             <template x-if="!cart[product.id] || cart[product.id].qty <= 0">
                                                 <button type="button" 
                                                         @click.stop="addToCart(product)"
-                                                        class="px-3.5 py-1.5 rounded-xl border border-[#0C831F] text-[#0C831F] bg-[#F7FFF8] hover:bg-[#0C831F] hover:text-white font-extrabold text-xs transition-all shadow-2xs active:scale-95 cursor-pointer flex items-center gap-1">
-                                                    <span>ADD</span>
-                                                    <span class="text-sm font-black leading-none">+</span>
+                                                        class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border border-[#0C831F] text-[#0C831F] bg-[#F7FFF8] hover:bg-[#0C831F] hover:text-white font-black text-sm transition-all shadow-2xs active:scale-90 cursor-pointer flex items-center justify-center"
+                                                        aria-label="Add item">
+                                                    +
                                                 </button>
                                             </template>
 
-                                            <!-- In cart: Solid Green Stepper -->
+                                            <!-- In cart: − 1 + Stepper -->
                                             <template x-if="cart[product.id] && cart[product.id].qty > 0">
-                                                <div class="flex items-center bg-[#0C831F] text-white rounded-xl overflow-hidden shadow-xs">
+                                                <div class="flex items-center bg-[#0C831F] text-white rounded-lg overflow-hidden shadow-xs h-7 sm:h-8">
                                                     <button type="button" 
                                                             @click.stop="decrementCart(product.id)" 
-                                                            class="px-2.5 py-1.5 text-xs font-black hover:bg-black/20 transition cursor-pointer">
+                                                            class="px-1.5 sm:px-2 h-full text-xs font-black hover:bg-black/20 transition cursor-pointer"
+                                                            aria-label="Decrease quantity">
                                                         –
                                                     </button>
-                                                    <span class="px-2 text-xs font-black" x-text="cart[product.id].qty"></span>
+                                                    <span class="px-1 sm:px-1.5 text-[10px] sm:text-xs font-bold" x-text="cart[product.id].qty"></span>
                                                     <button type="button" 
                                                             @click.stop="addToCart(product)" 
-                                                            class="px-2.5 py-1.5 text-xs font-black hover:bg-black/20 transition cursor-pointer">
+                                                            class="px-1.5 sm:px-2 h-full text-xs font-black hover:bg-black/20 transition cursor-pointer"
+                                                            aria-label="Increase quantity">
                                                         +
                                                     </button>
                                                 </div>
@@ -274,7 +272,7 @@
              x-transition:leave="transition ease-in duration-200 transform"
              x-transition:leave-start="translate-y-0 opacity-100"
              x-transition:leave-end="translate-y-full opacity-0"
-             class="fixed bottom-4 inset-x-0 z-40 px-4 sm:px-6 pointer-events-none">
+             class="fixed bottom-16 sm:bottom-4 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none">
             <div class="max-w-2xl mx-auto bg-[#0C831F] text-white p-3 sm:p-4 rounded-3xl shadow-[0_10px_35px_rgba(12,131,31,0.45)] border border-white/20 flex items-center justify-between pointer-events-auto backdrop-blur-xl">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center text-lg shrink-0">

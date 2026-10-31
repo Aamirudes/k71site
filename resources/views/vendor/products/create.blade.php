@@ -2398,7 +2398,7 @@ function liquidProductUploader() {
                     hsn_code: '22029990',
                     total_stock: '50',
                     sku: 'DISH-MANGO-SHAKE',
-                    description: 'Thick gourmet milkshake blended with 100% natural Ratnagiri Alphonso mango pulp, full cream chilled milk, and a scoop of Madagascar vanilla ice cream.',
+                    description: 'Thick artisan milkshake blended with 100% natural Ratnagiri Alphonso mango pulp, full cream chilled milk, and a scoop of Madagascar vanilla ice cream.',
                     specs: [
                         { key: 'Volume', value: '350 ml Sealed Glass Bottle' },
                         { key: 'Fruit Content', value: 'Real Alphonso Mango Pulp (Zero Artificial Flavors)' },

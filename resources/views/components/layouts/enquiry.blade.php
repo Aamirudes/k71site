@@ -29,8 +29,8 @@
     <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .font-display { font-family: 'Outfit', sans-serif; }
+        body { font-family: var(--font-body, 'IBM Plex Sans', sans-serif); }
+        .font-display { font-family: var(--font-display, 'IBM Plex Sans', sans-serif); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
