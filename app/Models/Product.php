@@ -155,6 +155,24 @@ class Product extends Model
     }
 
     /**
+     * Check if product belongs to marble, granite, or stone slabs category/vertical.
+     */
+    public function isMarble(): bool
+    {
+        $text = strtolower(($this->title ?? '') . ' ' . ($this->category?->name ?? '') . ' ' . ($this->category?->slug ?? '') . ' ' . ($this->material ?? ''));
+        return str_contains($text, 'marble') || str_contains($text, 'granite') || str_contains($text, 'stone') || str_contains($text, 'makrana');
+    }
+
+    /**
+     * Check if product belongs to industrial machinery / plant equipment.
+     */
+    public function isMachinery(): bool
+    {
+        $text = strtolower(($this->title ?? '') . ' ' . ($this->category?->name ?? '') . ' ' . ($this->category?->slug ?? '') . ' ' . ($this->vertical_type ?? ''));
+        return str_contains($text, 'machinery') || str_contains($text, 'machine') || str_contains($text, 'industrial') || str_contains($text, 'plant');
+    }
+
+    /**
      * Determine category vertical type with robust fallbacks
      */
     public function getVerticalTypeAttribute(): string

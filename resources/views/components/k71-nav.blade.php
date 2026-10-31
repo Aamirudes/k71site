@@ -248,7 +248,7 @@
                     <span>Catalog</span>
                 </a>
 
-                <!-- Direct Messages Quick Access (Instagram Red Dot Indicator) -->
+                <!-- Direct Messages Quick Access -->
                 <a href="{{ route('messages.index') }}" 
                    id="nav-messages-link"
                    class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
@@ -257,8 +257,6 @@
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                     </svg>
-                    <!-- Instagram Notification Red Dot (Appears ONLY when there are unseen messages) -->
-                    <span id="nav-messages-red-dot" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#FF3040] ring-2 ring-white shadow-xs {{ $navUnreadMessagesCount > 0 ? '' : 'hidden' }}"></span>
                 </a>
 
                 <!-- Wishlist (Visible on mobile and desktop) -->
@@ -499,53 +497,6 @@
 
 <script>
 (function() {
-    function refreshNavUnreadDot() {
-        fetch('/api/chat/get_unread_count.php', { 
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
-            cache: 'no-store' 
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (!data || !data.success) return;
-            const unread = parseInt(data.unread, 10) || 0;
-            const dots = document.querySelectorAll('#nav-messages-red-dot, .bottom-nav-messages-dot, #floating-chat-red-dot');
-            const badges = document.querySelectorAll('#nav-messages-badge');
-            
-            dots.forEach(dot => {
-                if (unread > 0) {
-                    dot.classList.remove('hidden');
-                    dot.style.display = 'block';
-                } else {
-                    dot.classList.add('hidden');
-                    dot.style.display = 'none';
-                }
-            });
-
-            badges.forEach(badge => {
-                if (unread > 0) {
-                    badge.textContent = unread > 99 ? '99+' : unread;
-                    badge.classList.remove('hidden');
-                    badge.style.display = 'inline-block';
-                } else {
-                    badge.classList.add('hidden');
-                    badge.style.display = 'none';
-                }
-            });
-        })
-        .catch(() => {});
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(refreshNavUnreadDot, 1500);
-            setInterval(refreshNavUnreadDot, 8000);
-        });
-    } else {
-        setTimeout(refreshNavUnreadDot, 1500);
-        setInterval(refreshNavUnreadDot, 8000);
-    }
-
-    window.addEventListener('k71-messages-read', refreshNavUnreadDot);
+    // Unread red dots removed per user design specifications
 })();
 </script>

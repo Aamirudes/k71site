@@ -162,11 +162,7 @@
             <svg class="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
-            <!-- Instagram-Style Red Dot for Floating Capsule -->
-            <span id="floating-chat-red-dot" class="absolute -top-1.5 -right-2 flex h-2.5 w-2.5 {{ $unreadChatCount > 0 ? '' : 'hidden' }}">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-80"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#EF4444] ring-2 ring-white dark:ring-zinc-900 shadow-sm"></span>
-            </span>
+
         </div>
 
         <span class="text-xs font-black tracking-tight text-zinc-900 dark:text-white hidden sm:inline">

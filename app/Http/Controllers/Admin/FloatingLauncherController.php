@@ -158,3 +158,4 @@ class FloatingLauncherController extends Controller
             ->with('success', 'Floating 6-in-1 Launcher items restored to default presets.');
     }
 }
+

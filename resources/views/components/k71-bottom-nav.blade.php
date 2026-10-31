@@ -211,9 +211,7 @@
                             <div class="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold">★</div>
                         @endif
 
-                        @if($isMessages)
-                            <span class="bottom-nav-messages-dot absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#FF3040] ring-1.5 ring-white shadow-xs {{ $bottomUnreadMessagesCount > 0 ? '' : 'hidden' }}"></span>
-                        @endif
+
 
                         @if($item->badge)
                             <span class="absolute -top-1.5 -right-2 bg-{{ $item->badge_color ?? 'emerald' }}-500 text-white text-[7.5px] font-black uppercase px-1 rounded-full leading-tight shadow-sm">
