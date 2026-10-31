@@ -97,10 +97,10 @@
                     <!-- Blinkit Style Green Cart Pill -->
                     <button type="button" 
                             @click="cartDrawerOpen = true"
-                            class="flex items-center gap-2.5 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer">
+                            class="flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-95 text-white font-bold text-xs sm:text-sm shadow-sm transition-all cursor-pointer max-h-11">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                         <div class="flex flex-col text-left leading-tight">
-                            <span class="text-[10px] font-extrabold text-emerald-200 uppercase" x-text="cartCount > 0 ? `${cartCount} items` : 'My Cart'">My Cart</span>
+                            <span class="text-[9px] font-bold text-emerald-200 uppercase" x-text="cartCount > 0 ? `${cartCount} items` : 'My Cart'">My Cart</span>
                             <span class="text-xs sm:text-sm font-black" x-text="cartCount > 0 ? `₹${cartTotal}` : '₹0'">₹0</span>
                         </div>
                     </button>
@@ -428,7 +428,7 @@
                         </div>
 
                         <a href="{{ route('checkout.index') }}" 
-                           class="w-full py-3.5 px-4 rounded-2xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-98 text-white font-black text-sm flex items-center justify-between shadow-lg shadow-emerald-700/20 transition-all cursor-pointer">
+                           class="w-full py-2.5 px-4 rounded-xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-98 text-white font-bold text-sm flex items-center justify-between shadow-md transition-all cursor-pointer max-h-12">
                             <div class="flex flex-col text-left leading-tight">
                                 <span class="text-base font-black" x-text="`₹${cartTotal + 2 + tipAmount}`"></span>
                                 <span class="text-[10px] text-emerald-200 uppercase font-semibold">Total to Pay</span>

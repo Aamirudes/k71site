@@ -19,7 +19,7 @@
                 </div>
 
                 <!-- Clear Direct Title -->
-                <h1 class="text-3xl sm:text-5xl font-black tracking-tight text-slate-950 leading-tight">
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-950 leading-tight">
                     {{ $ss['services_hero_title'] ?? 'Find the Perfect Freelance Services' }}
                 </h1>
 
@@ -390,11 +390,11 @@
             <!-- 6. SELLER ONBOARDING BANNER -->
             <section class="p-6 sm:p-8 rounded-3xl bg-slate-950 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md">
                 <div class="text-center sm:text-left space-y-1">
-                    <h3 class="text-xl sm:text-2xl font-black">Offer Your Skills on K71 Services</h3>
+                    <h3 class="text-lg sm:text-xl font-bold">Offer Your Skills on K71 Services</h3>
                     <p class="text-xs sm:text-sm text-slate-300">Create service packages, get client inquiries, and manage project orders with zero setup fee.</p>
                 </div>
                 <a href="{{ route('services.become_seller') }}" 
-                   class="px-6 py-3 rounded-full bg-white text-slate-950 hover:bg-slate-100 text-xs sm:text-sm font-bold uppercase tracking-wider transition shrink-0 shadow-xs">
+                   class="px-4 py-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 text-xs sm:text-sm font-semibold tracking-wide transition shrink-0 shadow-xs max-h-11 flex items-center justify-center">
                     Start Selling Now
                 </a>
             </section>

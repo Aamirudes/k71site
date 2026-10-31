@@ -243,6 +243,55 @@
     }
 
     /* ======================================================================
+       BUTTON SIZING & NATIVE-APP PROPORTIONS (Section C: 44px std, 36px sm)
+       Eliminates oversized, bloated buttons and guarantees sharp commerce feel
+       ====================================================================== */
+    button, input[type="button"], input[type="submit"], .btn {
+        touch-action: manipulation;
+    }
+
+    /* Standard Interactive Button Proportions */
+    .btn, .btn-primary, [data-brand] .btn-primary, .btn-accent, [data-brand] .btn-accent,
+    button.btn-primary, a.btn-primary, button.btn, a.btn {
+        height: var(--btn-height, 44px);
+        max-height: 44px;
+        padding: 9px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 12px;
+        box-sizing: border-box;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    /* Compact Buttons */
+    .btn-sm, button.btn-sm, a.btn-sm {
+        height: var(--btn-height-sm, 36px);
+        max-height: 36px;
+        padding: 5px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    /* Desktop Headings Scale (Prevents oversized 60px headings) */
+    @media (min-width: 641px) {
+        h1:not(.k71-display), .text-5xl:not(.k71-display), .text-6xl, .text-7xl {
+            font-size: clamp(26px, 3.5vw, 36px) !important;
+            line-height: 1.2 !important;
+        }
+        h2, .text-3xl, .text-4xl {
+            font-size: clamp(20px, 2.5vw, 26px) !important;
+            line-height: 1.25 !important;
+        }
+    }
+
+    /* ======================================================================
        ULTRA-MAX MOBILE RESPONSIVENESS SAFEGUARDS (Down to 320px)
        Prevents all horizontal overflow and guarantees text visibility
        ====================================================================== */
@@ -256,6 +305,35 @@
         /* Prevent oversized padding causing horizontal spillover */
         .container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl {
             max-width: 100% !important;
+        }
+
+        /* Tone down giant headings on mobile to clean native app scale (Section C) */
+        h1, .text-5xl, .text-6xl, .text-7xl {
+            font-size: clamp(20px, 5.5vw, 26px) !important;
+            line-height: 1.2 !important;
+            letter-spacing: -0.02em !important;
+        }
+
+        h2, .text-3xl, .text-4xl {
+            font-size: clamp(17px, 4.5vw, 20px) !important;
+            line-height: 1.25 !important;
+            letter-spacing: -0.015em !important;
+        }
+
+        h3, .text-2xl {
+            font-size: clamp(15px, 4vw, 18px) !important;
+            line-height: 1.3 !important;
+        }
+
+        h4, .text-xl {
+            font-size: 15px !important;
+            line-height: 1.35 !important;
+        }
+
+        /* Bound oversized bloated buttons on mobile screens */
+        button:not(.glass-icon-btn):not(.glass-composer-emoji-btn):not(.k71-tab-item),
+        a[class*="rounded-"][class*="bg-"]:not([class*="aspect-"]):not([class*="w-full"]):not([class*="col-span"]):not([class*="group"]) {
+            max-height: 44px;
         }
 
         /* Force long titles/words to wrap cleanly on narrow screens */

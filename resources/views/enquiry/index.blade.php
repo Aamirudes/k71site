@@ -32,7 +32,7 @@
 
                 <!-- Minimal Headline & Mission -->
                 <div class="max-w-3xl space-y-2.5">
-                    <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight leading-tight">
                         Find suppliers. Compare offers. Do business.
                     </h1>
                     <p class="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
@@ -85,7 +85,7 @@
                         <!-- Action Buttons (2 cols) -->
                         <div class="md:col-span-2 flex items-center gap-2">
                             <button type="submit" 
-                                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+                                    class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer max-h-11">
                                 <span>Search</span>
                             </button>
                         </div>
@@ -610,7 +610,7 @@
 
                         <button type="submit" 
                                 :disabled="rfqSubmitting" 
-                                class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/25 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50 max-h-11">
                             <span x-show="!rfqSubmitting">Submit Requirement &amp; Get Quotes &rarr;</span>
                             <span x-show="rfqSubmitting">Posting Requirement...</span>
                         </button>

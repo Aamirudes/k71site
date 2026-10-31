@@ -636,7 +636,7 @@
                         <span class="px-3 py-1 rounded-full bg-orange-500/20 text-[#ea580c] text-xs font-black uppercase tracking-wider">
                             👨‍🍳 FOR CLOUD KITCHENS &amp; RESTAURANTS
                         </span>
-                        <h2 class="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
+                        <h2 class="text-xl sm:text-2xl font-bold tracking-tight leading-tight">
                             Partner with K71 Food &amp; Grow Your Culinary Reach
                         </h2>
                         <p class="text-xs sm:text-sm text-stone-400 leading-relaxed">
@@ -644,10 +644,10 @@
                         </p>
                     </div>
                     <div class="shrink-0 flex flex-col sm:flex-row items-center gap-3">
-                        <a href="{{ route('vendor.register') }}" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#ea580c] to-[#dc2626] hover:brightness-105 text-white text-xs font-black shadow-lg transition active:scale-95 text-center">
+                        <a href="{{ route('vendor.register') }}" class="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#ea580c] to-[#dc2626] hover:brightness-105 text-white text-xs sm:text-sm font-bold shadow-md transition active:scale-95 text-center max-h-11 flex items-center justify-center">
                             Register Cloud Kitchen →
                         </a>
-                        <a href="{{ route('vendor.login') }}" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold transition text-center border border-stone-700">
+                        <a href="{{ route('vendor.login') }}" class="w-full sm:w-auto px-4 sm:px-5 py-2.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs sm:text-sm font-semibold transition text-center border border-stone-700 max-h-11 flex items-center justify-center">
                             Partner Login
                         </a>
                     </div>

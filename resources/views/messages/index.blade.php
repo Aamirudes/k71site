@@ -1769,26 +1769,45 @@
             background: rgba(255, 255, 255, 0.4);
         }
 
-        /* ---------------- RESPONSIVE BREAKPOINT ---------------- */
+        /* ---------------- RESPONSIVE BREAKPOINT (INSTAGRAM DIRECT NATIVE FEEL) ---------------- */
         @media (max-width: 768px) {
+            body.chat-active {
+                overflow: hidden !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* Hide the global store navbar when active chat is open */
+            body.chat-active header,
+            body.chat-active [x-data*="userMenuOpen"],
+            body.chat-active .k71-mobile-bottom-nav,
+            body.chat-active .k71-sticky-action-bar {
+                display: none !important;
+            }
+
             #k71-chat-wrapper {
                 padding: 0 !important;
                 margin: 0 !important;
                 width: 100% !important;
                 height: calc(100dvh - 56px) !important;
                 max-height: calc(100dvh - 56px) !important;
-                min-height: 480px !important;
+                min-height: 380px !important;
                 overflow: hidden !important;
                 display: flex !important;
                 align-items: stretch !important;
                 margin-bottom: 0 !important;
             }
             body.chat-active #k71-chat-wrapper {
-                height: calc(100dvh - 56px) !important;
-                max-height: calc(100dvh - 56px) !important;
-                position: relative !important;
-                inset: auto !important;
-                z-index: 1 !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+                z-index: 9999 !important;
+                background: var(--surface, #FFFFFF) !important;
             }
             .glass-chat-frame {
                 border-radius: 0 !important;
@@ -1839,16 +1858,19 @@
                 display: flex !important;
             }
             #glassActiveChat {
-                height: 100dvh !important;
-                max-height: 100dvh !important;
+                height: 100% !important;
+                max-height: 100% !important;
                 min-height: 0 !important;
-                display: grid !important;
-                grid-template-rows: clamp(52px, 6dvh, 60px) minmax(0, 1fr) auto !important;
+                display: flex !important;
+                flex-direction: column !important;
                 overflow: hidden !important;
+                width: 100% !important;
             }
             .glass-chat-header {
-                height: clamp(52px, 6dvh, 60px) !important;
-                padding: 0 12px !important;
+                height: 52px !important;
+                min-height: 52px !important;
+                max-height: 52px !important;
+                padding: 0 10px 0 6px !important;
                 gap: 8px !important;
                 flex-shrink: 0 !important;
                 position: sticky !important;
@@ -1856,25 +1878,40 @@
                 z-index: 30 !important;
                 background: var(--surface, #FFFFFF) !important;
                 border-bottom: 1px solid var(--border, #E2E8F0) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
             }
             .glass-chat-header-user {
                 gap: 8px !important;
                 min-width: 0 !important;
                 flex: 1 1 auto !important;
+                display: flex !important;
+                align-items: center !important;
             }
             .glass-back-btn {
                 display: flex !important;
-                width: 40px !important;
-                height: 40px !important;
+                width: 38px !important;
+                height: 38px !important;
+                min-width: 38px !important;
+                align-items: center !important;
+                justify-content: center !important;
+                border-radius: 50% !important;
+                background: transparent !important;
+                border: none !important;
+                color: var(--color-text-main, #0F172A) !important;
+                cursor: pointer !important;
                 margin-right: 2px !important;
             }
             .glass-chat-header-avatar {
-                width: 38px !important;
-                height: 38px !important;
+                width: 36px !important;
+                height: 36px !important;
+                border-radius: 50% !important;
             }
             .glass-chat-header-username {
                 font-size: 14px !important;
-                max-width: 180px !important;
+                font-weight: 700 !important;
+                max-width: 160px !important;
                 overflow: hidden !important;
                 text-overflow: ellipsis !important;
                 white-space: nowrap !important;
@@ -1883,50 +1920,84 @@
                 font-size: 11px !important;
             }
             .glass-chat-feed {
+                flex: 1 1 0% !important;
                 min-height: 0 !important;
                 overflow-y: auto !important;
                 overscroll-behavior: contain !important;
                 -webkit-overflow-scrolling: touch;
-                padding: 12px 14px !important;
-                gap: 8px !important;
+                padding: 10px 12px !important;
+                gap: 6px !important;
+                display: flex !important;
+                flex-direction: column !important;
             }
             .glass-msg-row {
-                max-width: 78% !important;
+                max-width: 80% !important;
             }
             .glass-msg-bubble {
                 font-size: 14px !important;
-                padding: 9px 14px !important;
+                padding: 8px 13px !important;
+                line-height: 1.4 !important;
+                word-break: break-word !important;
             }
             .glass-composer-bar {
                 flex-shrink: 0 !important;
-                padding: 8px 12px max(10px, env(safe-area-inset-bottom, 10px)) !important;
+                padding: 6px 10px max(8px, env(safe-area-inset-bottom, 8px)) !important;
                 background: var(--surface, #FFFFFF) !important;
                 z-index: 50 !important;
                 border-top: 1px solid var(--border, #E2E8F0) !important;
             }
             .glass-composer-pill {
-                padding: 4px 10px !important;
-                gap: 6px !important;
-                border-radius: 20px !important;
-                min-height: 44px !important;
-            }
-            .glass-composer-textarea {
-                font-size: 16px !important; /* 16px font to stop iOS auto-zoom */
-                padding: 6px 4px !important;
-                min-height: 44px !important;
-                max-height: 80px !important;
-                line-height: 1.4 !important;
-            }
-            .glass-composer-send-btn {
-                width: 44px !important;
-                height: 44px !important;
-                min-width: 44px !important;
-                min-height: 44px !important;
-                padding: 0 !important;
+                padding: 3px 6px 3px 10px !important;
+                gap: 4px !important;
+                border-radius: 22px !important;
+                min-height: 42px !important;
+                background: #F1F5F9 !important;
+                border: 1px solid #E2E8F0 !important;
                 display: flex !important;
                 align-items: center !important;
-                justify-content: center !important;
+                width: 100% !important;
+            }
+            .glass-composer-textarea {
+                font-size: 15px !important;
+                padding: 6px 4px !important;
+                min-height: 30px !important;
+                max-height: 84px !important;
+                line-height: 1.35 !important;
+                border: none !important;
+                outline: none !important;
+                background: transparent !important;
+                resize: none !important;
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+            }
+            .glass-composer-emoji-btn {
+                width: 32px !important;
+                height: 32px !important;
+                min-width: 32px !important;
+                font-size: 18px !important;
+            }
+            .glass-composer-send-btn {
+                background: transparent !important;
+                color: #0095f6 !important;
+                border: none !important;
                 font-size: 14px !important;
+                font-weight: 700 !important;
+                padding: 4px 8px !important;
+                min-width: auto !important;
+                min-height: auto !important;
+                height: auto !important;
+                cursor: pointer !important;
+                box-shadow: none !important;
+                border-radius: 8px !important;
+            }
+            .glass-composer-send-btn:not(.active) {
+                display: none !important;
+            }
+            .glass-composer-send-btn.active {
+                display: inline-flex !important;
+            }
+            .glass-composer-voice-btn.hidden-by-text {
+                display: none !important;
             }
         }
 
@@ -3347,6 +3418,7 @@
                 }
                 if (typeof voiceBtn !== 'undefined' && voiceBtn) {
                     voiceBtn.style.display = 'none';
+                    voiceBtn.classList.add('hidden-by-text');
                 }
             } else {
                 if (sendBtn) {
@@ -3355,6 +3427,7 @@
                 }
                 if (typeof voiceBtn !== 'undefined' && voiceBtn) {
                     voiceBtn.style.display = 'inline-flex';
+                    voiceBtn.classList.remove('hidden-by-text');
                 }
             }
         }
@@ -4129,10 +4202,15 @@
                     document.body.classList.add('chat-active');
                     wrapper.style.height = `${vh}px`;
                     wrapper.style.maxHeight = `${vh}px`;
+                    if (chatFeed) {
+                        requestAnimationFrame(() => {
+                            chatFeed.scrollTop = chatFeed.scrollHeight;
+                        });
+                    }
                 } else {
                     document.body.classList.remove('chat-active');
                     const nav = document.querySelector('header');
-                    const navHeight = (nav && nav.offsetHeight > 0) ? nav.offsetHeight : 104;
+                    const navHeight = (nav && nav.offsetHeight > 0) ? nav.offsetHeight : 56;
                     const availableHeight = Math.max(280, Math.floor(vh - navHeight));
                     wrapper.style.height = `${availableHeight}px`;
                     wrapper.style.maxHeight = `${availableHeight}px`;

@@ -261,14 +261,14 @@
                                     <div class="flex flex-wrap items-center gap-3">
                                         @if(!empty($slide['btn1_text']))
                                             <a href="{{ $slide['btn1_link'] }}" 
-                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                               class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer max-h-11">
                                                 <span>{{ $slide['btn1_text'] }}</span>
                                                 <span>&rarr;</span>
                                             </a>
                                         @endif
                                         @if(!empty($slide['btn2_text']))
                                             <a href="{{ $slide['btn2_link'] }}" 
-                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm tracking-wide border border-white/25 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                               class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm tracking-wide border border-white/25 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer max-h-11">
                                                 <span>{{ $slide['btn2_text'] }}</span>
                                                 <span>↗</span>
                                             </a>
@@ -431,7 +431,7 @@
                 <!-- Load More Button -->
                 <div class="text-center pt-4">
                     <a href="{{ route('catalog.index') }}" 
-                       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-100 font-bold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer">
+                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-100 font-semibold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer max-h-11">
                         <span>Load More Products</span>
                         <span>&rarr;</span>
                     </a>
@@ -715,7 +715,7 @@
                         <span class="px-3 py-1 rounded-full bg-white/10 text-zinc-300 text-[10px] font-bold uppercase tracking-widest border border-white/10">
                             Indian Merchant Program
                         </span>
-                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        <h3 class="text-lg sm:text-xl font-bold text-white tracking-tight">
                             Start Selling Direct on K71 Marketplace
                         </h3>
                         <p class="text-xs sm:text-sm text-zinc-300 max-w-lg leading-relaxed">
@@ -725,13 +725,13 @@
 
                     <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
                         <a href="{{ route('vendor.register') }}" 
-                           class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 !text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95"
+                           class="w-full md:w-auto px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 !text-slate-950 font-bold text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95 max-h-11 flex items-center justify-center"
                            style="background-color: #ffffff !important; color: #020617 !important;">
                             Open Your Store &rarr;
                         </a>
                         <button type="button" 
                                 onclick="if(window.openAuthModal) { window.openAuthModal(null, 'login', 'seller'); } else { window.location.href = '{{ route('login') }}'; }"
-                                class="w-full md:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/15 text-center transition">
+                                class="w-full md:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm border border-white/15 text-center transition max-h-11 flex items-center justify-center">
                             Seller Login
                         </button>
                     </div>

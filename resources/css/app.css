@@ -102,17 +102,18 @@
     .btn-primary {
         background-color: #0600c2;
         color: #FFFFFF;
-        padding: 0.75rem 1.75rem;
-        border-radius: 9999px;
-        font-weight: 700;
+        padding: 0.55rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 600;
         font-size: 0.875rem;
+        max-height: 44px;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
         letter-spacing: -0.01em;
-        box-shadow: 0 4px 14px rgba(6, 0, 194, 0.25);
+        box-shadow: 0 2px 8px rgba(6, 0, 194, 0.2);
     }
     .btn-primary:hover {
         background-color: #0500a8;
