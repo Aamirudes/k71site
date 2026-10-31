@@ -15,7 +15,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ ($currentBrand ?? 'main') === 'shorts' ? 'dark' : 'light' }}" data-brand="{{ $currentBrand ?? 'main' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ ($k71Brand ?? $currentBrand ?? 'main') === 'shorts' ? 'dark' : 'light' }}" data-brand="{{ $k71Brand ?? $currentBrand ?? 'main' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

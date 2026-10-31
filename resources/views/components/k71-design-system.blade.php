@@ -1,5 +1,5 @@
 @php
-    $activeBrand = $currentBrand ?? (function_exists('k71_current_brand') ? k71_current_brand() : 'main');
+    $activeBrand = $k71Brand ?? $currentBrand ?? (function_exists('k71_current_brand') ? k71_current_brand() : 'main');
 @endphp
 
 <!-- Pre-assert Brand on HTML root immediately -->
