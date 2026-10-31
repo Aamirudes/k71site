@@ -60,7 +60,7 @@ if (!function_exists('k71_current_brand')) {
             return 'main';
         }
 
-        $host = strtolower(trim($req->getHost()));
+        $host = strtolower(trim($req->header('x-forwarded-host') ?? $req->getHost()));
         $sub = k71_extract_subdomain($host);
         if (!$sub && str_contains($host, '.')) {
             $prefix = explode('.', $host)[0] ?? '';
@@ -90,24 +90,27 @@ if (!function_exists('k71_current_brand')) {
 
         // Path or route fallback for local dev or directory routing
         $path = trim($req->path(), '/');
+        if (str_starts_with($path, 's/')) {
+            $path = substr($path, 2);
+        }
         $routeName = $req->route() ? $req->route()->getName() : '';
 
-        if (str_starts_with($path, 'food') || ($routeName && str_starts_with($routeName, 'food.'))) {
+        if (str_starts_with($path, 'food') || ($routeName && (str_starts_with($routeName, 'food.') || $routeName === 'storefront.food'))) {
             return 'food';
         }
-        if (str_starts_with($path, 'services') || ($routeName && str_starts_with($routeName, 'services.'))) {
+        if (str_starts_with($path, 'services') || ($routeName && (str_starts_with($routeName, 'services.') || str_starts_with($routeName, 'storefront.services')))) {
             return 'services';
         }
-        if (str_starts_with($path, 'used') || ($routeName && str_starts_with($routeName, 'used.'))) {
+        if (str_starts_with($path, 'used') || ($routeName && (str_starts_with($routeName, 'used.') || str_starts_with($routeName, 'storefront.used')))) {
             return 'used';
         }
-        if (str_starts_with($path, 'enquiry') || str_starts_with($path, 'b2b') || ($routeName && (str_starts_with($routeName, 'enquiry.') || str_starts_with($routeName, 'b2b.')))) {
+        if (str_starts_with($path, 'enquiry') || str_starts_with($path, 'b2b') || ($routeName && (str_starts_with($routeName, 'enquiry.') || str_starts_with($routeName, 'b2b.') || str_starts_with($routeName, 'storefront.enquiry')))) {
             return 'b2b';
         }
-        if (str_starts_with($path, 'feasto') || ($routeName && str_starts_with($routeName, 'feasto.'))) {
+        if (str_starts_with($path, 'feasto') || ($routeName && (str_starts_with($routeName, 'feasto.') || str_starts_with($routeName, 'storefront.feasto')))) {
             return 'feasto';
         }
-        if (str_starts_with($path, 'shorts') || ($routeName && str_starts_with($routeName, 'shorts.'))) {
+        if (str_starts_with($path, 'shorts') || ($routeName && (str_starts_with($routeName, 'shorts.') || str_starts_with($routeName, 'storefront.shorts')))) {
             return 'shorts';
         }
 
