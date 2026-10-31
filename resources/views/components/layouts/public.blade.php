@@ -15,7 +15,7 @@
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ ($currentBrand ?? 'main') === 'shorts' ? 'dark' : 'light' }}" data-brand="{{ $currentBrand ?? 'main' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -419,8 +419,8 @@
     </footer>
     @endif
 
-    <!-- K71 Mobile Bottom Tab Navigation Removed per user request -->
-    {{-- <x-k71-bottom-nav /> --}}
+    <!-- K71 Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav />
 
     <!-- K71 Mini-Cart Bottom Sheet / Drawer -->
     <x-k71-mini-cart />

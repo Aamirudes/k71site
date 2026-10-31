@@ -1,11 +1,11 @@
 @props([
     'title' => 'K71 Food — Order Online from Top Restaurants & Cloud Kitchens',
-    'metaDescription' => 'Order fresh gourmet biryani, wood-fired pizza, burgers, pure veg thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, live kitchen tracking, and verified hygiene.',
+    'metaDescription' => 'Order fresh artisan biryani, wood-fired pizza, burgers, pure veg thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, live kitchen tracking, and verified hygiene.',
     'canonicalUrl' => null,
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="{{ $currentBrand ?? 'food' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -49,7 +49,7 @@
       "name": "K71 Food",
       "url": "{{ url('/') }}",
       "logo": "{{ asset('images/k71-logo.png') }}",
-      "description": "On-demand food delivery and cloud kitchen platform delivering authentic gourmet meals across top Indian cities in under 30 minutes.",
+      "description": "On-demand food delivery and cloud kitchen platform delivering authentic fresh meals across top Indian cities in under 30 minutes.",
       "servesCuisine": ["Biryani", "North Indian", "South Indian", "Pizza", "Burgers", "Chinese", "Desserts"],
       "priceRange": "₹₹",
       "paymentAccepted": "Cash, Credit Card, Debit Card, UPI, PhonePe, Google Pay",
@@ -74,7 +74,7 @@
             </a>
             <span class="text-zinc-600">|</span>
             <span class="text-amber-400 font-bold text-[11px] hidden sm:inline">
-                K71 Gourmet Food &amp; Cloud Kitchens
+                K71 Fresh Food &amp; Local Kitchens
             </span>
         </div>
         <div class="flex items-center gap-4 text-[11px] text-zinc-400">
@@ -109,7 +109,7 @@
                                 </span>
                             </div>
                             <span class="text-[9.5px] font-black uppercase tracking-widest text-[#ea580c] font-mono mt-0.5">
-                                GOURMET &amp; CLOUD KITCHENS
+                                FRESH &amp; LOCAL KITCHENS
                             </span>
                         </div>
                     </a>
@@ -282,7 +282,7 @@
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl shrink-0">🍲</div>
                     <div>
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gourmet Quality</h4>
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Fresh Quality</h4>
                         <p class="text-[11px] text-stone-400 mt-0.5">Cooked fresh to order by certified culinary masters.</p>
                     </div>
                 </div>
@@ -304,7 +304,7 @@
                         <span class="text-xl font-black text-white tracking-tight">K71<span class="text-[#ea580c]">FOOD</span></span>
                     </div>
                     <p class="text-xs text-stone-400 leading-relaxed max-w-sm">
-                        K71 Food is an independent, gourmet food ordering destination empowering cloud kitchens, legacy restaurants, and artisan bakers to serve hungry foodies with supreme hygiene and speed.
+                        K71 Food is an independent, fresh food ordering destination empowering cloud kitchens, legacy restaurants, and artisan bakers to serve hungry foodies with supreme hygiene and speed.
                     </p>
                     <div class="pt-2">
                         <a href="{{ k71_vertical_url('main') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-bold transition border border-stone-800">
@@ -706,6 +706,9 @@
         };
     }
     </script>
+
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="food" />
 
     <!-- K71 Global Authentication Modal (Non-Negotiable) -->
     <x-k71-auth-modal />

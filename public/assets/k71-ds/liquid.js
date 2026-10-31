@@ -1,18 +1,17 @@
 /**
- * K71 DESIGN SYSTEM — LIQUID.JS
- * Micro-interactions: dynamic pointer water ripples, hover-fill coords,
- * and gooey slider position tracking.
+ * K71 DESIGN SYSTEM — LIQUID.JS (LEAN & POLISHED)
+ * Subtle click feedback only, respects prefers-reduced-motion.
  */
 (function() {
     'use strict';
 
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // 1. Water Ripple Effect
     function initRipples() {
+        if (prefersReducedMotion) return;
         document.addEventListener('click', (e) => {
-            const target = e.target.closest('.k71-btn, .btn, .k71-clickable, .k71-glass-2');
-            if (!target || prefersReducedMotion) return;
+            const target = e.target.closest('.k71-btn, .btn-primary, .btn-accent');
+            if (!target) return;
 
             const rect = target.getBoundingClientRect();
             const circle = document.createElement('span');
@@ -24,35 +23,17 @@
             circle.style.top = `${e.clientY - rect.top - radius}px`;
             circle.classList.add('k71-ripple');
 
-            const existingRipple = target.querySelector('.k71-ripple');
-            if (existingRipple) existingRipple.remove();
+            const existing = target.querySelector('.k71-ripple');
+            if (existing) existing.remove();
 
             target.appendChild(circle);
-            setTimeout(() => circle.remove(), 600);
-        }, { passive: true });
-    }
-
-    // 2. Liquid Hover Position Tracking
-    function initLiquidButtons() {
-        if (prefersReducedMotion) return;
-        document.addEventListener('mousemove', (e) => {
-            const btn = e.target.closest('.k71-btn-liquid');
-            if (!btn) return;
-            const rect = btn.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            btn.style.setProperty('--liquid-x', `${x}px`);
-            btn.style.setProperty('--liquid-y', `${y}px`);
+            setTimeout(() => circle.remove(), 350);
         }, { passive: true });
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            initRipples();
-            initLiquidButtons();
-        });
+        document.addEventListener('DOMContentLoaded', initRipples);
     } else {
         initRipples();
-        initLiquidButtons();
     }
 })();

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark" data-brand="{{ $currentBrand ?? 'shorts' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -1142,5 +1142,10 @@
             };
         }
     </script>
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="shorts" />
+
+    <!-- Shared K71 Authentication Popup Modal -->
+    <x-k71-auth-modal />
 </body>
 </html>

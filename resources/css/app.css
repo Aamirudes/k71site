@@ -45,9 +45,9 @@
         text-rendering: optimizeLegibility;
     }
 
-    h1, h2, h3, h4, h5, h6 {
+    :where(h1, h2, h3, h4, h5, h6) {
         font-family: var(--font-sans);
-        color: #0F172A;
+        color: inherit;
         letter-spacing: -0.012em;
         font-weight: 800;
         line-height: 1.25;
@@ -55,13 +55,13 @@
         word-break: break-word;
     }
 
-    h1 { line-height: 1.15; }
-    h2 { line-height: 1.2; }
-    h3 { line-height: 1.25; }
-    h4 { line-height: 1.3; }
+    :where(h1) { line-height: 1.15; }
+    :where(h2) { line-height: 1.2; }
+    :where(h3) { line-height: 1.25; }
+    :where(h4) { line-height: 1.3; }
 
-    p {
-        color: #475569;
+    :where(p) {
+        color: inherit;
         line-height: 1.65;
         overflow-wrap: break-word;
     }

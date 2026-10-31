@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50 antialiased" x-data="{ mobileMenuOpen: false, rfqModalOpen: false, projectCategory: '' }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light h-full bg-slate-50 antialiased" data-brand="{{ $currentBrand ?? 'services' }}" x-data="{ mobileMenuOpen: false, rfqModalOpen: false, projectCategory: '' }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -50,7 +50,7 @@
     }
     </script>
 </head>
-<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-purple-600 selection:text-white">
+<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-[#0F766E] selection:text-white">
 
     <!-- SUBDOMAIN PARITY MARKER FOR AUTOMATED AUDITS -->
     <span class="hidden" aria-hidden="true">services.k71.in</span>
@@ -123,24 +123,24 @@
                 </button>
 
                 <a href="{{ route('services.become_seller') }}" 
-                   class="px-4 py-2 rounded-xl text-slate-700 hover:text-purple-800 text-xs font-bold transition hover:bg-purple-50/60">
+                   class="px-4 py-2 rounded-xl text-slate-700 hover:text-[#0F766E] text-xs font-bold transition hover:bg-teal-50">
                     Become a Seller
                 </a>
 
                 @auth
                     <a href="{{ route('orders.index') }}" 
-                       class="px-4 py-2 rounded-xl text-slate-700 hover:text-purple-800 text-xs font-bold transition hover:bg-purple-50/60">
+                       class="px-4 py-2 rounded-xl text-slate-700 hover:text-[#0F766E] text-xs font-bold transition hover:bg-teal-50">
                         My Bookings
                     </a>
                     <div class="relative flex items-center gap-2 pl-2 border-l border-slate-200">
                         <a href="{{ route('orders.index') }}" 
-                           class="w-8 h-8 rounded-full bg-purple-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                           class="w-8 h-8 rounded-full bg-[#0F766E] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                             {{ substr(auth()->user()->first_name ?? 'U', 0, 1) }}
                         </a>
                     </div>
                 @else
                     <button type="button" @click="$dispatch('open-auth-modal', { mode: 'login' })"
-                            class="px-5 py-2 rounded-xl bg-slate-950 hover:bg-purple-900 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                            class="px-5 py-2 rounded-xl bg-slate-950 hover:bg-[#115E59] text-white text-xs font-bold transition shadow-xs cursor-pointer">
                         Sign In
                     </button>
                 @endauth
@@ -149,43 +149,43 @@
             <!-- Mobile Hamburger -->
             <div class="flex lg:hidden items-center gap-2">
                 <button type="button" @click="rfqModalOpen = true"
-                        class="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold shadow-xs">
+                        class="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold shadow-xs">
                     + Project
                 </button>
                 <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="p-2 rounded-xl text-slate-700 hover:bg-purple-50 transition" aria-label="Toggle Navigation">
+                        class="p-2 rounded-xl text-slate-700 hover:bg-teal-50 transition" aria-label="Toggle Navigation">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
             </div>
         </div>
 
         <!-- Secondary Services Category Strip (Horizontal Touch Pan) -->
-        <div class="border-t border-purple-100/80 bg-white/60">
+        <div class="border-t border-slate-100 bg-white/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar overscroll-x-contain py-2.5 text-xs font-semibold whitespace-nowrap">
                     <a href="{{ route('services.index') }}" 
-                       class="px-3 py-1 rounded-full {{ !request('cat') ? 'bg-purple-700 text-white' : 'text-slate-600 hover:text-purple-700 hover:bg-purple-50' }} transition">
+                       class="px-3 py-1 rounded-full {{ !request('cat') ? 'bg-[#0F766E] text-white' : 'text-slate-600 hover:text-[#0F766E] hover:bg-teal-50' }} transition">
                         ⚡ All Services
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Web Development']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Web Development']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         💻 Web & Apps
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Design']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Design']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🎨 UI/UX & Graphics
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Video']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Video']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🎬 Video & Animation
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Marketing']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Marketing']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🚀 Marketing & SEO
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Content']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Content']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         ✍️ Writing & AI
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Marble']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Marble']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🏛️ Marble Polishing
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Repair']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Repair']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🔧 Home & Tech Repairs
                     </a>
                 </div>
@@ -198,18 +198,18 @@
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-2"
              x-transition:enter-end="opacity-100 translate-y-0"
-             class="lg:hidden border-b border-purple-100 bg-white px-5 py-4 space-y-3 shadow-lg">
+             class="lg:hidden border-b border-teal-100 bg-white px-5 py-4 space-y-3 shadow-lg">
             
             <form action="{{ route('services.index') }}" method="GET" class="relative">
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search services or specialists..."
-                       class="w-full pl-9 pr-4 py-2 rounded-xl bg-purple-50/50 border border-purple-200 text-xs font-medium focus:outline-none focus:border-purple-600">
-                <svg class="w-4 h-4 text-purple-600 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                       class="w-full pl-9 pr-4 py-2 rounded-xl bg-teal-50/50 border border-teal-200 text-xs font-medium focus:outline-none focus:border-[#0F766E]">
+                <svg class="w-4 h-4 text-[#0F766E] absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
             </form>
 
             <div class="grid grid-cols-2 gap-2 text-xs font-bold pt-2">
-                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-purple-50 text-purple-800 text-center">Explore Gigs</a>
-                <button type="button" @click="mobileMenuOpen = false; rfqModalOpen = true" class="p-2.5 rounded-xl bg-purple-600 text-white text-center">+ Post Project</button>
+                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-teal-50 text-teal-900 text-center">Explore Gigs</a>
+                <button type="button" @click="mobileMenuOpen = false; rfqModalOpen = true" class="p-2.5 rounded-xl bg-[#0F766E] text-white text-center">+ Post Project</button>
                 <a href="{{ route('services.become_seller') }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-700 text-center">Become a Seller</a>
                 <a href="{{ route('messages.index') }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-700 text-center">Messages</a>
             </div>
@@ -361,6 +361,9 @@
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="services" />
 
     <!-- SHARED GLOBAL AUTH POPUP MODAL -->
     <x-k71-auth-modal />

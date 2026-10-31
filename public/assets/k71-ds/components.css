@@ -1,152 +1,176 @@
 /* ==========================================================================
-   K71 DESIGN SYSTEM — COMPONENTS.CSS
-   Buttons, chips, product cards, bottom-sheets, skeleton shimmers,
-   badges, stepped timelines, and responsive data-tables.
+   K71 DESIGN SYSTEM — COMPONENTS.CSS (LAUNCH-POLISHED)
+   Solid cards, chips, bottom-sheets, skeleton shimmers,
+   badges, sticky action bars, and native commerce elements.
    ========================================================================== */
 
-/* 1. Universal Product & Listing Cards */
-.k71-card-product {
-    display: flex;
-    flex-direction: column;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    position: relative;
-    transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
-}
-.k71-card-product:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-.k71-card-product .k71-card-media {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    width: 100%;
-    overflow: hidden;
-    background: var(--bg-2);
-}
-.k71-card-product .k71-card-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s var(--ease-out);
-}
-.k71-card-product:hover .k71-card-media img {
-    transform: scale(1.04);
-}
-.k71-card-product .k71-card-body {
-    padding: var(--space-4);
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
+@layer k71-components {
+    /* 1. Solid Product & Listing Cards (Strict Commerce UI) */
+    .k71-card-product {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        position: relative;
+        box-shadow: var(--shadow-xs);
+        transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+    }
+    .k71-card-product:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-sm);
+    }
+    .k71-card-product .k71-card-media {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        width: 100%;
+        overflow: hidden;
+        background-color: var(--bg-2);
+    }
+    .k71-card-product .k71-card-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .k71-card-product .k71-card-body {
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        gap: 4px;
+    }
 
-/* 2. Chips & Filter Tags */
-.k71-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 0.375rem 0.875rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    border-radius: var(--radius-full);
-    background: var(--bg-2);
-    color: var(--text);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    transition: all var(--duration-fast) var(--ease-out);
-    white-space: nowrap;
-}
-.k71-chip:hover, .k71-chip.active {
-    background: var(--primary);
-    color: var(--primary-contrast);
-    border-color: var(--primary);
-}
+    /* 2. Chips & Filter Tags (Section C: 12-13px secondary, 10-11px badge) */
+    .k71-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: var(--radius-full);
+        background-color: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: all var(--duration-fast) var(--ease-out);
+        white-space: nowrap;
+        user-select: none;
+    }
+    .k71-chip:hover, .k71-chip.active {
+        background-color: var(--primary);
+        color: var(--on-primary);
+        border-color: var(--primary);
+    }
 
-/* 3. Skeleton Shimmer */
-.k71-skeleton {
-    background: linear-gradient(90deg, var(--bg-2) 25%, var(--surface) 50%, var(--bg-2) 75%);
-    background-size: 200% 100%;
-    animation: k71Shimmer 1.5s infinite;
-    border-radius: var(--radius-sm);
-}
-@keyframes k71Shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+    /* 3. Skeleton Shimmer Loader (Section B) */
+    .k71-skeleton {
+        background: linear-gradient(90deg, var(--bg-2) 25%, var(--surface) 50%, var(--bg-2) 75%);
+        background-size: 200% 100%;
+        animation: k71Shimmer 1.5s infinite;
+        border-radius: var(--radius-sm);
+    }
+    @keyframes k71Shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 
-/* 4. Steppers & Timelines */
-.k71-timeline {
-    position: relative;
-    padding-left: var(--space-6);
-}
-.k71-timeline::before {
-    content: '';
-    position: absolute;
-    left: 8px;
-    top: 4px;
-    bottom: 4px;
-    width: 2px;
-    background: var(--border);
-}
-.k71-timeline-item {
-    position: relative;
-    margin-bottom: var(--space-5);
-}
-.k71-timeline-item::before {
-    content: '';
-    position: absolute;
-    left: calc(var(--space-6) * -1 + 4px);
-    top: 4px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 0 3px var(--bg);
-}
+    /* 4. Native App Mobile Bottom Sheet (Section B & F) */
+    .k71-bottom-sheet {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: var(--surface);
+        border-top: 1px solid var(--border);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+        z-index: 100;
+        padding: 16px;
+        transform: translateY(100%);
+        transition: transform var(--duration-base) var(--ease-out);
+        max-height: 85dvh;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+    }
+    .k71-bottom-sheet.open {
+        transform: translateY(0);
+    }
+    .k71-bottom-sheet-handle {
+        width: 36px;
+        height: 4px;
+        background-color: var(--muted);
+        opacity: 0.35;
+        border-radius: var(--radius-full);
+        margin: 0 auto 12px auto;
+    }
 
-/* 5. Mobile Bottom Sheet Container */
-.k71-bottom-sheet {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
-    z-index: 100;
-    padding: var(--space-4);
-    transform: translateY(100%);
-    transition: transform var(--duration-base) var(--ease-out);
-}
-.k71-bottom-sheet.open {
-    transform: translateY(0);
-}
-.k71-bottom-sheet-handle {
-    width: 40px;
-    height: 4px;
-    background: var(--text-muted);
-    opacity: 0.3;
-    border-radius: var(--radius-full);
-    margin: 0 auto var(--space-3) auto;
-}
+    /* 5. Native App Mobile Bottom Tab Bar (Section F: 56px + safe-area) */
+    .k71-mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(56px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background-color: rgba(255, 255, 255, 0.95);
+        border-top: 1px solid var(--border);
+        z-index: 45;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        user-select: none;
+    }
+    [data-brand="shorts"] .k71-mobile-bottom-nav {
+        background-color: rgba(18, 18, 18, 0.95);
+        border-top-color: #262626;
+    }
 
-/* 6. Universe Switcher Grid Item */
-.k71-universe-tile {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: var(--space-4);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
-    text-align: center;
-}
-.k71-universe-tile:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-sm);
-    border-color: var(--primary);
+    .k71-tab-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 56px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: color var(--duration-fast) var(--ease-out);
+    }
+    .k71-tab-item.active {
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    /* 6. Sticky Mobile Action Buttons (e.g. Services "Post a Project", Used "Sell") */
+    .k71-sticky-action-bar {
+        position: fixed;
+        bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+        left: 0;
+        right: 0;
+        padding: 8px 16px;
+        background-color: rgba(255, 255, 255, 0.92);
+        border-top: 1px solid var(--border);
+        z-index: 40;
+    }
+
+    /* 7. Universe Switcher Grid Item */
+    .k71-universe-tile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px;
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        text-align: center;
+        transition: border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+    }
+    .k71-universe-tile:active {
+        transform: scale(0.97);
+        border-color: var(--primary);
+    }
 }

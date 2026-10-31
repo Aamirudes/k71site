@@ -48,6 +48,73 @@ if (!function_exists('k71_extract_subdomain')) {
     }
 }
 
+if (!function_exists('k71_current_brand')) {
+    /**
+     * Single source of truth for current active brand:
+     * main, food, services, used, b2b (enquiry), feasto, shorts.
+     */
+    function k71_current_brand(?\Illuminate\Http\Request $request = null): string
+    {
+        $req = $request ?? (app()->bound('request') ? request() : null);
+        if (!$req) {
+            return 'main';
+        }
+
+        $host = strtolower(trim($req->getHost()));
+        $sub = k71_extract_subdomain($host);
+        if (!$sub && str_contains($host, '.')) {
+            $prefix = explode('.', $host)[0] ?? '';
+            if (in_array($prefix, ['food', 'services', 'used', 'b2b', 'enquiry', 'feasto', 'shorts'])) {
+                $sub = $prefix;
+            }
+        }
+
+        if ($sub === 'food' || str_starts_with($host, 'food.')) {
+            return 'food';
+        }
+        if ($sub === 'services' || str_starts_with($host, 'services.')) {
+            return 'services';
+        }
+        if ($sub === 'used' || str_starts_with($host, 'used.')) {
+            return 'used';
+        }
+        if ($sub === 'enquiry' || $sub === 'b2b' || str_starts_with($host, 'enquiry.') || str_starts_with($host, 'b2b.')) {
+            return 'b2b';
+        }
+        if ($sub === 'feasto' || str_starts_with($host, 'feasto.')) {
+            return 'feasto';
+        }
+        if ($sub === 'shorts' || str_starts_with($host, 'shorts.')) {
+            return 'shorts';
+        }
+
+        // Path or route fallback for local dev or directory routing
+        $path = trim($req->path(), '/');
+        $routeName = $req->route() ? $req->route()->getName() : '';
+
+        if (str_starts_with($path, 'food') || ($routeName && str_starts_with($routeName, 'food.'))) {
+            return 'food';
+        }
+        if (str_starts_with($path, 'services') || ($routeName && str_starts_with($routeName, 'services.'))) {
+            return 'services';
+        }
+        if (str_starts_with($path, 'used') || ($routeName && str_starts_with($routeName, 'used.'))) {
+            return 'used';
+        }
+        if (str_starts_with($path, 'enquiry') || str_starts_with($path, 'b2b') || ($routeName && (str_starts_with($routeName, 'enquiry.') || str_starts_with($routeName, 'b2b.')))) {
+            return 'b2b';
+        }
+        if (str_starts_with($path, 'feasto') || ($routeName && str_starts_with($routeName, 'feasto.'))) {
+            return 'feasto';
+        }
+        if (str_starts_with($path, 'shorts') || ($routeName && str_starts_with($routeName, 'shorts.'))) {
+            return 'shorts';
+        }
+
+        return 'main';
+    }
+}
+
 if (!function_exists('k71_root_domain')) {
     /**
      * Dynamically determine the root apex domain from current request host.

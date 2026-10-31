@@ -1,302 +1,212 @@
 /* ==========================================================================
    K71 DESIGN SYSTEM — TOKENS.CSS
-   Brand tokens, typographic hierarchy, responsive 8pt spacing grid,
+   Brand tokens, typographic hierarchy, responsive 4px/8px spacing grid,
    and dynamic color variables for all 7 K71 universe brands.
    ========================================================================== */
 
-:root {
-    /* 8pt Grid & Spatial Spacing */
-    --space-1: 0.25rem;  /* 4px */
-    --space-2: 0.5rem;   /* 8px */
-    --space-3: 0.75rem;  /* 12px */
-    --space-4: 1rem;     /* 16px */
-    --space-5: 1.25rem;  /* 20px */
-    --space-6: 1.5rem;   /* 24px */
-    --space-7: 1.75rem;  /* 28px */
-    --space-8: 2rem;     /* 32px */
-    --space-9: 2.5rem;   /* 40px */
-    --space-10: 3rem;    /* 48px */
-    --space-11: 4rem;    /* 64px */
-    --space-12: 5rem;    /* 80px */
+@layer k71-tokens {
+    :root {
+        /* 4px Base Spacing Scale (Section C) */
+        --space-0: 0;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-7: 28px;
+        --space-8: 32px;
+        --space-9: 36px;
+        --space-10: 40px;
+        --space-12: 48px;
+        --space-14: 56px;
+        --space-16: 64px;
 
-    /* Universal Radii */
-    --radius-sm: 6px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
-    --radius-full: 9999px;
+        /* Universal Dimensions (Section C & F) */
+        --header-height: 56px;
+        --bottom-nav-height: 56px;
+        --btn-height: 44px;
+        --btn-height-sm: 36px;
+        --input-height: 44px;
+        --tap-target-min: 44px;
 
-    /* Physics & Animation Timing */
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --duration-fast: 150ms;
-    --duration-base: 250ms;
-    --duration-slow: 450ms;
+        /* Radii */
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --radius-xl: 20px;
+        --radius-full: 9999px;
 
-    /* Universal Elevation Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.12), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+        /* Physics & Timing (Section B: 150ms-300ms, subtle) */
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+        --duration-fast: 150ms;
+        --duration-base: 250ms;
 
-    /* Universal Functional Colors */
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    --info: #3B82F6;
-}
+        /* Universal Elevation Shadows */
+        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.08);
+        --shadow-lg: 0 10px 25px -4px rgba(0, 0, 0, 0.12);
 
-/* --------------------------------------------------------------------------
-   1. BRAND: MAIN MARKETPLACE ("Midnight Aurora")
-   -------------------------------------------------------------------------- */
-[data-brand="main"], :root {
-    --bg: #FAFAFB;
-    --bg-2: #F1F3F7;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #070B1A;
-    --text-muted: #64748B;
-    --border: rgba(7, 11, 26, 0.08);
+        /* Universal Functional Colors */
+        --success: #15803D;
+        --danger: #DC2626;
+        --warning: #F59E0B;
+        --info: #2563EB;
+        --on-ink: #FFFFFF;
+        --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+    }
 
-    --primary: #0F172A;
-    --primary-hover: #1E293B;
-    --primary-contrast: #FFFFFF;
-    --secondary: #5B5BFF;
-    --accent: #22E4D0;
-    --magenta: #FF4FD8;
+    /* --------------------------------------------------------------------------
+       1. BRAND: MAIN (K71)
+       -------------------------------------------------------------------------- */
+    [data-brand="main"], :root {
+        --bg: #F6F7FB;
+        --bg-2: #EEF1F8;
+        --surface: #FFFFFF;
+        --border: #E2E6F0;
+        --text: #0F1222;
+        --muted: #5B6178;
+        --primary: #4338CA;
+        --primary-hover: #3730A3;
+        --on-primary: #FFFFFF;
+        --accent: #F59E0B;
+        --on-accent: #1C1917;
+        --ink: #0F1222;
+        --on-ink: #FFFFFF;
+        --font-display: 'Plus Jakarta Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Plus Jakarta Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-    --gradient-1: linear-gradient(135deg, #070B1A 0%, #1E1B4B 100%);
-    --gradient-2: linear-gradient(135deg, #5B5BFF 0%, #22E4D0 100%);
-    --gradient-3: linear-gradient(135deg, rgba(91, 91, 255, 0.08) 0%, rgba(34, 228, 208, 0.08) 100%);
+    /* --------------------------------------------------------------------------
+       2. BRAND: FOOD
+       -------------------------------------------------------------------------- */
+    [data-brand="food"] {
+        --bg: #FFF8F1;
+        --bg-2: #FEEFDE;
+        --surface: #FFFFFF;
+        --border: #FEE7D6;
+        --text: #1C1209;
+        --muted: #6B5B4D;
+        --primary: #EA580C;
+        --primary-hover: #C2410C;
+        --primary-text-small: #C2410C;
+        --on-primary: #FFFFFF;
+        --accent: #16A34A;
+        --on-accent: #FFFFFF;
+        --ink: #2A1408;
+        --on-ink: #FFFFFF;
+        --font-display: 'Outfit', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Outfit', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-    --font-display: 'Clash Display', 'Outfit', 'Noto Sans Devanagari', -apple-system, sans-serif;
-    --font-body: 'Satoshi', 'Inter', 'Noto Sans Devanagari', -apple-system, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-}
+    /* --------------------------------------------------------------------------
+       3. BRAND: SERVICES (Clean Slate & Teal, zero purple)
+       -------------------------------------------------------------------------- */
+    [data-brand="services"] {
+        --bg: #F4F8F8;
+        --bg-2: #EBF2F2;
+        --surface: #FFFFFF;
+        --border: #E0ECEC;
+        --text: #0A2540;
+        --muted: #51657A;
+        --primary: #0F766E;
+        --primary-hover: #115E59;
+        --on-primary: #FFFFFF;
+        --accent: #F59E0B;
+        --on-accent: #1C1917;
+        --ink: #0A2540;
+        --on-ink: #FFFFFF;
+        --font-display: 'Sora', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-[data-brand="main"].dark, [data-brand="main"] .dark {
-    --bg: #070B1A;
-    --bg-2: #0D1326;
-    --surface: #11182E;
-    --surface-elevated: #18223F;
-    --text: #F8FAFC;
-    --text-muted: #94A3B8;
-    --border: rgba(255, 255, 255, 0.1);
-    --primary: #F8FAFC;
-    --primary-hover: #E2E8F0;
-    --primary-contrast: #070B1A;
-}
+    /* --------------------------------------------------------------------------
+       4. BRAND: USED
+       -------------------------------------------------------------------------- */
+    [data-brand="used"] {
+        --bg: #FAF6EE;
+        --bg-2: #F4EDE0;
+        --surface: #FFFFFF;
+        --border: #E8E2D5;
+        --text: #1C1917;
+        --muted: #6B6358;
+        --primary: #1C1917;
+        --primary-hover: #292524;
+        --on-primary: #FFFFFF;
+        --accent: #FACC15;
+        --on-accent: #1C1917;
+        --secondary: #15803D;
+        --ink: #1C1917;
+        --on-ink: #FFFFFF;
+        --font-display: 'Space Grotesk', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-/* --------------------------------------------------------------------------
-   2. BRAND: FOOD ("Fire & Spice")
-   -------------------------------------------------------------------------- */
-[data-brand="food"] {
-    --bg: #FFFBF7;
-    --bg-2: #FFF3E6;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #1A0E08;
-    --text-muted: #8C6F5A;
-    --border: rgba(214, 40, 40, 0.1);
+    /* --------------------------------------------------------------------------
+       5. BRAND: B2B (Enquiry)
+       -------------------------------------------------------------------------- */
+    [data-brand="b2b"] {
+        --bg: #F1F5F9;
+        --bg-2: #E6EDF5;
+        --surface: #FFFFFF;
+        --border: #E2E8F0;
+        --text: #0F172A;
+        --muted: #475569;
+        --primary: #1D4ED8;
+        --primary-hover: #1E40AF;
+        --on-primary: #FFFFFF;
+        --accent: #F59E0B;
+        --on-accent: #1C1917;
+        --ink: #0F172A;
+        --on-ink: #FFFFFF;
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --font-display: 'IBM Plex Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'IBM Plex Sans', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-    --primary: #FF6A00;
-    --primary-hover: #E65A00;
-    --primary-contrast: #FFFFFF;
-    --secondary: #D62828;
-    --accent: #FFB703;
+    /* --------------------------------------------------------------------------
+       6. BRAND: FEASTO (Quick Commerce)
+       -------------------------------------------------------------------------- */
+    [data-brand="feasto"] {
+        --bg: #F5FAF6;
+        --bg-2: #ECF5ED;
+        --surface: #FFFFFF;
+        --border: #E1EFE4;
+        --text: #0B1F12;
+        --muted: #4B6354;
+        --primary: #0C831F;
+        --primary-hover: #086417;
+        --on-primary: #FFFFFF;
+        --accent: #FACC15;
+        --on-accent: #1C1917;
+        --ink: #0B3B17;
+        --on-ink: #FFFFFF;
+        --font-display: 'Bricolage Grotesque', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Manrope', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 
-    --gradient-1: linear-gradient(135deg, #FF6A00 0%, #D62828 100%);
-    --gradient-2: linear-gradient(135deg, #FFB703 0%, #FF6A00 100%);
-    --gradient-3: linear-gradient(135deg, rgba(255, 106, 0, 0.08) 0%, rgba(214, 40, 40, 0.08) 100%);
-
-    --font-display: 'Fraunces', 'Outfit', 'Noto Sans Devanagari', serif;
-    --font-body: 'DM Sans', 'Inter', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-}
-
-[data-brand="food"].dark, [data-brand="food"] .dark {
-    --bg: #140A05;
-    --bg-2: #211208;
-    --surface: #2E1B10;
-    --surface-elevated: #3D2416;
-    --text: #FFF6EC;
-    --text-muted: #C49F83;
-    --border: rgba(255, 183, 3, 0.15);
-}
-
-/* --------------------------------------------------------------------------
-   3. BRAND: SERVICES ("Trust & Precision")
-   -------------------------------------------------------------------------- */
-[data-brand="services"] {
-    --bg: #F8FAFC;
-    --bg-2: #F1F5F9;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #0B1F3A;
-    --text-muted: #64748B;
-    --border: rgba(11, 31, 58, 0.08);
-
-    --primary: #0B1F3A;
-    --primary-hover: #162F52;
-    --primary-contrast: #FFFFFF;
-    --secondary: #00B8A9;
-    --accent: #4CC9F0;
-
-    --gradient-1: linear-gradient(135deg, #0B1F3A 0%, #00B8A9 100%);
-    --gradient-2: linear-gradient(135deg, #00B8A9 0%, #4CC9F0 100%);
-    --gradient-3: linear-gradient(135deg, rgba(0, 184, 169, 0.08) 0%, rgba(76, 201, 240, 0.08) 100%);
-
-    --font-display: 'Sora', 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    --font-body: 'Inter', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-}
-
-[data-brand="services"].dark, [data-brand="services"] .dark {
-    --bg: #071224;
-    --bg-2: #0B1F3A;
-    --surface: #102A4E;
-    --surface-elevated: #163765;
-    --text: #F8FAFC;
-    --text-muted: #94A3B8;
-    --border: rgba(255, 255, 255, 0.1);
-}
-
-/* --------------------------------------------------------------------------
-   4. BRAND: USED ITEMS ("Thrift & Tag")
-   -------------------------------------------------------------------------- */
-[data-brand="used"] {
-    --bg: #F9F7F3;
-    --bg-2: #F0EDE6;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #2D3748;
-    --text-muted: #718096;
-    --border: rgba(47, 93, 80, 0.12);
-
-    --primary: #2F5D50;
-    --primary-hover: #24483E;
-    --primary-contrast: #FFFFFF;
-    --secondary: #E76F51;
-    --accent: #E9C46A;
-
-    --gradient-1: linear-gradient(135deg, #2F5D50 0%, #E76F51 100%);
-    --gradient-2: linear-gradient(135deg, #E9C46A 0%, #E76F51 100%);
-    --gradient-3: linear-gradient(135deg, rgba(47, 93, 80, 0.08) 0%, rgba(233, 196, 106, 0.08) 100%);
-
-    --font-display: 'Space Grotesk', 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    --font-body: 'Inter', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-}
-
-[data-brand="used"].dark, [data-brand="used"] .dark {
-    --bg: #121F1B;
-    --bg-2: #1B2F2A;
-    --surface: #243D36;
-    --surface-elevated: #2D4C44;
-    --text: #F4EBDD;
-    --text-muted: #A0AEC0;
-    --border: rgba(233, 196, 106, 0.15);
-}
-
-/* --------------------------------------------------------------------------
-   5. BRAND: B2B ENQUIRY ("Industrial Ledger")
-   -------------------------------------------------------------------------- */
-[data-brand="b2b"] {
-    --bg: #F8FAFC;
-    --bg-2: #F1F5F9;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #0F172A;
-    --text-muted: #64748B;
-    --border: #E2E8F0;
-
-    --primary: #0F172A;
-    --primary-hover: #1E293B;
-    --primary-contrast: #FFFFFF;
-    --secondary: #1D4ED8;
-    --accent: #F5A524;
-
-    --gradient-1: linear-gradient(135deg, #0F172A 0%, #1D4ED8 100%);
-    --gradient-2: linear-gradient(135deg, #1D4ED8 0%, #F5A524 100%);
-    --gradient-3: linear-gradient(135deg, rgba(29, 78, 216, 0.08) 0%, rgba(245, 165, 36, 0.08) 100%);
-
-    --font-display: 'IBM Plex Sans', 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    --font-body: 'IBM Plex Sans', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
-}
-
-[data-brand="b2b"].dark, [data-brand="b2b"] .dark {
-    --bg: #0A0F1D;
-    --bg-2: #0F172A;
-    --surface: #1E293B;
-    --surface-elevated: #334155;
-    --text: #F8FAFC;
-    --text-muted: #94A3B8;
-    --border: #334155;
-}
-
-/* --------------------------------------------------------------------------
-   6. BRAND: FEASTO ("Fresh & Fast")
-   -------------------------------------------------------------------------- */
-[data-brand="feasto"] {
-    --bg: #F8FAF8;
-    --bg-2: #E8FFF3;
-    --surface: #FFFFFF;
-    --surface-elevated: #FFFFFF;
-    --text: #04210F;
-    --text-muted: #4B6B56;
-    --border: rgba(0, 196, 106, 0.12);
-
-    --primary: #00C46A;
-    --primary-hover: #00A85A;
-    --primary-contrast: #FFFFFF;
-    --secondary: #04210F;
-    --accent: #B6F500;
-    --yellow: #FFD84D;
-
-    --gradient-1: linear-gradient(135deg, #00C46A 0%, #04210F 100%);
-    --gradient-2: linear-gradient(135deg, #B6F500 0%, #00C46A 100%);
-    --gradient-3: linear-gradient(135deg, rgba(0, 196, 106, 0.1) 0%, rgba(182, 245, 0, 0.1) 100%);
-
-    --font-display: 'Bricolage Grotesque', 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    --font-body: 'Manrope', 'Inter', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-}
-
-[data-brand="feasto"].dark, [data-brand="feasto"] .dark {
-    --bg: #031409;
-    --bg-2: #062412;
-    --surface: #0A361C;
-    --surface-elevated: #114B28;
-    --text: #E8FFF3;
-    --text-muted: #7FA78E;
-    --border: rgba(0, 196, 106, 0.2);
-}
-
-/* --------------------------------------------------------------------------
-   7. BRAND: SHORTS ("Neon Cinema")
-   -------------------------------------------------------------------------- */
-[data-brand="shorts"] {
-    --bg: #000000;
-    --bg-2: #0A0A0E;
-    --surface: #121218;
-    --surface-elevated: #1A1A24;
-    --text: #FFFFFF;
-    --text-muted: #A0A0B0;
-    --border: rgba(255, 255, 255, 0.12);
-
-    --primary: #FFFFFF;
-    --primary-hover: #E2E8F0;
-    --primary-contrast: #000000;
-    --secondary: #FF2E63;
-    --accent: #08F7FE;
-    --violet: #7C3AED;
-
-    --gradient-1: linear-gradient(135deg, #FF2E63 0%, #7C3AED 100%);
-    --gradient-2: linear-gradient(135deg, #7C3AED 0%, #08F7FE 100%);
-    --gradient-3: linear-gradient(135deg, rgba(255, 46, 99, 0.15) 0%, rgba(8, 247, 254, 0.15) 100%);
-
-    --font-display: 'Unbounded', 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    --font-body: 'Inter', 'Noto Sans Devanagari', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    /* --------------------------------------------------------------------------
+       7. BRAND: SHORTS (Dark Only)
+       -------------------------------------------------------------------------- */
+    [data-brand="shorts"] {
+        --bg: #000000;
+        --bg-2: #141414;
+        --surface: #121212;
+        --border: #262626;
+        --text: #FFFFFF;
+        --muted: #A3A3A3;
+        --primary: #FF2D55;
+        --primary-hover: #E11D48;
+        --on-primary: #FFFFFF;
+        --accent: #22D3EE;
+        --on-accent: #000000;
+        --ink: #000000;
+        --on-ink: #FFFFFF;
+        --font-display: 'Unbounded', 'Noto Sans Devanagari', system-ui, sans-serif;
+        --font-body: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+    }
 }

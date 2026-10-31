@@ -1,5 +1,5 @@
 <x-layouts.food 
-    title="K71 Food — Order Online from Top Gourmet Cloud Kitchens & Restaurants"
+    title="K71 Food — Order Online from Top Fresh Cloud Kitchens & Restaurants"
     metaDescription="Order fresh handi biryani, wood-fired artisan pizza, smash burgers, pure veg royal thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, FSSAI hygiene verified, and zero delivery fee offers."
 >
     @php
@@ -10,7 +10,7 @@
 
     <div x-data="k71FoodHomepage()" class="space-y-8 sm:space-y-12 pb-16">
 
-        <!-- 1. HIGH-IMPACT GOURMET HERO & LIVE SEARCH SECTION -->
+        <!-- 1. HIGH-IMPACT FRESH & LOCAL HERO & LIVE SEARCH SECTION -->
         <section class="relative bg-gradient-to-b from-orange-500/15 via-amber-500/5 to-transparent pt-6 sm:pt-10 pb-8 px-4 sm:px-6 lg:px-8 border-b border-orange-100/70">
             <div class="max-w-7xl mx-auto space-y-6">
                 
@@ -31,8 +31,8 @@
                         </button>
                     </div>
                     
-                    <h1 class="text-3xl sm:text-5xl font-black text-stone-950 tracking-tight leading-tight">
-                        Crave it? Get it hot &amp; fresh from <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#ea580c] via-rose-600 to-amber-600">top gourmet kitchens</span>.
+                    <h1 class="k71-display text-stone-950 tracking-tight leading-tight">
+                        Crave it? Get it hot &amp; fresh from <span class="text-[#EA580C]">your favourite kitchens</span>.
                     </h1>
                     <p class="text-sm sm:text-base text-stone-600 font-medium leading-relaxed">
                         {{ $fs['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, sizzling tandoori kebabs, and pure veg royal thalis.' }}

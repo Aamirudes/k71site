@@ -30,6 +30,13 @@ class AppServiceProvider extends ServiceProvider
     {
         date_default_timezone_set('Asia/Kolkata');
 
+        // Centralized brand detection shared with all views & layouts
+        view()->composer('*', function ($view) {
+            $brand = function_exists('k71_current_brand') ? k71_current_brand() : 'main';
+            $view->with('currentBrand', $brand);
+            $view->with('detectedBrand', $brand);
+        });
+
         if (!$this->app->runningInConsole() && $this->app->bound('request')) {
             $host = request()->getHost();
             $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '']) 

@@ -1,15 +1,17 @@
 /* ==========================================================================
-   K71 DESIGN SYSTEM — BASE.CSS (THE CATCH-ALL LAYER)
-   Styles every raw HTML element on-brand inside CSS @layer so existing
-   page-specific rules still win, while seamlessly upgrading framework classes.
+   K71 DESIGN SYSTEM — BASE.CSS (REPAIRED & LAUNCH-POLISHED)
+   Zero-specificity element rules inside @layer k71-base.
+   Elements inherit color from container so utility classes (text-white etc.) win.
    ========================================================================== */
+
+@layer k71-tokens, k71-base, k71-components, utilities;
 
 @layer k71-base {
     *, *::before, *::after {
         box-sizing: border-box;
     }
 
-    html {
+    :where(html) {
         font-family: var(--font-body, system-ui, sans-serif);
         background-color: var(--bg);
         color: var(--text);
@@ -17,282 +19,224 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    body {
+    :where(body) {
         margin: 0;
         padding: 0;
         background-color: var(--bg);
         color: var(--text);
         font-family: var(--font-body, system-ui, sans-serif);
-        font-size: 0.9375rem; /* 15px */
-        line-height: 1.6;
-        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        min-height: 100dvh;
         overflow-x: hidden;
+        touch-action: manipulation;
     }
 
     /* Selection */
     ::selection {
         background-color: var(--primary);
-        color: var(--primary-contrast);
+        color: var(--on-primary);
     }
 
     /* Scrollbars */
     ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
     }
     ::-webkit-scrollbar-track {
-        background: var(--bg-2);
+        background: transparent;
     }
     ::-webkit-scrollbar-thumb {
         background: var(--border);
         border-radius: var(--radius-full);
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: var(--text-muted);
+        background: var(--muted);
     }
 
-    /* Headings */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: var(--font-display, var(--font-body, system-ui, sans-serif));
-        color: var(--text);
-        font-weight: 700;
-        line-height: 1.2;
-        letter-spacing: -0.025em;
-        margin-top: 0;
-        margin-bottom: var(--space-3);
-    }
-
-    h1 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); }
-    h2 { font-size: clamp(1.5rem, 2.5vw + 0.75rem, 2.25rem); }
-    h3 { font-size: clamp(1.25rem, 1.8vw + 0.5rem, 1.75rem); }
-    h4 { font-size: 1.25rem; }
-    h5 { font-size: 1.125rem; }
-    h6 { font-size: 1rem; }
-
-    p {
-        margin-top: 0;
-        margin-bottom: var(--space-4);
+    /* ----------------------------------------------------------------------
+       ZERO-SPECIFICITY ELEMENT INHERITANCE RULES
+       Color, font-size, font-weight, line-height & margin REMOVED from tags.
+       Containers & Tailwind utility classes determine visual properties.
+       ---------------------------------------------------------------------- */
+    :where(h1, h2, h3, h4, h5, h6, p, a, button, label, span, small, li, strong, b, em, i) {
         color: inherit;
     }
 
-    a {
+    :where(a, button, input, select, textarea) {
         color: inherit;
+        font-family: inherit;
+    }
+
+    :where(a) {
         text-decoration: none;
-        transition: color var(--duration-fast) var(--ease-out);
-    }
-    a:hover {
-        color: var(--primary);
+        background-color: transparent;
     }
 
-    small {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-    }
-
-    strong, b {
-        font-weight: 700;
-        color: var(--text);
-    }
-
-    hr {
+    :where(button) {
+        background-color: transparent;
         border: none;
-        border-top: 1px solid var(--border);
-        margin: var(--space-6) 0;
+        padding: 0;
+        cursor: pointer;
+        touch-action: manipulation;
     }
 
-    img, picture, video, canvas, svg {
+    :where(input, select, textarea) {
+        font-size: 16px; /* Stop iOS auto-zoom on focus (Section C) */
+    }
+
+    :where(img, picture, video, canvas, svg) {
         display: block;
         max-width: 100%;
         height: auto;
     }
 
-    /* Lists */
-    ul, ol {
-        margin-top: 0;
-        margin-bottom: var(--space-4);
-        padding-left: var(--space-5);
-    }
-    li {
-        margin-bottom: var(--space-1);
-    }
-
-    /* Tables */
-    table {
+    :where(table) {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: var(--space-6);
-        font-size: 0.875rem;
-    }
-    th, td {
-        padding: var(--space-3) var(--space-4);
-        text-align: left;
-        border-bottom: 1px solid var(--border);
-    }
-    th {
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        background: var(--bg-2);
-    }
-    tbody tr:hover {
-        background: var(--bg-2);
     }
 
-    /* Forms & Controls */
-    form {
-        margin: 0;
-    }
-    label {
-        display: inline-block;
-        margin-bottom: var(--space-1);
-        font-size: 0.8125rem;
-        font-weight: 600;
-        color: var(--text);
-    }
-    input, select, textarea, button {
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-    }
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    input[type="tel"],
-    input[type="url"],
-    input[type="search"],
-    select,
-    textarea {
-        display: block;
-        width: 100%;
-        padding: 0.625rem 0.875rem;
-        font-size: 0.875rem;
-        color: var(--text);
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        box-shadow: var(--shadow-sm);
-        transition: border-color var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
-        outline: none;
-    }
-    input:focus, select:focus, textarea:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12);
-    }
-    textarea {
-        resize: vertical;
-        min-height: 90px;
+    :where(hr) {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: var(--space-4) 0;
     }
 
-    /* Checkbox & Radio */
-    input[type="checkbox"], input[type="radio"] {
-        accent-color: var(--primary);
-        cursor: pointer;
-    }
-
-    /* Buttons */
-    button, input[type="submit"], input[type="button"] {
-        cursor: pointer;
-    }
-
-    /* Focus rings */
-    :focus-visible {
-        outline: 2px solid var(--primary);
-        outline-offset: 2px;
-    }
-
-    /* Code & Pre */
-    code, pre {
-        font-family: var(--font-mono, monospace);
-        font-size: 0.85em;
-    }
-    code {
-        padding: 0.2em 0.4em;
-        background: var(--bg-2);
-        border-radius: var(--radius-sm);
-    }
-    pre {
-        padding: var(--space-4);
-        background: var(--bg-2);
-        border-radius: var(--radius-md);
-        overflow-x: auto;
+    /* Fallback Font Families per hierarchy */
+    :where(h1, h2, h3) {
+        font-family: var(--font-display, var(--font-body, system-ui, sans-serif));
     }
 
     /* ----------------------------------------------------------------------
-       Framework Class Bridging (.btn, .card, .form-control, .table, .badge)
+       TYPOGRAPHIC SCALE (Section C: Mobile-first, 375px baseline)
        ---------------------------------------------------------------------- */
-    .card {
-        background-color: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) var(--ease-out);
-    }
-    .card:hover {
-        box-shadow: var(--shadow-md);
+    .k71-page-title {
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        letter-spacing: -0.02em !important;
     }
 
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-2);
-        padding: 0.625rem 1.25rem;
-        font-size: 0.875rem;
-        font-weight: 600;
-        border-radius: var(--radius-full);
-        border: 1px solid transparent;
-        cursor: pointer;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: middle;
-        user-select: none;
-        transition: all var(--duration-fast) var(--ease-out);
+    .k71-section-title {
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        line-height: 1.3 !important;
+        letter-spacing: -0.01em !important;
     }
-    .btn:active {
+    @media (min-width: 640px) {
+        .k71-section-title { font-size: 20px !important; }
+    }
+
+    /* Hero headline explicit class (Section A.2 & C: max 28px on 375px, 40px tablet, 52px desktop) */
+    .k71-display {
+        font-family: var(--font-display, var(--font-body, system-ui, sans-serif)) !important;
+        font-size: clamp(20px, 5.8vw, 28px) !important;
+        font-weight: 800 !important;
+        line-height: 1.15 !important;
+        letter-spacing: -0.025em !important;
+    }
+    @media (min-width: 640px) {
+        .k71-display { font-size: 40px !important; }
+    }
+    @media (min-width: 1024px) {
+        .k71-display { font-size: 52px !important; }
+    }
+
+    /* Product card title: 14px, weight 600, 2-line clamp (Never 1-line truncate per Section C) */
+    .k71-card-title {
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        line-height: 1.35 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+    }
+
+    /* Product card prices: 15-16px weight 700, old price 12px */
+    .k71-price {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        line-height: 1.2 !important;
+    }
+    @media (min-width: 640px) {
+        .k71-price { font-size: 16px !important; }
+    }
+    .k71-old-price {
+        font-size: 12px !important;
+        color: var(--muted) !important;
+        text-decoration: line-through !important;
+    }
+
+    /* Captions & badges: 10-11px, weight 600-700 */
+    .k71-badge {
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        letter-spacing: 0.02em !important;
+    }
+
+    /* ----------------------------------------------------------------------
+       SURFACE PAIRINGS & SCRIM OVERLAYS (Section A.1)
+       ---------------------------------------------------------------------- */
+    .surface-dark {
+        background-color: var(--ink) !important;
+        color: var(--on-ink) !important;
+    }
+    .surface-dark :where(h1, h2, h3, h4, h5, h6, p, span, small, a, li, label, strong) {
+        color: inherit;
+    }
+
+    /* Colored Buttons Guarantee High Contrast */
+    .btn-primary, [data-brand] .btn-primary {
+        background-color: var(--primary) !important;
+        color: var(--on-primary) !important;
+    }
+    .btn-accent, [data-brand] .btn-accent {
+        background-color: var(--accent) !important;
+        color: var(--on-accent) !important;
+    }
+
+    /* Scrim Gradient for Photos */
+    .k71-photo-scrim, .photo-scrim {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.35) 50%, transparent 100%);
+        pointer-events: none;
+    }
+
+    .k71-photo-text, .photo-text {
+        color: #FFFFFF !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+    .k71-photo-text *, .photo-text * {
+        color: inherit !important;
+    }
+
+    /* Tap Target Minimum 44px (Section C) */
+    .k71-tap-target {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Subtle Press State (Section B & F) */
+    .k71-pressable:active, .btn:active, button:active {
         transform: scale(0.97);
-    }
-    .btn-primary {
-        background-color: var(--primary);
-        color: var(--primary-contrast);
-    }
-    .btn-primary:hover {
-        background-color: var(--primary-hover, var(--primary));
-        color: var(--primary-contrast);
-    }
-    .btn-secondary, .btn-light {
-        background-color: var(--bg-2);
-        color: var(--text);
-        border-color: var(--border);
-    }
-    .btn-secondary:hover, .btn-light:hover {
-        background-color: var(--surface);
+        transition: transform var(--duration-fast) var(--ease-out);
     }
 
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.625rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        border-radius: var(--radius-full);
-        background: var(--bg-2);
-        color: var(--text);
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+        .k71-pressable:active, .btn:active, button:active {
+            transform: none !important;
+        }
     }
-
-    .alert {
-        padding: var(--space-4);
-        border-radius: var(--radius-md);
-        margin-bottom: var(--space-4);
-        font-size: 0.875rem;
-        border: 1px solid transparent;
-    }
-    .alert-success { background: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
-    .alert-danger { background: #FEF2F2; color: #991B1B; border-color: #FECACA; }
-    .alert-warning { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
-    .alert-info { background: #EFF6FF; color: #1E40AF; border-color: #BFDBFE; }
 }

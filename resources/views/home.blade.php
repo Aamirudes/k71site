@@ -227,7 +227,7 @@
                                  x-transition:leave="transition ease-in duration-300 absolute inset-0"
                                  x-transition:leave-start="opacity-100 scale-100"
                                  x-transition:leave-end="opacity-0 scale-95"
-                                 class="absolute inset-0 w-full h-full p-6 sm:p-10 flex flex-col justify-between z-10"
+                                 class="absolute inset-0 w-full h-full p-6 sm:p-10 pb-12 sm:pb-12 flex flex-col justify-between z-10"
                                  style="{{ $idx > 0 ? 'display: none;' : '' }}">
                                 
                                 <!-- Background Image with Clean Neutral Scrim -->
@@ -246,12 +246,12 @@
                                     </span>
                                 </div>
 
-                                <!-- Hero Main Headline -->
+                                 <!-- Hero Main Headline -->
                                 <div class="relative z-10 my-4 sm:my-6 space-y-2 sm:space-y-3">
-                                    <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.12] text-white drop-shadow-sm">
+                                    <h1 class="k71-display text-white photo-text drop-shadow-md">
                                         {{ $slide['title'] }}
                                     </h1>
-                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-200 max-w-2xl font-normal leading-relaxed drop-shadow-sm">
+                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-100 max-w-2xl font-normal leading-relaxed drop-shadow-sm">
                                         {{ $slide['subtitle'] }}
                                     </p>
                                 </div>
@@ -710,7 +710,7 @@
                  11. SELLER ONBOARDING CALLOUT
                  ========================================== -->
             <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-                <div class="p-6 sm:p-10 rounded-2xl sm:rounded-3xl bg-slate-950 text-white shadow-md relative overflow-hidden border border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="p-6 sm:p-10 rounded-2xl sm:rounded-3xl bg-slate-950 surface-dark text-white shadow-md relative overflow-hidden border border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="space-y-2 text-center md:text-left">
                         <span class="px-3 py-1 rounded-full bg-white/10 text-zinc-300 text-[10px] font-bold uppercase tracking-widest border border-white/10">
                             Indian Merchant Program
@@ -718,14 +718,15 @@
                         <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
                             Start Selling Direct on K71 Marketplace
                         </h3>
-                        <p class="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed">
+                        <p class="text-xs sm:text-sm text-zinc-300 max-w-lg leading-relaxed">
                             Zero setup fee for retail boutiques, dining kitchens, verified specialists, pre-owned sellers, and marble factories with automated daily PhonePe settlements.
                         </p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
                         <a href="{{ route('vendor.register') }}" 
-                           class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95">
+                           class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 !text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95"
+                           style="color: #020617 !important;">
                             Open Your Store &rarr;
                         </a>
                         <button type="button" 

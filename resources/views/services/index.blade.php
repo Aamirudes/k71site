@@ -15,7 +15,7 @@
                 <!-- Simple Trust Badge -->
                 <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-slate-50 border border-slate-200/90 shadow-2xs text-xs font-bold text-slate-800">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>{{ $ss['services_hero_badge'] ?? 'services.k71.in • K71 Verified Freelancers & Services' }}</span>
+                    <span>{{ $ss['services_hero_badge'] ?? 'Verified Freelancers & Professional Services' }}</span>
                 </div>
 
                 <!-- Clear Direct Title -->
@@ -100,32 +100,31 @@
                     </div>
                 </div>
 
-                <!-- Horizontal Category Carousel -->
-                <div x-ref="categorySlider" 
-                     class="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth pb-3 scrollbar-none snap-x snap-mandatory focus:outline-none -mx-4 px-4 sm:mx-0 sm:px-0">
+                <!-- 4-Column Category Icon Grid (Section E) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                     
                     <!-- 'All Categories' Reset Card -->
                     <a href="{{ route('services.index') }}" 
-                       class="w-36 sm:w-48 shrink-0 snap-start rounded-2xl p-4 flex flex-col justify-between border transition-all duration-300 relative overflow-hidden group {{ empty($selectedCategory) ? 'bg-slate-950 text-white border-slate-950 shadow-md' : 'bg-white text-slate-900 border-slate-200 hover:border-slate-400 hover:shadow-2xs' }}">
+                       class="rounded-2xl p-4 flex flex-col justify-between border transition-all duration-300 relative overflow-hidden group {{ empty($selectedCategory) ? 'bg-[#0A2540] surface-dark text-white border-[#0A2540] shadow-md' : 'bg-white text-[#0A2540] border-slate-200 hover:border-slate-400 hover:shadow-2xs' }}">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg {{ empty($selectedCategory) ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-800' }}">
                             ⚡
                         </div>
-                        <div class="mt-8">
-                            <h3 class="font-bold text-sm leading-snug">All Services</h3>
-                            <p class="text-[11px] mt-0.5 {{ empty($selectedCategory) ? 'text-slate-300' : 'text-slate-500' }}">
+                        <div class="mt-4">
+                            <h3 class="font-bold text-sm leading-snug {{ empty($selectedCategory) ? 'text-white' : 'text-[#0A2540]' }}">All Services</h3>
+                            <p class="text-[11px] mt-0.5 {{ empty($selectedCategory) ? 'text-slate-200' : 'text-slate-500' }}">
                                 Complete Directory
                             </p>
                         </div>
                     </a>
 
-                    <!-- Category Cards with Photography Images -->
+                    <!-- Category Cards with Photography Images & Guaranteed Scrim Readability -->
                     @foreach($servicesCategories as $cat)
                         @php
                             $isSelected = ($selectedCategory === $cat->slug);
                             $categoryImg = $cat->image_url;
                         @endphp
                         <a href="{{ route('services.category', $cat->slug) }}" 
-                           class="w-44 sm:w-56 shrink-0 snap-start rounded-2xl relative overflow-hidden group aspect-[4/3] sm:aspect-[16/11] border transition-all duration-300 shadow-2xs {{ $isSelected ? 'border-slate-950 ring-2 ring-slate-950 shadow-md' : 'border-slate-200/90 hover:border-slate-400 hover:shadow-md' }}">
+                           class="rounded-2xl relative overflow-hidden group aspect-[4/3] sm:aspect-[16/11] border transition-all duration-300 shadow-2xs {{ $isSelected ? 'border-[#0F766E] ring-2 ring-[#0F766E] shadow-md' : 'border-slate-200/90 hover:border-slate-400 hover:shadow-md' }}">
                             
                             <!-- Category Photography Cover -->
                             <img src="{{ $categoryImg }}" 
@@ -133,22 +132,22 @@
                                  loading="lazy"
                                  class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
                             
-                            <!-- Dark Gradient Overlay for Readability -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/10 group-hover:from-black/90 transition-colors duration-300"></div>
+                            <!-- Dark Gradient Overlay for Readability (Section A.1) -->
+                            <div class="k71-photo-scrim"></div>
 
                             <!-- Active Indicator Ribbon -->
                             @if($isSelected)
-                                <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-slate-950 text-white text-[10px] font-bold shadow-xs flex items-center gap-1">
+                                <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#0F766E] text-white text-[10px] font-bold shadow-xs flex items-center gap-1 z-10">
                                     <span>✓ Active</span>
                                 </div>
                             @endif
 
                             <!-- Bottom Content -->
-                            <div class="absolute inset-x-0 bottom-0 p-3.5 sm:p-4 text-white">
-                                <h3 class="font-bold text-xs sm:text-sm text-white group-hover:text-slate-200 transition leading-snug line-clamp-1 drop-shadow-xs">
+                            <div class="absolute inset-x-0 bottom-0 p-3 sm:p-4 text-white z-10 photo-text">
+                                <h3 class="font-bold text-xs sm:text-sm text-white group-hover:text-slate-100 transition leading-snug line-clamp-2 drop-shadow-md">
                                     {{ $cat->name }}
                                 </h3>
-                                <div class="flex items-center justify-between mt-1 text-[11px] text-slate-300 font-medium">
+                                <div class="flex items-center justify-between mt-1 text-[11px] text-slate-200 font-medium">
                                     <span>{{ $cat->products_count }} Services</span>
                                     <span class="group-hover:translate-x-1 transition duration-200">→</span>
                                 </div>
@@ -225,7 +224,8 @@
                         </a>
                     </div>
                 @else
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                    <!-- HORIZONTAL LIST CARDS (Section E: 96px image left, title, rating, 'Starting ₹X' right, verified badge) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($services as $svc)
                             @php
                                 $imgUrl = $svc->primary_image_url;
@@ -233,62 +233,54 @@
                                 $sellerAvatar = $svc->vendor?->logo ? format_image_url($svc->vendor->logo) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                                 $price = $basicPkg ? $basicPkg->price : ($svc->base_price / 100);
                             @endphp
-                            <div class="group rounded-2xl bg-white border border-slate-200/90 hover:border-slate-400 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between">
+                            <div class="group rounded-2xl bg-white border border-slate-200/90 hover:border-[#0F766E] hover:shadow-md transition-all duration-300 overflow-hidden flex flex-row items-stretch p-3 gap-3.5">
                                 
-                                <!-- Cover Photo -->
-                                <div class="relative aspect-[16/10] overflow-hidden bg-slate-100">
-                                    <a href="{{ route('services.show', $svc->slug) }}">
-                                        <img src="{{ $imgUrl }}" alt="{{ $svc->title }}" 
-                                             loading="lazy"
-                                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                                    </a>
-                                    <!-- Category Pill -->
-                                    <div class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-[10px] font-bold text-slate-900 border border-slate-200 shadow-2xs">
-                                        {{ $svc->category?->name ?? 'Service' }}
-                                    </div>
-                                </div>
+                                <!-- 96px Image Left -->
+                                <a href="{{ route('services.show', $svc->slug) }}" class="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-slate-100 relative">
+                                    <img src="{{ $imgUrl }}" alt="{{ $svc->title }}" 
+                                         loading="lazy"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                                </a>
 
-                                <!-- Card Body -->
-                                <div class="p-4 flex-1 flex flex-col justify-between">
+                                <!-- Card Body Right -->
+                                <div class="flex-1 min-w-0 flex flex-col justify-between">
                                     <div>
-                                        <!-- Seller Row -->
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <img src="{{ $sellerAvatar }}" alt="{{ $svc->vendor?->shop_name }}" class="w-6 h-6 rounded-full object-cover border border-slate-200">
-                                            <a href="{{ route('services.provider', $svc->vendor?->slug ?? '') }}" class="text-xs font-bold text-slate-800 hover:text-black truncate">
-                                                {{ $svc->vendor?->shop_name ?? 'Verified Pro' }}
-                                            </a>
-                                            @if($svc->vendor?->is_verified_pro)
-                                                <span class="text-emerald-600 text-xs" title="Verified Specialist">✓</span>
+                                        <!-- Category & Verified Pro Badge -->
+                                        <div class="flex items-center gap-1.5 flex-wrap text-[10px] mb-1">
+                                            <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">{{ $svc->category?->name ?? 'Service' }}</span>
+                                            @if($svc->vendor?->is_verified_pro || $svc->vendor?->is_verified)
+                                                <span class="px-2 py-0.5 rounded-full bg-teal-50 text-[#0F766E] font-bold flex items-center gap-0.5">
+                                                    <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                    <span>Verified</span>
+                                                </span>
                                             @endif
                                         </div>
 
-                                        <!-- Title -->
-                                        <h3 class="font-bold text-xs sm:text-sm text-slate-950 group-hover:text-black transition line-clamp-2 leading-snug">
+                                        <!-- Title (2-line clamp per Section C) -->
+                                        <h3 class="k71-card-title text-slate-900 group-hover:text-[#0F766E] transition">
                                             <a href="{{ route('services.show', $svc->slug) }}">
                                                 {{ $svc->title }}
                                             </a>
                                         </h3>
 
-                                        <!-- Rating & Deliverables -->
-                                        <div class="flex items-center gap-2 mt-2 text-[11px] text-slate-500 font-medium">
-                                            <span class="text-amber-500 font-bold flex items-center gap-0.5">
-                                                ★ 5.0
-                                            </span>
+                                        <!-- Rating & Delivery -->
+                                        <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-500 font-medium">
+                                            <span class="text-amber-500 font-bold flex items-center gap-0.5">★ 5.0</span>
                                             <span>•</span>
                                             <span>⏱️ {{ $basicPkg?->delivery_days ?? 3 }} Days</span>
                                         </div>
                                     </div>
 
                                     <!-- Price & CTA -->
-                                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                                    <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
                                         <div>
                                             <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">Starting at</span>
-                                            <span class="text-base font-black text-slate-950 leading-tight">
+                                            <span class="k71-price text-slate-950">
                                                 ₹{{ number_format($price, 2) }}
                                             </span>
                                         </div>
                                         <a href="{{ route('services.show', $svc->slug) }}" 
-                                           class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-2xs">
+                                           class="px-3.5 py-1.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] active:scale-95 text-white text-xs font-bold transition shadow-2xs">
                                             View Package
                                         </a>
                                     </div>
@@ -407,6 +399,16 @@
                 </a>
             </section>
 
+        </div>
+
+        <!-- Sticky Mobile "Post a Project" Floating Button (Section E) -->
+        <div class="fixed bottom-0 inset-x-0 p-3 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 flex justify-center shadow-lg md:hidden">
+            <button type="button" 
+                    @click="rfqModalOpen = true" 
+                    class="w-full max-w-md h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] active:scale-95 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                <span>Post a Project</span>
+            </button>
         </div>
 
     </div>

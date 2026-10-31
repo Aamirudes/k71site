@@ -1,7 +1,7 @@
 @props(['title' => null, 'seo' => null])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="{{ $currentBrand ?? 'main' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -102,32 +102,8 @@
         </div>
     </footer>
 
-    <!-- Mobile Bottom Nav Placeholder -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 glass-panel rounded-none border-b-0 border-x-0 h-16 z-50 flex justify-around items-center pb-safe">
-        <a href="{{ route('home') }}" class="flex flex-col items-center text-brand-sage">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
-            <span class="text-[10px] mt-1 font-medium">Home</span>
-        </a>
-        <a href="{{ route('catalog.index') }}" class="flex flex-col items-center text-brand-muted hover:text-brand-text">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-            <span class="text-[10px] mt-1 font-medium">Shop</span>
-        </a>
-        <a href="{{ route('cart.index') }}" class="flex flex-col items-center text-brand-muted hover:text-brand-text">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-            <span class="text-[10px] mt-1 font-medium">Cart</span>
-        </a>
-        @auth
-            <a href="{{ auth()->user()->hasRole('admin') ? route('admin.dashboard') : (auth()->user()->hasRole('vendor') ? route('vendor.dashboard') : route('account')) }}" class="flex flex-col items-center text-brand-muted hover:text-brand-text">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                <span class="text-[10px] mt-1 font-medium">Account</span>
-            </a>
-        @else
-            <a href="{{ route('login') }}" class="flex flex-col items-center text-brand-muted hover:text-brand-text">
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                <span class="text-[10px] mt-1 font-medium">Login</span>
-            </a>
-        @endauth
-    </div>
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav />
 
     <!-- CSRF Auto-Refresh & Session Heartbeat (Guarantees zero 419 Page Expired errors) -->
     <script>

@@ -1,77 +1,59 @@
 /* ==========================================================================
-   K71 DESIGN SYSTEM — GLASS.CSS
-   Three restrained levels of optical glass with specular highlights,
-   backdrop saturation, and @supports fallback for low-power devices.
+   K71 DESIGN SYSTEM — GLASS.CSS (TONED DOWN & LAUNCH-POLISHED)
+   Glass/blur ONLY on sticky headers, bottom nav, bottom sheets, and modals.
+   Product/listing cards are solid white with 1px border & soft shadow (not glass).
    ========================================================================== */
 
-/* Low-power / Fallback without backdrop-filter */
-.k71-glass-1,
-.k71-glass-2,
-.k71-glass-3 {
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-}
-
-@supports (backdrop-filter: blur(10px)) or (-webkit-backdrop-filter: blur(10px)) {
-    /* Level 1: Subtle Utility Glass (Navbars, tags, tooltips, pills) */
-    .k71-glass-1 {
-        background: rgba(255, 255, 255, 0.72);
-        -webkit-backdrop-filter: blur(12px) saturate(140%);
-        backdrop-filter: blur(12px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.04);
-    }
-    .dark .k71-glass-1, [data-brand="shorts"] .k71-glass-1 {
-        background: rgba(15, 23, 42, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.25);
+@layer k71-components {
+    /* Solid Cards (Strict Commerce UI) */
+    .k71-card, .card, .k71-card-product {
+        background-color: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-xs) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 
-    /* Level 2: Surface Card Glass (Product cards, hero sections, drawers) */
-    .k71-glass-2 {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(255, 255, 255, 0.65) 100%);
-        -webkit-backdrop-filter: blur(20px) saturate(150%);
-        backdrop-filter: blur(20px) saturate(150%);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-        border-radius: var(--radius-lg);
-    }
-    .dark .k71-glass-2, [data-brand="shorts"] .k71-glass-2 {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.85) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    /* Glass/Blur ONLY on chrome elements */
+    .k71-header-glass, header.sticky, .k71-sticky-header {
+        background-color: rgba(255, 255, 255, 0.94);
+        border-bottom: 1px solid var(--border);
     }
 
-    /* Level 3: Liquid Refraction Glass (Floating action buttons, 6-in-1 launcher, modals) */
-    .k71-glass-3 {
-        position: relative;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.7) 100%);
-        -webkit-backdrop-filter: blur(30px) saturate(160%);
-        backdrop-filter: blur(30px) saturate(160%);
-        border: 1px solid rgba(255, 255, 255, 0.7);
-        box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 1);
-        overflow: hidden;
-    }
-    .dark .k71-glass-3, [data-brand="shorts"] .k71-glass-3 {
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.88) 0%, rgba(15, 23, 42, 0.95) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 24px 56px -12px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    .k71-bottom-nav, .k71-bottom-nav-glass {
+        background-color: rgba(255, 255, 255, 0.96);
+        border-top: 1px solid var(--border);
     }
 
-    /* Specular shine sweep on hover */
-    .k71-glass-3::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(60deg, transparent 40%, rgba(255, 255, 255, 0.3) 50%, transparent 60%);
-        transform: rotate(25deg) translateY(-100%);
-        transition: transform 0.75s var(--ease-out);
-        pointer-events: none;
+    .k71-modal-surface {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
     }
-    .k71-glass-3:hover::after {
-        transform: rotate(25deg) translateY(100%);
+
+    @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+        .k71-header-glass, header.sticky, .k71-sticky-header {
+            background-color: rgba(255, 255, 255, 0.88);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+        }
+
+        .k71-bottom-nav, .k71-bottom-nav-glass {
+            background-color: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
+
+        .k71-bottom-sheet {
+            background-color: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+        }
+
+        [data-brand="shorts"] .k71-header-glass, 
+        [data-brand="shorts"] .k71-bottom-nav,
+        [data-brand="shorts"] .k71-bottom-sheet {
+            background-color: rgba(18, 18, 18, 0.9);
+        }
     }
 }

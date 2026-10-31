@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="{{ $currentBrand ?? 'b2b' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -448,6 +448,9 @@
         };
     }
     </script>
+
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="b2b" />
 
     <!-- Shared K71 Authentication Popup Modal -->
     <x-k71-auth-modal />
