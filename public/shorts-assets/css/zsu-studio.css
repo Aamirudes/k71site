@@ -281,7 +281,7 @@
 }
 
 .zsu-editor-preview-panel { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.zsu-editor-controls       { flex: 1; min-width: 260px; padding-right: 20vw; box-sizing: border-box; }
+.zsu-editor-controls       { flex: 1; min-width: 260px; padding-right: 0; box-sizing: border-box; max-width: 100%; }
 
 .zsu-editor-phone-frame {
   width: 220px;

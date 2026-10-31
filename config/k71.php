@@ -72,6 +72,15 @@ return [
             'badge' => 'Shorts',
             'theme_color' => '#DC2626',
         ],
+        'feasto' => [
+            'key' => 'feasto',
+            'name' => 'Feasto — 10-Min Fast Food & Daily Essentials',
+            'subdomain' => 'feasto',
+            'title' => 'Feasto by K71 — 10-Min Hyperlocal Food & Daily Needs',
+            'description' => 'Instant 10-minute doorstep delivery: piping hot cloud kitchen meals, dairy, beverages, and fast home essentials.',
+            'badge' => 'Feasto 10m',
+            'theme_color' => '#F8CB46',
+        ],
     ],
 
     /*
@@ -80,7 +89,7 @@ return [
     |--------------------------------------------------------------------------
     */
     'reserved_subdomains' => [
-        'food', 'services', 'used', 'enquiry', 'shorts',
+        'food', 'feasto', 'services', 'used', 'enquiry', 'shorts',
         'www', 'admin', 'api', 'app', 'mail', 'ftp', 'cpanel', 'support',
         'help', 'blog', 'shop', 'store', 'stores', 'dashboard', 'login',
         'register', 'cdn', 'static', 'assets', 'billing', 'staging', 'dev',

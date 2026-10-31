@@ -85,6 +85,27 @@
         }" 
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
         class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
+    
+    @if($currentVendor)
+        <!-- Standalone Vendor Store Header: Small link Back to Marketplace -->
+        <div class="bg-black text-white text-[11px] font-medium py-1.5 px-3 sm:px-6 lg:px-8 border-b border-zinc-900">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors group">
+                    <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span class="font-semibold">← Back to Marketplace</span>
+                </a>
+                <div class="flex items-center gap-3 text-zinc-400 text-[10px]">
+                    <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Official Brand Store
+                    </span>
+                    <span class="hidden sm:inline text-zinc-700">•</span>
+                    <span class="hidden sm:inline text-zinc-400">Direct Store Dispatch</span>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-14 sm:h-16">
             
@@ -103,14 +124,21 @@
                 <!-- Brand Logo -->
                 <div class="flex items-center gap-2">
                     @if($currentVendor)
-                        <div class="flex items-center gap-2">
+                        <a href="{{ $currentVendor->storefront_url ?? route('storefront.show', $currentVendor->slug) }}" class="flex items-center gap-2.5 group" aria-label="{{ $currentVendor->shop_name }}">
                             @if($currentVendor->logo_url)
-                                <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 rounded-lg object-cover border border-slate-200">
+                                <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 shadow-xs group-hover:scale-105 transition-transform">
+                            @else
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black text-white font-serif font-black flex items-center justify-center text-sm shadow-xs group-hover:scale-105 transition-transform">
+                                    {{ strtoupper(substr($currentVendor->shop_name, 0, 1)) }}
+                                </div>
                             @endif
-                            <a href="{{ route('home') }}" class="font-sans text-base sm:text-xl font-black tracking-tight text-slate-900 leading-none truncate max-w-[140px] sm:max-w-none">
-                                {{ $currentVendor->shop_name }}
-                            </a>
-                        </div>
+                            <div class="flex flex-col leading-tight">
+                                <span class="font-sans text-base sm:text-lg font-black tracking-tight text-slate-900 group-hover:text-black leading-none truncate max-w-[140px] sm:max-w-xs">
+                                    {{ $currentVendor->shop_name }}
+                                </span>
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">Verified Boutique</span>
+                            </div>
+                        </a>
                     @else
                         <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
                             <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
@@ -302,7 +330,15 @@
                                 </div>
                                 <div class="py-1">
                                     <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
+                                    <a href="{{ route('account.listings') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
+                                        <span>My Listings &amp; Gigs</span>
+                                        <span class="text-[9px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">Classifieds</span>
+                                    </a>
                                     <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
+                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
+                                        <span>Delivery Pilot Hub</span>
+                                        <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">⚡ Fleet</span>
+                                    </a>
                                     <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
                                     <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
                                     <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Notifications</a>
@@ -412,7 +448,8 @@
 
     </div>
 
-    <!-- Integrated Category Navigation Row (Hidden on mobile when on Home page to avoid duplicate category slider) -->
+    <!-- Integrated Category Navigation Row -->
+    @if(!$currentVendor)
     <div class="{{ request()->routeIs('home') ? 'hidden md:block' : '' }} border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
@@ -433,6 +470,31 @@
             </nav>
         </div>
     </div>
+    @else
+    <div class="border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <nav class="flex items-center gap-2 sm:gap-3 py-2 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
+                 aria-label="Store Navigation">
+                <a href="#store-products" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-950 text-white shadow-xs">
+                    <span>🛍️</span>
+                    <span>All Products</span>
+                </a>
+                <a href="#store-about" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
+                    <span>🏛️</span>
+                    <span>About Atelier</span>
+                </a>
+                <a href="#store-reviews" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
+                    <span>⭐</span>
+                    <span>Store Reviews</span>
+                </a>
+                <a href="#store-contact" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
+                    <span>📞</span>
+                    <span>Contact Seller</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+    @endif
 </header>
 
 <script>

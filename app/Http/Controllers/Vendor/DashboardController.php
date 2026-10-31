@@ -210,6 +210,17 @@ class DashboardController extends Controller
             }
         }
 
+        // Fetch customer payment submissions (UTR / Screenshots) waiting for vendor approval
+        $pendingPaymentClaims = \App\Models\PaymentClaim::with(['order.user', 'order.items.product'])
+            ->whereHas('order', function($q) use ($vendor) {
+                $q->where('vendor_id', $vendor->id);
+            })
+            ->where(function($q) {
+                $q->where('status', 'submitted')->orWhere('status', 'pending');
+            })
+            ->latest()
+            ->get();
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -229,7 +240,8 @@ class DashboardController extends Controller
             'totalProducts',
             'totalOrdersInPeriod',
             'recentOrders',
-            'chartData'
+            'chartData',
+            'pendingPaymentClaims'
         ));
     }
 }

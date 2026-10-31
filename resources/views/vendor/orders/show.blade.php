@@ -395,14 +395,118 @@
                                         </button>
                                     </form>
                                 @else
-                                    <form action="{{ route('vendor.orders.status', $order) }}" method="POST">
-                                        @csrf
-                                        @method('PUT')
-                                        <input type="hidden" name="status" value="shipped">
-                                        <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
-                                            <span>🛵 Dispatch Rider (Out for Delivery)</span>
+                                    <div x-data="{
+                                        showPartnerModal: false,
+                                        loadingPartners: false,
+                                        partners: [],
+                                        selectedPartnerId: null,
+                                        dispatchedSuccess: false,
+                                        dispatchedMsg: '',
+
+                                        openPartnerModal() {
+                                            this.showPartnerModal = true;
+                                            this.loadingPartners = true;
+                                            fetch('{{ route('vendor.orders.nearby_partners', $order) }}')
+                                                .then(r => r.json())
+                                                .then(d => {
+                                                    this.partners = d.partners || [];
+                                                    if (this.partners.length > 0) {
+                                                        this.selectedPartnerId = this.partners[0].id;
+                                                    }
+                                                    this.loadingPartners = false;
+                                                })
+                                                .catch(() => { this.loadingPartners = false; });
+                                        },
+
+                                        assignSelectedPartner() {
+                                            if (!this.selectedPartnerId) return;
+                                            fetch('{{ route('vendor.orders.assign_partner', $order) }}', {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                                },
+                                                body: JSON.stringify({
+                                                    delivery_partner_id: this.selectedPartnerId
+                                                })
+                                            })
+                                            .then(r => r.json())
+                                            .then(d => {
+                                                this.dispatchedSuccess = true;
+                                                this.dispatchedMsg = d.message;
+                                                setTimeout(() => window.location.reload(), 1500);
+                                            });
+                                        }
+                                    }">
+                                        <button type="button" @click="openPartnerModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow transition active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                                            <span>⚡ Assign Nearest Delivery Boy (Blinkit Speed)</span>
                                         </button>
-                                    </form>
+
+                                        <!-- MODAL FOR NEAREST DELIVERY BOY SELECTION -->
+                                        <div x-show="showPartnerModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                                            <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 text-left" @click.away="showPartnerModal = false">
+                                                <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+                                                    <div class="flex items-center gap-2.5">
+                                                        <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">🛵</span>
+                                                        <div>
+                                                            <h3 class="text-sm font-black text-slate-900">Choose Nearest Delivery Partner</h3>
+                                                            <p class="text-[11px] text-slate-500">Calculated by real-time mobile GPS from your store</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" @click="showPartnerModal = false" class="text-slate-400 hover:text-slate-700 font-bold text-sm">✕</button>
+                                                </div>
+
+                                                <template x-if="dispatchedSuccess">
+                                                    <div class="p-4 rounded-2xl bg-emerald-50 text-emerald-800 text-xs font-bold text-center border border-emerald-200">
+                                                        ✓ <span x-text="dispatchedMsg"></span>
+                                                    </div>
+                                                </template>
+
+                                                <div x-show="!dispatchedSuccess" class="space-y-4">
+                                                    <div x-show="loadingPartners" class="py-6 text-center text-xs text-slate-400">
+                                                        <span>Locating nearest online delivery partners...</span>
+                                                    </div>
+
+                                                    <div x-show="!loadingPartners && partners.length === 0" class="py-6 text-center text-xs text-slate-500">
+                                                        <span>No delivery partners online right now in this zone. You can also ship via standard courier.</span>
+                                                    </div>
+
+                                                    <div x-show="!loadingPartners && partners.length > 0" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                                                        <template x-for="p in partners" :key="p.id">
+                                                            <label class="flex items-center justify-between p-3 rounded-2xl border-2 transition-all cursor-pointer"
+                                                                   :class="selectedPartnerId === p.id ? 'border-amber-500 bg-amber-50/50' : 'border-slate-200 hover:border-slate-300'">
+                                                                <div class="flex items-center gap-3">
+                                                                    <input type="radio" name="delivery_partner_id" :value="p.id" x-model="selectedPartnerId" class="sr-only">
+                                                                    <span class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs" x-text="p.name.charAt(0)"></span>
+                                                                    <div>
+                                                                        <div class="text-xs font-bold text-slate-900" x-text="p.name"></div>
+                                                                        <div class="text-[10px] text-slate-500 mt-0.5">
+                                                                            <span x-text="p.vehicle_type"></span> • <span class="font-bold text-amber-600">★ <span x-text="p.rating"></span></span> • <span x-text="p.total_deliveries"></span> trips
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="text-right">
+                                                                    <span class="text-xs font-black text-emerald-600 block" x-text="p.distance_km + ' km away'"></span>
+                                                                    <span class="text-[10px] text-slate-400 font-mono" x-text="'ETA ~' + p.eta_minutes + ' mins'"></span>
+                                                                </div>
+                                                            </label>
+                                                        </template>
+                                                    </div>
+
+                                                    <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                                                        <button type="button" @click="showPartnerModal = false" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button" @click="assignSelectedPartner()" 
+                                                                :disabled="!selectedPartnerId"
+                                                                class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition disabled:opacity-50 cursor-pointer">
+                                                            Confirm Pickup &amp; Ring Partner 🔔
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 @endif
                             @endif
 

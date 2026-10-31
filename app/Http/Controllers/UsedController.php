@@ -360,6 +360,79 @@ class UsedController extends Controller
     }
 
     /**
+     * Edit Classified Ad Form
+     */
+    public function editAd(Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to edit this listing.');
+        }
+
+        $usedCategories = Category::where('vertical', 'used')->where('is_active', true)->get();
+
+        return view('used.edit', compact('product', 'usedCategories'));
+    }
+
+    /**
+     * Update Classified Ad
+     */
+    public function updateAd(Request $request, Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to update this listing.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:150',
+            'category_id' => 'required|exists:categories,id',
+            'price' => 'required|numeric|min:1',
+            'brand' => 'nullable|string|max:80',
+            'city' => 'required|string|max:100',
+            'phone' => 'required|string|max:20',
+            'description' => 'required|string|max:3000',
+            'condition' => 'nullable|string|max:50',
+            'photos' => 'nullable|array|max:10',
+            'photos.*' => 'nullable|image|max:12288',
+        ]);
+
+        $customFields = $product->custom_fields ?: [];
+        $customFields['location'] = $validated['city'];
+        $customFields['contact_phone'] = $validated['phone'];
+        $customFields['condition'] = $validated['condition'] ?? 'Good Condition';
+
+        $product->update([
+            'title' => $validated['title'],
+            'category_id' => $validated['category_id'],
+            'description' => $validated['description'],
+            'short_description' => Str::limit($validated['description'], 120),
+            'brand' => $validated['brand'] ?? 'Standard',
+            'base_price' => (int) ($validated['price'] * 100),
+            'custom_fields' => $customFields,
+        ]);
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $idx => $photo) {
+                if ($photo && $photo->isValid()) {
+                    $path = $photo->store('products', 'public');
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'image_url' => asset('storage/' . $path),
+                        'sort_order' => $product->images()->count() + $idx,
+                    ]);
+                }
+            }
+        }
+
+        return redirect()->route('used.show', $product->slug)->with('success', 'Ad updated successfully!');
+    }
+
+    /**
      * Delete an ad owned by the user.
      */
     public function deleteAd(Request $request, Product $product)

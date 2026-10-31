@@ -58,40 +58,84 @@
         </div>
     </div>
 
-    <!-- ⚡ 1-Tap Fast-Track Category Presets Bar -->
+    <!-- ⚡ 1-Tap Fast-Track Category Presets Bar (Slider without Price) -->
     <div class="relative z-10 mb-6">
-        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-purple-950/40 backdrop-blur-xl border border-indigo-500/20 shadow-xl">
+        <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-slate-900/60 to-purple-950/40 backdrop-blur-xl border border-indigo-500/20 shadow-xl">
             <div class="flex items-center justify-between gap-3 mb-3 pb-2.5 border-b border-white/10">
                 <div class="flex items-center gap-2">
                     <span class="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs font-black">⚡</span>
                     <span class="text-xs sm:text-sm font-bold text-white tracking-wide">
-                        1-Tap {{ $sec['label'] ?? ucfirst($vendorType) }} Launch Presets
+                        1-Tap AI Launch Presets
                     </span>
-                    <span class="text-[10px] text-amber-400 font-mono font-semibold">Auto-Fill</span>
+                    <span class="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full font-mono font-semibold">Magic Auto-Fill</span>
                 </div>
                 <template x-if="appliedPreset">
                     <div class="flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-bold">
                         <span>Applied: <strong x-text="appliedPreset"></strong></span>
-                        <button type="button" @click="resetForm()" class="text-rose-400 hover:text-rose-300 font-bold ml-1">✕</button>
+                        <button type="button" @click="resetForm()" class="text-rose-400 hover:text-rose-300 font-bold ml-1 cursor-pointer">✕</button>
                     </div>
                 </template>
             </div>
 
-            <!-- Scrollable Presets Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            <!-- Category Filter Slider Bar -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-2.5 mb-2.5 border-b border-white/5 scroll-smooth">
+                <button type="button" @click="selectedPresetCategory = 'all'"
+                        :class="selectedPresetCategory === 'all' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    All Categories
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'clothing'"
+                        :class="selectedPresetCategory === 'clothing' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    👗 Clothing & Couture
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'food'"
+                        :class="selectedPresetCategory === 'food' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🍛 Food & Sweets
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'groceries'"
+                        :class="selectedPresetCategory === 'groceries' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    ⚡ Feasto & Daily Needs
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'marble'"
+                        :class="selectedPresetCategory === 'marble' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🧱 Marble & Stone
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'home_living'"
+                        :class="selectedPresetCategory === 'home_living' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🛋️ Home & Living
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'real_estate'"
+                        :class="selectedPresetCategory === 'real_estate' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🏡 Real Estate
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'automotive'"
+                        :class="selectedPresetCategory === 'automotive' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🚗 Automotive
+                </button>
+            </div>
+
+            <!-- Scrollable Presets Slider (Without Price) -->
+            <div class="flex items-stretch gap-3 overflow-x-auto no-scrollbar py-1 scroll-smooth">
                 <template x-for="(preset, key) in currentSectorPresets" :key="key">
                     <button 
                         type="button" 
                         @click="applyPreset(preset)"
-                        :class="appliedPreset === preset.title ? 'border-cyan-400 bg-cyan-500/20 text-white' : 'border-white/10 bg-white/5 hover:bg-white/10 text-slate-200'"
-                        class="p-2.5 rounded-xl border text-left transition-all group flex flex-col justify-between cursor-pointer"
+                        :class="appliedPreset === preset.title ? 'border-cyan-400 bg-cyan-500/20 text-white shadow-lg shadow-cyan-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10 text-slate-200'"
+                        class="min-w-[200px] max-w-[240px] p-3 rounded-xl border text-left transition-all group flex flex-col justify-between shrink-0 cursor-pointer"
                     >
                         <div class="flex items-center justify-between mb-1.5">
-                            <span class="text-base" x-text="preset.icon"></span>
-                            <span class="text-[10px] font-mono font-bold text-cyan-300" x-text="'₹' + preset.base_price"></span>
+                            <span class="text-xl" x-text="preset.icon"></span>
+                            <span class="text-[9px] font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950/60 border border-cyan-800/40 px-1.5 py-0.5 rounded">1-Tap Fill</span>
                         </div>
                         <div class="text-xs font-bold truncate group-hover:text-cyan-300 transition-colors" x-text="preset.title"></div>
-                        <div class="text-[10px] text-slate-400 truncate mt-0.5" x-text="preset.brand || 'Quick Preset'"></div>
+                        <div class="text-[10px] text-slate-400 truncate mt-1" x-text="preset.brand || 'Category Preset'"></div>
                     </button>
                 </template>
             </div>
@@ -2701,9 +2745,21 @@ function liquidProductUploader() {
             ]
         },
 
+        selectedPresetCategory: 'all',
+
         get currentSectorPresets() {
+            if (this.selectedPresetCategory && this.selectedPresetCategory !== 'all') {
+                return this.presets[this.selectedPresetCategory] || [];
+            }
             const vType = '{{ $vendorType }}';
-            return this.presets[vType] || this.presets['clothing'] || [];
+            const primary = this.presets[vType] || this.presets['clothing'] || [];
+            let others = [];
+            Object.keys(this.presets).forEach(k => {
+                if (k !== vType && Array.isArray(this.presets[k])) {
+                    others = others.concat(this.presets[k]);
+                }
+            });
+            return [...primary, ...others];
         },
 
         init() {

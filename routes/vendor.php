@@ -11,6 +11,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/preview-ajax', [ProfileController::class, 'previewAjax'])->name('profile.preview_ajax');
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
@@ -29,6 +30,10 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::post('/orders/{order}/ship-automated', [\App\Http\Controllers\Vendor\OrderController::class, 'shipAutomated'])->name('orders.ship_automated');
         Route::post('/orders/{order}/accept', [\App\Http\Controllers\Vendor\OrderController::class, 'acceptOrder'])->name('orders.accept');
         Route::post('/orders/{order}/reject', [\App\Http\Controllers\Vendor\OrderController::class, 'rejectOrder'])->name('orders.reject');
+        Route::post('/orders/{order}/approve-payment', [\App\Http\Controllers\Vendor\OrderController::class, 'approvePaymentProof'])->name('orders.approve_payment');
+        Route::post('/orders/{order}/reject-payment', [\App\Http\Controllers\Vendor\OrderController::class, 'rejectPaymentProof'])->name('orders.reject_payment');
+        Route::get('/orders/{order}/nearby-partners', [\App\Http\Controllers\Vendor\OrderController::class, 'getNearbyDeliveryPartners'])->name('orders.nearby_partners');
+        Route::post('/orders/{order}/assign-partner', [\App\Http\Controllers\Vendor\OrderController::class, 'assignDeliveryPartner'])->name('orders.assign_partner');
         Route::post('/orders/{order}/simulate-shipping', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateShipping'])->name('orders.simulate_shipping');
         Route::post('/orders/{order}/simulate-settlement', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateSettlement'])->name('orders.simulate_settlement');
         Route::get('/orders/{order}/status', fn(\App\Models\Order $order) => redirect()->route('vendor.orders.show', $order));

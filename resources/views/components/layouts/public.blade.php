@@ -89,6 +89,9 @@
     <!-- K71 Glass Hamburger Menu Drawer -->
     <x-k71-hamburger />
 
+    <!-- 6-in-1 Draggable Floating Radial Nav (Semi-Circle Arc + '*' Retract Button) -->
+    <x-floating-six-nav />
+
     @if($fullWidth)
         <main class="flex-1 w-full pb-24 md:pb-16">
             {{ $slot }}

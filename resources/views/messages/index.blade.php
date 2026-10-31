@@ -844,6 +844,91 @@
             transform: scale(1.2);
         }
 
+        /* Instagram Style Swipe to Reply Bar & Bubble Quote */
+        .glass-reply-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 18px;
+            background: var(--glass-surface);
+            border-top: 1px solid var(--glass-border);
+            border-left: 3px solid #6366f1;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 41;
+            animation: slideDownReply 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideDownReply {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .glass-reply-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+        .glass-reply-text-col {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .glass-reply-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #6366f1;
+        }
+        .glass-reply-body {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 280px;
+        }
+        .glass-reply-close-btn {
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            padding: 4px 8px;
+            line-height: 1;
+            border-radius: 50%;
+        }
+        .glass-reply-close-btn:hover {
+            color: var(--color-text-main);
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .glass-reply-quote {
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            background: rgba(0, 0, 0, 0.06);
+            border-left: 3px solid #6366f1;
+            border-radius: 8px;
+            font-size: 11px;
+            max-width: 260px;
+        }
+        .dark .glass-reply-quote {
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .glass-reply-quote-author {
+            font-weight: 800;
+            color: #6366f1;
+            display: block;
+            font-size: 10px;
+            margin-bottom: 2px;
+        }
+        .glass-reply-quote-text {
+            opacity: 0.85;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
+        }
+
         /* Sticky Bottom Composer (Instagram Style Elevation & Responsiveness) */
         .glass-composer-bar {
             padding: 14px 20px max(18px, env(safe-area-inset-bottom, 16px));
@@ -2002,6 +2087,18 @@
                         <button type="button" class="glass-emoji-chip" data-emoji="✨">✨</button>
                     </div>
 
+                    <!-- Instagram-Style Reply Preview Bar -->
+                    <div id="glassReplyBar" class="glass-reply-bar" style="display: none;">
+                        <div class="glass-reply-left">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 015 5v3M3 10l6-6m-6 6l6 6"/></svg>
+                            <div class="glass-reply-text-col">
+                                <span class="glass-reply-title" id="glassReplyTargetName">Replying to...</span>
+                                <span class="glass-reply-body" id="glassReplyTargetBody">Message preview</span>
+                            </div>
+                        </div>
+                        <button type="button" id="glassReplyCancelBtn" class="glass-reply-close-btn" title="Cancel reply">✕</button>
+                    </div>
+
                     <!-- Sticky Bottom Input Composer -->
                     <div class="glass-composer-bar">
                         <div class="glass-composer-pill">
@@ -2596,16 +2693,28 @@
                     `;
                 }
 
+                let replyQuoteHtml = '';
+                if (msg.reply_to_id && msg.reply_to_body) {
+                    replyQuoteHtml = `
+                        <div class="glass-reply-quote">
+                            <span class="glass-reply-quote-author">${escapeHtml(msg.reply_to_sender_name || 'Replied')}</span>
+                            <span class="glass-reply-quote-text">${escapeHtml(msg.reply_to_body)}</span>
+                        </div>
+                    `;
+                }
+
                 let bodyHtml = '';
                 if (isVoice) {
                     // Do not show duplicated text bubble if body is voice note indicator
                     if (msg.body && !msg.body.startsWith('🎤 Voice message') && !msg.body.startsWith('🎤 Voice note')) {
-                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                    } else if (replyQuoteHtml) {
+                        bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}</div>`;
                     }
                 } else if (msg.body && msg.body !== '📷 Photo') {
-                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
                 } else if (!attachmentHtml) {
-                    bodyHtml = `<div class="glass-msg-bubble">📷 Photo</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}📷 Photo</div>`;
                 }
 
                 const unsendBtnHtml = (isSent && !msg.is_optimistic)
@@ -2803,7 +2912,129 @@
                 row.addEventListener('touchend', () => clearTimeout(pressTimer));
                 row.addEventListener('touchmove', () => clearTimeout(pressTimer));
             });
+
+            // Instagram-Style Swipe Gestures: Left slide on own chat to reply to self, Right slide on other's chat to reply to them
+            chatFeed.querySelectorAll('.glass-msg-row').forEach(row => {
+                const isSent = row.classList.contains('sent');
+                const msgId = parseInt(row.getAttribute('data-msg-id'), 10);
+                if (!msgId) return;
+
+                const bubble = row.querySelector('.glass-msg-bubble') || row.querySelector('.glass-voice-player') || row.querySelector('.glass-msg-image-wrap');
+                const snippet = bubble ? (bubble.innerText.trim() || 'Attachment') : 'Message';
+                const authorName = isSent ? 'You' : ((recipient && recipient.name) ? recipient.name : ('@' + (recipient?.username || 'user')));
+
+                let startX = 0;
+                let startY = 0;
+                let movedX = 0;
+
+                row.addEventListener('touchstart', (e) => {
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    movedX = 0;
+                }, { passive: true });
+
+                row.addEventListener('touchmove', (e) => {
+                    const dx = e.touches[0].clientX - startX;
+                    const dy = e.touches[0].clientY - startY;
+                    if (Math.abs(dy) > Math.abs(dx)) return; // prioritize vertical scroll
+
+                    // Left slide on own message to reply to self
+                    if (isSent && dx < 0 && dx > -90) {
+                        movedX = dx;
+                        row.style.transform = `translateX(${dx}px)`;
+                        row.style.transition = 'none';
+                    }
+                    // Right slide on other's message to reply to them
+                    else if (!isSent && dx > 0 && dx < 90) {
+                        movedX = dx;
+                        row.style.transform = `translateX(${dx}px)`;
+                        row.style.transition = 'none';
+                    }
+                }, { passive: true });
+
+                row.addEventListener('touchend', () => {
+                    row.style.transition = 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+                    row.style.transform = 'translateX(0px)';
+
+                    if (isSent && movedX < -40) {
+                        if (navigator.vibrate) navigator.vibrate(25);
+                        triggerReplyPreview(msgId, 'You', snippet);
+                    } else if (!isSent && movedX > 40) {
+                        if (navigator.vibrate) navigator.vibrate(25);
+                        triggerReplyPreview(msgId, authorName, snippet);
+                    }
+                });
+
+                // Desktop double-click to reply
+                row.addEventListener('dblclick', () => {
+                    triggerReplyPreview(msgId, authorName, snippet);
+                });
+            });
         }
+
+        // Instagram Active Reply Target Manager
+        let currentReplyTarget = null;
+
+        function triggerReplyPreview(msgId, authorName, textSnippet) {
+            currentReplyTarget = {
+                id: msgId,
+                author: authorName,
+                text: textSnippet.slice(0, 150)
+            };
+            const bar = document.getElementById('glassReplyBar');
+            const nameEl = document.getElementById('glassReplyTargetName');
+            const bodyEl = document.getElementById('glassReplyTargetBody');
+            if (bar && nameEl && bodyEl) {
+                nameEl.textContent = 'Replying to ' + authorName;
+                bodyEl.textContent = textSnippet.slice(0, 80);
+                bar.style.display = 'flex';
+            }
+            if (messageInput) {
+                messageInput.focus();
+            }
+        }
+
+        function cancelReplyPreview() {
+            currentReplyTarget = null;
+            const bar = document.getElementById('glassReplyBar');
+            if (bar) bar.style.display = 'none';
+        }
+
+        const cancelReplyBtn = document.getElementById('glassReplyCancelBtn');
+        if (cancelReplyBtn) {
+            cancelReplyBtn.addEventListener('click', cancelReplyPreview);
+        }
+
+        // Chunked Pagination & Long Chat Preserver
+        let oldestChatMsgId = 0;
+        let hasMoreChatHistory = true;
+        let isFetchingOlderHistory = false;
+
+        chatFeed.addEventListener('scroll', () => {
+            if (chatFeed.scrollTop < 50 && !isFetchingOlderHistory && hasMoreChatHistory && oldestChatMsgId > 0 && currentConversationId) {
+                isFetchingOlderHistory = true;
+                const prevScrollHeight = chatFeed.scrollHeight;
+                fetch(`/api/chat/get_messages.php?conversation_id=${currentConversationId}&before_id=${oldestChatMsgId}&limit=40`)
+                    .then(r => r.json())
+                    .then(res => {
+                        isFetchingOlderHistory = false;
+                        if (res.success && res.messages && res.messages.length > 0) {
+                            hasMoreChatHistory = Boolean(res.has_more);
+                            oldestChatMsgId = res.messages[0].id;
+                            messagesCache = [...res.messages, ...messagesCache];
+                            renderMessages(messagesCache, {
+                                username: headerUsername.textContent.replace('@', ''),
+                                name: headerStatus.textContent,
+                                profile_pic: headerAvatar.src
+                            });
+                            chatFeed.scrollTop = chatFeed.scrollHeight - prevScrollHeight;
+                        } else {
+                            hasMoreChatHistory = false;
+                        }
+                    })
+                    .catch(() => { isFetchingOlderHistory = false; });
+            }
+        });
 
         function isUserNearBottom() {
             return (chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight) <= 120;
@@ -2824,6 +3055,9 @@
             const text = messageInput.value.trim();
             if (!text || !currentConversationId) return;
 
+            const replyData = currentReplyTarget ? { ...currentReplyTarget } : null;
+            cancelReplyPreview();
+
             messageInput.value = '';
             updateSendButtonState();
             messageInput.style.height = 'auto';
@@ -2832,6 +3066,9 @@
             const optimisticMsg = {
                 id: 'opt_' + Date.now(),
                 body: text,
+                reply_to_id: replyData ? replyData.id : null,
+                reply_to_body: replyData ? replyData.text : null,
+                reply_to_sender_name: replyData ? replyData.author : null,
                 sender_id: CURRENT_USER_ID,
                 is_mine: true,
                 is_optimistic: true,
@@ -2847,7 +3084,17 @@
             });
             scrollFeedToBottom(true);
 
-            // API POST
+            // API POST with Reply Metadata
+            const postBody = {
+                conversation_id: currentConversationId,
+                message: text
+            };
+            if (replyData) {
+                postBody.reply_to_id = replyData.id;
+                postBody.reply_to_body = replyData.text;
+                postBody.reply_to_sender_name = replyData.author;
+            }
+
             fetch('/api/chat/send_message.php', {
                 method: 'POST',
                 headers: {
@@ -2855,10 +3102,7 @@
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({
-                    conversation_id: currentConversationId,
-                    message: text
-                })
+                body: JSON.stringify(postBody)
             })
             .then(res => res.json())
             .then(result => {

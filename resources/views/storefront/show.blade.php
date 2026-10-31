@@ -1,4 +1,7 @@
 @php
+    if (!app()->bound('current_vendor')) {
+        app()->instance('current_vendor', $vendor);
+    }
     $storeCanonicalUrl = $vendor->storefront_url;
     $storeLogo = $vendor->logo ? (str_starts_with($vendor->logo, 'http') ? $vendor->logo : asset('storage/' . $vendor->logo)) : null;
     $storeBanner = $vendor->banner ? (str_starts_with($vendor->banner, 'http') ? $vendor->banner : asset('storage/' . $vendor->banner)) : null;

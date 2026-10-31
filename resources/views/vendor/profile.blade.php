@@ -6,6 +6,7 @@
         if ($currentPalette === 'default') { $currentPalette = 'sage'; }
         $currentLayout = old('layout_preset', $vendor->layout_preset ?? 'classic');
         $currentProductPreset = old('product_preset', $vendor->product_preset ?? 'gallery');
+        $currentTextPreset = old('text_preset', $social['text_preset'] ?? 'obsidian');
     @endphp
 
     <div class="mb-8">
@@ -99,15 +100,51 @@
             </div>
         </div>
 
-        <!-- SECTION 2: Aesthetic Theme Palette & Layout Preset -->
-        <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-6 sm:p-8" x-data="{ palette: '{{ $currentPalette }}', layout: '{{ $currentLayout }}', productPreset: '{{ $currentProductPreset }}' }">
+        <!-- SECTION 2: Aesthetic Theme Palette, Text Colors & Layout Presets with Down AJAX Preview -->
+        <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-6 sm:p-8" 
+             x-data="{ 
+                palette: '{{ $currentPalette }}', 
+                layout: '{{ $currentLayout }}', 
+                productPreset: '{{ $currentProductPreset }}',
+                textPreset: '{{ $currentTextPreset }}',
+                previewTab: 'storefront',
+                previewDevice: 'desktop',
+                ajaxStatus: 'Live Synced',
+                isAjaxLoading: false,
+                syncPreviewAjax() {
+                    this.isAjaxLoading = true;
+                    this.ajaxStatus = 'Syncing via AJAX...';
+                    fetch('{{ route('vendor.profile.preview_ajax') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            palette: this.palette,
+                            layout: this.layout,
+                            product_preset: this.productPreset,
+                            text_preset: this.textPreset
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        this.isAjaxLoading = false;
+                        this.ajaxStatus = 'Live Synced at ' + new Date().toLocaleTimeString();
+                    })
+                    .catch(() => {
+                        this.isAjaxLoading = false;
+                        this.ajaxStatus = 'Live Synced';
+                    });
+                }
+             }">
             <div class="flex items-center gap-3 pb-4 border-b border-stone-100 mb-6">
                 <div class="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
                 </div>
                 <div>
-                    <h2 class="text-lg font-bold text-gray-900">3×3×3 Visual Atmosphere & Layout Presets</h2>
-                    <p class="text-xs text-gray-500">Pick an artisanal color palette, storefront presentation layout, and product detail page styling.</p>
+                    <h2 class="text-lg font-bold text-gray-900">Visual Atmosphere, Text Colors &amp; Layout Presets</h2>
+                    <p class="text-xs text-gray-500">Pick an artisanal color palette, visible text color tone, storefront presentation layout, and preview live down below.</p>
                 </div>
             </div>
 
@@ -222,7 +259,7 @@
             </div>
 
             <!-- Product Page Layout Preset Selector -->
-            <div>
+            <div class="mb-8">
                 <div class="flex items-center justify-between mb-3">
                     <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">3. Product Page Layout Preset (3 Core)</label>
                     <span class="text-[11px] text-gray-400">Controls product detail pages</span>
@@ -230,7 +267,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     
                     <label class="relative cursor-pointer">
-                        <input type="radio" name="product_preset" value="gallery" x-model="productPreset" class="peer sr-only">
+                        <input type="radio" name="product_preset" value="gallery" x-model="productPreset" @change="syncPreviewAjax()" class="peer sr-only">
                         <div class="p-4 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400">
                             <span class="text-xs font-bold text-gray-900 block mb-1">Thumbnails & Gallery Strip</span>
                             <p class="text-[11px] text-gray-500 leading-relaxed">Interactive carousel with thumbnail strip, variant pills, and instant slide-over cart drawer.</p>
@@ -238,7 +275,7 @@
                     </label>
 
                     <label class="relative cursor-pointer">
-                        <input type="radio" name="product_preset" value="immersive" x-model="productPreset" class="peer sr-only">
+                        <input type="radio" name="product_preset" value="immersive" x-model="productPreset" @change="syncPreviewAjax()" class="peer sr-only">
                         <div class="p-4 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400">
                             <span class="text-xs font-bold text-gray-900 block mb-1">Full-Bleed Immersive</span>
                             <p class="text-[11px] text-gray-500 leading-relaxed">Edge-to-edge media showcase with floating sticky checkout bar and cinematic imagery.</p>
@@ -246,13 +283,291 @@
                     </label>
 
                     <label class="relative cursor-pointer">
-                        <input type="radio" name="product_preset" value="showcase" x-model="productPreset" class="peer sr-only">
+                        <input type="radio" name="product_preset" value="showcase" x-model="productPreset" @change="syncPreviewAjax()" class="peer sr-only">
                         <div class="p-4 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400">
                             <span class="text-xs font-bold text-gray-900 block mb-1">Specification Showcase</span>
                             <p class="text-[11px] text-gray-500 leading-relaxed">Split-screen layout emphasizing technical specifications, fabric care, dimensions, and trust seals.</p>
                         </div>
                     </label>
 
+                </div>
+            </div>
+
+            <!-- Visible Text Colors Preset (High Legibility) -->
+            <div class="mb-8 pt-6 border-t border-stone-100">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">4. Visible Text Color Tone Presets</label>
+                        <p class="text-[11px] text-gray-500">Fine-tune font contrast for effortless readability across mobile &amp; desktop screens.</p>
+                    </div>
+                    <span class="text-[10px] text-emerald-600 font-mono font-bold bg-emerald-50 px-2 py-0.5 rounded-full">Responsive Contrast</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="text_preset" value="obsidian" x-model="textPreset" @change="syncPreviewAjax()" class="peer sr-only">
+                        <div class="p-3.5 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400 flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-[#09090b] border border-stone-300 shrink-0"></span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-900 block leading-tight">Obsidian Deep</span>
+                                <span class="text-[10px] text-gray-500">High Contrast Black</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="text_preset" value="deep_navy" x-model="textPreset" @change="syncPreviewAjax()" class="peer sr-only">
+                        <div class="p-3.5 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400 flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-[#0f172a] border border-stone-300 shrink-0"></span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-900 block leading-tight">Slate Navy</span>
+                                <span class="text-[10px] text-gray-500">Executive Deep Blue</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="text_preset" value="espresso" x-model="textPreset" @change="syncPreviewAjax()" class="peer sr-only">
+                        <div class="p-3.5 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400 flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-[#291811] border border-stone-300 shrink-0"></span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-900 block leading-tight">Warm Espresso</span>
+                                <span class="text-[10px] text-gray-500">Artisanal Earth Tone</span>
+                            </div>
+                        </div>
+                    </label>
+                    <label class="relative cursor-pointer">
+                        <input type="radio" name="text_preset" value="monochrome" x-model="textPreset" @change="syncPreviewAjax()" class="peer sr-only">
+                        <div class="p-3.5 rounded-2xl border-2 transition-all peer-checked:border-gray-900 peer-checked:bg-stone-50 hover:border-stone-400 flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full bg-[#000000] border border-stone-300 shrink-0"></span>
+                            <div>
+                                <span class="text-xs font-bold text-gray-900 block leading-tight">Pure Monochrome</span>
+                                <span class="text-[10px] text-gray-500">Clean Minimalist</span>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- DOWN AJAX LIVE VISUAL RESULT PREVIEW CANVAS -->
+            <div class="pt-6 border-t-2 border-dashed border-stone-200">
+                <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Live Down AJAX Visual Result Preview</h3>
+                        <span class="text-[10px] text-stone-500 font-mono bg-stone-100 px-2 py-0.5 rounded" x-text="ajaxStatus"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <!-- Storefront vs Product Tab -->
+                        <div class="inline-flex rounded-xl bg-stone-100 p-1">
+                            <button type="button" @click="previewTab = 'storefront'" 
+                                    :class="previewTab === 'storefront' ? 'bg-white shadow-xs font-bold text-stone-900' : 'text-stone-600 hover:text-stone-900'"
+                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                🏪 Storefront
+                            </button>
+                            <button type="button" @click="previewTab = 'product'" 
+                                    :class="previewTab === 'product' ? 'bg-white shadow-xs font-bold text-stone-900' : 'text-stone-600 hover:text-stone-900'"
+                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                🛍️ Product View
+                            </button>
+                        </div>
+                        <!-- Responsive Desktop / Mobile Switcher -->
+                        <div class="inline-flex rounded-xl bg-stone-100 p-1">
+                            <button type="button" @click="previewDevice = 'desktop'" 
+                                    :class="previewDevice === 'desktop' ? 'bg-white shadow-xs text-stone-900 font-bold' : 'text-stone-600'"
+                                    class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer" title="Desktop View">
+                                💻
+                            </button>
+                            <button type="button" @click="previewDevice = 'mobile'" 
+                                    :class="previewDevice === 'mobile' ? 'bg-white shadow-xs text-stone-900 font-bold' : 'text-stone-600'"
+                                    class="px-2.5 py-1 rounded-lg text-xs transition cursor-pointer" title="Mobile View">
+                                📱
+                            </button>
+                        </div>
+                        <!-- Re-sync AJAX button -->
+                        <button type="button" @click="syncPreviewAjax()" class="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs transition cursor-pointer" title="Refresh Live AJAX Preview">
+                            <svg :class="isAjaxLoading ? 'animate-spin' : ''" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Shell Frame -->
+                <div class="p-3 sm:p-5 rounded-3xl bg-stone-900 border border-stone-800 shadow-2xl overflow-hidden flex justify-center">
+                    <div :class="previewDevice === 'mobile' ? 'max-w-sm w-full rounded-2xl border-4 border-stone-800 shadow-2xl' : 'w-full rounded-xl'" 
+                         class="bg-white overflow-hidden transition-all duration-300 relative text-left">
+                        
+                        <!-- Top Mini Utility Bar -->
+                        <div class="bg-black text-white text-[9px] py-1 px-3 flex items-center justify-between">
+                            <span class="text-stone-400">← Back to Marketplace</span>
+                            <span class="text-emerald-400 font-bold">● Official Store</span>
+                        </div>
+
+                        <!-- Store Header Simulation -->
+                        <div class="px-4 py-3 border-b border-stone-100 flex items-center justify-between"
+                             :class="{
+                                'bg-[#F8FAF8]': palette === 'sage',
+                                'bg-[#F8FAFC]': palette === 'midnight',
+                                'bg-[#FFFDF9]': palette === 'sunset',
+                                'bg-[#FAF7F2]': palette === 'linen'
+                             }">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg bg-stone-900 text-white font-serif font-black flex items-center justify-center text-xs">
+                                    {{ strtoupper(substr($vendor->shop_name, 0, 1)) }}
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black leading-none"
+                                        :class="{
+                                            'text-[#09090b]': textPreset === 'obsidian',
+                                            'text-[#0f172a]': textPreset === 'deep_navy',
+                                            'text-[#291811]': textPreset === 'espresso',
+                                            'text-black': textPreset === 'monochrome'
+                                        }">{{ $vendor->shop_name }}</h4>
+                                    <span class="text-[8px] font-bold uppercase tracking-wider text-emerald-600">Verified Seller</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-[9px]">
+                                <span class="px-2 py-0.5 rounded-full font-bold text-white text-[9px]"
+                                      :class="{
+                                        'bg-emerald-800': palette === 'sage',
+                                        'bg-slate-900': palette === 'midnight',
+                                        'bg-amber-800': palette === 'sunset',
+                                        'bg-stone-800': palette === 'linen'
+                                      }">Cart (0)</span>
+                            </div>
+                        </div>
+
+                        <!-- TAB 1: STOREFRONT PREVIEW -->
+                        <div x-show="previewTab === 'storefront'" class="p-4 space-y-4">
+                            <!-- Hero Layout Simulation -->
+                            <div class="p-5 rounded-2xl text-white relative overflow-hidden"
+                                 :class="{
+                                    'bg-gradient-to-r from-emerald-950 via-emerald-900 to-teal-950': palette === 'sage',
+                                    'bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950': palette === 'midnight',
+                                    'bg-gradient-to-r from-stone-900 via-amber-950 to-orange-950': palette === 'sunset',
+                                    'bg-gradient-to-r from-stone-950 via-stone-900 to-emerald-950': palette === 'linen'
+                                 }">
+                                <div class="relative z-10">
+                                    <span class="text-[9px] font-bold uppercase tracking-widest text-amber-300">Layout: <span x-text="layout"></span></span>
+                                    <h3 class="text-base sm:text-lg font-serif font-bold mt-1 text-white">Curated Collection</h3>
+                                    <p class="text-[10px] text-stone-300 mt-1 max-w-xs leading-relaxed">
+                                        Handcrafted weaves &amp; direct artisan dispatches delivered across India.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Layout-specific product cards preview -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500">Featured Releases</span>
+                                    <span class="text-[9px] text-stone-400">3 Products</span>
+                                </div>
+
+                                <div class="grid gap-2.5"
+                                     :class="layout === 'minimal' ? 'grid-cols-3' : (layout === 'editorial' ? 'grid-cols-2' : 'grid-cols-3')">
+                                    <div class="p-2.5 rounded-xl border border-stone-200/80 bg-stone-50/50">
+                                        <div class="aspect-square rounded-lg bg-stone-200 mb-2 flex items-center justify-center text-base">👗</div>
+                                        <div class="text-[10px] font-bold truncate"
+                                             :class="{
+                                                'text-[#09090b]': textPreset === 'obsidian',
+                                                'text-[#0f172a]': textPreset === 'deep_navy',
+                                                'text-[#291811]': textPreset === 'espresso',
+                                                'text-black': textPreset === 'monochrome'
+                                             }">Pure Chanderi Silk Saree</div>
+                                        <div class="text-[9px] font-mono font-bold text-stone-900 mt-0.5">₹3,499</div>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl border border-stone-200/80 bg-stone-50/50">
+                                        <div class="aspect-square rounded-lg bg-stone-200 mb-2 flex items-center justify-center text-base">✨</div>
+                                        <div class="text-[10px] font-bold truncate"
+                                             :class="{
+                                                'text-[#09090b]': textPreset === 'obsidian',
+                                                'text-[#0f172a]': textPreset === 'deep_navy',
+                                                'text-[#291811]': textPreset === 'espresso',
+                                                'text-black': textPreset === 'monochrome'
+                                             }">Handblock Kurta Set</div>
+                                        <div class="text-[9px] font-mono font-bold text-stone-900 mt-0.5">₹1,899</div>
+                                    </div>
+                                    <div class="p-2.5 rounded-xl border border-stone-200/80 bg-stone-50/50" x-show="layout !== 'editorial'">
+                                        <div class="aspect-square rounded-lg bg-stone-200 mb-2 flex items-center justify-center text-base">🧵</div>
+                                        <div class="text-[10px] font-bold truncate"
+                                             :class="{
+                                                'text-[#09090b]': textPreset === 'obsidian',
+                                                'text-[#0f172a]': textPreset === 'deep_navy',
+                                                'text-[#291811]': textPreset === 'espresso',
+                                                'text-black': textPreset === 'monochrome'
+                                             }">Zari Organza Dupatta</div>
+                                        <div class="text-[9px] font-mono font-bold text-stone-900 mt-0.5">₹999</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: PRODUCT PAGE PREVIEW -->
+                        <div x-show="previewTab === 'product'" class="p-4 space-y-4">
+                            <div class="p-3 rounded-2xl bg-stone-50 border border-stone-200">
+                                <span class="text-[9px] font-bold uppercase tracking-widest text-emerald-700 block mb-1">
+                                    Product Template: <span x-text="productPreset"></span>
+                                </span>
+                                
+                                <!-- Gallery Strip Mockup -->
+                                <template x-if="productPreset === 'gallery'">
+                                    <div class="space-y-2">
+                                        <div class="aspect-video rounded-xl bg-stone-200 flex items-center justify-center text-2xl">📸 Main Carousel</div>
+                                        <div class="flex gap-1.5">
+                                            <span class="w-8 h-8 rounded-lg bg-stone-300 inline-block border border-stone-400"></span>
+                                            <span class="w-8 h-8 rounded-lg bg-stone-200 inline-block"></span>
+                                            <span class="w-8 h-8 rounded-lg bg-stone-200 inline-block"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Full-Bleed Immersive Mockup -->
+                                <template x-if="productPreset === 'immersive'">
+                                    <div class="space-y-2">
+                                        <div class="h-44 rounded-xl bg-stone-800 text-white flex items-center justify-center text-sm font-bold">
+                                            Cinematic Full-Bleed Imagery
+                                        </div>
+                                        <div class="flex justify-between items-center text-[10px] text-stone-500">
+                                            <span>Floating Quick-Buy Bar</span>
+                                            <span class="font-bold text-stone-900">Sticky Bottom</span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Specification Showcase Mockup -->
+                                <template x-if="productPreset === 'showcase'">
+                                    <div class="grid grid-cols-2 gap-2 text-[9px]">
+                                        <div class="aspect-square rounded-xl bg-stone-200 flex items-center justify-center">📐 Product</div>
+                                        <div class="p-2 rounded-xl bg-white border border-stone-200 space-y-1">
+                                            <div class="font-bold text-stone-900">Specs &amp; Care</div>
+                                            <div class="text-stone-500">• 100% Pure Mulberry</div>
+                                            <div class="text-stone-500">• Dry Clean Only</div>
+                                            <div class="text-stone-500">• 7-Day Exchange</div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="mt-3 pt-2 border-t border-stone-200 flex items-center justify-between">
+                                    <div>
+                                        <h4 class="text-xs font-black"
+                                            :class="{
+                                                'text-[#09090b]': textPreset === 'obsidian',
+                                                'text-[#0f172a]': textPreset === 'deep_navy',
+                                                'text-[#291811]': textPreset === 'espresso',
+                                                'text-black': textPreset === 'monochrome'
+                                            }">Kanjeevaram Bridal Saree</h4>
+                                        <div class="text-[10px] font-mono font-bold text-stone-900">₹8,999</div>
+                                    </div>
+                                    <button type="button" class="px-3 py-1.5 rounded-lg text-white text-[10px] font-bold"
+                                            :class="{
+                                                'bg-emerald-800': palette === 'sage',
+                                                'bg-slate-900': palette === 'midnight',
+                                                'bg-amber-800': palette === 'sunset',
+                                                'bg-stone-800': palette === 'linen'
+                                            }">
+                                        Buy Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>

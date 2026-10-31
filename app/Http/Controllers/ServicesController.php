@@ -295,7 +295,95 @@ class ServicesController extends Controller
             ]);
         }
 
-        return redirect()->route('vendor.services.index')
-            ->with('success', 'Congratulations! Your freelancer profile is live. Create your first service gig below!');
+        return redirect()->route('account.listings', ['tab' => 'services'])
+            ->with('success', 'Your Freelancer Service Profile is active! Manage your gigs below.');
+    }
+
+    /**
+     * Edit Freelance Service Gig Form
+     */
+    public function editService(Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to edit this service.');
+        }
+
+        $categories = Category::where('vertical', 'services')->where('is_active', true)->get();
+        $packages = $product->gigPackages()->get();
+
+        return view('services.edit', compact('product', 'categories', 'packages'));
+    }
+
+    /**
+     * Update Freelance Service Gig
+     */
+    public function updateService(Request $request, Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to update this service.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:150',
+            'category_id' => 'required|exists:categories,id',
+            'description' => 'required|string|max:5000',
+            'base_price' => 'required|numeric|min:10',
+            'packages' => 'nullable|array',
+            'packages.*.name' => 'nullable|string',
+            'packages.*.price' => 'nullable|numeric',
+            'packages.*.delivery_days' => 'nullable|integer',
+            'packages.*.revisions' => 'nullable|string',
+            'packages.*.description' => 'nullable|string',
+        ]);
+
+        $product->update([
+            'title' => $validated['title'],
+            'category_id' => $validated['category_id'],
+            'description' => $validated['description'],
+            'short_description' => Str::limit($validated['description'], 120),
+            'base_price' => (int) ($validated['base_price'] * 100),
+        ]);
+
+        if (!empty($validated['packages'])) {
+            foreach ($validated['packages'] as $tier => $pkg) {
+                if (!empty($pkg['price'])) {
+                    \App\Models\GigPackage::updateOrCreate(
+                        ['product_id' => $product->id, 'tier' => $tier],
+                        [
+                            'name' => $pkg['name'] ?? ucfirst($tier),
+                            'price' => (int) ($pkg['price'] * 100),
+                            'delivery_days' => (int) ($pkg['delivery_days'] ?? 3),
+                            'revisions' => $pkg['revisions'] ?? '2 Revisions',
+                            'description' => $pkg['description'] ?? 'Standard tier delivery',
+                        ]
+                    );
+                }
+            }
+        }
+
+        return redirect()->route('services.show', $product->slug)->with('success', 'Service Gig updated successfully!');
+    }
+
+    /**
+     * Delete Service Gig
+     */
+    public function deleteService(Product $product)
+    {
+        $user = auth()->user();
+        if (!$user) abort(401);
+
+        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
+            abort(403, 'Unauthorized to delete this service.');
+        }
+
+        $product->delete();
+
+        return redirect()->route('account.listings', ['tab' => 'services'])->with('success', 'Service gig removed.');
     }
 }

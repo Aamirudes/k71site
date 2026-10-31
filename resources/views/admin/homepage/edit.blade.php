@@ -181,6 +181,9 @@
                                        class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-bold">
                             </div>
                         </div>
+                    </div>
+                </div>
+
                 <!-- Front Banner 3-Slide Carousel Studio Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-6" x-data="{ activeSlideTab: 1 }">
                     <div class="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-2">

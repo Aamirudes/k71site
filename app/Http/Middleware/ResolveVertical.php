@@ -33,7 +33,7 @@ class ResolveVertical
 
         // Detect vertical directly from request path (both /vertical and /s/vertical)
         if ($detectedKey === 'main') {
-            foreach (['shorts', 'food', 'services', 'used', 'enquiry'] as $vPrefix) {
+            foreach (['shorts', 'food', 'feasto', 'services', 'used', 'enquiry'] as $vPrefix) {
                 if ($request->is($vPrefix . '*') || $request->is('s/' . $vPrefix . '*')) {
                     $detectedKey = $vPrefix;
                     break;
@@ -45,7 +45,7 @@ class ResolveVertical
         // NOTE: Never redirect /s/ proxy paths to avoid infinite loops with reverse proxies
         if ($useSubdomains && $detectedKey === 'main' && !$request->is('s/*') && !filter_var($host, FILTER_VALIDATE_IP) && app()->environment('production')) {
             $rootDomain = k71_root_domain($host);
-            foreach (['shorts', 'food', 'services', 'used', 'enquiry'] as $vPrefix) {
+            foreach (['shorts', 'food', 'feasto', 'services', 'used', 'enquiry'] as $vPrefix) {
                 if ($request->is($vPrefix . '*')) {
                     $path = $request->path();
                     $remaining = ltrim(substr($path, strlen($vPrefix)), '/');

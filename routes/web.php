@@ -91,6 +91,8 @@ Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middle
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
 Route::post('/used/post-ad', [\App\Http\Controllers\UsedController::class, 'storeAd'])->name('used.post-ad');
+Route::get('/used/ad/{product}/edit', [\App\Http\Controllers\UsedController::class, 'editAd'])->middleware('auth')->name('used.edit');
+Route::put('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'updateAd'])->middleware('auth')->name('used.update');
 Route::post('/used/ad/{product}/toggle-sold', [\App\Http\Controllers\UsedController::class, 'toggleSold'])->middleware('auth')->name('used.toggle-sold');
 Route::delete('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'deleteAd'])->middleware('auth')->name('used.delete');
 Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('used.show');
@@ -104,6 +106,12 @@ Route::get('/services/become-seller', [\App\Http\Controllers\ServicesController:
 Route::post('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'storeSeller'])->name('services.store_seller');
 Route::get('/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('services.provider');
 Route::get('/services/{slug}', [\App\Http\Controllers\ServicesController::class, 'show'])->name('services.show');
+Route::get('/services/gig/{product}/edit', [\App\Http\Controllers\ServicesController::class, 'editService'])->middleware('auth')->name('services.gig.edit');
+Route::put('/services/gig/{product}', [\App\Http\Controllers\ServicesController::class, 'updateService'])->middleware('auth')->name('services.gig.update');
+Route::delete('/services/gig/{product}', [\App\Http\Controllers\ServicesController::class, 'deleteService'])->middleware('auth')->name('services.gig.destroy');
+
+// Unified Customer Listings Hub
+Route::get('/account/listings', [\App\Http\Controllers\CustomerListingController::class, 'index'])->middleware('auth')->name('account.listings');
 
 // Service Ordering & Checkout
 Route::get('/services/order/{product}', [\App\Http\Controllers\ServiceOrderController::class, 'checkout'])->name('services.order.checkout');
@@ -381,7 +389,19 @@ Route::get('/storage/{path}', function ($path) {
     abort(404);
 })->where('path', '.*');
 
-// Safe Vendor Seeding Web Endpoint (Protected by secret token)
+// Feasto 10-Minute Blinkit-Speed Hyperlocal Commerce
+Route::get('/feasto', [\App\Http\Controllers\FeastoController::class, 'index'])->name('feasto.index');
+
+// Earn on K71 by Delivery Partner Fleet
+Route::get('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'showOnboarding'])->name('delivery.onboarding');
+Route::post('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'register'])->name('delivery.register');
+Route::get('/delivery/dashboard', [\App\Http\Controllers\DeliveryPartnerController::class, 'dashboard'])->name('delivery.dashboard');
+Route::post('/delivery/location', [\App\Http\Controllers\DeliveryPartnerController::class, 'updateLocation'])->name('delivery.location');
+Route::get('/delivery/check-assignments', [\App\Http\Controllers\DeliveryPartnerController::class, 'checkNewAssignments'])->name('delivery.check_assignments');
+Route::post('/delivery/assignments/{assignment}/accept', [\App\Http\Controllers\DeliveryPartnerController::class, 'acceptAssignment'])->name('delivery.assignments.accept');
+Route::post('/delivery/assignments/{assignment}/pickup', [\App\Http\Controllers\DeliveryPartnerController::class, 'pickupAssignment'])->name('delivery.assignments.pickup');
+Route::post('/delivery/assignments/{assignment}/deliver', [\App\Http\Controllers\DeliveryPartnerController::class, 'deliverAssignment'])->name('delivery.assignments.deliver');
+
 Route::get('/api/setup/seed-vendors', function (\Illuminate\Http\Request $request) {
     if ($request->query('token') !== 'marblemandi2026') {
         return response()->json(['error' => 'Unauthorized'], 403);

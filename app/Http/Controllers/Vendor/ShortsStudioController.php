@@ -96,7 +96,7 @@ class ShortsStudioController extends Controller
             'zsu_upload_short' => $this->upload($request),
             'zsu_save_short' => $this->save($request),
             'zsu_vendor_get_shorts' => $this->getShorts($request),
-            'zsu_vendor_delete_short' => $this->deleteShort($request),
+            'zsu_vendor_delete_short' => $this->deleteShortAjax($request),
             'zsu_vendor_analytics' => $this->analytics($request),
             'zsu_request_boost' => $this->requestBoost($request),
             'zsu_vendor_get_boosts' => $this->getBoosts($request),
@@ -294,9 +294,9 @@ class ShortsStudioController extends Controller
     }
 
     /**
-     * Delete vendor's short.
+     * Delete vendor's short via AJAX.
      */
-    public function deleteShort(Request $request): JsonResponse
+    public function deleteShortAjax(Request $request): JsonResponse
     {
         $vendor = $this->getVendor();
         $shortId = (int) $request->input('short_id', 0);

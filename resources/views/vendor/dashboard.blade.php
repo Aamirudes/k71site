@@ -1,4 +1,4 @@
-<x-layouts.vendor title="Dashboard Overview">
+<x-layouts.vendor title="Vendor Command Dashboard">
     @php
         $period = $period ?? request('period', 'all');
         $periodLabel = $periodLabel ?? 'Lifetime';
@@ -8,12 +8,12 @@
             'name' => 'Marketplace Store',
             'catalog_name' => 'Catalog Items',
             'item_singular' => 'Product',
-            'icon' => '🛍️',
-            'badge' => 'Curated Retail',
+            'icon' => '🏷️',
+            'badge' => 'Verified Vendor',
             'orders_name' => 'Orders'
         ];
         $currV = [
-            'icon' => $sec['icon'] ?? '🛍️',
+            'icon' => $sec['icon'] ?? '🏷️',
             'badge' => $sec['badge'] ?? 'Merchant Store',
             'action' => 'Add ' . ($sec['item_singular'] ?? 'Item'),
             'catalog' => $sec['catalog_name'] ?? 'Catalog Items',
@@ -28,137 +28,269 @@
         $paidCount = (int)($paidOrdersCount ?? 0);
         $catalogCount = (int)($totalProducts ?? 0);
         $chartData = $chartData ?? [];
+        $pendingClaims = $pendingPaymentClaims ?? collect();
     @endphp
 
     <style>
-        /* ==========================================================================
-           VISIONOS / APPLE LIQUID GLASS DEPTH STYLING
-           ========================================================================== */
-        .glass-shell {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(28px) saturate(190%);
-            -webkit-backdrop-filter: blur(28px) saturate(190%);
-            border: 1px solid rgba(255, 255, 255, 0.65);
-            box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.06), 
-                        inset 0 1px 1px 0 rgba(255, 255, 255, 0.95),
-                        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.02);
-            border-radius: 24px;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        /* MINIMAL PURE BLACK & WHITE HIGH-CONTRAST DESIGN */
+        .bw-card {
+            background: #ffffff;
+            border: 1px solid #e4e4e7;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            transition: all 0.2s ease;
         }
-
-        .dark .glass-shell {
-            background: linear-gradient(135deg, rgba(20, 26, 42, 0.72) 0%, rgba(12, 16, 28, 0.78) 100%);
-            backdrop-filter: blur(32px) saturate(180%);
-            -webkit-backdrop-filter: blur(32px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.65), 
-                        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.14),
-                        inset 0 -1px 2px 0 rgba(0, 0, 0, 0.5);
+        .bw-card:hover {
+            border-color: #18181b;
         }
-
-        .glass-shell-hover:hover {
-            transform: translateY(-2px);
-            border-color: rgba(99, 102, 241, 0.35);
-            box-shadow: 0 28px 65px -15px rgba(99, 102, 241, 0.15), 
-                        inset 0 1px 2px 0 rgba(255, 255, 255, 0.22);
-        }
-
-        .glass-pill {
-            background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 1px rgba(255, 255, 255, 0.9);
-            border-radius: 9999px;
-        }
-
-        .dark .glass-pill {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.12);
-        }
-
-        .glass-btn-primary {
-            background: #0f172a;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.3);
-            color: #ffffff;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .glass-btn-primary:hover {
+        .bw-btn-black {
             background: #000000;
-            transform: translateY(-1px);
-            box-shadow: 0 14px 30px -5px rgba(0, 0, 0, 0.4);
+            color: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.15s ease;
+        }
+        .bw-btn-black:hover {
+            background: #27272a;
+            border-color: #27272a;
+        }
+        .bw-btn-white {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #d4d4d8;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.15s ease;
+        }
+        .bw-btn-white:hover {
+            background: #f4f4f5;
+            border-color: #18181b;
+        }
+        .bw-badge {
+            background: #f4f4f5;
+            color: #18181b;
+            border: 1px solid #e4e4e7;
+            border-radius: 9999px;
+            font-weight: 700;
+        }
+        .bw-badge-active {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #000000;
+            border-radius: 9999px;
+            font-weight: 700;
         }
     </style>
 
-    <div class="space-y-6 sm:space-y-8 max-w-7xl mx-auto" x-data="{ showDateFilter: {{ $period === 'custom' ? 'true' : 'false' }} }">
+    <div class="space-y-6 max-w-7xl mx-auto pb-12" x-data="{ 
+        showDateFilter: {{ $period === 'custom' ? 'true' : 'false' }},
+        previewScreenshot: null,
+        rejectingClaimId: null,
+        rejectionReason: ''
+    }">
         
+        <!-- 1. MINIMAL HEADER -->
+        <div class="bw-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="bw-badge text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5">
+                        {{ $currV['badge'] }}
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-full border border-zinc-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-black"></span>
+                        Merchant Active
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-black text-black tracking-tight">
+                    {{ $shopName }}
+                </h1>
+                <p class="text-xs text-zinc-500 font-medium">
+                    Store Operations, Payment Clearances, and Product Catalog Engine
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2.5">
+                <a href="{{ route('vendor.products.create') }}" class="bw-btn-black px-4 py-2.5 text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span>{{ $currV['action'] }}</span>
+                </a>
+
+                @if($vendor->storefront_url)
+                <a href="{{ $vendor->storefront_url }}" target="_blank" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                    <span>View Storefront</span>
+                    <span>↗</span>
+                </a>
+                @endif
+
+                <a href="/messages" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                    <span>Messages</span>
+                </a>
+            </div>
+        </div>
+
+        @if(session('success'))
+            <div class="p-4 bg-zinc-100 text-black border border-black rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-xs">
+                <span>✓ {{ session('success') }}</span>
+                <span class="text-[10px] font-mono uppercase bg-black text-white px-2 py-0.5 rounded">Updated</span>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="p-4 bg-zinc-900 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-xs">
+                <span>✕ {{ session('error') }}</span>
+            </div>
+        @endif
+
         <!-- ====================================================================
-             1. REFINED LIQUID GLASS STORE HEADER
+             2. CUSTOMER PAYMENT SUBMISSIONS (UTR / SCREENSHOT) TO APPROVE OR REJECT
              ==================================================================== -->
-        <div class="glass-shell p-5 sm:p-7 relative overflow-hidden">
-            <!-- Subtle Optical Background Glows -->
-            <div class="absolute -top-24 -right-24 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-500/10 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-                <!-- Store Identity & Badges -->
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2 mb-2">
-                        <span class="glass-pill px-3 py-1 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                            <span>{{ $currV['icon'] }}</span>
-                            <span>{{ $currV['badge'] }}</span>
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Online & Live
-                        </span>
+        <div class="bw-card p-6 border-2 border-black space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-lg bg-black text-white flex items-center justify-center text-xs font-black">
+                        ₹
                     </div>
-
-                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">
-                        {{ $shopName }}
-                    </h1>
-                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
-                        Real-time revenue, order fulfillment stream, and catalog performance overview.
-                    </p>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm sm:text-base font-black text-black uppercase tracking-wider">
+                                Payment Submissions (UTR &amp; Screenshots)
+                            </h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ $pendingClaims->isNotEmpty() ? 'bg-black text-white animate-pulse' : 'bg-zinc-100 text-zinc-600' }}">
+                                {{ $pendingClaims->count() }} PENDING
+                            </span>
+                        </div>
+                        <p class="text-xs text-zinc-500 mt-0.5">
+                            Customer manual UPI transaction IDs and proof screenshots waiting for your review.
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Fast Actions -->
-                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                    <a href="{{ route('vendor.products.create') }}" 
-                       class="glass-btn-primary px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        <span>{{ $currV['action'] }}</span>
-                    </a>
+                <a href="{{ route('vendor.orders.index', ['status' => 'pending']) }}" class="text-xs font-bold text-black hover:underline flex items-center gap-1">
+                    <span>All Orders</span>
+                    <span>&rarr;</span>
+                </a>
+            </div>
 
-                    @if($vendor->storefront_url)
-                    <a href="{{ $vendor->storefront_url }}" target="_blank" 
-                       class="glass-shell glass-shell-hover px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
-                        <span>Storefront</span>
-                    </a>
+            @if($pendingClaims->isEmpty())
+                <div class="text-center py-8 px-4 bg-zinc-50 rounded-xl border border-dashed border-zinc-300">
+                    <p class="text-xs font-bold text-zinc-700">All payment submissions are up to date.</p>
+                    <p class="text-[11px] text-zinc-500 mt-0.5">When customers upload payment screenshots or UTR numbers during UPI checkout, they will immediately appear here for 1-tap verification.</p>
+                </div>
+            @else
+                <div class="space-y-3">
+                    @foreach($pendingClaims as $claim)
+                    @php $o = $claim->order; @endphp
+                    @if($o)
+                    <div class="p-4 rounded-xl border border-zinc-200 bg-white hover:border-black transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-zinc-100 border border-zinc-300 flex items-center justify-center font-black text-black shrink-0 text-sm">
+                                #
+                            </div>
+                            <div class="space-y-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-mono font-black text-sm text-black">Order #{{ $o->order_number }}</span>
+                                    <span class="bw-badge text-[10px] font-bold px-2 py-0.5">
+                                        ₹{{ number_format(($claim->amount_claimed ?: $o->total_amount) / 100, 2) }}
+                                    </span>
+                                    <span class="text-[11px] text-zinc-400 font-mono">{{ $claim->created_at->format('d M, g:i A') }}</span>
+                                </div>
+                                <div class="text-xs text-zinc-700 font-medium">
+                                    Customer: <strong class="text-black">{{ $o->user?->name ?? 'Guest Buyer' }}</strong>
+                                    @if($o->user?->phone || !empty($o->address_snapshot['phone']))
+                                        • <span class="font-mono text-zinc-500">{{ $o->user?->phone ?? $o->address_snapshot['phone'] }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-2 text-xs pt-1">
+                                    <span class="text-zinc-500 font-semibold">Submitted UTR / Ref:</span>
+                                    <span class="font-mono font-bold bg-zinc-100 text-black px-2 py-0.5 rounded border border-zinc-300 select-all">
+                                        {{ $claim->utr_number ?? 'Not provided' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions & Screenshot Preview -->
+                        <div class="flex items-center gap-2.5 flex-wrap self-end lg:self-center">
+                            @if($claim->screenshot)
+                                <button type="button" 
+                                        @click="previewScreenshot = '{{ asset('storage/' . $claim->screenshot) }}'"
+                                        class="bw-btn-white px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 cursor-pointer">
+                                    <span>🖼️ View Screenshot</span>
+                                </button>
+                            @endif
+
+                            <form action="{{ route('vendor.orders.approve_payment', $o->id) }}" method="POST" onsubmit="return confirm('Approve payment for Order #{{ $o->order_number }}? Order will be marked as PAID and ready for dispatch.');">
+                                @csrf
+                                <button type="submit" class="bw-btn-black px-3.5 py-1.5 text-xs font-black cursor-pointer shadow-xs">
+                                    ✓ Approve Payment
+                                </button>
+                            </form>
+
+                            <button type="button" 
+                                    @click="rejectingClaimId = {{ $o->id }}"
+                                    class="bw-btn-white px-3 py-1.5 text-xs font-bold text-red-600 hover:text-red-700 hover:border-red-600 cursor-pointer">
+                                ✕ Reject
+                            </button>
+
+                            <a href="{{ route('vendor.orders.show', $o->id) }}" class="text-xs font-bold text-zinc-500 hover:text-black px-2 py-1">
+                                Order Details &rarr;
+                            </a>
+                        </div>
+                    </div>
                     @endif
+                    @endforeach
+                </div>
+            @endif
+        </div>
 
-                    <a href="/messages" 
-                       class="glass-shell glass-shell-hover px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                        <span>💬</span>
-                        <span class="hidden sm:inline">Direct Messages</span>
-                        <span class="sm:hidden">Chats</span>
-                    </a>
+        <!-- Screenshot Modal -->
+        <div x-show="previewScreenshot" x-cloak class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs" @click.self="previewScreenshot = null">
+            <div class="bg-white rounded-2xl max-w-lg w-full p-5 border border-black space-y-3 relative">
+                <div class="flex items-center justify-between pb-2 border-b border-zinc-200">
+                    <h3 class="text-sm font-black text-black">Payment Proof Screenshot</h3>
+                    <button type="button" @click="previewScreenshot = null" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-black hover:text-white flex items-center justify-center text-xs font-black">✕</button>
+                </div>
+                <div class="max-h-[70vh] overflow-auto rounded-xl bg-zinc-100 border border-zinc-200 p-2 flex items-center justify-center">
+                    <img :src="previewScreenshot" alt="Payment Proof" class="max-w-full max-h-[60vh] object-contain rounded-lg">
+                </div>
+                <div class="flex justify-end pt-2">
+                    <button type="button" @click="previewScreenshot = null" class="bw-btn-black px-4 py-2 text-xs font-bold">Close</button>
                 </div>
             </div>
         </div>
 
+        <!-- Rejection Reason Modal -->
+        <div x-show="rejectingClaimId" x-cloak class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs" @click.self="rejectingClaimId = null">
+            <div class="bg-white rounded-2xl max-w-md w-full p-5 border border-black space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-zinc-200">
+                    <h3 class="text-sm font-black text-black">Reject Payment Submission</h3>
+                    <button type="button" @click="rejectingClaimId = null" class="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-black hover:text-white flex items-center justify-center text-xs font-black">✕</button>
+                </div>
+                <p class="text-xs text-zinc-600 leading-relaxed">
+                    Please provide the reason for payment rejection. The customer will be informed so they can correct and resubmit the payment.
+                </p>
+                <form :action="'/vendor/orders/' + rejectingClaimId + '/reject-payment'" method="POST" class="space-y-3">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-bold text-black mb-1">Rejection Reason</label>
+                        <input type="text" name="rejection_reason" required x-model="rejectionReason"
+                               placeholder="e.g. UTR not matching statement, Invalid screenshot, Uncredited"
+                               class="w-full px-3 py-2 text-xs rounded-xl border border-zinc-300 text-black font-semibold focus:border-black focus:outline-none">
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="rejectingClaimId = null" class="bw-btn-white px-3.5 py-2 text-xs font-bold">Cancel</button>
+                        <button type="submit" class="bw-btn-black px-4 py-2 text-xs font-black bg-red-600 hover:bg-red-700 border-red-600 text-white">Confirm Rejection</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- ====================================================================
-             2. MINIMAL TIME HORIZON SEGMENTED TABS
+             3. TIME HORIZON FILTER BAR
              ==================================================================== -->
-        <div class="glass-shell p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2.5">
-            <div class="flex flex-wrap items-center gap-1">
+        <div class="bw-card p-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5">
                 @php
                     $periods = [
                         'all' => 'Lifetime',
@@ -170,318 +302,244 @@
 
                 @foreach($periods as $key => $lbl)
                     <a href="{{ route('vendor.dashboard', ['period' => $key]) }}" 
-                       class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 {{ $period === $key ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06]' }}">
+                       class="px-3.5 py-1.5 text-xs font-bold transition-all {{ $period === $key ? 'bw-badge-active' : 'bw-badge hover:bg-zinc-200' }}">
                         {{ $lbl }}
                     </a>
                 @endforeach
 
                 <button type="button" 
                         @click="showDateFilter = !showDateFilter"
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 {{ $period === 'custom' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.06]' }}">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
+                        class="px-3.5 py-1.5 text-xs font-bold transition-all flex items-center gap-1.5 {{ $period === 'custom' ? 'bw-badge-active' : 'bw-badge hover:bg-zinc-200' }}">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                     <span>Custom</span>
                 </button>
             </div>
 
-            <div class="text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 px-2 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <span>Active Scope: <strong class="text-slate-900 dark:text-white font-bold">{{ $periodLabel }}</strong></span>
+            <div class="text-[11px] font-mono text-zinc-600 px-2 flex items-center gap-1.5">
+                <span>Active Period: <strong class="text-black font-bold">{{ $periodLabel }}</strong></span>
             </div>
         </div>
 
-        <!-- Custom Date Range Form (Expandable) -->
-        <div x-show="showDateFilter" x-cloak class="glass-shell p-4 sm:p-5" x-transition>
-            <form method="GET" action="{{ route('vendor.dashboard') }}" class="flex flex-wrap items-end gap-3 sm:gap-4">
+        <!-- Custom Date Range -->
+        <div x-show="showDateFilter" x-cloak class="bw-card p-4">
+            <form method="GET" action="{{ route('vendor.dashboard') }}" class="flex flex-wrap items-end gap-3">
                 <input type="hidden" name="period" value="custom">
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">From</label>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">From Date</label>
                     <input type="date" name="start_date" value="{{ $startDateInput ?? request('start_date') }}" required
-                           class="px-3 py-1.5 text-xs font-medium border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                           class="px-3 py-1.5 text-xs font-mono font-bold border border-zinc-300 rounded-lg text-black bg-white focus:border-black focus:outline-none">
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">To</label>
+                    <label class="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1">To Date</label>
                     <input type="date" name="end_date" value="{{ $endDateInput ?? request('end_date') }}" required
-                           class="px-3 py-1.5 text-xs font-medium border border-slate-200 dark:border-white/10 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                           class="px-3 py-1.5 text-xs font-mono font-bold border border-zinc-300 rounded-lg text-black bg-white focus:border-black focus:outline-none">
                 </div>
-                <div class="flex items-center gap-2">
-                    <button type="submit" class="glass-btn-primary px-4 py-2 text-xs font-bold rounded-xl shadow-md">
-                        Filter
-                    </button>
-                    <a href="{{ route('vendor.dashboard') }}" class="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                        Reset
-                    </a>
-                </div>
+                <button type="submit" class="bw-btn-black px-4 py-2 text-xs font-bold">Apply Filter</button>
+                <a href="{{ route('vendor.dashboard') }}" class="bw-btn-white px-3 py-2 text-xs font-semibold">Reset</a>
             </form>
         </div>
 
         <!-- ====================================================================
-             3. THE 4 ESSENTIAL LIQUID GLASS METRIC TILES
+             4. MINIMAL 4 METRIC TILES
              ==================================================================== -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <!-- Tile 1: Total Revenue -->
-            <div class="glass-shell glass-shell-hover p-5 sm:p-6 flex flex-col justify-between">
+            <div class="bw-card p-5 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Total Revenue
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">
+                            Total Net Revenue
                         </span>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span class="bw-badge text-[9px] px-2 py-0.5">
                             Realized
                         </span>
                     </div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <div class="text-2xl sm:text-3xl font-black text-black tracking-tight font-mono">
                         ₹{{ number_format($totalRev / 100, 2) }}
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Paid customer orders</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">Cleared customer payments</p>
                 </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                    <span class="text-slate-400 dark:text-slate-500 text-[11px]">Net Payout (95%)</span>
-                    <span class="font-extrabold text-emerald-600 dark:text-emerald-400">₹{{ number_format($netPay / 100, 2) }}</span>
+                <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                    <span class="text-zinc-500 text-[11px]">Vendor Payout (95%)</span>
+                    <span class="font-mono font-black text-black">₹{{ number_format($netPay / 100, 2) }}</span>
                 </div>
             </div>
 
-            <!-- Tile 2: Order Volume -->
-            <div class="glass-shell glass-shell-hover p-5 sm:p-6 flex flex-col justify-between">
+            <!-- Tile 2: Completed Orders -->
+            <div class="bw-card p-5 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Completed Orders
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">
+                            Paid Orders
                         </span>
-                        <div class="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center text-xs font-bold">
-                            📦
-                        </div>
+                        <span class="bw-badge text-[9px] px-2 py-0.5 font-mono">
+                            Count
+                        </span>
                     </div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <div class="text-2xl sm:text-3xl font-black text-black tracking-tight font-mono">
                         {{ $paidCount }}
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Successfully fulfilled</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">Orders successfully settled</p>
                 </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                    <span class="text-slate-400 dark:text-slate-500 text-[11px]">Avg. Order Value</span>
-                    <span class="font-bold text-slate-900 dark:text-white">₹{{ number_format($avgVal / 100, 2) }}</span>
+                <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                    <span class="text-zinc-500 text-[11px]">Avg. Order Value</span>
+                    <span class="font-mono font-bold text-black">₹{{ number_format($avgVal / 100, 2) }}</span>
                 </div>
             </div>
 
-            <!-- Tile 3: Actionable Orders (Fulfillment Queue) -->
-            <div class="glass-shell glass-shell-hover p-5 sm:p-6 flex flex-col justify-between">
+            <!-- Tile 3: Fulfillment Queue -->
+            <div class="bw-card p-5 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">
                             Fulfillment Queue
                         </span>
-                        <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center text-xs font-bold">
-                            ⚡
-                        </div>
+                        <span class="bw-badge text-[9px] px-2 py-0.5 font-mono">
+                            Pending
+                        </span>
                     </div>
-                    <div class="text-2xl sm:text-3xl font-extrabold {{ $actionableCount > 0 ? 'text-amber-500' : 'text-slate-900 dark:text-white' }} tracking-tight">
+                    <div class="text-2xl sm:text-3xl font-black text-black tracking-tight font-mono">
                         {{ $actionableCount }}
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Pending dispatch or preparation</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">Orders awaiting packing/dispatch</p>
                 </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                    <span class="text-slate-400 dark:text-slate-500 text-[11px]">Action status</span>
-                    <a href="{{ route('vendor.orders.index') }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                        Review Queue &rarr;
+                <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                    <span class="text-zinc-500 text-[11px]">Action</span>
+                    <a href="{{ route('vendor.orders.index') }}" class="font-bold text-black hover:underline">
+                        Review Orders &rarr;
                     </a>
                 </div>
             </div>
 
             <!-- Tile 4: Active Listings -->
-            <div class="glass-shell glass-shell-hover p-5 sm:p-6 flex flex-col justify-between">
+            <div class="bw-card p-5 flex flex-col justify-between">
                 <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">
                             {{ $currV['catalog'] }}
                         </span>
-                        <div class="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center text-xs font-bold">
-                            {{ $currV['icon'] }}
-                        </div>
+                        <span class="bw-badge text-[9px] px-2 py-0.5 font-mono">
+                            Live
+                        </span>
                     </div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    <div class="text-2xl sm:text-3xl font-black text-black tracking-tight font-mono">
                         {{ $catalogCount }}
                     </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Live active listings on store</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">Products on your store</p>
                 </div>
-
-                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.06] flex items-center justify-between text-xs">
-                    <span class="text-slate-400 dark:text-slate-500 text-[11px]">Store catalog</span>
-                    <a href="{{ route('vendor.products.index') }}" class="font-bold text-indigo-600 dark:text-indigo-400 hover:underline">
-                        Manage &rarr;
+                <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                    <span class="text-zinc-500 text-[11px]">Catalog</span>
+                    <a href="{{ route('vendor.products.index') }}" class="font-bold text-black hover:underline">
+                        Manage Listings &rarr;
                     </a>
                 </div>
             </div>
+
         </div>
 
         <!-- ====================================================================
-             4. SLEEK REVENUE VELOCITY LINE CHART
+             5. MONOCHROMATIC REVENUE TRAJECTORY CHART
              ==================================================================== -->
-        <div class="glass-shell p-5 sm:p-7">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div class="bw-card p-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-3 border-b border-zinc-100">
                 <div>
-                    <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                        Revenue Trajectory
+                    <h2 class="text-sm sm:text-base font-black text-black uppercase tracking-wider">
+                        Revenue Velocity &amp; Cashflow
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        {{ $periodLabel }} cash inflows across settled transactions.
+                    <p class="text-xs text-zinc-500 mt-0.5">
+                        {{ $periodLabel }} realized gross revenue and 95% net payout.
                     </p>
                 </div>
 
-                <div class="flex items-center gap-4 text-xs font-semibold">
-                    <div class="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
-                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <div class="flex items-center gap-4 text-xs font-mono">
+                    <div class="flex items-center gap-1.5 font-bold text-black">
+                        <span class="w-2.5 h-2.5 rounded-full bg-black"></span>
                         <span>Gross (₹)</span>
                     </div>
-                    <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                        <span>Net Take-Home (₹)</span>
+                    <div class="flex items-center gap-1.5 font-semibold text-zinc-500">
+                        <span class="w-2.5 h-2.5 rounded-full bg-zinc-400"></span>
+                        <span>Net 95% (₹)</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Canvas Container -->
-            <div class="relative w-full h-64 sm:h-72">
+            <div class="relative w-full h-60 sm:h-64">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
 
         <!-- ====================================================================
-             5. RECENT TRANSACTIONS (FULLY RESPONSIVE: CARDS ON MOBILE, TABLE ON DESKTOP)
+             6. RECENT ORDERS TABLE (CLEAN MINIMAL BLACK & WHITE)
              ==================================================================== -->
-        <div class="glass-shell p-5 sm:p-7">
-            <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+        <div class="bw-card p-6">
+            <div class="flex items-center justify-between mb-5 pb-3 border-b border-zinc-100">
                 <div>
-                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-                        Recent Transactions
+                    <h3 class="text-sm sm:text-base font-black text-black uppercase tracking-wider">
+                        Recent Transactions &amp; Orders
                     </h3>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Latest incoming orders and booking requests
+                    <p class="text-xs text-zinc-500 mt-0.5">
+                        Orders placed across your store catalog.
                     </p>
                 </div>
-                <a href="{{ route('vendor.orders.index') }}" class="px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors">
+                <a href="{{ route('vendor.orders.index') }}" class="bw-btn-white px-3 py-1.5 text-xs font-bold">
                     View All Orders &rarr;
                 </a>
             </div>
 
             @if($recentOrders->isEmpty())
-                <div class="text-center py-12 px-4">
-                    <div class="w-14 h-14 rounded-2xl glass-shell flex items-center justify-center text-2xl mx-auto mb-3">
-                        📦
-                    </div>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">No Recent Orders</h4>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-                        New customer purchases and booking inquiries will appear here in real-time.
-                    </p>
-                    <a href="{{ route('vendor.products.create') }}" class="mt-4 inline-flex items-center gap-1.5 glass-btn-primary px-4 py-2 rounded-xl text-xs font-bold">
-                        <span>{{ $currV['action'] }}</span>
-                    </a>
+                <div class="text-center py-10 px-4 bg-zinc-50 rounded-xl border border-dashed border-zinc-300">
+                    <p class="text-xs font-bold text-zinc-700">No recent orders yet</p>
+                    <p class="text-[11px] text-zinc-500 mt-0.5">When shoppers buy your items, orders will be listed here.</p>
                 </div>
             @else
-                <!-- A. MOBILE CARD VIEW (< md breakpoint, zero horizontal scrollbar) -->
-                <div class="md:hidden space-y-3">
-                    @foreach($recentOrders as $o)
-                    <div class="p-4 rounded-2xl bg-white/50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="font-mono font-extrabold text-xs text-slate-900 dark:text-white">
-                                #{{ $o->order_number ?? $o->id }}
-                            </span>
-                            @php
-                                $sColors = [
-                                    'completed' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-                                    'processing' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-                                    'pending' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-                                    'cancelled' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-                                ];
-                            @endphp
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $sColors[$o->status] ?? 'bg-slate-100 text-slate-600' }}">
-                                {{ ucfirst($o->status) }}
-                            </span>
-                        </div>
-
-                        <div class="flex items-center justify-between text-xs">
-                            <div>
-                                <div class="font-bold text-slate-900 dark:text-white">{{ $o->user?->name ?? 'Customer' }}</div>
-                                <div class="text-[10px] text-slate-400">{{ $o->created_at->format('d M, g:i A') }}</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-extrabold text-sm text-slate-900 dark:text-white">
-                                    ₹{{ number_format(($o->subtotal - $o->discount_amount) / 100, 2) }}
-                                </div>
-                                <div class="text-[10px] font-semibold {{ $o->payment_status === 'paid' ? 'text-emerald-500' : 'text-amber-500' }}">
-                                    {{ ucfirst($o->payment_status) }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 border-t border-slate-100 dark:border-white/[0.05] flex justify-end">
-                            <a href="{{ route('vendor.orders.show', $o->id) }}" class="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold">
-                                View Details &rarr;
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-
-                <!-- B. DESKTOP TABLE VIEW (>= md breakpoint) -->
-                <div class="hidden md:block overflow-x-auto no-scrollbar">
+                <!-- Desktop Table -->
+                <div class="overflow-x-auto no-scrollbar">
                     <table class="w-full text-left text-xs">
                         <thead>
-                            <tr class="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.06]">
+                            <tr class="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 border-b border-zinc-200">
                                 <th class="pb-3 px-3">Order Ref</th>
                                 <th class="pb-3 px-3">Customer</th>
                                 <th class="pb-3 px-3">Date</th>
                                 <th class="pb-3 px-3">Items</th>
-                                <th class="pb-3 px-3">Total</th>
+                                <th class="pb-3 px-3">Amount</th>
                                 <th class="pb-3 px-3">Payment</th>
                                 <th class="pb-3 px-3">Status</th>
                                 <th class="pb-3 px-3 text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-white/[0.04]">
+                        <tbody class="divide-y divide-zinc-100">
                             @foreach($recentOrders as $o)
-                            <tr class="hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
-                                <td class="py-3 px-3 font-mono font-bold text-slate-900 dark:text-white">
+                            <tr class="hover:bg-zinc-50 transition-colors">
+                                <td class="py-3 px-3 font-mono font-bold text-black">
                                     #{{ $o->order_number ?? $o->id }}
                                 </td>
                                 <td class="py-3 px-3">
-                                    <div class="font-bold text-slate-900 dark:text-white">{{ $o->user?->name ?? 'Guest Buyer' }}</div>
-                                    <div class="text-[10px] text-slate-400">{{ $o->user?->email ?? $o->phone }}</div>
+                                    <div class="font-bold text-black">{{ $o->user?->name ?? 'Guest Buyer' }}</div>
+                                    <div class="text-[10px] text-zinc-400 font-mono">{{ $o->user?->email ?? $o->phone }}</div>
                                 </td>
-                                <td class="py-3 px-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                <td class="py-3 px-3 text-zinc-500 whitespace-nowrap font-mono text-[11px]">
                                     {{ $o->created_at->format('d M, g:i A') }}
                                 </td>
-                                <td class="py-3 px-3 font-medium text-slate-600 dark:text-slate-300">
+                                <td class="py-3 px-3 font-medium text-zinc-700">
                                     {{ $o->items_count ?? ($o->items ? $o->items->count() : 1) }} items
                                 </td>
-                                <td class="py-3 px-3 font-extrabold text-slate-900 dark:text-white whitespace-nowrap">
+                                <td class="py-3 px-3 font-mono font-bold text-black whitespace-nowrap">
                                     ₹{{ number_format(($o->subtotal - $o->discount_amount) / 100, 2) }}
                                 </td>
                                 <td class="py-3 px-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold {{ $o->payment_status === 'paid' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold border {{ $o->payment_status === 'paid' ? 'bg-black text-white border-black' : 'bg-zinc-100 text-zinc-800 border-zinc-300' }}">
                                         {{ ucfirst($o->payment_status) }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-3 whitespace-nowrap">
-                                    @php
-                                        $sColors = [
-                                            'completed' => 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
-                                            'processing' => 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-                                            'pending' => 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
-                                            'cancelled' => 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
-                                        ];
-                                    @endphp
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border {{ $sColors[$o->status] ?? 'bg-slate-100 text-slate-600' }}">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold border border-zinc-300 bg-white text-zinc-800">
                                         {{ ucfirst($o->status) }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-3 text-right whitespace-nowrap">
-                                    <a href="{{ route('vendor.orders.show', $o->id) }}" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 text-slate-700 dark:text-slate-300 font-bold text-[11px] transition-colors">
-                                        Inspect &rarr;
+                                    <a href="{{ route('vendor.orders.show', $o->id) }}" class="bw-btn-white px-2.5 py-1 text-[11px] font-bold">
+                                        View &rarr;
                                     </a>
                                 </td>
                             </tr>
@@ -491,31 +549,22 @@
                 </div>
             @endif
         </div>
+
     </div>
 
-    <!-- Chart.js Injection with Dark/Light Theme Reactivity -->
+    <!-- Monochromatic Chart.js Script -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const chartCanvas = document.getElementById('revenueChart');
             if (!chartCanvas) return;
 
-            const isDark = document.documentElement.classList.contains('dark');
             const chartData = @json($chartData);
-
             const labels = chartData.map(item => item.label);
             const revenue = chartData.map(item => item.revenue);
             const net = chartData.map(item => item.net);
 
             const ctx = chartCanvas.getContext('2d');
-
-            const gradGross = ctx.createLinearGradient(0, 0, 0, 260);
-            gradGross.addColorStop(0, isDark ? 'rgba(99, 102, 241, 0.45)' : 'rgba(79, 70, 229, 0.25)');
-            gradGross.addColorStop(1, 'rgba(99, 102, 241, 0)');
-
-            const gradNet = ctx.createLinearGradient(0, 0, 0, 260);
-            gradNet.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.2)');
-            gradNet.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
             new Chart(ctx, {
                 type: 'line',
@@ -525,27 +574,23 @@
                         {
                             label: 'Gross Paid (₹)',
                             data: revenue.length ? revenue : [0],
-                            borderColor: '#6366f1',
-                            borderWidth: 2.5,
-                            backgroundColor: gradGross,
-                            tension: 0.38,
-                            fill: true,
-                            pointBackgroundColor: '#6366f1',
+                            borderColor: '#000000',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: false,
+                            pointBackgroundColor: '#000000',
                             pointRadius: 3,
-                            pointHoverRadius: 6,
                         },
                         {
                             label: 'Net Payout (₹)',
                             data: net.length ? net : [0],
-                            borderColor: '#10b981',
-                            borderWidth: 2,
+                            borderColor: '#71717a',
+                            borderWidth: 1.5,
                             borderDash: [4, 4],
-                            backgroundColor: gradNet,
-                            tension: 0.38,
-                            fill: true,
-                            pointBackgroundColor: '#10b981',
-                            pointRadius: 2.5,
-                            pointHoverRadius: 5,
+                            tension: 0.2,
+                            fill: false,
+                            pointBackgroundColor: '#71717a',
+                            pointRadius: 2,
                         }
                     ]
                 },
@@ -556,14 +601,11 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                            titleColor: isDark ? '#ffffff' : '#0f172a',
-                            bodyColor: isDark ? '#94a3b8' : '#475569',
-                            borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                            borderWidth: 1,
-                            padding: 10,
-                            boxPadding: 4,
-                            usePointStyle: true,
+                            backgroundColor: '#000000',
+                            titleColor: '#ffffff',
+                            bodyColor: '#e4e4e7',
+                            padding: 8,
+                            cornerRadius: 8,
                             callbacks: {
                                 label: function(c) {
                                     return ' ' + c.dataset.label + ': ₹' + Number(c.parsed.y).toLocaleString('en-IN', { minimumFractionDigits: 2 });
@@ -574,19 +616,14 @@
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: {
-                                color: isDark ? '#64748b' : '#94a3b8',
-                                font: { size: 11, weight: '500' }
-                            }
+                            ticks: { color: '#71717a', font: { size: 10 } }
                         },
                         y: {
                             beginAtZero: true,
-                            grid: {
-                                color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)'
-                            },
+                            grid: { color: '#f4f4f5' },
                             ticks: {
-                                color: isDark ? '#64748b' : '#94a3b8',
-                                font: { size: 10, weight: '500' },
+                                color: '#71717a',
+                                font: { size: 10 },
                                 callback: function(val) {
                                     return '₹' + val.toLocaleString('en-IN');
                                 }

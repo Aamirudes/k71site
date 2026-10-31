@@ -542,29 +542,47 @@ class MessageController extends Controller
                 ->where('is_read', 0)
                 ->update(['is_read' => 1]);
 
-            // Fetch last 100 messages
-            $rawMessages = \Illuminate\Support\Facades\DB::table('chat_messages')
-                ->where('conversation_id', $conversationId)
-                ->orderBy('id', 'desc')
-                ->limit(100)
+            // Chunked pagination without deleting any older messages
+            $beforeId = (int) $request->input('before_id', 0);
+            $limit = min(60, max(15, (int) $request->input('limit', 40)));
+
+            $msgQuery = \Illuminate\Support\Facades\DB::table('chat_messages')
+                ->where('conversation_id', $conversationId);
+
+            if ($beforeId > 0) {
+                $msgQuery->where('id', '<', $beforeId);
+            }
+
+            $rawMessages = $msgQuery->orderBy('id', 'desc')
+                ->limit($limit)
                 ->get()
                 ->reverse()
                 ->values();
 
+            $earliestId = $rawMessages->first() ? $rawMessages->first()->id : 0;
+            $hasMore = $earliestId > 0 ? \Illuminate\Support\Facades\DB::table('chat_messages')
+                ->where('conversation_id', $conversationId)
+                ->where('id', '<', $earliestId)
+                ->exists() : false;
+
             $formatted = [];
             foreach ($rawMessages as $m) {
                 $senderId = (int) $m->sender_id;
+                $carbonDate = \Carbon\Carbon::parse($m->created_at)->timezone('Asia/Kolkata');
                 $formatted[] = [
                     'id' => (int) $m->id,
                     'body' => $m->body,
                     'attachment_url' => $m->attachment_url ?? null,
                     'attachment_type' => $m->attachment_type ?? null,
+                    'reply_to_id' => $m->reply_to_id ? (int)$m->reply_to_id : null,
+                    'reply_to_body' => $m->reply_to_body ?? null,
+                    'reply_to_sender_name' => $m->reply_to_sender_name ?? null,
                     'sender_id' => $senderId,
                     'is_mine' => ($senderId === $userId),
                     'is_read' => (bool) $m->is_read,
-                    'created_at' => $m->created_at,
-                    'time_formatted' => date('g:i A', strtotime($m->created_at)),
-                    'date_header' => date('M j, Y', strtotime($m->created_at)),
+                    'created_at' => $carbonDate->toIso8601String(),
+                    'time_formatted' => $carbonDate->format('g:i A'),
+                    'date_header' => $carbonDate->format('M j, Y'),
                 ];
             }
 
@@ -581,11 +599,13 @@ class MessageController extends Controller
 
             return response()->json([
                 'success' => true,
+                'has_more' => $hasMore,
                 'conversation' => $convData,
                 'recipient' => $recipientInfo,
                 'is_typing' => $isTyping,
                 'messages' => $formatted,
                 'data' => [
+                    'has_more' => $hasMore,
                     'conversation' => $convData,
                     'recipient' => $recipientInfo,
                     'is_typing' => $isTyping,
@@ -627,14 +647,28 @@ class MessageController extends Controller
                 return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
             }
 
+            $replyToId = $request->input('reply_to_id') ?: $request->json('reply_to_id');
+            $replyToBody = $request->input('reply_to_body') ?: $request->json('reply_to_body');
+            $replyToSender = $request->input('reply_to_sender_name') ?: $request->json('reply_to_sender_name');
+
             $now = now()->toDateTimeString();
-            $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            $carbonNow = \Carbon\Carbon::now('Asia/Kolkata');
+
+            $insertData = [
                 'conversation_id' => $conversationId,
                 'sender_id' => $userId,
                 'body' => $cleanBody,
                 'is_read' => 0,
                 'created_at' => $now,
-            ]);
+            ];
+
+            if ($replyToId) {
+                $insertData['reply_to_id'] = (int) $replyToId;
+                $insertData['reply_to_body'] = Str::limit($replyToBody, 200);
+                $insertData['reply_to_sender_name'] = $replyToSender;
+            }
+
+            $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId($insertData);
 
             \Illuminate\Support\Facades\DB::table('chat_conversations')
                 ->where('id', $conversationId)
@@ -644,11 +678,14 @@ class MessageController extends Controller
                 'id' => (int) $messageId,
                 'conversation_id' => $conversationId,
                 'body' => $cleanBody,
+                'reply_to_id' => $replyToId ? (int)$replyToId : null,
+                'reply_to_body' => $replyToBody,
+                'reply_to_sender_name' => $replyToSender,
                 'sender_id' => $userId,
                 'is_mine' => true,
                 'is_read' => false,
-                'created_at' => $now,
-                'time_formatted' => date('g:i A', strtotime($now))
+                'created_at' => $carbonNow->toIso8601String(),
+                'time_formatted' => $carbonNow->format('g:i A')
             ];
 
             return response()->json([

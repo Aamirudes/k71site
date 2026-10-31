@@ -43,15 +43,15 @@
 
     <style>
         :root {
-            --fk-blue: #2874f0;
-            --fk-blue-dark: #1259c7;
-            --fk-yellow: #ff9f00;
-            --fk-orange: #fb641b;
-            --fk-green: #388e3c;
-            --fk-bg: #f1f2f4;
-            --fk-border: #e0e0e0;
-            --fk-text: #212121;
-            --fk-muted: #878787;
+            --fk-blue: #18181b;
+            --fk-blue-dark: #09090b;
+            --fk-yellow: #e4e4e7;
+            --fk-orange: #ffffff;
+            --fk-green: #22c55e;
+            --fk-bg: #09090b;
+            --fk-border: #27272a;
+            --fk-text: #f4f4f5;
+            --fk-muted: #71717a;
         }
 
         body {

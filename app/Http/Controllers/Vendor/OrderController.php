@@ -560,5 +560,178 @@ class OrderController extends Controller
             'latest_order_id' => $latestOrder?->id ?? 0,
         ]);
     }
+
+    /**
+     * Vendor approve customer payment proof (UTR / Screenshot)
+     */
+    public function approvePaymentProof(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to order.');
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($order->paymentClaim) {
+                $order->paymentClaim->update([
+                    'status' => 'approved',
+                    'verified_at' => now(),
+                ]);
+            }
+
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => $order->status === 'pending' ? 'processing' : $order->status,
+            ]);
+
+            \App\Models\OrderStatusLog::create([
+                'order_id' => $order->id,
+                'from_status' => $order->status,
+                'to_status' => $order->status,
+                'actor_type' => 'vendor',
+                'actor_id' => auth()->id(),
+                'note' => "Payment verified and approved by vendor. Bank UTR/Proof confirmed.",
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', "Payment approved successfully! Order #{$order->order_number} is now marked as Paid.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Failed to approve payment: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Vendor reject customer payment proof (UTR / Screenshot)
+     */
+    public function rejectPaymentProof(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to order.');
+        }
+
+        $reason = $request->input('reason', $request->input('rejection_reason', 'Transaction ID / UTR not found in bank statement'));
+
+        DB::beginTransaction();
+        try {
+            if ($order->paymentClaim) {
+                $order->paymentClaim->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => $reason,
+                ]);
+            }
+
+            $order->update([
+                'payment_status' => 'failed',
+            ]);
+
+            \App\Models\OrderStatusLog::create([
+                'order_id' => $order->id,
+                'from_status' => $order->status,
+                'to_status' => $order->status,
+                'actor_type' => 'vendor',
+                'actor_id' => auth()->id(),
+                'note' => "Payment proof rejected by vendor: {$reason}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', "Payment proof rejected for Order #{$order->order_number}.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Failed to reject payment: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get nearby delivery partners for fast dispatch (Blinkit speed)
+     */
+    public function getNearbyDeliveryPartners(Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $vLat = 27.0425; // default Makrana
+        $vLng = 74.7214;
+
+        $partners = \App\Models\DeliveryPartner::where('is_online', true)
+            ->get()
+            ->map(function ($p) use ($vLat, $vLng) {
+                $dist = $p->distanceTo($vLat, $vLng);
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'phone' => $p->phone,
+                    'vehicle_type' => ucfirst($p->vehicle_type),
+                    'vehicle_number' => $p->vehicle_number ?: 'Unregistered',
+                    'rating' => number_format($p->rating, 1),
+                    'total_deliveries' => $p->total_deliveries,
+                    'distance_km' => $dist,
+                    'eta_minutes' => max(4, round($dist * 3.5)),
+                ];
+            })
+            ->sortBy('distance_km')
+            ->values();
+
+        return response()->json([
+            'partners' => $partners,
+            'vendor_location' => $vendor->pickup_address['line_1'] ?? 'Makrana Hub',
+        ]);
+    }
+
+    /**
+     * Confirm order and dispatch to chosen delivery partner
+     */
+    public function assignDeliveryPartner(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $partnerId = $request->input('delivery_partner_id');
+        $partner = \App\Models\DeliveryPartner::findOrFail($partnerId);
+
+        $dist = $partner->distanceTo(27.0425, 74.7214);
+
+        $assignment = \App\Models\DeliveryAssignment::create([
+            'order_id' => $order->id,
+            'delivery_partner_id' => $partner->id,
+            'vendor_id' => $vendor->id,
+            'status' => 'assigned',
+            'pickup_distance_km' => $dist,
+            'payout_amount' => 45.00,
+            'assigned_at' => now(),
+        ]);
+
+        $order->update([
+            'status' => 'processing',
+        ]);
+
+        \App\Models\OrderStatusLog::create([
+            'order_id' => $order->id,
+            'from_status' => $order->status,
+            'to_status' => 'processing',
+            'actor_type' => 'vendor',
+            'actor_id' => auth()->id(),
+            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$dist} km away). Pickup alerted.",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Order dispatched to {$partner->name}! Alert ring sent to delivery partner.",
+            'partner' => [
+                'name' => $partner->name,
+                'phone' => $partner->phone,
+                'vehicle' => $partner->vehicle_number,
+            ]
+        ]);
+    }
 }
 
