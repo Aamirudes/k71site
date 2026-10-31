@@ -1,204 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="{{ $currentBrand ?? 'main' }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $conversation->subject ?? 'Conversation' }} — K71 Direct</title>
+    <meta name="description" content="Real-time direct chat on K71.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-k71-design-system />
 
     <style>
-        .direct-chat-shell {
-            max-width: 900px;
-            margin: 0 auto;
-            min-height: calc(100vh - 80px);
-            display: flex;
-            flex-direction: column;
-            padding: 16px;
+        [x-cloak] { display: none !important; }
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: var(--bg, #F6F7FB);
+            color: var(--text, #0F1222);
+            font-family: var(--font-body, 'Plus Jakarta Sans', system-ui, sans-serif);
         }
-        @media (max-width: 640px) {
-            .direct-chat-shell {
-                padding: 8px;
-                min-height: calc(100vh - 64px);
-            }
+
+        .chat-app-container {
+            height: 100dvh;
+            max-height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: clamp(52px, 6dvh, 60px) minmax(0, 1fr) auto;
+            background-color: var(--bg, #F6F7FB);
+        }
+
+        .chat-messages-viewport {
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bubble-sent {
+            background-color: var(--primary, #4338CA);
+            color: var(--on-primary, #FFFFFF);
+            border-radius: 16px 16px 2px 16px;
+        }
+
+        .bubble-received {
+            background-color: var(--surface, #FFFFFF);
+            color: var(--text, #0F1222);
+            border: 1px solid var(--border, #E2E8F0);
+            border-radius: 16px 16px 16px 2px;
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-[#060a17] text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white font-sans">
+<body class="antialiased selection:bg-indigo-600 selection:text-white">
 
-    <!-- Dedicated Minimalist Header: No Search Bar, No Category Slider, No Mobile Panel -->
-    <header class="bg-black text-white px-4 sm:px-6 py-2.5 border-b border-white/10 flex items-center justify-between z-30 relative select-none">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white text-xs font-semibold transition group">
-                <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to Marketplace</span>
-            </a>
-            <span class="text-zinc-600">|</span>
-            <a href="{{ route('messages.index') }}" class="text-xs font-bold text-white hover:text-emerald-400 transition flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>All Messages</span>
-            </a>
-        </div>
+    <div class="chat-app-container max-w-4xl mx-auto border-x border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
+         x-data="{
+             init() {
+                 this.scrollToBottom();
+                 window.addEventListener('resize', () => this.scrollToBottom());
+             },
+             scrollToBottom() {
+                 this.$nextTick(() => {
+                     const feed = this.$refs.messagesFeed;
+                     if (feed) {
+                         feed.scrollTop = feed.scrollHeight;
+                     }
+                 });
+             }
+         }">
 
-        <div class="flex items-center gap-3 text-xs">
-            <span class="text-[11px] text-zinc-400 hidden sm:inline font-mono">End-to-End Private Chat</span>
-            <a href="{{ route('account') }}" class="font-semibold text-zinc-300 hover:text-white transition flex items-center gap-1.5">
-                <span>Account</span>
-                <span class="text-zinc-500">›</span>
-            </a>
-        </div>
-    </header>
+        <!-- ═══════════════════════════════════════════════════════════════════
+             2. FIXED HEADER (NEVER SCROLLS)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <header class="h-[clamp(52px,6dvh,60px)] px-3 sm:px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 z-30 select-none">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <!-- Back Button -->
+                <a href="{{ route('messages.index') }}" 
+                   class="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition"
+                   title="Back to Messages"
+                   aria-label="Back to Messages">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </a>
 
-    <div class="direct-chat-shell">
-        
-        <!-- Instagram-Style Individual Chat Frame -->
-        <div class="flex-1 flex flex-col bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-3xl border border-slate-200/80 dark:border-white/10 shadow-2xl overflow-hidden">
-            
-            <!-- Top Instagram Direct Header -->
-            <div class="h-18 px-4 sm:px-6 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl shrink-0 gap-3">
-                <div class="flex items-center gap-3 min-w-0">
-                    <!-- Instagram Back Arrow Button -->
-                    <a href="{{ route('messages.index') }}" 
-                       class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-800 dark:text-white flex items-center justify-center transition-all duration-150 hover:scale-105 shrink-0 shadow-xs" 
-                       title="Back to All Conversations" 
-                       aria-label="Back to All Conversations">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="19" y1="12" x2="5" y2="12"></line>
-                            <polyline points="12 19 5 12 12 5"></polyline>
-                        </svg>
-                    </a>
-
-                    <!-- Seller Avatar with Online Badge -->
-                    <div class="relative shrink-0">
-                        @if($conversation->vendor && $conversation->vendor->logo_url)
-                            <img src="{{ $conversation->vendor->logo_url }}" alt="{{ $conversation->vendor->shop_name }}" class="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-md">
-                        @else
-                            <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow-md">
-                                {{ substr($conversation->vendor->shop_name ?? 'S', 0, 1) }}
-                            </div>
-                        @endif
-                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-xs"></span>
-                    </div>
-
-                    <!-- Vendor Name & Status -->
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white truncate tracking-tight">
-                                {{ $conversation->vendor->shop_name ?? 'Verified Seller' }}
-                            </h1>
-                            <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold border border-emerald-500/20">
-                                Verified Seller
-                            </span>
+                <!-- Recipient Avatar with Online Badge -->
+                <div class="relative shrink-0">
+                    @if($conversation->vendor && $conversation->vendor->logo_url)
+                        <img src="{{ $conversation->vendor->logo_url }}" alt="{{ $conversation->vendor->shop_name }}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    @else
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                            {{ substr($conversation->vendor->shop_name ?? 'S', 0, 1) }}
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5 font-medium">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>Active now</span>
-                            @if($conversation->subject)
-                                <span class="hidden md:inline">• {{ Str::limit($conversation->subject, 35) }}</span>
-                            @endif
-                        </p>
-                    </div>
+                    @endif
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
                 </div>
 
-                <!-- Product Pill if attached -->
-                @if($conversation->product)
-                    <div class="shrink-0 hidden sm:block">
-                        <a href="{{ route('catalog.product', $conversation->product->slug) }}" 
-                           class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200 transition shadow-xs">
-                            <span>📦</span>
-                            <span class="font-bold truncate max-w-[150px]">{{ $conversation->product->title }}</span>
-                            <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">View →</span>
-                        </a>
+                <!-- Recipient Name & Online Status -->
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5 truncate">
+                        <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
+                            {{ $conversation->vendor->shop_name ?? 'Verified Seller' }}
+                        </h1>
+                        @if($conversation->vendor)
+                            <span class="hidden sm:inline-flex px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                                ✓ Verified
+                            </span>
+                        @endif
                     </div>
-                @endif
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 leading-tight">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Active now</span>
+                        @if($conversation->subject)
+                            <span class="hidden md:inline text-slate-400 truncate">• {{ Str::limit($conversation->subject, 30) }}</span>
+                        @endif
+                    </div>
+                </div>
             </div>
 
+            <!-- Action Overflow Menu & Product Attachment -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                @if($conversation->product)
+                    <a href="{{ route('catalog.product', $conversation->product->slug) }}" 
+                       class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition font-medium">
+                        <span>📦</span>
+                        <span class="truncate max-w-[120px]">{{ $conversation->product->title }}</span>
+                    </a>
+                @endif
+
+                <!-- Storefront link or more options -->
+                @if($conversation->vendor)
+                    <a href="{{ route('storefront.show', $conversation->vendor->slug) }}" 
+                       class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition"
+                       title="View Storefront">
+                        Store
+                    </a>
+                @endif
+            </div>
+        </header>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             3. MESSAGE LIST (THE ONLY SCROLLING ELEMENT)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <main x-ref="messagesFeed" 
+              class="chat-messages-viewport px-3 sm:px-4 py-3 space-y-3 bg-[#F8FAFC] dark:bg-slate-950/40">
+
             @if(session('success'))
-                <div class="m-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center gap-2">
+                <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
                     <span>✓</span>
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
 
-            <!-- Scrollable Messages Feed -->
-            <div id="messagesFeed" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 max-h-[calc(100vh-270px)]">
-                @forelse($conversation->messages as $msg)
-                    @if($msg->isSenderUser())
-                        <!-- User's Message (Right) -->
-                        <div class="flex justify-end">
-                            <div class="max-w-[82%] sm:max-w-[70%]">
-                                <div class="rounded-2xl rounded-tr-xs bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-3.5 text-xs sm:text-sm leading-relaxed shadow-md shadow-indigo-600/15 break-words">
-                                    {{ $msg->body }}
-                                </div>
-                                <div class="text-[10px] text-slate-400 dark:text-slate-500 text-right mt-1 font-semibold pr-1">
-                                    You • {{ $msg->created_at->format('h:i A') }}
-                                </div>
+            <!-- Attached Product Banner (if conversation initiated on product) -->
+            @if($conversation->product)
+                <div class="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-2xs">
+                    <img src="{{ $conversation->product->primary_image_url ?? asset('images/product-placeholder.svg') }}" 
+                         alt="{{ $conversation->product->title }}" 
+                         class="w-12 h-12 rounded-lg object-cover bg-slate-100 shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[10px] text-slate-400 font-semibold uppercase block">Inquiring about</span>
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ $conversation->product->title }}</h4>
+                        <span class="text-xs font-black text-indigo-700 dark:text-indigo-400">₹{{ number_format($conversation->product->base_price / 100, 2) }}</span>
+                    </div>
+                    <a href="{{ route('catalog.product', $conversation->product->slug) }}" 
+                       class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 text-xs font-semibold text-slate-800 dark:text-white shrink-0">
+                        View Item
+                    </a>
+                </div>
+            @endif
+
+            <!-- Conversation Messages -->
+            @forelse($conversation->messages as $msg)
+                @if($msg->isSenderUser())
+                    <!-- Sent Message (Right Aligned, Brand Primary) -->
+                    <div class="flex justify-end">
+                        <div class="max-w-[78%]">
+                            <div class="bubble-sent px-3.5 py-2.5 text-[14px] leading-relaxed break-words shadow-xs">
+                                {{ $msg->body }}
+                            </div>
+                            <div class="text-[10.5px] text-slate-400 text-right mt-1 font-medium pr-1">
+                                {{ $msg->created_at->format('h:i A') }}
                             </div>
                         </div>
-                    @else
-                        <!-- Vendor's Message (Left) -->
-                        <div class="flex justify-start items-end gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-[11px] shrink-0 mb-4">
-                                {{ substr($conversation->vendor->shop_name ?? 'S', 0, 1) }}
+                    </div>
+                @else
+                    <!-- Received Message (Left Aligned, Solid Surface with Border) -->
+                    <div class="flex justify-start items-end gap-2">
+                        <div class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-[10px] shrink-0 mb-4 select-none">
+                            {{ substr($conversation->vendor->shop_name ?? 'S', 0, 1) }}
+                        </div>
+                        <div class="max-w-[78%]">
+                            <div class="bubble-received px-3.5 py-2.5 text-[14px] leading-relaxed break-words shadow-xs">
+                                {{ $msg->body }}
                             </div>
-                            <div class="max-w-[82%] sm:max-w-[70%]">
-                                <div class="rounded-2xl rounded-tl-xs bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 p-3.5 text-xs sm:text-sm leading-relaxed border border-slate-200/60 dark:border-slate-700/80 shadow-xs break-words">
-                                    {{ $msg->body }}
-                                </div>
-                                <div class="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold pl-1">
-                                    {{ $conversation->vendor->shop_name ?? 'Seller' }} • {{ $msg->created_at->format('h:i A') }}
-                                </div>
+                            <div class="text-[10.5px] text-slate-400 mt-1 font-medium pl-1">
+                                {{ $conversation->vendor->shop_name ?? 'Seller' }} • {{ $msg->created_at->format('h:i A') }}
                             </div>
                         </div>
-                    @endif
-                @empty
-                    <div class="py-16 text-center text-slate-400 text-xs">
-                        No messages yet in this conversation. Send a message below to start chatting!
                     </div>
-                @endforelse
-            </div>
+                @endif
+            @empty
+                <div class="py-16 text-center text-slate-400 text-xs">
+                    <p class="font-semibold text-slate-600 dark:text-slate-400">No messages yet</p>
+                    <p class="mt-1">Send a message below to start chatting with {{ $conversation->vendor->shop_name ?? 'the seller' }}.</p>
+                </div>
+            @endforelse
 
-            <!-- Sticky Bottom Composer Bar -->
-            <div class="p-3 sm:p-4 bg-white/90 dark:bg-slate-900/90 border-t border-slate-200/80 dark:border-white/10 shrink-0">
-                <form action="{{ route('messages.reply', $conversation->id) }}" method="POST" class="flex items-center gap-2">
-                    @csrf
-                    <div class="flex-1 flex items-center bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700/80 px-4 py-1.5 focus-within:border-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600/20 transition-all">
-                        <input type="text" 
-                               name="body" 
-                               required 
-                               autocomplete="off"
-                               placeholder="Message {{ $conversation->vendor->shop_name ?? 'seller' }}..."
-                               class="w-full bg-transparent border-none text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 py-1.5">
-                    </div>
-                    <button type="submit" 
-                            class="px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-extrabold transition shadow-lg shadow-indigo-600/25 shrink-0 flex items-center gap-1.5 active:scale-95 cursor-pointer">
-                        <span>Send</span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
-                </form>
-            </div>
+        </main>
 
-        </div>
+        <!-- ═══════════════════════════════════════════════════════════════════
+             4. COMPOSER BAR (PINNED BOTTOM, STAYS ABOVE KEYBOARD)
+             ═══════════════════════════════════════════════════════════════════ -->
+        <footer class="p-2 sm:p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 z-30 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
+            <form action="{{ route('messages.reply', $conversation->id) }}" 
+                  method="POST" 
+                  class="flex items-center gap-2"
+                  @submit="scrollToBottom()">
+                @csrf
+                <div class="flex-1 flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 focus-within:border-indigo-600 focus-within:bg-white dark:focus-within:bg-slate-800 transition">
+                    <input type="text" 
+                           name="body" 
+                           required 
+                           autocomplete="off"
+                           placeholder="Type a message..."
+                           class="w-full bg-transparent border-none text-slate-900 dark:text-white text-[16px] leading-normal min-h-[44px] focus:outline-none placeholder:text-slate-400">
+                </div>
+                <button type="submit" 
+                        class="w-11 h-11 rounded-xl bg-slate-900 hover:bg-black text-white active:scale-95 transition flex items-center justify-center shrink-0 cursor-pointer shadow-xs"
+                        style="background-color: var(--primary); color: var(--on-primary);"
+                        aria-label="Send message">
+                    <svg class="w-5 h-5 ml-0.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+                </button>
+            </form>
+        </footer>
 
     </div>
 
-    <script>
-        // Auto-scroll feed to bottom
-        (function() {
-            const feed = document.getElementById('messagesFeed');
-            if (feed) {
-                feed.scrollTop = feed.scrollHeight;
-            }
-        })();
-    </script>
 </body>
 </html>

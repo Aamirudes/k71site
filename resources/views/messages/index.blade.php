@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Direct Messages • Chats — K71</title>
@@ -89,8 +89,9 @@
 
         /* ---------------- LEFT SIDEBAR ---------------- */
         .glass-sidebar {
-            width: 360px;
-            min-width: 310px;
+            width: 340px;
+            min-width: 340px;
+            max-width: 340px;
             border-right: 1px solid var(--glass-border);
             display: flex;
             flex-direction: column;
@@ -314,8 +315,12 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 14px;
-            border-radius: 16px;
+            padding: 0 14px;
+            height: 64px;
+            min-height: 64px;
+            max-height: 64px;
+            box-sizing: border-box;
+            border-radius: 14px;
             cursor: pointer;
             transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             border: 1px solid transparent;
@@ -360,17 +365,16 @@
             right: 0px;
             width: 11px;
             height: 11px;
-            background: #EF4444;
+            background: var(--primary, #4338CA);
             border: 2px solid #FFFFFF;
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.75);
-            animation: instagramRedDotPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            box-shadow: 0 0 8px rgba(67, 56, 202, 0.6);
         }
 
         .dark .glass-unread-dot {
-            background: #EF4444;
+            background: var(--primary, #6366F1);
             border-color: #0E172A;
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.9);
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
         }
 
         @keyframes instagramRedDotPing {
@@ -775,30 +779,30 @@
         }
 
         .glass-msg-bubble {
-            padding: 10px 16px;
-            border-radius: 20px;
-            font-size: 13.5px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px;
             line-height: 1.45;
             word-break: break-word;
             position: relative;
             max-width: 100%;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
         .glass-msg-row.sent .glass-msg-bubble {
-            background: var(--color-bubble-sent-grad);
-            color: #FFFFFF;
-            border-bottom-right-radius: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 6px 18px var(--glass-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            background: var(--primary, #4338CA);
+            color: var(--on-primary, #FFFFFF);
+            border-bottom-right-radius: 4px;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .glass-msg-row.received .glass-msg-bubble {
-            background: var(--color-bubble-received);
-            color: var(--color-bubble-received-text);
-            border-bottom-left-radius: 5px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 1px var(--glass-specular);
+            background: var(--surface, #FFFFFF);
+            color: var(--text, #0F1222);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--border, #E2E8F0);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
         }
 
         .glass-msg-bubble.optimistic {
@@ -806,11 +810,12 @@
         }
 
         .glass-msg-meta {
-            font-size: 10px;
-            color: var(--color-text-muted);
+            font-size: 10.5px;
+            color: var(--muted, #64748B);
             margin-top: 3px;
             padding: 0 4px;
-            display: none;
+            display: block !important;
+            text-align: right;
         }
 
         .glass-msg-row:hover .glass-msg-meta {
@@ -1834,24 +1839,23 @@
                 display: flex !important;
             }
             #glassActiveChat {
-                height: 100% !important;
-                max-height: 100% !important;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
                 min-height: 0 !important;
-                flex: 1 1 0% !important;
-                display: flex !important;
-                flex-direction: column !important;
+                display: grid !important;
+                grid-template-rows: clamp(52px, 6dvh, 60px) minmax(0, 1fr) auto !important;
                 overflow: hidden !important;
             }
             .glass-chat-header {
-                height: 56px !important;
+                height: clamp(52px, 6dvh, 60px) !important;
                 padding: 0 12px !important;
                 gap: 8px !important;
                 flex-shrink: 0 !important;
                 position: sticky !important;
                 top: 0 !important;
                 z-index: 30 !important;
-                background: var(--glass-surface) !important;
-                border-bottom: 1px solid var(--glass-border) !important;
+                background: var(--surface, #FFFFFF) !important;
+                border-bottom: 1px solid var(--border, #E2E8F0) !important;
             }
             .glass-chat-header-user {
                 gap: 8px !important;
@@ -1860,8 +1864,8 @@
             }
             .glass-back-btn {
                 display: flex !important;
-                width: 36px !important;
-                height: 36px !important;
+                width: 40px !important;
+                height: 40px !important;
                 margin-right: 2px !important;
             }
             .glass-chat-header-avatar {
@@ -1879,15 +1883,15 @@
                 font-size: 11px !important;
             }
             .glass-chat-feed {
-                flex: 1 1 0% !important;
                 min-height: 0 !important;
                 overflow-y: auto !important;
+                overscroll-behavior: contain !important;
                 -webkit-overflow-scrolling: touch;
                 padding: 12px 14px !important;
                 gap: 8px !important;
             }
             .glass-msg-row {
-                max-width: 86% !important;
+                max-width: 78% !important;
             }
             .glass-msg-bubble {
                 font-size: 14px !important;
@@ -1895,27 +1899,34 @@
             }
             .glass-composer-bar {
                 flex-shrink: 0 !important;
-                padding: 10px 14px max(20px, env(safe-area-inset-bottom, 20px)) !important;
-                background: var(--glass-surface) !important;
+                padding: 8px 12px max(10px, env(safe-area-inset-bottom, 10px)) !important;
+                background: var(--surface, #FFFFFF) !important;
                 z-index: 50 !important;
-                border-top: 1px solid var(--glass-border) !important;
+                border-top: 1px solid var(--border, #E2E8F0) !important;
             }
             .glass-composer-pill {
-                padding: 5px 12px !important;
+                padding: 4px 10px !important;
                 gap: 6px !important;
-                border-radius: 26px !important;
-                min-height: 50px !important;
+                border-radius: 20px !important;
+                min-height: 44px !important;
             }
             .glass-composer-textarea {
-                font-size: 15px !important;
+                font-size: 16px !important; /* 16px font to stop iOS auto-zoom */
                 padding: 6px 4px !important;
+                min-height: 44px !important;
                 max-height: 80px !important;
                 line-height: 1.4 !important;
             }
             .glass-composer-send-btn {
-                padding: 6px 16px !important;
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                min-height: 44px !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
                 font-size: 14px !important;
-                min-height: 38px !important;
             }
         }
 
