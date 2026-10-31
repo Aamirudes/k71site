@@ -18,7 +18,7 @@
                 </a>
 
                 @php
-                    $canCancel = in_array($order->status, ['pending', 'processing']) && ($order->vendor->settings->allow_customer_cancellation ?? true);
+                    $canCancel = in_array($order->status, ['pending', 'processing']) && ($order->vendor?->settings?->allow_customer_cancellation ?? true);
                 @endphp
                 @if($canCancel)
                     <button type="button" @click="showCancelModal = true" class="px-4 py-2.5 rounded-2xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors">
@@ -64,9 +64,13 @@
             <div class="bg-gradient-to-r from-stone-50/90 via-white to-stone-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-xs">
                     <span class="text-gray-400 font-medium">Sold by</span>
-                    <a href="{{ $order->vendor->storefront_url }}" class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
-                        {{ $order->vendor->shop_name }}
-                    </a>
+                    @if($order->vendor)
+                        <a href="{{ $order->vendor->storefront_url }}" class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
+                            {{ $order->vendor->shop_name }}
+                        </a>
+                    @else
+                        <span class="font-bold text-brand-text">K71 Direct Store</span>
+                    @endif
                 </div>
                 <div>
                     @if($isDelivered)

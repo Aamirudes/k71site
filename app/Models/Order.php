@@ -67,6 +67,14 @@ class Order extends Model
     ];
 
     /**
+     * Get shipping address (aliases to address_snapshot)
+     */
+    public function getShippingAddressAttribute()
+    {
+        return $this->address_snapshot;
+    }
+
+    /**
      * Check if this order is a food delivery or takeaway order.
      */
     public function isFoodOrder(): bool

@@ -72,7 +72,7 @@
             <div class="space-y-4">
                 @foreach($orders as $order)
                     @php
-                        $canCancel = in_array($order->status, ['pending', 'processing']) && ($order->vendor->settings->allow_customer_cancellation ?? true);
+                        $canCancel = in_array($order->status, ['pending', 'processing']) && ($order->vendor?->settings?->allow_customer_cancellation ?? true);
                         $isOutForDelivery = ($order->shipment && $order->shipment->status === 'out_for_delivery') || ($order->status === 'out_for_delivery');
                         $isDelivered = ($order->status === 'delivered') || ($order->shipment && $order->shipment->status === 'delivered');
                         $isActive = in_array($order->status, ['pending', 'processing', 'shipped', 'out_for_delivery']) && !$isDelivered;
@@ -151,7 +151,7 @@
                                         </span>
                                         <span class="text-gray-400 text-xs hidden md:inline">•</span>
                                         <span class="text-gray-500 text-xs truncate hidden md:inline">
-                                            Sold by <strong class="text-gray-800">{{ $order->vendor->shop_name }}</strong>
+                                            Sold by <strong class="text-gray-800">{{ $order->vendor?->shop_name ?? 'K71 Direct Store' }}</strong>
                                         </span>
                                     </div>
 
@@ -474,9 +474,13 @@
 
                                     <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
                                         <span class="text-gray-400 font-medium">Vendor Store:</span>
-                                        <a href="{{ $order->vendor->storefront_url }}" @click.stop class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
-                                            {{ $order->vendor->shop_name }} ↗
-                                        </a>
+                                        @if($order->vendor)
+                                            <a href="{{ $order->vendor->storefront_url }}" @click.stop class="font-bold text-brand-text hover:text-brand-sage underline decoration-dotted">
+                                                {{ $order->vendor->shop_name }} ↗
+                                            </a>
+                                        @else
+                                            <span class="font-bold text-brand-text">K71 Direct Store</span>
+                                        @endif
                                     </div>
                                 </div>
 

@@ -517,7 +517,7 @@
             transform: translateY(0);
         }
 
-        /* Active Chat Header */
+        /* Active Chat Header - Sticky at Top of Conversation */
         .glass-chat-header {
             height: 68px;
             padding: 0 20px;
@@ -530,6 +530,9 @@
             -webkit-backdrop-filter: blur(20px);
             gap: 12px;
             flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 30;
         }
 
         .glass-chat-header-user {
@@ -1278,22 +1281,22 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
         }
         .typing-dot {
-            width: 7px;
-            height: 7px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: #8e8e93;
+            background: #94a3b8;
             display: inline-block;
-            animation: igTypingBounce 1.2s infinite ease-in-out both;
+            animation: igTypingBounce 1.1s infinite ease-in-out both;
         }
         .dark .typing-dot {
-            background: #94a3b8;
+            background: #cbd5e1;
         }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
         .typing-dot:nth-child(3) { animation-delay: 0s; }
         @keyframes igTypingBounce {
-            0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-            40% { transform: translateY(-6px); opacity: 1; background: #0095f6; }
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+            40% { transform: translateY(-7px); opacity: 1; background: #0095f6; box-shadow: 0 2px 6px rgba(0, 149, 246, 0.4); }
         }
 
         /* Instagram Voice Message Elements (Exact Parity) */
@@ -1844,6 +1847,9 @@
                 padding: 0 12px !important;
                 gap: 8px !important;
                 flex-shrink: 0 !important;
+                position: sticky !important;
+                top: 0 !important;
+                z-index: 30 !important;
                 background: var(--glass-surface) !important;
                 border-bottom: 1px solid var(--glass-border) !important;
             }
@@ -1922,8 +1928,28 @@
 </head>
 <body class="bg-slate-50 dark:bg-[#060a17] text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
 
-    <!-- Top Navigation -->
-    <x-k71-nav />
+    <!-- Dedicated Minimalist Header: No Search Bar, No Category Slider, No Mobile Panel -->
+    <header class="bg-black text-white px-4 sm:px-6 py-2.5 border-b border-white/10 flex items-center justify-between z-30 relative select-none">
+        <div class="flex items-center gap-3">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white text-xs font-semibold transition group">
+                <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>Back to Marketplace</span>
+            </a>
+            <span class="text-zinc-600">|</span>
+            <div class="flex items-center gap-1.5 text-xs font-bold text-white tracking-tight">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Direct Messages</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs">
+            <span class="text-[11px] text-zinc-400 hidden sm:inline font-mono">End-to-End Private Chat</span>
+            <a href="{{ route('account') }}" class="font-semibold text-zinc-300 hover:text-white transition flex items-center gap-1.5">
+                <span>Account</span>
+                <span class="text-zinc-500">›</span>
+            </a>
+        </div>
+    </header>
 
     <div id="k71-chat-wrapper">
         <div class="glass-chat-frame" id="glassMainContainer">
@@ -2570,7 +2596,7 @@
                         requestBanner.style.display = 'none';
                     }
 
-                    // Render Messages
+                    // Render Messages (Preserving scroll position & loaded history like Instagram)
                     const newMessages = result.messages || (result.data ? result.data.messages : []);
                     const wasNearBottom = isUserNearBottom();
 
@@ -2580,25 +2606,40 @@
                         recipient: recipient
                     };
 
-                    if (JSON.stringify(newMessages) !== JSON.stringify(messagesCache)) {
+                    if (!messagesCache || messagesCache.length === 0) {
+                        // First load of conversation
                         messagesCache = newMessages;
                         if (newMessages.length > 0) {
                             oldestChatMsgId = newMessages[0].id;
                             hasMoreChatHistory = (typeof result.has_more !== 'undefined') ? Boolean(result.has_more) : (newMessages.length >= 40);
                         }
-                        renderMessages(newMessages, recipient);
-                        if (scrollToBottom || wasNearBottom) {
-                            scrollFeedToBottom(scrollToBottom);
+                        renderMessages(messagesCache, recipient);
+                        scrollFeedToBottom(false);
+                    } else {
+                        // Incremental sync: only append genuinely new messages without discarding older loaded history
+                        const existingIds = new Set(messagesCache.map(m => m.id));
+                        const genuinelyNew = newMessages.filter(m => !existingIds.has(m.id));
+
+                        if (genuinelyNew.length > 0) {
+                            messagesCache = [...messagesCache, ...genuinelyNew];
+                            renderMessages(messagesCache, recipient);
+                            // Only scroll to bottom if user was already watching near the bottom
+                            if (scrollToBottom || wasNearBottom) {
+                                scrollFeedToBottom(true);
+                            }
                         }
                     }
 
                     // Dispatch unread update event for instant red-dot clearance
                     window.dispatchEvent(new CustomEvent('k71-messages-read'));
 
-                    // Instagram-Style 3-Dot Bouncing Typing Indicator
+                    // Instagram-Style 3-Dot Bouncing Typing Indicator & Header Status
                     const isTyping = Boolean(result.is_typing);
-                    const existingTyping = document.getElementById('glassTypingRow');
+                    let existingTyping = document.getElementById('glassTypingRow');
                     if (isTyping) {
+                        if (headerStatus) {
+                            headerStatus.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span><span style="color:#0095f6; font-weight:700;">typing...</span>';
+                        }
                         if (!existingTyping) {
                             const recipientAvatar = recipient.profile_pic || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(recipient.name || 'User') + '&background=0095F6&color=fff');
                             const typingEl = document.createElement('div');
@@ -2615,8 +2656,13 @@
                             chatFeed.appendChild(typingEl);
                             if (wasNearBottom) scrollFeedToBottom(true);
                         }
-                    } else if (existingTyping) {
-                        existingTyping.remove();
+                    } else {
+                        if (headerStatus && headerStatus.textContent.includes('typing')) {
+                            headerStatus.innerHTML = '<span class="glass-online-indicator"></span> Active now';
+                        }
+                        if (existingTyping) {
+                            existingTyping.remove();
+                        }
                     }
 
                 } else if (result.error) {
@@ -3020,9 +3066,11 @@
         let isFetchingOlderHistory = false;
 
         chatFeed.addEventListener('scroll', () => {
-            if (chatFeed.scrollTop < 50 && !isFetchingOlderHistory && hasMoreChatHistory && oldestChatMsgId > 0 && currentConversationId) {
+            if (chatFeed.scrollTop < 60 && !isFetchingOlderHistory && hasMoreChatHistory && oldestChatMsgId > 0 && currentConversationId) {
                 isFetchingOlderHistory = true;
                 const prevScrollHeight = chatFeed.scrollHeight;
+                const prevScrollTop = chatFeed.scrollTop;
+
                 fetch(`/api/chat/get_messages.php?conversation_id=${currentConversationId}&before_id=${oldestChatMsgId}&limit=40`)
                     .then(r => r.json())
                     .then(res => {
@@ -3030,13 +3078,24 @@
                         if (res.success && res.messages && res.messages.length > 0) {
                             hasMoreChatHistory = Boolean(res.has_more);
                             oldestChatMsgId = res.messages[0].id;
-                            messagesCache = [...res.messages, ...messagesCache];
-                            renderMessages(messagesCache, {
-                                username: headerUsername.textContent.replace('@', ''),
-                                name: headerStatus.textContent,
-                                profile_pic: headerAvatar.src
-                            });
-                            chatFeed.scrollTop = chatFeed.scrollHeight - prevScrollHeight;
+
+                            // Filter out any duplicates
+                            const existingIds = new Set(messagesCache.map(m => m.id));
+                            const uniqueOlder = res.messages.filter(m => !existingIds.has(m.id));
+
+                            if (uniqueOlder.length > 0) {
+                                messagesCache = [...uniqueOlder, ...messagesCache];
+                                renderMessages(messagesCache, {
+                                    username: headerUsername.textContent.replace('@', ''),
+                                    name: headerStatus.textContent,
+                                    profile_pic: headerAvatar.src
+                                });
+
+                                // Exact Instagram scroll anchoring: keep exact reading position without jumping!
+                                requestAnimationFrame(() => {
+                                    chatFeed.scrollTop = (chatFeed.scrollHeight - prevScrollHeight) + prevScrollTop;
+                                });
+                            }
                         } else {
                             hasMoreChatHistory = false;
                         }
@@ -4213,8 +4272,5 @@
 
     })();
     </script>
-
-    <!-- Mobile Bottom Navigation Panel -->
-    <x-k71-bottom-nav />
 </body>
 </html>

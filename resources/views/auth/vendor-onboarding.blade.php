@@ -51,6 +51,20 @@
                                 </div>
                             </label>
 
+                            <!-- 1b. Men's Fashion & Apparel -->
+                            <label :class="selectedType === 'mens' ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
+                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
+                                <input type="radio" name="vendor_type" value="mens" x-model="selectedType" class="sr-only" required>
+                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">👔</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-xs font-black text-zinc-900 dark:text-white">Men's Fashion &amp; Apparel</div>
+                                        <span x-show="selectedType === 'mens'" class="text-emerald-500 text-xs font-black">✓</span>
+                                    </div>
+                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Shirts, ethnic kurtas, trousers, suits &amp; footwear</div>
+                                </div>
+                            </label>
+
                             <!-- 2. Food & Cloud Kitchen -->
                             <label :class="selectedType === 'food' ? 'ring-2 ring-emerald-600 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
                                    class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
@@ -62,6 +76,23 @@
                                         <span x-show="selectedType === 'food'" class="text-emerald-500 text-xs font-black">✓</span>
                                     </div>
                                     <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Dishes, bakery, veg/non-veg &amp; 30m dispatch</div>
+                                </div>
+                            </label>
+
+                            <!-- 2b. Feasto Hyperlocal Quick-Commerce -->
+                            <label :class="selectedType === 'feasto' ? 'ring-2 ring-[#0C831F] border-[#0C831F] bg-emerald-50/60 dark:bg-emerald-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
+                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
+                                <input type="radio" name="vendor_type" value="feasto" x-model="selectedType" class="sr-only" required>
+                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">⚡</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-xs font-black text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                            <span>Feasto Hyperlocal Store</span>
+                                            <span class="px-1.5 py-0.2 rounded-md bg-[#0C831F] text-white text-[9px] font-extrabold uppercase">10 Mins</span>
+                                        </div>
+                                        <span x-show="selectedType === 'feasto'" class="text-emerald-500 text-xs font-black">✓</span>
+                                    </div>
+                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Fast moving groceries, snacks &amp; drinks. Direct K71 store with full vendor dashboard &amp; 10-min delivery fleet dispatch.</div>
                                 </div>
                             </label>
 

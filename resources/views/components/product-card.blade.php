@@ -44,17 +44,21 @@
         $cardUrl = route('food.restaurant', $product->vendor->slug);
     }
 
-    $vendorPhone = $product->vendor?->contact_phone;
+    $vendorPhone = $product->vendor?->contact_phone ?: ($product->vendor?->user?->phone ?: null);
     $vendorSocial = is_array($product->vendor?->social_links) ? $product->vendor?->social_links : (is_string($product->vendor?->social_links) ? (json_decode($product->vendor?->social_links, true) ?: []) : []);
     $vendorWa = $vendorSocial['whatsapp'] ?? $vendorPhone;
     $vendorWaClean = $vendorWa ? preg_replace('/[^0-9]/', '', $vendorWa) : null;
     if ($vendorWaClean && strlen($vendorWaClean) === 10) { $vendorWaClean = '91' . $vendorWaClean; }
-    $productMsg = rawurlencode("Namaste! I saw '{$product->title}' on K71 and want to know more.");
-    $vendorWaUrl = $vendorWaClean ? "https://wa.me/{$vendorWaClean}?text={$productMsg}" : "https://wa.me/919829012345?text={$productMsg}";
+    $productMsg = rawurlencode("Namaste " . ($product->vendor?->shop_name ?: '') . "! I saw '{$product->title}' on K71: " . url('/product/' . $product->slug));
+    $vendorWaUrl = $vendorWaClean ? "https://wa.me/{$vendorWaClean}?text={$productMsg}" : ($product->vendor ? route('storefront.show', $product->vendor->slug) : route('product.show', $product->slug));
 
-    $vendorInsta = $vendorSocial['instagram'] ?? 'k71marketplace';
-    $vendorInstaHandle = ltrim($vendorInsta, '@');
-    $vendorInstaUrl = Str::startsWith($vendorInsta, 'http') ? $vendorInsta : 'https://instagram.com/' . $vendorInstaHandle;
+    $vendorInsta = $vendorSocial['instagram'] ?? ($product->vendor?->user?->username ?: null);
+    if ($vendorInsta) {
+        $vendorInstaHandle = ltrim($vendorInsta, '@');
+        $vendorInstaUrl = Str::startsWith($vendorInsta, 'http') ? $vendorInsta : 'https://instagram.com/' . $vendorInstaHandle;
+    } else {
+        $vendorInstaUrl = $product->vendor ? route('storefront.show', $product->vendor->slug) : route('product.show', $product->slug);
+    }
 @endphp
 
 <div x-data="{ 

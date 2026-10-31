@@ -105,6 +105,9 @@ class DeliveryPartnerController extends Controller
     public function dashboard()
     {
         $partner = $this->getActivePartner();
+        if (!$partner) {
+            return redirect()->route('delivery.onboarding');
+        }
 
         $activeAssignments = DeliveryAssignment::with(['order', 'vendor'])
             ->where('delivery_partner_id', $partner->id)

@@ -32,8 +32,28 @@
 </head>
 <body class="bg-slate-50 dark:bg-[#060a17] text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white font-sans">
 
-    <!-- Top Navigation -->
-    <x-k71-nav />
+    <!-- Dedicated Minimalist Header: No Search Bar, No Category Slider, No Mobile Panel -->
+    <header class="bg-black text-white px-4 sm:px-6 py-2.5 border-b border-white/10 flex items-center justify-between z-30 relative select-none">
+        <div class="flex items-center gap-3">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white text-xs font-semibold transition group">
+                <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>Back to Marketplace</span>
+            </a>
+            <span class="text-zinc-600">|</span>
+            <a href="{{ route('messages.index') }}" class="text-xs font-bold text-white hover:text-emerald-400 transition flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>All Messages</span>
+            </a>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs">
+            <span class="text-[11px] text-zinc-400 hidden sm:inline font-mono">End-to-End Private Chat</span>
+            <a href="{{ route('account') }}" class="font-semibold text-zinc-300 hover:text-white transition flex items-center gap-1.5">
+                <span>Account</span>
+                <span class="text-zinc-500">›</span>
+            </a>
+        </div>
+    </header>
 
     <div class="direct-chat-shell">
         

@@ -6,7 +6,7 @@
         
         <h1 class="text-3xl font-serif font-bold text-brand-text mb-4">Order Placed Successfully!</h1>
         <p class="text-gray-600 mb-2">Thank you for shopping directly with independent brands.</p>
-        <p class="text-gray-500 text-sm mb-8">Your order <span class="font-bold text-brand-text">{{ $order->order_number }}</span> has been sent to {{ $order->vendor->shop_name }}.</p>
+        <p class="text-gray-500 text-sm mb-8">Your order <span class="font-bold text-brand-text">{{ $order->order_number }}</span> has been sent to {{ $order->vendor?->shop_name ?? 'K71 Direct Store' }}.</p>
         
         <div class="bg-white rounded-2xl p-6 border border-gray-200 text-left mb-8 shadow-sm">
             <h3 class="font-medium text-brand-text mb-4 border-b border-gray-100 pb-4">Order Summary</h3>

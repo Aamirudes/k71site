@@ -1,9 +1,9 @@
 <x-layouts.public title="Delivery Pilot Command | K71 Hyperlocal">
     <div class="py-6 sm:py-10 max-w-5xl mx-auto px-4 sm:px-6"
          x-data="{
-            isOnline: {{ $partner->is_online ? 'true' : 'false' }},
-            lat: {{ $partner->current_latitude ?? 27.0425 }},
-            lng: {{ $partner->current_longitude ?? 74.7214 }},
+            isOnline: {{ ($partner?->is_online) ? 'true' : 'false' }},
+            lat: {{ $partner?->current_latitude ?? 27.0425 }},
+            lng: {{ $partner?->current_longitude ?? 74.7214 }},
             audioRingActive: false,
             audioCtx: null,
             ringInterval: null,
@@ -264,11 +264,34 @@
                                     {{ $assignment->status === 'picked_up' ? 'Out for Delivery' : 'Ready for Pickup' }}
                                 </span>
                             </div>
+                            @php
+                                $pickupText = 'Makrana Center';
+                                if ($assignment->vendor) {
+                                    $pAddr = $assignment->vendor->pickup_address;
+                                    if (is_array($pAddr)) {
+                                        $pickupText = $pAddr['line_1'] ?? $pAddr['address_line1'] ?? $pAddr['city'] ?? 'Makrana Center';
+                                    } elseif (is_string($pAddr) && !empty($pAddr)) {
+                                        $pickupText = $pAddr;
+                                    } else {
+                                        $pickupText = $assignment->vendor->shop_name;
+                                    }
+                                }
+
+                                $deliveryText = 'Customer Address';
+                                if ($assignment->order) {
+                                    $sAddr = $assignment->order->shipping_address ?: $assignment->order->address_snapshot;
+                                    if (is_array($sAddr)) {
+                                        $deliveryText = $sAddr['line_1'] ?? $sAddr['address_line1'] ?? $sAddr['city'] ?? 'Customer Address';
+                                    } elseif (is_string($sAddr) && !empty($sAddr)) {
+                                        $deliveryText = $sAddr;
+                                    }
+                                }
+                            @endphp
                             <p class="text-xs text-slate-500 mt-1">
-                                Pickup from: <strong class="text-slate-800">{{ $assignment->vendor ? ($assignment->vendor->pickup_address['line_1'] ?? 'Makrana Center') : 'Vendor Store' }}</strong>
+                                Pickup from: <strong class="text-slate-800">{{ $pickupText }}</strong>
                             </p>
                             <p class="text-xs text-slate-500">
-                                Deliver to: <strong class="text-slate-800">{{ $assignment->order ? ($assignment->order->shipping_address['line_1'] ?? 'Customer Address') : 'Customer' }}</strong>
+                                Deliver to: <strong class="text-slate-800">{{ $deliveryText }}</strong>
                             </p>
                         </div>
                     </div>
