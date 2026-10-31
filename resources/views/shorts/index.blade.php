@@ -55,13 +55,16 @@
             --fk-muted: #71717a;
         }
 
-        body {
+        html, body {
             font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--fk-bg);
             color: var(--fk-text);
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            max-width: 100%;
+            width: 100%;
         }
 
         /* Hide scrollbars for slick horizontal rails */
@@ -112,22 +115,24 @@
       @keydown.window="handleKeyboard($event)">
 
     <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-4 sm:px-6 py-2 flex items-center justify-between z-50 relative">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to K71 Universal Marketplace</span>
+    <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
+                <span class="sm:hidden text-[11px]">Back to K71</span>
             </a>
-            <span class="text-zinc-600">|</span>
-            <span class="text-rose-400 font-bold text-[11px] hidden sm:inline flex items-center gap-1">
+            <span class="text-zinc-600 hidden xs:inline">|</span>
+            <span class="text-rose-400 font-bold text-[11px] hidden sm:inline-flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                 K71 Shoppable Video Commerce
             </span>
         </div>
-        <div class="flex items-center gap-4 text-[11px] text-zinc-400">
+        <div class="flex items-center gap-2 sm:gap-4 text-[11px] text-zinc-400 shrink-0">
             <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
             <a href="{{ route('vendor.shorts.index') }}" class="text-amber-300 hover:text-amber-200 font-bold transition flex items-center gap-1">
-                <span>Upload Short Reel →</span>
+                <span class="hidden sm:inline">Upload Short Reel →</span>
+                <span class="sm:hidden text-[11px]">Upload →</span>
             </a>
         </div>
     </div>
@@ -140,12 +145,12 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <header class="sticky top-0 z-40 bg-black text-white border-b border-zinc-800 shadow-md">
         <!-- Top bar with brand & search -->
-        <div class="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3 sm:gap-6">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-6 overflow-hidden">
             <!-- Brand Logo -->
-            <div class="flex items-center gap-3 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <a href="{{ route('shorts.index') }}" class="flex items-center gap-1.5 group">
-                    <span class="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:text-zinc-300 transition">K71</span>
-                    <span class="inline-flex items-center gap-1 bg-zinc-800 text-white border border-zinc-700 text-[10px] sm:text-xs font-black uppercase px-2 py-0.5 rounded-full shadow-sm">
+                    <span class="text-lg sm:text-2xl font-black tracking-tight text-white group-hover:text-zinc-300 transition">K71</span>
+                    <span class="inline-flex items-center gap-1 bg-zinc-800 text-white border border-zinc-700 text-[9px] sm:text-xs font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full shadow-sm">
                         <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         SHORTS
                     </span>
@@ -157,26 +162,26 @@
             </div>
 
             <!-- Instant Search Bar -->
-            <div class="flex-1 max-w-xl relative">
+            <div class="flex-1 min-w-0 max-w-xl relative">
                 <div class="relative">
                     <input type="text"
                            x-model="searchQuery"
                            @input.debounce.250ms="filterShorts()"
-                           placeholder="Search products, styles, reels or sellers..."
-                           class="w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm pl-9 pr-8 py-2 rounded-lg border border-zinc-800 focus:border-white focus:outline-none transition">
-                    <svg class="w-4 h-4 text-zinc-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           placeholder="Search..."
+                           class="w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-lg border border-zinc-800 focus:border-white focus:outline-none transition">
+                    <svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-zinc-400 absolute left-2.5 top-2 sm:top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <button x-show="searchQuery.length > 0"
                             @click="searchQuery = ''; filterShorts()"
-                            class="absolute right-2.5 top-2.5 text-zinc-400 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            class="absolute right-2 sm:right-2.5 top-2 sm:top-2.5 text-zinc-400 hover:text-white">
+                        <svg class="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Header Actions -->
-            <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-4 shrink-0">
                 <!-- Switch to other K71 Verticals -->
                 <div class="hidden lg:flex items-center gap-2 text-xs font-semibold">
                     <a href="{{ url('/') }}" class="text-zinc-400 hover:text-white px-2 py-1 rounded transition">Store</a>
@@ -187,13 +192,13 @@
                 <!-- Creator Studio Upload -->
                 @auth
                 <a href="{{ route('vendor.shorts.index') }}"
-                   class="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-3 py-1.5 rounded-md border border-zinc-700 transition">
+                   class="hidden xs:inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-md border border-zinc-700 transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     <span class="hidden sm:inline">Upload Reel</span>
                 </a>
                 @else
                 <a href="{{ route('login') }}"
-                   class="inline-flex items-center gap-1 text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-md border border-zinc-700 transition">
+                   class="hidden xs:inline-flex items-center gap-1 text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-2.5 sm:px-3 py-1.5 rounded-md border border-zinc-700 transition">
                     <span class="hidden sm:inline">Seller</span> Studio
                 </a>
                 @endauth
@@ -201,22 +206,22 @@
                 <!-- Cart Button with Live Counter -->
                 <a href="{{ route('cart.index') }}"
                    aria-label="View Shopping Cart"
-                   class="relative inline-flex items-center gap-1.5 bg-white hover:bg-zinc-200 text-black font-extrabold text-xs sm:text-sm px-3.5 py-1.5 rounded-md shadow-sm transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   class="relative inline-flex items-center gap-1 bg-white hover:bg-zinc-200 text-black font-extrabold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 rounded-md shadow-sm transition">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span class="hidden sm:inline">Cart</span>
                     <span x-show="cartCount > 0"
                           x-text="cartCount"
-                          class="bg-black text-white text-[11px] font-black w-4 h-4 rounded-full flex items-center justify-center -ml-0.5"></span>
+                          class="bg-black text-white text-[10px] sm:text-[11px] font-black w-4 h-4 rounded-full flex items-center justify-center -ml-0.5"></span>
                 </a>
             </div>
         </div>
 
         <!-- Horizontal Category Navigation Strip -->
-        <div class="bg-zinc-950 border-b border-zinc-800">
-            <div class="max-w-7xl mx-auto px-4">
-                <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-2 text-xs font-semibold">
+        <div class="bg-zinc-950 border-b border-zinc-800 w-full overflow-hidden">
+            <div class="max-w-7xl mx-auto px-3 sm:px-4">
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-2 text-xs font-semibold w-full">
                     <button @click="setActiveCat('')"
                             :class="activeCat === '' ? 'bg-white text-black font-black shadow-sm' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'"
                             class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap flex items-center gap-1">

@@ -55,11 +55,12 @@
       @keydown.escape.window="rfqModalOpen = false;">
 
     <!-- Universal Top Strip: Back to K71 Marketplace -->
-    <div class="bg-black text-white text-[11px] font-medium py-1.5 px-4 sm:px-6 lg:px-8 border-b border-zinc-900 select-none">
+    <div class="bg-black text-white text-[11px] font-medium py-1.5 px-3 sm:px-6 lg:px-8 border-b border-zinc-900 select-none overflow-hidden">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors group">
-                <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span class="font-semibold">‹ Back to K71 Universal Marketplace</span>
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors group truncate">
+                <svg class="w-3.5 h-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span class="hidden sm:inline font-semibold">‹ Back to K71 Universal Marketplace</span>
+                <span class="sm:hidden font-semibold text-[11px]">‹ Back to K71</span>
             </a>
             <div class="flex items-center gap-3 text-zinc-400 text-[10px]">
                 <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">

@@ -38,7 +38,7 @@
     <!-- Alpine.js (Defer) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-brand-background text-brand-text font-sans antialiased flex flex-col min-h-screen">
+<body class="bg-brand-background text-brand-text font-sans antialiased flex flex-col min-h-screen overflow-x-hidden max-w-full w-full">
 
     <!-- Header / Nav -->
     <header class="sticky top-0 z-50 glass-panel rounded-none border-t-0 border-x-0">

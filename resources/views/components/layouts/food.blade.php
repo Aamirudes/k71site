@@ -58,7 +58,7 @@
     </script>
 </head>
 
-<body class="bg-[#faf8f5] text-stone-900 font-sans antialiased flex flex-col min-h-screen selection:bg-[#ea580c] selection:text-white pb-20 md:pb-0"
+<body class="bg-[#faf8f5] text-stone-900 font-sans antialiased flex flex-col min-h-screen selection:bg-[#ea580c] selection:text-white pb-20 md:pb-0 overflow-x-hidden max-w-full w-full"
       x-data="k71FoodGlobalState()"
       @cart-updated.window="if($event.detail && ($event.detail.cart_count !== undefined || $event.detail.count !== undefined)) { cartTotalCount = ($event.detail.cart_count !== undefined ? $event.detail.cart_count : $event.detail.count); } fetchCartData();"
       @cart-count-updated.window="if($event.detail && $event.detail.count !== undefined) { cartTotalCount = $event.detail.count; }"
@@ -66,13 +66,14 @@
       @keydown.escape.window="cartDrawerOpen = false; locationModalOpen = false;">
 
     <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-4 sm:px-6 py-2 flex items-center justify-between z-50 relative">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to K71 Universal Marketplace</span>
+    <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
+                <span class="sm:hidden text-[11px]">Back to K71</span>
             </a>
-            <span class="text-zinc-600">|</span>
+            <span class="text-zinc-600 hidden xs:inline">|</span>
             <span class="text-amber-400 font-bold text-[11px] hidden sm:inline">
                 K71 Fresh Food &amp; Local Kitchens
             </span>

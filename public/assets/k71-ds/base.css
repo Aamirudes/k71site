@@ -20,6 +20,9 @@
         -moz-osx-font-smoothing: grayscale;
         scroll-behavior: smooth;
         -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+        max-width: 100%;
+        width: 100%;
     }
 
     :where(body) {
@@ -32,6 +35,8 @@
         line-height: 1.5;
         min-height: 100dvh;
         overflow-x: hidden;
+        max-width: 100%;
+        width: 100%;
         touch-action: manipulation;
     }
 
@@ -234,6 +239,39 @@
         }
         .k71-pressable:active, .btn:active, button:active {
             transform: none !important;
+        }
+    }
+
+    /* ======================================================================
+       ULTRA-MAX MOBILE RESPONSIVENESS SAFEGUARDS (Down to 320px)
+       Prevents all horizontal overflow and guarantees text visibility
+       ====================================================================== */
+    @media (max-width: 640px) {
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* Prevent oversized padding causing horizontal spillover */
+        .container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl {
+            max-width: 100% !important;
+        }
+
+        /* Force long titles/words to wrap cleanly on narrow screens */
+        h1, h2, h3, h4, h5, h6, p, span, a, label, li, dt, dd {
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+        }
+
+        /* Prevent fixed/sticky bars from exceeding viewport width */
+        header, nav, footer, .sticky, .fixed {
+            max-width: 100% !important;
+        }
+
+        /* Scrollable containers always clip cleanly */
+        .no-scrollbar, .overflow-x-auto {
+            max-width: 100% !important;
         }
     }
 }

@@ -50,7 +50,7 @@
     }
     </script>
 </head>
-<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-[#0F766E] selection:text-white">
+<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-[#0F766E] selection:text-white overflow-x-hidden max-w-full w-full">
 
     <!-- SUBDOMAIN PARITY MARKER FOR AUTOMATED AUDITS -->
     <span class="hidden" aria-hidden="true">services.k71.in</span>

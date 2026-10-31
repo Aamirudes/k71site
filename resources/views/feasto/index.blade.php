@@ -13,14 +13,15 @@
         <!-- ====================================================================
              1. THIN SLEEK TOP STRIP: BACK TO K71 MARKETPLACE
              ==================================================================== -->
-        <div class="bg-black text-white text-xs border-b border-white/10 px-4 sm:px-6 py-2 flex items-center justify-between z-40 relative">
-            <div class="flex items-center gap-3">
-                <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    <span>Back to K71 Universal Marketplace</span>
+        <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-40 relative overflow-hidden">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
+                    <span class="sm:hidden text-[11px]">Back to K71</span>
                 </a>
-                <span class="text-zinc-600">|</span>
-                <span class="text-emerald-400 font-bold text-[11px] hidden sm:inline flex items-center gap-1">
+                <span class="text-zinc-600 hidden xs:inline">|</span>
+                <span class="text-emerald-400 font-bold text-[11px] hidden sm:inline-flex items-center gap-1">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                     Feasto 10-Min Hyperlocal Network
                 </span>
