@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/assets/k71-ds/glass.css">
 <link rel="stylesheet" href="/assets/k71-ds/liquid.css">
 <link rel="stylesheet" href="/assets/k71-ds/components.css">
+<link rel="stylesheet" href="/assets/k71-ds/brand-overrides.css">
 
 <!-- K71 Unified Design System Micro-Engines -->
 <script defer src="/assets/k71-ds/liquid.js"></script>
