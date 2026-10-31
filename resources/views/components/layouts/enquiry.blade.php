@@ -26,6 +26,7 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
