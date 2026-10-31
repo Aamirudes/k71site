@@ -1,1 +1,102 @@
-/* K71 Brand Overrides (Unlayered to override utilities cleanly) */
+/* ==========================================================================
+   K71 BRAND OVERRIDES (UNLAYERED)
+   Beats Tailwind utilities to guarantee per-site brand cohesion.
+   Never sets font-size, line-height, margin, padding or width/height.
+   ========================================================================== */
+
+/* Dark and Surface Color Mappings */
+.surface-dark {
+    background-color: var(--ink) !important;
+    color: var(--on-ink) !important;
+}
+.surface-dark :where(h1, h2, h3, h4, h5, h6, p, span, a, label) {
+    color: inherit;
+}
+
+/* Primary Button Styling */
+.btn-primary,
+button.btn-primary,
+a.btn-primary {
+    background-color: var(--primary) !important;
+    color: var(--on-primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* Brand specific overrides */
+[data-brand="food"] .bg-indigo-600,
+[data-brand="food"] .bg-indigo-700,
+[data-brand="food"] .bg-indigo-500,
+[data-brand="food"] .bg-violet-600 {
+    background-color: var(--primary) !important;
+}
+
+[data-brand="food"] .text-indigo-600,
+[data-brand="food"] .text-indigo-700,
+[data-brand="food"] .text-violet-600 {
+    color: var(--primary) !important;
+}
+
+[data-brand="food"] .border-indigo-600,
+[data-brand="food"] .border-indigo-500 {
+    border-color: var(--primary) !important;
+}
+
+[data-brand="services"] .bg-indigo-600,
+[data-brand="services"] .bg-indigo-700,
+[data-brand="services"] .bg-indigo-500,
+[data-brand="services"] .bg-violet-600,
+[data-brand="services"] .bg-orange-600 {
+    background-color: var(--primary) !important;
+}
+
+[data-brand="services"] .text-indigo-600,
+[data-brand="services"] .text-indigo-700,
+[data-brand="services"] .text-orange-600 {
+    color: var(--primary) !important;
+}
+
+[data-brand="services"] .border-indigo-600,
+[data-brand="services"] .border-indigo-500 {
+    border-color: var(--primary) !important;
+}
+
+[data-brand="used"] .bg-indigo-600,
+[data-brand="used"] .bg-indigo-700,
+[data-brand="used"] .bg-orange-600 {
+    background-color: var(--primary) !important;
+}
+
+[data-brand="used"] .text-indigo-600,
+[data-brand="used"] .text-indigo-700,
+[data-brand="used"] .text-orange-600 {
+    color: var(--primary) !important;
+}
+
+[data-brand="b2b"] .bg-orange-600,
+[data-brand="b2b"] .bg-indigo-600 {
+    background-color: var(--primary) !important;
+}
+
+[data-brand="b2b"] .text-orange-600,
+[data-brand="b2b"] .text-indigo-600 {
+    color: var(--primary) !important;
+}
+
+[data-brand="feasto"] .bg-orange-600,
+[data-brand="feasto"] .bg-indigo-600 {
+    background-color: var(--primary) !important;
+}
+
+[data-brand="feasto"] .text-orange-600,
+[data-brand="feasto"] .text-indigo-600 {
+    color: var(--primary) !important;
+}
+
+[data-brand="shorts"] {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
+[data-brand="shorts"] body {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+}
