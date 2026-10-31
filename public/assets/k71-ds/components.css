@@ -234,13 +234,7 @@
         z-index: 30;
     }
 
-    /* 11. Overkill Removal & Responsive Floating NAV (T10) */
-    @media (max-width: 767px) {
-        .k71-fab {
-            display: none !important;
-        }
-    }
-
+    /* 11. Overkill Removal (T10) */
     @media (prefers-reduced-motion: reduce) {
         .k71-js [data-k71-reveal] {
             opacity: 1 !important;

@@ -24,8 +24,8 @@ class ResolveVertical
         } else {
             // 2. Wildcard subdomain check for ANY domain (mysite.in, k71.in, localhost)
             $subdomain = k71_extract_subdomain($host);
-            if ($subdomain && isset($verticals[$subdomain])) {
-                $detectedKey = $subdomain;
+            if ($subdomain && (isset($verticals[$subdomain]) || in_array($subdomain, ['feasto', 'food', 'services', 'used', 'enquiry', 'shorts', 'b2b']))) {
+                $detectedKey = ($subdomain === 'b2b') ? 'enquiry' : $subdomain;
             }
         }
 

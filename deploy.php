@@ -127,6 +127,20 @@ if ($syncRequested) {
                                     continue;
                                 }
                                 @copy($item, $targetPath);
+
+                                // If baseDir is public_html (Hostinger setup), also mirror public/ files (assets, build, etc.) directly into baseDir
+                                if ($d === 'public') {
+                                    $webRootTarget = $baseDir . DIRECTORY_SEPARATOR . $subPath;
+                                    if ($item->isDir()) {
+                                        if (!file_exists($webRootTarget)) {
+                                            @mkdir($webRootTarget, 0775, true);
+                                        }
+                                    } else {
+                                        if ($subPath !== '.env' && !str_starts_with($subPath, 'storage') && $subPath !== 'index.php') {
+                                            @copy($item, $webRootTarget);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

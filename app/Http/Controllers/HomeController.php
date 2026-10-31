@@ -106,8 +106,11 @@ class HomeController extends Controller
             return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts'));
         }
 
-        // Vertical-aware homepage dispatch: food.k71.in, used.k71.in, services.k71.in
+        // Vertical-aware homepage dispatch: food.k71.in, used.k71.in, services.k71.in, feasto.k71.in
         $verticalKey = $request->attributes->get('k71_vertical_key');
+        if ($verticalKey === 'feasto') {
+            return app(\App\Http\Controllers\FeastoController::class)->index($request);
+        }
         if ($verticalKey === 'food') {
             return app(FoodController::class)->index($request);
         }
