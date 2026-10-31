@@ -59,13 +59,18 @@
         }
     </style>
 </head>
-<body class="antialiased selection:bg-indigo-600 selection:text-white">
+<body class="k71-chat-page antialiased selection:bg-indigo-600 selection:text-white">
 
-    <div class="chat-app-container max-w-4xl mx-auto border-x border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
+    <div class="k71-chat chat-app-container max-w-4xl mx-auto border-x border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
          x-data="{
              init() {
                  this.scrollToBottom();
                  window.addEventListener('resize', () => this.scrollToBottom());
+                 const feed = this.$refs.messagesFeed;
+                 if (feed && 'MutationObserver' in window) {
+                     const observer = new MutationObserver(() => this.scrollToBottom());
+                     observer.observe(feed, { childList: true, subtree: true });
+                 }
              },
              scrollToBottom() {
                  this.$nextTick(() => {
@@ -80,7 +85,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════
              2. FIXED HEADER (NEVER SCROLLS)
              ═══════════════════════════════════════════════════════════════════ -->
-        <header class="h-[clamp(52px,6dvh,60px)] px-3 sm:px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 z-30 select-none">
+        <header class="k71-chat__head h-[clamp(52px,6dvh,60px)] px-3 sm:px-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 z-30 select-none">
             <div class="flex items-center gap-2.5 min-w-0">
                 <!-- Back Button -->
                 <a href="{{ route('messages.index') }}" 
@@ -149,7 +154,7 @@
              3. MESSAGE LIST (THE ONLY SCROLLING ELEMENT)
              ═══════════════════════════════════════════════════════════════════ -->
         <main x-ref="messagesFeed" 
-              class="chat-messages-viewport px-3 sm:px-4 py-3 space-y-3 bg-[#F8FAFC] dark:bg-slate-950/40">
+              class="k71-chat__body k71-chat__list chat-messages-viewport px-3 sm:px-4 py-3 space-y-3 bg-[#F8FAFC] dark:bg-slate-950/40">
 
             @if(session('success'))
                 <div class="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center gap-2">
@@ -218,7 +223,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════
              4. COMPOSER BAR (PINNED BOTTOM, STAYS ABOVE KEYBOARD)
              ═══════════════════════════════════════════════════════════════════ -->
-        <footer class="p-2 sm:p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 z-30 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
+        <footer class="k71-chat__composer p-2 sm:p-3 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 z-30 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
             <form action="{{ route('messages.reply', $conversation->id) }}" 
                   method="POST" 
                   class="flex items-center gap-2"

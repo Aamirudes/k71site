@@ -214,6 +214,14 @@
         transform: translateY(0);
     }
 
+    /* 9. Chat & Messaging Layout (T8) */
+    body.k71-chat-page header:not(.k71-chat__head),
+    body.k71-chat-page nav:not(.k71-chat__head),
+    body.k71-chat-page .k71-mobile-bottom-nav,
+    body.k71-chat-page footer:not(.k71-chat__composer) {
+        display: none !important;
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .k71-js [data-k71-reveal] {
             opacity: 1 !important;
