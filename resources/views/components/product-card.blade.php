@@ -208,35 +208,35 @@
                     </span>
                 @elseif($isService)
                     <a href="{{ $cardUrl }}" 
-                       class="text-[11px] font-black text-purple-700 hover:text-purple-900 hover:underline inline-flex items-center gap-1" 
+                       class="text-[11px] font-black text-purple-700 hover:text-purple-900 hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="View Service Packages">
                         <span>View Packages</span>
                         <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($product->isEnquiry())
                     <a href="{{ $cardUrl }}" 
-                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Request Quotation / View Details">
                         <span>Request Quote</span>
                         <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($product->isBooking())
                     <a href="{{ $cardUrl }}" 
-                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Book Service">
                         <span>Book Service</span>
                         <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif(!$product->isPurchase())
                     <a href="{{ $cardUrl }}" 
-                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="View Listing">
                         <span>View Listing</span>
                         <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($hasMultipleVariants)
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1" 
+                       class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Select options">
                         <span>Options ›</span>
                     </a>
@@ -286,7 +286,7 @@
                         aria-label="Add {{ addslashes($product->title) }} to Cart"
                         title="Add to Cart"
                     >
-                        <span x-show="!adding && !added" class="flex items-center gap-1">
+                        <span x-show="!adding && !added" class="flex items-center gap-1 whitespace-nowrap">
                             <span>ADD</span>
                             <span class="text-sm font-bold leading-none">+</span>
                         </span>

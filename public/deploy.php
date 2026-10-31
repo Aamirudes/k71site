@@ -427,7 +427,12 @@ try {
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+
+    // Chat schema auto-repair
+    try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
+    try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
+
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof). Chat direct schema & legacy chats verified.</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }

@@ -82,6 +82,17 @@ try {
 $conn = $pdo;
 $db = $pdo;
 
+// Self-heal chat schema directly on PDO if active
+if ($pdo) {
+    try { $pdo->exec("ALTER TABLE chat_conversations ADD COLUMN status VARCHAR(20) DEFAULT 'accepted'"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_conversations ADD COLUMN requested_by BIGINT UNSIGNED NULL"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_messages ADD COLUMN attachment_url VARCHAR(500) NULL"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_messages ADD COLUMN attachment_type VARCHAR(30) NULL"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_messages ADD COLUMN reply_to_id BIGINT UNSIGNED NULL"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_messages ADD COLUMN reply_to_body TEXT NULL"); } catch (\Throwable $e) {}
+    try { $pdo->exec("ALTER TABLE chat_messages ADD COLUMN reply_to_sender_name VARCHAR(100) NULL"); } catch (\Throwable $e) {}
+}
+
 // 3. User Session Resolution (Bridges $_SESSION and Laravel Session)
 if (!function_exists('get_current_user_id')) {
 function get_current_user_id(): ?int

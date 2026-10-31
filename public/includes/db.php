@@ -117,6 +117,17 @@ if ($pdo) {
             if (!$checkCols2) {
                 $pdo->exec("ALTER TABLE `chat_conversations` ADD COLUMN `requested_by` BIGINT UNSIGNED NULL");
             }
+            $checkCols3 = $pdo->query("SHOW COLUMNS FROM `chat_messages` LIKE 'attachment_url'")->fetch();
+            if (!$checkCols3) {
+                $pdo->exec("ALTER TABLE `chat_messages` ADD COLUMN `attachment_url` VARCHAR(500) NULL");
+                $pdo->exec("ALTER TABLE `chat_messages` ADD COLUMN `attachment_type` VARCHAR(30) NULL");
+            }
+            $checkCols4 = $pdo->query("SHOW COLUMNS FROM `chat_messages` LIKE 'reply_to_id'")->fetch();
+            if (!$checkCols4) {
+                $pdo->exec("ALTER TABLE `chat_messages` ADD COLUMN `reply_to_id` BIGINT UNSIGNED NULL");
+                $pdo->exec("ALTER TABLE `chat_messages` ADD COLUMN `reply_to_body` TEXT NULL");
+                $pdo->exec("ALTER TABLE `chat_messages` ADD COLUMN `reply_to_sender_name` VARCHAR(100) NULL");
+            }
         }
     } catch (\Throwable $st) {}
 }

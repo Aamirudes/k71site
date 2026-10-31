@@ -59,6 +59,11 @@ class AppServiceProvider extends ServiceProvider
             // Silently ignore during migration or CLI bootstrap
         }
 
+        // Self-healing chat engine schema & legacy chat sync
+        try {
+            \App\Http\Controllers\MessageController::ensureChatSchema();
+        } catch (\Throwable $e) {}
+
         // Security: Rate Limiters
         \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $request) {
             return \Illuminate\Cache\RateLimiting\Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());

@@ -2103,10 +2103,18 @@
                     <div class="glass-composer-bar">
                         <div class="glass-composer-pill">
                             <button type="button" class="glass-composer-emoji-btn" id="glassEmojiToggleBtn" title="Insert Emoji">
-                                😊
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                </svg>
                             </button>
-                            <button type="button" class="glass-composer-emoji-btn" id="glassAttachBtn" title="Send Photo" style="font-size: 16px;">
-                                📷
+                            <button type="button" class="glass-composer-emoji-btn" id="glassAttachBtn" title="Send Photo">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
                             </button>
                             <input type="file" id="glassPhotoInput" accept="image/*" style="display: none;">
                             
@@ -2386,8 +2394,8 @@
                     renderConversations(filterInput.value.trim());
                 } else if (!silent) {
                     conversationsList.innerHTML = `
-                        <li style="padding: 30px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
-                            ${result.error || 'No conversations found.'}
+                        <li style="padding: 36px 20px; text-align: center; color: var(--color-text-muted); font-size: 13px; line-height: 1.5;">
+                            No messages yet.<br>Click the edit icon above to start chatting!
                         </li>`;
                 }
             })
@@ -2574,6 +2582,10 @@
 
                     if (JSON.stringify(newMessages) !== JSON.stringify(messagesCache)) {
                         messagesCache = newMessages;
+                        if (newMessages.length > 0) {
+                            oldestChatMsgId = newMessages[0].id;
+                            hasMoreChatHistory = (typeof result.has_more !== 'undefined') ? Boolean(result.has_more) : (newMessages.length >= 40);
+                        }
                         renderMessages(newMessages, recipient);
                         if (scrollToBottom || wasNearBottom) {
                             scrollFeedToBottom(scrollToBottom);
@@ -2608,10 +2620,7 @@
                     }
 
                 } else if (result.error) {
-                    chatFeed.innerHTML = `
-                        <div style="padding: 40px; text-align: center; color: #EF4444; font-size: 13.5px; font-weight: 700;">
-                            ${escapeHtml(result.error)}
-                        </div>`;
+                    console.warn('Chat messages sync notice:', result.error);
                 }
             })
             .catch(err => {

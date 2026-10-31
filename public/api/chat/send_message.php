@@ -31,8 +31,22 @@ if (file_exists($dbPath)) {
 
             if ($conversationId > 0) {
                 $now = date('Y-m-d H:i:s');
-                $stmtInsert = $pdo->prepare("INSERT INTO chat_messages (conversation_id, sender_id, body, is_read, created_at) VALUES (?, ?, ?, 0, ?)");
-                $stmtInsert->execute([$conversationId, $currentUserId, $body, $now]);
+                $replyToId = isset($input['reply_to_id']) ? (int)$input['reply_to_id'] : null;
+                $replyToBody = isset($input['reply_to_body']) ? mb_substr(trim($input['reply_to_body']), 0, 200) : null;
+                $replyToSender = isset($input['reply_to_sender_name']) ? mb_substr(trim($input['reply_to_sender_name']), 0, 100) : null;
+
+                try {
+                    if ($replyToId) {
+                        $stmtInsert = $pdo->prepare("INSERT INTO chat_messages (conversation_id, sender_id, body, reply_to_id, reply_to_body, reply_to_sender_name, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
+                        $stmtInsert->execute([$conversationId, $currentUserId, $body, $replyToId, $replyToBody, $replyToSender, $now]);
+                    } else {
+                        $stmtInsert = $pdo->prepare("INSERT INTO chat_messages (conversation_id, sender_id, body, is_read, created_at) VALUES (?, ?, ?, 0, ?)");
+                        $stmtInsert->execute([$conversationId, $currentUserId, $body, $now]);
+                    }
+                } catch (\Throwable $colErr) {
+                    $stmtInsert = $pdo->prepare("INSERT INTO chat_messages (conversation_id, sender_id, body, is_read, created_at) VALUES (?, ?, ?, 0, ?)");
+                    $stmtInsert->execute([$conversationId, $currentUserId, $body, $now]);
+                }
                 $msgId = (int) $pdo->lastInsertId();
 
                 $stmtUpdateConv = $pdo->prepare("UPDATE chat_conversations SET last_message_at = ?, status = 'accepted' WHERE id = ?");
@@ -42,6 +56,9 @@ if (file_exists($dbPath)) {
                     'id' => $msgId,
                     'conversation_id' => $conversationId,
                     'body' => $body,
+                    'reply_to_id' => $replyToId,
+                    'reply_to_body' => $replyToBody,
+                    'reply_to_sender_name' => $replyToSender,
                     'sender_id' => $currentUserId,
                     'is_mine' => true,
                     'is_read' => false,

@@ -4,7 +4,7 @@
         dragStartX: 0,
         dragStartY: 0,
         posX: window.innerWidth - 76,
-        posY: window.innerHeight - 180,
+        posY: window.innerHeight - 170,
         hasMoved: false,
 
         startDrag(e) {
@@ -30,7 +30,7 @@
                 this.hasMoved = true;
             }
             this.posX = Math.max(16, Math.min(window.innerWidth - 76, newX));
-            this.posY = Math.max(60, Math.min(window.innerHeight - 100, newY));
+            this.posY = Math.max(60, Math.min(window.innerHeight - 90, newY));
         },
 
         stopDrag() {
@@ -47,12 +47,12 @@
         },
 
         navItems: [
-            { name: 'K71Mart', icon: '🛍️', label: 'Fashion & Mart', url: '{{ k71_vertical_url('main') }}', bg: 'from-amber-600 to-orange-600', angle: 0 },
-            { name: 'Feasto', icon: '⚡', label: '10-Min Fast Needs', url: '{{ route('feasto.index') }}', bg: 'from-emerald-600 to-teal-600', angle: 36 },
-            { name: 'Services', icon: '💼', label: 'Freelance & Gigs', url: '{{ k71_vertical_url('services') }}', bg: 'from-indigo-600 to-violet-600', angle: 72 },
-            { name: 'Used', icon: '♻️', label: 'Pre-Loved OLX', url: '{{ k71_vertical_url('used') }}', bg: 'from-teal-600 to-cyan-700', angle: 108 },
-            { name: 'Shorts', icon: '▶', label: 'Video Commerce', url: '{{ k71_vertical_url('shorts') }}', bg: 'from-zinc-900 to-black', angle: 144 },
-            { name: 'Fleet', icon: '🛵', label: 'Earn on K71', url: '{{ route('delivery.onboarding') }}', bg: 'from-rose-600 to-pink-600', angle: 180 }
+            { id: 'mart', name: 'K71Mart', label: 'Fashion & Mart', url: '{{ k71_vertical_url('main') }}', color: 'from-amber-500 to-orange-600' },
+            { id: 'feasto', name: 'Feasto', label: '10-Min Hyperlocal', url: '{{ route('feasto.index') }}', color: 'from-emerald-500 to-teal-600' },
+            { id: 'services', name: 'Services', label: 'Freelance & Gigs', url: '{{ k71_vertical_url('services') }}', color: 'from-indigo-500 to-violet-600' },
+            { id: 'used', name: 'Pre-Loved', label: 'Used Marketplace', url: '{{ k71_vertical_url('used') }}', color: 'from-cyan-500 to-blue-600' },
+            { id: 'shorts', name: 'Shorts', label: 'Video Commerce', url: '{{ k71_vertical_url('shorts') }}', color: 'from-rose-500 to-red-600' },
+            { id: 'fleet', name: 'Delivery', label: 'Earn as Fleet Partner', url: '{{ route('delivery.onboarding') }}', color: 'from-amber-400 to-yellow-500' }
         ]
      }"
      :style="'transform: translate3d(' + posX + 'px, ' + posY + 'px, 0);'"
@@ -70,59 +70,75 @@
          x-transition:leave-end="opacity-0 scale-50"
          class="absolute inset-0 pointer-events-none">
         
-        <template x-for="(item, index) in navItems" :key="index">
-            @php
-                // Pre-calculated trigonometric offsets for a semi-circle arc (radius ~105px)
-                // Left or Right side adapted based on position
-            @endphp
+        <template x-for="(item, index) in navItems" :key="item.id">
             <div class="absolute pointer-events-auto transition-all duration-300 ease-out"
                  :style="(() => {
-                    const radius = 100;
-                    // If near right edge of screen, radiate leftwards; otherwise radiate rightwards
+                    const radius = 95;
                     const isRightSide = posX > (window.innerWidth / 2);
-                    const baseAngle = isRightSide ? 90 + (index * 36) : -90 + (index * 36);
+                    const baseAngle = isRightSide ? 95 + (index * 34) : -85 + (index * 34);
                     const rad = (baseAngle * Math.PI) / 180;
                     const x = Math.round(Math.cos(rad) * radius);
                     const y = Math.round(Math.sin(rad) * radius);
                     return 'transform: translate3d(' + x + 'px, ' + y + 'px, 0);';
                  })()">
                 <a :href="item.url" 
-                   class="group flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-slate-200 dark:border-zinc-700 shadow-xl hover:scale-115 transition-all cursor-pointer relative"
+                   class="group flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-slate-900/90 dark:bg-black/90 backdrop-blur-2xl border border-white/20 shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer relative overflow-hidden"
                    :title="item.label">
-                    <span class="text-lg leading-none" x-text="item.icon"></span>
-                    <span class="text-[8px] font-black tracking-tight text-slate-800 dark:text-white leading-none mt-0.5" x-text="item.name"></span>
-                    <!-- Hover Tooltip -->
-                    <span class="absolute -top-7 whitespace-nowrap bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md"
+                    
+                    <!-- Subtle Top Gradient Sheen -->
+                    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r" :class="item.color"></div>
+
+                    <!-- Clean Vector SVG Glyphs -->
+                    <template x-if="item.id === 'mart'">
+                        <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    </template>
+                    <template x-if="item.id === 'feasto'">
+                        <svg class="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </template>
+                    <template x-if="item.id === 'services'">
+                        <svg class="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    </template>
+                    <template x-if="item.id === 'used'">
+                        <svg class="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </template>
+                    <template x-if="item.id === 'shorts'">
+                        <svg class="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </template>
+                    <template x-if="item.id === 'fleet'">
+                        <svg class="w-5 h-5 text-yellow-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </template>
+
+                    <span class="text-[8px] font-black tracking-tight text-white/90 leading-none mt-1" x-text="item.name"></span>
+                    
+                    <!-- Crisp Hover Tooltip -->
+                    <span class="absolute -top-7 whitespace-nowrap bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10"
                           x-text="item.label"></span>
                 </a>
             </div>
         </template>
     </div>
 
-    <!-- Center Trigger Button -->
+    <!-- Center Trigger Button (Apple Dynamic Island Pro Obsidian Glass) -->
     <div @mousedown="startDrag($event)" 
          @touchstart="startDrag($event)"
          @click="toggle()"
-         class="w-14 h-14 rounded-full bg-slate-950 text-white shadow-2xl border-2 border-white/40 flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-105 transition-all duration-200 relative group overflow-hidden">
+         class="w-14 h-14 rounded-full bg-black/90 dark:bg-black/95 text-white shadow-[0_10px_35px_rgba(0,0,0,0.55)] border border-white/25 backdrop-blur-2xl flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 transition-all duration-200 relative group overflow-hidden">
         
-        <!-- Ambient Radial Glow -->
-        <div class="absolute inset-0 bg-gradient-to-tr from-indigo-500/30 via-emerald-500/20 to-amber-500/30 animate-pulse pointer-events-none"></div>
+        <!-- Subtle Specular Edge Ring -->
+        <div class="absolute inset-0 rounded-full border border-white/20 pointer-events-none"></div>
 
-        <!-- Normal State: 6-in-1 Hex / Multiverse Logo Icon -->
+        <!-- Normal State: Sleek Multi-Portal Glyph -->
         <div x-show="!open" class="flex flex-col items-center justify-center transition-all">
-            <svg class="w-6 h-6 text-amber-300 animate-spin-slow" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="3" stroke-width="2" fill="currentColor"/>
-                <circle cx="12" cy="4" r="2" stroke-width="2"/>
-                <circle cx="19" cy="8" r="2" stroke-width="2"/>
-                <circle cx="19" cy="16" r="2" stroke-width="2"/>
-                <circle cx="12" cy="20" r="2" stroke-width="2"/>
-                <circle cx="5" cy="16" r="2" stroke-width="2"/>
-                <circle cx="5" cy="8" r="2" stroke-width="2"/>
+            <svg class="w-5 h-5 text-white group-hover:text-amber-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                <rect x="3" y="14" width="7" height="7" rx="2"></rect>
             </svg>
-            <span class="text-[7px] font-black uppercase tracking-widest text-white leading-none mt-0.5">6-in-1</span>
+            <span class="text-[7.5px] font-black tracking-wider uppercase text-white/80 leading-none mt-1">NAV</span>
         </div>
 
-        <!-- Active Open State: Retract Button '*' -->
+        <!-- Active Open State: Retract Button '✱' -->
         <div x-show="open" class="flex items-center justify-center transition-all">
             <span class="text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">✱</span>
         </div>
@@ -130,14 +146,3 @@
     </div>
 
 </div>
-
-<style>
-@keyframes spinSlow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-.animate-spin-slow {
-    animation: spinSlow 20s linear infinite;
-}
-</style>
-

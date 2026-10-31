@@ -39,10 +39,37 @@ if (file_exists($dbPath)) {
             $stmtMarkRead = $pdo->prepare("UPDATE chat_messages SET is_read = 1 WHERE conversation_id = ? AND sender_id != ? AND is_read = 0");
             $stmtMarkRead->execute([$conversationId, $currentUserId]);
 
-            // Fetch last 100 messages
-            $stmtMessages = $pdo->prepare("SELECT id, conversation_id, sender_id, body, attachment_url, attachment_type, is_read, created_at FROM chat_messages WHERE conversation_id = ? ORDER BY id DESC LIMIT 100");
-            $stmtMessages->execute([$conversationId]);
-            $rawMessages = array_reverse($stmtMessages->fetchAll());
+            // Chunked pagination support
+            $beforeId = isset($_GET['before_id']) ? (int) $_GET['before_id'] : 0;
+            $limit = isset($_GET['limit']) ? min(60, max(15, (int) $_GET['limit'])) : 40;
+
+            $sql = "SELECT id, conversation_id, sender_id, body, attachment_url, attachment_type, reply_to_id, reply_to_body, reply_to_sender_name, is_read, created_at FROM chat_messages WHERE conversation_id = ? ";
+            $params = [$conversationId];
+            if ($beforeId > 0) {
+                $sql .= "AND id < ? ";
+                $params[] = $beforeId;
+            }
+            $sql .= "ORDER BY id DESC LIMIT " . $limit;
+
+            try {
+                $stmtMessages = $pdo->prepare($sql);
+                $stmtMessages->execute($params);
+                $rawMessages = array_reverse($stmtMessages->fetchAll());
+            } catch (\Throwable $queryErr) {
+                // Fallback query if optional columns are absent
+                $fallbackSql = "SELECT id, conversation_id, sender_id, body, is_read, created_at FROM chat_messages WHERE conversation_id = ? ";
+                $fallbackParams = [$conversationId];
+                if ($beforeId > 0) {
+                    $fallbackSql .= "AND id < ? ";
+                    $fallbackParams[] = $beforeId;
+                }
+                $fallbackSql .= "ORDER BY id DESC LIMIT " . $limit;
+                $stmtMessages = $pdo->prepare($fallbackSql);
+                $stmtMessages->execute($fallbackParams);
+                $rawMessages = array_reverse($stmtMessages->fetchAll());
+            }
+
+            $hasMore = count($rawMessages) >= $limit;
 
             $formattedMessages = [];
             foreach ($rawMessages as $msg) {
@@ -53,6 +80,9 @@ if (file_exists($dbPath)) {
                     'body' => $msg['body'],
                     'attachment_url' => $msg['attachment_url'] ?? null,
                     'attachment_type' => $msg['attachment_type'] ?? null,
+                    'reply_to_id' => !empty($msg['reply_to_id']) ? (int)$msg['reply_to_id'] : null,
+                    'reply_to_body' => $msg['reply_to_body'] ?? null,
+                    'reply_to_sender_name' => $msg['reply_to_sender_name'] ?? null,
                     'sender_id' => $senderId,
                     'is_mine' => ($senderId === $currentUserId),
                     'is_read' => (bool) $msg['is_read'],
@@ -74,11 +104,13 @@ if (file_exists($dbPath)) {
 
             echo json_encode([
                 'success' => true,
+                'has_more' => $hasMore,
                 'conversation' => $convData,
                 'recipient' => $recipientInfo,
                 'is_typing' => false,
                 'messages' => $formattedMessages,
                 'data' => [
+                    'has_more' => $hasMore,
                     'conversation' => $convData,
                     'recipient' => $recipientInfo,
                     'is_typing' => false,
