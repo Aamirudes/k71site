@@ -22,7 +22,7 @@
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
 @endphp
 
-<div class="hidden sm:block" x-data="{
+<div class="k71-fab hidden md:block" x-data="{
         open: false,
         isDragging: false,
         dragStartX: 0,
