@@ -83,6 +83,22 @@ form button[type="submit"] * {
     color: inherit !important;
 }
 
+/* Light buttons: ALWAYS dark readable text */
+button[class*="bg-white"],
+a[class*="bg-white"],
+button[class*="bg-slate-100"],
+a[class*="bg-slate-100"],
+button[class*="bg-zinc-100"],
+a[class*="bg-zinc-100"] {
+    color: #0f172a !important;
+}
+button[class*="bg-white"] :where(span, svg, p, div),
+a[class*="bg-white"] :where(span, svg, p, div),
+button[class*="bg-slate-100"] :where(span, svg, p, div),
+a[class*="bg-slate-100"] :where(span, svg, p, div) {
+    color: inherit !important;
+}
+
 /* Brand specific overrides */
 [data-brand="food"] .bg-indigo-600,
 [data-brand="food"] .bg-indigo-700,
