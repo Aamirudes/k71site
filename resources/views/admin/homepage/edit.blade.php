@@ -29,7 +29,7 @@
         hp_show_seller: {{ ($hp['show_seller_banner'] ?? true) ? 'true' : 'false' }},
 
         // Services Hub Live State
-        srv_hero_badge: '{{ addslashes($sp['services_hero_badge'] ?? 'services.k71.in • K71 Verified Freelancers & Services') }}',
+        srv_hero_badge: '{{ addslashes($sp['services_hero_badge'] ?? 'K71 Verified Freelancers & Services') }}',
         srv_hero_title: '{{ addslashes($sp['services_hero_title'] ?? 'Find the Perfect Freelance Services') }}',
         srv_hero_sub: '{{ addslashes($sp['services_hero_subtitle'] ?? 'Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.') }}',
         srv_search_placeholder: '{{ addslashes($sp['services_search_placeholder'] ?? 'What service are you looking for today? (e.g. Logo Design, Website)') }}',
