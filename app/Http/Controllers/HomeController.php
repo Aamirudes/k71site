@@ -108,7 +108,7 @@ class HomeController extends Controller
 
         // Vertical-aware homepage dispatch: food.k71.in, used.k71.in, services.k71.in, feasto.k71.in
         $verticalKey = $request->attributes->get('k71_vertical_key');
-        if ($verticalKey === 'feasto') {
+        if ($verticalKey === 'feasto' || $verticalKey === 'feato') {
             return app(\App\Http\Controllers\FeastoController::class)->index($request);
         }
         if ($verticalKey === 'food') {

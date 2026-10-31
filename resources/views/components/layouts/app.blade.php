@@ -139,5 +139,8 @@
             }, true);
         })();
     </script>
+
+    <!-- 6-in-1 Draggable Floating Radial Nav -->
+    <x-floating-six-nav />
 </body>
 </html>

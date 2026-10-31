@@ -22,7 +22,11 @@
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
 @endphp
 
-<div class="k71-fab" x-data="{
+<div class="k71-fab fixed top-0 left-0 select-none touch-none" 
+     style="transform: translate3d(calc(100vw - 72px), calc(50vh - 28px), 0); will-change: transform; z-index: 9999 !important;"
+     :style="'transform: translate3d(' + posX + 'px, ' + posY + 'px, 0); z-index: 9999 !important;'"
+     :class="(!mounted || isDragging) ? '' : 'transition-transform duration-150'"
+     x-data="{
         open: false,
         isDragging: false,
         dragStartX: 0,
@@ -30,16 +34,16 @@
         posX: (() => {
             try {
                 const saved = JSON.parse(sessionStorage.getItem('k71_launcher_pos') || 'null');
-                if (saved && typeof saved.x === 'number') return Math.min(window.innerWidth - 72, Math.max(16, saved.x));
+                if (saved && typeof saved.x === 'number') return Math.min(window.innerWidth - 68, Math.max(12, saved.x));
             } catch(e){}
-            return Math.max(16, window.innerWidth - 72);
+            return Math.max(12, (window.innerWidth || 375) - 68);
         })(),
         posY: (() => {
             try {
                 const saved = JSON.parse(sessionStorage.getItem('k71_launcher_pos') || 'null');
-                if (saved && typeof saved.y === 'number') return Math.min(window.innerHeight - 72, Math.max(60, saved.y));
+                if (saved && typeof saved.y === 'number') return Math.min(window.innerHeight - 68, Math.max(60, saved.y));
             } catch(e){}
-            return window.innerWidth < 640 ? Math.round(window.innerHeight - 140) : Math.round(window.innerHeight / 2 - 28);
+            return (window.innerWidth < 640) ? Math.round((window.innerHeight || 667) - 130) : Math.round((window.innerHeight || 800) / 2 - 28);
         })(),
         hasMoved: false,
         mounted: false,
@@ -72,8 +76,8 @@
             if (Math.abs(newX - this.posX) > 5 || Math.abs(newY - this.posY) > 5) {
                 this.hasMoved = true;
             }
-            this.posX = Math.max(16, Math.min(window.innerWidth - 72, newX));
-            this.posY = Math.max(60, Math.min(window.innerHeight - 72, newY));
+            this.posX = Math.max(12, Math.min(window.innerWidth - 68, newX));
+            this.posY = Math.max(60, Math.min(window.innerHeight - 68, newY));
         },
 
         stopDrag() {
@@ -95,11 +99,7 @@
         },
 
         navItems: {{ Js::from($activeLauncherItems) }}
-     }"
-     :style="'transform: translate3d(' + posX + 'px, ' + posY + 'px, 0);'"
-     class="fixed top-0 left-0 z-50 select-none touch-none"
-     :class="(!mounted || isDragging) ? '' : 'transition-transform duration-150'"
-     style="transform: translate3d(calc(100vw - 72px), calc(50vh - 28px), 0); will-change: transform;">
+     }">
 
     <!-- Radial Semi-Circle 6 Nav Items Container -->
     <div x-show="open" 

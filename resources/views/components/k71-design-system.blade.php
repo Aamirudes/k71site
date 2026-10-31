@@ -55,20 +55,30 @@ a.btn-primary {
     color: #ffffff !important;
 }
 
-button[class*="bg-slate-900"] :where(span, svg, p, div),
-button[class*="bg-slate-950"] :where(span, svg, p, div),
-button[class*="bg-black"] :where(span, svg, p, div),
-button[class*="bg-zinc-900"] :where(span, svg, p, div),
-button[class*="bg-zinc-950"] :where(span, svg, p, div),
-button[class*="bg-indigo-600"] :where(span, svg, p, div),
-a[class*="bg-slate-900"] :where(span, svg, p, div),
-a[class*="bg-slate-950"] :where(span, svg, p, div),
-a[class*="bg-black"] :where(span, svg, p, div),
-a[class*="bg-zinc-900"] :where(span, svg, p, div),
-a[class*="bg-zinc-950"] :where(span, svg, p, div),
-a[class*="bg-indigo-600"] :where(span, svg, p, div),
-.btn-primary :where(span, svg, p, div) {
-    color: inherit !important;
+/* Force ALL children of dark buttons to be pure white */
+button[class*="bg-slate-900"] *,
+button[class*="bg-slate-950"] *,
+button[class*="bg-black"] *,
+button[class*="bg-zinc-900"] *,
+button[class*="bg-zinc-950"] *,
+button[class*="bg-indigo-600"] *,
+button[class*="bg-indigo-700"] *,
+button[class*="bg-orange-600"] *,
+button[class*="bg-teal-700"] *,
+button[class*="bg-emerald-600"] *,
+a[class*="bg-slate-900"] *,
+a[class*="bg-slate-950"] *,
+a[class*="bg-black"] *,
+a[class*="bg-zinc-900"] *,
+a[class*="bg-zinc-950"] *,
+a[class*="bg-indigo-600"] *,
+a[class*="bg-indigo-700"] *,
+a[class*="bg-orange-600"] *,
+a[class*="bg-teal-700"] *,
+a[class*="bg-emerald-600"] *,
+.btn-primary * {
+    color: #ffffff !important;
+    fill: currentColor !important;
 }
 
 header button[type="submit"],
@@ -77,9 +87,11 @@ form button[type="submit"] {
 }
 header button[type="submit"] *,
 form button[type="submit"] * {
-    color: inherit !important;
+    color: #ffffff !important;
+    fill: currentColor !important;
 }
 
+/* Light buttons: ALWAYS dark readable text */
 button[class*="bg-white"],
 a[class*="bg-white"],
 button[class*="bg-slate-100"],
@@ -88,11 +100,20 @@ button[class*="bg-zinc-100"],
 a[class*="bg-zinc-100"] {
     color: #0f172a !important;
 }
-button[class*="bg-white"] :where(span, svg, p, div),
-a[class*="bg-white"] :where(span, svg, p, div),
-button[class*="bg-slate-100"] :where(span, svg, p, div),
-a[class*="bg-slate-100"] :where(span, svg, p, div) {
-    color: inherit !important;
+button[class*="bg-white"] *,
+a[class*="bg-white"] *,
+button[class*="bg-slate-100"] *,
+a[class*="bg-slate-100"] * {
+    color: #0f172a !important;
+}
+
+/* 6-in-1 Floating Nav Guaranteed Visibility across all viewports */
+.k71-fab {
+    display: block !important;
+    position: fixed !important;
+    z-index: 9999 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 </style>
 

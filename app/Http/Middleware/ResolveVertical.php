@@ -24,8 +24,8 @@ class ResolveVertical
         } else {
             // 2. Wildcard subdomain check for ANY domain (mysite.in, k71.in, localhost)
             $subdomain = k71_extract_subdomain($host);
-            if ($subdomain && (isset($verticals[$subdomain]) || in_array($subdomain, ['feasto', 'food', 'services', 'used', 'enquiry', 'shorts', 'b2b']))) {
-                $detectedKey = ($subdomain === 'b2b') ? 'enquiry' : $subdomain;
+            if ($subdomain && (isset($verticals[$subdomain]) || in_array($subdomain, ['feasto', 'feato', 'food', 'services', 'used', 'enquiry', 'shorts', 'b2b']))) {
+                $detectedKey = ($subdomain === 'b2b') ? 'enquiry' : (($subdomain === 'feato') ? 'feasto' : $subdomain);
             }
         }
 
@@ -33,9 +33,9 @@ class ResolveVertical
 
         // Detect vertical directly from request path (both /vertical and /s/vertical)
         if ($detectedKey === 'main') {
-            foreach (['shorts', 'food', 'feasto', 'services', 'used', 'enquiry'] as $vPrefix) {
+            foreach (['shorts', 'food', 'feasto', 'feato', 'services', 'used', 'enquiry'] as $vPrefix) {
                 if ($request->is($vPrefix . '*') || $request->is('s/' . $vPrefix . '*')) {
-                    $detectedKey = $vPrefix;
+                    $detectedKey = ($vPrefix === 'feato') ? 'feasto' : $vPrefix;
                     break;
                 }
             }

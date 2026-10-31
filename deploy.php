@@ -185,6 +185,9 @@ if ($syncRequested) {
                     }
                 }
                 
+                if (function_exists('opcache_reset')) {
+                    @opcache_reset();
+                }
                 echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";

@@ -38,7 +38,7 @@ class AppServiceProvider extends ServiceProvider
                 $sub === 'services' => 'services',
                 $sub === 'used' => 'used',
                 in_array($sub, ['enquiry','b2b'], true) => 'b2b',
-                $sub === 'feasto' => 'feasto',
+                in_array($sub, ['feasto', 'feato'], true) => 'feasto',
                 $sub === 'shorts' => 'shorts',
                 default => (function_exists('k71_current_brand') ? k71_current_brand() : 'main'),
             };

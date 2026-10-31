@@ -47,7 +47,7 @@ class ResolveStorefront
             }
 
             // 3. Vertical subdomains (food, services, used, enquiry, shorts, feasto, b2b) are platform hubs
-            if (in_array($extractedSlug, ['feasto', 'food', 'services', 'used', 'enquiry', 'b2b', 'shorts']) || array_key_exists($extractedSlug, config('k71.verticals', []))) {
+            if (in_array($extractedSlug, ['feasto', 'feato', 'food', 'services', 'used', 'enquiry', 'b2b', 'shorts']) || array_key_exists($extractedSlug, config('k71.verticals', []))) {
                 return $next($request);
             }
 
@@ -69,7 +69,7 @@ class ResolveStorefront
             $lowerSlug = strtolower($slug);
 
             // 1. Allow vertical platform hubs through without treating as vendor stores
-            if (in_array($lowerSlug, ['feasto', 'food', 'services', 'used', 'enquiry', 'b2b', 'shorts']) || array_key_exists($lowerSlug, config('k71.verticals', []))) {
+            if (in_array($lowerSlug, ['feasto', 'feato', 'food', 'services', 'used', 'enquiry', 'b2b', 'shorts']) || array_key_exists($lowerSlug, config('k71.verticals', []))) {
                 return $next($request);
             }
 

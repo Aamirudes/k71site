@@ -242,6 +242,7 @@ Route::get('/s/used', [\App\Http\Controllers\UsedController::class, 'index'])->n
 Route::get('/s/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('storefront.used.show');
 Route::get('/s/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('storefront.enquiry');
 Route::get('/s/feasto', [\App\Http\Controllers\FeastoController::class, 'index'])->name('storefront.feasto');
+Route::get('/s/feato', [\App\Http\Controllers\FeastoController::class, 'index'])->name('storefront.feato');
 Route::get('/s/shorts', [ShortsController::class, 'index'])->name('storefront.shorts');
 Route::get('/s/vendor', fn() => redirect()->route('vendor.register'))->name('storefront.vendor');
 
@@ -400,6 +401,7 @@ Route::get('/storage/{path}', function ($path) {
 
 // Feasto 10-Minute Blinkit-Speed Hyperlocal Commerce
 Route::get('/feasto', [\App\Http\Controllers\FeastoController::class, 'index'])->name('feasto.index');
+Route::get('/feato', [\App\Http\Controllers\FeastoController::class, 'index'])->name('feato.index');
 
 // Earn on K71 by Delivery Partner Fleet
 Route::get('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'showOnboarding'])->name('delivery.onboarding');

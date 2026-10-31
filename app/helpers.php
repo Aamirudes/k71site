@@ -64,8 +64,8 @@ if (!function_exists('k71_current_brand')) {
         $sub = k71_extract_subdomain($host);
         if (!$sub && str_contains($host, '.')) {
             $prefix = explode('.', $host)[0] ?? '';
-            if (in_array($prefix, ['food', 'services', 'used', 'b2b', 'enquiry', 'feasto', 'shorts'])) {
-                $sub = $prefix;
+            if (in_array($prefix, ['food', 'services', 'used', 'b2b', 'enquiry', 'feasto', 'feato', 'shorts'])) {
+                $sub = ($prefix === 'feato') ? 'feasto' : $prefix;
             }
         }
 
@@ -81,7 +81,7 @@ if (!function_exists('k71_current_brand')) {
         if ($sub === 'enquiry' || $sub === 'b2b' || str_starts_with($host, 'enquiry.') || str_starts_with($host, 'b2b.')) {
             return 'b2b';
         }
-        if ($sub === 'feasto' || str_starts_with($host, 'feasto.')) {
+        if ($sub === 'feasto' || $sub === 'feato' || str_starts_with($host, 'feasto.') || str_starts_with($host, 'feato.')) {
             return 'feasto';
         }
         if ($sub === 'shorts' || str_starts_with($host, 'shorts.')) {
@@ -107,7 +107,7 @@ if (!function_exists('k71_current_brand')) {
         if (str_starts_with($path, 'enquiry') || str_starts_with($path, 'b2b') || ($routeName && (str_starts_with($routeName, 'enquiry.') || str_starts_with($routeName, 'b2b.') || str_starts_with($routeName, 'storefront.enquiry')))) {
             return 'b2b';
         }
-        if (str_starts_with($path, 'feasto') || ($routeName && (str_starts_with($routeName, 'feasto.') || str_starts_with($routeName, 'storefront.feasto')))) {
+        if (str_starts_with($path, 'feasto') || str_starts_with($path, 'feato') || ($routeName && (str_starts_with($routeName, 'feasto.') || str_starts_with($routeName, 'feato.') || str_starts_with($routeName, 'storefront.feasto') || str_starts_with($routeName, 'storefront.feato')))) {
             return 'feasto';
         }
         if (str_starts_with($path, 'shorts') || ($routeName && (str_starts_with($routeName, 'shorts.') || str_starts_with($routeName, 'storefront.shorts')))) {
