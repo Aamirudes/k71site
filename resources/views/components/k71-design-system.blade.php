@@ -25,3 +25,25 @@
 <!-- K71 Unified Design System Micro-Engines -->
 <script defer src="/assets/k71-ds/liquid.js"></script>
 <script defer src="/assets/k71-ds/motion.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.documentElement.classList.add('k71-js');
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('k71-revealed');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('[data-k71-reveal]').forEach(function(el) {
+                observer.observe(el);
+            });
+        } else {
+            document.querySelectorAll('[data-k71-reveal]').forEach(function(el) {
+                el.classList.add('k71-revealed');
+            });
+        }
+    });
+</script>

@@ -175,8 +175,53 @@
         text-align: center;
         transition: border-color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
     }
-    .k71-universe-tile:active {
-        transform: scale(0.97);
-        border-color: var(--primary);
+    /* 8. Professional Polish (T6) */
+    :focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
+
+    button:active, .btn:active, [role="button"]:active {
+        transform: scale(0.98);
+        transition: transform 0.08s ease-out;
+    }
+
+    .k71-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-sm);
+        border-radius: 12px;
+    }
+
+    .k71-glass-nav {
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    input:focus, select:focus, textarea:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.15) !important;
+    }
+
+    /* Subtle Reveal on Scroll */
+    .k71-js [data-k71-reveal] {
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.28s ease-out, transform 0.28s ease-out;
+    }
+    .k71-js [data-k71-reveal].k71-revealed {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .k71-js [data-k71-reveal] {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+        button:active, .btn:active {
+            transform: none !important;
+        }
     }
 }
