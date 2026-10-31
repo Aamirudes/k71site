@@ -162,6 +162,28 @@ if ($syncRequested) {
                         }
                     }
                 }
+
+                // Explicit mirror of public/assets to root assets/ for Hostinger root layout
+                $publicAssetsDir = $baseDir . '/public/assets';
+                $rootAssetsDir = $baseDir . '/assets';
+                if (file_exists($publicAssetsDir)) {
+                    if (!file_exists($rootAssetsDir)) {
+                        @mkdir($rootAssetsDir, 0775, true);
+                    }
+                    $pIter = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($publicAssetsDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                        RecursiveIteratorIterator::SELF_FIRST
+                    );
+                    foreach ($pIter as $pItem) {
+                        $pSub = $pIter->getSubPathName();
+                        $pTarget = $rootAssetsDir . DIRECTORY_SEPARATOR . $pSub;
+                        if ($pItem->isDir()) {
+                            if (!file_exists($pTarget)) @mkdir($pTarget, 0775, true);
+                        } else {
+                            @copy($pItem, $pTarget);
+                        }
+                    }
+                }
                 
                 echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
