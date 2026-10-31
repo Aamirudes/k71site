@@ -672,6 +672,33 @@ class Vendor extends Model
                     ['key' => 'Storage', 'value' => 'Store in a cool, dry and hygienic container'],
                 ],
             ],
+            'feasto' => [
+                'key' => 'feasto',
+                'label' => 'Feasto Hyperlocal Quick-Commerce (Blinkit Speed)',
+                'icon' => '⚡',
+                'color' => 'from-emerald-600 to-green-700',
+                'badge' => 'bg-emerald-500/10 text-[#0C831F] dark:text-emerald-400 border-emerald-500/20',
+                'catalog_name' => '10-Minute Dark Store & Grocery SKUs',
+                'item_singular' => 'Quick Commerce SKU',
+                'add_btn' => 'Add Quick SKU',
+                'specs_label' => 'Net Weight, Shelf Life, Packaging & Instant Stock',
+                'title_placeholder' => 'e.g. Amul Taaza Homogenised Toned Milk 1L Tetrapack',
+                'brand_placeholder' => 'e.g. Amul, Britannia, Haldiram, Nestle, Coca-Cola, Tata',
+                'brand_label' => 'Brand / Manufacturer',
+                'price_label' => 'Selling Price (₹)',
+                'price_placeholder' => '74.00',
+                'unit_label' => 'Pack Size / Volume (100g, 500g, 1L)',
+                'stock_label' => 'Instant Shelf Stock (Units)',
+                'gst_default' => '5',
+                'desc_placeholder' => 'Instant grocery item, ingredients, storage temperature, expiry info...',
+                'orders_name' => '10-Min Flash Orders & Fleet Dispatch Stream',
+                'default_specs' => [
+                    ['key' => 'Dispatch Speed', 'value' => '⚡ 10 Minutes Flash Dispatch'],
+                    ['key' => 'Pack Quantity', 'value' => '1 Pack / Bottle / Box'],
+                    ['key' => 'Food Grade', 'value' => '100% Vegetarian (FSSAI Lic. Approved)'],
+                    ['key' => 'Storage Condition', 'value' => 'Store in cool and dry place'],
+                ],
+            ],
         ];
 
         // Aliases
@@ -683,6 +710,7 @@ class Vendor extends Model
         $config['name'] = $config['name'] ?? ($config['label'] ?? 'Marketplace Store');
         $config['orders_name'] = match($config['key'] ?? '') {
             'food' => 'Kitchen Orders & Live Delivery Stream',
+            'feasto' => '10-Min Flash Orders & Fleet Dispatch Stream',
             'groceries' => 'Customer Grocery Orders & Pickups',
             'services' => 'Service Appointments & Bookings',
             'real_estate' => 'Client Inquiries & Property Visits',
@@ -706,6 +734,7 @@ class Vendor extends Model
         if ($vType) {
             return match($vType) {
                 'food' => 'food',
+                'feasto' => 'feasto',
                 'kirana', 'groceries', 'grocery' => 'marketplace',
                 'services', 'local_services', 'digital_services' => 'services',
                 'used' => 'used',

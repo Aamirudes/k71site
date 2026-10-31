@@ -912,13 +912,26 @@ class FeastoController extends Controller
         ]);
 
         // Merge real database products from approved vendors if available
-        $dbProducts = Product::whereIn('vertical', ['food', 'groceries', 'main'])
+        $dbProducts = Product::whereIn('vertical', ['food', 'groceries', 'main', 'feasto'])
             ->where('status', 'active')
+            ->where(function ($q) {
+                $q->where('title', 'NOT LIKE', '%dummy%')
+                  ->where('title', 'NOT LIKE', '%test%')
+                  ->where('title', 'NOT LIKE', '%sample%')
+                  ->where('title', 'NOT LIKE', '%fake%');
+            })
             ->latest()
             ->take(30)
             ->get();
 
         foreach ($dbProducts as $dp) {
+            $catSlug = 'dairy';
+            if ($dp->category && in_array($dp->category->slug, ['dairy', 'veggies', 'munchies', 'drinks', 'instant', 'sweets', 'tea_coffee', 'cleaning', 'personal_care'])) {
+                $catSlug = $dp->category->slug;
+            } elseif ($dp->vertical === 'food') {
+                $catSlug = 'sweets';
+            }
+
             $curatedItems->push((object)[
                 'id' => $dp->id,
                 'title' => $dp->title,
@@ -928,7 +941,7 @@ class FeastoController extends Controller
                 'compare_at_price' => $dp->compare_at_price ? (float) ($dp->compare_at_price / 100) : (float) (($dp->base_price * 1.1) / 100),
                 'featured_image' => $dp->primary_image_url ?: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=600&auto=format&fit=crop&q=80',
                 'brand' => $dp->vendor?->shop_name ?? 'K71 Direct Store',
-                'category_slug' => $dp->vertical === 'food' ? 'sweets' : 'dairy',
+                'category_slug' => $catSlug,
                 'rating' => 4.9,
                 'delivery_minutes' => '10 MINS',
                 'description' => $dp->description ?: 'Verified item dispatched directly with 10-minute doorstep guarantee.',

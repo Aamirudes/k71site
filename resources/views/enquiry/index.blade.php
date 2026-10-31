@@ -252,14 +252,14 @@
                             </div>
 
                             <!-- Card Action: Get Best Price / Send Enquiry -->
-                            <div class="p-4 pt-0 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+                            <div class="p-3.5 sm:p-4 pt-0 border-t border-slate-100 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 mt-2">
                                 <a href="{{ route('product.show', $prod->slug) }}" 
-                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
+                                   class="flex-1 min-w-[100px] py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] sm:text-xs font-bold text-center whitespace-nowrap transition">
                                     View Specs
                                 </a>
                                 <button type="button" 
                                         @click="openRfqModal('{{ addslashes($prod->title) }}', {{ $prod->vendor_id ?? 'null' }}, {{ $prod->id }})"
-                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold text-center shadow-xs transition cursor-pointer">
+                                        class="flex-1 min-w-[110px] py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-[11px] sm:text-xs font-bold text-center whitespace-nowrap shadow-xs transition cursor-pointer">
                                     Get Best Price
                                 </button>
                             </div>
@@ -308,14 +308,14 @@
                                 </div>
                             </div>
 
-                            <div class="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+                            <div class="pt-3.5 sm:pt-4 mt-3.5 sm:mt-4 border-t border-slate-100 flex flex-wrap sm:flex-nowrap items-center gap-2">
                                 <a href="{{ route('storefront.show', $sup->slug) }}" 
-                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
-                                    View Storefront
+                                   class="flex-1 min-w-[100px] py-2 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] sm:text-xs font-bold text-center whitespace-nowrap transition">
+                                    View Store
                                 </a>
                                 <button type="button" 
                                         @click="openRfqModal('', {{ $sup->id }})"
-                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold text-center transition cursor-pointer">
+                                        class="flex-1 min-w-[110px] py-2 px-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] sm:text-xs font-bold text-center whitespace-nowrap transition cursor-pointer">
                                     Contact Supplier
                                 </button>
                             </div>
@@ -385,14 +385,14 @@
                             </div>
 
                             <!-- Right CTA -->
-                            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0">
+                            <div class="flex flex-wrap sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0">
                                 <div class="text-right">
-                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 block">
+                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 block whitespace-nowrap">
                                         💬 {{ $enq->quotes->count() }} Quotes Submitted
                                     </span>
                                 </div>
                                 <a href="{{ route('enquiry.show', $enq->enquiry_number) }}" 
-                                   class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs">
+                                   class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs whitespace-nowrap">
                                     Submit Quotation &rarr;
                                 </a>
                             </div>

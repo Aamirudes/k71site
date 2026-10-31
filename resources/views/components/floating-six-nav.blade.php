@@ -1,4 +1,23 @@
 @php
+    $shouldHide = request()->routeIs('messages.*')
+        || request()->is('messages*')
+        || request()->routeIs('checkout.*')
+        || request()->is('checkout*')
+        || request()->routeIs('orders.*')
+        || request()->is('orders*')
+        || request()->routeIs('account.orders*')
+        || request()->routeIs('admin.*')
+        || request()->is('admin*')
+        || request()->routeIs('vendor.*')
+        || request()->is('vendor*')
+        || request()->is('seller*')
+        || request()->routeIs('delivery.*')
+        || request()->is('delivery*');
+
+    if ($shouldHide) {
+        return;
+    }
+
     $launcherItems = \App\Http\Controllers\Admin\FloatingLauncherController::getLauncherItems();
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
 @endphp
@@ -20,7 +39,7 @@
                 const saved = JSON.parse(sessionStorage.getItem('k71_launcher_pos') || 'null');
                 if (saved && typeof saved.y === 'number') return Math.min(window.innerHeight - 72, Math.max(60, saved.y));
             } catch(e){}
-            return Math.round(window.innerHeight / 2 - 28);
+            return window.innerWidth < 640 ? Math.round(window.innerHeight - 140) : Math.round(window.innerHeight / 2 - 28);
         })(),
         hasMoved: false,
         mounted: false,

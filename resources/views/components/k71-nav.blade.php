@@ -1,4 +1,13 @@
+@props([
+    'hideSearch' => false,
+    'hideCategories' => false,
+])
+
 @php
+    $isMessages = request()->routeIs('messages.*') || request()->is('messages*');
+    $hideSearch = $hideSearch || $isMessages;
+    $hideCategories = $hideCategories || $isMessages;
+
     $currentVendor = app()->bound('current_vendor') ? app('current_vendor') : null;
     $activeVertical = $k71_vertical ?? config('k71.verticals.main');
     $currentKey = $k71_vertical_key ?? 'main';
@@ -157,6 +166,7 @@
                 </div>
             </div>
 
+            @if(!$hideSearch)
             <!-- Desktop Middle: Clean Integrated Search Bar with Live Autocomplete -->
             <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8 relative"
                  x-data="{
@@ -234,6 +244,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             <!-- Right Actions: Stores + Catalog + Messages + Wishlist + Cart + Account -->
             <div class="flex items-center gap-1 sm:gap-1.5">
@@ -365,6 +376,7 @@
 
         </div>
 
+        @if(!$hideSearch)
         <!-- Mobile Integrated Search Bar (Always visible on mobile screens) -->
         <div class="md:hidden pb-2.5 pt-0.5"
              x-data="{
@@ -443,10 +455,12 @@
                 </div>
             </div>
         </div>
+        @endif
 
     </div>
 
     <!-- Integrated Category Navigation Row -->
+    @if(!$hideCategories)
     @if(!$currentVendor)
     <div class="{{ request()->routeIs('home') ? 'hidden md:block' : '' }} border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -492,6 +506,7 @@
             </nav>
         </div>
     </div>
+    @endif
     @endif
 </header>
 

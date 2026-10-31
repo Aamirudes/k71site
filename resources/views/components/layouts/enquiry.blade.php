@@ -53,6 +53,24 @@
       @open-rfq-modal.window="openRfqModal($event.detail)"
       @keydown.escape.window="rfqModalOpen = false;">
 
+    <!-- Universal Top Strip: Back to K71 Marketplace -->
+    <div class="bg-black text-white text-[11px] font-medium py-1.5 px-4 sm:px-6 lg:px-8 border-b border-zinc-900 select-none">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors group">
+                <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span class="font-semibold">‹ Back to K71 Universal Marketplace</span>
+            </a>
+            <div class="flex items-center gap-3 text-zinc-400 text-[10px]">
+                <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Verified B2B Gateway
+                </span>
+                <span class="hidden sm:inline text-zinc-600">|</span>
+                <a href="{{ route('catalog.index') }}" class="hidden sm:inline hover:text-white transition">All Categories</a>
+            </div>
+        </div>
+    </div>
+
     <!-- ===================================================================
          1. TOP B2B BRAND HEADER & NAVIGATION (DEDICATED BUSINESS IDENTITY)
          =================================================================== -->

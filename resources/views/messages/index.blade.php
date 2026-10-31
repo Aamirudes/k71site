@@ -1928,28 +1928,8 @@
 </head>
 <body class="bg-slate-50 dark:bg-[#060a17] text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
 
-    <!-- Dedicated Minimalist Header: No Search Bar, No Category Slider, No Mobile Panel -->
-    <header class="bg-black text-white px-4 sm:px-6 py-2.5 border-b border-white/10 flex items-center justify-between z-30 relative select-none">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white text-xs font-semibold transition group">
-                <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to Marketplace</span>
-            </a>
-            <span class="text-zinc-600">|</span>
-            <div class="flex items-center gap-1.5 text-xs font-bold text-white tracking-tight">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Direct Messages</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3 text-xs">
-            <span class="text-[11px] text-zinc-400 hidden sm:inline font-mono">End-to-End Private Chat</span>
-            <a href="{{ route('account') }}" class="font-semibold text-zinc-300 hover:text-white transition flex items-center gap-1.5">
-                <span>Account</span>
-                <span class="text-zinc-500">›</span>
-            </a>
-        </div>
-    </header>
+    <!-- Standard Header Navbar without Search Bar and Category Slider per user instruction -->
+    <x-k71-nav :hideSearch="true" :hideCategories="true" />
 
     <div id="k71-chat-wrapper">
         <div class="glass-chat-frame" id="glassMainContainer">
@@ -2070,7 +2050,7 @@
                             </div>
                         </div>
 
-                        <div>
+                        <div class="flex items-center gap-1.5 relative">
                             <button type="button" class="glass-icon-btn" id="headerInfoBtn" title="View Profile Details">
                                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -2078,6 +2058,35 @@
                                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                                 </svg>
                             </button>
+
+                            <!-- Instagram 3-Dot Conversation Options Menu -->
+                            <button type="button" class="glass-icon-btn" id="headerMoreOptionsBtn" title="More Options">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="1.5"></circle>
+                                    <circle cx="19" cy="12" r="1.5"></circle>
+                                    <circle cx="5" cy="12" r="1.5"></circle>
+                                </svg>
+                            </button>
+
+                            <!-- 3-Dot Dropdown Menu -->
+                            <div id="chatOptionsDropdown" class="hidden absolute right-0 top-12 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 py-1 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="py-1">
+                                    <button type="button" id="optViewProfile" class="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                                        <span>👤</span> View Profile &amp; Store
+                                    </button>
+                                    <button type="button" id="optSearchInChat" class="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                                        <span>🔍</span> Search in Chat
+                                    </button>
+                                </div>
+                                <div class="py-1">
+                                    <button type="button" id="optMuteChat" class="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                                        <span>🔔</span> Mute Notifications
+                                    </button>
+                                    <button type="button" id="optDeleteChat" class="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 font-bold text-rose-600 dark:text-rose-400">
+                                        <span>🗑️</span> Delete Conversation
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -2475,7 +2484,9 @@
                                 <div class="glass-conv-time">${escapeHtml(lastMsgTime)}</div>
                             </div>
                             <div class="glass-conv-last-msg ${isUnread ? 'unread-bold' : ''}">
-                                <span>${escapeHtml(prefix + lastMsgText)}</span>
+                                ${c.is_typing 
+                                    ? '<span style="color:#0095f6; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#0095f6; animation:igTypingBounce 1s infinite;"></span> typing...</span>'
+                                    : `<span>${escapeHtml(prefix + lastMsgText)}</span>`}
                             </div>
                         </div>
                     </li>
@@ -2525,6 +2536,9 @@
         function loadConversation(convId, recipientId) {
             currentConversationId = convId;
             activeRecipientId = recipientId;
+            oldestChatMsgId = 0;
+            hasMoreChatHistory = true;
+            isFetchingOlderHistory = false;
 
             mainContainer.classList.add('chat-active');
             document.body.classList.add('chat-active');
@@ -2540,12 +2554,16 @@
                 const cached = threadMemoryCache[convId];
                 currentRecipientData = cached.recipient;
                 messagesCache = cached.messages;
+                if (messagesCache.length > 0) {
+                    oldestChatMsgId = messagesCache[0].id;
+                }
                 headerAvatar.src = cached.recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
                 headerAvatar.alt = cached.recipient.name || 'User';
                 headerUsername.textContent = '@' + (cached.recipient.username || 'user');
                 renderMessages(messagesCache, cached.recipient);
                 scrollFeedToBottom(false);
             } else {
+                messagesCache = [];
                 chatFeed.innerHTML = `
                     <div style="padding: 40px; text-align: center; color: var(--color-text-muted); font-size: 13px;" class="flex flex-col items-center justify-center gap-2">
                         <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
@@ -2554,6 +2572,110 @@
             }
 
             fetchMessages(true);
+        }
+
+        // ---------------------------------------------------------------------
+        // Real-Time Typing Indicator & Cross-Tab Broadcast Synchronization
+        // ---------------------------------------------------------------------
+        let chatBroadcastChannel = null;
+        let typingStopTimer = null;
+        try {
+            if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+                chatBroadcastChannel = new BroadcastChannel('k71_chat_sync_channel');
+                chatBroadcastChannel.onmessage = (event) => {
+                    const data = event.data;
+                    if (!data) return;
+                    if (data.type === 'typing' && data.conversation_id === currentConversationId && data.sender_id !== CURRENT_USER_ID) {
+                        showTypingIndicator();
+                    } else if (data.type === 'stop_typing' && data.conversation_id === currentConversationId) {
+                        hideTypingIndicator();
+                    } else if (data.type === 'new_message' && data.conversation_id === currentConversationId && data.sender_id !== CURRENT_USER_ID) {
+                        hideTypingIndicator();
+                        fetchMessages(false);
+                    }
+                };
+            }
+        } catch(e) {}
+
+        function showTypingIndicator() {
+            if (headerStatus) {
+                headerStatus.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span><span style="color:#0095f6; font-weight:700;">typing...</span>';
+            }
+            let existingTyping = document.getElementById('glassTypingRow');
+            if (!existingTyping && chatFeed) {
+                const recipientAvatar = (currentRecipientData && currentRecipientData.profile_pic)
+                    ? currentRecipientData.profile_pic
+                    : 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                const typingEl = document.createElement('div');
+                typingEl.id = 'glassTypingRow';
+                typingEl.className = 'glass-typing-row';
+                typingEl.innerHTML = `
+                    <img src="${escapeHtml(recipientAvatar)}" class="glass-msg-avatar" alt="">
+                    <div class="glass-typing-bubble">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                `;
+                chatFeed.appendChild(typingEl);
+                if (isUserNearBottom()) scrollFeedToBottom(true);
+            }
+        }
+
+        function hideTypingIndicator() {
+            const existingTyping = document.getElementById('glassTypingRow');
+            if (existingTyping) {
+                existingTyping.remove();
+            }
+            if (headerStatus && headerStatus.textContent.includes('typing')) {
+                if (currentRecipientData && currentRecipientData.is_online) {
+                    headerStatus.innerHTML = `<span class="glass-online-pill"><span class="glass-online-dot"></span> Active now</span> • ${escapeHtml(currentRecipientData.name || 'User')}`;
+                } else {
+                    const statusTxt = (currentRecipientData && currentRecipientData.status_label) ? escapeHtml(currentRecipientData.status_label) : 'Offline';
+                    headerStatus.innerHTML = `<span style="color:var(--color-text-muted);font-size:12px;">${statusTxt}</span> • ${escapeHtml((currentRecipientData && currentRecipientData.name) || 'User')}`;
+                }
+            }
+        }
+
+        function emitTypingPing() {
+            if (!currentConversationId) return;
+            const now = Date.now();
+
+            if (chatBroadcastChannel) {
+                try {
+                    chatBroadcastChannel.postMessage({
+                        type: 'typing',
+                        conversation_id: currentConversationId,
+                        sender_id: CURRENT_USER_ID
+                    });
+                } catch(e) {}
+            }
+
+            if (typingStopTimer) clearTimeout(typingStopTimer);
+            typingStopTimer = setTimeout(() => {
+                if (chatBroadcastChannel && currentConversationId) {
+                    try {
+                        chatBroadcastChannel.postMessage({
+                            type: 'stop_typing',
+                            conversation_id: currentConversationId,
+                            sender_id: CURRENT_USER_ID
+                        });
+                    } catch(e) {}
+                }
+            }, 3000);
+
+            if (now - lastTypingPing > 2000) {
+                lastTypingPing = now;
+                fetch('/api/chat/typing.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ conversation_id: currentConversationId })
+                }).catch(() => {});
+            }
         }
 
         function fetchMessages(scrollToBottom = false) {
@@ -2621,11 +2743,14 @@
                         const genuinelyNew = newMessages.filter(m => !existingIds.has(m.id));
 
                         if (genuinelyNew.length > 0) {
+                            const prevScroll = chatFeed.scrollTop;
                             messagesCache = [...messagesCache, ...genuinelyNew];
                             renderMessages(messagesCache, recipient);
                             // Only scroll to bottom if user was already watching near the bottom
                             if (scrollToBottom || wasNearBottom) {
                                 scrollFeedToBottom(true);
+                            } else {
+                                chatFeed.scrollTop = prevScroll;
                             }
                         }
                     }
@@ -2635,34 +2760,10 @@
 
                     // Instagram-Style 3-Dot Bouncing Typing Indicator & Header Status
                     const isTyping = Boolean(result.is_typing);
-                    let existingTyping = document.getElementById('glassTypingRow');
                     if (isTyping) {
-                        if (headerStatus) {
-                            headerStatus.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span><span style="color:#0095f6; font-weight:700;">typing...</span>';
-                        }
-                        if (!existingTyping) {
-                            const recipientAvatar = recipient.profile_pic || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(recipient.name || 'User') + '&background=0095F6&color=fff');
-                            const typingEl = document.createElement('div');
-                            typingEl.id = 'glassTypingRow';
-                            typingEl.className = 'glass-typing-row';
-                            typingEl.innerHTML = `
-                                <img src="${escapeHtml(recipientAvatar)}" class="glass-msg-avatar" alt="">
-                                <div class="glass-typing-bubble">
-                                    <span class="typing-dot"></span>
-                                    <span class="typing-dot"></span>
-                                    <span class="typing-dot"></span>
-                                </div>
-                            `;
-                            chatFeed.appendChild(typingEl);
-                            if (wasNearBottom) scrollFeedToBottom(true);
-                        }
+                        showTypingIndicator();
                     } else {
-                        if (headerStatus && headerStatus.textContent.includes('typing')) {
-                            headerStatus.innerHTML = '<span class="glass-online-indicator"></span> Active now';
-                        }
-                        if (existingTyping) {
-                            existingTyping.remove();
-                        }
+                        hideTypingIndicator();
                     }
 
                 } else if (result.error) {
@@ -3092,6 +3193,7 @@
                                 });
 
                                 // Exact Instagram scroll anchoring: keep exact reading position without jumping!
+                                chatFeed.scrollTop = (chatFeed.scrollHeight - prevScrollHeight) + prevScrollTop;
                                 requestAnimationFrame(() => {
                                     chatFeed.scrollTop = (chatFeed.scrollHeight - prevScrollHeight) + prevScrollTop;
                                 });
@@ -3129,6 +3231,22 @@
             messageInput.value = '';
             updateSendButtonState();
             messageInput.style.height = 'auto';
+
+            if (typingStopTimer) clearTimeout(typingStopTimer);
+            if (chatBroadcastChannel && currentConversationId) {
+                try {
+                    chatBroadcastChannel.postMessage({
+                        type: 'stop_typing',
+                        conversation_id: currentConversationId,
+                        sender_id: CURRENT_USER_ID
+                    });
+                    chatBroadcastChannel.postMessage({
+                        type: 'new_message',
+                        conversation_id: currentConversationId,
+                        sender_id: CURRENT_USER_ID
+                    });
+                } catch(e) {}
+            }
 
             // Optimistic UI Append
             const optimisticMsg = {
@@ -3230,25 +3348,12 @@
             }
         }
 
-        // Emit typing indicator with debounce
+        // Emit typing indicator with debounce and real-time cross-tab sync
         messageInput.addEventListener('input', () => {
             updateSendButtonState();
             messageInput.style.height = 'auto';
             messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
-
-            const now = Date.now();
-            if (now - lastTypingPing > 2200 && currentConversationId) {
-                lastTypingPing = now;
-                fetch('/api/chat/typing.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ conversation_id: currentConversationId })
-                }).catch(() => {});
-            }
+            emitTypingPing();
         });
 
         messageInput.addEventListener('keydown', (e) => {
@@ -3464,6 +3569,108 @@
                 }
             })
             .catch(err => console.error('Unsend error:', err));
+        }
+
+        // ---------------------------------------------------------------------
+        // Instagram 3-Dot Conversation Options Menu
+        // ---------------------------------------------------------------------
+        const headerMoreOptionsBtn = document.getElementById('headerMoreOptionsBtn');
+        const chatOptionsDropdown = document.getElementById('chatOptionsDropdown');
+        const optViewProfile = document.getElementById('optViewProfile');
+        const optSearchInChat = document.getElementById('optSearchInChat');
+        const optMuteChat = document.getElementById('optMuteChat');
+        const optDeleteChat = document.getElementById('optDeleteChat');
+
+        if (headerMoreOptionsBtn && chatOptionsDropdown) {
+            headerMoreOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                chatOptionsDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!chatOptionsDropdown.contains(e.target) && e.target !== headerMoreOptionsBtn) {
+                    chatOptionsDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        if (optViewProfile) {
+            optViewProfile.addEventListener('click', () => {
+                if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
+                if (currentRecipientData) {
+                    if (currentRecipientData.store_url) {
+                        window.open(currentRecipientData.store_url, '_blank');
+                    } else if (currentRecipientData.username) {
+                        window.location.href = '/' + currentRecipientData.username;
+                    } else {
+                        showGlassToast('User: ' + (currentRecipientData.name || 'Member'));
+                    }
+                }
+            });
+        }
+
+        if (optSearchInChat) {
+            optSearchInChat.addEventListener('click', () => {
+                if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
+                const query = prompt('Search messages in this conversation:');
+                if (!query) return;
+                const terms = query.toLowerCase();
+                const matchedBubbles = chatFeed.querySelectorAll('.glass-msg-body');
+                let found = false;
+                matchedBubbles.forEach(b => {
+                    if (b.textContent.toLowerCase().includes(terms)) {
+                        b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        b.style.outline = '2px solid #0095f6';
+                        b.style.borderRadius = '8px';
+                        setTimeout(() => { b.style.outline = ''; }, 3000);
+                        found = true;
+                    }
+                });
+                if (!found) {
+                    showGlassToast('No messages found matching "' + query + '"', 'info');
+                }
+            });
+        }
+
+        let isChatMuted = false;
+        if (optMuteChat) {
+            optMuteChat.addEventListener('click', () => {
+                if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
+                isChatMuted = !isChatMuted;
+                optMuteChat.innerHTML = isChatMuted ? '<span>🔕</span> Unmute Notifications' : '<span>🔔</span> Mute Notifications';
+                showGlassToast(isChatMuted ? 'Notifications muted for this conversation' : 'Notifications unmuted', 'info');
+            });
+        }
+
+        if (optDeleteChat) {
+            optDeleteChat.addEventListener('click', () => {
+                if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
+                if (!currentConversationId) return;
+                if (!confirm('Delete this conversation? All messages will be permanently deleted.')) return;
+                fetch('/api/chat/delete_conversation.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ conversation_id: currentConversationId })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        currentConversationId = null;
+                        mainContainer.classList.remove('chat-active');
+                        activeChat.style.display = 'none';
+                        emptyState.style.display = 'flex';
+                        fetchConversations(false);
+                        showGlassToast('Conversation deleted', 'info');
+                    } else {
+                        alert(result.error || 'Failed to delete chat.');
+                    }
+                })
+                .catch(err => console.error('Delete chat error:', err));
+            });
         }
 
         // Emoji Drawer
@@ -3930,7 +4137,7 @@
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', () => {
                 adjustMobileLayout();
-                if (chatFeed) chatFeed.scrollTop = chatFeed.scrollHeight;
+                if (chatFeed && isUserNearBottom()) chatFeed.scrollTop = chatFeed.scrollHeight;
             });
         }
         adjustMobileLayout();

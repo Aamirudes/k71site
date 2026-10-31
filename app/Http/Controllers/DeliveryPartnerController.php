@@ -24,7 +24,7 @@ class DeliveryPartnerController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:25'],
             'email' => ['nullable', 'email', 'max:100'],
             'vehicle_type' => ['required', 'string', 'in:bike,scooter,ev,bicycle'],
             'vehicle_number' => ['nullable', 'string', 'max:20'],
@@ -35,26 +35,53 @@ class DeliveryPartnerController extends Controller
             'payout_upi_id' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $partner = DeliveryPartner::where('phone', $validated['phone'])->first();
+        try {
+            // Clean phone number
+            $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            if (strlen($cleanPhone) === 12 && str_starts_with($cleanPhone, '91')) {
+                $cleanPhone = substr($cleanPhone, 2);
+            }
+            $validated['phone'] = $cleanPhone ?: $validated['phone'];
 
-        if (!$partner) {
-            $partner = DeliveryPartner::create(array_merge($validated, [
-                'user_id' => auth()->id(),
-                'is_online' => true,
-                'is_verified' => true,
-                'last_active_at' => now(),
-            ]));
-        } else {
-            $partner->update(array_merge($validated, [
-                'user_id' => auth()->id() ?: $partner->user_id,
-                'is_online' => true,
-                'last_active_at' => now(),
-            ]));
+            $partner = null;
+            if (auth()->check()) {
+                $partner = DeliveryPartner::where('user_id', auth()->id())->first();
+            }
+            if (!$partner) {
+                $partner = DeliveryPartner::where('phone', $validated['phone'])->first();
+            }
+
+            if (!$partner) {
+                $partner = DeliveryPartner::create(array_merge($validated, [
+                    'user_id' => auth()->id(),
+                    'is_online' => true,
+                    'is_verified' => true,
+                    'last_active_at' => now(),
+                ]));
+            } else {
+                $partner->update(array_merge($validated, [
+                    'user_id' => auth()->id() ?: $partner->user_id,
+                    'is_online' => true,
+                    'last_active_at' => now(),
+                ]));
+            }
+
+            // Assign role if authenticated user
+            if (auth()->check()) {
+                $user = auth()->user();
+                if ($user->role !== 'admin') {
+                    $user->role = 'delivery_partner';
+                    $user->save();
+                }
+            }
+
+            session(['delivery_partner_id' => $partner->id]);
+
+            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! You are now online.');
+        } catch (\Throwable $e) {
+            \Log::error('Delivery partner registration error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Registration encountered an issue: ' . $e->getMessage());
         }
-
-        session(['delivery_partner_id' => $partner->id]);
-
-        return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! You are now online.');
     }
 
     /**

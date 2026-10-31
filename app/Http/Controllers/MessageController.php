@@ -721,11 +721,14 @@ class MessageController extends Controller
                     $requestsCount++;
                 }
 
+                $isConvTyping = (bool) \Illuminate\Support\Facades\Cache::has("chat_typing_{$conv->id}_{$recipientId}");
+
                 $conversations[] = [
                     'id' => (int) $conv->id,
                     'status' => $conv->status ?? 'accepted',
                     'requested_by' => $conv->requested_by ? (int)$conv->requested_by : null,
                     'recipient' => $recipientInfo,
+                    'is_typing' => $isConvTyping,
                     'last_message' => $latestMsg ? [
                         'body' => $latestMsg->body,
                         'is_sent_by_me' => ((int)$latestMsg->sender_id === $userId),

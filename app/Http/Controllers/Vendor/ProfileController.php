@@ -21,7 +21,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'shop_name' => ['required', 'string', 'max:100'],
-            'vendor_type' => ['nullable', 'string', 'in:clothing,food,services,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,toys_sports,shorts,b2b'],
+            'vendor_type' => ['nullable', 'string', 'in:clothing,mens,food,feasto,services,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,toys_sports,shorts,b2b'],
             'description' => ['nullable', 'string', 'max:1000'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string'],

@@ -55,23 +55,23 @@
     <span class="hidden" aria-hidden="true">services.k71.in</span>
 
     <!-- 1. TOP PLATFORM NETWORK BAR -->
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-purple-100 shadow-xs">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-2xs">
         
-        <!-- Top Pro Strip -->
-        <div class="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white text-[11px] font-semibold py-1.5 px-4 sm:px-6">
+        <!-- Universal Minimal Black Strip: Back to Marketplace -->
+        <div class="bg-black text-white text-[11px] font-medium py-1.5 px-4 sm:px-6 border-b border-zinc-900 select-none">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="font-bold tracking-wide text-purple-200 uppercase">K71 ESCROW PROTECTED</span>
-                    <span class="hidden sm:inline text-purple-300/70">• Milestone funding released only upon your final milestone sign-off</span>
+                    <span class="font-bold tracking-wide text-zinc-300 uppercase">K71 ESCROW PROTECTED</span>
+                    <span class="hidden sm:inline text-zinc-400">• Milestone funds released upon your final approval</span>
                 </div>
-                <div class="flex items-center gap-4 text-purple-200">
+                <div class="flex items-center gap-4 text-zinc-300">
                     <a href="{{ url('/') }}" class="hover:text-white transition flex items-center gap-1">
-                        <span>&larr; Main Marketplace</span>
+                        <span>‹ Back to Marketplace</span>
                     </a>
-                    <span class="text-purple-400/40">|</span>
-                    <a href="{{ route('messages.index') }}" class="hover:text-white transition flex items-center gap-1 font-bold">
-                        <svg class="w-3.5 h-3.5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <span class="text-zinc-700">|</span>
+                    <a href="{{ route('messages.index') }}" class="hover:text-white transition flex items-center gap-1 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <span>Direct Messages</span>
                     </a>
                 </div>
@@ -84,15 +84,15 @@
             <!-- Logo & Brand Badge -->
             <div class="flex items-center gap-3 shrink-0">
                 <a href="{{ route('services.index') }}" class="flex items-center gap-2.5 group">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-purple-600/20 group-hover:scale-105 transition">
+                    <div class="w-10 h-10 rounded-xl bg-slate-950 text-white flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-slate-800 transition">
                         ⚡
                     </div>
                     <div>
                         <div class="flex items-center gap-1.5">
                             <span class="font-extrabold text-xl tracking-tight text-slate-950">K71</span>
-                            <span class="font-black text-xl tracking-tight text-purple-700">SERVICES</span>
+                            <span class="font-black text-xl tracking-tight text-slate-700">SERVICES</span>
                         </div>
-                        <p class="text-[10px] text-purple-600/80 font-bold tracking-wider uppercase -mt-0.5">Vetted Freelancers & Pros</p>
+                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase -mt-0.5">Vetted Freelancers &amp; Pros</p>
                     </div>
                 </a>
             </div>
@@ -100,14 +100,14 @@
             <!-- Global Services Search Bar (Desktop) -->
             <div class="hidden md:flex flex-1 max-w-xl mx-4">
                 <form action="{{ route('services.index') }}" method="GET" class="w-full relative flex items-center">
-                    <div class="absolute left-3.5 pointer-events-none text-purple-600">
+                    <div class="absolute left-3.5 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
                     <input type="text" name="search" value="{{ request('search') }}"
-                           placeholder="Search gigs & experts (e.g. Full-Stack Web, Logo Design, 3D Reels)..."
-                           class="w-full pl-10 pr-24 py-2.5 rounded-full bg-purple-50/50 border border-purple-200/80 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition">
+                           placeholder="Search gigs &amp; experts (e.g. Full-Stack Web, Logo Design, 3D Reels)..."
+                           class="w-full pl-10 pr-24 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition">
                     <button type="submit" 
-                            class="absolute right-1.5 px-4 py-1.5 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition shadow-xs">
+                            class="absolute right-1.5 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs cursor-pointer">
                         Find Pro
                     </button>
                 </form>
@@ -116,8 +116,8 @@
             <!-- Header Quick Actions (Desktop) -->
             <div class="hidden lg:flex items-center gap-3">
                 <button type="button" @click="rfqModalOpen = true"
-                        class="px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold transition border border-purple-200 flex items-center gap-1.5 cursor-pointer">
-                    <span class="text-purple-600">+</span>
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
+                    <span class="text-slate-600">+</span>
                     <span>Post Custom Project</span>
                 </button>
 

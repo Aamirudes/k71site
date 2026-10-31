@@ -1,7 +1,9 @@
 @props(['active' => null])
 
 @php
-    $currentHost = request()->getHost();
+    // Completely removed per user directive: "remove the mobile panel of home from evrywhere main mobile panel remove it fully from site"
+    return;
+@endphp
     $currentPath = request()->path();
     $currentRoute = request()->route() ? request()->route()->getName() : '';
 
