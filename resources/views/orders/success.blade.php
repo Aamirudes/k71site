@@ -31,6 +31,19 @@
                         <strong>Cash on Delivery:</strong> Please keep <strong>₹{{ number_format($order->total_amount / 100, 2) }}</strong> ready in cash to hand to the delivery courier rider upon delivery.
                     </div>
                 </div>
+            @elseif($order->payment_method === 'upi' && $order->payment_status !== 'paid')
+                <div class="my-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">📸</span>
+                        <div>
+                            <strong>UPI Payment Proof Pending:</strong>
+                            <p class="text-[11px] text-emerald-800">Submit your UTR number or screenshot so the merchant can verify & dispatch your order.</p>
+                        </div>
+                    </div>
+                    <a href="{{ route('checkout.payment', $order) }}" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs whitespace-nowrap shadow-xs">
+                        Upload Proof ↗
+                    </a>
+                </div>
             @endif
             <div class="flex justify-between text-sm mb-2">
                 <span class="text-gray-500">Status</span>

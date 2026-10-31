@@ -99,6 +99,10 @@ class Product extends Model
      */
     public function isPurchase(): bool
     {
+        if ($this->listing_type === 'purchase') {
+            return true;
+        }
+
         if ($this->isEnquiry() || $this->vertical === 'used' || $this->listing_type === 'classified') {
             return false;
         }

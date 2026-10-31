@@ -1,3 +1,8 @@
+@php
+    $launcherItems = \App\Http\Controllers\Admin\FloatingLauncherController::getLauncherItems();
+    $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
+@endphp
+
 <div x-data="{
         open: false,
         isDragging: false,
@@ -46,14 +51,7 @@
             this.open = !this.open;
         },
 
-        navItems: [
-            { id: 'mart', name: 'K71Mart', label: 'Fashion & Mart', url: '{{ k71_vertical_url('main') }}', color: 'from-amber-500 to-orange-600' },
-            { id: 'feasto', name: 'Feasto', label: '10-Min Hyperlocal', url: '{{ route('feasto.index') }}', color: 'from-emerald-500 to-teal-600' },
-            { id: 'services', name: 'Services', label: 'Freelance & Gigs', url: '{{ k71_vertical_url('services') }}', color: 'from-indigo-500 to-violet-600' },
-            { id: 'used', name: 'Pre-Loved', label: 'Used Marketplace', url: '{{ k71_vertical_url('used') }}', color: 'from-cyan-500 to-blue-600' },
-            { id: 'shorts', name: 'Shorts', label: 'Video Commerce', url: '{{ k71_vertical_url('shorts') }}', color: 'from-rose-500 to-red-600' },
-            { id: 'fleet', name: 'Delivery', label: 'Earn as Fleet Partner', url: '{{ route('delivery.onboarding') }}', color: 'from-amber-400 to-yellow-500' }
-        ]
+        navItems: {{ Js::from($activeLauncherItems) }}
      }"
      :style="'transform: translate3d(' + posX + 'px, ' + posY + 'px, 0);'"
      class="fixed top-0 left-0 z-50 select-none touch-none transition-transform duration-75"
@@ -88,24 +86,32 @@
                     <!-- Subtle Top Gradient Sheen -->
                     <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r" :class="item.color"></div>
 
-                    <!-- Clean Vector SVG Glyphs -->
-                    <template x-if="item.id === 'mart'">
+                    <!-- Custom Image Icon if Uploaded -->
+                    <template x-if="item.image_url">
+                        <img :src="item.image_url" :alt="item.name" class="w-5 h-5 object-contain group-hover:scale-110 transition-transform">
+                    </template>
+
+                    <!-- Clean Vector SVG Glyphs fallback -->
+                    <template x-if="!item.image_url && item.id === 'mart'">
                         <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </template>
-                    <template x-if="item.id === 'feasto'">
+                    <template x-if="!item.image_url && item.id === 'feasto'">
                         <svg class="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </template>
-                    <template x-if="item.id === 'services'">
+                    <template x-if="!item.image_url && item.id === 'services'">
                         <svg class="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     </template>
-                    <template x-if="item.id === 'used'">
+                    <template x-if="!item.image_url && item.id === 'used'">
                         <svg class="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     </template>
-                    <template x-if="item.id === 'shorts'">
+                    <template x-if="!item.image_url && item.id === 'shorts'">
                         <svg class="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </template>
-                    <template x-if="item.id === 'fleet'">
+                    <template x-if="!item.image_url && item.id === 'fleet'">
                         <svg class="w-5 h-5 text-yellow-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </template>
+                    <template x-if="!item.image_url && !['mart', 'feasto', 'services', 'used', 'shorts', 'fleet'].includes(item.id)">
+                        <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </template>
 
                     <span class="text-[8px] font-black tracking-tight text-white/90 leading-none mt-1" x-text="item.name"></span>

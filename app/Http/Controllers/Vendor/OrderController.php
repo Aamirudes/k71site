@@ -30,6 +30,14 @@ class OrderController extends Controller
         // Counts for pipeline filter tabs
         $counts = [
             'all' => Order::where('vendor_id', $vendor->id)->count(),
+            'pending_payment' => Order::where('vendor_id', $vendor->id)
+                ->where(function($q) {
+                    $q->whereHas('paymentClaim', function($cq) {
+                        $cq->whereIn('status', ['submitted', 'pending']);
+                    })->orWhere(function($oq) {
+                        $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
+                    });
+                })->count(),
             'to_pack' => Order::where('vendor_id', $vendor->id)->whereIn('status', ['pending', 'processing'])->count(),
             'shipped' => Order::where('vendor_id', $vendor->id)->where('status', 'shipped')->count(),
             'delivered' => Order::where('vendor_id', $vendor->id)->where('status', 'delivered')->count(),
@@ -40,7 +48,15 @@ class OrderController extends Controller
             ->where('vendor_id', $vendor->id);
 
         // Apply status filter
-        if ($status === 'to_pack') {
+        if ($status === 'pending_payment') {
+            $query->where(function($q) {
+                $q->whereHas('paymentClaim', function($cq) {
+                    $cq->whereIn('status', ['submitted', 'pending']);
+                })->orWhere(function($oq) {
+                    $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
+                });
+            });
+        } elseif ($status === 'to_pack') {
             $query->whereIn('status', ['pending', 'processing']);
         } elseif ($status === 'shipped') {
             $query->where('status', 'shipped');

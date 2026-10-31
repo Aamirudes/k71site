@@ -320,6 +320,10 @@
                             <a href="{{ route('payment.phonepe.initiate', $order) }}" class="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700">
                                 ⚡ Pay Now
                             </a>
+                        @elseif($order->payment_method === 'upi' && $order->payment_status !== 'paid' && $order->status !== 'cancelled')
+                            <a href="{{ route('checkout.payment', $order) }}" class="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700">
+                                📸 Submit Payment Proof
+                            </a>
                         @else
                             <span class="font-bold {{ $order->payment_status === 'paid' ? 'text-emerald-700' : 'text-amber-700' }}">
                                 {{ ucfirst($order->payment_status) }}

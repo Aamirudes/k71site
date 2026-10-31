@@ -42,6 +42,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
 
         // Vendor Shorts Studio
         Route::get('/shorts', [\App\Http\Controllers\Vendor\ShortsStudioController::class, 'index'])->name('shorts.index');
+        Route::get('/shorts/studio', [\App\Http\Controllers\Vendor\ShortsStudioController::class, 'index'])->name('shorts.studio');
         Route::match(['get', 'post'], '/shorts/ajax', [\App\Http\Controllers\Vendor\ShortsStudioController::class, 'ajax'])->name('shorts.ajax');
         Route::post('/shorts/upload', [\App\Http\Controllers\Vendor\ShortsStudioController::class, 'upload'])->name('shorts.upload');
         Route::post('/shorts/save', [\App\Http\Controllers\Vendor\ShortsStudioController::class, 'save'])->name('shorts.save');

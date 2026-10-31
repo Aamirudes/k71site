@@ -780,7 +780,7 @@
                                             @click="showEnquiryModal = true"
                                             class="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg shadow-stone-900/15 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                                         <span>📋</span>
-                                        <span>Request Best Quotation / Send Enquiry</span>
+                                        <span>Request Custom Quotation / Bulk Enquiry</span>
                                     </button>
 
                                     @if(!empty($sellerPhone))

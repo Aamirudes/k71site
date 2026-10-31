@@ -40,6 +40,13 @@
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'all' ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/70' }}">
                 All Orders ({{ $counts['all'] ?? 0 }})
             </a>
+            <a href="{{ route('vendor.orders.index', ['status' => 'pending_payment', 'search' => $search]) }}" 
+               class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'pending_payment' ? 'bg-black text-white shadow-xs' : 'bg-white text-zinc-900 hover:bg-zinc-50 border border-zinc-300' }}">
+                <span>💳 Payment Proofs</span>
+                <span class="px-2 py-0.2 rounded-full text-[10px] font-mono {{ ($counts['pending_payment'] ?? 0) > 0 ? 'bg-amber-400 text-black font-black animate-pulse' : 'bg-zinc-100 text-zinc-600' }}">
+                    {{ $counts['pending_payment'] ?? 0 }}
+                </span>
+            </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'to_pack', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'to_pack' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200/70' }}">
                 ⚡ To Pack ({{ $counts['to_pack'] ?? 0 }})

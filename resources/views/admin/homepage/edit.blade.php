@@ -516,15 +516,17 @@
 
             <!-- TAB 2: SERVICES HUB CONTROLS -->
             <div x-show="activeTab === 'services'" class="space-y-6">
+                
+                <!-- Services Hero & Header Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                         <div>
                             <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
                                 Services Hub Header &amp; Discovery
                             </h3>
-                            <p class="text-xs text-zinc-500 mt-0.5">Configure services.marblemandi.org and /services hero information.</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Configure services.k71.in and /services freelance hub hero copy.</p>
                         </div>
-                        <span class="text-[10px] bg-zinc-100 text-zinc-700 font-mono font-semibold px-2 py-0.5 rounded">services.k71.in</span>
+                        <span class="text-[10px] bg-indigo-50 text-indigo-700 font-mono font-semibold px-2 py-0.5 rounded">services.k71.in</span>
                     </div>
 
                     <div class="space-y-4 text-xs">
@@ -552,44 +554,140 @@
                                    class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                             <div>
-                                <label class="block font-semibold text-zinc-800 mb-1">Category Slider Title</label>
-                                <input type="text" name="services_cat_title" x-model="srv_cat_title"
-                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
+                                <label class="block font-semibold text-zinc-800 mb-1">Services Hero Banner Image Upload</label>
+                                <input type="file" name="services_hero_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($sp['services_hero_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $sp['services_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom banner active</span>
+                                    </div>
+                                @endif
                             </div>
                             <div>
-                                <label class="block font-semibold text-zinc-800 mb-1">Trending Gigs Title</label>
-                                <input type="text" name="services_trending_title" x-model="srv_trending_title"
-                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Banner Image URL</label>
+                                <input type="text" name="services_hero_image_url" value="{{ $sp['services_hero_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
                             </div>
-                        </div>
-
-                        <div>
-                            <label class="block font-semibold text-zinc-800 mb-1">Freelancer Onboarding Title</label>
-                            <input type="text" name="services_seller_cta_title" x-model="srv_seller_title"
-                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
                         </div>
                     </div>
                 </div>
+
+                <!-- Services Section Titles Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Section Titles &amp; Headings
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Customize category sliders and trending gig showcases.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Category Slider Title</label>
+                            <input type="text" name="services_cat_title" x-model="srv_cat_title"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Category Slider Subtitle</label>
+                            <input type="text" name="services_cat_subtitle" x-model="srv_cat_sub"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Trending Gigs Title</label>
+                            <input type="text" name="services_trending_title" x-model="srv_trending_title"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Trending Gigs Subtitle</label>
+                            <input type="text" name="services_trending_subtitle" x-model="srv_trending_sub"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Freelancer Onboarding CTA Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Freelancer &amp; Specialist Onboarding CTA
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Recruit skilled freelancers with escrow milestone guarantees.</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Title</label>
+                            <input type="text" name="services_seller_cta_title" x-model="srv_seller_title"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Subtitle / Value Proposition</label>
+                            <textarea name="services_seller_cta_subtitle" x-model="srv_seller_sub" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Text</label>
+                                <input type="text" name="services_seller_cta_btn_text" value="{{ $sp['services_seller_cta_btn_text'] ?? 'Start Selling Services' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Link</label>
+                                <input type="text" name="services_seller_cta_btn_link" value="{{ $sp['services_seller_cta_btn_link'] ?? '/vendor/register' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Services Visual Simulation Card -->
+                <div class="bg-zinc-950 text-white rounded-2xl p-6 border border-zinc-800 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase tracking-widest text-indigo-400 font-bold block">Interactive Preview</span>
+                            <h4 class="text-sm font-bold text-white mt-0.5">Services Hub Hero Simulation</h4>
+                        </div>
+                        <a href="{{ k71_vertical_url('services') }}" target="_blank" class="text-xs text-indigo-300 hover:underline font-mono">Open Live ↗</a>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black uppercase tracking-wider"
+                              x-text="srv_hero_badge || 'SERVICES TRUST'"></span>
+                        <h3 class="text-base sm:text-lg font-black text-white" x-text="srv_hero_title"></h3>
+                        <p class="text-xs text-zinc-400 line-clamp-2" x-text="srv_hero_sub"></p>
+                        <div class="flex items-center gap-2 pt-1">
+                            <div class="flex-1 py-2 px-3 rounded-lg bg-zinc-800 text-zinc-400 text-xs border border-zinc-700 flex items-center justify-between">
+                                <span x-text="srv_search_placeholder || 'Search services...'"></span>
+                                <span class="text-zinc-500">🔍</span>
+                            </div>
+                            <span class="px-3.5 py-2 rounded-lg bg-white text-zinc-950 font-bold text-xs">Search</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 3: FOOD & DINING CONTROLS -->
             <div x-show="activeTab === 'food'" class="space-y-6">
+                
+                <!-- Food Hero & Express Delivery Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                         <div>
                             <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
                                 Food &amp; Cloud Kitchens Header
                             </h3>
-                            <p class="text-xs text-zinc-500 mt-0.5">Configure food.marblemandi.org and /food discovery copy.</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Configure food.k71.in and /food express doorstep dining hub.</p>
                         </div>
-                        <span class="text-[10px] bg-zinc-100 text-zinc-700 font-mono font-semibold px-2 py-0.5 rounded">food.k71.in</span>
+                        <span class="text-[10px] bg-amber-50 text-amber-800 font-mono font-semibold px-2 py-0.5 rounded">food.k71.in</span>
                     </div>
 
                     <div class="space-y-4 text-xs">
                         <div>
-                            <label class="block font-semibold text-zinc-800 mb-1">Express Delivery Badge</label>
+                            <label class="block font-semibold text-zinc-800 mb-1">Express Delivery Trust Badge</label>
                             <input type="text" name="food_hero_badge" x-model="food_hero_badge"
                                    class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
                         </div>
@@ -605,26 +703,140 @@
                             <textarea name="food_hero_subtitle" x-model="food_hero_sub" rows="2"
                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium"></textarea>
                         </div>
+
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Food Search Placeholder</label>
+                            <input type="text" name="food_search_placeholder" value="{{ $fp['food_search_placeholder'] ?? 'Search biryani, pizza, thali, rolls, desserts...' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Food Hero Banner Image Upload</label>
+                                <input type="file" name="food_hero_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($fp['food_hero_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $fp['food_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom banner active</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Banner Image URL</label>
+                                <input type="text" name="food_hero_image_url" value="{{ $fp['food_hero_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Food Section Titles Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Section Titles &amp; Headings
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Customize cuisine collections and cloud kitchen showcases.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Cuisines Slider Title</label>
+                            <input type="text" name="food_cuisines_title" value="{{ $fp['food_cuisines_title'] ?? 'Popular Regional Cuisines' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Cuisines Slider Subtitle</label>
+                            <input type="text" name="food_cuisines_subtitle" value="{{ $fp['food_cuisines_subtitle'] ?? 'Authentic flavors delivered hot to your doorstep' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Cloud Kitchens Showcase Title</label>
+                            <input type="text" name="food_restaurants_title" value="{{ $fp['food_restaurants_title'] ?? 'Top Hygiene-Certified Cloud Kitchens' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Cloud Kitchens Showcase Subtitle</label>
+                            <input type="text" name="food_restaurants_subtitle" value="{{ $fp['food_restaurants_subtitle'] ?? 'Hand-crafted meals by vetted culinary masters' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kitchen Partner Onboarding CTA Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Cloud Kitchen &amp; Restaurant Onboarding CTA
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Recruit cloud kitchens, home chefs, and dining ateliers.</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Title</label>
+                            <input type="text" name="food_seller_cta_title" value="{{ $fp['food_seller_cta_title'] ?? 'Are You a Restaurant, Cloud Kitchen, or Home Baker?' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Subtitle / Value Proposition</label>
+                            <textarea name="food_seller_cta_subtitle" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $fp['food_seller_cta_subtitle'] ?? 'List your menu on K71 Food with zero extortionate commission rates. Direct customer payouts, automated dispatch alerts, and verified customer reviews.' }}</textarea>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Text</label>
+                                <input type="text" name="food_seller_cta_btn_text" value="{{ $fp['food_seller_cta_btn_text'] ?? 'Register Kitchen' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Link</label>
+                                <input type="text" name="food_seller_cta_btn_link" value="{{ $fp['food_seller_cta_btn_link'] ?? '/vendor/register' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Food Visual Simulation Card -->
+                <div class="bg-zinc-950 text-white rounded-2xl p-6 border border-zinc-800 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">Interactive Preview</span>
+                            <h4 class="text-sm font-bold text-white mt-0.5">Food Hub Hero Simulation</h4>
+                        </div>
+                        <a href="{{ k71_vertical_url('food') }}" target="_blank" class="text-xs text-amber-300 hover:underline font-mono">Open Live ↗</a>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider"
+                              x-text="food_hero_badge || 'EXPRESS DELIVERY'"></span>
+                        <h3 class="text-base sm:text-lg font-black text-white" x-text="food_hero_title"></h3>
+                        <p class="text-xs text-zinc-400 line-clamp-2" x-text="food_hero_sub"></p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 4: PRE-LOVED & USED CONTROLS -->
             <div x-show="activeTab === 'used'" class="space-y-6">
+                
+                <!-- Used Re-Commerce Hero Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
                         <div>
                             <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
                                 Pre-Loved &amp; Re-Commerce Hub
                             </h3>
-                            <p class="text-xs text-zinc-500 mt-0.5">Configure used.marblemandi.org and /used certified classifieds.</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Configure used.k71.in and /used certified classifieds &amp; thrift.</p>
                         </div>
-                        <span class="text-[10px] bg-zinc-100 text-zinc-700 font-mono font-semibold px-2 py-0.5 rounded">used.k71.in</span>
+                        <span class="text-[10px] bg-cyan-50 text-cyan-800 font-mono font-semibold px-2 py-0.5 rounded">used.k71.in</span>
                     </div>
 
                     <div class="space-y-4 text-xs">
                         <div>
-                            <label class="block font-semibold text-zinc-800 mb-1">Re-Commerce Badge</label>
+                            <label class="block font-semibold text-zinc-800 mb-1">Re-Commerce Verification Badge</label>
                             <input type="text" name="used_hero_badge" x-model="used_hero_badge"
                                    class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
                         </div>
@@ -640,8 +852,120 @@
                             <textarea name="used_hero_subtitle" x-model="used_hero_sub" rows="2"
                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium"></textarea>
                         </div>
+
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Search Placeholder</label>
+                            <input type="text" name="used_search_placeholder" value="{{ $up['used_search_placeholder'] ?? 'Search iPhone 15, Royal Enfield, Dell XPS, DSLR, Vintage watches...' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-medium">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Used Hero Banner Image Upload</label>
+                                <input type="file" name="used_hero_image" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                @if(!empty($up['used_hero_image']))
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $up['used_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <span class="text-[11px] text-zinc-500">Custom banner active</span>
+                                    </div>
+                                @endif
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Or Banner Image URL</label>
+                                <input type="text" name="used_hero_image_url" value="{{ $up['used_hero_image_url'] ?? '' }}" placeholder="https://..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Used Section Titles Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Section Titles &amp; Headings
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Customize verified categories and inspected deal showcases.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Categories Grid Title</label>
+                            <input type="text" name="used_cat_title" value="{{ $up['used_cat_title'] ?? 'Browse Certified Re-Commerce Verticals' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Categories Grid Subtitle</label>
+                            <input type="text" name="used_cat_subtitle" value="{{ $up['used_cat_subtitle'] ?? 'Inspected electronics, vehicles, furniture and vintage collectibles' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Trending Deals Title</label>
+                            <input type="text" name="used_trending_title" value="{{ $up['used_trending_title'] ?? 'Fresh Inspected Pre-Owned Deals' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Trending Deals Subtitle</label>
+                            <input type="text" name="used_trending_subtitle" value="{{ $up['used_trending_subtitle'] ?? 'Every item inspected by our certified technical team' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Seller Classified Onboarding CTA Card -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
+                    <div class="pb-3 border-b border-zinc-100">
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                            Post Free Classified / Sell Used Items CTA
+                        </h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Encourage customers and traders to sell pre-owned items directly.</p>
+                    </div>
+
+                    <div class="space-y-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Title</label>
+                            <input type="text" name="used_seller_cta_title" value="{{ $up['used_seller_cta_title'] ?? 'Got Something to Sell? Turn Pre-Owned Items into Cash' }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Banner Subtitle / Value Proposition</label>
+                            <textarea name="used_seller_cta_subtitle" rows="2"
+                                      class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">{{ $up['used_seller_cta_subtitle'] ?? 'Post free verified classifieds in 60 seconds. Connect directly with buyers across India with optional PhonePe escrow inspection protection.' }}</textarea>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Text</label>
+                                <input type="text" name="used_seller_cta_btn_text" value="{{ $up['used_seller_cta_btn_text'] ?? 'Post Free Ad' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Button Link</label>
+                                <input type="text" name="used_seller_cta_btn_link" value="{{ $up['used_seller_cta_btn_link'] ?? '/used/create' }}"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Used Visual Simulation Card -->
+                <div class="bg-zinc-950 text-white rounded-2xl p-6 border border-zinc-800 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold block">Interactive Preview</span>
+                            <h4 class="text-sm font-bold text-white mt-0.5">Pre-Loved Hub Hero Simulation</h4>
+                        </div>
+                        <a href="{{ k71_vertical_url('used') }}" target="_blank" class="text-xs text-cyan-300 hover:underline font-mono">Open Live ↗</a>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-3">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider"
+                              x-text="used_hero_badge || 'PRE-LOVED VERIFIED'"></span>
+                        <h3 class="text-base sm:text-lg font-black text-white" x-text="used_hero_title"></h3>
+                        <p class="text-xs text-zinc-400 line-clamp-2" x-text="used_hero_sub"></p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- TAB 5: SEO & META TAGS -->

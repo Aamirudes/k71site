@@ -109,6 +109,15 @@
                                 <span>Navigation &amp; Mobile</span>
                             </div>
                         </a>
+
+                        <a href="{{ route('admin.floating_launcher.index') }}" 
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors {{ request()->routeIs('admin.floating_launcher*') ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950' }}">
+                            <div class="flex items-center gap-3">
+                                <span class="text-sm font-black text-amber-500">✱</span>
+                                <span>Floating 6-in-1 Launcher</span>
+                            </div>
+                            <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded {{ request()->routeIs('admin.floating_launcher*') ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-500' }}">Radial</span>
+                        </a>
                     </div>
                 </div>
 

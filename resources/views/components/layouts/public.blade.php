@@ -10,6 +10,8 @@
     'ogType' => 'website',
     'schemaJson' => null,
     'fullWidth' => false,
+    'hideMainHeader' => false,
+    'hideFooter' => false,
 ])
 
 <!DOCTYPE html>
@@ -83,8 +85,23 @@
 <body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
     
     
-    <!-- K71 Top Navigation Header -->
-    <x-k71-nav />
+    @php
+        $detectedVertical = request()->attributes->get('vertical') ?? null;
+        $isVerticalRoute = !empty($detectedVertical) 
+            || request()->is('feasto*') 
+            || request()->is('food*') 
+            || request()->is('services*') 
+            || request()->is('used*') 
+            || request()->is('shorts*')
+            || request()->routeIs('storefront.show')
+            || app()->bound('current_vendor');
+        $suppressMainHeader = $hideMainHeader || $isVerticalRoute;
+    @endphp
+
+    @if(!$suppressMainHeader)
+        <!-- K71 Top Navigation Header -->
+        <x-k71-nav />
+    @endif
 
     <!-- K71 Glass Hamburger Menu Drawer -->
     <x-k71-hamburger />
@@ -102,6 +119,7 @@
         </main>
     @endif
     
+    @if(!$hideFooter)
     <!-- LUXURY EDITORIAL ATELIER FOOTER -->
     @php
         $footerVendor = app()->bound('current_vendor') ? app('current_vendor') : null;
@@ -398,6 +416,7 @@
         </div>
 
     </footer>
+    @endif
 
     <!-- K71 Mobile Bottom Tab Navigation -->
     <x-k71-bottom-nav />

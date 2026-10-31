@@ -112,6 +112,10 @@ class HomepageController extends Controller
             'services_trending_subtitle' => ['nullable', 'string', 'max:200'],
             'services_seller_cta_title' => ['nullable', 'string', 'max:120'],
             'services_seller_cta_subtitle' => ['nullable', 'string', 'max:300'],
+            'services_seller_cta_btn_text' => ['nullable', 'string', 'max:60'],
+            'services_seller_cta_btn_link' => ['nullable', 'string', 'max:255'],
+            'services_hero_image_url' => ['nullable', 'string', 'max:500'],
+            'services_hero_image' => ['nullable', 'image', 'max:5120'],
 
             // Food Page Studio
             'food_hero_badge' => ['nullable', 'string', 'max:100'],
@@ -119,13 +123,32 @@ class HomepageController extends Controller
             'food_hero_subtitle' => ['nullable', 'string', 'max:300'],
             'food_search_placeholder' => ['nullable', 'string', 'max:120'],
             'food_cuisines_title' => ['nullable', 'string', 'max:100'],
+            'food_cuisines_subtitle' => ['nullable', 'string', 'max:200'],
             'food_trending_title' => ['nullable', 'string', 'max:100'],
             'food_restaurants_title' => ['nullable', 'string', 'max:100'],
+            'food_restaurants_subtitle' => ['nullable', 'string', 'max:200'],
+            'food_seller_cta_title' => ['nullable', 'string', 'max:120'],
+            'food_seller_cta_subtitle' => ['nullable', 'string', 'max:300'],
+            'food_seller_cta_btn_text' => ['nullable', 'string', 'max:60'],
+            'food_seller_cta_btn_link' => ['nullable', 'string', 'max:255'],
+            'food_hero_image_url' => ['nullable', 'string', 'max:500'],
+            'food_hero_image' => ['nullable', 'image', 'max:5120'],
 
             // Used Page Studio
             'used_hero_badge' => ['nullable', 'string', 'max:100'],
             'used_hero_title' => ['nullable', 'string', 'max:150'],
             'used_hero_subtitle' => ['nullable', 'string', 'max:300'],
+            'used_search_placeholder' => ['nullable', 'string', 'max:120'],
+            'used_cat_title' => ['nullable', 'string', 'max:100'],
+            'used_cat_subtitle' => ['nullable', 'string', 'max:200'],
+            'used_trending_title' => ['nullable', 'string', 'max:100'],
+            'used_trending_subtitle' => ['nullable', 'string', 'max:200'],
+            'used_seller_cta_title' => ['nullable', 'string', 'max:120'],
+            'used_seller_cta_subtitle' => ['nullable', 'string', 'max:300'],
+            'used_seller_cta_btn_text' => ['nullable', 'string', 'max:60'],
+            'used_seller_cta_btn_link' => ['nullable', 'string', 'max:255'],
+            'used_hero_image_url' => ['nullable', 'string', 'max:500'],
+            'used_hero_image' => ['nullable', 'image', 'max:5120'],
         ]);
 
         // File uploads
@@ -151,6 +174,30 @@ class HomepageController extends Controller
                 $path = $request->file("slide{$s}_image")->store('homepage', 'public');
                 Setting::set("slide{$s}_image", $path, 'homepage', 'string');
             }
+        }
+
+        // Services Hero Image Upload
+        if ($request->hasFile('services_hero_image')) {
+            $oldImg = Setting::get('services_hero_image');
+            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            $path = $request->file('services_hero_image')->store('services_page', 'public');
+            Setting::set('services_hero_image', $path, 'services_page', 'string');
+        }
+
+        // Food Hero Image Upload
+        if ($request->hasFile('food_hero_image')) {
+            $oldImg = Setting::get('food_hero_image');
+            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            $path = $request->file('food_hero_image')->store('food_page', 'public');
+            Setting::set('food_hero_image', $path, 'food_page', 'string');
+        }
+
+        // Used Hero Image Upload
+        if ($request->hasFile('used_hero_image')) {
+            $oldImg = Setting::get('used_hero_image');
+            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            $path = $request->file('used_hero_image')->store('used_page', 'public');
+            Setting::set('used_hero_image', $path, 'used_page', 'string');
         }
 
         // Category Custom Images Upload / Removal
@@ -215,7 +262,9 @@ class HomepageController extends Controller
             'services_hero_badge', 'services_hero_title', 'services_hero_subtitle',
             'services_search_placeholder', 'services_cat_title', 'services_cat_subtitle',
             'services_trending_title', 'services_trending_subtitle',
-            'services_seller_cta_title', 'services_seller_cta_subtitle'
+            'services_seller_cta_title', 'services_seller_cta_subtitle',
+            'services_seller_cta_btn_text', 'services_seller_cta_btn_link',
+            'services_hero_image_url'
         ];
         foreach ($servicesFields as $field) {
             Setting::set($field, $request->input($field), 'services_page', 'string');
@@ -224,8 +273,11 @@ class HomepageController extends Controller
         // Save Food Page Settings
         $foodFields = [
             'food_hero_badge', 'food_hero_title', 'food_hero_subtitle',
-            'food_search_placeholder', 'food_cuisines_title', 'food_trending_title',
-            'food_restaurants_title'
+            'food_search_placeholder', 'food_cuisines_title', 'food_cuisines_subtitle',
+            'food_trending_title', 'food_restaurants_title', 'food_restaurants_subtitle',
+            'food_seller_cta_title', 'food_seller_cta_subtitle',
+            'food_seller_cta_btn_text', 'food_seller_cta_btn_link',
+            'food_hero_image_url'
         ];
         foreach ($foodFields as $field) {
             Setting::set($field, $request->input($field), 'food_page', 'string');
@@ -233,7 +285,12 @@ class HomepageController extends Controller
 
         // Save Used Page Settings
         $usedFields = [
-            'used_hero_badge', 'used_hero_title', 'used_hero_subtitle'
+            'used_hero_badge', 'used_hero_title', 'used_hero_subtitle',
+            'used_search_placeholder', 'used_cat_title', 'used_cat_subtitle',
+            'used_trending_title', 'used_trending_subtitle',
+            'used_seller_cta_title', 'used_seller_cta_subtitle',
+            'used_seller_cta_btn_text', 'used_seller_cta_btn_link',
+            'used_hero_image_url'
         ];
         foreach ($usedFields as $field) {
             Setting::set($field, $request->input($field), 'used_page', 'string');

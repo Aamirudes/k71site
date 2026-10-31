@@ -213,13 +213,38 @@ class DashboardController extends Controller
         // Fetch customer payment submissions (UTR / Screenshots) waiting for vendor approval
         $pendingPaymentClaims = \App\Models\PaymentClaim::with(['order.user', 'order.items.product'])
             ->whereHas('order', function($q) use ($vendor) {
-                $q->where('vendor_id', $vendor->id);
+                $q->where('vendor_id', $vendor->id)
+                  ->where('payment_status', '!=', 'paid')
+                  ->where('status', '!=', 'cancelled');
             })
-            ->where(function($q) {
-                $q->where('status', 'submitted')->orWhere('status', 'pending');
-            })
+            ->whereIn('status', ['submitted', 'pending', 'processing'])
             ->latest()
             ->get();
+
+        // Also ensure any UPI orders awaiting payment review appear in the vendor queue
+        $unclaimedUpiOrders = Order::with('user')
+            ->where('vendor_id', $vendor->id)
+            ->where('payment_method', 'upi')
+            ->whereIn('payment_status', ['processing', 'pending'])
+            ->whereDoesntHave('paymentClaim')
+            ->latest()
+            ->get();
+
+        foreach ($unclaimedUpiOrders as $uOrder) {
+            $claim = \App\Models\PaymentClaim::firstOrCreate(
+                ['order_id' => $uOrder->id],
+                [
+                    'user_id' => $uOrder->user_id,
+                    'utr_number' => 'WAITING_PROOF',
+                    'amount_claimed' => $uOrder->total_amount,
+                    'status' => 'pending',
+                ]
+            );
+            if ($claim && !$pendingPaymentClaims->contains('id', $claim->id)) {
+                $claim->setRelation('order', $uOrder);
+                $pendingPaymentClaims->push($claim);
+            }
+        }
 
         return view('vendor.dashboard', compact(
             'vendor',

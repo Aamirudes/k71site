@@ -55,8 +55,8 @@
             'key' => 'clothing',
             'icon' => '🏪',
             'label' => 'Merchant Portal',
-            'color' => 'from-indigo-600 to-purple-600',
-            'badge' => 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+            'color' => 'bg-black text-white',
+            'badge' => 'bg-zinc-100 text-black border-zinc-300',
             'item_singular' => 'Product',
             'add_btn' => 'Add Product',
         ];
@@ -87,19 +87,19 @@
          x-transition:leave-end="-translate-x-full">
         
         <!-- Mobile Sidebar Header -->
-        <div class="h-20 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+        <div class="h-20 flex items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br {{ $currentVInfo['color'] }} flex items-center justify-center text-white text-lg font-bold shadow-md shadow-violet-500/10">
+                <div class="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center text-lg font-bold shadow-xs">
                     {{ $currentVInfo['icon'] }}
                 </div>
                 <div class="min-w-0">
-                    <h2 class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px]">{{ $curVendor?->shop_name ?? 'My Merchant Portal' }}</h2>
-                    <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded border {{ $currentVInfo['badge'] }}">
+                    <h2 class="text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[140px]">{{ $curVendor?->shop_name ?? 'Merchant Portal' }}</h2>
+                    <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded border border-zinc-300 bg-zinc-100 text-zinc-800">
                         {{ $currentVInfo['label'] }}
                     </span>
                 </div>
             </div>
-            <button @click="sidebarOpen = false" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+            <button @click="sidebarOpen = false" class="p-2 rounded-lg text-zinc-400 hover:text-black dark:hover:text-white transition-colors">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -129,21 +129,19 @@
     <aside class="w-72 bg-white dark:bg-[#0c0d14] border-r border-slate-200 dark:border-white/[0.08] hidden md:flex flex-col shrink-0 relative z-30 transition-colors duration-300">
         
         <!-- Desktop Brand Header -->
-        <div class="h-20 flex items-center px-6 border-b border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.01]">
+        <div class="h-20 flex items-center px-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-black">
             <div class="flex items-center gap-3.5 min-w-0">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br {{ $currentVInfo['color'] }} p-[2px] shadow-lg shadow-violet-500/10">
-                    <div class="w-full h-full bg-white dark:bg-zinc-900 rounded-[14px] flex items-center justify-center text-xl">
-                        {{ $currentVInfo['icon'] }}
-                    </div>
+                <div class="w-11 h-11 rounded-2xl bg-black text-white border border-zinc-800 flex items-center justify-center text-xl shadow-xs">
+                    {{ $currentVInfo['icon'] }}
                 </div>
                 <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
-                        <a href="{{ route('vendor.dashboard') }}" class="font-display text-sm font-bold text-slate-900 dark:text-white truncate block max-w-[150px] tracking-tight hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                        <a href="{{ route('vendor.dashboard') }}" class="font-display text-sm font-bold text-zinc-950 dark:text-white truncate block max-w-[150px] tracking-tight hover:underline transition-colors">
                             {{ $curVendor?->shop_name ?? 'Merchant Portal' }}
                         </a>
                     </div>
                     <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $currentVInfo['badge'] }}">
+                        <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full border border-zinc-300 bg-zinc-100 text-zinc-800">
                             {{ $currentVInfo['label'] }}
                         </span>
                     </div>

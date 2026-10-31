@@ -946,10 +946,25 @@
                                 <h4 class="text-sm font-medium text-gray-900 mb-2">Payment Verification (UPI)</h4>
                                 <div class="bg-gray-50 p-3 rounded-md mb-3 text-sm">
                                     <p class="flex justify-between items-center">
-                                        <span class="text-gray-500">Customer Submitted UTR:</span> 
-                                        <span class="font-mono font-bold text-gray-900 bg-white px-2 py-1 rounded border">{{ $order->paymentClaim->utr_number ?? 'Not provided' }}</span>
+                                        <span class="text-gray-500 font-semibold">Customer Submitted UTR:</span> 
+                                        <span class="font-mono font-bold text-gray-900 bg-white px-2 py-1 rounded border select-all">{{ $order->paymentClaim->utr_number ?? 'Not provided' }}</span>
                                     </p>
                                     <p class="text-xs text-gray-500 mt-1">Check your bank statement or UPI app to confirm ₹{{ number_format($order->total_amount / 100, 2) }} was credited.</p>
+                                    
+                                    @if($order->paymentClaim?->screenshot)
+                                        <div class="mt-3 pt-3 border-t border-gray-200">
+                                            <span class="text-xs font-bold text-gray-900 block mb-1.5 flex items-center gap-1.5">
+                                                <span>📸 Customer Uploaded Proof Screenshot</span>
+                                            </span>
+                                            <a href="{{ asset('storage/' . $order->paymentClaim->screenshot) }}" target="_blank" class="block max-w-sm rounded-xl overflow-hidden border-2 border-gray-300 hover:border-black transition-all shadow-sm group relative bg-white">
+                                                <img src="{{ asset('storage/' . $order->paymentClaim->screenshot) }}" alt="Payment Screenshot Proof" class="w-full h-auto max-h-60 object-contain mx-auto p-1">
+                                                <div class="p-2 bg-black text-white text-[10px] font-bold flex items-center justify-between">
+                                                    <span>Open full resolution image in new tab</span>
+                                                    <span>↗</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
                                 <label for="payment_status" class="block text-sm font-medium leading-6 text-gray-900">Verify Payment Status</label>
                                 <select id="payment_status" name="payment_status" x-model="paymentStatus" class="mt-2 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-brand-sage sm:text-sm sm:leading-6">

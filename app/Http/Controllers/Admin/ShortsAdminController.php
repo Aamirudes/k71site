@@ -99,6 +99,7 @@ class ShortsAdminController extends Controller
     public function destroy(Short $short)
     {
         $id = $short->id;
+        $title = $short->title;
         $short->forceDelete();
 
         if (request()->wantsJson()) {

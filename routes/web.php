@@ -92,6 +92,7 @@ Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middle
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
 Route::post('/used/post-ad', [\App\Http\Controllers\UsedController::class, 'storeAd'])->name('used.post-ad');
 Route::get('/used/ad/{product}/edit', [\App\Http\Controllers\UsedController::class, 'editAd'])->middleware('auth')->name('used.edit');
+Route::get('/used/{product}/edit', [\App\Http\Controllers\UsedController::class, 'editAd'])->middleware('auth')->name('used.item.edit');
 Route::put('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'updateAd'])->middleware('auth')->name('used.update');
 Route::post('/used/ad/{product}/toggle-sold', [\App\Http\Controllers\UsedController::class, 'toggleSold'])->middleware('auth')->name('used.toggle-sold');
 Route::delete('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'deleteAd'])->middleware('auth')->name('used.delete');
@@ -105,10 +106,11 @@ Route::get('/services/category/{slug}', [\App\Http\Controllers\ServicesControlle
 Route::get('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'becomeSeller'])->name('services.become_seller');
 Route::post('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'storeSeller'])->name('services.store_seller');
 Route::get('/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('services.provider');
-Route::get('/services/{slug}', [\App\Http\Controllers\ServicesController::class, 'show'])->name('services.show');
 Route::get('/services/gig/{product}/edit', [\App\Http\Controllers\ServicesController::class, 'editService'])->middleware('auth')->name('services.gig.edit');
+Route::get('/services/{product}/edit', [\App\Http\Controllers\ServicesController::class, 'editService'])->middleware('auth')->name('services.item.edit');
 Route::put('/services/gig/{product}', [\App\Http\Controllers\ServicesController::class, 'updateService'])->middleware('auth')->name('services.gig.update');
 Route::delete('/services/gig/{product}', [\App\Http\Controllers\ServicesController::class, 'deleteService'])->middleware('auth')->name('services.gig.destroy');
+Route::get('/services/{slug}', [\App\Http\Controllers\ServicesController::class, 'show'])->name('services.show');
 
 // Unified Customer Listings Hub
 Route::get('/account/listings', [\App\Http\Controllers\CustomerListingController::class, 'index'])->middleware('auth')->name('account.listings');
@@ -209,6 +211,7 @@ Route::get('/sell', [RegisterController::class, 'vendorShow'])->name('vendor.reg
 Route::post('/sell', [RegisterController::class, 'vendorStore']);
 Route::get('/vendor/register', [RegisterController::class, 'vendorShow']);
 Route::post('/vendor/register', [RegisterController::class, 'vendorStore']);
+Route::get('/vendor/onboarding', fn() => redirect()->route('vendor.register'))->name('vendor.onboarding');
 
 // OTP Routes (Needs session, but not necessarily fully authenticated)
 Route::get('/verify-otp', [OtpController::class, 'show'])->name('otp.show');
@@ -350,6 +353,11 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::delete('/navigation/{item}', [\App\Http\Controllers\Admin\NavigationController::class, 'destroy'])->name('navigation.destroy');
     Route::post('/navigation/reorder', [\App\Http\Controllers\Admin\NavigationController::class, 'reorder'])->name('navigation.reorder');
     Route::post('/navigation/reset-defaults', [\App\Http\Controllers\Admin\NavigationController::class, 'resetDefaults'])->name('navigation.reset');
+
+    // Floating 6-in-1 Radial Launcher Studio
+    Route::get('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'index'])->name('floating_launcher.index');
+    Route::post('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'save'])->name('floating_launcher.save');
+    Route::post('/floating-launcher/reset', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'resetDefaults'])->name('floating_launcher.reset');
 });
 
 // PhonePe Gateway Callback & S2S Webhook
