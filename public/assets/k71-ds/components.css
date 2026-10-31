@@ -5,6 +5,12 @@
    ========================================================================== */
 
 @layer k71-components {
+    /* Scrim overlay for photography text readability */
+    .k71-scrim { position: relative; isolation: isolate; }
+    .k71-scrim::after { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; background:linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 75%); }
+    .k71-scrim > * { position: relative; z-index: 1; }
+    .k71-scrim, .k71-scrim * { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+
     /* 1. Solid Product & Listing Cards (Strict Commerce UI) */
     .k71-card-product {
         display: flex;
