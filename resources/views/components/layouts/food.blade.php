@@ -108,7 +108,7 @@
                                     K71<span class="text-[#ea580c]">FOOD</span>
                                 </span>
                             </div>
-                            <span class="text-[9.5px] font-black uppercase tracking-widest text-[#ea580c] font-mono mt-0.5">
+                            <span class="text-[9.5px] font-black uppercase tracking-widest text-[#c2410c] font-mono mt-0.5">
                                 FRESH &amp; LOCAL KITCHENS
                             </span>
                         </div>
@@ -124,7 +124,7 @@
                                 class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100/80 border border-orange-200/70 text-left transition-colors cursor-pointer group">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                             <div class="min-w-0 max-w-[200px] lg:max-w-[240px]">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-[#ea580c] flex items-center gap-1">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-[#c2410c] flex items-center gap-1">
                                     <span>Deliver to</span>
                                     <svg class="w-3 h-3 text-[#ea580c] group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                 </div>
@@ -227,6 +227,7 @@
                     <!-- Food Bag Button (Triggers Drawer) -->
                     <button type="button" 
                             @click="cartDrawerOpen = true"
+                            aria-label="View shopping bag"
                             class="relative px-3.5 sm:px-4 py-2 rounded-2xl bg-gradient-to-r from-[#ea580c] to-[#dc2626] hover:brightness-105 text-white text-xs font-black transition shadow-md shadow-orange-500/25 flex items-center gap-2 cursor-pointer active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                         <span class="hidden sm:inline">Bag</span>
@@ -242,7 +243,7 @@
                         @click="locationModalOpen = true" 
                         class="flex items-center gap-1.5 text-stone-800 font-bold truncate max-w-[240px] cursor-pointer">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span class="text-[10px] uppercase tracking-wider text-[#ea580c] font-black shrink-0">DELIVER TO:</span>
+                    <span class="text-[10px] uppercase tracking-wider text-[#c2410c] font-black shrink-0">DELIVER TO:</span>
                     <span class="truncate underline decoration-orange-300" x-text="currentLocation"></span>
                     <svg class="w-3 h-3 text-[#ea580c] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                 </button>
@@ -351,7 +352,7 @@
             </div>
 
             <!-- Bottom Copyright & Compliance -->
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-400">
                 <div>
                     &copy; {{ date('Y') }} K71 Food • All rights reserved • Certified FSSAI Compliant Food Delivery
                 </div>

@@ -18,7 +18,7 @@
                     $fs = $foodSettings ?? [];
                 @endphp
                 <div class="max-w-3xl space-y-3">
-                    <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-orange-100/90 border border-orange-200 text-[#ea580c] text-[11px] font-black uppercase tracking-wider flex-wrap shadow-2xs">
+                    <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-orange-100/90 border border-orange-200 text-[#c2410c] text-[11px] font-black uppercase tracking-wider flex-wrap shadow-2xs">
                         <span class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>{{ $fs['food_hero_badge'] ?? '⚡ 25-30 MINUTE EXPRESS DOORSTEP DISPATCH' }}</span>
@@ -72,7 +72,7 @@
                         <!-- Matching Restaurants -->
                         <template x-if="results?.restaurants?.length > 0">
                             <div>
-                                <span class="text-[10.5px] font-black uppercase tracking-wider text-stone-400 block mb-2">Restaurants &amp; Kitchens</span>
+                                <span class="text-[10.5px] font-black uppercase tracking-wider text-stone-600 block mb-2">Restaurants &amp; Kitchens</span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <template x-for="r in results.restaurants" :key="r.name">
                                         <a :href="r.url" class="flex items-center gap-3 p-2 rounded-xl hover:bg-orange-50 transition border border-transparent hover:border-orange-100">
@@ -81,7 +81,7 @@
                                             </div>
                                             <div class="min-w-0">
                                                 <div class="text-xs font-bold text-stone-900 truncate" x-text="r.name"></div>
-                                                <div class="text-[10px] text-stone-500" x-text="'📍 ' + (r.city || 'Express Delivery')"></div>
+                                                <div class="text-[10px] text-stone-600" x-text="'📍 ' + (r.city || 'Express Delivery')"></div>
                                             </div>
                                         </a>
                                     </template>
@@ -92,7 +92,7 @@
                         <!-- Matching Dishes -->
                         <template x-if="results?.dishes?.length > 0">
                             <div>
-                                <span class="text-[10.5px] font-black uppercase tracking-wider text-stone-400 block mb-2">Popular Dishes</span>
+                                <span class="text-[10.5px] font-black uppercase tracking-wider text-stone-600 block mb-2">Popular Dishes</span>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <template x-for="d in results.dishes" :key="d.title">
                                         <a :href="d.restaurant_url" class="flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-orange-50 transition border border-transparent hover:border-orange-100">
@@ -117,7 +117,7 @@
 
                 <!-- Trending Quick Chips with Food Emojis -->
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1">
-                    <span class="text-[11px] font-black uppercase tracking-wider text-stone-400 shrink-0">Popular:</span>
+                    <span class="text-[11px] font-black uppercase tracking-wider text-stone-600 shrink-0">Popular:</span>
                     @php
                         $popularChips = [
                             ['label' => 'Dum Biryani', 'emoji' => '🍲'],
@@ -211,7 +211,7 @@
                                 <img src="{{ $col['img'] }}" alt="{{ $col['name'] }}" class="w-full h-full object-cover">
                             </div>
                             <span class="text-xs font-black text-stone-900 group-hover:text-[#ea580c] truncate w-full transition-colors">{{ $col['name'] }}</span>
-                            <span class="text-[10px] text-stone-400 font-semibold group-hover:text-orange-500">Explore ›</span>
+                            <span class="text-[10px] text-stone-600 font-semibold group-hover:text-orange-500">Explore ›</span>
                         </a>
                     @endforeach
                 </div>
@@ -349,7 +349,7 @@
 
                     <!-- Sort Dropdown -->
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-stone-400">Sort by:</span>
+                        <span class="text-xs font-bold text-stone-600">Sort by:</span>
                         <select onchange="window.location.href = this.value" class="px-3 py-1.5 rounded-xl bg-white border border-stone-200 text-xs font-bold text-stone-800 focus:outline-none focus:border-[#ea580c]">
                             <option value="{{ request()->fullUrlWithQuery(['sort' => 'recommended']) }}" {{ ($sort ?? 'recommended') === 'recommended' ? 'selected' : '' }}>Recommended</option>
                             <option value="{{ request()->fullUrlWithQuery(['sort' => 'delivery_time']) }}" {{ ($sort ?? '') === 'delivery_time' ? 'selected' : '' }}>Fastest Dispatch</option>
@@ -362,7 +362,7 @@
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                     <!-- Pure Veg Toggle -->
                     <a href="{{ $pureVegOnly ? request()->fullUrlWithQuery(['pure_veg' => null, 'veg' => null]) : request()->fullUrlWithQuery(['pure_veg' => 1]) }}" 
-                       class="px-3.5 py-2 rounded-full text-xs font-black transition-all shrink-0 flex items-center gap-2 {{ $pureVegOnly ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25' : 'bg-white text-stone-700 border border-stone-200 hover:border-emerald-300' }}">
+                       class="px-3.5 py-2 rounded-full text-xs font-black transition-all shrink-0 flex items-center gap-2 {{ $pureVegOnly ? 'bg-emerald-700 text-white shadow-md shadow-emerald-700/25' : 'bg-white text-stone-700 border border-stone-200 hover:border-emerald-300' }}">
                         <span class="w-3.5 h-3.5 rounded-xs border-2 border-current flex items-center justify-center p-0.5">
                             <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
                         </span>
@@ -425,7 +425,7 @@
                                         <!-- Top Left Badges -->
                                         <div class="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap z-10">
                                             @if($isVeg)
-                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-600 text-white shadow-sm flex items-center gap-1">
+                                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-700 text-white shadow-sm flex items-center gap-1">
                                                     <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
                                                     <span>Pure Veg</span>
                                                 </span>
@@ -484,7 +484,7 @@
                                         </div>
 
                                         <!-- Special Offer Ribbon -->
-                                        <div class="flex items-center gap-2 p-2 rounded-xl bg-orange-50/80 border border-orange-100 text-[#ea580c] text-[11px] font-black">
+                                        <div class="flex items-center gap-2 p-2 rounded-xl bg-orange-50/80 border border-orange-100 text-[#c2410c] text-[11px] font-black">
                                             <span>🏷️</span>
                                             <span class="truncate">Flat 50% OFF up to ₹150 • Use Code K71FEAST</span>
                                         </div>
@@ -494,7 +494,7 @@
                                 <!-- Action Button -->
                                 <div class="p-5 pt-0">
                                     <a href="{{ route('food.restaurant', $rest->slug) }}" 
-                                       class="w-full block py-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 hover:from-[#ea580c] hover:to-[#dc2626] text-[#ea580c] hover:text-white text-center text-xs font-black transition-all shadow-xs cursor-pointer border border-orange-200/80 hover:border-transparent group-hover:shadow-md">
+                                       class="w-full block py-3 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 hover:from-[#ea580c] hover:to-[#dc2626] text-[#c2410c] hover:text-white text-center text-xs font-black transition-all shadow-xs cursor-pointer border border-orange-200/80 hover:border-transparent group-hover:shadow-md">
                                         View Digital Menu &amp; Order ›
                                     </a>
                                 </div>
@@ -549,7 +549,7 @@
                                         </div>
 
                                         <div class="absolute top-3 right-3 z-10">
-                                            <span class="px-2.5 py-0.5 rounded-md bg-[#ea580c] text-white text-[9.5px] font-black uppercase tracking-wider shadow-md">
+                                            <span class="px-2.5 py-0.5 rounded-md text-white text-[9.5px] font-black uppercase tracking-wider shadow-md" style="background-color: #c2410c !important; color: #ffffff !important;">
                                                 FOOD
                                             </span>
                                         </div>
@@ -570,7 +570,7 @@
                                             </a>
                                         </div>
                                         
-                                        <p class="text-xs text-stone-400 line-clamp-2 leading-relaxed">
+                                        <p class="text-xs text-stone-600 line-clamp-2 leading-relaxed">
                                             {{ $dish->description ?: 'Freshly prepared specialty meal with premium farm ingredients.' }}
                                         </p>
                                     </div>
@@ -597,7 +597,7 @@
             <!-- 7. THE K71 FOOD PROMISE & TRUST BADGES -->
             <section class="space-y-4">
                 <div class="text-center max-w-xl mx-auto space-y-1">
-                    <span class="text-[11px] font-black uppercase tracking-widest text-[#ea580c]">WHY DINERS LOVE US</span>
+                    <span class="text-[11px] font-black uppercase tracking-widest text-[#c2410c]">WHY DINERS LOVE US</span>
                     <h2 class="text-2xl sm:text-3xl font-black text-stone-950 tracking-tight">The K71 Food Standard</h2>
                     <p class="text-xs text-stone-500">Uncompromising quality, blistering dispatch, and certified hygiene on every meal.</p>
                 </div>

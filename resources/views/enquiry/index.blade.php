@@ -95,7 +95,7 @@
                     <!-- Popular Sourcing Chips + Quick RFQ CTA Strip -->
                     <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                            <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider shrink-0">Trending:</span>
+                            <span class="text-slate-600 font-bold uppercase text-[10px] tracking-wider shrink-0">Trending:</span>
                             @foreach(['Makrana Marble', 'Diamond Blades', 'Granite Slabs', 'CNC Machines', 'Packaging Material', 'Quartz Stone'] as $chip)
                                 <a href="{{ route('enquiry.index', ['search' => $chip]) }}" 
                                    class="px-3 py-1 rounded-full bg-slate-100 hover:bg-indigo-50 border border-slate-200/70 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-xs font-semibold transition shrink-0">
@@ -130,7 +130,7 @@
                             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800">
                                 Sourcing Categories
                             </span>
-                            <span class="text-xs text-slate-400 font-mono">Wholesale &amp; Real Estate</span>
+                            <span class="text-xs text-slate-600 font-mono">Wholesale &amp; Real Estate</span>
                         </div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mt-1">Key Industry &amp; Real Estate Sectors</h2>
                     </div>
@@ -177,7 +177,7 @@
                                 <h3 class="text-xs sm:text-sm font-black text-slate-900 group-hover:text-amber-800 transition-colors leading-snug">
                                     {{ $cat->name }}
                                 </h3>
-                                <p class="text-[11px] text-slate-500 font-medium mt-1 flex items-center justify-between">
+                                <p class="text-[11px] text-slate-700 font-semibold mt-1 flex items-center justify-between">
                                     <span>{{ $cat->enquiries_count }} RFQs</span>
                                     <span class="text-amber-700 font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                                 </p>
@@ -196,7 +196,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Recommended Industrial &amp; Wholesale Listings</h2>
-                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct factory-priced products ready for bulk dispatch and custom quotation.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Direct factory-priced products ready for bulk dispatch and custom quotation.</p>
                     </div>
                     <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1">
                         <span>Browse Catalog</span>
@@ -247,7 +247,7 @@
                                     <!-- Specs Snippet / MOQ -->
                                     <div class="text-[11px] text-slate-600 line-clamp-1 leading-normal flex items-center gap-2">
                                         <span class="font-medium bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px]">MOQ: {{ $prod->custom_fields['moq'] ?? '50 Units' }}</span>
-                                        <span class="text-slate-400">Direct Dispatch</span>
+                                        <span class="text-slate-600 font-medium">Direct Dispatch</span>
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +279,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Verified Suppliers &amp; Manufacturers</h2>
-                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Pre-audited verified businesses with direct contact and quoting capabilities.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Pre-audited verified businesses with direct contact and quoting capabilities.</p>
                     </div>
                 </div>
 
@@ -306,7 +306,7 @@
                                         </p>
                                         <div class="flex items-center gap-2 mt-1.5 text-[10.5px]">
                                             <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium">MOQ: 50+ Units</span>
-                                            <span class="text-slate-500 font-medium">Bulk Rates: Factory Direct</span>
+                                            <span class="text-slate-600 font-medium">Bulk Rates: Factory Direct</span>
                                         </div>
                                     </div>
                                 </div>
@@ -337,7 +337,7 @@
                             <span>Open Buyer Requirements &amp; Leads</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">Live Board</span>
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct RFQs posted by verified commercial buyers waiting for supplier quotations.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Direct RFQs posted by verified commercial buyers waiting for supplier quotations.</p>
                     </div>
 
                     <button type="button" 
@@ -353,7 +353,7 @@
                         <div class="p-5 sm:p-6 hover:bg-slate-50/70 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div class="space-y-2 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-[10px] font-mono font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                                    <span class="text-[10px] font-mono font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
                                         {{ $enq->enquiry_number }}
                                     </span>
                                     <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
@@ -364,7 +364,7 @@
                                             ⚡ Immediate Need
                                         </span>
                                     @endif
-                                    <span class="text-xs text-slate-400">
+                                    <span class="text-xs text-slate-600">
                                         Posted {{ $enq->created_at->diffForHumans() }}
                                     </span>
                                 </div>

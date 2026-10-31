@@ -200,6 +200,7 @@
 
                 <!-- Cart Button with Live Counter -->
                 <a href="{{ route('cart.index') }}"
+                   aria-label="View Shopping Cart"
                    class="relative inline-flex items-center gap-1.5 bg-white hover:bg-zinc-200 text-black font-extrabold text-xs sm:text-sm px-3.5 py-1.5 rounded-md shadow-sm transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -317,7 +318,7 @@
                             <div class="mt-1 flex items-baseline justify-center sm:justify-start gap-2">
                                 <span class="text-base sm:text-xl font-black text-white">₹{{ number_format($firstProd->base_price / 100, 0) }}</span>
                                 @if($firstProd->compare_at_price && ($firstProd->compare_at_price > $firstProd->base_price))
-                                <span class="text-xs text-zinc-500 line-through">₹{{ number_format($firstProd->compare_at_price / 100, 0) }}</span>
+                                <span class="text-xs text-zinc-400 line-through">₹{{ number_format($firstProd->compare_at_price / 100, 0) }}</span>
                                 <span class="text-xs font-bold text-emerald-400">
                                     {{ round((1 - ($firstProd->base_price / $firstProd->compare_at_price)) * 100) }}% OFF
                                 </span>
@@ -356,14 +357,6 @@
                     </div>
                 </div>
                 <span class="text-xs font-bold text-zinc-300">Scroll ➔</span>
-            </div>
-                    <span class="text-lg">🔥</span>
-                    <div>
-                        <h2 class="text-base sm:text-lg font-black text-slate-900">Trending Shoppable Reels</h2>
-                        <p class="text-xs text-slate-500">Swipe to watch customer favorites & creator showcases</p>
-                    </div>
-                </div>
-                <span class="text-xs font-bold text-zinc-400">Scroll ➔</span>
             </div>
 
             <div class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-2">
@@ -441,7 +434,7 @@
                         <div class="flex items-baseline gap-1.5">
                             <span class="text-sm font-black text-white">₹{{ number_format($price, 0) }}</span>
                             @if($compare)
-                            <span class="text-[10px] text-zinc-500 line-through">₹{{ number_format($compare, 0) }}</span>
+                            <span class="text-[10px] text-zinc-400 line-through">₹{{ number_format($compare, 0) }}</span>
                             @endif
                         </div>
                         <button @click="addToCartDirect({{ $p->id }})"
@@ -759,7 +752,7 @@
                                     <div class="flex items-baseline gap-2 mt-1">
                                         <span class="text-base font-black text-white" x-text="item.price"></span>
                                         <span x-show="item.original_price"
-                                              class="text-xs text-zinc-500 line-through"
+                                              class="text-xs text-zinc-400 line-through"
                                               x-text="item.original_price"></span>
                                         <span x-show="item.discount_pct > 0"
                                               class="text-xs font-bold text-emerald-400"

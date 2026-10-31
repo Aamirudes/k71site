@@ -554,7 +554,7 @@
                             <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
                                 <div>
                                     <h3 class="font-bold text-xs sm:text-sm text-slate-950 dark:text-white group-hover:text-black transition truncate">{{ $rTitle }}</h3>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">Express delivery in 30-45 mins</p>
+                                    <p class="text-[10px] text-slate-600 dark:text-zinc-400 mt-0.5">Express delivery in 30-45 mins</p>
                                 </div>
                                 <div class="pt-2 mt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-zinc-100">
                                     <span>View Menu</span>
@@ -646,7 +646,7 @@
                             <div class="p-3">
                                 <h4 class="text-xs font-bold text-slate-950 dark:text-white truncate group-hover:text-black transition">{{ $item->title }}</h4>
                                 <div class="text-sm font-black text-slate-950 dark:text-white mt-1">{{ $item->formatted_base_price }}</div>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">📍 {{ $item->getCustomField('city', 'India') }}</span>
+                                <span class="text-[10px] text-slate-600 dark:text-zinc-400 block mt-0.5">📍 {{ $item->getCustomField('city', 'India') }}</span>
                             </div>
                         </a>
                     @endforeach
@@ -683,7 +683,7 @@
                     @foreach($featuredEnquiries->take(4) as $enq)
                         <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xs flex flex-col justify-between space-y-3">
                             <div>
-                                <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                                <div class="flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
                                     <span>#{{ $enq->enquiry_number }}</span>
                                     <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-bold uppercase">{{ $enq->status }}</span>
                                 </div>
@@ -726,7 +726,7 @@
                     <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
                         <a href="{{ route('vendor.register') }}" 
                            class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 !text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95"
-                           style="color: #020617 !important;">
+                           style="background-color: #ffffff !important; color: #020617 !important;">
                             Open Your Store &rarr;
                         </a>
                         <button type="button" 

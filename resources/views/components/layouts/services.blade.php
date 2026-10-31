@@ -351,12 +351,12 @@
                 </div>
             </div>
 
-            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500">
+            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400">
                 <p>&copy; {{ date('Y') }} K71 Services • Independent Professional Services Platform. All rights reserved.</p>
                 <div class="flex items-center gap-6">
-                    <a href="{{ url('/terms') }}" class="hover:text-slate-400 transition">Terms of Service</a>
-                    <a href="{{ url('/privacy') }}" class="hover:text-slate-400 transition">Privacy Policy</a>
-                    <a href="{{ url('/escrow') }}" class="hover:text-slate-400 transition">Escrow Safety Policy</a>
+                    <a href="{{ url('/terms') }}" class="hover:text-white transition">Terms of Service</a>
+                    <a href="{{ url('/privacy') }}" class="hover:text-white transition">Privacy Policy</a>
+                    <a href="{{ url('/escrow') }}" class="hover:text-white transition">Escrow Safety Policy</a>
                 </div>
             </div>
         </div>

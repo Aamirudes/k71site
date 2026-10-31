@@ -19,10 +19,21 @@
         background-color: rgba(255, 255, 255, 0.94);
         border-bottom: 1px solid var(--border);
     }
+    [data-brand="shorts"] .k71-header-glass,
+    [data-brand="shorts"] header.sticky,
+    [data-brand="shorts"] .k71-sticky-header {
+        background-color: #000000 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
 
     .k71-bottom-nav, .k71-bottom-nav-glass {
         background-color: rgba(255, 255, 255, 0.96);
         border-top: 1px solid var(--border);
+    }
+    [data-brand="shorts"] .k71-bottom-nav,
+    [data-brand="shorts"] .k71-bottom-nav-glass {
+        background-color: #000000 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
     }
 
     .k71-modal-surface {
@@ -51,9 +62,13 @@
         }
 
         [data-brand="shorts"] .k71-header-glass, 
+        [data-brand="shorts"] header.sticky,
+        [data-brand="shorts"] .k71-sticky-header,
         [data-brand="shorts"] .k71-bottom-nav,
+        [data-brand="shorts"] .k71-bottom-nav-glass,
         [data-brand="shorts"] .k71-bottom-sheet {
-            background-color: rgba(18, 18, 18, 0.9);
+            background-color: rgba(0, 0, 0, 0.88) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
         }
     }
 }

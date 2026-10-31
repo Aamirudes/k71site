@@ -53,7 +53,7 @@
 
                 <!-- Popular Quick-Tag Suggestions -->
                 <div class="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
-                    <span class="text-slate-400 font-medium">Popular:</span>
+                    <span class="text-slate-600 font-medium">Popular:</span>
                     <a href="{{ route('services.index', ['search' => 'Logo Design']) }}" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold transition border border-slate-200/80">Logo Design</a>
                     <a href="{{ route('services.index', ['search' => 'Website']) }}" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold transition border border-slate-200/80">Web Development</a>
                     <a href="{{ route('services.index', ['search' => 'Video']) }}" class="px-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold transition border border-slate-200/80">Video Editing</a>
@@ -264,8 +264,8 @@
                                         </h3>
 
                                         <!-- Rating & Delivery -->
-                                        <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-500 font-medium">
-                                            <span class="text-amber-500 font-bold flex items-center gap-0.5">★ 5.0</span>
+                                        <div class="flex items-center gap-2 mt-1 text-[11px] text-slate-600 font-medium">
+                                            <span class="text-amber-700 font-bold flex items-center gap-0.5">★ 5.0</span>
                                             <span>•</span>
                                             <span>⏱️ {{ $basicPkg?->delivery_days ?? 3 }} Days</span>
                                         </div>
@@ -274,7 +274,7 @@
                                     <!-- Price & CTA -->
                                     <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
                                         <div>
-                                            <span class="text-[10px] uppercase font-bold text-slate-400 block leading-none">Starting at</span>
+                                            <span class="text-[10px] uppercase font-bold text-slate-600 block leading-none">Starting at</span>
                                             <span class="k71-price text-slate-950">
                                                 ₹{{ number_format($price, 2) }}
                                             </span>
@@ -360,8 +360,8 @@
                                         <img src="{{ $pAvatar }}" alt="{{ $pro->shop_name }}" class="w-11 h-11 rounded-full object-cover border border-slate-200">
                                         <div>
                                             <h4 class="font-bold text-xs sm:text-sm text-slate-900 leading-tight">{{ $pro->shop_name }}</h4>
-                                            <div class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
-                                                <span class="text-amber-500 font-bold">★ {{ number_format($pro->rating ?? 5.0, 1) }}</span>
+                                            <div class="text-[11px] text-slate-600 flex items-center gap-1 mt-0.5">
+                                                <span class="text-amber-700 font-bold">★ {{ number_format($pro->rating ?? 5.0, 1) }}</span>
                                                 <span>({{ $pro->completed_projects ?? 0 }} orders)</span>
                                             </div>
                                         </div>

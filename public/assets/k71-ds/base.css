@@ -61,11 +61,8 @@
        ZERO-SPECIFICITY ELEMENT INHERITANCE RULES
        Color, font-size, font-weight, line-height & margin REMOVED from tags.
        Containers & Tailwind utility classes determine visual properties.
+       Only interactive controls require explicit inheritance.
        ---------------------------------------------------------------------- */
-    :where(h1, h2, h3, h4, h5, h6, p, a, button, label, span, small, li, strong, b, em, i) {
-        color: inherit;
-    }
-
     :where(a, button, input, select, textarea) {
         color: inherit;
         font-family: inherit;

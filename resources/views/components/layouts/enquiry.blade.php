@@ -242,7 +242,7 @@
                     <p class="text-slate-400 text-xs leading-relaxed">
                         National B2B sourcing portal connecting verified commercial buyers with accredited factory manufacturers, quarry operators, and wholesale distributors.
                     </p>
-                    <div class="text-[11px] font-mono text-slate-500">
+                    <div class="text-[11px] font-mono text-slate-400">
                         GST Compliant • Verified Commercial Escrow
                     </div>
                 </div>
@@ -283,7 +283,7 @@
                 </div>
             </div>
 
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
                 <div>&copy; {{ date('Y') }} K71 Enquiry Platform • A Division of K71 Multi-Category Marketplace</div>
                 <div class="flex items-center gap-4">
                     <span>GST Invoiced</span>

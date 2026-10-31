@@ -1,0 +1,172 @@
+[
+  {
+    "name": "main",
+    "url": "http://k71.in:8000/",
+    "expectedBrand": "main",
+    "brand": "main",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "food",
+    "url": "http://food.k71.in:8000/",
+    "expectedBrand": "food",
+    "brand": "food",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "services",
+    "url": "http://services.k71.in:8000/",
+    "expectedBrand": "services",
+    "brand": "services",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "used",
+    "url": "http://used.k71.in:8000/",
+    "expectedBrand": "used",
+    "brand": "used",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "b2b",
+    "url": "http://enquiry.k71.in:8000/",
+    "expectedBrand": "b2b",
+    "brand": "b2b",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "feasto",
+    "url": "http://feasto.k71.in:8000/",
+    "expectedBrand": "feasto",
+    "brand": "feasto",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "shorts",
+    "url": "http://shorts.k71.in:8000/",
+    "expectedBrand": "shorts",
+    "brand": "shorts",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "account",
+    "url": "http://k71.in:8000/account",
+    "expectedBrand": "main",
+    "brand": "main",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "orders",
+    "url": "http://k71.in:8000/orders",
+    "expectedBrand": "main",
+    "brand": "main",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  },
+  {
+    "name": "messages",
+    "url": "http://k71.in:8000/messages",
+    "expectedBrand": "main",
+    "brand": "main",
+    "brandMatch": true,
+    "h1Violations": [],
+    "cardTitleViolations": [],
+    "unlabeledButtons": [],
+    "ctaOverlaps": [],
+    "contrastViolations": [],
+    "overflow360": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "hasOverflow": false
+    }
+  }
+]

@@ -164,8 +164,8 @@
                 {{ $product->category?->name ?? $theme['label'] }}
             </span>
             @if($product->vendor)
-                <span class="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-[9px] text-emerald-800 dark:text-emerald-400 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                     <span class="truncate max-w-[80px]">{{ $product->vendor->shop_name }}</span>
                 </span>
             @endif
@@ -180,12 +180,12 @@
         <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
             <span class="text-sm font-black text-zinc-900 dark:text-white">
                 @if($isService)
-                    <span class="text-[10px] text-zinc-400 font-semibold block w-full">Starting at</span>
+                    <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-semibold block w-full">Starting at</span>
                 @endif
                 ₹{{ number_format($product->base_price / 100, 0) }}
             </span>
             @if($discount > 0 && !$isService)
-                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
+                <span class="text-[10px] text-zinc-600 dark:text-zinc-400 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
             @endif
         </div>
 

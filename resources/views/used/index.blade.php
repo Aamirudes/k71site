@@ -81,7 +81,7 @@
                         <span>{{ $catData['icon'] }}</span>
                         <span>{{ $catData['name'] }}</span>
                         @if($catKey === 'all')
-                            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $isCatActive ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600' }}">{{ $items->total() }}</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $isCatActive ? 'text-white' : 'text-stone-700 font-bold' }}" style="{{ $isCatActive ? 'background-color: #44403c !important; color: #ffffff !important;' : 'background-color: #e7e5e4 !important; color: #1c1917 !important;' }}">{{ $items->total() }}</span>
                         @endif
                     </button>
                 @endforeach
@@ -95,7 +95,7 @@
             
             <!-- Left: Condition Filter Pills (Tested by UsedItemsAndOffersTest) -->
             <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
-                <span class="text-[11px] font-black uppercase text-slate-400 mr-1 shrink-0">Condition:</span>
+                <span class="text-[11px] font-black uppercase text-slate-600 mr-1 shrink-0">Condition:</span>
                 
                 <button type="button" 
                         @click="applyCondition('all')"
@@ -106,7 +106,8 @@
 
                 <button type="button" 
                         @click="applyCondition('Like New')"
-                        :class="selectedCondition === 'Like New' ? 'bg-[#15803D] text-white' : 'bg-stone-100 text-stone-700 hover:bg-emerald-50'"
+                        :class="selectedCondition === 'Like New' ? 'text-white' : 'bg-stone-100 text-stone-700 hover:bg-emerald-50'"
+                        :style="selectedCondition === 'Like New' ? 'background-color: #15803D !important; color: #ffffff !important;' : ''"
                         class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer shrink-0">
                     Like New
                 </button>
@@ -159,7 +160,7 @@
                         :class="activeTab === 'explore' ? 'text-stone-900 border-b-2 border-stone-900 font-bold' : 'text-stone-500 font-medium hover:text-stone-900'"
                         class="pb-2 text-sm sm:text-base tracking-tight transition cursor-pointer flex items-center gap-1.5">
                     <span>Fresh Recommendations in {{ explode(',', $currentCity)[0] }}</span>
-                    <span class="text-xs text-stone-400 font-normal">({{ $items->total() }})</span>
+                    <span class="text-xs text-stone-600 font-medium">({{ $items->total() }})</span>
                 </button>
 
                 @auth
@@ -234,7 +235,7 @@
                                     </span>
                                 @endif
 
-                                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md {{ $isLikeNew ? 'bg-[#15803D] text-white' : 'bg-stone-900/80 text-white' }} font-bold text-[10px] uppercase tracking-wider z-10">
+                                <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md font-bold text-[10px] uppercase tracking-wider z-10 text-white" style="{{ $isLikeNew ? 'background-color: #15803D !important;' : 'background-color: rgba(28, 25, 23, 0.88) !important;' }} color: #ffffff !important;">
                                     {{ $itemCond }}
                                 </span>
 
@@ -277,7 +278,7 @@
                                             <svg class="w-3 h-3 text-stone-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                             <span class="truncate">{{ explode(',', $location)[0] }}</span>
                                         </span>
-                                        <span class="shrink-0 text-stone-400 font-medium">{{ $item->created_at ? $item->created_at->diffForHumans(null, true) : '2d' }}</span>
+                                        <span class="shrink-0 text-stone-600 font-medium">{{ $item->created_at ? $item->created_at->diffForHumans(null, true) : '2d' }}</span>
                                     </div>
                                 </div>
 
