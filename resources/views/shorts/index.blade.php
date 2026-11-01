@@ -1140,8 +1140,6 @@
         }
     </script>
     <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="shorts" />
-
     <!-- Shared K71 Authentication Popup Modal -->
     <x-k71-auth-modal />
 </body>

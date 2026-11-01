@@ -2102,6 +2102,73 @@
                 align-items: center !important;
                 width: 100% !important;
             }
+
+            /* Dark Mode High-Contrast Mobile Overrides */
+            html.dark .glass-chat-header,
+            .dark .glass-chat-header {
+                background: #090d16 !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+            }
+            html.dark .glass-chat-header-username,
+            .dark .glass-chat-header-username,
+            html.dark .glass-back-btn,
+            .dark .glass-back-btn,
+            html.dark .glass-chat-header button,
+            .dark .glass-chat-header button {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+            }
+            html.dark .glass-back-btn svg,
+            .dark .glass-back-btn svg,
+            html.dark .glass-chat-header button svg,
+            .dark .glass-chat-header button svg {
+                color: #ffffff !important;
+                stroke: #ffffff !important;
+            }
+            html.dark .glass-chat-header-status,
+            .dark .glass-chat-header-status {
+                color: #94a3b8 !important;
+                -webkit-text-fill-color: #94a3b8 !important;
+            }
+            html.dark .glass-composer-bar,
+            .dark .glass-composer-bar {
+                background: #090d16 !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+            }
+            html.dark .glass-composer-pill,
+            .dark .glass-composer-pill {
+                background: #141c2b !important;
+                border: 1px solid rgba(255, 255, 255, 0.14) !important;
+            }
+            html.dark .glass-composer-textarea,
+            .dark .glass-composer-textarea,
+            html.dark .glass-composer-input,
+            .dark .glass-composer-input {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                background: transparent !important;
+            }
+            html.dark .glass-composer-textarea::placeholder,
+            .dark .glass-composer-textarea::placeholder,
+            html.dark .glass-composer-input::placeholder,
+            .dark .glass-composer-input::placeholder {
+                color: #64748b !important;
+                -webkit-text-fill-color: #64748b !important;
+            }
+            html.dark .glass-composer-bar .glass-icon-btn,
+            .dark .glass-composer-bar .glass-icon-btn,
+            html.dark .glass-composer-pill button,
+            .dark .glass-composer-pill button {
+                color: #cbd5e1 !important;
+                -webkit-text-fill-color: #cbd5e1 !important;
+            }
+            html.dark .glass-composer-bar .glass-icon-btn svg,
+            .dark .glass-composer-bar .glass-icon-btn svg,
+            html.dark .glass-composer-pill button svg,
+            .dark .glass-composer-pill button svg {
+                color: #cbd5e1 !important;
+                stroke: #cbd5e1 !important;
+            }
             .glass-composer-textarea {
                 font-size: 15px !important;
                 padding: 6px 4px !important;
@@ -2938,7 +3005,7 @@
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
+                        body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID, stop: 1 })
                     }).catch(() => {});
                 }
             }, 3000);
@@ -2952,7 +3019,7 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ conversation_id: currentConversationId })
+                    body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID })
                 }).catch(() => {});
             }
         }
@@ -3535,7 +3602,7 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
+                    body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID, stop: 1 })
                 }).catch(() => {});
             }
 

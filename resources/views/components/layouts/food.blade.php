@@ -541,30 +541,7 @@
         </div>
     </div>
 
-    <!-- 6. MOBILE BOTTOM NAVIGATION (Fixed) -->
-    <div class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200 px-4 py-2 flex items-center justify-around shadow-lg">
-        <a href="{{ route('food.index') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold {{ request()->routeIs('food.index') ? 'text-[#ea580c]' : 'text-stone-500' }}">
-            <span class="text-base">🍕</span>
-            <span class="text-[10px]">Explore</span>
-        </a>
-        <a href="{{ route('food.index') }}#search" class="flex flex-col items-center gap-0.5 text-xs font-bold text-stone-500">
-            <span class="text-base">🔍</span>
-            <span class="text-[10px]">Search</span>
-        </a>
-        <a href="{{ route('food.index') }}#deals" class="flex flex-col items-center gap-0.5 text-xs font-bold text-stone-500">
-            <span class="text-base">🏷️</span>
-            <span class="text-[10px]">Offers</span>
-        </a>
-        <a href="{{ route('orders.index') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold text-stone-500">
-            <span class="text-base">📦</span>
-            <span class="text-[10px]">Orders</span>
-        </a>
-        <button type="button" @click="cartDrawerOpen = true" class="relative flex flex-col items-center gap-0.5 text-xs font-bold text-stone-500 cursor-pointer">
-            <span class="text-base">🛍️</span>
-            <span class="text-[10px]">Bag</span>
-            <span x-show="cartTotalCount > 0" x-text="cartTotalCount" class="absolute -top-1 right-1 w-4 h-4 rounded-full bg-[#ea580c] text-white text-[9px] font-black flex items-center justify-center"></span>
-        </button>
-    </div>
+
 
     <script>
     function k71FoodGlobalState() {
@@ -709,8 +686,6 @@
     </script>
 
     <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="food" />
-
     <!-- K71 Global Authentication Modal (Non-Negotiable) -->
     <x-k71-auth-modal />
 

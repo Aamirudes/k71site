@@ -22,112 +22,68 @@
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
     $triggerImage = \App\Models\Setting::get('floating_launcher_trigger_image', null);
     $triggerText = \App\Models\Setting::get('floating_launcher_trigger_text', 'NAV');
-    $closeText = \App\Models\Setting::get('floating_launcher_close_text', '✱');
+    $closeText = \App\Models\Setting::get('floating_launcher_close_text', '✕');
 @endphp
 
-<div class="k71-fab fixed top-0 left-0 select-none touch-none" 
-     style="transform: translate3d(calc(100vw - 72px), calc(50vh - 28px), 0); will-change: transform; z-index: 9999 !important;"
-     :style="'transform: translate3d(' + posX + 'px, ' + posY + 'px, 0); z-index: 9999 !important;'"
-     :class="(!mounted || isDragging) ? '' : 'transition-transform duration-150'"
+<style>
+    .k71-nav-fixed-dock {
+        position: fixed !important;
+        right: 20px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 9999 !important;
+        user-select: none;
+        -webkit-user-select: none;
+    }
+    @media (max-width: 640px) {
+        .k71-nav-fixed-dock {
+            right: 16px !important;
+            top: auto !important;
+            bottom: 85px !important;
+            transform: none !important;
+        }
+    }
+</style>
+
+<div class="k71-nav-fixed-dock" 
      x-data="{
         open: false,
-        isDragging: false,
-        dragStartX: 0,
-        dragStartY: 0,
-        posX: (() => {
-            try {
-                const saved = JSON.parse(sessionStorage.getItem('k71_launcher_pos') || 'null');
-                if (saved && typeof saved.x === 'number') return Math.min(window.innerWidth - 68, Math.max(12, saved.x));
-            } catch(e){}
-            return Math.max(12, (window.innerWidth || 375) - 68);
-        })(),
-        posY: (() => {
-            try {
-                const saved = JSON.parse(sessionStorage.getItem('k71_launcher_pos') || 'null');
-                if (saved && typeof saved.y === 'number') return Math.min(window.innerHeight - 68, Math.max(60, saved.y));
-            } catch(e){}
-            return (window.innerWidth < 640) ? Math.round((window.innerHeight || 667) - 130) : Math.round((window.innerHeight || 800) / 2 - 28);
-        })(),
-        hasMoved: false,
-        mounted: false,
-
-        init() {
-            this.$nextTick(() => {
-                setTimeout(() => { this.mounted = true; }, 50);
-            });
-        },
-
-        startDrag(e) {
-            this.isDragging = true;
-            this.hasMoved = false;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            this.dragStartX = clientX - this.posX;
-            this.dragStartY = clientY - this.posY;
-            document.addEventListener('mousemove', this.onDrag.bind(this));
-            document.addEventListener('mouseup', this.stopDrag.bind(this));
-            document.addEventListener('touchmove', this.onDrag.bind(this));
-            document.addEventListener('touchend', this.stopDrag.bind(this));
-        },
-
-        onDrag(e) {
-            if (!this.isDragging) return;
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const newX = clientX - this.dragStartX;
-            const newY = clientY - this.dragStartY;
-            if (Math.abs(newX - this.posX) > 5 || Math.abs(newY - this.posY) > 5) {
-                this.hasMoved = true;
-            }
-            this.posX = Math.max(12, Math.min(window.innerWidth - 68, newX));
-            this.posY = Math.max(60, Math.min(window.innerHeight - 68, newY));
-        },
-
-        stopDrag() {
-            this.isDragging = false;
-            document.removeEventListener('mousemove', this.onDrag);
-            document.removeEventListener('mouseup', this.stopDrag);
-            document.removeEventListener('touchmove', this.onDrag);
-            document.removeEventListener('touchend', this.stopDrag);
-            if (this.hasMoved) {
-                try {
-                    sessionStorage.setItem('k71_launcher_pos', JSON.stringify({ x: this.posX, y: this.posY }));
-                } catch(e){}
-            }
-        },
-
         toggle() {
-            if (this.hasMoved) return;
             this.open = !this.open;
         },
-
+        close() {
+            this.open = false;
+        },
         navItems: {{ Js::from($activeLauncherItems) }}
-     }">
+     }"
+     @click.outside="close()"
+     @keydown.escape.window="close()">
 
-    <!-- Radial Semi-Circle 6 Nav Items Container -->
+    <!-- Radial Arc Satellites Container (Fans out to the left towards center screen) -->
     <div x-show="open" 
          x-cloak 
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 scale-50"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0 scale-75"
          x-transition:enter-end="opacity-100 scale-100"
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 scale-100"
-         x-transition:leave-end="opacity-0 scale-50"
+         x-transition:leave-end="opacity-0 scale-75"
          class="absolute inset-0 pointer-events-none">
         
         <template x-for="(item, index) in navItems" :key="item.id">
             <div class="absolute pointer-events-auto transition-all duration-300 ease-out"
                  :style="(() => {
                     const radius = 95;
-                    const isRightSide = posX > (window.innerWidth / 2);
-                    const baseAngle = isRightSide ? 95 + (index * 34) : -85 + (index * 34);
-                    const rad = (baseAngle * Math.PI) / 180;
+                    // Fan smoothly to the left (between 100 deg and 260 deg)
+                    const total = Math.max(navItems.length - 1, 1);
+                    const angleDeg = 100 + (index * (160 / total));
+                    const rad = (angleDeg * Math.PI) / 180;
                     const x = Math.round(Math.cos(rad) * radius);
                     const y = Math.round(Math.sin(rad) * radius);
                     return 'transform: translate3d(' + x + 'px, ' + y + 'px, 0);';
                  })()">
                 <a :href="item.url" 
-                   class="group flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-slate-900/90 dark:bg-black/90 backdrop-blur-2xl border border-white/20 shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer relative overflow-hidden"
+                   class="group flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-slate-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer relative overflow-hidden text-center"
                    :title="item.label">
                     
                     <!-- Subtle Top Gradient Sheen -->
@@ -171,19 +127,19 @@
         </template>
     </div>
 
-    <!-- Center Trigger Button (Apple Dynamic Island Pro Obsidian Glass) -->
-    <div @mousedown="startDrag($event)" 
-         @touchstart="startDrag($event)"
-         @click="toggle()"
-         class="w-14 h-14 rounded-full bg-black/90 dark:bg-black/95 text-white shadow-[0_10px_35px_rgba(0,0,0,0.55)] border border-white/25 backdrop-blur-2xl flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 transition-all duration-200 relative group overflow-hidden">
+    <!-- Center Trigger Button (Obsidian Glass Floating Action Button) -->
+    <button type="button"
+            @click="toggle()"
+            aria-label="Toggle 6-in-1 Navigation"
+            class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-950/95 text-white shadow-[0_10px_35px_rgba(0,0,0,0.55)] border border-white/20 backdrop-blur-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 relative group overflow-hidden focus:outline-none">
         
         <!-- Subtle Specular Edge Ring -->
-        <div class="absolute inset-0 rounded-full border border-white/20 pointer-events-none"></div>
+        <div class="absolute inset-0 rounded-full border border-white/15 pointer-events-none"></div>
 
-        <!-- Normal State: Custom Trigger Image or Sleek Multi-Portal Glyph -->
+        <!-- Normal State: Custom Trigger Image or Multi-Portal Glyph -->
         <div x-show="!open" class="flex flex-col items-center justify-center transition-all w-full h-full p-1.5">
             @if(!empty($triggerImage))
-                <img src="{{ $triggerImage }}" alt="{{ $triggerText }}" class="w-7 h-7 object-contain rounded-full shadow-xs">
+                <img src="{{ $triggerImage }}" alt="{{ $triggerText }}" class="w-6 h-6 sm:w-7 sm:h-7 object-contain rounded-full shadow-xs">
                 @if(!empty($triggerText))
                     <span class="text-[7px] font-black tracking-wider uppercase text-white/90 leading-none mt-0.5 truncate max-w-[44px]">{{ $triggerText }}</span>
                 @endif
@@ -194,15 +150,15 @@
                     <rect x="14" y="14" width="7" height="7" rx="2"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="2"></rect>
                 </svg>
-                <span class="text-[7.5px] font-black tracking-wider uppercase text-white/80 leading-none mt-1">{{ $triggerText }}</span>
+                <span class="text-[7.5px] font-black tracking-wider uppercase text-white/90 leading-none mt-1">{{ $triggerText }}</span>
             @endif
         </div>
 
-        <!-- Active Open State: Retract Button Close Symbol / Text -->
+        <!-- Active Open State: Retract Close Symbol -->
         <div x-show="open" class="flex items-center justify-center transition-all">
-            <span class="text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">{{ $closeText }}</span>
+            <span class="text-xl sm:text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">{{ $closeText }}</span>
         </div>
 
-    </div>
+    </button>
 
 </div>

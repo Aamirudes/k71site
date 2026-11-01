@@ -65,7 +65,8 @@
     :ogImage="$vendor->banner ?: $vendor->logo"
     :schemaJson="$storeSchemaJson"
     :fullWidth="true"
-    :hide-footer="true"
+    :hideMainHeader="true"
+    :hideFooter="false"
 >
     @php
         $social = is_array($vendor->social_links) ? $vendor->social_links : (is_string($vendor->social_links) ? (json_decode($vendor->social_links, true) ?: []) : []);
@@ -904,83 +905,7 @@
                 </div>
             @endif
 
-            {{-- 1. VISUAL "WARDROBE STORIES" BUBBLES RAIL (High-fashion instant discovery) --}}
-            @if(isset($vendorCategories) && $vendorCategories->count() > 0)
-                <div class="mb-8 pt-2">
-                    <div class="flex items-center justify-between mb-3 px-1">
-                        <span class="text-[11px] font-mono uppercase tracking-widest text-stone-500 font-bold flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                            Shop by Collection
-                        </span>
-                        <span class="text-[11px] text-stone-400 font-medium">Swipe to explore →</span>
-                    </div>
 
-                    <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth" id="live-category-bubbles">
-                        <!-- "All Pieces" Story Bubble -->
-                        <button type="button" 
-                                @click="filterLive({ category: '' })" 
-                                class="flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer">
-                            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0.5 transition-all duration-300"
-                                 :class="category === '' 
-                                    ? 'bg-gradient-to-tr from-amber-500 via-stone-800 to-amber-600 shadow-md scale-105 ring-2 ring-amber-500/50' 
-                                    : 'bg-stone-200 group-hover:bg-stone-300 group-hover:scale-102'">
-                                <div class="w-full h-full rounded-full bg-white flex flex-col items-center justify-center p-1 overflow-hidden border border-white shadow-inner">
-                                    <span class="text-base sm:text-xl">✨</span>
-                                    <span class="text-[9px] font-bold uppercase tracking-wider text-stone-800 font-mono mt-0.5">All</span>
-                                </div>
-                            </div>
-                            <span class="text-[11px] font-bold text-center leading-tight transition-colors"
-                                  :class="category === '' ? 'text-stone-900 font-black' : 'text-stone-600 group-hover:text-stone-900'">
-                                All Pieces
-                            </span>
-                            <span class="text-[9px] font-mono text-stone-400 -mt-1.5">
-                                {{ $products->total() }} items
-                            </span>
-                        </button>
-
-                        <!-- Individual Category Bubbles -->
-                        @foreach($vendorCategories as $cat)
-                            <button type="button" 
-                                    @click="filterLive({ category: category === '{{ $cat->slug }}' ? '' : '{{ $cat->slug }}' })" 
-                                    class="flex flex-col items-center gap-2 shrink-0 group focus:outline-none cursor-pointer">
-                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0.5 transition-all duration-300"
-                                     :class="category === '{{ $cat->slug }}' 
-                                        ? 'bg-gradient-to-tr from-amber-500 via-stone-800 to-amber-600 shadow-md scale-105 ring-2 ring-amber-500/50' 
-                                        : 'bg-stone-200 group-hover:bg-stone-300 group-hover:scale-102'">
-                                    <div class="w-full h-full rounded-full bg-stone-100 overflow-hidden relative border border-white">
-                                        @if($cat->sample_image)
-                                            <img src="{{ \App\Services\ImageService::url($cat->sample_image, 160) }}" 
-                                                 alt="{{ $cat->name }}" 
-                                                 width="80"
-                                                 height="80"
-                                                 loading="lazy"
-                                                 decoding="async"
-                                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                 onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
-                                        @else
-                                            <img src="{{ asset('images/product-placeholder.svg') }}" 
-                                                 alt="{{ $cat->name }}" 
-                                                 width="80"
-                                                 height="80"
-                                                 loading="lazy"
-                                                 decoding="async"
-                                                 class="w-full h-full object-cover">
-                                        @endif
-                                        <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                                    </div>
-                                </div>
-                                <span class="text-[11px] font-bold text-center leading-tight max-w-[76px] sm:max-w-[88px] truncate transition-colors"
-                                      :class="category === '{{ $cat->slug }}' ? 'text-stone-900 font-black' : 'text-stone-600 group-hover:text-stone-900'">
-                                    {{ $cat->name }}
-                                </span>
-                                <span class="text-[9px] font-mono text-stone-400 -mt-1.5">
-                                    {{ $cat->products_count ?? 0 }} items
-                                </span>
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
 
             {{-- 2. NEW IN ATELIER / SIGNATURE HIGHLIGHTS HORIZONTAL SHELF (Hides when search/category active) --}}
             @if(isset($featuredProducts) && $featuredProducts->count() > 0)
@@ -1323,119 +1248,7 @@
             </div>
         </div>
 
-        <!-- ====================================================================
-             SIGNATURE OVERSIZED K71 VENDOR STOREFRONT FOOTER (ANTIGRAVITY INSPIRED)
-             ==================================================================== -->
-        <footer class="mt-20 border-t border-white/10 bg-gradient-to-b from-[#090b0e] via-black to-[#050608] text-white relative overflow-hidden select-none">
-            
-            <!-- Subtle Radial Sheen -->
-            <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-white/[0.03] rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-8 relative z-10">
-                
-                <!-- ZONE 1: UPPER LINK COLUMNS (EDITORIAL LUXURY) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-14 border-b border-white/10">
-                    
-                    <!-- Col 1: Boutique Identity -->
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">
-                                {{ $customBadge ?? 'Verified Atelier' }}
-                            </span>
-                        </div>
-                        <h3 class="text-xl font-bold tracking-tight text-white font-serif">{{ $vendor->shop_name }}</h3>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
-                            {{ $tagline ?: ($craftSpecialty ?: 'Curated artisan boutique, direct order dispatch and guaranteed customer satisfaction.') }}
-                        </p>
-                        <div class="text-[11px] text-zinc-500 font-mono pt-1">
-                            <span>Est. {{ $establishedYear }}</span> • <span>Rajasthan, India</span>
-                        </div>
-                    </div>
-
-                    <!-- Col 2: Store Catalog -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">Store Collections</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li><a href="#catalog" class="hover:text-white transition">All Featured Products</a></li>
-                            @foreach($vendorCategories->take(4) as $vCat)
-                                <li>
-                                    <a href="{{ $vendor->storefront_url }}?category={{ $vCat->slug }}" class="hover:text-white transition flex items-center justify-between">
-                                        <span>{{ $vCat->name }}</span>
-                                        <span class="text-[10px] text-zinc-600 font-mono">{{ $vCat->products_count }}</span>
-                                    </a>
-                                </li>
-                            @endforeach
-                            <li><a href="#about" @click="storyModalOpen = true" class="hover:text-white transition">Artisan Story &amp; Craft</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Col 3: Customer Care & Trust -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">Customer Assurance</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> 100% Escrow Protected by K71
-                            </li>
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> 7-Day Safe Exchange Policy
-                            </li>
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> Direct Shop Courier Dispatch
-                            </li>
-                            @if($whatsappUrl)
-                                <li>
-                                    <a href="{{ $whatsappUrl }}" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold mt-1">
-                                        <span>💬 Chat on WhatsApp</span>
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-
-                    <!-- Col 4: K71 Unified Platform -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">K71 Commerce Ecosystem</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li><a href="{{ url('/') }}" class="hover:text-white transition">Universal Marketplace</a></li>
-                            <li><a href="{{ route('feasto.index') }}" class="hover:text-white transition">Feasto 10-Min Hub</a></li>
-                            <li><a href="{{ route('vendor.register') }}" class="hover:text-white transition">Become a Vendor on K71</a></li>
-                            <li><a href="{{ route('delivery.onboarding') }}" class="hover:text-white transition">Earn as Delivery Fleet Partner</a></li>
-                            <li><a href="{{ route('shorts.index') }}" class="hover:text-white transition">Shoppable Video Commerce</a></li>
-                        </ul>
-                    </div>
-
-                </div>
-
-                <!-- ZONE 2: OVERSIZED K71 MONOLITHIC BRAND WORDMARK (ANTIGRAVITY REFERENCE) -->
-                <div class="py-8 sm:py-14 text-center overflow-hidden">
-                    <div class="text-[17vw] sm:text-[19vw] md:text-[21vw] font-black tracking-tighter leading-none select-none text-white/95 pointer-events-none font-sans drop-shadow-[0_10px_30px_rgba(255,255,255,0.05)]">
-                        K71
-                    </div>
-                    <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-zinc-500 -mt-2 sm:-mt-4">
-                        UNIFIED COMMERCE &bull; DIRECT ATELIER DISPATCH
-                    </div>
-                </div>
-
-                <!-- ZONE 3: QUIET BOTTOM ROW DIVIDER -->
-                <div class="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-                    <div class="flex items-center gap-3">
-                        <span>&copy; {{ date('Y') }} <strong>{{ $vendor->shop_name }}</strong></span>
-                        <span class="text-zinc-700">&bull;</span>
-                        <span>Powered by K71 Engine</span>
-                    </div>
-
-                    <div class="flex items-center gap-4 text-[11px] font-mono">
-                        <span class="text-zinc-400">&bull; India Standard Time (IST UTC+5:30)</span>
-                        <button type="button" @click="window.scrollTo({ top: 0, behavior: 'smooth' })" class="text-zinc-400 hover:text-white transition font-bold flex items-center gap-1 cursor-pointer">
-                            <span>Top</span>
-                            <span>&uarr;</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </footer>
 
         <!-- Floating WhatsApp Concierge FAB with radar ripple pulses -->
         @if($whatsappUrl)

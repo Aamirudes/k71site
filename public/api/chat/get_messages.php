@@ -95,13 +95,18 @@ if (file_exists($dbPath)) {
             $recipientInfo = get_chat_user_info($pdo, $recipientId);
 
             $isTyping = false;
-            $typingFile = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
-            if (file_exists($typingFile)) {
+            $storageDir = dirname(__DIR__, 2) . '/storage/framework/typing';
+            $file1 = $storageDir . "/k71_typing_{$conversationId}_{$recipientId}";
+            $file2 = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
+            $typingFile = file_exists($file1) ? $file1 : (file_exists($file2) ? $file2 : null);
+
+            if ($typingFile && file_exists($typingFile)) {
                 $lastT = (int) @file_get_contents($typingFile);
                 if ((time() - $lastT) < 6) {
                     $isTyping = true;
                 } else {
-                    @unlink($typingFile);
+                    @unlink($file1);
+                    @unlink($file2);
                 }
             }
 

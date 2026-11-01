@@ -162,9 +162,12 @@ class DeliveryPartnerController extends Controller
                 'rating' => 4.95,
             ]);
         } else {
-            // Update default city if needed
-            if ($partner->city === 'Makrana') {
+            // Update default city and placeholder name if needed
+            if (in_array(strtolower($partner->city), ['makrana', ''])) {
                 $partner->update(['city' => 'Kishangarh']);
+            }
+            if (str_contains(strtolower($partner->name), 'ramesh kumar')) {
+                $partner->update(['name' => 'K71 Kishangarh Fleet Pilot', 'city' => 'Kishangarh']);
             }
         }
         session(['delivery_partner_id' => $partner->id]);

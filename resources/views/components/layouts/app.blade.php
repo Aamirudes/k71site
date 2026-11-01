@@ -101,8 +101,6 @@
     </footer>
 
     <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav />
-
     <!-- CSRF Auto-Refresh & Session Heartbeat (Guarantees zero 419 Page Expired errors) -->
     <script>
         (function() {

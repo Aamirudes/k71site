@@ -450,8 +450,6 @@
     </script>
 
     <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="b2b" />
-
     <!-- 6-in-1 Draggable Floating Radial Nav -->
     <x-floating-six-nav />
 

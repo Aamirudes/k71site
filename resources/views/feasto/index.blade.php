@@ -64,7 +64,7 @@
                             <span>Delivery in 10 minutes</span>
                         </div>
                         <div class="flex items-center gap-1 text-xs text-slate-500 font-semibold group hover:text-slate-900 transition">
-                            <span class="truncate max-w-[170px]" x-text="selectedLocation">Makrana Central, Rajasthan</span>
+                            <span class="truncate max-w-[170px]" x-text="selectedLocation">Kishangarh Central, Rajasthan</span>
                             <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
              @click="showLocationModal = true">
             <div class="flex items-center gap-1.5 font-bold text-slate-900 truncate">
                 <span class="px-2 py-0.5 rounded-full bg-[#0C831F] text-white font-black text-[10px] tracking-wide shrink-0">⚡ 10 MIN</span>
-                <span class="truncate text-slate-800 font-semibold" x-text="selectedLocation">Makrana Central, Rajasthan</span>
+                <span class="truncate text-slate-800 font-semibold" x-text="selectedLocation">Kishangarh Central, Rajasthan</span>
             </div>
             <span class="text-emerald-700 font-bold shrink-0 text-[11px]">Change ▾</span>
         </div>
@@ -326,7 +326,7 @@
                             </div>
                             <div>
                                 <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Delivery in 10 minutes</h2>
-                                <p class="text-[11px] text-slate-500 font-medium">To <strong x-text="selectedLocation">Makrana Central</strong></p>
+                                <p class="text-[11px] text-slate-500 font-medium">To <strong x-text="selectedLocation">Kishangarh Central</strong></p>
                             </div>
                         </div>
                         <button type="button" @click="cartDrawerOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-black">
@@ -421,7 +421,7 @@
                         <div class="flex items-center justify-between mb-3 text-xs">
                             <div>
                                 <span class="text-[10px] text-slate-400 font-bold block">DELIVERY ADDRESS</span>
-                                <span class="font-bold text-slate-900 truncate block max-w-[200px]" x-text="selectedLocation">Makrana Central</span>
+                                <span class="font-bold text-slate-900 truncate block max-w-[200px]" x-text="selectedLocation">Kishangarh Central</span>
                             </div>
                             <button type="button" @click="showLocationModal = true" class="text-xs font-bold text-[#0C831F] hover:underline">
                                 Change
@@ -656,7 +656,7 @@
                 categories: config.initialCategories || [],
                 activeCategory: 'all',
                 searchQuery: '',
-                selectedLocation: 'Makrana Central, Rajasthan (305801)',
+                selectedLocation: 'Kishangarh Central, Rajasthan (305801)',
                 showLocationModal: false,
                 cartDrawerOpen: false,
                 selectedProduct: null,
@@ -666,7 +666,7 @@
                 cartTotal: 0,
                 tipAmount: 0,
                 popularLocations: [
-                    'Makrana Central, Rajasthan (305801)',
+                    'Kishangarh Central, Rajasthan (305801)',
                     'Jaipur Vaishali Nagar, Rajasthan (302021)',
                     'Ajmer Civil Lines, Rajasthan (305001)',
                     'Jodhpur Sardarpura, Rajasthan (342003)',

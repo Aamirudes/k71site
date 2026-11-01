@@ -417,8 +417,6 @@
     @endif
 
     <!-- K71 Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav />
-
     <!-- K71 Mini-Cart Bottom Sheet / Drawer -->
     <x-k71-mini-cart />
 

@@ -576,30 +576,7 @@
         </div>
     </div>
 
-    <!-- ===================================================================
-         7. MOBILE BOTTOM NAVIGATION (OLX STYLE FIXED BAR)
-         =================================================================== -->
-    <div class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2 flex items-center justify-around shadow-lg">
-        <a href="{{ route('used.index') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold {{ request()->routeIs('used.index') ? 'text-blue-700' : 'text-slate-500' }}">
-            <span class="text-base">🔄</span>
-            <span class="text-[10px]">Explore</span>
-        </a>
-        <a href="{{ route('messages.index') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold text-slate-500">
-            <span class="text-base">💬</span>
-            <span class="text-[10px]">Chats</span>
-        </a>
-        <button type="button" @click="postAdModalOpen = true" class="relative -mt-5 w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-black shadow-lg shadow-blue-600/40 cursor-pointer">
-            +
-        </button>
-        <a href="{{ route('used.index') }}#my-ads" class="flex flex-col items-center gap-0.5 text-xs font-bold text-slate-500">
-            <span class="text-base">📦</span>
-            <span class="text-[10px]">My Ads</span>
-        </a>
-        <a href="{{ route('login') }}" class="flex flex-col items-center gap-0.5 text-xs font-bold text-slate-500">
-            <span class="text-base">👤</span>
-            <span class="text-[10px]">Account</span>
-        </a>
-    </div>
+
 
     <script>
     function k71UsedGlobalState() {
@@ -734,8 +711,6 @@
     }
     </script>
     <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="used" />
-
     <!-- K71 Global Authentication Modal -->
     <x-k71-auth-modal />
 </body>

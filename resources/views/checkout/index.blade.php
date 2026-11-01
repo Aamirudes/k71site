@@ -478,8 +478,8 @@
                         <dd id="total-display" class="text-2xl font-bold text-brand-text">₹{{ number_format($total / 100, 2) }}</dd>
                     </div>
                     
-                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]">
-                        <span class="text-white font-black text-base flex items-center justify-center gap-2" x-text="checkoutBtnText">
+                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]" style="background-color: #000000 !important; color: #ffffff !important;">
+                        <span class="text-white font-black text-base flex items-center justify-center gap-2" style="color: #ffffff !important;" x-text="typeof checkoutBtnText !== 'undefined' && checkoutBtnText ? checkoutBtnText : 'Place Order →'">
                             Place Order &rarr;
                         </span>
                     </button>
