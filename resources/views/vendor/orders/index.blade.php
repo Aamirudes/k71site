@@ -40,6 +40,13 @@
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'all' ? 'bg-gray-900 text-white shadow-xs' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200/70' }}">
                 All Orders ({{ $counts['all'] ?? 0 }})
             </a>
+            <a href="{{ route('vendor.orders.index', ['status' => 'pending_payment', 'search' => $search]) }}" 
+               class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'pending_payment' ? 'bg-black text-white shadow-xs' : 'bg-white text-zinc-900 hover:bg-zinc-50 border border-zinc-300' }}">
+                <span>💳 Payment Proofs</span>
+                <span class="px-2 py-0.2 rounded-full text-[10px] font-mono {{ ($counts['pending_payment'] ?? 0) > 0 ? 'bg-amber-400 text-black font-black animate-pulse' : 'bg-zinc-100 text-zinc-600' }}">
+                    {{ $counts['pending_payment'] ?? 0 }}
+                </span>
+            </a>
             <a href="{{ route('vendor.orders.index', ['status' => 'to_pack', 'search' => $search]) }}" 
                class="px-4 py-2 rounded-2xl text-xs font-bold transition-all whitespace-nowrap {{ $status === 'to_pack' ? 'bg-amber-600 text-white shadow-xs' : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200/70' }}">
                 ⚡ To Pack ({{ $counts['to_pack'] ?? 0 }})
@@ -261,13 +268,20 @@
                                         ✓ Paid ({{ ucfirst($order->status) }})
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs
-                                        {{ $order->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : '' }}
-                                        {{ $order->status === 'processing' ? 'bg-sky-50 text-sky-700 border-sky-200' : '' }}
-                                        {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : '' }}
-                                        {{ $order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : '' }}">
-                                        {{ ucfirst($order->status) }}
-                                    </span>
+                                    <div class="flex flex-col items-start gap-1">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs
+                                            {{ $order->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : '' }}
+                                            {{ $order->status === 'processing' ? 'bg-sky-50 text-sky-700 border-sky-200' : '' }}
+                                            {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : '' }}
+                                            {{ $order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : '' }}">
+                                            {{ ucfirst($order->status) }}
+                                        </span>
+                                        @if($order->deliveryAssignment && in_array($order->deliveryAssignment->status, ['assigned', 'accepted', 'picked_up']))
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                🛵 Rider: {{ $order->deliveryAssignment->partner->name ?? 'Dispatched' }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
 

@@ -173,7 +173,7 @@
                             [
                                 'badge' => $hp['slide2_badge'] ?? '⚡ Cloud Kitchen Dining • 30 Min Express',
                                 'title' => $hp['slide2_title'] ?? 'Authentic Flavors. Delivered Hot & Fresh.',
-                                'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.',
+                                'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, fresh chef treats, and hygienic contactless doorstep delivery.',
                                 'btn1_text' => $hp['slide2_btn1_text'] ?? 'Order Food Online',
                                 'btn1_link' => $hp['slide2_btn1_link'] ?? '/food',
                                 'btn2_text' => $hp['slide2_btn2_text'] ?? 'View Restaurants',
@@ -227,7 +227,7 @@
                                  x-transition:leave="transition ease-in duration-300 absolute inset-0"
                                  x-transition:leave-start="opacity-100 scale-100"
                                  x-transition:leave-end="opacity-0 scale-95"
-                                 class="absolute inset-0 w-full h-full p-6 sm:p-10 flex flex-col justify-between z-10"
+                                 class="absolute inset-0 w-full h-full p-6 sm:p-10 pb-12 sm:pb-12 flex flex-col justify-between z-10"
                                  style="{{ $idx > 0 ? 'display: none;' : '' }}">
                                 
                                 <!-- Background Image with Clean Neutral Scrim -->
@@ -246,12 +246,12 @@
                                     </span>
                                 </div>
 
-                                <!-- Hero Main Headline -->
+                                 <!-- Hero Main Headline -->
                                 <div class="relative z-10 my-4 sm:my-6 space-y-2 sm:space-y-3">
-                                    <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-[1.12] text-white drop-shadow-sm">
+                                    <h1 class="k71-display text-white photo-text drop-shadow-md">
                                         {{ $slide['title'] }}
                                     </h1>
-                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-200 max-w-2xl font-normal leading-relaxed drop-shadow-sm">
+                                    <p class="text-xs sm:text-sm lg:text-base text-zinc-100 max-w-2xl font-normal leading-relaxed drop-shadow-sm">
                                         {{ $slide['subtitle'] }}
                                     </p>
                                 </div>
@@ -261,14 +261,14 @@
                                     <div class="flex flex-wrap items-center gap-3">
                                         @if(!empty($slide['btn1_text']))
                                             <a href="{{ $slide['btn1_link'] }}" 
-                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                               class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-950 font-bold text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer max-h-11">
                                                 <span>{{ $slide['btn1_text'] }}</span>
                                                 <span>&rarr;</span>
                                             </a>
                                         @endif
                                         @if(!empty($slide['btn2_text']))
                                             <a href="{{ $slide['btn2_link'] }}" 
-                                               class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm tracking-wide border border-white/25 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                                               class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm tracking-wide border border-white/25 backdrop-blur-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer max-h-11">
                                                 <span>{{ $slide['btn2_text'] }}</span>
                                                 <span>↗</span>
                                             </a>
@@ -431,9 +431,9 @@
                 <!-- Load More Button -->
                 <div class="text-center pt-4">
                     <a href="{{ route('catalog.index') }}" 
-                       class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-100 font-bold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer">
-                        <span>Load More Products</span>
-                        <span>&rarr;</span>
+                       class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition cursor-pointer max-h-11">
+                        <span class="text-white font-black">Load More Products</span>
+                        <span class="text-white font-black">&rarr;</span>
                     </a>
                 </div>
             </section>
@@ -547,14 +547,14 @@
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-3xl">🍲</div>
                                 @endif
-                                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900 text-white text-[9px] font-black uppercase tracking-wider">
+                                <span class="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-slate-950 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
                                     Fresh
                                 </span>
                             </div>
                             <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
                                 <div>
                                     <h3 class="font-bold text-xs sm:text-sm text-slate-950 dark:text-white group-hover:text-black transition truncate">{{ $rTitle }}</h3>
-                                    <p class="text-[10px] text-slate-400 mt-0.5">Express delivery in 30-45 mins</p>
+                                    <p class="text-[10px] text-slate-600 dark:text-zinc-400 mt-0.5">Express delivery in 30-45 mins</p>
                                 </div>
                                 <div class="pt-2 mt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-slate-900 dark:text-zinc-100">
                                     <span>View Menu</span>
@@ -646,7 +646,7 @@
                             <div class="p-3">
                                 <h4 class="text-xs font-bold text-slate-950 dark:text-white truncate group-hover:text-black transition">{{ $item->title }}</h4>
                                 <div class="text-sm font-black text-slate-950 dark:text-white mt-1">{{ $item->formatted_base_price }}</div>
-                                <span class="text-[10px] text-slate-400 block mt-0.5">📍 {{ $item->getCustomField('city', 'India') }}</span>
+                                <span class="text-[10px] text-slate-600 dark:text-zinc-400 block mt-0.5">📍 {{ $item->getCustomField('city', 'India') }}</span>
                             </div>
                         </a>
                     @endforeach
@@ -683,7 +683,7 @@
                     @foreach($featuredEnquiries->take(4) as $enq)
                         <div class="p-4 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 shadow-xs flex flex-col justify-between space-y-3">
                             <div>
-                                <div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                                <div class="flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
                                     <span>#{{ $enq->enquiry_number }}</span>
                                     <span class="px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-bold uppercase">{{ $enq->status }}</span>
                                 </div>
@@ -710,27 +710,28 @@
                  11. SELLER ONBOARDING CALLOUT
                  ========================================== -->
             <section class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-                <div class="p-6 sm:p-10 rounded-2xl sm:rounded-3xl bg-slate-950 text-white shadow-md relative overflow-hidden border border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="p-6 sm:p-10 rounded-2xl sm:rounded-3xl bg-slate-950 surface-dark text-white shadow-md relative overflow-hidden border border-slate-900 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="space-y-2 text-center md:text-left">
                         <span class="px-3 py-1 rounded-full bg-white/10 text-zinc-300 text-[10px] font-bold uppercase tracking-widest border border-white/10">
                             Indian Merchant Program
                         </span>
-                        <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                        <h3 class="text-lg sm:text-xl font-bold text-white tracking-tight">
                             Start Selling Direct on K71 Marketplace
                         </h3>
-                        <p class="text-xs sm:text-sm text-zinc-400 max-w-lg leading-relaxed">
+                        <p class="text-xs sm:text-sm text-zinc-300 max-w-lg leading-relaxed">
                             Zero setup fee for retail boutiques, dining kitchens, verified specialists, pre-owned sellers, and marble factories with automated daily PhonePe settlements.
                         </p>
                     </div>
 
                     <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
                         <a href="{{ route('vendor.register') }}" 
-                           class="w-full md:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-zinc-100 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95">
+                           class="w-full md:w-auto px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-100 !text-slate-950 font-bold text-xs sm:text-sm tracking-wide shadow-xs text-center transition active:scale-95 max-h-11 flex items-center justify-center"
+                           style="background-color: #ffffff !important; color: #020617 !important;">
                             Open Your Store &rarr;
                         </a>
                         <button type="button" 
                                 onclick="if(window.openAuthModal) { window.openAuthModal(null, 'login', 'seller'); } else { window.location.href = '{{ route('login') }}'; }"
-                                class="w-full md:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs sm:text-sm border border-white/15 text-center transition">
+                                class="w-full md:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white font-semibold text-xs sm:text-sm border border-white/15 text-center transition max-h-11 flex items-center justify-center">
                             Seller Login
                         </button>
                     </div>

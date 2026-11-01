@@ -674,7 +674,7 @@ class CheckoutController extends Controller
     public function processPayment(Request $request, Order $order)
     {
         if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) abort(403);
-        if ($order->payment_method !== 'upi' || !in_array($order->payment_status, ['pending', 'pending_verification'])) {
+        if ($order->payment_method !== 'upi' || !in_array($order->payment_status, ['pending', 'pending_verification', 'processing', 'unpaid', 'failed'])) {
             return redirect()->route('orders.success', $order->id);
         }
 

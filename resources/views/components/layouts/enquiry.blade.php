@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="b2b">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -26,10 +26,11 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
-        body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .font-display { font-family: 'Outfit', sans-serif; }
+        body { font-family: var(--font-body, 'IBM Plex Sans', sans-serif); }
+        .font-display { font-family: var(--font-display, 'IBM Plex Sans', sans-serif); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -52,6 +53,25 @@
       x-data="k71EnquiryGlobalState()"
       @open-rfq-modal.window="openRfqModal($event.detail)"
       @keydown.escape.window="rfqModalOpen = false;">
+
+    <!-- Universal Top Strip: Back to K71 Marketplace -->
+    <div class="bg-black text-white text-[11px] font-medium py-1.5 px-3 sm:px-6 lg:px-8 border-b border-zinc-900 select-none overflow-hidden">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors group truncate">
+                <svg class="w-3.5 h-3.5 shrink-0 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span class="hidden sm:inline font-semibold">‹ Back to K71 Universal Marketplace</span>
+                <span class="sm:hidden font-semibold text-[11px]">‹ Back to K71</span>
+            </a>
+            <div class="flex items-center gap-3 text-zinc-400 text-[10px]">
+                <span class="inline-flex items-center gap-1 text-emerald-400 font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Verified B2B Gateway
+                </span>
+                <span class="hidden sm:inline text-zinc-600">|</span>
+                <a href="{{ route('catalog.index') }}" class="hidden sm:inline hover:text-white transition">All Categories</a>
+            </div>
+        </div>
+    </div>
 
     <!-- ===================================================================
          1. TOP B2B BRAND HEADER & NAVIGATION (DEDICATED BUSINESS IDENTITY)
@@ -223,7 +243,7 @@
                     <p class="text-slate-400 text-xs leading-relaxed">
                         National B2B sourcing portal connecting verified commercial buyers with accredited factory manufacturers, quarry operators, and wholesale distributors.
                     </p>
-                    <div class="text-[11px] font-mono text-slate-500">
+                    <div class="text-[11px] font-mono text-slate-400">
                         GST Compliant • Verified Commercial Escrow
                     </div>
                 </div>
@@ -264,7 +284,7 @@
                 </div>
             </div>
 
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-400">
                 <div>&copy; {{ date('Y') }} K71 Enquiry Platform • A Division of K71 Multi-Category Marketplace</div>
                 <div class="flex items-center gap-4">
                     <span>GST Invoiced</span>
@@ -429,6 +449,12 @@
         };
     }
     </script>
+
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="b2b" />
+
+    <!-- 6-in-1 Draggable Floating Radial Nav -->
+    <x-floating-six-nav />
 
     <!-- Shared K71 Authentication Popup Modal -->
     <x-k71-auth-modal />

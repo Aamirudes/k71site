@@ -2,7 +2,7 @@
     <!-- Dedicated Shorts Studio CSS -->
     <link rel="stylesheet" href="{{ asset('shorts-assets/css/zsu-studio.css') }}">
 
-    <div class="space-y-6" x-data="vendorStudio()">
+    <div class="space-y-6 max-w-full overflow-x-hidden" x-data="vendorStudio()">
         <!-- Header -->
         <div class="sm:flex sm:items-center sm:justify-between border-b border-gray-200 pb-5">
             <div>

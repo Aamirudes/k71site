@@ -210,6 +210,77 @@ class DashboardController extends Controller
             }
         }
 
+        // Fetch customer payment submissions (UTR / Screenshots) waiting for vendor approval
+        $pendingPaymentClaims = \App\Models\PaymentClaim::with(['order.user', 'order.items.product'])
+            ->whereHas('order', function($q) use ($vendor) {
+                $q->where('vendor_id', $vendor->id)
+                  ->where('payment_status', '!=', 'paid')
+                  ->where('status', '!=', 'cancelled');
+            })
+            ->whereIn('status', ['submitted', 'pending', 'processing'])
+            ->latest()
+            ->get();
+
+        // Also ensure any UPI orders awaiting payment review appear in the vendor queue
+        $unclaimedUpiOrders = Order::with('user')
+            ->where('vendor_id', $vendor->id)
+            ->where('payment_method', 'upi')
+            ->whereIn('payment_status', ['processing', 'pending'])
+            ->whereDoesntHave('paymentClaim')
+            ->latest()
+            ->get();
+
+        foreach ($unclaimedUpiOrders as $uOrder) {
+            $claim = \App\Models\PaymentClaim::firstOrCreate(
+                ['order_id' => $uOrder->id],
+                [
+                    'user_id' => $uOrder->user_id,
+                    'utr_number' => 'WAITING_PROOF',
+                    'amount_claimed' => $uOrder->total_amount,
+                    'status' => 'pending',
+                ]
+            );
+            if ($claim && !$pendingPaymentClaims->contains('id', $claim->id)) {
+                $claim->setRelation('order', $uOrder);
+                $pendingPaymentClaims->push($claim);
+            }
+        }
+
+        // 7. Delivery Partners & Boys Listing for Food, Feasto, Kirana & Express Vendors
+        $isFoodOrFeasto = in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana']) 
+            || (method_exists($vendor, 'isRestaurant') && $vendor->isRestaurant());
+
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $deliveryPartners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+            $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
+        }])->get()->map(function($dp) use ($vLat, $vLng) {
+            $activeAssignment = $dp->assignments->first(function($a) {
+                return in_array($a->status, ['assigned', 'accepted', 'picked_up']);
+            });
+            $dp->active_assignment = $activeAssignment;
+            $dp->is_busy = !is_null($activeAssignment);
+            $dp->distance_km = $dp->distanceTo($vLat, $vLng);
+            $dp->eta_minutes = max(3, (int) round($dp->distance_km * 3.5));
+            return $dp;
+        })->sortBy('distance_km')->values();
+
+        $pendingDispatchOrders = Order::where('vendor_id', $vendor->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->where(function($q) {
+                $q->whereDoesntHave('deliveryAssignment')
+                  ->orWhereHas('deliveryAssignment', function($aq) {
+                      $aq->whereIn('status', ['cancelled', 'failed']);
+                  });
+            })
+            ->latest()
+            ->get();
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -229,7 +300,11 @@ class DashboardController extends Controller
             'totalProducts',
             'totalOrdersInPeriod',
             'recentOrders',
-            'chartData'
+            'chartData',
+            'pendingPaymentClaims',
+            'deliveryPartners',
+            'isFoodOrFeasto',
+            'pendingDispatchOrders'
         ));
     }
 }

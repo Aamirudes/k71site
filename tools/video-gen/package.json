@@ -1,0 +1,17 @@
+{
+  "name": "k71-video-gen",
+  "version": "1.0.0",
+  "description": "Local utility to generate K71 intro video clips using Gemini Omni Flash. Run manually — never exposed to website visitors.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test-config": "node generate.js --test",
+    "generate": "node generate.js",
+    "generate-clip": "node generate.js --clip"
+  },
+  "dependencies": {
+    "@google/genai": "^1.0.0",
+    "dotenv": "^16.0.0"
+  }
+}
+

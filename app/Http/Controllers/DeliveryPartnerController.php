@@ -1,0 +1,346 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\DeliveryAssignment;
+use App\Models\DeliveryPartner;
+use App\Models\Order;
+use Illuminate\Http\Request;
+
+class DeliveryPartnerController extends Controller
+{
+    /**
+     * Delivery Partner Onboarding Landing Page
+     */
+    public function showOnboarding()
+    {
+        return view('delivery.onboarding');
+    }
+
+    /**
+     * Submit Partner Registration
+     */
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'phone' => ['required', 'string', 'max:25'],
+            'email' => ['nullable', 'email', 'max:100'],
+            'password' => ['nullable', 'string', 'min:6'],
+            'vehicle_type' => ['required', 'string', 'in:bike,scooter,ev,bicycle'],
+            'vehicle_number' => ['nullable', 'string', 'max:20'],
+            'city' => ['required', 'string', 'max:100'],
+            'state' => ['required', 'string', 'max:100'],
+            'aadhaar_number' => ['nullable', 'string', 'max:20'],
+            'driving_license' => ['nullable', 'string', 'max:30'],
+            'payout_upi_id' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        try {
+            // Clean phone number
+            $cleanPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
+            if (strlen($cleanPhone) === 12 && str_starts_with($cleanPhone, '91')) {
+                $cleanPhone = substr($cleanPhone, 2);
+            }
+            $validated['phone'] = $cleanPhone ?: $validated['phone'];
+
+            // If guest and email provided, register/login user account
+            if (!auth()->check() && !empty($validated['email'])) {
+                $user = \App\Models\User::where('email', $validated['email'])->first();
+                if (!$user) {
+                    $user = \App\Models\User::create([
+                        'name' => $validated['name'],
+                        'email' => $validated['email'],
+                        'password' => \Illuminate\Support\Facades\Hash::make($request->input('password', '12345678')),
+                        'phone' => $validated['phone'],
+                        'role' => 'delivery_partner',
+                    ]);
+                } else {
+                    if ($user->role !== 'admin') {
+                        $user->role = 'delivery_partner';
+                        $user->save();
+                    }
+                }
+                \Illuminate\Support\Facades\Auth::login($user);
+            }
+
+            $partner = null;
+            if (auth()->check()) {
+                $partner = DeliveryPartner::where('user_id', auth()->id())->first();
+            }
+            if (!$partner) {
+                $partner = DeliveryPartner::where('phone', $validated['phone'])->first();
+            }
+
+            $partnerData = array_merge($validated, [
+                'user_id' => auth()->id(),
+                'is_online' => true,
+                'is_verified' => true,
+                'last_active_at' => now(),
+            ]);
+            unset($partnerData['password']);
+
+            if (!$partner) {
+                $partner = DeliveryPartner::create($partnerData);
+            } else {
+                $partner->update($partnerData);
+            }
+
+            // Assign role if authenticated user
+            if (auth()->check()) {
+                $user = auth()->user();
+                if ($user->role !== 'admin') {
+                    $user->role = 'delivery_partner';
+                    $user->save();
+                }
+            }
+
+            session(['delivery_partner_id' => $partner->id]);
+
+            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! You are now online.');
+        } catch (\Throwable $e) {
+            \Log::error('Delivery partner registration error: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Registration encountered an issue: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get active partner from session or auth
+     */
+    protected function getActivePartner()
+    {
+        $partnerId = session('delivery_partner_id');
+        if ($partnerId) {
+            $partner = DeliveryPartner::find($partnerId);
+            if ($partner) return $partner;
+        }
+
+        if (auth()->check()) {
+            $partner = DeliveryPartner::where('user_id', auth()->id())->first();
+            if ($partner) {
+                session(['delivery_partner_id' => $partner->id]);
+                return $partner;
+            }
+
+            // Create personal partner profile for logged in user
+            $user = auth()->user();
+            $partner = DeliveryPartner::create([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'phone' => $user->phone ?: '9829012345',
+                'vehicle_type' => 'bike',
+                'vehicle_number' => 'RJ-01-AB-1234',
+                'city' => 'Kishangarh',
+                'state' => 'Rajasthan',
+                'is_online' => true,
+                'is_verified' => true,
+                'current_latitude' => 26.5744,
+                'current_longitude' => 74.8654,
+                'total_deliveries' => 0,
+                'rating' => 5.0,
+            ]);
+            session(['delivery_partner_id' => $partner->id]);
+            return $partner;
+        }
+
+        // Fallback demo/active partner for Kishangarh
+        $partner = DeliveryPartner::first();
+        if (!$partner) {
+            $partner = DeliveryPartner::create([
+                'name' => 'K71 Kishangarh Fleet Pilot',
+                'phone' => '9829012345',
+                'vehicle_type' => 'bike',
+                'vehicle_number' => 'RJ-01-AB-1234',
+                'city' => 'Kishangarh',
+                'state' => 'Rajasthan',
+                'is_online' => true,
+                'is_verified' => true,
+                'current_latitude' => 26.5744,
+                'current_longitude' => 74.8654,
+                'payout_upi_id' => 'k71fleet@okhdfcbank',
+                'total_deliveries' => 25,
+                'rating' => 4.95,
+            ]);
+        } else {
+            // Update default city if needed
+            if ($partner->city === 'Makrana') {
+                $partner->update(['city' => 'Kishangarh']);
+            }
+        }
+        session(['delivery_partner_id' => $partner->id]);
+        return $partner;
+    }
+
+    /**
+     * Delivery Boy Dashboard
+     */
+    public function dashboard()
+    {
+        $partner = $this->getActivePartner();
+        if (!$partner) {
+            return redirect()->route('delivery.onboarding');
+        }
+
+        $activeAssignments = DeliveryAssignment::with(['order', 'vendor'])
+            ->where('delivery_partner_id', $partner->id)
+            ->whereIn('status', ['assigned', 'accepted', 'picked_up'])
+            ->latest()
+            ->get();
+
+        $completedAssignments = DeliveryAssignment::with(['order', 'vendor'])
+            ->where('delivery_partner_id', $partner->id)
+            ->where('status', 'delivered')
+            ->latest()
+            ->take(15)
+            ->get();
+
+        $totalEarningsToday = DeliveryAssignment::where('delivery_partner_id', $partner->id)
+            ->where('status', 'delivered')
+            ->whereDate('delivered_at', today())
+            ->sum('payout_amount');
+
+        return view('delivery.dashboard', compact('partner', 'activeAssignments', 'completedAssignments', 'totalEarningsToday'));
+    }
+
+    /**
+     * Location & Online Toggle API
+     */
+    public function updateLocation(Request $request)
+    {
+        $partner = $this->getActivePartner();
+
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+        $isOnline = $request->input('is_online');
+
+        $updateData = ['last_active_at' => now()];
+        if ($lat !== null) $updateData['current_latitude'] = (float) $lat;
+        if ($lng !== null) $updateData['current_longitude'] = (float) $lng;
+        if ($isOnline !== null) $updateData['is_online'] = (bool) $isOnline;
+
+        $partner->update($updateData);
+
+        return response()->json([
+            'status' => 'success',
+            'is_online' => $partner->is_online,
+            'latitude' => $partner->current_latitude,
+            'longitude' => $partner->current_longitude,
+        ]);
+    }
+
+    /**
+     * Real-time distance and delivery fee pricing configuration (Blinkit style)
+     */
+    public function updatePricing(Request $request)
+    {
+        $partner = $this->getActivePartner();
+        if (!$partner) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'base_delivery_fee' => 'required|numeric|min:5|max:500',
+            'per_km_rate' => 'required|numeric|min:2|max:100',
+            'max_delivery_radius_km' => 'nullable|numeric|min:1|max:50',
+        ]);
+
+        $partner->update([
+            'base_delivery_fee' => (float) $validated['base_delivery_fee'],
+            'per_km_rate' => (float) $validated['per_km_rate'],
+            'max_delivery_radius_km' => (float) ($validated['max_delivery_radius_km'] ?? 15.0),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Real-time delivery rates updated successfully!',
+                'base_delivery_fee' => $partner->base_delivery_fee,
+                'per_km_rate' => $partner->per_km_rate,
+                'max_delivery_radius_km' => $partner->max_delivery_radius_km,
+            ]);
+        }
+
+        return back()->with('success', 'Real-time delivery rates updated successfully!');
+    }
+
+    /**
+     * Active Alert Polling API - Triggers audio ringtone on delivery boy dashboard!
+     */
+    public function checkNewAssignments()
+    {
+        $partner = $this->getActivePartner();
+
+        $newAssigned = DeliveryAssignment::with(['order.items', 'vendor'])
+            ->where('delivery_partner_id', $partner->id)
+            ->where('status', 'assigned')
+            ->latest()
+            ->first();
+
+        return response()->json([
+            'has_new' => (bool) $newAssigned,
+            'assignment' => $newAssigned ? [
+                'id' => $newAssigned->id,
+                'order_id' => $newAssigned->order_id,
+                'order_number' => $newAssigned->order ? $newAssigned->order->order_number : ('#ORD-' . $newAssigned->order_id),
+                'vendor_name' => $newAssigned->vendor ? $newAssigned->vendor->shop_name : 'K71 Merchant',
+                'pickup_address' => $newAssigned->vendor ? ($newAssigned->vendor->pickup_address['line_1'] ?? 'Kishangarh Center') : 'Vendor Store',
+                'payout' => '₹' . number_format($newAssigned->payout_amount, 2),
+                'distance' => $newAssigned->pickup_distance_km ? ($newAssigned->pickup_distance_km . ' km') : '0.8 km',
+            ] : null,
+        ]);
+    }
+
+    /**
+     * Accept Order
+     */
+    public function acceptAssignment(DeliveryAssignment $assignment)
+    {
+        $assignment->update([
+            'status' => 'accepted',
+            'accepted_at' => now(),
+        ]);
+
+        if ($assignment->order) {
+            $assignment->order->update(['status' => 'processing']);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Order accepted! Proceed to pickup.']);
+    }
+
+    /**
+     * Pickup Order
+     */
+    public function pickupAssignment(DeliveryAssignment $assignment)
+    {
+        $assignment->update([
+            'status' => 'picked_up',
+            'picked_up_at' => now(),
+        ]);
+
+        if ($assignment->order) {
+            $assignment->order->update(['status' => 'shipped']);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Order picked up! Now delivering.']);
+    }
+
+    /**
+     * Deliver Order
+     */
+    public function deliverAssignment(DeliveryAssignment $assignment)
+    {
+        $assignment->update([
+            'status' => 'delivered',
+            'delivered_at' => now(),
+        ]);
+
+        $assignment->deliveryPartner()->increment('total_deliveries');
+
+        if ($assignment->order) {
+            $assignment->order->update(['status' => 'delivered']);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Delivered successfully! Payout credited.']);
+    }
+}
+

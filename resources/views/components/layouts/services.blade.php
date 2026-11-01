@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-slate-50 antialiased" x-data="{ mobileMenuOpen: false, rfqModalOpen: false, projectCategory: '' }">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light h-full bg-slate-50 antialiased" data-brand="services" x-data="{ mobileMenuOpen: false, rfqModalOpen: false, projectCategory: '' }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -20,6 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-k71-design-system />
 
     <style>
         [x-cloak] { display: none !important; }
@@ -49,29 +50,29 @@
     }
     </script>
 </head>
-<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-purple-600 selection:text-white">
+<body class="min-h-full flex flex-col font-services bg-[#FBFBFD] text-slate-900 selection:bg-[#0F766E] selection:text-white overflow-x-hidden max-w-full w-full">
 
     <!-- SUBDOMAIN PARITY MARKER FOR AUTOMATED AUDITS -->
     <span class="hidden" aria-hidden="true">services.k71.in</span>
 
     <!-- 1. TOP PLATFORM NETWORK BAR -->
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-purple-100 shadow-xs">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-2xs">
         
-        <!-- Top Pro Strip -->
-        <div class="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white text-[11px] font-semibold py-1.5 px-4 sm:px-6">
+        <!-- Universal Minimal Black Strip: Back to Marketplace -->
+        <div class="bg-black text-white text-[11px] font-medium py-1.5 px-4 sm:px-6 border-b border-zinc-900 select-none">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="font-bold tracking-wide text-purple-200 uppercase">K71 ESCROW PROTECTED</span>
-                    <span class="hidden sm:inline text-purple-300/70">• Milestone funding released only upon your final milestone sign-off</span>
+                    <span class="font-bold tracking-wide text-zinc-300 uppercase">K71 ESCROW PROTECTED</span>
+                    <span class="hidden sm:inline text-zinc-400">• Milestone funds released upon your final approval</span>
                 </div>
-                <div class="flex items-center gap-4 text-purple-200">
+                <div class="flex items-center gap-4 text-zinc-300">
                     <a href="{{ url('/') }}" class="hover:text-white transition flex items-center gap-1">
-                        <span>&larr; Main Marketplace</span>
+                        <span>‹ Back to Marketplace</span>
                     </a>
-                    <span class="text-purple-400/40">|</span>
-                    <a href="{{ route('messages.index') }}" class="hover:text-white transition flex items-center gap-1 font-bold">
-                        <svg class="w-3.5 h-3.5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <span class="text-zinc-700">|</span>
+                    <a href="{{ route('messages.index') }}" class="hover:text-white transition flex items-center gap-1 font-semibold">
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         <span>Direct Messages</span>
                     </a>
                 </div>
@@ -84,15 +85,15 @@
             <!-- Logo & Brand Badge -->
             <div class="flex items-center gap-3 shrink-0">
                 <a href="{{ route('services.index') }}" class="flex items-center gap-2.5 group">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-indigo-600 text-white flex items-center justify-center font-black text-lg shadow-md shadow-purple-600/20 group-hover:scale-105 transition">
+                    <div class="w-10 h-10 rounded-xl bg-slate-950 text-white flex items-center justify-center font-black text-lg shadow-sm group-hover:bg-slate-800 transition">
                         ⚡
                     </div>
                     <div>
                         <div class="flex items-center gap-1.5">
                             <span class="font-extrabold text-xl tracking-tight text-slate-950">K71</span>
-                            <span class="font-black text-xl tracking-tight text-purple-700">SERVICES</span>
+                            <span class="font-black text-xl tracking-tight text-slate-700">SERVICES</span>
                         </div>
-                        <p class="text-[10px] text-purple-600/80 font-bold tracking-wider uppercase -mt-0.5">Vetted Freelancers & Pros</p>
+                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase -mt-0.5">Vetted Freelancers &amp; Pros</p>
                     </div>
                 </a>
             </div>
@@ -100,14 +101,14 @@
             <!-- Global Services Search Bar (Desktop) -->
             <div class="hidden md:flex flex-1 max-w-xl mx-4">
                 <form action="{{ route('services.index') }}" method="GET" class="w-full relative flex items-center">
-                    <div class="absolute left-3.5 pointer-events-none text-purple-600">
+                    <div class="absolute left-3.5 pointer-events-none text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
                     <input type="text" name="search" value="{{ request('search') }}"
-                           placeholder="Search gigs & experts (e.g. Full-Stack Web, Logo Design, 3D Reels)..."
-                           class="w-full pl-10 pr-24 py-2.5 rounded-full bg-purple-50/50 border border-purple-200/80 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-purple-600 focus:bg-white focus:ring-4 focus:ring-purple-600/10 transition">
+                           placeholder="Search gigs &amp; experts (e.g. Full-Stack Web, Logo Design, 3D Reels)..."
+                           class="w-full pl-10 pr-24 py-2.5 rounded-full bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition">
                     <button type="submit" 
-                            class="absolute right-1.5 px-4 py-1.5 rounded-full bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition shadow-xs">
+                            class="absolute right-1.5 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs cursor-pointer">
                         Find Pro
                     </button>
                 </form>
@@ -116,30 +117,30 @@
             <!-- Header Quick Actions (Desktop) -->
             <div class="hidden lg:flex items-center gap-3">
                 <button type="button" @click="rfqModalOpen = true"
-                        class="px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold transition border border-purple-200 flex items-center gap-1.5 cursor-pointer">
-                    <span class="text-purple-600">+</span>
+                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition border border-slate-200 flex items-center gap-1.5 cursor-pointer">
+                    <span class="text-slate-600">+</span>
                     <span>Post Custom Project</span>
                 </button>
 
                 <a href="{{ route('services.become_seller') }}" 
-                   class="px-4 py-2 rounded-xl text-slate-700 hover:text-purple-800 text-xs font-bold transition hover:bg-purple-50/60">
+                   class="px-4 py-2 rounded-xl text-slate-700 hover:text-[#0F766E] text-xs font-bold transition hover:bg-teal-50">
                     Become a Seller
                 </a>
 
                 @auth
                     <a href="{{ route('orders.index') }}" 
-                       class="px-4 py-2 rounded-xl text-slate-700 hover:text-purple-800 text-xs font-bold transition hover:bg-purple-50/60">
+                       class="px-4 py-2 rounded-xl text-slate-700 hover:text-[#0F766E] text-xs font-bold transition hover:bg-teal-50">
                         My Bookings
                     </a>
                     <div class="relative flex items-center gap-2 pl-2 border-l border-slate-200">
                         <a href="{{ route('orders.index') }}" 
-                           class="w-8 h-8 rounded-full bg-purple-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                           class="w-8 h-8 rounded-full bg-[#0F766E] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                             {{ substr(auth()->user()->first_name ?? 'U', 0, 1) }}
                         </a>
                     </div>
                 @else
                     <button type="button" @click="$dispatch('open-auth-modal', { mode: 'login' })"
-                            class="px-5 py-2 rounded-xl bg-slate-950 hover:bg-purple-900 text-white text-xs font-bold transition shadow-xs cursor-pointer">
+                            class="px-5 py-2 rounded-xl bg-slate-950 hover:bg-[#115E59] text-white text-xs font-bold transition shadow-xs cursor-pointer">
                         Sign In
                     </button>
                 @endauth
@@ -148,43 +149,43 @@
             <!-- Mobile Hamburger -->
             <div class="flex lg:hidden items-center gap-2">
                 <button type="button" @click="rfqModalOpen = true"
-                        class="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-bold shadow-xs">
+                        class="px-3 py-1.5 rounded-lg bg-[#0F766E] text-white text-xs font-bold shadow-xs">
                     + Project
                 </button>
                 <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
-                        class="p-2 rounded-xl text-slate-700 hover:bg-purple-50 transition" aria-label="Toggle Navigation">
+                        class="p-2 rounded-xl text-slate-700 hover:bg-teal-50 transition" aria-label="Toggle Navigation">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </button>
             </div>
         </div>
 
         <!-- Secondary Services Category Strip (Horizontal Touch Pan) -->
-        <div class="border-t border-purple-100/80 bg-white/60">
+        <div class="border-t border-slate-100 bg-white/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar overscroll-x-contain py-2.5 text-xs font-semibold whitespace-nowrap">
                     <a href="{{ route('services.index') }}" 
-                       class="px-3 py-1 rounded-full {{ !request('cat') ? 'bg-purple-700 text-white' : 'text-slate-600 hover:text-purple-700 hover:bg-purple-50' }} transition">
+                       class="px-3 py-1 rounded-full {{ !request('cat') ? 'bg-[#0F766E] text-white' : 'text-slate-600 hover:text-[#0F766E] hover:bg-teal-50' }} transition">
                         ⚡ All Services
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Web Development']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Web Development']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         💻 Web & Apps
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Design']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Design']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🎨 UI/UX & Graphics
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Video']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Video']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🎬 Video & Animation
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Marketing']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Marketing']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🚀 Marketing & SEO
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Content']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Content']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         ✍️ Writing & AI
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Marble']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Marble']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🏛️ Marble Polishing
                     </a>
-                    <a href="{{ route('services.index', ['search' => 'Repair']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-purple-700 hover:bg-purple-50 transition">
+                    <a href="{{ route('services.index', ['search' => 'Repair']) }}" class="px-3 py-1 rounded-full text-slate-600 hover:text-[#0F766E] hover:bg-teal-50 transition">
                         🔧 Home & Tech Repairs
                     </a>
                 </div>
@@ -197,18 +198,18 @@
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-2"
              x-transition:enter-end="opacity-100 translate-y-0"
-             class="lg:hidden border-b border-purple-100 bg-white px-5 py-4 space-y-3 shadow-lg">
+             class="lg:hidden border-b border-teal-100 bg-white px-5 py-4 space-y-3 shadow-lg">
             
             <form action="{{ route('services.index') }}" method="GET" class="relative">
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search services or specialists..."
-                       class="w-full pl-9 pr-4 py-2 rounded-xl bg-purple-50/50 border border-purple-200 text-xs font-medium focus:outline-none focus:border-purple-600">
-                <svg class="w-4 h-4 text-purple-600 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                       class="w-full pl-9 pr-4 py-2 rounded-xl bg-teal-50/50 border border-teal-200 text-xs font-medium focus:outline-none focus:border-[#0F766E]">
+                <svg class="w-4 h-4 text-[#0F766E] absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
             </form>
 
             <div class="grid grid-cols-2 gap-2 text-xs font-bold pt-2">
-                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-purple-50 text-purple-800 text-center">Explore Gigs</a>
-                <button type="button" @click="mobileMenuOpen = false; rfqModalOpen = true" class="p-2.5 rounded-xl bg-purple-600 text-white text-center">+ Post Project</button>
+                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-teal-50 text-teal-900 text-center">Explore Gigs</a>
+                <button type="button" @click="mobileMenuOpen = false; rfqModalOpen = true" class="p-2.5 rounded-xl bg-[#0F766E] text-white text-center">+ Post Project</button>
                 <a href="{{ route('services.become_seller') }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-700 text-center">Become a Seller</a>
                 <a href="{{ route('messages.index') }}" class="p-2.5 rounded-xl bg-slate-50 text-slate-700 text-center">Messages</a>
             </div>
@@ -350,16 +351,22 @@
                 </div>
             </div>
 
-            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500">
+            <div class="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400">
                 <p>&copy; {{ date('Y') }} K71 Services • Independent Professional Services Platform. All rights reserved.</p>
                 <div class="flex items-center gap-6">
-                    <a href="{{ url('/terms') }}" class="hover:text-slate-400 transition">Terms of Service</a>
-                    <a href="{{ url('/privacy') }}" class="hover:text-slate-400 transition">Privacy Policy</a>
-                    <a href="{{ url('/escrow') }}" class="hover:text-slate-400 transition">Escrow Safety Policy</a>
+                    <a href="{{ url('/terms') }}" class="hover:text-white transition">Terms of Service</a>
+                    <a href="{{ url('/privacy') }}" class="hover:text-white transition">Privacy Policy</a>
+                    <a href="{{ url('/escrow') }}" class="hover:text-white transition">Escrow Safety Policy</a>
                 </div>
             </div>
         </div>
     </footer>
+
+    <!-- Mobile Bottom Tab Navigation (Section F) -->
+    <x-k71-bottom-nav active="services" />
+
+    <!-- 6-in-1 Draggable Floating Radial Nav -->
+    <x-floating-six-nav />
 
     <!-- SHARED GLOBAL AUTH POPUP MODAL -->
     <x-k71-auth-modal />

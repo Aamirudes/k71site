@@ -1,0 +1,46 @@
+/* ==========================================================================
+   K71 DESIGN SYSTEM — LIQUID.CSS (LAUNCH-POLISHED)
+   Restrained subtle commerce micro-accents.
+   Blobs strictly under 15% opacity, inside hero backgrounds only.
+   ========================================================================== */
+
+@layer k71-components {
+    /* Low-opacity decorative ambient bubbles (hero only, under 15% opacity) */
+    .k71-hero-blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(50px);
+        opacity: 0.12; /* under 15% per Section B */
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Subtle Commerce Button Ripple */
+    .k71-ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: k71RippleAnim 0.35s ease-out;
+        background-color: rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+    }
+    @keyframes k71RippleAnim {
+        to {
+            transform: scale(3);
+            opacity: 0;
+        }
+    }
+
+    /* Subtle clean spinner loader */
+    .k71-spinner {
+        width: 32px;
+        height: 32px;
+        border: 2.5px solid var(--border);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: k71Spin 0.7s linear infinite;
+    }
+    @keyframes k71Spin {
+        to { transform: rotate(360deg); }
+    }
+}

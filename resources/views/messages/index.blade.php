@@ -27,6 +27,7 @@
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-k71-design-system />
 
     <!-- Alpine.js (Defer) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -120,22 +121,28 @@
             color: #94a3b8 !important;
         }
 
+        html.dark .glass-msg-row.received .glass-msg-bubble,
         html.dark .glass-bubble.received {
             background: #1e293b !important;
             color: #ffffff !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
+        html.dark .glass-msg-row.received .glass-msg-bubble *,
         html.dark .glass-bubble.received * {
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
 
+        html.dark .glass-msg-row.sent .glass-msg-bubble,
         html.dark .glass-bubble.sent {
-            background: #18181b !important;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
             color: #ffffff !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            border: none !important;
         }
+        html.dark .glass-msg-row.sent .glass-msg-bubble *,
         html.dark .glass-bubble.sent * {
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
 
         html.dark .glass-icon-btn {
@@ -163,20 +170,27 @@
             color: #0f172a !important;
             font-weight: 700 !important;
         }
+        html:not(.dark) .glass-msg-row.received .glass-msg-bubble,
         html:not(.dark) .glass-bubble.received {
-            background: #f1f5f9 !important;
+            background: #ffffff !important;
             color: #0f172a !important;
             border: 1px solid #e2e8f0 !important;
         }
+        html:not(.dark) .glass-msg-row.received .glass-msg-bubble *,
         html:not(.dark) .glass-bubble.received * {
             color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
         }
+        html:not(.dark) .glass-msg-row.sent .glass-msg-bubble,
         html:not(.dark) .glass-bubble.sent {
-            background: #0f172a !important;
+            background: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%) !important;
             color: #ffffff !important;
+            border: none !important;
         }
+        html:not(.dark) .glass-msg-row.sent .glass-msg-bubble *,
         html:not(.dark) .glass-bubble.sent * {
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
 
         #k71-chat-wrapper {
@@ -915,19 +929,27 @@
         }
 
         .glass-msg-row.sent .glass-msg-bubble {
-            background: var(--primary, #4338CA);
-            color: var(--on-primary, #FFFFFF);
+            background: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%) !important;
+            color: #ffffff !important;
             border-bottom-right-radius: 4px;
-            border: none;
+            border: none !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        .glass-msg-row.sent .glass-msg-bubble * {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
         }
 
         .glass-msg-row.received .glass-msg-bubble {
-            background: var(--surface, #FFFFFF);
-            color: var(--text, #0F1222);
+            background: #ffffff !important;
+            color: #0f172a !important;
             border-bottom-left-radius: 4px;
-            border: 1px solid var(--border, #E2E8F0);
+            border: 1px solid #E2E8F0 !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+        .glass-msg-row.received .glass-msg-bubble * {
+            color: #0f172a !important;
+            -webkit-text-fill-color: #0f172a !important;
         }
 
         .glass-msg-bubble.optimistic {
@@ -3119,17 +3141,18 @@
                 }
 
                 let bodyHtml = '';
+                const bubbleColorStyle = isSent ? 'color: #ffffff !important;' : (document.documentElement.classList.contains('dark') ? 'color: #f8fafc !important;' : 'color: #0f172a !important;');
                 if (isVoice) {
                     // Do not show duplicated text bubble if body is voice note indicator
                     if (msg.body && !msg.body.startsWith('🎤 Voice message') && !msg.body.startsWith('🎤 Voice note')) {
-                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}" style="${bubbleColorStyle}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
                     } else if (replyQuoteHtml) {
-                        bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}</div>`;
+                        bodyHtml = `<div class="glass-msg-bubble" style="${bubbleColorStyle}">${replyQuoteHtml}</div>`;
                     }
                 } else if (msg.body && msg.body !== '📷 Photo') {
-                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}" style="${bubbleColorStyle}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
                 } else if (!attachmentHtml) {
-                    bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}📷 Photo</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble" style="${bubbleColorStyle}">${replyQuoteHtml}📷 Photo</div>`;
                 }
 
                 const unsendBtnHtml = (isSent && !msg.is_optimistic)

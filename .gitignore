@@ -59,3 +59,7 @@ Thumbs.db
 scratch/
 refzip/
 
+
+# Video gen tool dependencies
+tools/video-gen/node_modules/
+tools/video-gen/package-lock.json

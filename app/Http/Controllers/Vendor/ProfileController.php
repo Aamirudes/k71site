@@ -21,7 +21,7 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'shop_name' => ['required', 'string', 'max:100'],
-            'vendor_type' => ['nullable', 'string', 'in:clothing,food,services,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,toys_sports,shorts,b2b'],
+            'vendor_type' => ['nullable', 'string', 'in:clothing,mens,food,feasto,services,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,toys_sports,shorts,b2b'],
             'description' => ['nullable', 'string', 'max:1000'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string'],
@@ -39,6 +39,7 @@ class ProfileController extends Controller
             'colour_palette' => ['nullable', 'string', 'in:default,linen,emerald,rose,noir,terracotta,sage,midnight,sunset'],
             'layout_preset' => ['nullable', 'string', 'in:classic,boutique,editorial,minimal'],
             'product_preset' => ['nullable', 'string', 'in:gallery,immersive,showcase'],
+            'text_preset' => ['nullable', 'string', 'in:default,obsidian,deep_navy,espresso,monochrome'],
             'tagline' => ['nullable', 'string', 'max:150'],
             'custom_badge' => ['nullable', 'string', 'max:50'],
             'announcement_bar' => ['nullable', 'string', 'max:200'],
@@ -97,6 +98,7 @@ class ProfileController extends Controller
         $social['show_stats_strip'] = $request->has('show_stats_strip');
         $social['show_whatsapp_button'] = $request->has('show_whatsapp_button');
         $social['show_spotlight'] = $request->has('show_spotlight');
+        $social['text_preset'] = $request->input('text_preset', 'obsidian');
         $social['instagram'] = $request->input('instagram');
         $social['whatsapp'] = $request->input('whatsapp');
         $social['website'] = $request->input('website');
@@ -114,5 +116,24 @@ class ProfileController extends Controller
         }
 
         return back()->with('success', 'Boutique storefront updated successfully.');
+    }
+
+    public function previewAjax(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        $palette = $request->input('palette', $vendor->colour_palette ?? 'sage');
+        $layout = $request->input('layout', $vendor->layout_preset ?? 'classic');
+        $productPreset = $request->input('product_preset', $vendor->product_preset ?? 'gallery');
+        $textPreset = $request->input('text_preset', 'obsidian');
+
+        return response()->json([
+            'status' => 'success',
+            'palette' => $palette,
+            'layout' => $layout,
+            'product_preset' => $productPreset,
+            'text_preset' => $textPreset,
+            'shop_name' => $vendor->shop_name,
+            'timestamp' => now()->toIso8601String(),
+        ]);
     }
 }

@@ -149,6 +149,30 @@ if ($syncRequested) {
                     }
                 }
                 
+                // Mirror public/assets and public/build into document root for direct web server static delivery
+                $mirrorDirs = ['assets', 'build', 'images'];
+                foreach ($mirrorDirs as $md) {
+                    $srcDir = $baseDir . '/public/' . $md;
+                    $dstDir = $baseDir . '/' . $md;
+                    if (file_exists($srcDir) && $srcDir !== $dstDir) {
+                        if (!file_exists($dstDir)) {
+                            @mkdir($dstDir, 0775, true);
+                        }
+                        $it = new RecursiveIteratorIterator(
+                            new RecursiveDirectoryIterator($srcDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                            RecursiveIteratorIterator::SELF_FIRST
+                        );
+                        foreach ($it as $item) {
+                            $target = $dstDir . DIRECTORY_SEPARATOR . $it->getSubPathName();
+                            if ($item->isDir()) {
+                                if (!file_exists($target)) @mkdir($target, 0775, true);
+                            } else {
+                                @copy($item, $target);
+                            }
+                        }
+                    }
+                }
+
                 echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";
@@ -427,7 +451,12 @@ try {
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+
+    // Chat schema auto-repair
+    try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
+    try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
+
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof). Chat direct schema & legacy chats verified.</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }

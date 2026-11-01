@@ -51,6 +51,20 @@
                                 </div>
                             </label>
 
+                            <!-- 1b. Men's Fashion & Apparel -->
+                            <label :class="selectedType === 'mens' ? 'ring-2 ring-indigo-600 border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
+                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
+                                <input type="radio" name="vendor_type" value="mens" x-model="selectedType" class="sr-only" required>
+                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">👔</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-xs font-black text-zinc-900 dark:text-white">Men's Fashion &amp; Apparel</div>
+                                        <span x-show="selectedType === 'mens'" class="text-emerald-500 text-xs font-black">✓</span>
+                                    </div>
+                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Shirts, ethnic kurtas, trousers, suits &amp; footwear</div>
+                                </div>
+                            </label>
+
                             <!-- 2. Food & Cloud Kitchen -->
                             <label :class="selectedType === 'food' ? 'ring-2 ring-emerald-600 border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
                                    class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
@@ -65,35 +79,24 @@
                                 </div>
                             </label>
 
-                            <!-- 3. Services -->
-                            <label :class="selectedType === 'services' ? 'ring-2 ring-purple-600 border-purple-600 bg-purple-50/50 dark:bg-purple-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
+                            <!-- 2b. Feasto Hyperlocal Quick-Commerce -->
+                            <label :class="selectedType === 'feasto' ? 'ring-2 ring-[#0C831F] border-[#0C831F] bg-emerald-50/60 dark:bg-emerald-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
                                    class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
-                                <input type="radio" name="vendor_type" value="services" x-model="selectedType" class="sr-only" required>
-                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">🧹</div>
+                                <input type="radio" name="vendor_type" value="feasto" x-model="selectedType" class="sr-only" required>
+                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">⚡</div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between">
-                                        <div class="text-xs font-black text-zinc-900 dark:text-white">On-Demand Services</div>
-                                        <span x-show="selectedType === 'services'" class="text-emerald-500 text-xs font-black">✓</span>
+                                        <div class="text-xs font-black text-zinc-900 dark:text-white flex items-center gap-1.5">
+                                            <span>Feasto Hyperlocal Store</span>
+                                            <span class="px-1.5 py-0.2 rounded-md bg-[#0C831F] text-white text-[9px] font-extrabold uppercase">10 Mins</span>
+                                        </div>
+                                        <span x-show="selectedType === 'feasto'" class="text-emerald-500 text-xs font-black">✓</span>
                                     </div>
-                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Electricians, plumbers, deep cleaning &amp; slots</div>
+                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Fast moving groceries, snacks &amp; drinks. Direct K71 store with full vendor dashboard &amp; 10-min delivery fleet dispatch.</div>
                                 </div>
                             </label>
 
-                            <!-- 4. Used Items -->
-                            <label :class="selectedType === 'used' ? 'ring-2 ring-zinc-900 dark:ring-white border-zinc-900 dark:border-white bg-zinc-100 dark:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
-                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
-                                <input type="radio" name="vendor_type" value="used" x-model="selectedType" class="sr-only" required>
-                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">🔄</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between">
-                                        <div class="text-xs font-black text-zinc-900 dark:text-white">Pre-Owned &amp; Used</div>
-                                        <span x-show="selectedType === 'used'" class="text-emerald-500 text-xs font-black">✓</span>
-                                    </div>
-                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Second-hand tech, vehicles &amp; offer bidding</div>
-                                </div>
-                            </label>
-
-                            <!-- 5. Heavy Machinery / B2B -->
+                            <!-- 3. Heavy Machinery / B2B -->
                             <label :class="selectedType === 'machinery' ? 'ring-2 ring-amber-600 border-amber-600 bg-amber-50/50 dark:bg-amber-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
                                    class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
                                 <input type="radio" name="vendor_type" value="machinery" x-model="selectedType" class="sr-only" required>
@@ -135,19 +138,6 @@
                                 </div>
                             </label>
 
-                            <!-- 8. Digital Gigs -->
-                            <label :class="selectedType === 'digital_services' ? 'ring-2 ring-violet-600 border-violet-600 bg-violet-50/50 dark:bg-violet-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"
-                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
-                                <input type="radio" name="vendor_type" value="digital_services" x-model="selectedType" class="sr-only" required>
-                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">💼</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center justify-between">
-                                        <div class="text-xs font-black text-zinc-900 dark:text-white">Digital Gigs &amp; Freelance</div>
-                                        <span x-show="selectedType === 'digital_services'" class="text-emerald-500 text-xs font-black">✓</span>
-                                    </div>
-                                    <div class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">Web dev, AI/ML, UI/UX, 3D &amp; copywriting</div>
-                                </div>
-                            </label>
 
                             <!-- 9. Real Estate -->
                             <label :class="selectedType === 'real_estate' ? 'ring-2 ring-emerald-700 border-emerald-700 bg-emerald-50/50 dark:bg-emerald-950/40' : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-800/50 hover:border-zinc-400 dark:hover:border-zinc-600'"

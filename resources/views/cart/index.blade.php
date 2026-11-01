@@ -195,9 +195,9 @@
                                 <span>Remove Out-of-Stock Items to Checkout</span>
                             </button>
                         @else
-                            <a href="{{ route('checkout.vendor', $vendor->id) }}" class="w-full sm:w-auto px-7 py-3.5 bg-zinc-900 text-white font-sans font-semibold text-xs tracking-wider uppercase rounded-full hover:bg-black transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-95">
-                                <span>Checkout {{ $vendor->shop_name }}</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            <a href="{{ route('checkout.vendor', $vendor->id) }}" class="w-full sm:w-auto px-7 py-3.5 bg-black hover:bg-zinc-800 text-white font-black text-xs tracking-wider uppercase rounded-2xl transition-all flex items-center justify-center gap-2.5 shadow-md active:scale-95 cursor-pointer">
+                                <span class="text-white font-black">Checkout {{ $vendor->shop_name }}</span>
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             </a>
                         @endif
                     </div>

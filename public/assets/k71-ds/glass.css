@@ -1,0 +1,74 @@
+/* ==========================================================================
+   K71 DESIGN SYSTEM — GLASS.CSS (TONED DOWN & LAUNCH-POLISHED)
+   Glass/blur ONLY on sticky headers, bottom nav, bottom sheets, and modals.
+   Product/listing cards are solid white with 1px border & soft shadow (not glass).
+   ========================================================================== */
+
+@layer k71-components {
+    /* Solid Cards (Strict Commerce UI) */
+    .k71-card, .card, .k71-card-product {
+        background-color: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: var(--shadow-xs) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    /* Glass/Blur ONLY on chrome elements */
+    .k71-header-glass, header.sticky, .k71-sticky-header {
+        background-color: rgba(255, 255, 255, 0.94);
+        border-bottom: 1px solid var(--border);
+    }
+    [data-brand="shorts"] .k71-header-glass,
+    [data-brand="shorts"] header.sticky,
+    [data-brand="shorts"] .k71-sticky-header {
+        background-color: #000000 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .k71-bottom-nav, .k71-bottom-nav-glass {
+        background-color: rgba(255, 255, 255, 0.96);
+        border-top: 1px solid var(--border);
+    }
+    [data-brand="shorts"] .k71-bottom-nav,
+    [data-brand="shorts"] .k71-bottom-nav-glass {
+        background-color: #000000 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .k71-modal-surface {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-lg);
+    }
+
+    @supports (backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px)) {
+        .k71-header-glass, header.sticky, .k71-sticky-header {
+            background-color: rgba(255, 255, 255, 0.88);
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+        }
+
+        .k71-bottom-nav, .k71-bottom-nav-glass {
+            background-color: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+        }
+
+        .k71-bottom-sheet {
+            background-color: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(24px);
+        }
+
+        [data-brand="shorts"] .k71-header-glass, 
+        [data-brand="shorts"] header.sticky,
+        [data-brand="shorts"] .k71-sticky-header,
+        [data-brand="shorts"] .k71-bottom-nav,
+        [data-brand="shorts"] .k71-bottom-nav-glass,
+        [data-brand="shorts"] .k71-bottom-sheet {
+            background-color: rgba(0, 0, 0, 0.88) !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+    }
+}

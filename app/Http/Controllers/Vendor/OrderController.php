@@ -30,6 +30,14 @@ class OrderController extends Controller
         // Counts for pipeline filter tabs
         $counts = [
             'all' => Order::where('vendor_id', $vendor->id)->count(),
+            'pending_payment' => Order::where('vendor_id', $vendor->id)
+                ->where(function($q) {
+                    $q->whereHas('paymentClaim', function($cq) {
+                        $cq->whereIn('status', ['submitted', 'pending']);
+                    })->orWhere(function($oq) {
+                        $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
+                    });
+                })->count(),
             'to_pack' => Order::where('vendor_id', $vendor->id)->whereIn('status', ['pending', 'processing'])->count(),
             'shipped' => Order::where('vendor_id', $vendor->id)->where('status', 'shipped')->count(),
             'delivered' => Order::where('vendor_id', $vendor->id)->where('status', 'delivered')->count(),
@@ -40,7 +48,15 @@ class OrderController extends Controller
             ->where('vendor_id', $vendor->id);
 
         // Apply status filter
-        if ($status === 'to_pack') {
+        if ($status === 'pending_payment') {
+            $query->where(function($q) {
+                $q->whereHas('paymentClaim', function($cq) {
+                    $cq->whereIn('status', ['submitted', 'pending']);
+                })->orWhere(function($oq) {
+                    $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
+                });
+            });
+        } elseif ($status === 'to_pack') {
             $query->whereIn('status', ['pending', 'processing']);
         } elseif ($status === 'shipped') {
             $query->where('status', 'shipped');
@@ -559,6 +575,246 @@ class OrderController extends Controller
             ]),
             'latest_order_id' => $latestOrder?->id ?? 0,
         ]);
+    }
+
+    /**
+     * Vendor approve customer payment proof (UTR / Screenshot)
+     */
+    public function approvePaymentProof(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to order.');
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($order->paymentClaim) {
+                $order->paymentClaim->update([
+                    'status' => 'approved',
+                    'verified_at' => now(),
+                ]);
+            }
+
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => $order->status === 'pending' ? 'processing' : $order->status,
+            ]);
+
+            \App\Models\OrderStatusLog::create([
+                'order_id' => $order->id,
+                'from_status' => $order->status,
+                'to_status' => $order->status,
+                'actor_type' => 'vendor',
+                'actor_id' => auth()->id(),
+                'note' => "Payment verified and approved by vendor. Bank UTR/Proof confirmed.",
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', "Payment approved successfully! Order #{$order->order_number} is now marked as Paid.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Failed to approve payment: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Vendor reject customer payment proof (UTR / Screenshot)
+     */
+    public function rejectPaymentProof(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to order.');
+        }
+
+        $reason = $request->input('reason', $request->input('rejection_reason', 'Transaction ID / UTR not found in bank statement'));
+
+        DB::beginTransaction();
+        try {
+            if ($order->paymentClaim) {
+                $order->paymentClaim->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => $reason,
+                ]);
+            }
+
+            $order->update([
+                'payment_status' => 'failed',
+            ]);
+
+            \App\Models\OrderStatusLog::create([
+                'order_id' => $order->id,
+                'from_status' => $order->status,
+                'to_status' => $order->status,
+                'actor_type' => 'vendor',
+                'actor_id' => auth()->id(),
+                'note' => "Payment proof rejected by vendor: {$reason}",
+                'ip_address' => $request->ip(),
+            ]);
+
+            DB::commit();
+            return back()->with('success', "Payment proof rejected for Order #{$order->order_number}.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Failed to reject payment: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get nearby delivery partners for fast dispatch (Blinkit speed)
+     */
+    public function getNearbyDeliveryPartners(Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $vLat = 26.5744; // default Kishangarh, Rajasthan
+        $vLng = 74.8654;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $partners = \App\Models\DeliveryPartner::where('is_online', true)
+            ->with(['activeAssignments' => function($q) {
+                $q->with('order');
+            }])
+            ->get()
+            ->map(function ($p) use ($vLat, $vLng) {
+                $dist = $p->distanceTo($vLat, $vLng);
+                $fare = $p->calculateDeliveryFee($dist);
+                $isBusy = $p->activeAssignments->isNotEmpty();
+                return [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'phone' => $p->phone,
+                    'vehicle_type' => ucfirst($p->vehicle_type),
+                    'vehicle_number' => $p->vehicle_number ?: 'Unregistered',
+                    'rating' => number_format($p->rating, 1),
+                    'total_deliveries' => $p->total_deliveries,
+                    'distance_km' => $dist,
+                    'eta_minutes' => max(3, round($dist * 3.5)),
+                    'base_delivery_fee' => (float) ($p->base_delivery_fee ?? 30.00),
+                    'per_km_rate' => (float) ($p->per_km_rate ?? 15.00),
+                    'calculated_payout' => $fare,
+                    'fare_formatted' => '₹' . number_format($fare, 2),
+                    'is_busy' => $isBusy,
+                    'status_label' => $isBusy ? 'On Active Delivery' : 'Available for Pickup',
+                ];
+            })
+            ->sortBy('distance_km')
+            ->values();
+
+        return response()->json([
+            'partners' => $partners,
+            'vendor_location' => $vendor->pickup_address['line_1'] ?? 'Kishangarh Hub',
+        ]);
+    }
+
+    /**
+     * Confirm order and dispatch to chosen delivery partner
+     */
+    public function assignDeliveryPartner(Request $request, Order $order)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $order->vendor_id !== $vendor->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $partnerId = $request->input('delivery_partner_id');
+        $partner = \App\Models\DeliveryPartner::findOrFail($partnerId);
+
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $dist = $partner->distanceTo($vLat, $vLng);
+        $fare = $partner->calculateDeliveryFee($dist);
+
+        $assignment = \App\Models\DeliveryAssignment::create([
+            'order_id' => $order->id,
+            'delivery_partner_id' => $partner->id,
+            'vendor_id' => $vendor->id,
+            'status' => 'assigned',
+            'pickup_distance_km' => $dist,
+            'payout_amount' => $fare,
+            'assigned_at' => now(),
+        ]);
+
+        $order->update([
+            'status' => 'processing',
+        ]);
+
+        \App\Models\OrderStatusLog::create([
+            'order_id' => $order->id,
+            'from_status' => $order->status,
+            'to_status' => 'processing',
+            'actor_type' => 'vendor',
+            'actor_id' => auth()->id(),
+            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$dist} km away • ₹{$fare} delivery fare). Pickup alert ring dispatched.",
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Order dispatched to {$partner->name}! Alert ring sent to delivery partner.",
+            'partner' => [
+                'name' => $partner->name,
+                'phone' => $partner->phone,
+                'vehicle' => $partner->vehicle_number,
+                'fare' => '₹' . number_format($fare, 2),
+                'distance' => $dist . ' km',
+            ]
+        ]);
+    }
+
+    /**
+     * Dedicated full-page Delivery Fleet and Delivery Boy Management for Food and Feasto vendors
+     */
+    public function deliveryPartnersIndex(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $partners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+            $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
+        }])->get()->map(function($p) use ($vLat, $vLng) {
+            $activeAssignment = $p->assignments->first(function($a) {
+                return in_array($a->status, ['assigned', 'accepted', 'picked_up']);
+            });
+            $p->active_assignment = $activeAssignment;
+            $p->is_busy = !is_null($activeAssignment);
+            $p->distance_km = $p->distanceTo($vLat, $vLng);
+            $p->eta_minutes = max(3, (int) round($p->distance_km * 3.5));
+            return $p;
+        })->sortBy('distance_km')->values();
+
+        $activeOrdersNeedingDispatch = Order::where('vendor_id', $vendor->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->where(function($q) {
+                $q->whereDoesntHave('deliveryAssignment')
+                  ->orWhereHas('deliveryAssignment', function($aq) {
+                      $aq->whereIn('status', ['cancelled', 'failed']);
+                  });
+            })
+            ->latest()
+            ->get();
+
+        return view('vendor.delivery-partners.index', compact('vendor', 'partners', 'activeOrdersNeedingDispatch'));
     }
 }
 

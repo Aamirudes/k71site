@@ -30,7 +30,7 @@
             <!-- Header -->
             <div class="flex justify-between items-start border-b border-gray-100 pb-8 mb-8">
                 <div>
-                    <h1 class="text-4xl font-serif font-bold text-gray-900 tracking-tight">{{ $order->vendor->shop_name }}</h1>
+                    <h1 class="text-4xl font-serif font-bold text-gray-900 tracking-tight">{{ $order->vendor?->shop_name ?? 'K71 Direct Store' }}</h1>
                     <p class="text-gray-500 mt-2 text-sm max-w-xs">The premier multi-vendor fashion marketplace. Discover unique brands, designers, and boutiques all in one place.</p>
                 </div>
                 <div class="text-right">
@@ -44,9 +44,9 @@
             <div class="flex flex-col sm:flex-row justify-between gap-8 border-b border-gray-100 pb-8 mb-8">
                 <div>
                     <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Billed To</p>
-                    <p class="text-gray-900 font-bold">{{ $order->user->first_name }} {{ $order->user->last_name }}</p>
+                    <p class="text-gray-900 font-bold">{{ $order->user ? ($order->user->first_name . ' ' . $order->user->last_name) : 'Valued Customer' }}</p>
                     <address class="text-gray-600 not-italic text-sm mt-1 leading-relaxed">
-                        {{ $order->user->email }}<br>
+                        {{ $order->user?->email ?? ($order->address_snapshot['email'] ?? '') }}<br>
                         {{ $order->address_snapshot['line_1'] ?? '' }}<br>
                         {{ $order->address_snapshot['city'] ?? '' }}, {{ $order->address_snapshot['state'] ?? '' }} {{ $order->address_snapshot['pincode'] ?? '' }}<br>
                         P: {{ $order->address_snapshot['phone'] ?? '' }}
@@ -54,11 +54,11 @@
                 </div>
                 <div class="sm:text-right">
                     <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-3">Sold By</p>
-                    <p class="text-gray-900 font-bold">{{ $order->vendor->shop_name }}</p>
+                    <p class="text-gray-900 font-bold">{{ $order->vendor?->shop_name ?? 'K71 Direct Store' }}</p>
                     <address class="text-gray-600 not-italic text-sm mt-1 leading-relaxed">
-                        GSTIN: {{ $order->vendor->business_details['gstin'] ?? 'N/A' }}<br>
-                        PAN: {{ $order->vendor->business_details['pan'] ?? 'N/A' }}<br>
-                        Contact: {{ $order->vendor->contact_email }}
+                        GSTIN: {{ $order->vendor?->business_details['gstin'] ?? 'N/A' }}<br>
+                        PAN: {{ $order->vendor?->business_details['pan'] ?? 'N/A' }}<br>
+                        Contact: {{ $order->vendor?->contact_email ?? 'support@k71.com' }}
                     </address>
                 </div>
             </div>
