@@ -57,6 +57,66 @@
                 <form id="floating-launcher-form" action="{{ route('admin.floating_launcher.save') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
+                    <!-- 0. Main Trigger Button Icon & Retract Text Settings -->
+                    <div class="bg-white rounded-2xl p-5 border-2 border-zinc-950 shadow-xs space-y-4 mb-4">
+                        <div class="flex items-center justify-between pb-3 border-b border-zinc-100">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-8 h-8 rounded-xl bg-zinc-950 text-white flex items-center justify-center font-bold text-sm">
+                                    ⚙️
+                                </span>
+                                <div>
+                                    <h3 class="text-sm font-black text-zinc-950 uppercase tracking-wider">
+                                        Main Launcher Trigger Button &amp; Retract Symbol
+                                    </h3>
+                                    <p class="text-xs text-zinc-500">Configure the center floating button image/icon and the retract close text.</p>
+                                </div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                Global Trigger
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                            <div>
+                                <label class="block font-bold text-zinc-900 mb-1">Trigger Text (Default: NAV)</label>
+                                <input type="text" name="trigger_text" value="{{ $triggerText ?? 'NAV' }}" placeholder="NAV, MENU, K71..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold focus:ring-2 focus:ring-zinc-950">
+                                <span class="text-[10px] text-zinc-400 mt-1 block">Label shown under the trigger button</span>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-zinc-900 mb-1">Retract / Close Symbol (Default: ✱)</label>
+                                <input type="text" name="close_text" value="{{ $closeText ?? '✱' }}" placeholder="✱, ✕, CLOSE..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-bold text-base focus:ring-2 focus:ring-zinc-950">
+                                <span class="text-[10px] text-zinc-400 mt-1 block">Text or symbol shown when menu is expanded</span>
+                            </div>
+
+                            <div>
+                                <label class="block font-bold text-zinc-900 mb-1">Direct Trigger Image URL</label>
+                                <input type="text" name="trigger_image_url" value="{{ $triggerImage ?? '' }}" placeholder="https://... or /images/..."
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px] focus:ring-2 focus:ring-zinc-950">
+                                <span class="text-[10px] text-zinc-400 mt-1 block">Optional custom center logo</span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-zinc-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <label class="block font-bold text-zinc-900 mb-1">Upload Custom Center Trigger Icon (PNG / SVG / WebP)</label>
+                                <input type="file" name="trigger_image_file" accept="image/*"
+                                       class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200 cursor-pointer">
+                            </div>
+                            @if(!empty($triggerImage))
+                                <div class="flex items-center gap-3">
+                                    <img src="{{ $triggerImage }}" alt="Trigger Icon" class="w-10 h-10 object-contain rounded-full bg-zinc-900 p-1 border">
+                                    <label class="flex items-center gap-1.5 text-xs text-rose-600 font-bold cursor-pointer">
+                                        <input type="checkbox" name="remove_trigger_image" value="1" class="rounded border-zinc-300 text-rose-600">
+                                        <span>Remove Image (Restore Default SVG)</span>
+                                    </label>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                     <div class="space-y-4">
                         @foreach($items as $index => $item)
                             <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs space-y-4 transition hover:border-zinc-300">
@@ -212,12 +272,16 @@
 
                         <!-- Center Trigger Launcher Button -->
                         <button type="button" @click="launcherOpen = !launcherOpen"
-                                class="w-13 h-13 rounded-full bg-black text-white shadow-2xl border border-white/30 backdrop-blur-2xl flex items-center justify-center relative z-20 cursor-pointer hover:scale-105 active:scale-95 transition-transform">
+                                class="w-13 h-13 rounded-full bg-black text-white shadow-2xl border border-white/30 backdrop-blur-2xl flex items-center justify-center relative z-20 cursor-pointer hover:scale-105 active:scale-95 transition-transform overflow-hidden">
                             <span x-show="!launcherOpen" class="flex flex-col items-center justify-center">
-                                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
-                                <span class="text-[7px] font-black uppercase text-white/80 leading-none mt-0.5">NAV</span>
+                                @if(!empty($triggerImage))
+                                    <img src="{{ $triggerImage }}" class="w-6 h-6 object-contain rounded-full">
+                                @else
+                                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
+                                @endif
+                                <span class="text-[7px] font-black uppercase text-white/80 leading-none mt-0.5">{{ $triggerText ?? 'NAV' }}</span>
                             </span>
-                            <span x-show="launcherOpen" class="text-xl font-black text-amber-300 leading-none">✱</span>
+                            <span x-show="launcherOpen" class="text-xl font-black text-amber-300 leading-none">{{ $closeText ?? '✱' }}</span>
                         </button>
                     </div>
 

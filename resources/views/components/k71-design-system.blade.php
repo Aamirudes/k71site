@@ -141,10 +141,22 @@ a[class~="bg-emerald-50"] * {
 }
 
 /* Hovering light buttons to dark background */
+button[class*="hover:bg-slate-950"]:hover,
+button[class*="hover:bg-slate-950"]:hover *,
+a[class*="hover:bg-slate-950"]:hover,
+a[class*="hover:bg-slate-950"]:hover *,
 button[class*="hover:bg-slate-900"]:hover,
 button[class*="hover:bg-slate-900"]:hover *,
 a[class*="hover:bg-slate-900"]:hover,
 a[class*="hover:bg-slate-900"]:hover *,
+button[class*="hover:bg-zinc-800"]:hover,
+button[class*="hover:bg-zinc-800"]:hover *,
+a[class*="hover:bg-zinc-800"]:hover,
+a[class*="hover:bg-zinc-800"]:hover *,
+button[class*="hover:bg-zinc-900"]:hover,
+button[class*="hover:bg-zinc-900"]:hover *,
+a[class*="hover:bg-zinc-900"]:hover,
+a[class*="hover:bg-zinc-900"]:hover *,
 button[class*="hover:bg-black"]:hover,
 button[class*="hover:bg-black"]:hover *,
 a[class*="hover:bg-black"]:hover,
@@ -153,10 +165,18 @@ button[class*="hover:bg-amber-600"]:hover,
 button[class*="hover:bg-amber-600"]:hover *,
 a[class*="hover:bg-amber-600"]:hover,
 a[class*="hover:bg-amber-600"]:hover *,
+button[class*="hover:bg-amber-700"]:hover,
+button[class*="hover:bg-amber-700"]:hover *,
+a[class*="hover:bg-amber-700"]:hover,
+a[class*="hover:bg-amber-700"]:hover *,
 button[class*="hover:bg-emerald-600"]:hover,
 button[class*="hover:bg-emerald-600"]:hover *,
 a[class*="hover:bg-emerald-600"]:hover,
-a[class*="hover:bg-emerald-600"]:hover * {
+a[class*="hover:bg-emerald-600"]:hover *,
+button[class*="hover:bg-emerald-700"]:hover,
+button[class*="hover:bg-emerald-700"]:hover *,
+a[class*="hover:bg-emerald-700"]:hover,
+a[class*="hover:bg-emerald-700"]:hover * {
     color: #ffffff !important;
 }
 

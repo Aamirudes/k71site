@@ -20,6 +20,9 @@
 
     $launcherItems = \App\Http\Controllers\Admin\FloatingLauncherController::getLauncherItems();
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
+    $triggerImage = \App\Models\Setting::get('floating_launcher_trigger_image', null);
+    $triggerText = \App\Models\Setting::get('floating_launcher_trigger_text', 'NAV');
+    $closeText = \App\Models\Setting::get('floating_launcher_close_text', '✱');
 @endphp
 
 <div class="k71-fab fixed top-0 left-0 select-none touch-none" 
@@ -177,20 +180,27 @@
         <!-- Subtle Specular Edge Ring -->
         <div class="absolute inset-0 rounded-full border border-white/20 pointer-events-none"></div>
 
-        <!-- Normal State: Sleek Multi-Portal Glyph -->
-        <div x-show="!open" class="flex flex-col items-center justify-center transition-all">
-            <svg class="w-5 h-5 text-white group-hover:text-amber-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7" rx="2"></rect>
-                <rect x="14" y="3" width="7" height="7" rx="2"></rect>
-                <rect x="14" y="14" width="7" height="7" rx="2"></rect>
-                <rect x="3" y="14" width="7" height="7" rx="2"></rect>
-            </svg>
-            <span class="text-[7.5px] font-black tracking-wider uppercase text-white/80 leading-none mt-1">NAV</span>
+        <!-- Normal State: Custom Trigger Image or Sleek Multi-Portal Glyph -->
+        <div x-show="!open" class="flex flex-col items-center justify-center transition-all w-full h-full p-1.5">
+            @if(!empty($triggerImage))
+                <img src="{{ $triggerImage }}" alt="{{ $triggerText }}" class="w-7 h-7 object-contain rounded-full shadow-xs">
+                @if(!empty($triggerText))
+                    <span class="text-[7px] font-black tracking-wider uppercase text-white/90 leading-none mt-0.5 truncate max-w-[44px]">{{ $triggerText }}</span>
+                @endif
+            @else
+                <svg class="w-5 h-5 text-white group-hover:text-amber-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                    <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                    <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                    <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                </svg>
+                <span class="text-[7.5px] font-black tracking-wider uppercase text-white/80 leading-none mt-1">{{ $triggerText }}</span>
+            @endif
         </div>
 
-        <!-- Active Open State: Retract Button '✱' -->
+        <!-- Active Open State: Retract Button Close Symbol / Text -->
         <div x-show="open" class="flex items-center justify-center transition-all">
-            <span class="text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">✱</span>
+            <span class="text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">{{ $closeText }}</span>
         </div>
 
     </div>

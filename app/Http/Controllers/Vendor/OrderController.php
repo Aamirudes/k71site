@@ -674,11 +674,20 @@ class OrderController extends Controller
 
         $vLat = 27.0425; // default Makrana
         $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
 
         $partners = \App\Models\DeliveryPartner::where('is_online', true)
+            ->with(['activeAssignments' => function($q) {
+                $q->with('order');
+            }])
             ->get()
             ->map(function ($p) use ($vLat, $vLng) {
                 $dist = $p->distanceTo($vLat, $vLng);
+                $fare = $p->calculateDeliveryFee($dist);
+                $isBusy = $p->activeAssignments->isNotEmpty();
                 return [
                     'id' => $p->id,
                     'name' => $p->name,
@@ -688,7 +697,13 @@ class OrderController extends Controller
                     'rating' => number_format($p->rating, 1),
                     'total_deliveries' => $p->total_deliveries,
                     'distance_km' => $dist,
-                    'eta_minutes' => max(4, round($dist * 3.5)),
+                    'eta_minutes' => max(3, round($dist * 3.5)),
+                    'base_delivery_fee' => (float) ($p->base_delivery_fee ?? 30.00),
+                    'per_km_rate' => (float) ($p->per_km_rate ?? 15.00),
+                    'calculated_payout' => $fare,
+                    'fare_formatted' => '₹' . number_format($fare, 2),
+                    'is_busy' => $isBusy,
+                    'status_label' => $isBusy ? 'On Active Delivery' : 'Available for Pickup',
                 ];
             })
             ->sortBy('distance_km')
@@ -713,7 +728,15 @@ class OrderController extends Controller
         $partnerId = $request->input('delivery_partner_id');
         $partner = \App\Models\DeliveryPartner::findOrFail($partnerId);
 
-        $dist = $partner->distanceTo(27.0425, 74.7214);
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $dist = $partner->distanceTo($vLat, $vLng);
+        $fare = $partner->calculateDeliveryFee($dist);
 
         $assignment = \App\Models\DeliveryAssignment::create([
             'order_id' => $order->id,
@@ -721,7 +744,7 @@ class OrderController extends Controller
             'vendor_id' => $vendor->id,
             'status' => 'assigned',
             'pickup_distance_km' => $dist,
-            'payout_amount' => 45.00,
+            'payout_amount' => $fare,
             'assigned_at' => now(),
         ]);
 
@@ -735,7 +758,7 @@ class OrderController extends Controller
             'to_status' => 'processing',
             'actor_type' => 'vendor',
             'actor_id' => auth()->id(),
-            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$dist} km away). Pickup alerted.",
+            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$dist} km away • ₹{$fare} delivery fare). Pickup alert ring dispatched.",
             'ip_address' => $request->ip(),
         ]);
 
@@ -746,6 +769,8 @@ class OrderController extends Controller
                 'name' => $partner->name,
                 'phone' => $partner->phone,
                 'vehicle' => $partner->vehicle_number,
+                'fare' => '₹' . number_format($fare, 2),
+                'distance' => $dist . ' km',
             ]
         ]);
     }

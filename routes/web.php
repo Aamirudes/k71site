@@ -408,6 +408,7 @@ Route::get('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController
 Route::post('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'register'])->name('delivery.register');
 Route::get('/delivery/dashboard', [\App\Http\Controllers\DeliveryPartnerController::class, 'dashboard'])->name('delivery.dashboard');
 Route::post('/delivery/location', [\App\Http\Controllers\DeliveryPartnerController::class, 'updateLocation'])->name('delivery.location');
+Route::post('/delivery/pricing', [\App\Http\Controllers\DeliveryPartnerController::class, 'updatePricing'])->name('delivery.pricing');
 Route::get('/delivery/check-assignments', [\App\Http\Controllers\DeliveryPartnerController::class, 'checkNewAssignments'])->name('delivery.check_assignments');
 Route::post('/delivery/assignments/{assignment}/accept', [\App\Http\Controllers\DeliveryPartnerController::class, 'acceptAssignment'])->name('delivery.assignments.accept');
 Route::post('/delivery/assignments/{assignment}/pickup', [\App\Http\Controllers\DeliveryPartnerController::class, 'pickupAssignment'])->name('delivery.assignments.pickup');

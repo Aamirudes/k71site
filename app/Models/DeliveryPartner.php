@@ -19,6 +19,9 @@ class DeliveryPartner extends Model
         'last_active_at' => 'datetime',
         'rating' => 'float',
         'total_deliveries' => 'integer',
+        'base_delivery_fee' => 'float',
+        'per_km_rate' => 'float',
+        'max_delivery_radius_km' => 'float',
     ];
 
     public function user()
@@ -58,6 +61,21 @@ class DeliveryPartner extends Model
             cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
 
         return round($angle * $earthRadius, 2);
+    }
+
+    /**
+     * Compute dynamic real-time delivery fee based on distance (Blinkit style)
+     */
+    public function calculateDeliveryFee(float $distanceKm): float
+    {
+        $base = (float) ($this->base_delivery_fee ?? 30.00);
+        $perKm = (float) ($this->per_km_rate ?? 15.00);
+        
+        // Base fee covers first 2.0 km. Beyond that, per_km_rate is added.
+        $extraKm = max(0.0, $distanceKm - 2.0);
+        $totalFee = $base + ($extraKm * $perKm);
+
+        return round(max($base, $totalFee), 2);
     }
 }
 

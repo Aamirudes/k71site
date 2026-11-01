@@ -241,6 +241,118 @@
             </div>
         </div>
 
+        <!-- Real-Time Distance & Delivery Pricing Engine (Blinkit Style) -->
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 mb-6"
+             x-data="{
+                baseFee: {{ $partner->base_delivery_fee ?? 30.00 }},
+                perKmRate: {{ $partner->per_km_rate ?? 15.00 }},
+                maxRadius: {{ $partner->max_delivery_radius_km ?? 15.00 }},
+                saving: false,
+                saveSuccess: false,
+                calcPreview(km) {
+                    const extra = Math.max(0, km - 2);
+                    return Math.round(Number(this.baseFee) + (extra * Number(this.perKmRate)));
+                },
+                saveRates() {
+                    this.saving = true;
+                    fetch('{{ route('delivery.pricing') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            base_delivery_fee: this.baseFee,
+                            per_km_rate: this.perKmRate,
+                            max_delivery_radius_km: this.maxRadius
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(d => {
+                        this.saving = false;
+                        if (d.status === 'success') {
+                            this.saveSuccess = true;
+                            setTimeout(() => { this.saveSuccess = false; }, 3000);
+                        }
+                    })
+                    .catch(() => { this.saving = false; });
+                }
+             }">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm shadow-xs">
+                        ₹
+                    </div>
+                    <div>
+                        <h2 class="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider">
+                            My Real-Time Delivery Pricing (By Distance)
+                        </h2>
+                        <p class="text-xs text-slate-500">
+                            Set your custom delivery charges. Food &amp; Feasto vendors will see your exact real-time rate per distance.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span x-show="saveSuccess" x-cloak class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        ✓ Saved Live!
+                    </span>
+                    <button type="button" @click="saveRates()" :disabled="saving"
+                            class="px-4 py-2 rounded-xl bg-black hover:bg-zinc-800 text-white font-black text-xs transition shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95">
+                        <span x-show="!saving">⚡ Save Rates</span>
+                        <span x-show="saving">Saving...</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Base Delivery Fee (First 2 KM)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
+                        <input type="number" x-model.number="baseFee" min="10" max="500" step="5"
+                               class="w-full pl-7 pr-3 py-2 text-xs font-black text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-black">
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Guaranteed minimum pickup fare</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Per-KM Rate (Beyond 2 KM)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-bold text-xs">₹</span>
+                        <input type="number" x-model.number="perKmRate" min="5" max="100" step="1"
+                               class="w-full pl-7 pr-3 py-2 text-xs font-black text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-black">
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Added per additional km</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Max Delivery Reach (KM)</label>
+                    <div class="relative">
+                        <input type="number" x-model.number="maxRadius" min="2" max="50" step="1"
+                               class="w-full px-3 py-2 text-xs font-black text-slate-900 bg-white border border-slate-300 rounded-xl focus:outline-none focus:border-black">
+                        <span class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 font-bold text-xs">KM</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-1 block">Maximum service radius</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Live Calculator Preview -->
+            <div class="mt-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span class="font-bold text-slate-600">Live Distance Pricing Preview:</span>
+                <div class="flex items-center gap-3 text-xs font-mono font-bold">
+                    <span class="text-slate-800">1.5 km: <strong class="text-emerald-700" x-text="'₹' + calcPreview(1.5)"></strong></span>
+                    <span>•</span>
+                    <span class="text-slate-800">3.0 km: <strong class="text-emerald-700" x-text="'₹' + calcPreview(3.0)"></strong></span>
+                    <span>•</span>
+                    <span class="text-slate-800">5.0 km: <strong class="text-emerald-700" x-text="'₹' + calcPreview(5.0)"></strong></span>
+                    <span>•</span>
+                    <span class="text-slate-800">8.0 km: <strong class="text-emerald-700" x-text="'₹' + calcPreview(8.0)"></strong></span>
+                </div>
+            </div>
+        </div>
+
         <!-- Active Deliveries Section -->
         <div class="space-y-4 mb-8">
             <div class="flex items-center justify-between">

@@ -184,6 +184,41 @@ class DeliveryPartnerController extends Controller
     }
 
     /**
+     * Real-time distance and delivery fee pricing configuration (Blinkit style)
+     */
+    public function updatePricing(Request $request)
+    {
+        $partner = $this->getActivePartner();
+        if (!$partner) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $validated = $request->validate([
+            'base_delivery_fee' => 'required|numeric|min:5|max:500',
+            'per_km_rate' => 'required|numeric|min:2|max:100',
+            'max_delivery_radius_km' => 'nullable|numeric|min:1|max:50',
+        ]);
+
+        $partner->update([
+            'base_delivery_fee' => (float) $validated['base_delivery_fee'],
+            'per_km_rate' => (float) $validated['per_km_rate'],
+            'max_delivery_radius_km' => (float) ($validated['max_delivery_radius_km'] ?? 15.0),
+        ]);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Real-time delivery rates updated successfully!',
+                'base_delivery_fee' => $partner->base_delivery_fee,
+                'per_km_rate' => $partner->per_km_rate,
+                'max_delivery_radius_km' => $partner->max_delivery_radius_km,
+            ]);
+        }
+
+        return back()->with('success', 'Real-time delivery rates updated successfully!');
+    }
+
+    /**
      * Active Alert Polling API - Triggers audio ringtone on delivery boy dashboard!
      */
     public function checkNewAssignments()

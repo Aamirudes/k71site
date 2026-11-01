@@ -97,7 +97,11 @@ class FloatingLauncherController extends Controller
     public function index()
     {
         $items = self::getLauncherItems();
-        return view('admin.floating_launcher.index', compact('items'));
+        $triggerImage = Setting::get('floating_launcher_trigger_image', null);
+        $triggerText = Setting::get('floating_launcher_trigger_text', 'NAV');
+        $closeText = Setting::get('floating_launcher_close_text', '✱');
+
+        return view('admin.floating_launcher.index', compact('items', 'triggerImage', 'triggerText', 'closeText'));
     }
 
     /**
@@ -105,6 +109,28 @@ class FloatingLauncherController extends Controller
      */
     public function save(Request $request)
     {
+        // 1. Handle main launcher trigger button image and close symbol
+        if ($request->hasFile('trigger_image_file')) {
+            $file = $request->file('trigger_image_file');
+            if ($file && $file->isValid()) {
+                $path = $file->store('floating_launcher', 'public');
+                Setting::set('floating_launcher_trigger_image', '/storage/' . $path, 'navigation');
+            }
+        } elseif ($request->filled('trigger_image_url')) {
+            Setting::set('floating_launcher_trigger_image', trim($request->input('trigger_image_url')), 'navigation');
+        } elseif ($request->boolean('remove_trigger_image')) {
+            Setting::set('floating_launcher_trigger_image', null, 'navigation');
+        }
+
+        if ($request->has('trigger_text')) {
+            Setting::set('floating_launcher_trigger_text', trim($request->input('trigger_text', 'NAV')), 'navigation');
+        }
+
+        if ($request->has('close_text')) {
+            Setting::set('floating_launcher_close_text', trim($request->input('close_text', '✱')), 'navigation');
+        }
+
+        // 2. Handle the 6 radial items
         $inputItems = $request->input('items', []);
         $currentItems = self::getLauncherItems();
         $processed = [];

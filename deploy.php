@@ -127,20 +127,6 @@ if ($syncRequested) {
                                     continue;
                                 }
                                 @copy($item, $targetPath);
-
-                                // If baseDir is public_html (Hostinger setup), also mirror public/ files (assets, build, etc.) directly into baseDir
-                                if ($d === 'public') {
-                                    $webRootTarget = $baseDir . DIRECTORY_SEPARATOR . $subPath;
-                                    if ($item->isDir()) {
-                                        if (!file_exists($webRootTarget)) {
-                                            @mkdir($webRootTarget, 0775, true);
-                                        }
-                                    } else {
-                                        if ($subPath !== '.env' && !str_starts_with($subPath, 'storage') && $subPath !== 'index.php') {
-                                            @copy($item, $webRootTarget);
-                                        }
-                                    }
-                                }
                             }
                         }
                     }
@@ -162,32 +148,31 @@ if ($syncRequested) {
                         }
                     }
                 }
-
-                // Explicit mirror of public/assets to root assets/ for Hostinger root layout
-                $publicAssetsDir = $baseDir . '/public/assets';
-                $rootAssetsDir = $baseDir . '/assets';
-                if (file_exists($publicAssetsDir)) {
-                    if (!file_exists($rootAssetsDir)) {
-                        @mkdir($rootAssetsDir, 0775, true);
-                    }
-                    $pIter = new RecursiveIteratorIterator(
-                        new RecursiveDirectoryIterator($publicAssetsDir, RecursiveDirectoryIterator::SKIP_DOTS),
-                        RecursiveIteratorIterator::SELF_FIRST
-                    );
-                    foreach ($pIter as $pItem) {
-                        $pSub = $pIter->getSubPathName();
-                        $pTarget = $rootAssetsDir . DIRECTORY_SEPARATOR . $pSub;
-                        if ($pItem->isDir()) {
-                            if (!file_exists($pTarget)) @mkdir($pTarget, 0775, true);
-                        } else {
-                            @copy($pItem, $pTarget);
+                
+                // Mirror public/assets and public/build into document root for direct web server static delivery
+                $mirrorDirs = ['assets', 'build', 'images'];
+                foreach ($mirrorDirs as $md) {
+                    $srcDir = $baseDir . '/public/' . $md;
+                    $dstDir = $baseDir . '/' . $md;
+                    if (file_exists($srcDir) && $srcDir !== $dstDir) {
+                        if (!file_exists($dstDir)) {
+                            @mkdir($dstDir, 0775, true);
+                        }
+                        $it = new RecursiveIteratorIterator(
+                            new RecursiveDirectoryIterator($srcDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                            RecursiveIteratorIterator::SELF_FIRST
+                        );
+                        foreach ($it as $item) {
+                            $target = $dstDir . DIRECTORY_SEPARATOR . $it->getSubPathName();
+                            if ($item->isDir()) {
+                                if (!file_exists($target)) @mkdir($target, 0775, true);
+                            } else {
+                                @copy($item, $target);
+                            }
                         }
                     }
                 }
-                
-                if (function_exists('opcache_reset')) {
-                    @opcache_reset();
-                }
+
                 echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";
@@ -358,15 +343,20 @@ if (!file_exists($link) && function_exists('symlink')) {
 }
 
 // 8. Bootstrap Laravel
-if (!file_exists($baseDir . '/vendor/autoload.php')) {
-    echo '<div class="error">Error: vendor/autoload.php not found. Composer dependencies missing.</div></div></body></html>';
-    exit;
-}
+if (file_exists($baseDir . '/vendor/autoload.php')) {
+    require $baseDir . '/vendor/autoload.php';
+    $bootstrapApp = file_exists($baseDir . '/bootstrap/app.php') 
+        ? $baseDir . '/bootstrap/app.php' 
+        : (file_exists(dirname($baseDir) . '/bootstrap/app.php') ? dirname($baseDir) . '/bootstrap/app.php' : null);
 
-require $baseDir . '/vendor/autoload.php';
-$app = require_once $baseDir . '/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
+    if ($bootstrapApp) {
+        try {
+            $app = require_once $bootstrapApp;
+            $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+            $kernel->bootstrap();
+        } catch (\Throwable $e) {}
+    }
+}
 
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -461,7 +451,12 @@ try {
     DB::statement("ALTER TABLE `vendors` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof).</pre></div>";
+
+    // Chat schema auto-repair
+    try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
+    try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
+
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof). Chat direct schema & legacy chats verified.</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }

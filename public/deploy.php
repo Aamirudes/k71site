@@ -149,6 +149,30 @@ if ($syncRequested) {
                     }
                 }
                 
+                // Mirror public/assets and public/build into document root for direct web server static delivery
+                $mirrorDirs = ['assets', 'build', 'images'];
+                foreach ($mirrorDirs as $md) {
+                    $srcDir = $baseDir . '/public/' . $md;
+                    $dstDir = $baseDir . '/' . $md;
+                    if (file_exists($srcDir) && $srcDir !== $dstDir) {
+                        if (!file_exists($dstDir)) {
+                            @mkdir($dstDir, 0775, true);
+                        }
+                        $it = new RecursiveIteratorIterator(
+                            new RecursiveDirectoryIterator($srcDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                            RecursiveIteratorIterator::SELF_FIRST
+                        );
+                        foreach ($it as $item) {
+                            $target = $dstDir . DIRECTORY_SEPARATOR . $it->getSubPathName();
+                            if ($item->isDir()) {
+                                if (!file_exists($target)) @mkdir($target, 0775, true);
+                            } else {
+                                @copy($item, $target);
+                            }
+                        }
+                    }
+                }
+
                 echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
             } else {
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";

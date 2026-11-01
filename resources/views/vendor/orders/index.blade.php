@@ -268,13 +268,20 @@
                                         ✓ Paid ({{ ucfirst($order->status) }})
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs
-                                        {{ $order->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : '' }}
-                                        {{ $order->status === 'processing' ? 'bg-sky-50 text-sky-700 border-sky-200' : '' }}
-                                        {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : '' }}
-                                        {{ $order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : '' }}">
-                                        {{ ucfirst($order->status) }}
-                                    </span>
+                                    <div class="flex flex-col items-start gap-1">
+                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs
+                                            {{ $order->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : '' }}
+                                            {{ $order->status === 'processing' ? 'bg-sky-50 text-sky-700 border-sky-200' : '' }}
+                                            {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : '' }}
+                                            {{ $order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : '' }}">
+                                            {{ ucfirst($order->status) }}
+                                        </span>
+                                        @if($order->deliveryAssignment && in_array($order->deliveryAssignment->status, ['assigned', 'accepted', 'picked_up']))
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                                🛵 Rider: {{ $order->deliveryAssignment->partner->name ?? 'Dispatched' }}
+                                            </span>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
 

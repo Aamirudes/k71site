@@ -989,6 +989,202 @@
         </div>
 
         <div class="space-y-8">
+            @php
+                $curVendor = auth()->user()?->vendor;
+                $vType = $curVendor?->vendor_type ?? 'clothing';
+                $isFoodOrFeasto = in_array($vType, ['food', 'feasto', 'groceries', 'kirana']) 
+                    || ($curVendor && (method_exists($curVendor, 'isRestaurant') && $curVendor->isRestaurant()))
+                    || (method_exists($order, 'isFoodOrder') && $order->isFoodOrder());
+                $activeAssignment = $order->deliveryAssignment;
+            @endphp
+
+            @if($isFoodOrFeasto)
+                <!-- Blinkit-Style Fast Delivery Boy Dispatch Card -->
+                <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl overflow-hidden"
+                     x-data="{
+                        loading: true,
+                        partners: [],
+                        selectedId: null,
+                        dispatching: false,
+                        dispatchedSuccess: false,
+                        dispatchedMsg: '',
+                        init() {
+                            @if(!$activeAssignment)
+                            this.fetchRiders();
+                            @else
+                            this.loading = false;
+                            @endif
+                        },
+                        fetchRiders() {
+                            this.loading = true;
+                            fetch('{{ route('vendor.orders.nearby_partners', $order) }}')
+                                .then(r => r.json())
+                                .then(d => {
+                                    this.partners = d.partners || [];
+                                    if (this.partners.length > 0) {
+                                        this.selectedId = this.partners[0].id;
+                                    }
+                                    this.loading = false;
+                                })
+                                .catch(() => { this.loading = false; });
+                        },
+                        dispatch(partnerId) {
+                            if (!partnerId) return;
+                            this.dispatching = true;
+                            fetch('{{ route('vendor.orders.assign_partner', $order) }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ delivery_partner_id: partnerId })
+                            })
+                            .then(r => r.json())
+                            .then(d => {
+                                this.dispatching = false;
+                                if (d.success) {
+                                    this.dispatchedSuccess = true;
+                                    this.dispatchedMsg = d.message;
+                                    setTimeout(() => window.location.reload(), 1200);
+                                } else {
+                                    alert(d.message || 'Error dispatching rider');
+                                }
+                            })
+                            .catch(() => {
+                                this.dispatching = false;
+                                alert('Network error dispatching rider');
+                            });
+                        }
+                     }">
+                    
+                    <div class="px-4 py-4 sm:px-6 bg-slate-950 text-white flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">🛵</span>
+                            <div>
+                                <h3 class="text-sm font-black text-white">Blinkit Delivery Fleet Dispatch</h3>
+                                <p class="text-[10px] text-zinc-300">Live distance-based pricing &amp; 1-tap dispatch</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider border border-emerald-500/30">
+                            Automation Active
+                        </span>
+                    </div>
+
+                    <div class="p-4 text-xs space-y-4">
+                        @if($activeAssignment && in_array($activeAssignment->status, ['assigned', 'accepted', 'picked_up', 'delivered']))
+                            <!-- Active Dispatched Rider Info -->
+                            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                                        Rider Dispatched ({{ ucfirst(str_replace('_', ' ', $activeAssignment->status)) }})
+                                    </span>
+                                    <span class="text-xs font-black text-emerald-900 font-mono">
+                                        Payout: ₹{{ number_format(($activeAssignment->payout_amount ?? 0) / 100, 2) }}
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                        {{ substr($activeAssignment->partner->name ?? 'R', 0, 1) }}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-black text-slate-900 text-sm truncate">{{ $activeAssignment->partner->name ?? 'Delivery Partner' }}</p>
+                                        <p class="text-[11px] text-slate-600">
+                                            {{ ucfirst($activeAssignment->partner->vehicle_type ?? 'Motorcycle') }} 
+                                            @if($activeAssignment->partner->vehicle_number)
+                                                • <span class="font-mono font-bold">{{ $activeAssignment->partner->vehicle_number }}</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                </div>
+
+                                @if($activeAssignment->partner?->phone)
+                                    @php
+                                        $riderPhone = preg_replace('/[^0-9]/', '', $activeAssignment->partner->phone);
+                                        $riderWa = strlen($riderPhone) === 10 ? '91' . $riderPhone : $riderPhone;
+                                        $orderNum = $order->order_number;
+                                        $waText = rawurlencode("Namaste {$activeAssignment->partner->name}! This is {$order->vendor?->shop_name} regarding Order #{$orderNum}. The food packet is packed and ready for pickup!");
+                                    @endphp
+                                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200">
+                                        <a href="tel:{{ $activeAssignment->partner->phone }}" 
+                                           class="py-2 px-3 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold text-center flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                            <span>📞 Call Rider</span>
+                                        </a>
+                                        <a href="https://wa.me/{{ $riderWa }}?text={{ $waText }}" target="_blank"
+                                           class="py-2 px-3 rounded-xl bg-[#25D366] hover:bg-[#20ba59] text-white font-bold text-center flex items-center justify-center gap-1.5 transition cursor-pointer">
+                                            <span>💬 WhatsApp</span>
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <!-- Dispatched Success Flash Alert -->
+                            <template x-if="dispatchedSuccess">
+                                <div class="p-3.5 rounded-2xl bg-emerald-50 text-emerald-900 font-bold border border-emerald-200 text-center">
+                                    ✓ <span x-text="dispatchedMsg"></span>
+                                </div>
+                            </template>
+
+                            <div x-show="!dispatchedSuccess" class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-slate-700">Available Riders Ready to Pickup:</span>
+                                    <button type="button" @click="fetchRiders()" class="text-[11px] text-blue-600 font-bold hover:underline">
+                                        Refresh ⟳
+                                    </button>
+                                </div>
+
+                                <div x-show="loading" class="py-6 text-center text-slate-400">
+                                    Locating nearest online delivery partners...
+                                </div>
+
+                                <div x-show="!loading && partners.length === 0" class="py-6 text-center text-slate-500">
+                                    No delivery boys online in this zone currently.
+                                </div>
+
+                                <div x-show="!loading && partners.length > 0" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                                    <template x-for="p in partners" :key="p.id">
+                                        <div class="p-3 rounded-2xl border border-slate-200 hover:border-black transition-all bg-stone-50/50 space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs" x-text="p.name.charAt(0)"></span>
+                                                    <div>
+                                                        <span class="font-bold text-slate-900 text-xs block" x-text="p.name"></span>
+                                                        <span class="text-[10px] text-slate-500 font-medium" x-text="p.vehicle_type + ' • ★ ' + p.rating"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="text-xs font-black text-emerald-700 block" x-text="p.fare_formatted"></span>
+                                                    <span class="text-[10px] text-slate-500 font-mono" x-text="p.distance_km + ' km • ~' + p.eta_minutes + 'm'"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2 pt-1.5 border-t border-slate-200/80">
+                                                <template x-if="p.phone">
+                                                    <div class="flex items-center gap-1">
+                                                        <a :href="'tel:' + p.phone" title="Call Rider" class="p-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs">
+                                                            📞
+                                                        </a>
+                                                        <a :href="'https://wa.me/' + p.phone.replace(/[^0-9]/g, '')" target="_blank" title="WhatsApp Rider" class="p-1.5 rounded-lg bg-[#25D366] text-white hover:opacity-90 text-xs">
+                                                            💬
+                                                        </a>
+                                                    </div>
+                                                </template>
+                                                <button type="button" 
+                                                        @click="dispatch(p.id)"
+                                                        :disabled="dispatching"
+                                                        class="flex-1 py-1.5 px-3 rounded-xl bg-black hover:bg-zinc-800 text-white font-black text-xs text-center shadow-xs transition active:scale-95 disabled:opacity-50 cursor-pointer">
+                                                    <span x-text="dispatching ? 'Dispatching...' : '⚡ Dispatch to Rider'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             <!-- Customer Info -->
             <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl overflow-hidden">
                 <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
