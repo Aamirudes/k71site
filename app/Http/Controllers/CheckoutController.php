@@ -90,12 +90,15 @@ class CheckoutController extends Controller
             $totalGst += $taxAmount;
         }
 
-        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => (($it->product?->vertical ?? '') === 'food' || ($it->variant?->product?->vertical ?? '') === 'food'));
+        $isFoodOrder = $vendor->isRestaurant() 
+            || in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana'])
+            || $items->contains(fn($it) => in_array($it->product?->vertical ?? '', ['food', 'groceries']));
 
         $shipping = 0;
         $cachedShipping = session("checkout_shipping_{$vendor->id}");
         if ($isFoodOrder) {
-            $shipping = $settings->food_delivery_fee ?? 4000; // Fixed restaurant local delivery fee (default ₹40)
+            // Feasto / Quick-commerce local food orders default to free delivery or explicitly set fee
+            $shipping = ($settings && isset($settings->food_delivery_fee)) ? (int)$settings->food_delivery_fee : 0;
         } elseif ($subtotal <= 100) {
             $shipping = 0; // ₹1 Test Order: 100% Free Shipping for Gateway Verification
         } elseif ($settings && $settings->shipping_type === 'free_above' && !empty($settings->shipping_free_above) && $subtotal >= $settings->shipping_free_above) {
@@ -103,9 +106,9 @@ class CheckoutController extends Controller
         } elseif (is_array($cachedShipping) && isset($cachedShipping['amount_paise'])) {
             $shipping = (int) $cachedShipping['amount_paise'];
         } elseif ($settings && $settings->shipping_type === 'flat') {
-            $shipping = $settings->shipping_flat_rate ?? 6000;
+            $shipping = (int) ($settings->shipping_flat_rate ?? 0);
         } else {
-            $shipping = 6000; // Standard 60 Rs
+            $shipping = 0; // Default to free delivery instead of surprise hidden fee
         }
 
         $discount = 0;
@@ -478,7 +481,7 @@ class CheckoutController extends Controller
             $shipping = 0;
             // 1. Food orders use restaurant direct delivery fee or free takeaway
             if ($isFoodOrder) {
-                $shipping = ($orderType === 'food_takeaway') ? 0 : ($settings?->food_delivery_fee ?? 4000);
+                $shipping = ($orderType === 'food_takeaway') ? 0 : (($settings && isset($settings->food_delivery_fee)) ? (int)$settings->food_delivery_fee : 0);
             } elseif ($settings && $settings->shipping_type === 'free_above' && !empty($settings->shipping_free_above) && $subtotal >= $settings->shipping_free_above) {
                 $shipping = 0; // Free delivery (only if vendor explicitly configured a free shipping threshold)
             } elseif ($subtotal <= 100) {

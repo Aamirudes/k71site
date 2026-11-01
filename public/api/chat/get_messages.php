@@ -24,9 +24,15 @@ if (file_exists($dbPath)) {
         }
 
         try {
-            $stmtConv = $pdo->prepare("SELECT id, user_one_id, user_two_id, status, requested_by, last_message_at FROM chat_conversations WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) LIMIT 1");
-            $stmtConv->execute([$conversationId, $currentUserId, $currentUserId]);
-            $conv = $stmtConv->fetch();
+            try {
+                $stmtConv = $pdo->prepare("SELECT id, user_one_id, user_two_id, status, requested_by, last_message_at, typing_user_id, typing_at FROM chat_conversations WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) LIMIT 1");
+                $stmtConv->execute([$conversationId, $currentUserId, $currentUserId]);
+                $conv = $stmtConv->fetch();
+            } catch (\Throwable $convErr) {
+                $stmtConv = $pdo->prepare("SELECT id, user_one_id, user_two_id, status, requested_by, last_message_at FROM chat_conversations WHERE id = ? AND (user_one_id = ? OR user_two_id = ?) LIMIT 1");
+                $stmtConv->execute([$conversationId, $currentUserId, $currentUserId]);
+                $conv = $stmtConv->fetch();
+            }
             if (!$conv) {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'error' => 'Conversation not found or access denied.']);
@@ -43,7 +49,7 @@ if (file_exists($dbPath)) {
             $beforeId = isset($_GET['before_id']) ? (int) $_GET['before_id'] : 0;
             $limit = isset($_GET['limit']) ? min(60, max(15, (int) $_GET['limit'])) : 40;
 
-            $sql = "SELECT id, conversation_id, sender_id, body, attachment_url, attachment_type, reply_to_id, reply_to_body, reply_to_sender_name, is_read, created_at FROM chat_messages WHERE conversation_id = ? ";
+            $sql = "SELECT id, conversation_id, sender_id, body, attachment_url, attachment_type, reply_to_id, reply_to_body, reply_to_sender_name, is_read, is_edited, edited_at, created_at FROM chat_messages WHERE conversation_id = ? ";
             $params = [$conversationId];
             if ($beforeId > 0) {
                 $sql .= "AND id < ? ";
@@ -57,16 +63,23 @@ if (file_exists($dbPath)) {
                 $rawMessages = array_reverse($stmtMessages->fetchAll());
             } catch (\Throwable $queryErr) {
                 // Fallback query if optional columns are absent
-                $fallbackSql = "SELECT id, conversation_id, sender_id, body, is_read, created_at FROM chat_messages WHERE conversation_id = ? ";
+                $fallbackSql = "SELECT id, conversation_id, sender_id, body, attachment_url, attachment_type, reply_to_id, reply_to_body, reply_to_sender_name, is_read, created_at FROM chat_messages WHERE conversation_id = ? ";
                 $fallbackParams = [$conversationId];
                 if ($beforeId > 0) {
                     $fallbackSql .= "AND id < ? ";
                     $fallbackParams[] = $beforeId;
                 }
                 $fallbackSql .= "ORDER BY id DESC LIMIT " . $limit;
-                $stmtMessages = $pdo->prepare($fallbackSql);
-                $stmtMessages->execute($fallbackParams);
-                $rawMessages = array_reverse($stmtMessages->fetchAll());
+                try {
+                    $stmtMessages = $pdo->prepare($fallbackSql);
+                    $stmtMessages->execute($fallbackParams);
+                    $rawMessages = array_reverse($stmtMessages->fetchAll());
+                } catch (\Throwable $fbErr) {
+                    $superFallbackSql = "SELECT id, conversation_id, sender_id, body, is_read, created_at FROM chat_messages WHERE conversation_id = ? " . ($beforeId > 0 ? "AND id < ? " : "") . "ORDER BY id DESC LIMIT " . $limit;
+                    $stmtMessages = $pdo->prepare($superFallbackSql);
+                    $stmtMessages->execute($beforeId > 0 ? [$conversationId, $beforeId] : [$conversationId]);
+                    $rawMessages = array_reverse($stmtMessages->fetchAll());
+                }
             }
 
             $hasMore = count($rawMessages) >= $limit;
@@ -86,6 +99,8 @@ if (file_exists($dbPath)) {
                     'sender_id' => $senderId,
                     'is_mine' => ($senderId === $currentUserId),
                     'is_read' => (bool) $msg['is_read'],
+                    'is_edited' => !empty($msg['is_edited']),
+                    'edited_at' => $msg['edited_at'] ?? null,
                     'created_at' => $timeStr,
                     'time_formatted' => date('g:i A', strtotime($timeStr)),
                     'date_header' => date('M j, Y', strtotime($timeStr)),
@@ -95,18 +110,29 @@ if (file_exists($dbPath)) {
             $recipientInfo = get_chat_user_info($pdo, $recipientId);
 
             $isTyping = false;
-            $storageDir = dirname(__DIR__, 2) . '/storage/framework/typing';
-            $file1 = $storageDir . "/k71_typing_{$conversationId}_{$recipientId}";
-            $file2 = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
-            $typingFile = file_exists($file1) ? $file1 : (file_exists($file2) ? $file2 : null);
-
-            if ($typingFile && file_exists($typingFile)) {
-                $lastT = (int) @file_get_contents($typingFile);
-                if ((time() - $lastT) < 6) {
+            // Check DB typing indicator first (atomic across all webservers)
+            if (!empty($conv['typing_user_id']) && (int)$conv['typing_user_id'] === $recipientId && !empty($conv['typing_at'])) {
+                $timeDiff = time() - strtotime($conv['typing_at']);
+                if ($timeDiff >= 0 && $timeDiff < 7) {
                     $isTyping = true;
-                } else {
-                    @unlink($file1);
-                    @unlink($file2);
+                }
+            }
+
+            // Fallback to filesystem
+            if (!$isTyping) {
+                $storageDir = dirname(__DIR__, 2) . '/storage/framework/typing';
+                $file1 = $storageDir . "/k71_typing_{$conversationId}_{$recipientId}";
+                $file2 = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
+                $typingFile = file_exists($file1) ? $file1 : (file_exists($file2) ? $file2 : null);
+
+                if ($typingFile && file_exists($typingFile)) {
+                    $lastT = (int) @file_get_contents($typingFile);
+                    if ((time() - $lastT) < 7) {
+                        $isTyping = true;
+                    } else {
+                        @unlink($file1);
+                        @unlink($file2);
+                    }
                 }
             }
 

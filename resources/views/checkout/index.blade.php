@@ -479,8 +479,11 @@
                     </div>
                     
                     <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]" style="background-color: #000000 !important; color: #ffffff !important;">
-                        <span class="text-white font-black text-base flex items-center justify-center gap-2" style="color: #ffffff !important;" x-text="typeof checkoutBtnText !== 'undefined' && checkoutBtnText ? checkoutBtnText : 'Place Order →'">
-                            Place Order &rarr;
+                        <span class="text-white font-black text-base flex items-center justify-center gap-2" style="color: #ffffff !important;">
+                            <span x-show="paymentMethod === 'phonepe'">Pay Securely via PhonePe / UPI &rarr;</span>
+                            <span x-show="paymentMethod === 'upi'">Continue to Store UPI / QR &rarr;</span>
+                            <span x-show="paymentMethod === 'cod'">Place Order (Cash on Delivery) &rarr;</span>
+                            <span x-show="!['phonepe', 'upi', 'cod'].includes(paymentMethod)">Place Order &rarr;</span>
                         </span>
                     </button>
                     

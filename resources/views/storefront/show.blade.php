@@ -66,7 +66,7 @@
     :schemaJson="$storeSchemaJson"
     :fullWidth="true"
     :hideMainHeader="true"
-    :hideFooter="false"
+    :hideFooter="true"
 >
     @php
         $social = is_array($vendor->social_links) ? $vendor->social_links : (is_string($vendor->social_links) ? (json_decode($vendor->social_links, true) ?: []) : []);
@@ -207,6 +207,76 @@
             }
         }
     }">
+
+        <!-- TOP UTILITY / BACK TO MARKETPLACE STRIP -->
+        <div class="w-full bg-stone-900 text-stone-200 text-xs py-2 px-4 sm:px-8 border-b border-stone-800 flex items-center justify-between z-40">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 font-semibold text-stone-200 hover:text-white transition">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                <span>Back to {{ config('marketplace.name', 'K71 Marketplace') }}</span>
+            </a>
+            <div class="hidden sm:flex items-center gap-4 text-[11px] text-stone-400">
+                <span class="flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Verified Authentic Merchant</span>
+                </span>
+                <span>•</span>
+                <span>Kishangarh Fast Dispatch</span>
+            </div>
+        </div>
+
+        <!-- DYNAMIC BOUTIQUE STORE HEADER -->
+        <header class="sticky top-0 z-30 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-b border-stone-200 dark:border-stone-800 px-4 sm:px-8 py-3.5 shadow-2xs mb-4 transition-all">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+                <!-- Left: Logo & Identity -->
+                <a href="{{ $storeCanonicalUrl }}" class="flex items-center gap-3 group min-w-0">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl overflow-hidden bg-stone-100 border border-stone-200 dark:border-stone-700 flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                        @if($vendor->logo)
+                            <img src="{{ \App\Services\ImageService::url($vendor->logo, 100) }}" alt="{{ $vendor->shop_name }}" class="w-full h-full object-cover">
+                        @else
+                            <span class="font-black text-stone-900 dark:text-white text-base">{{ strtoupper(substr($vendor->shop_name, 0, 2)) }}</span>
+                        @endif
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <h1 class="text-sm sm:text-base font-bold text-stone-900 dark:text-white truncate group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition">
+                                {{ $vendor->shop_name }}
+                            </h1>
+                            <span class="inline-flex text-emerald-600 dark:text-emerald-400" title="Verified Merchant">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-stone-500 dark:text-stone-400">
+                            <span>{{ $vendor->getSectorConfig()['label'] ?? 'Merchant Store' }}</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Right: Actions (WhatsApp, Share, Cart) -->
+                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                    @if($whatsappUrl)
+                        <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" 
+                           class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition">
+                            <span>WhatsApp</span>
+                        </a>
+                    @endif
+
+                    <button type="button" @click="shareBoutique()" class="w-9 h-9 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center justify-center text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition" title="Share Store">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    </button>
+
+                    <!-- Dynamic Cart Pill -->
+                    <a href="{{ route('cart.index') }}" 
+                       class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black text-white text-xs font-bold shadow-xs hover:bg-stone-800 active:scale-95 transition">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span class="hidden sm:inline">Cart</span>
+                        @php
+                            $cartCount = \App\Services\CartService::getCount();
+                        @endphp
+                        <span class="w-4 h-4 rounded-full bg-emerald-500 text-black text-[10px] font-black flex items-center justify-center">{{ $cartCount }}</span>
+                    </a>
+                </div>
+            </div>
+        </header>
 
         <!-- ANNOUNCEMENT MARQUEE BAR -->
         @if($announcementEnabled)
@@ -1315,6 +1385,52 @@
                 document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
             });
         </script>
+
+        <!-- BOUTIQUE SINGLE CLEAN FOOTER -->
+        <footer class="mt-20 border-t border-stone-200 dark:border-stone-800 bg-white/60 dark:bg-stone-900/60 backdrop-blur-md py-10 px-4 sm:px-8">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 rounded-2xl bg-stone-100 border border-stone-200 dark:border-stone-700 flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                        @if($vendor->logo)
+                            <img src="{{ \App\Services\ImageService::url($vendor->logo, 100) }}" alt="{{ $vendor->shop_name }}" class="w-full h-full object-cover">
+                        @else
+                            <span class="font-black text-stone-900 dark:text-white text-base">{{ strtoupper(substr($vendor->shop_name, 0, 2)) }}</span>
+                        @endif
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5 justify-center sm:justify-start">
+                            <h4 class="text-sm font-bold text-stone-900 dark:text-white">{{ $vendor->shop_name }}</h4>
+                            <span class="inline-flex text-emerald-600 dark:text-emerald-400" title="Verified Merchant">
+                                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                            </span>
+                        </div>
+                        <p class="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                            {{ $vendor->pickup_address['city'] ?? 'Kishangarh' }}, Rajasthan • Direct Merchant Fulfillment
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    @if($whatsappUrl)
+                        <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" 
+                           class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                            <span>Contact Merchant</span>
+                        </a>
+                    @endif
+                    <a href="{{ url('/') }}" class="px-4 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs">
+                        <span>← Back to Marketplace</span>
+                    </a>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto mt-6 pt-6 border-t border-stone-200/60 dark:border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2">
+                <span>© {{ date('Y') }} {{ $vendor->shop_name }}. All rights reserved. Powered by {{ config('marketplace.name', 'K71') }}.</span>
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('privacy') }}" class="hover:text-stone-900 dark:hover:text-white transition">Privacy</a>
+                    <a href="{{ route('terms') }}" class="hover:text-stone-900 dark:hover:text-white transition">Terms</a>
+                    <a href="{{ route('shipping') }}" class="hover:text-stone-900 dark:hover:text-white transition">Shipping Policy</a>
+                </div>
+            </div>
+        </footer>
 
     </div>
 </x-layouts.public>

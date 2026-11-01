@@ -2021,7 +2021,7 @@
                 position: sticky !important;
                 top: 0 !important;
                 z-index: 30 !important;
-                background: var(--surface, #FFFFFF) !important;
+                background: #FFFFFF !important;
                 border-bottom: 1px solid var(--border, #E2E8F0) !important;
                 display: flex !important;
                 align-items: center !important;
@@ -2087,7 +2087,7 @@
             .glass-composer-bar {
                 flex-shrink: 0 !important;
                 padding: 6px 10px max(8px, env(safe-area-inset-bottom, 8px)) !important;
-                background: var(--surface, #FFFFFF) !important;
+                background: #FFFFFF !important;
                 z-index: 50 !important;
                 border-top: 1px solid var(--border, #E2E8F0) !important;
             }
@@ -2103,16 +2103,21 @@
                 width: 100% !important;
             }
 
-            /* Dark Mode High-Contrast Mobile Overrides */
+            /* Dark Mode High-Contrast Mobile Overrides (Covers .dark, body.dark, and system dark preference) */
             html.dark .glass-chat-header,
-            .dark .glass-chat-header {
+            .dark .glass-chat-header,
+            body.dark .glass-chat-header,
+            #k71-chat-wrapper.dark .glass-chat-header {
                 background: #090d16 !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
             }
             html.dark .glass-chat-header-username,
             .dark .glass-chat-header-username,
+            body.dark .glass-chat-header-username,
+            #k71-chat-wrapper.dark .glass-chat-header-username,
             html.dark .glass-back-btn,
             .dark .glass-back-btn,
+            body.dark .glass-back-btn,
             html.dark .glass-chat-header button,
             .dark .glass-chat-header button {
                 color: #ffffff !important;
@@ -2120,30 +2125,38 @@
             }
             html.dark .glass-back-btn svg,
             .dark .glass-back-btn svg,
+            body.dark .glass-back-btn svg,
             html.dark .glass-chat-header button svg,
             .dark .glass-chat-header button svg {
                 color: #ffffff !important;
                 stroke: #ffffff !important;
             }
             html.dark .glass-chat-header-status,
-            .dark .glass-chat-header-status {
+            .dark .glass-chat-header-status,
+            body.dark .glass-chat-header-status {
                 color: #94a3b8 !important;
                 -webkit-text-fill-color: #94a3b8 !important;
             }
             html.dark .glass-composer-bar,
-            .dark .glass-composer-bar {
+            .dark .glass-composer-bar,
+            body.dark .glass-composer-bar,
+            #k71-chat-wrapper.dark .glass-composer-bar {
                 background: #090d16 !important;
                 border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
             }
             html.dark .glass-composer-pill,
-            .dark .glass-composer-pill {
+            .dark .glass-composer-pill,
+            body.dark .glass-composer-pill,
+            #k71-chat-wrapper.dark .glass-composer-pill {
                 background: #141c2b !important;
-                border: 1px solid rgba(255, 255, 255, 0.14) !important;
+                border: 1px solid rgba(255, 255, 255, 0.16) !important;
             }
             html.dark .glass-composer-textarea,
             .dark .glass-composer-textarea,
             html.dark .glass-composer-input,
-            .dark .glass-composer-input {
+            .dark .glass-composer-input,
+            html.dark #glassMessageInput,
+            .dark #glassMessageInput {
                 color: #ffffff !important;
                 -webkit-text-fill-color: #ffffff !important;
                 background: transparent !important;
@@ -2151,7 +2164,9 @@
             html.dark .glass-composer-textarea::placeholder,
             .dark .glass-composer-textarea::placeholder,
             html.dark .glass-composer-input::placeholder,
-            .dark .glass-composer-input::placeholder {
+            .dark .glass-composer-input::placeholder,
+            html.dark #glassMessageInput::placeholder,
+            .dark #glassMessageInput::placeholder {
                 color: #64748b !important;
                 -webkit-text-fill-color: #64748b !important;
             }
@@ -2168,6 +2183,59 @@
             .dark .glass-composer-pill button svg {
                 color: #cbd5e1 !important;
                 stroke: #cbd5e1 !important;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                html:not(.light) .glass-chat-header {
+                    background: #090d16 !important;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+                }
+                html:not(.light) .glass-chat-header-username,
+                html:not(.light) .glass-back-btn,
+                html:not(.light) .glass-chat-header button {
+                    color: #ffffff !important;
+                    -webkit-text-fill-color: #ffffff !important;
+                }
+                html:not(.light) .glass-back-btn svg,
+                html:not(.light) .glass-chat-header button svg {
+                    color: #ffffff !important;
+                    stroke: #ffffff !important;
+                }
+                html:not(.light) .glass-chat-header-status {
+                    color: #94a3b8 !important;
+                    -webkit-text-fill-color: #94a3b8 !important;
+                }
+                html:not(.light) .glass-composer-bar {
+                    background: #090d16 !important;
+                    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+                }
+                html:not(.light) .glass-composer-pill {
+                    background: #141c2b !important;
+                    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+                }
+                html:not(.light) .glass-composer-textarea,
+                html:not(.light) .glass-composer-input,
+                html:not(.light) #glassMessageInput {
+                    color: #ffffff !important;
+                    -webkit-text-fill-color: #ffffff !important;
+                    background: transparent !important;
+                }
+                html:not(.light) .glass-composer-textarea::placeholder,
+                html:not(.light) .glass-composer-input::placeholder,
+                html:not(.light) #glassMessageInput::placeholder {
+                    color: #64748b !important;
+                    -webkit-text-fill-color: #64748b !important;
+                }
+                html:not(.light) .glass-composer-bar .glass-icon-btn,
+                html:not(.light) .glass-composer-pill button {
+                    color: #cbd5e1 !important;
+                    -webkit-text-fill-color: #cbd5e1 !important;
+                }
+                html:not(.light) .glass-composer-bar .glass-icon-btn svg,
+                html:not(.light) .glass-composer-pill button svg {
+                    color: #cbd5e1 !important;
+                    stroke: #cbd5e1 !important;
+                }
             }
             .glass-composer-textarea {
                 font-size: 15px !important;
@@ -2467,6 +2535,18 @@
                             </div>
                         </div>
                         <button type="button" id="glassReplyCancelBtn" class="glass-reply-close-btn" title="Cancel reply">✕</button>
+                    </div>
+
+                    <!-- Instagram-Style Editing Message Preview Bar -->
+                    <div id="glassEditingBar" class="glass-reply-bar" style="display: none; background: rgba(99, 102, 241, 0.08); border-top: 1px solid rgba(99, 102, 241, 0.25);">
+                        <div class="glass-reply-left">
+                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <div class="glass-reply-text-col">
+                                <span class="glass-reply-title" style="color: #6366f1; font-weight: 700;">Editing message</span>
+                                <span class="glass-reply-body" id="glassEditingText">Original message</span>
+                            </div>
+                        </div>
+                        <button type="button" id="glassEditingCancelBtn" onclick="cancelEditingMessage()" class="glass-reply-close-btn" title="Cancel edit">✕</button>
                     </div>
 
                     <!-- Sticky Bottom Input Composer -->
@@ -2927,6 +3007,17 @@
                     } else if (data.type === 'new_message' && data.conversation_id === currentConversationId && data.sender_id !== CURRENT_USER_ID) {
                         hideTypingIndicator();
                         fetchMessages(false);
+                    } else if (data.type === 'edit_message' && data.conversation_id === currentConversationId) {
+                        const targetMsg = messagesCache.find(m => String(m.id) === String(data.message_id));
+                        if (targetMsg) {
+                            targetMsg.body = data.body;
+                            targetMsg.is_edited = true;
+                            renderMessages(messagesCache, currentRecipientData || {
+                                username: headerUsername.textContent.replace('@', ''),
+                                name: headerStatus.textContent,
+                                profile_pic: headerAvatar.src
+                            });
+                        }
                     }
                 };
             }
@@ -3224,20 +3315,44 @@
                     ? `<button type="button" class="glass-msg-unsend-btn" data-msg-id="${msg.id}" title="Unsend message">&times;</button>`
                     : '';
 
+                const isEditable = isSent && !msg.is_optimistic && !isVoice && msg.body && msg.body !== '📷 Photo' && !msg.body.startsWith('🎤');
+                const editBtnHtml = isEditable
+                    ? `<button type="button" class="glass-msg-edit-btn" data-msg-id="${msg.id}" title="Edit message" style="background: none; border: none; cursor: pointer; opacity: 0.65; padding: 2px 4px; border-radius: 4px; color: inherit; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.65'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>`
+                    : '';
+
+                const editedTagHtml = (msg.is_edited)
+                    ? `<span class="glass-edited-badge" style="font-size: 10px; opacity: 0.75; margin-left: 4px; font-style: italic;">(edited)</span>`
+                    : '';
+
                 html += `
                     <div class="glass-msg-row ${isSent ? 'sent' : 'received'}" data-msg-id="${msg.id}" data-is-mine="${isSent ? '1' : '0'}">
                         ${!isSent ? `<img src="${escapeHtml(recipientAvatar)}" alt="" class="glass-msg-avatar">` : `<img src="${escapeHtml(myCurrentAvatarUrl)}" alt="" class="glass-msg-avatar my-user-avatar">`}
                         <div>
                             ${attachmentHtml}
                             ${bodyHtml}
-                            <div class="glass-msg-meta">${escapeHtml(msg.time_formatted || '')}</div>
+                            <div class="glass-msg-meta">${escapeHtml(msg.time_formatted || '')}${editedTagHtml}</div>
                         </div>
-                        ${unsendBtnHtml}
+                        <div class="glass-msg-actions-col" style="display: flex; align-items: center; gap: 2px;">
+                            ${editBtnHtml}
+                            ${unsendBtnHtml}
+                        </div>
                     </div>
                 `;
             });
 
             chatFeed.innerHTML = html;
+
+            // Bind click to edit message
+            chatFeed.querySelectorAll('.glass-msg-edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const msgId = btn.getAttribute('data-msg-id');
+                    const targetMsg = messages.find(m => String(m.id) === String(msgId));
+                    if (targetMsg) {
+                        startEditingMessage(targetMsg);
+                    }
+                });
+            });
 
             // Bind click to open lightbox on photo thumbnails
             chatFeed.querySelectorAll('.glass-msg-image-wrap').forEach(wrap => {
@@ -3508,6 +3623,38 @@
             cancelReplyBtn.addEventListener('click', cancelReplyPreview);
         }
 
+        // Editing Message State Manager
+        let currentEditingMessageId = null;
+
+        function startEditingMessage(msg) {
+            cancelReplyPreview();
+            currentEditingMessageId = msg.id;
+            const bar = document.getElementById('glassEditingBar');
+            const textEl = document.getElementById('glassEditingText');
+            if (bar && textEl) {
+                textEl.textContent = msg.body;
+                bar.style.display = 'flex';
+            }
+            if (messageInput) {
+                messageInput.value = msg.body;
+                messageInput.focus();
+                messageInput.style.height = 'auto';
+                messageInput.style.height = Math.min(messageInput.scrollHeight, 100) + 'px';
+                updateSendButtonState();
+            }
+        }
+
+        function cancelEditingMessage() {
+            currentEditingMessageId = null;
+            const bar = document.getElementById('glassEditingBar');
+            if (bar) bar.style.display = 'none';
+            if (messageInput) {
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                updateSendButtonState();
+            }
+        }
+
         // Chunked Pagination & Long Chat Preserver
         let oldestChatMsgId = 0;
         let hasMoreChatHistory = true;
@@ -3571,6 +3718,52 @@
         function sendMessage() {
             const text = messageInput.value.trim();
             if (!text || !currentConversationId) return;
+
+            // Handle Message Edit
+            if (currentEditingMessageId) {
+                const editMsgId = currentEditingMessageId;
+                cancelEditingMessage();
+
+                // Optimistically update message in cache & UI
+                const targetMsg = messagesCache.find(m => String(m.id) === String(editMsgId));
+                if (targetMsg) {
+                    targetMsg.body = text;
+                    targetMsg.is_edited = true;
+                    renderMessages(messagesCache, currentRecipientData || {
+                        username: headerUsername.textContent.replace('@', ''),
+                        name: headerStatus.textContent,
+                        profile_pic: headerAvatar.src
+                    });
+                }
+
+                // POST edit to backend
+                fetch('/api/chat/edit_message.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        message_id: editMsgId,
+                        body: text
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.success && chatBroadcastChannel && currentConversationId) {
+                        try {
+                            chatBroadcastChannel.postMessage({
+                                type: 'edit_message',
+                                conversation_id: currentConversationId,
+                                message_id: editMsgId,
+                                body: text
+                            });
+                        } catch(e) {}
+                    }
+                }).catch(err => {
+                    console.error('Error editing message:', err);
+                });
+                return;
+            }
 
             const replyData = currentReplyTarget ? { ...currentReplyTarget } : null;
             cancelReplyPreview();

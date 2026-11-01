@@ -250,8 +250,8 @@ class DashboardController extends Controller
         $isFoodOrFeasto = in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana']) 
             || (method_exists($vendor, 'isRestaurant') && $vendor->isRestaurant());
 
-        $vLat = 27.0425;
-        $vLng = 74.7214;
+        $vLat = 26.5744; // Kishangarh default
+        $vLng = 74.8654;
         if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
@@ -265,7 +265,7 @@ class DashboardController extends Controller
             });
             $dp->active_assignment = $activeAssignment;
             $dp->is_busy = !is_null($activeAssignment);
-            $dp->distance_km = $dp->distanceTo($vLat, $vLng);
+            $dp->distance_km = round(abs((float) $dp->distanceTo($vLat, $vLng)), 1);
             $dp->eta_minutes = max(3, (int) round($dp->distance_km * 3.5));
             return $dp;
         })->sortBy('distance_km')->values();
