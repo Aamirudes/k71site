@@ -165,13 +165,13 @@
                 <div class="space-y-2 pt-1">
                     <a :href="cartData.items && cartData.items[0] ? cartData.items[0].checkout_url : '{{ route('cart.index') }}'"
                        @click="closeCart()"
-                       class="w-full block text-center py-3 rounded-xl bg-zinc-950 text-white text-xs sm:text-sm font-semibold hover:bg-black transition-all shadow-xs">
-                        Proceed to Checkout
+                       class="w-full block text-center py-3 rounded-xl bg-black hover:bg-zinc-800 text-white text-xs sm:text-sm font-black transition-all shadow-md active:scale-95 cursor-pointer">
+                        <span class="text-white font-black">Proceed to Checkout</span>
                     </a>
                     <a href="{{ route('cart.index') }}" 
                        @click="closeCart()"
-                       class="w-full block text-center py-2.5 rounded-xl border border-zinc-300 text-zinc-800 text-xs font-medium hover:bg-white transition-all">
-                        View Detailed Cart
+                       class="w-full block text-center py-2.5 rounded-xl border border-zinc-300 bg-white hover:bg-zinc-100 text-zinc-950 text-xs font-black transition-all cursor-pointer">
+                        <span class="text-zinc-950 font-black">View Detailed Cart</span>
                     </a>
                 </div>
             </div>

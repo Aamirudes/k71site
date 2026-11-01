@@ -14,7 +14,7 @@
         ];
         $currV = [
             'icon' => $sec['icon'] ?? '🏷️',
-            'badge' => $sec['badge'] ?? 'Merchant Store',
+            'badge' => $sec['label'] ?? ($sec['name'] ?? 'Merchant Store'),
             'action' => 'Add ' . ($sec['item_singular'] ?? 'Item'),
             'catalog' => $sec['catalog_name'] ?? 'Catalog Items',
             'orders' => $sec['orders_name'] ?? 'Orders',

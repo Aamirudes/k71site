@@ -260,8 +260,8 @@
                     </div>
 
                     <button type="submit" 
-                            class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold rounded-xl text-center text-sm shadow-sm transition-all cursor-pointer mt-2">
-                        Submit Proof & Confirm Order
+                            class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black rounded-xl text-center text-sm shadow-sm transition-all cursor-pointer mt-2 flex items-center justify-center gap-2">
+                        <span class="text-white font-black">Submit Proof & Confirm Order</span>
                     </button>
                 </form>
 

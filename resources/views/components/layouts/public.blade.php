@@ -93,10 +93,8 @@
             || request()->is('food*') 
             || request()->is('services*') 
             || request()->is('used*') 
-            || request()->is('shorts*')
-            || request()->routeIs('storefront.show')
-            || app()->bound('current_vendor');
-        $suppressMainHeader = $hideMainHeader || $isVerticalRoute;
+            || request()->is('shorts*');
+        $suppressMainHeader = $hideMainHeader || ($isVerticalRoute && !app()->bound('current_vendor'));
     @endphp
 
     @if(!$suppressMainHeader)

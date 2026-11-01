@@ -65,28 +65,7 @@
     :ogImage="$vendor->banner ?: $vendor->logo"
     :schemaJson="$storeSchemaJson"
     :fullWidth="true"
-    :hideMainHeader="true"
-    :hideFooter="true"
 >
-    <!-- Thin Sleek Top Strip: Back to K71 Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-4 sm:px-6 py-2 flex items-center justify-between z-40 relative">
-        <div class="flex items-center gap-3">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span>Back to K71 Marketplace</span>
-            </a>
-            <span class="text-zinc-600">|</span>
-            <span class="text-zinc-400 text-[11px] hidden sm:inline">
-                {{ $vendor->shop_name }} Official Storefront
-            </span>
-        </div>
-        <div class="flex items-center gap-4 text-[11px] text-zinc-400">
-            <span class="hidden md:inline font-mono">IST UTC+5:30 (India)</span>
-            <a href="{{ route('account') }}" class="hover:text-white transition font-medium">
-                @auth My Account @else Sign In @endauth
-            </a>
-        </div>
-    </div>
     @php
         $social = is_array($vendor->social_links) ? $vendor->social_links : (is_string($vendor->social_links) ? (json_decode($vendor->social_links, true) ?: []) : []);
         $tagline = $social['tagline'] ?? null;
@@ -1027,8 +1006,8 @@
                 </section>
             @endif
 
-            {{-- 3. STICKY SMART SUB-BAR (Category navigation, Density toggle, Live Search & Sort) --}}
-            <div class="sticky top-14 sm:top-16 z-20 bg-stone-50/95 backdrop-blur-md py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 border-y border-stone-200/80 mb-6 shadow-2xs" id="collection-hub">
+            {{-- 3. SMART SUB-BAR (Category navigation, Density toggle, Live Search & Sort - NON-STICKY) --}}
+            <div class="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl py-3 px-4 sm:px-6 border border-stone-200/80 dark:border-zinc-800 mb-6 shadow-2xs" id="collection-hub">
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <!-- Title & Live Count -->
                     <div class="min-w-0">

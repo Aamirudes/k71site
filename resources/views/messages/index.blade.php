@@ -2911,6 +2911,17 @@
                         });
                     } catch(e) {}
                 }
+                if (currentConversationId) {
+                    fetch('/api/chat/typing.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
+                    }).catch(() => {});
+                }
             }, 3000);
 
             if (now - lastTypingPing > 2000) {
@@ -3495,6 +3506,17 @@
                         sender_id: CURRENT_USER_ID
                     });
                 } catch(e) {}
+            }
+            if (currentConversationId) {
+                fetch('/api/chat/typing.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
+                }).catch(() => {});
             }
 
             // Optimistic UI Append

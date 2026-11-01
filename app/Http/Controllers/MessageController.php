@@ -835,6 +835,12 @@ class MessageController extends Controller
 
             $recipientInfo = $this->getChatUserInfo($recipientId);
             $isTyping = (bool) \Illuminate\Support\Facades\Cache::has("chat_typing_{$conversationId}_{$recipientId}");
+            if (!$isTyping) {
+                $typingFile = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
+                if (file_exists($typingFile) && (time() - (int)@file_get_contents($typingFile)) < 6) {
+                    $isTyping = true;
+                }
+            }
 
             $convData = [
                 'id' => $conversationId,
@@ -1176,7 +1182,14 @@ class MessageController extends Controller
 
         $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
         if ($conversationId > 0) {
-            \Illuminate\Support\Facades\Cache::put("chat_typing_{$conversationId}_{$userId}", time(), now()->addSeconds(8));
+            $typingFile = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$userId}";
+            if ($request->input('stop') || $request->json('stop')) {
+                \Illuminate\Support\Facades\Cache::forget("chat_typing_{$conversationId}_{$userId}");
+                @unlink($typingFile);
+            } else {
+                \Illuminate\Support\Facades\Cache::put("chat_typing_{$conversationId}_{$userId}", time(), now()->addSeconds(8));
+                @file_put_contents($typingFile, time());
+            }
         }
 
         return response()->json(['success' => true]);

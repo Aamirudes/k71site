@@ -43,10 +43,10 @@
                  orderType: '{{ old('order_type', 'food_delivery') }}',
                  paymentMethod: '{{ old('payment_method', $defaultPaymentMethod) }}',
                  get checkoutBtnText() {
-                     if (this.paymentMethod === 'phonepe') return 'Pay Securely via PhonePe / UPI &rarr;';
-                     if (this.paymentMethod === 'upi') return 'Continue to Store UPI / QR &rarr;';
-                     if (this.paymentMethod === 'cod') return 'Place Order (Cash on Delivery) &rarr;';
-                     return 'Place Order &rarr;';
+                     if (this.paymentMethod === 'phonepe') return 'Pay Securely via PhonePe / UPI →';
+                     if (this.paymentMethod === 'upi') return 'Continue to Store UPI / QR →';
+                     if (this.paymentMethod === 'cod') return 'Place Order (Cash on Delivery) →';
+                     return 'Place Order →';
                  }
              }">
             
@@ -479,9 +479,8 @@
                     </div>
                     
                     <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]">
-                        <span class="text-white font-black text-base flex items-center justify-center gap-2" x-html="checkoutBtnText ? checkoutBtnText : 'Place Order &rarr;'">
-                            <span class="text-white font-black">Place Order</span>
-                            <span class="text-white font-black">&rarr;</span>
+                        <span class="text-white font-black text-base flex items-center justify-center gap-2" x-text="checkoutBtnText">
+                            Place Order &rarr;
                         </span>
                     </button>
                     

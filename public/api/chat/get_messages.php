@@ -94,6 +94,17 @@ if (file_exists($dbPath)) {
 
             $recipientInfo = get_chat_user_info($pdo, $recipientId);
 
+            $isTyping = false;
+            $typingFile = sys_get_temp_dir() . "/k71_typing_{$conversationId}_{$recipientId}";
+            if (file_exists($typingFile)) {
+                $lastT = (int) @file_get_contents($typingFile);
+                if ((time() - $lastT) < 6) {
+                    $isTyping = true;
+                } else {
+                    @unlink($typingFile);
+                }
+            }
+
             $convData = [
                 'id' => $conversationId,
                 'status' => $conv['status'] ?? 'accepted',
@@ -107,13 +118,13 @@ if (file_exists($dbPath)) {
                 'has_more' => $hasMore,
                 'conversation' => $convData,
                 'recipient' => $recipientInfo,
-                'is_typing' => false,
+                'is_typing' => $isTyping,
                 'messages' => $formattedMessages,
                 'data' => [
                     'has_more' => $hasMore,
                     'conversation' => $convData,
                     'recipient' => $recipientInfo,
-                    'is_typing' => false,
+                    'is_typing' => $isTyping,
                     'messages' => $formattedMessages
                 ]
             ]);

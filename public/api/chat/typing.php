@@ -13,7 +13,11 @@ if (file_exists($dbPath)) {
         $convId = isset($input['conversation_id']) ? (int) $input['conversation_id'] : 0;
         if ($convId > 0) {
             $typingFile = sys_get_temp_dir() . "/k71_typing_{$convId}_{$uid}";
-            @file_put_contents($typingFile, time());
+            if (!empty($input['stop'])) {
+                @unlink($typingFile);
+            } else {
+                @file_put_contents($typingFile, time());
+            }
             echo json_encode(['success' => true]);
             exit;
         }
