@@ -132,4 +132,14 @@ class Order extends Model
     {
         return $this->hasMany(Shipment::class);
     }
+
+    public function deliveryAssignment(): HasOne
+    {
+        return $this->hasOne(DeliveryAssignment::class)->latestOfMany();
+    }
+
+    public function deliveryAssignments(): HasMany
+    {
+        return $this->hasMany(DeliveryAssignment::class);
+    }
 }
