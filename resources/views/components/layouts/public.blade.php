@@ -10,12 +10,10 @@
     'ogType' => 'website',
     'schemaJson' => null,
     'fullWidth' => false,
-    'hideMainHeader' => false,
-    'hideFooter' => false,
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ ($k71Brand ?? $currentBrand ?? 'main') === 'shorts' ? 'dark' : 'light' }}" data-brand="{{ $k71Brand ?? $currentBrand ?? 'main' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,7 +62,6 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-k71-design-system />
     <style>[x-cloak] { display: none !important; }</style>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -86,26 +83,13 @@
 <body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
     
     
-    @php
-        $detectedVertical = request()->attributes->get('vertical') ?? null;
-        $isVerticalRoute = !empty($detectedVertical) 
-            || request()->is('feasto*') 
-            || request()->is('food*') 
-            || request()->is('services*') 
-            || request()->is('used*') 
-            || request()->is('shorts*');
-        $suppressMainHeader = $hideMainHeader || ($isVerticalRoute && !app()->bound('current_vendor'));
-    @endphp
-
-    @if(!$suppressMainHeader)
-        <!-- K71 Top Navigation Header -->
-        <x-k71-nav />
-    @endif
+    <!-- K71 Top Navigation Header -->
+    <x-k71-nav />
 
     <!-- K71 Glass Hamburger Menu Drawer -->
     <x-k71-hamburger />
 
-    <!-- 6-in-1 Draggable Floating Radial Nav (Semi-Circle Arc + '*' Retract Button) -->
+    <!-- 6-in-1 Floating Radial Nav -->
     <x-floating-six-nav />
 
     @if($fullWidth)
@@ -118,7 +102,6 @@
         </main>
     @endif
     
-    @if(!$hideFooter)
     <!-- LUXURY EDITORIAL ATELIER FOOTER -->
     @php
         $footerVendor = app()->bound('current_vendor') ? app('current_vendor') : null;
@@ -415,9 +398,8 @@
         </div>
 
     </footer>
-    @endif
 
-    <!-- K71 Mobile Bottom Tab Navigation (Section F) -->
+    <!-- K71 Mobile Bottom Tab Navigation -->
     <x-k71-bottom-nav />
 
     <!-- K71 Mini-Cart Bottom Sheet / Drawer -->

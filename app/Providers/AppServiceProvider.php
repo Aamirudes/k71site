@@ -28,25 +28,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        date_default_timezone_set('Asia/Kolkata');
-
-        // Centralized brand detection shared with all views & layouts
-        \Illuminate\Support\Facades\View::composer('*', function ($view) {
-            $sub = strtolower(explode('.', request()->getHost())[0] ?? '');
-            $brand = match (true) {
-                $sub === 'food' => 'food',
-                $sub === 'services' => 'services',
-                $sub === 'used' => 'used',
-                in_array($sub, ['enquiry','b2b'], true) => 'b2b',
-                in_array($sub, ['feasto', 'feato'], true) => 'feasto',
-                $sub === 'shorts' => 'shorts',
-                default => (function_exists('k71_current_brand') ? k71_current_brand() : 'main'),
-            };
-            $view->with('k71Brand', $brand);
-            $view->with('currentBrand', $brand);
-            $view->with('detectedBrand', $brand);
-        });
-
         if (!$this->app->runningInConsole() && $this->app->bound('request')) {
             $host = request()->getHost();
             $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '']) 
@@ -75,11 +56,6 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             // Silently ignore during migration or CLI bootstrap
         }
-
-        // Self-healing chat engine schema & legacy chat sync
-        try {
-            \App\Http\Controllers\MessageController::ensureChatSchema();
-        } catch (\Throwable $e) {}
 
         // Security: Rate Limiters
         \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $request) {

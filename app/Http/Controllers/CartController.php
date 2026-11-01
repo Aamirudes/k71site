@@ -289,7 +289,6 @@ class CartController extends Controller
 
             return [
                 'id' => $item->id,
-                'product_id' => $item->product_id ?? $item->variant?->product_id,
                 'product_title' => $product?->title ?? 'Product',
                 'variant_label' => $variantLabel,
                 'vendor_name' => $item->vendor?->shop_name ?? 'K71 Store',

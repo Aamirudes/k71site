@@ -32,7 +32,7 @@
 
                 <!-- Minimal Headline & Mission -->
                 <div class="max-w-3xl space-y-2.5">
-                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-950 tracking-tight leading-tight">
+                    <h1 class="text-3xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight">
                         Find suppliers. Compare offers. Do business.
                     </h1>
                     <p class="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
@@ -85,7 +85,7 @@
                         <!-- Action Buttons (2 cols) -->
                         <div class="md:col-span-2 flex items-center gap-2">
                             <button type="submit" 
-                                    class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer max-h-11">
+                                    class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer">
                                 <span>Search</span>
                             </button>
                         </div>
@@ -95,7 +95,7 @@
                     <!-- Popular Sourcing Chips + Quick RFQ CTA Strip -->
                     <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
                         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                            <span class="text-slate-600 font-bold uppercase text-[10px] tracking-wider shrink-0">Trending:</span>
+                            <span class="text-slate-400 font-bold uppercase text-[10px] tracking-wider shrink-0">Trending:</span>
                             @foreach(['Makrana Marble', 'Diamond Blades', 'Granite Slabs', 'CNC Machines', 'Packaging Material', 'Quartz Stone'] as $chip)
                                 <a href="{{ route('enquiry.index', ['search' => $chip]) }}" 
                                    class="px-3 py-1 rounded-full bg-slate-100 hover:bg-indigo-50 border border-slate-200/70 hover:border-indigo-200 text-slate-700 hover:text-indigo-600 text-xs font-semibold transition shrink-0">
@@ -130,7 +130,7 @@
                             <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800">
                                 Sourcing Categories
                             </span>
-                            <span class="text-xs text-slate-600 font-mono">Wholesale &amp; Real Estate</span>
+                            <span class="text-xs text-slate-400 font-mono">Wholesale &amp; Real Estate</span>
                         </div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mt-1">Key Industry &amp; Real Estate Sectors</h2>
                     </div>
@@ -177,7 +177,7 @@
                                 <h3 class="text-xs sm:text-sm font-black text-slate-900 group-hover:text-amber-800 transition-colors leading-snug">
                                     {{ $cat->name }}
                                 </h3>
-                                <p class="text-[11px] text-slate-700 font-semibold mt-1 flex items-center justify-between">
+                                <p class="text-[11px] text-slate-500 font-medium mt-1 flex items-center justify-between">
                                     <span>{{ $cat->enquiries_count }} RFQs</span>
                                     <span class="text-amber-700 font-bold group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                                 </p>
@@ -196,7 +196,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Recommended Industrial &amp; Wholesale Listings</h2>
-                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Direct factory-priced products ready for bulk dispatch and custom quotation.</p>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct factory-priced products ready for bulk dispatch and custom quotation.</p>
                     </div>
                     <a href="{{ route('catalog.index') }}" class="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1">
                         <span>Browse Catalog</span>
@@ -204,65 +204,64 @@
                     </a>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     @forelse($b2bProducts as $prod)
-                        <div class="k71-card bg-white rounded-lg border border-slate-200 hover:border-slate-300 shadow-xs transition-all duration-200 flex flex-col justify-between group overflow-hidden">
+                        <div class="bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200/80 hover:border-indigo-300 shadow-xs hover:shadow-xl hover:shadow-slate-200/60 transition-all duration-300 flex flex-col justify-between group overflow-hidden">
                             <div>
                                 <!-- Image Preview -->
                                 <div class="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
                                     <img src="{{ $prod->primary_image_url }}" 
                                          alt="{{ $prod->title }}" 
-                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                          onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                     
-                                    <div class="absolute top-2.5 left-2.5 px-2 py-0.5 rounded bg-slate-900/85 text-white text-[9.5px] font-bold uppercase tracking-wider">
+                                    <div class="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[9.5px] font-black uppercase tracking-wider">
                                         {{ $prod->category?->name ?? 'Wholesale' }}
                                     </div>
 
                                     @if($prod->vendor)
-                                        <div class="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded bg-white/95 border border-slate-200 text-slate-900 text-[10px] font-semibold shadow-xs flex items-center gap-1.5">
+                                        <div class="absolute bottom-3 left-3 px-2.5 py-1 rounded-xl bg-white/95 backdrop-blur-sm border border-slate-200/60 text-slate-900 text-[10px] font-bold shadow-xs flex items-center gap-1.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            <span class="truncate max-w-[130px]">{{ $prod->vendor->shop_name }}</span>
+                                            <span class="truncate max-w-[140px]">{{ $prod->vendor->shop_name }}</span>
                                         </div>
                                     @endif
                                 </div>
 
                                 <!-- Product Details -->
-                                <div class="p-3.5 space-y-1.5">
-                                    <h3 class="text-xs sm:text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2 leading-snug min-h-[2.4rem]">
+                                <div class="p-4 space-y-2">
+                                    <h3 class="text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-2 leading-snug">
                                         <a href="{{ route('product.show', $prod->slug) }}">
                                             {{ $prod->title }}
                                         </a>
                                     </h3>
 
                                     <div class="flex items-baseline gap-2">
-                                        <span class="text-base font-bold text-slate-950">
+                                        <span class="text-base font-black text-slate-950">
                                             ₹{{ number_format($prod->base_price / 100, 2) }}
                                         </span>
-                                        <span class="text-[10px] text-slate-500 font-semibold uppercase">
-                                            {{ $prod->custom_fields['unit'] ?? ($prod->isMarble() ? 'Per Sq Ft' : 'Per Unit') }}
+                                        <span class="text-[10px] text-slate-400 font-semibold uppercase">
+                                            {{ $prod->custom_fields['unit'] ?? ($prod->isMarble() ? 'Per Sq Ft / Slab' : 'Per Piece / Unit') }}
                                         </span>
                                     </div>
 
-                                    <!-- Specs Snippet / MOQ -->
-                                    <div class="text-[11px] text-slate-600 line-clamp-1 leading-normal flex items-center gap-2">
-                                        <span class="font-medium bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded text-[10px]">MOQ: {{ $prod->custom_fields['moq'] ?? '50 Units' }}</span>
-                                        <span class="text-slate-600 font-medium">Direct Dispatch</span>
+                                    <!-- Specs Snippet -->
+                                    <div class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                        {{ Str::limit(strip_tags($prod->description), 110) ?: 'High grade commercial quality with factory dispatch guarantee.' }}
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Card Action: Full-width Get Best Price Button -->
-                            <div class="p-3.5 pt-0 border-t border-slate-100 flex flex-col gap-1.5 mt-2">
+                            <!-- Card Action: Get Best Price / Send Enquiry -->
+                            <div class="p-4 pt-0 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+                                <a href="{{ route('product.show', $prod->slug) }}" 
+                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
+                                    View Specs
+                                </a>
                                 <button type="button" 
                                         @click="openRfqModal('{{ addslashes($prod->title) }}', {{ $prod->vendor_id ?? 'null' }}, {{ $prod->id }})"
-                                        class="w-full py-2.5 rounded-lg bg-[#F59E0B] hover:bg-amber-400 active:scale-[0.98] text-[#1C1917] text-xs font-bold text-center shadow-xs transition cursor-pointer">
+                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs font-bold text-center shadow-xs transition cursor-pointer">
                                     Get Best Price
                                 </button>
-                                <a href="{{ route('product.show', $prod->slug) }}" 
-                                   class="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold text-center transition">
-                                    View Specs &rarr;
-                                </a>
                             </div>
                         </div>
                     @empty
@@ -279,49 +278,46 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight">Verified Suppliers &amp; Manufacturers</h2>
-                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Pre-audited verified businesses with direct contact and quoting capabilities.</p>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Pre-audited verified businesses with direct contact and quoting capabilities.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($verifiedSuppliers as $sup)
-                        <div class="k71-card p-4 rounded-lg bg-white border border-slate-200 hover:border-slate-300 shadow-xs transition-all flex flex-col justify-between group">
-                            <div>
-                                <div class="flex items-start gap-3.5">
-                                    <div class="w-12 h-12 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
-                                        <img src="{{ $sup->logo ? format_image_url($sup->logo) : asset('images/default-avatar.png') }}" 
-                                             alt="{{ $sup->shop_name }}" 
-                                             class="w-full h-full object-cover">
+                        <div class="p-5 rounded-3xl bg-white/90 backdrop-blur-xl border border-slate-200/80 hover:border-indigo-300 shadow-2xs hover:shadow-lg transition-all flex flex-col justify-between group">
+                            <div class="flex items-start gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0">
+                                    <img src="{{ $sup->logo ? format_image_url($sup->logo) : asset('images/default-avatar.png') }}" 
+                                         alt="{{ $sup->shop_name }}" 
+                                         class="w-full h-full object-cover">
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <h3 class="text-sm font-black text-slate-900 truncate">{{ $sup->shop_name }}</h3>
+                                        <span class="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9.5px] font-black uppercase shrink-0">
+                                            ✓ Verified
+                                        </span>
                                     </div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                                            <h3 class="text-sm font-bold text-slate-900 truncate">{{ $sup->shop_name }}</h3>
-                                            <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 text-[9.5px] font-bold uppercase shrink-0">
-                                                ✓ Verified • GST
-                                            </span>
-                                        </div>
-                                        <p class="text-[11px] text-slate-600 flex items-center gap-1">
-                                            <span>📍</span>
-                                            <span class="truncate">{{ $sup->city ?? 'Jaipur' }}, {{ $sup->state ?? 'India' }}</span>
-                                        </p>
-                                        <div class="flex items-center gap-2 mt-1.5 text-[10.5px]">
-                                            <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium">MOQ: 50+ Units</span>
-                                            <span class="text-slate-600 font-medium">Bulk Rates: Factory Direct</span>
-                                        </div>
-                                    </div>
+                                    <p class="text-[11px] text-slate-500 flex items-center gap-1">
+                                        <span>📍</span>
+                                        <span class="truncate">{{ $sup->city ?? 'Jaipur' }}, {{ $sup->state ?? 'India' }}</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 font-semibold mt-1">
+                                        {{ $sup->products_count }} Published Catalog Products
+                                    </p>
                                 </div>
                             </div>
 
-                            <div class="pt-3 mt-3 border-t border-slate-100 flex flex-col gap-1.5">
+                            <div class="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+                                <a href="{{ route('storefront.show', $sup->slug) }}" 
+                                   class="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold text-center transition">
+                                    View Storefront
+                                </a>
                                 <button type="button" 
                                         @click="openRfqModal('', {{ $sup->id }})"
-                                        class="w-full py-2.5 rounded-lg bg-[#F59E0B] hover:bg-amber-400 active:scale-[0.98] text-[#1C1917] text-xs font-bold text-center shadow-xs transition cursor-pointer">
-                                    Get Best Price
+                                        class="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold text-center transition cursor-pointer">
+                                    Contact Supplier
                                 </button>
-                                <a href="{{ route('storefront.show', $sup->slug) }}" 
-                                   class="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold text-center transition">
-                                    View Storefront &amp; Catalog &rarr;
-                                </a>
                             </div>
                         </div>
                     @endforeach
@@ -337,7 +333,7 @@
                             <span>Open Buyer Requirements &amp; Leads</span>
                             <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">Live Board</span>
                         </h2>
-                        <p class="text-xs sm:text-sm text-slate-600 font-medium">Direct RFQs posted by verified commercial buyers waiting for supplier quotations.</p>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium">Direct RFQs posted by verified commercial buyers waiting for supplier quotations.</p>
                     </div>
 
                     <button type="button" 
@@ -353,7 +349,7 @@
                         <div class="p-5 sm:p-6 hover:bg-slate-50/70 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div class="space-y-2 flex-1">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <span class="text-[10px] font-mono font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                                    <span class="text-[10px] font-mono font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
                                         {{ $enq->enquiry_number }}
                                     </span>
                                     <span class="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
@@ -364,7 +360,7 @@
                                             ⚡ Immediate Need
                                         </span>
                                     @endif
-                                    <span class="text-xs text-slate-600">
+                                    <span class="text-xs text-slate-400">
                                         Posted {{ $enq->created_at->diffForHumans() }}
                                     </span>
                                 </div>
@@ -389,14 +385,14 @@
                             </div>
 
                             <!-- Right CTA -->
-                            <div class="flex flex-wrap sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0">
+                            <div class="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0 pt-2 sm:pt-0">
                                 <div class="text-right">
-                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 block whitespace-nowrap">
+                                    <span class="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100 block">
                                         💬 {{ $enq->quotes->count() }} Quotes Submitted
                                     </span>
                                 </div>
                                 <a href="{{ route('enquiry.show', $enq->enquiry_number) }}" 
-                                   class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs whitespace-nowrap">
+                                   class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition shadow-xs">
                                     Submit Quotation &rarr;
                                 </a>
                             </div>
@@ -610,28 +606,13 @@
 
                         <button type="submit" 
                                 :disabled="rfqSubmitting" 
-                                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs uppercase tracking-wider shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50 max-h-11">
+                                class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/25 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
                             <span x-show="!rfqSubmitting">Submit Requirement &amp; Get Quotes &rarr;</span>
                             <span x-show="rfqSubmitting">Posting Requirement...</span>
                         </button>
                     </div>
                 </form>
 
-            </div>
-        </div>
-
-        <!-- Sticky Mobile & Tablet Enquiry Bar (Section E) -->
-        <div class="fixed bottom-14 md:bottom-4 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none">
-            <div class="max-w-4xl mx-auto bg-slate-900 text-white rounded-lg p-3 sm:p-3.5 shadow-xl border border-slate-800 flex items-center justify-between gap-3 pointer-events-auto">
-                <div class="min-w-0">
-                    <p class="text-xs sm:text-sm font-bold truncate">Need customized factory pricing or bulk quotes?</p>
-                    <p class="text-[11px] text-slate-300 truncate">Connect with verified suppliers across India with direct RFQs</p>
-                </div>
-                <button type="button" 
-                        @click="openRfqModal()" 
-                        class="shrink-0 px-3.5 py-2 rounded-lg bg-[#F59E0B] hover:bg-amber-400 active:scale-95 text-[#1C1917] text-xs font-bold transition shadow-xs cursor-pointer">
-                    + Post RFQ
-                </button>
             </div>
         </div>
 

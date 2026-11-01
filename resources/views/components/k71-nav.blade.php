@@ -1,13 +1,4 @@
-@props([
-    'hideSearch' => false,
-    'hideCategories' => false,
-])
-
 @php
-    $isMessages = request()->routeIs('messages.*') || request()->is('messages*');
-    $hideSearch = $hideSearch || $isMessages;
-    $hideCategories = $hideCategories || $isMessages;
-
     $currentVendor = app()->bound('current_vendor') ? app('current_vendor') : null;
     $activeVertical = $k71_vertical ?? config('k71.verticals.main');
     $currentKey = $k71_vertical_key ?? 'main';
@@ -133,21 +124,14 @@
                 <!-- Brand Logo -->
                 <div class="flex items-center gap-2">
                     @if($currentVendor)
-                        <a href="{{ $currentVendor->storefront_url ?? route('storefront.show', $currentVendor->slug) }}" class="flex items-center gap-2.5 group" aria-label="{{ $currentVendor->shop_name }}">
+                        <div class="flex items-center gap-2">
                             @if($currentVendor->logo_url)
-                                <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover border border-slate-200 shadow-xs group-hover:scale-105 transition-transform">
-                            @else
-                                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-black text-white font-serif font-black flex items-center justify-center text-sm shadow-xs group-hover:scale-105 transition-transform">
-                                    {{ strtoupper(substr($currentVendor->shop_name, 0, 1)) }}
-                                </div>
+                                <img src="{{ $currentVendor->logo_url }}" alt="{{ $currentVendor->shop_name }}" class="w-8 h-8 rounded-lg object-cover border border-slate-200">
                             @endif
-                            <div class="flex flex-col leading-tight">
-                                <span class="font-sans text-base sm:text-lg font-black tracking-tight text-slate-900 group-hover:text-black leading-none truncate max-w-[140px] sm:max-w-xs">
-                                    {{ $currentVendor->shop_name }}
-                                </span>
-                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 mt-0.5">Verified Boutique</span>
-                            </div>
-                        </a>
+                            <a href="{{ route('home') }}" class="font-sans text-base sm:text-xl font-black tracking-tight text-slate-900 leading-none truncate max-w-[140px] sm:max-w-none">
+                                {{ $currentVendor->shop_name }}
+                            </a>
+                        </div>
                     @else
                         <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
                             <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
@@ -166,7 +150,6 @@
                 </div>
             </div>
 
-            @if(!$hideSearch)
             <!-- Desktop Middle: Clean Integrated Search Bar with Live Autocomplete -->
             <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8 relative"
                  x-data="{
@@ -244,7 +227,6 @@
                     </div>
                 </div>
             </div>
-            @endif
 
             <!-- Right Actions: Stores + Catalog + Messages + Wishlist + Cart + Account -->
             <div class="flex items-center gap-1 sm:gap-1.5">
@@ -259,7 +241,7 @@
                     <span>Catalog</span>
                 </a>
 
-                <!-- Direct Messages Quick Access -->
+                <!-- Direct Messages Quick Access (Instagram Red Dot Indicator) -->
                 <a href="{{ route('messages.index') }}" 
                    id="nav-messages-link"
                    class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
@@ -268,6 +250,8 @@
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                     </svg>
+                    <!-- Instagram Notification Red Dot (Appears ONLY when there are unseen messages) -->
+                    <span id="nav-messages-red-dot" class="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#FF3040] ring-2 ring-white shadow-xs {{ $navUnreadMessagesCount > 0 ? '' : 'hidden' }}"></span>
                 </a>
 
                 <!-- Wishlist (Visible on mobile and desktop) -->
@@ -339,15 +323,7 @@
                                 </div>
                                 <div class="py-1">
                                     <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
-                                    <a href="{{ route('account.listings') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
-                                        <span>My Listings &amp; Gigs</span>
-                                        <span class="text-[9px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">Classifieds</span>
-                                    </a>
                                     <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
-                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
-                                        <span>Delivery Pilot Hub</span>
-                                        <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">⚡ Fleet</span>
-                                    </a>
                                     <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
                                     <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
                                     <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Notifications</a>
@@ -376,7 +352,6 @@
 
         </div>
 
-        @if(!$hideSearch)
         <!-- Mobile Integrated Search Bar (Always visible on mobile screens) -->
         <div class="md:hidden pb-2.5 pt-0.5"
              x-data="{
@@ -455,13 +430,10 @@
                 </div>
             </div>
         </div>
-        @endif
 
     </div>
 
-    <!-- Integrated Category Navigation Row -->
-    @if(!$hideCategories)
-    @if(!$currentVendor)
+    <!-- Integrated Category Navigation Row (Hidden on mobile when on Home page to avoid duplicate category slider) -->
     <div class="{{ request()->routeIs('home') ? 'hidden md:block' : '' }} border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
@@ -482,36 +454,57 @@
             </nav>
         </div>
     </div>
-    @else
-    <div class="border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <nav class="flex items-center gap-2 sm:gap-3 py-2 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
-                 aria-label="Store Navigation">
-                <a href="#store-products" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-950 text-white shadow-xs">
-                    <span>🛍️</span>
-                    <span>All Products</span>
-                </a>
-                <a href="#store-about" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>🏛️</span>
-                    <span>About Atelier</span>
-                </a>
-                <a href="#store-reviews" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>⭐</span>
-                    <span>Store Reviews</span>
-                </a>
-                <a href="#store-contact" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>📞</span>
-                    <span>Contact Seller</span>
-                </a>
-            </nav>
-        </div>
-    </div>
-    @endif
-    @endif
 </header>
 
 <script>
 (function() {
-    // Unread red dots removed per user design specifications
+    function refreshNavUnreadDot() {
+        fetch('/api/chat/get_unread_count.php', { 
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store' 
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.success) return;
+            const unread = parseInt(data.unread, 10) || 0;
+            const dots = document.querySelectorAll('#nav-messages-red-dot, .bottom-nav-messages-dot, #floating-chat-red-dot');
+            const badges = document.querySelectorAll('#nav-messages-badge');
+            
+            dots.forEach(dot => {
+                if (unread > 0) {
+                    dot.classList.remove('hidden');
+                    dot.style.display = 'block';
+                } else {
+                    dot.classList.add('hidden');
+                    dot.style.display = 'none';
+                }
+            });
+
+            badges.forEach(badge => {
+                if (unread > 0) {
+                    badge.textContent = unread > 99 ? '99+' : unread;
+                    badge.classList.remove('hidden');
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.classList.add('hidden');
+                    badge.style.display = 'none';
+                }
+            });
+        })
+        .catch(() => {});
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(refreshNavUnreadDot, 1500);
+            setInterval(refreshNavUnreadDot, 8000);
+        });
+    } else {
+        setTimeout(refreshNavUnreadDot, 1500);
+        setInterval(refreshNavUnreadDot, 8000);
+    }
+
+    window.addEventListener('k71-messages-read', refreshNavUnreadDot);
 })();
 </script>

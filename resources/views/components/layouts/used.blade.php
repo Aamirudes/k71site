@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="used">
+<html lang="en" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -26,7 +26,6 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -56,30 +55,6 @@
       @open-offer-modal.window="openOfferModal($event.detail)"
       @open-post-ad.window="postAdModalOpen = true"
       @keydown.escape.window="locationModalOpen = false; offerModalOpen = false; postAdModalOpen = false;">
-
-    <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
-                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
-                <span class="sm:hidden text-[11px]">Back to K71</span>
-            </a>
-            <span class="text-zinc-600 hidden xs:inline">|</span>
-            <span class="text-blue-400 font-bold text-[11px] hidden sm:inline">
-                K71 Verified Pre-Owned &amp; Re-Commerce
-            </span>
-        </div>
-        <div class="flex items-center gap-4 text-[11px] text-zinc-400">
-            <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
-            <a href="{{ route('account.listings') }}" class="text-amber-300 hover:text-amber-200 font-bold transition flex items-center gap-1">
-                <span>Manage My Ads →</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- 6-in-1 Draggable Floating Radial Nav (Semi-Circle Arc + '*' Retract Button) -->
-    <x-floating-six-nav />
 
     <!-- ===================================================================
          1. TOP HEADER & NAVIGATION (CLEAN OLX-INSPIRED BLUE & WHITE)
@@ -734,10 +709,5 @@
         };
     }
     </script>
-    <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="used" />
-
-    <!-- K71 Global Authentication Modal -->
-    <x-k71-auth-modal />
 </body>
 </html>

@@ -67,14 +67,6 @@ class Order extends Model
     ];
 
     /**
-     * Get shipping address (aliases to address_snapshot)
-     */
-    public function getShippingAddressAttribute()
-    {
-        return $this->address_snapshot;
-    }
-
-    /**
      * Check if this order is a food delivery or takeaway order.
      */
     public function isFoodOrder(): bool
@@ -131,15 +123,5 @@ class Order extends Model
     public function shipments(): HasMany
     {
         return $this->hasMany(Shipment::class);
-    }
-
-    public function deliveryAssignment(): HasOne
-    {
-        return $this->hasOne(DeliveryAssignment::class)->latestOfMany();
-    }
-
-    public function deliveryAssignments(): HasMany
-    {
-        return $this->hasMany(DeliveryAssignment::class);
     }
 }

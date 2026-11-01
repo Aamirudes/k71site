@@ -348,7 +348,7 @@ class FreelanceMarketplaceAndAdminSuperpowersTest extends TestCase
             'contact_phone' => '9876500000',
         ]);
 
-        $this->assertTrue($postResponse->isRedirect());
+        $postResponse->assertRedirect(route('vendor.services.index'));
         $this->assertDatabaseHas('vendors', [
             'user_id' => $newUser->id,
             'shop_name' => 'Kunal Web Innovations',
@@ -463,7 +463,7 @@ class FreelanceMarketplaceAndAdminSuperpowersTest extends TestCase
         ]);
         $prodDelRes = $this->delete(route('admin.products.destroy', $prod));
         $prodDelRes->assertSessionHas('success');
-        $this->assertDatabaseMissing('products', ['id' => $prod->id]);
+        $this->assertSoftDeleted('products', ['id' => $prod->id]);
 
         // Delete short
         $short = Short::create([
@@ -488,6 +488,6 @@ class FreelanceMarketplaceAndAdminSuperpowersTest extends TestCase
         ]);
         $vendorDelRes = $this->delete(route('admin.vendors.destroy', $vendorToDelete));
         $vendorDelRes->assertSessionHas('success');
-        $this->assertDatabaseMissing('vendors', ['id' => $vendorToDelete->id]);
+        $this->assertSoftDeleted('vendors', ['id' => $vendorToDelete->id]);
     }
 }

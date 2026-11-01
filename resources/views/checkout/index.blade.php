@@ -38,17 +38,7 @@
 
     <form action="{{ route('checkout.process', $vendor->id) }}" method="POST" id="checkout-form">
         @csrf
-        <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16" 
-             x-data="{ 
-                 orderType: '{{ old('order_type', 'food_delivery') }}',
-                 paymentMethod: '{{ old('payment_method', $defaultPaymentMethod) }}',
-                 get checkoutBtnText() {
-                     if (this.paymentMethod === 'phonepe') return 'Pay Securely via PhonePe / UPI →';
-                     if (this.paymentMethod === 'upi') return 'Continue to Store UPI / QR →';
-                     if (this.paymentMethod === 'cod') return 'Place Order (Cash on Delivery) →';
-                     return 'Place Order →';
-                 }
-             }">
+        <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16" x-data="{ orderType: '{{ old('order_type', 'food_delivery') }}' }">
             
             <!-- Left Column: Shipping & Payment -->
             <div class="lg:col-span-7 space-y-10">
@@ -196,8 +186,8 @@
                                             x-show="!verified"
                                             @click="sendOtp()"
                                             :disabled="loading || cooldown > 0"
-                                            class="px-4 py-2 bg-black hover:bg-zinc-800 text-white text-xs font-bold rounded-xl shrink-0 transition active:scale-95 disabled:opacity-50 cursor-pointer shadow-xs">
-                                        <span x-show="!loading && cooldown === 0" x-text="otpSent ? 'Resend OTP' : 'Verify Email (OTP)'">Verify Email (OTP)</span>
+                                            class="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shrink-0 transition active:scale-95 disabled:opacity-50 cursor-pointer">
+                                        <span x-show="!loading && cooldown === 0" x-text="otpSent ? 'Resend OTP' : 'Verify Email (OTP)'"></span>
                                         <span x-show="cooldown > 0" x-text="'Wait ' + cooldown + 's'"></span>
                                         <span x-show="loading">Sending...</span>
                                     </button>
@@ -282,7 +272,7 @@
                 </section>
 
                 <!-- Payment Method -->
-                <section>
+                <section x-data="{ paymentMethod: '{{ old('payment_method', $defaultPaymentMethod) }}' }">
                     <h2 class="text-xl font-medium text-brand-text mb-4">Payment Method</h2>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-200">
                         
@@ -444,7 +434,7 @@
                         @else
                             <div class="flex items-center gap-2 w-full max-w-full">
                                 <input type="text" id="coupon_code_input" name="coupon_code" placeholder="Enter coupon code" class="min-w-0 flex-1 rounded-xl border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage text-sm px-3.5 py-2.5" onkeydown="if(event.key === 'Enter'){ event.preventDefault(); window.applyCoupon(); }">
-                                <button type="button" id="apply-coupon-btn" onclick="window.applyCoupon()" class="shrink-0 whitespace-nowrap bg-black text-white px-5 py-2.5 rounded-xl text-sm font-black hover:bg-zinc-800 transition-colors shadow-sm active:scale-95 cursor-pointer">
+                                <button type="button" id="apply-coupon-btn" onclick="window.applyCoupon()" class="shrink-0 whitespace-nowrap bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors shadow-sm active:scale-95">
                                     Apply
                                 </button>
                             </div>
@@ -478,10 +468,8 @@
                         <dd id="total-display" class="text-2xl font-bold text-brand-text">₹{{ number_format($total / 100, 2) }}</dd>
                     </div>
                     
-                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]">
-                        <span class="text-white font-black text-base flex items-center justify-center gap-2" x-text="checkoutBtnText">
-                            Place Order &rarr;
-                        </span>
+                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-lg font-bold text-white bg-slate-900 hover:bg-black rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer" x-text="paymentMethod === 'upi' ? 'Continue to Secure UPI Payment' : 'Place Order (Cash on Delivery)'">
+                        Place Order
                     </button>
                     
                     <p class="text-center text-xs text-gray-500 mt-4">

@@ -1,11 +1,11 @@
 @props([
     'title' => 'K71 Food — Order Online from Top Restaurants & Cloud Kitchens',
-    'metaDescription' => 'Order fresh artisan biryani, wood-fired pizza, burgers, pure veg thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, live kitchen tracking, and verified hygiene.',
+    'metaDescription' => 'Order fresh gourmet biryani, wood-fired pizza, burgers, pure veg thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, live kitchen tracking, and verified hygiene.',
     'canonicalUrl' => null,
 ])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="food">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -32,7 +32,6 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -49,7 +48,7 @@
       "name": "K71 Food",
       "url": "{{ url('/') }}",
       "logo": "{{ asset('images/k71-logo.png') }}",
-      "description": "On-demand food delivery and cloud kitchen platform delivering authentic fresh meals across top Indian cities in under 30 minutes.",
+      "description": "On-demand food delivery and cloud kitchen platform delivering authentic gourmet meals across top Indian cities in under 30 minutes.",
       "servesCuisine": ["Biryani", "North Indian", "South Indian", "Pizza", "Burgers", "Chinese", "Desserts"],
       "priceRange": "₹₹",
       "paymentAccepted": "Cash, Credit Card, Debit Card, UPI, PhonePe, Google Pay",
@@ -58,36 +57,12 @@
     </script>
 </head>
 
-<body class="bg-[#faf8f5] text-stone-900 font-sans antialiased flex flex-col min-h-screen selection:bg-[#ea580c] selection:text-white pb-20 md:pb-0 overflow-x-hidden max-w-full w-full"
+<body class="bg-[#faf8f5] text-stone-900 font-sans antialiased flex flex-col min-h-screen selection:bg-[#ea580c] selection:text-white pb-20 md:pb-0"
       x-data="k71FoodGlobalState()"
       @cart-updated.window="if($event.detail && ($event.detail.cart_count !== undefined || $event.detail.count !== undefined)) { cartTotalCount = ($event.detail.cart_count !== undefined ? $event.detail.cart_count : $event.detail.count); } fetchCartData();"
       @cart-count-updated.window="if($event.detail && $event.detail.count !== undefined) { cartTotalCount = $event.detail.count; }"
       @open-mini-cart.window="cartDrawerOpen = true; fetchCartData();"
       @keydown.escape.window="cartDrawerOpen = false; locationModalOpen = false;">
-
-    <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
-        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
-                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
-                <span class="sm:hidden text-[11px]">Back to K71</span>
-            </a>
-            <span class="text-zinc-600 hidden xs:inline">|</span>
-            <span class="text-amber-400 font-bold text-[11px] hidden sm:inline">
-                K71 Fresh Food &amp; Local Kitchens
-            </span>
-        </div>
-        <div class="flex items-center gap-4 text-[11px] text-zinc-400">
-            <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
-            <a href="{{ route('account') }}" class="hover:text-white transition font-medium">
-                @auth My Orders @else Sign In @endauth
-            </a>
-        </div>
-    </div>
-
-    <!-- 6-in-1 Draggable Floating Radial Nav (Semi-Circle Arc + '*' Retract Button) -->
-    <x-floating-six-nav />
 
     <!-- 1. TOP HEADER & NAVIGATION -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-orange-100 shadow-xs transition-all">
@@ -109,8 +84,8 @@
                                     K71<span class="text-[#ea580c]">FOOD</span>
                                 </span>
                             </div>
-                            <span class="text-[9.5px] font-black uppercase tracking-widest text-[#c2410c] font-mono mt-0.5">
-                                FRESH &amp; LOCAL KITCHENS
+                            <span class="text-[9.5px] font-black uppercase tracking-widest text-[#ea580c] font-mono mt-0.5">
+                                GOURMET &amp; CLOUD KITCHENS
                             </span>
                         </div>
                     </a>
@@ -125,7 +100,7 @@
                                 class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 hover:bg-orange-100/80 border border-orange-200/70 text-left transition-colors cursor-pointer group">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                             <div class="min-w-0 max-w-[200px] lg:max-w-[240px]">
-                                <div class="text-[10px] font-black uppercase tracking-wider text-[#c2410c] flex items-center gap-1">
+                                <div class="text-[10px] font-black uppercase tracking-wider text-[#ea580c] flex items-center gap-1">
                                     <span>Deliver to</span>
                                     <svg class="w-3 h-3 text-[#ea580c] group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                                 </div>
@@ -228,7 +203,6 @@
                     <!-- Food Bag Button (Triggers Drawer) -->
                     <button type="button" 
                             @click="cartDrawerOpen = true"
-                            aria-label="View shopping bag"
                             class="relative px-3.5 sm:px-4 py-2 rounded-2xl bg-gradient-to-r from-[#ea580c] to-[#dc2626] hover:brightness-105 text-white text-xs font-black transition shadow-md shadow-orange-500/25 flex items-center gap-2 cursor-pointer active:scale-95">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                         <span class="hidden sm:inline">Bag</span>
@@ -244,7 +218,7 @@
                         @click="locationModalOpen = true" 
                         class="flex items-center gap-1.5 text-stone-800 font-bold truncate max-w-[240px] cursor-pointer">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                    <span class="text-[10px] uppercase tracking-wider text-[#c2410c] font-black shrink-0">DELIVER TO:</span>
+                    <span class="text-[10px] uppercase tracking-wider text-[#ea580c] font-black shrink-0">DELIVER TO:</span>
                     <span class="truncate underline decoration-orange-300" x-text="currentLocation"></span>
                     <svg class="w-3 h-3 text-[#ea580c] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                 </button>
@@ -284,7 +258,7 @@
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl shrink-0">🍲</div>
                     <div>
-                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Fresh Quality</h4>
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Gourmet Quality</h4>
                         <p class="text-[11px] text-stone-400 mt-0.5">Cooked fresh to order by certified culinary masters.</p>
                     </div>
                 </div>
@@ -306,7 +280,7 @@
                         <span class="text-xl font-black text-white tracking-tight">K71<span class="text-[#ea580c]">FOOD</span></span>
                     </div>
                     <p class="text-xs text-stone-400 leading-relaxed max-w-sm">
-                        K71 Food is an independent, fresh food ordering destination empowering cloud kitchens, legacy restaurants, and artisan bakers to serve hungry foodies with supreme hygiene and speed.
+                        K71 Food is an independent, gourmet food ordering destination empowering cloud kitchens, legacy restaurants, and artisan bakers to serve hungry foodies with supreme hygiene and speed.
                     </p>
                     <div class="pt-2">
                         <a href="{{ k71_vertical_url('main') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-stone-300 text-xs font-bold transition border border-stone-800">
@@ -353,7 +327,7 @@
             </div>
 
             <!-- Bottom Copyright & Compliance -->
-            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-400">
+            <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-stone-500">
                 <div>
                     &copy; {{ date('Y') }} K71 Food • All rights reserved • Certified FSSAI Compliant Food Delivery
                 </div>
@@ -708,9 +682,6 @@
         };
     }
     </script>
-
-    <!-- Mobile Bottom Tab Navigation (Section F) -->
-    <x-k71-bottom-nav active="food" />
 
     <!-- K71 Global Authentication Modal (Non-Negotiable) -->
     <x-k71-auth-modal />

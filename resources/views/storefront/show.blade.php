@@ -1,7 +1,4 @@
 @php
-    if (!app()->bound('current_vendor')) {
-        app()->instance('current_vendor', $vendor);
-    }
     $storeCanonicalUrl = $vendor->storefront_url;
     $storeLogo = $vendor->logo ? (str_starts_with($vendor->logo, 'http') ? $vendor->logo : asset('storage/' . $vendor->logo)) : null;
     $storeBanner = $vendor->banner ? (str_starts_with($vendor->banner, 'http') ? $vendor->banner : asset('storage/' . $vendor->banner)) : null;
@@ -64,7 +61,6 @@
     :metaDescription="Str::limit(strip_tags($vendor->description), 160)" 
     :ogImage="$vendor->banner ?: $vendor->logo"
     :schemaJson="$storeSchemaJson"
-    :fullWidth="true"
 >
     @php
         $social = is_array($vendor->social_links) ? $vendor->social_links : (is_string($vendor->social_links) ? (json_decode($vendor->social_links, true) ?: []) : []);
@@ -1006,8 +1002,8 @@
                 </section>
             @endif
 
-            {{-- 3. SMART SUB-BAR (Category navigation, Density toggle, Live Search & Sort - NON-STICKY) --}}
-            <div class="relative z-10 bg-white dark:bg-zinc-900 rounded-2xl py-3 px-4 sm:px-6 border border-stone-200/80 dark:border-zinc-800 mb-6 shadow-2xs" id="collection-hub">
+            {{-- 3. STICKY SMART SUB-BAR (Category navigation, Density toggle, Live Search & Sort) --}}
+            <div class="sticky top-14 sm:top-16 z-20 bg-stone-50/95 backdrop-blur-md py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 border-y border-stone-200/80 mb-6 shadow-2xs" id="collection-hub">
                 <div class="flex items-center justify-between gap-3 mb-2">
                     <!-- Title & Live Count -->
                     <div class="min-w-0">
@@ -1371,122 +1367,6 @@
                     </button>
                 </div>
             </div>
-        </div>
-
-        <!-- ====================================================================
-             SIGNATURE OVERSIZED K71 VENDOR STOREFRONT FOOTER (ANTIGRAVITY INSPIRED)
-             ==================================================================== -->
-        <footer class="mt-20 border-t border-white/10 bg-gradient-to-b from-[#090b0e] via-black to-[#050608] text-white relative overflow-hidden select-none">
-            
-            <!-- Subtle Radial Sheen -->
-            <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-white/[0.03] rounded-full blur-3xl pointer-events-none"></div>
-
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-8 relative z-10">
-                
-                <!-- ZONE 1: UPPER LINK COLUMNS (EDITORIAL LUXURY) -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-14 border-b border-white/10">
-                    
-                    <!-- Col 1: Boutique Identity -->
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400 font-bold">
-                                {{ $customBadge ?? 'Verified Atelier' }}
-                            </span>
-                        </div>
-                        <h3 class="text-xl font-bold tracking-tight text-white font-serif">{{ $vendor->shop_name }}</h3>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
-                            {{ $tagline ?: ($craftSpecialty ?: 'Curated artisan boutique, direct order dispatch and guaranteed customer satisfaction.') }}
-                        </p>
-                        <div class="text-[11px] text-zinc-500 font-mono pt-1">
-                            <span>Est. {{ $establishedYear }}</span> • <span>Rajasthan, India</span>
-                        </div>
-                    </div>
-
-                    <!-- Col 2: Store Catalog -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">Store Collections</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li><a href="#catalog" class="hover:text-white transition">All Featured Products</a></li>
-                            @foreach($vendorCategories->take(4) as $vCat)
-                                <li>
-                                    <a href="{{ $vendor->storefront_url }}?category={{ $vCat->slug }}" class="hover:text-white transition flex items-center justify-between">
-                                        <span>{{ $vCat->name }}</span>
-                                        <span class="text-[10px] text-zinc-600 font-mono">{{ $vCat->products_count }}</span>
-                                    </a>
-                                </li>
-                            @endforeach
-                            <li><a href="#about" @click="storyModalOpen = true" class="hover:text-white transition">Artisan Story &amp; Craft</a></li>
-                        </ul>
-                    </div>
-
-                    <!-- Col 3: Customer Care & Trust -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">Customer Assurance</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> 100% Escrow Protected by K71
-                            </li>
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> 7-Day Safe Exchange Policy
-                            </li>
-                            <li class="flex items-center gap-1.5 text-zinc-300 font-semibold">
-                                <span class="text-emerald-400">✓</span> Direct Shop Courier Dispatch
-                            </li>
-                            @if($whatsappUrl)
-                                <li>
-                                    <a href="{{ $whatsappUrl }}" target="_blank" class="inline-flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-bold mt-1">
-                                        <span>💬 Chat on WhatsApp</span>
-                                    </a>
-                                </li>
-                            @endif
-                        </ul>
-                    </div>
-
-                    <!-- Col 4: K71 Unified Platform -->
-                    <div class="space-y-3">
-                        <h4 class="text-xs font-black uppercase tracking-wider text-zinc-300">K71 Commerce Ecosystem</h4>
-                        <ul class="space-y-2 text-xs text-zinc-400">
-                            <li><a href="{{ url('/') }}" class="hover:text-white transition">Universal Marketplace</a></li>
-                            <li><a href="{{ route('feasto.index') }}" class="hover:text-white transition">Feasto 10-Min Hub</a></li>
-                            <li><a href="{{ route('vendor.register') }}" class="hover:text-white transition">Become a Vendor on K71</a></li>
-                            <li><a href="{{ route('delivery.onboarding') }}" class="hover:text-white transition">Earn as Delivery Fleet Partner</a></li>
-                            <li><a href="{{ route('shorts.index') }}" class="hover:text-white transition">Shoppable Video Commerce</a></li>
-                        </ul>
-                    </div>
-
-                </div>
-
-                <!-- ZONE 2: OVERSIZED K71 MONOLITHIC BRAND WORDMARK (ANTIGRAVITY REFERENCE) -->
-                <div class="py-8 sm:py-14 text-center overflow-hidden">
-                    <div class="text-[17vw] sm:text-[19vw] md:text-[21vw] font-black tracking-tighter leading-none select-none text-white/95 pointer-events-none font-sans drop-shadow-[0_10px_30px_rgba(255,255,255,0.05)]">
-                        K71
-                    </div>
-                    <div class="text-[10px] sm:text-xs font-mono uppercase tracking-[0.3em] text-zinc-500 -mt-2 sm:-mt-4">
-                        UNIFIED COMMERCE &bull; DIRECT ATELIER DISPATCH
-                    </div>
-                </div>
-
-                <!-- ZONE 3: QUIET BOTTOM ROW DIVIDER -->
-                <div class="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-                    <div class="flex items-center gap-3">
-                        <span>&copy; {{ date('Y') }} <strong>{{ $vendor->shop_name }}</strong></span>
-                        <span class="text-zinc-700">&bull;</span>
-                        <span>Powered by K71 Engine</span>
-                    </div>
-
-                    <div class="flex items-center gap-4 text-[11px] font-mono">
-                        <span class="text-zinc-400">&bull; India Standard Time (IST UTC+5:30)</span>
-                        <button type="button" @click="window.scrollTo({ top: 0, behavior: 'smooth' })" class="text-zinc-400 hover:text-white transition font-bold flex items-center gap-1 cursor-pointer">
-                            <span>Top</span>
-                            <span>&uarr;</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </footer>
-
         <!-- Floating WhatsApp Concierge FAB with radar ripple pulses -->
         @if($whatsappUrl)
             <div class="fixed bottom-6 right-6 z-40">
