@@ -1856,6 +1856,18 @@
             transition: all 0.15s ease;
             text-align: center;
         }
+        .glass-action-sheet-btn.edit {
+            background: rgba(99, 102, 241, 0.12);
+            color: #4f46e5;
+        }
+        .dark .glass-action-sheet-btn.edit {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+        .glass-action-sheet-btn.edit:hover {
+            background: #4f46e5;
+            color: #ffffff;
+        }
         .glass-action-sheet-btn.danger {
             background: rgba(239, 68, 68, 0.1);
             color: #EF4444;
@@ -2021,8 +2033,8 @@
                 position: sticky !important;
                 top: 0 !important;
                 z-index: 30 !important;
-                background: #FFFFFF !important;
-                border-bottom: 1px solid var(--border, #E2E8F0) !important;
+                background: var(--glass-card, #FFFFFF) !important;
+                border-bottom: 1px solid var(--glass-border, #E2E8F0) !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
@@ -2087,17 +2099,17 @@
             .glass-composer-bar {
                 flex-shrink: 0 !important;
                 padding: 6px 10px max(8px, env(safe-area-inset-bottom, 8px)) !important;
-                background: #FFFFFF !important;
+                background: var(--glass-card, #FFFFFF) !important;
                 z-index: 50 !important;
-                border-top: 1px solid var(--border, #E2E8F0) !important;
+                border-top: 1px solid var(--glass-border, #E2E8F0) !important;
             }
             .glass-composer-pill {
                 padding: 3px 6px 3px 10px !important;
                 gap: 4px !important;
                 border-radius: 22px !important;
                 min-height: 42px !important;
-                background: #F1F5F9 !important;
-                border: 1px solid #E2E8F0 !important;
+                background: var(--glass-surface, #F1F5F9) !important;
+                border: 1px solid var(--glass-border, #E2E8F0) !important;
                 display: flex !important;
                 align-items: center !important;
                 width: 100% !important;
@@ -2641,6 +2653,7 @@
                 <div class="glass-action-sheet-handle"></div>
                 <div class="glass-action-sheet-header" id="actionSheetHeader">Options</div>
                 <div class="glass-action-sheet-actions">
+                    <button type="button" class="glass-action-sheet-btn edit" id="actionSheetEditBtn" style="display: none;">Edit Message</button>
                     <button type="button" class="glass-action-sheet-btn danger" id="actionSheetDangerBtn">Delete</button>
                     <button type="button" class="glass-action-sheet-btn cancel" id="actionSheetCancelBtn">Cancel</button>
                 </div>
@@ -3312,12 +3325,7 @@
                 }
 
                 const unsendBtnHtml = (isSent && !msg.is_optimistic)
-                    ? `<button type="button" class="glass-msg-unsend-btn" data-msg-id="${msg.id}" title="Unsend message">&times;</button>`
-                    : '';
-
-                const isEditable = isSent && !msg.is_optimistic && !isVoice && msg.body && msg.body !== '📷 Photo' && !msg.body.startsWith('🎤');
-                const editBtnHtml = isEditable
-                    ? `<button type="button" class="glass-msg-edit-btn" data-msg-id="${msg.id}" title="Edit message" style="background: none; border: none; cursor: pointer; opacity: 0.65; padding: 2px 4px; border-radius: 4px; color: inherit; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.65'"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>`
+                    ? `<button type="button" class="glass-msg-unsend-btn" data-msg-id="${msg.id}" title="Message options">&times;</button>`
                     : '';
 
                 const editedTagHtml = (msg.is_edited)
@@ -3332,27 +3340,12 @@
                             ${bodyHtml}
                             <div class="glass-msg-meta">${escapeHtml(msg.time_formatted || '')}${editedTagHtml}</div>
                         </div>
-                        <div class="glass-msg-actions-col" style="display: flex; align-items: center; gap: 2px;">
-                            ${editBtnHtml}
-                            ${unsendBtnHtml}
-                        </div>
+                        ${unsendBtnHtml}
                     </div>
                 `;
             });
 
             chatFeed.innerHTML = html;
-
-            // Bind click to edit message
-            chatFeed.querySelectorAll('.glass-msg-edit-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const msgId = btn.getAttribute('data-msg-id');
-                    const targetMsg = messages.find(m => String(m.id) === String(msgId));
-                    if (targetMsg) {
-                        startEditingMessage(targetMsg);
-                    }
-                });
-            });
 
             // Bind click to open lightbox on photo thumbnails
             chatFeed.querySelectorAll('.glass-msg-image-wrap').forEach(wrap => {
@@ -3524,11 +3517,16 @@
                         e.preventDefault();
                         if (navigator.vibrate) navigator.vibrate(50);
                         openActionSheet('message', msgId, '');
-                    }, 500);
+                    }, 400);
                 }, { passive: false });
 
                 row.addEventListener('touchend', () => clearTimeout(pressTimer));
                 row.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+                row.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    openActionSheet('message', msgId, '');
+                });
             });
 
             // Instagram-Style Swipe Gestures: Left slide on own chat to reply to self, Right slide on other's chat to reply to them
@@ -4038,15 +4036,25 @@
             }
         });
 
+        const actionSheetEditBtn = document.getElementById('actionSheetEditBtn');
+
         // Instagram Long-Press Action Sheet Functions
         function openActionSheet(type, id, label) {
             pendingAction = { type, id, label };
             if (type === 'conversation') {
                 actionSheetHeader.textContent = `Chat with @${label}`;
+                if (actionSheetEditBtn) actionSheetEditBtn.style.display = 'none';
                 actionSheetDangerBtn.textContent = 'Delete Chat';
             } else {
                 actionSheetHeader.textContent = 'Message Options';
                 actionSheetDangerBtn.textContent = 'Unsend Message';
+
+                const targetMsg = messagesCache.find(m => String(m.id) === String(id));
+                const isEditable = targetMsg && targetMsg.is_mine && !targetMsg.is_optimistic && !targetMsg.attachment_url && targetMsg.body && !targetMsg.body.startsWith('🎤') && targetMsg.body !== '📷 Photo';
+
+                if (actionSheetEditBtn) {
+                    actionSheetEditBtn.style.display = isEditable ? 'block' : 'none';
+                }
             }
             actionSheetModal.style.display = 'flex';
         }
@@ -4054,6 +4062,18 @@
         function closeActionSheet() {
             actionSheetModal.style.display = 'none';
             pendingAction = null;
+        }
+
+        if (actionSheetEditBtn) {
+            actionSheetEditBtn.addEventListener('click', () => {
+                if (!pendingAction || pendingAction.type !== 'message') return;
+                const msgId = pendingAction.id;
+                closeActionSheet();
+                const targetMsg = messagesCache.find(m => String(m.id) === String(msgId));
+                if (targetMsg) {
+                    startEditingMessage(targetMsg);
+                }
+            });
         }
 
         actionSheetCancelBtn.addEventListener('click', closeActionSheet);

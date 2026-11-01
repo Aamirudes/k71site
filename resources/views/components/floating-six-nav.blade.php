@@ -26,40 +26,30 @@
 @endphp
 
 <style>
-    .k71-nav-fixed-dock {
+    .k71-nav-draggable-dock {
         position: fixed !important;
-        right: 20px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
         z-index: 9999 !important;
         user-select: none;
         -webkit-user-select: none;
+        touch-action: none;
+        cursor: grab;
     }
-    @media (max-width: 640px) {
-        .k71-nav-fixed-dock {
-            right: 16px !important;
-            top: auto !important;
-            bottom: 85px !important;
-            transform: none !important;
-        }
+    .k71-nav-draggable-dock.is-dragging {
+        cursor: grabbing;
+        transition: none !important;
     }
 </style>
 
-<div class="k71-nav-fixed-dock" 
-     x-data="{
-        open: false,
-        toggle() {
-            this.open = !this.open;
-        },
-        close() {
-            this.open = false;
-        },
-        navItems: {{ Js::from($activeLauncherItems) }}
-     }"
+<div class="k71-nav-draggable-dock" 
+     :class="{ 'is-dragging': isDragging }"
+     x-data="floatingSixNav()"
+     x-init="init()"
+     :style="dockStyle"
+     @pointerdown="onPointerDown($event)"
      @click.outside="close()"
      @keydown.escape.window="close()">
 
-    <!-- Radial Arc Satellites Container (Fans out to the left towards center screen) -->
+    <!-- Radial Arc Satellites Container -->
     <div x-show="open" 
          x-cloak 
          x-transition:enter="transition ease-out duration-250"
@@ -74,9 +64,13 @@
             <div class="absolute pointer-events-auto transition-all duration-300 ease-out"
                  :style="(() => {
                     const radius = 95;
-                    // Fan smoothly to the left (between 100 deg and 260 deg)
                     const total = Math.max(navItems.length - 1, 1);
-                    const angleDeg = 100 + (index * (160 / total));
+                    let angleDeg;
+                    if (isLeftAligned) {
+                        angleDeg = -80 + (index * (160 / total));
+                    } else {
+                        angleDeg = 100 + (index * (160 / total));
+                    }
                     const rad = (angleDeg * Math.PI) / 180;
                     const x = Math.round(Math.cos(rad) * radius);
                     const y = Math.round(Math.sin(rad) * radius);
@@ -129,7 +123,7 @@
 
     <!-- Center Trigger Button (Obsidian Glass Floating Action Button) -->
     <button type="button"
-            @click="toggle()"
+            @click="handleButtonClick($event)"
             aria-label="Toggle 6-in-1 Navigation"
             class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-950/95 text-white shadow-[0_10px_35px_rgba(0,0,0,0.55)] border border-white/20 backdrop-blur-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 relative group overflow-hidden focus:outline-none">
         
@@ -162,3 +156,117 @@
     </button>
 
 </div>
+
+<script>
+    function floatingSixNav() {
+        return {
+            open: false,
+            isDragging: false,
+            hasDragged: false,
+            startX: 0,
+            startY: 0,
+            initialX: null,
+            initialY: null,
+            posX: null,
+            posY: null,
+            navItems: @json($activeLauncherItems),
+
+            get dockStyle() {
+                if (this.posX === null || this.posY === null) {
+                    return 'right: 16px; bottom: 85px;';
+                }
+                return `left: ${this.posX}px; top: ${this.posY}px; right: auto; bottom: auto;`;
+            },
+
+            get isLeftAligned() {
+                if (this.posX === null) return false;
+                return this.posX < (window.innerWidth / 2);
+            },
+
+            init() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('k71_6in1_nav_pos'));
+                    if (saved && typeof saved.x === 'number' && typeof saved.y === 'number') {
+                        this.posX = Math.max(10, Math.min(window.innerWidth - 65, saved.x));
+                        this.posY = Math.max(10, Math.min(window.innerHeight - 65, saved.y));
+                    }
+                } catch(e) {}
+
+                if (this.posX === null || this.posY === null) {
+                    if (window.innerWidth <= 640) {
+                        this.posX = Math.max(10, window.innerWidth - 68);
+                        this.posY = Math.max(10, window.innerHeight - 150);
+                    } else {
+                        this.posX = Math.max(10, window.innerWidth - 75);
+                        this.posY = Math.max(10, Math.round((window.innerHeight / 2) - 30));
+                    }
+                }
+
+                window.addEventListener('pointermove', (e) => this.onPointerMove(e));
+                window.addEventListener('pointerup', (e) => this.onPointerUp(e));
+                window.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+
+                window.addEventListener('resize', () => {
+                    if (this.posX !== null && this.posY !== null) {
+                        this.posX = Math.max(10, Math.min(window.innerWidth - 65, this.posX));
+                        this.posY = Math.max(10, Math.min(window.innerHeight - 65, this.posY));
+                    }
+                });
+            },
+
+            onPointerDown(e) {
+                if (e.target.closest('a')) return;
+                this.isDragging = false;
+                this.hasDragged = false;
+                this.startX = e.clientX;
+                this.startY = e.clientY;
+                this.initialX = this.posX;
+                this.initialY = this.posY;
+            },
+
+            onPointerMove(e) {
+                if (this.initialX === null || this.initialY === null || this.startX === 0) return;
+                const dx = e.clientX - this.startX;
+                const dy = e.clientY - this.startY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > 6) {
+                    this.isDragging = true;
+                    this.hasDragged = true;
+                    this.open = false;
+                    const newX = this.initialX + dx;
+                    const newY = this.initialY + dy;
+                    this.posX = Math.max(10, Math.min(window.innerWidth - 65, newX));
+                    this.posY = Math.max(10, Math.min(window.innerHeight - 65, newY));
+                }
+            },
+
+            onPointerUp(e) {
+                if (this.hasDragged) {
+                    try {
+                        localStorage.setItem('k71_6in1_nav_pos', JSON.stringify({ x: this.posX, y: this.posY }));
+                    } catch(e) {}
+                }
+                this.isDragging = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.initialX = null;
+                this.initialY = null;
+            },
+
+            handleButtonClick(e) {
+                if (this.hasDragged) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.hasDragged = false;
+                    return;
+                }
+                this.open = !this.open;
+            },
+
+            close() {
+                this.open = false;
+            }
+        };
+    }
+</script>

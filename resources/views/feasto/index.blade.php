@@ -309,8 +309,8 @@
             <div class="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity" 
                  @click="cartDrawerOpen = false"></div>
 
-            <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
-                <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between"
+            <div class="fixed inset-y-0 right-0 max-w-full flex sm:pl-10 w-full sm:w-auto">
+                <div class="w-full max-w-full sm:max-w-md bg-white shadow-2xl flex flex-col justify-between overflow-hidden"
                      x-transition:enter="transform transition ease-in-out duration-300"
                      x-transition:enter-start="translate-x-full"
                      x-transition:enter-end="translate-x-0"
@@ -319,23 +319,23 @@
                      x-transition:leave-end="translate-x-full">
                     
                     <!-- Drawer Header -->
-                    <div class="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-xl bg-[#0C831F] text-white flex items-center justify-center font-bold text-sm">
+                    <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-[#0C831F] text-white flex items-center justify-center font-bold text-sm shrink-0">
                                 ⚡
                             </div>
-                            <div>
-                                <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight">Delivery in 10 minutes</h2>
-                                <p class="text-[11px] text-slate-500 font-medium">To <strong x-text="selectedLocation">Kishangarh Central</strong></p>
+                            <div class="min-w-0">
+                                <h2 class="text-sm font-black text-slate-900 uppercase tracking-tight truncate">Delivery in 10 minutes</h2>
+                                <p class="text-[11px] text-slate-500 font-medium truncate">To <strong x-text="selectedLocation">Kishangarh Central</strong></p>
                             </div>
                         </div>
-                        <button type="button" @click="cartDrawerOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-black">
+                        <button type="button" @click="cartDrawerOpen = false" class="p-2 rounded-xl text-slate-400 hover:text-black shrink-0">
                             ✕
                         </button>
                     </div>
 
                     <!-- Drawer Scroll Area -->
-                    <div class="flex-1 overflow-y-auto p-5 space-y-5">
+                    <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:space-y-5">
                         
                         <!-- Empty Drawer State -->
                         <template x-if="cartCount <= 0">

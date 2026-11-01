@@ -264,16 +264,17 @@
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                     </button>
 
-                    <!-- Dynamic Cart Pill -->
-                    <a href="{{ route('cart.index') }}" 
-                       class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black text-white text-xs font-bold shadow-xs hover:bg-stone-800 active:scale-95 transition">
+                    <!-- Dynamic Cart Pill (Opens Slide-over Cart Popup) -->
+                    <button type="button"
+                            @click="$dispatch('open-mini-cart')" 
+                            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-black text-white text-xs font-bold shadow-xs hover:bg-stone-800 active:scale-95 transition cursor-pointer">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                         <span class="hidden sm:inline">Cart</span>
                         @php
                             $cartCount = \App\Services\CartService::getCount();
                         @endphp
                         <span class="w-4 h-4 rounded-full bg-emerald-500 text-black text-[10px] font-black flex items-center justify-center">{{ $cartCount }}</span>
-                    </a>
+                    </button>
                 </div>
             </div>
         </header>

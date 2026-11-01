@@ -447,8 +447,8 @@
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity" @click="cartDrawerOpen = false"></div>
 
-        <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col justify-between"
+        <div class="fixed inset-y-0 right-0 max-w-full flex sm:pl-10 w-full sm:w-auto">
+            <div class="w-full max-w-full sm:max-w-md bg-white shadow-2xl flex flex-col justify-between overflow-hidden"
                  x-transition:enter="transform transition ease-in-out duration-300"
                  x-transition:enter-start="translate-x-full"
                  x-transition:enter-end="translate-x-0"
@@ -457,23 +457,23 @@
                  x-transition:leave-end="translate-x-full">
                 
                 <!-- Drawer Header -->
-                <div class="px-6 py-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/80">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-xl bg-orange-100 text-[#ea580c] flex items-center justify-center text-lg font-black">
+                <div class="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-100 flex items-center justify-between bg-stone-50/80">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-9 h-9 rounded-xl bg-orange-100 text-[#ea580c] flex items-center justify-center text-lg font-black shrink-0">
                             🛍️
                         </div>
-                        <div>
-                            <h3 class="text-sm font-black text-stone-900 tracking-tight">Your Food Bag</h3>
-                            <p class="text-[11px] text-stone-500" x-text="cartTotalCount + ' item(s) selected'"></p>
+                        <div class="min-w-0">
+                            <h3 class="text-sm font-black text-stone-900 tracking-tight truncate">Your Food Bag</h3>
+                            <p class="text-[11px] text-stone-500 truncate" x-text="cartTotalCount + ' item(s) selected'"></p>
                         </div>
                     </div>
-                    <button @click="cartDrawerOpen = false" class="w-8 h-8 rounded-full bg-stone-200/80 hover:bg-stone-300 text-stone-700 flex items-center justify-center text-sm font-bold transition cursor-pointer">
+                    <button @click="cartDrawerOpen = false" class="w-8 h-8 rounded-full bg-stone-200/80 hover:bg-stone-300 text-stone-700 flex items-center justify-center text-sm font-bold transition cursor-pointer shrink-0">
                         ✕
                     </button>
                 </div>
 
                 <!-- Drawer Items Body -->
-                <div class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3.5 sm:space-y-4">
                     <template x-if="cartItems.length === 0">
                         <div class="py-16 text-center space-y-3">
                             <span class="text-5xl block">🍲</span>
@@ -510,7 +510,7 @@
                 </div>
 
                 <!-- Drawer Footer Summary -->
-                <div x-show="cartItems.length > 0" class="p-6 border-t border-stone-100 bg-stone-50 space-y-3">
+                <div x-show="cartItems.length > 0" class="p-4 sm:p-6 border-t border-stone-100 bg-stone-50 space-y-3">
                     <div class="space-y-1.5 text-xs">
                         <div class="flex justify-between text-stone-600">
                             <span>Item Subtotal</span>

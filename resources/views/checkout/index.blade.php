@@ -290,7 +290,7 @@
                             <!-- PhonePe Automated Gateway Option -->
                             <label class="block p-4 cursor-pointer hover:bg-purple-50/40 transition-colors" :class="paymentMethod === 'phonepe' ? 'bg-purple-50/30' : ''">
                                 <div class="flex items-center">
-                                    <input type="radio" name="payment_method" value="phonepe" x-model="paymentMethod" class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300">
+                                    <input type="radio" name="payment_method" value="phonepe" x-model="paymentMethod" {{ old('payment_method', $defaultPaymentMethod) === 'phonepe' ? 'checked' : '' }} class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300">
                                     <div class="ml-3">
                                         <span class="font-semibold text-brand-text flex items-center gap-2">
                                             <span>PhonePe / UPI / Cards / NetBanking</span>
@@ -314,7 +314,7 @@
                             <!-- Manual UPI Option -->
                             <label class="block p-4 cursor-pointer hover:bg-gray-50 transition-colors" :class="paymentMethod === 'upi' ? 'bg-stone-50' : ''">
                                 <div class="flex items-center">
-                                    <input type="radio" name="payment_method" value="upi" x-model="paymentMethod" class="h-4 w-4 text-brand-sage focus:ring-brand-sage border-gray-300">
+                                    <input type="radio" name="payment_method" value="upi" x-model="paymentMethod" {{ old('payment_method', $defaultPaymentMethod) === 'upi' ? 'checked' : '' }} class="h-4 w-4 text-brand-sage focus:ring-brand-sage border-gray-300">
                                     <span class="ml-3 font-medium text-brand-text">Direct Store UPI / QR Code</span>
                                     <span class="ml-auto flex gap-1">
                                         <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-600 text-xs font-medium">Store Direct</span>
@@ -345,7 +345,7 @@
                         @if($isCodEligible)
                             <label class="block p-4 cursor-pointer hover:bg-amber-50/30 transition-colors" :class="paymentMethod === 'cod' ? 'bg-amber-50/20' : ''">
                                 <div class="flex items-center">
-                                    <input type="radio" name="payment_method" value="cod" x-model="paymentMethod" class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300">
+                                    <input type="radio" name="payment_method" value="cod" x-model="paymentMethod" {{ old('payment_method', $defaultPaymentMethod) === 'cod' ? 'checked' : '' }} class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300">
                                     <div class="ml-3">
                                         <span class="font-semibold text-brand-text flex items-center gap-2">
                                             <span>Cash on Delivery (COD)</span>
@@ -478,12 +478,9 @@
                         <dd id="total-display" class="text-2xl font-bold text-brand-text">₹{{ number_format($total / 100, 2) }}</dd>
                     </div>
                     
-                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]" style="background-color: #000000 !important; color: #ffffff !important;">
-                        <span class="text-white font-black text-base flex items-center justify-center gap-2" style="color: #ffffff !important;">
-                            <span x-show="paymentMethod === 'phonepe'">Pay Securely via PhonePe / UPI &rarr;</span>
-                            <span x-show="paymentMethod === 'upi'">Continue to Store UPI / QR &rarr;</span>
-                            <span x-show="paymentMethod === 'cod'">Place Order (Cash on Delivery) &rarr;</span>
-                            <span x-show="!['phonepe', 'upi', 'cod'].includes(paymentMethod)">Place Order &rarr;</span>
+                    <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-xl font-black text-white bg-black hover:bg-zinc-800 rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px] text-white" style="background-color: #000000 !important; color: #ffffff !important;">
+                        <span class="text-white font-black text-base flex items-center justify-center gap-2" style="color: #ffffff !important;" x-text="checkoutBtnText">
+                            Place Order &rarr;
                         </span>
                     </button>
                     
