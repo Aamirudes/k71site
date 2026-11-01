@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="b2b">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
@@ -26,7 +26,6 @@
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-k71-design-system />
     <style>
         [x-cloak] { display: none !important; }
         body { font-family: var(--font-body, 'IBM Plex Sans', sans-serif); }

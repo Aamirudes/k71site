@@ -1,7 +1,7 @@
 @props(['title' => null, 'seo' => null])
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light" data-brand="{{ $k71Brand ?? $currentBrand ?? 'main' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
@@ -33,8 +33,6 @@
 
     <!-- Vite Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <x-k71-design-system />
-
     <!-- Alpine.js (Defer) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>

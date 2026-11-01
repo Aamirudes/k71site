@@ -1,7 +1,0 @@
-@layer k71-tokens, k71-base, k71-components, utilities;
-@layer k71-base {
-  *, *::before, *::after { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; overflow-x: clip; }
-  body { margin: 0; background-color: var(--bg); color: var(--text); overflow-x: clip; }
-  :where(img, video, svg) { max-width: 100%; }
-}

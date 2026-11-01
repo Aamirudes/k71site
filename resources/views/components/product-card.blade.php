@@ -121,9 +121,9 @@
         <!-- Top Left: Liquid Bubble Frosted Glass Theme Badge & Stock Pill -->
         <div class="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
             <!-- Liquid Bubble Glass Pill Badge -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase {{ $theme['badge_bg'] }} text-slate-950 dark:text-white transition-all group-hover:scale-102">
-                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-950 dark:bg-white' }} shadow-xs"></span>
-                <span class="text-slate-950 dark:text-white font-black">{{ $theme['label'] }}</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ $theme['badge_bg'] }} transition-all group-hover:scale-102">
+                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-900 dark:bg-white' }} shadow-xs"></span>
+                <span>{{ $theme['label'] }}</span>
             </span>
 
             @if($isOutOfStock)
@@ -164,8 +164,8 @@
                 {{ $product->category?->name ?? $theme['label'] }}
             </span>
             @if($product->vendor)
-                <span class="text-[9px] text-emerald-800 dark:text-emerald-400 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                <span class="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                     <span class="truncate max-w-[80px]">{{ $product->vendor->shop_name }}</span>
                 </span>
             @endif
@@ -180,12 +180,12 @@
         <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
             <span class="text-sm font-black text-zinc-900 dark:text-white">
                 @if($isService)
-                    <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-semibold block w-full">Starting at</span>
+                    <span class="text-[10px] text-zinc-400 font-semibold block w-full">Starting at</span>
                 @endif
                 ₹{{ number_format($product->base_price / 100, 0) }}
             </span>
             @if($discount > 0 && !$isService)
-                <span class="text-[10px] text-zinc-600 dark:text-zinc-400 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
+                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
             @endif
         </div>
 
@@ -212,38 +212,37 @@
                     </span>
                 @elseif($isService)
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-black text-xs inline-flex items-center gap-1 whitespace-nowrap shadow-xs transition-all active:scale-95 cursor-pointer" 
+                       class="text-[11px] font-black text-purple-700 hover:text-purple-900 hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="View Service Packages">
-                        <span class="text-white font-black">Packages</span>
-                        <span class="text-white font-black text-xs">&rarr;</span>
+                        <span>View Packages</span>
+                        <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($product->isEnquiry())
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs inline-flex items-center gap-1 whitespace-nowrap shadow-xs transition-all active:scale-95 cursor-pointer" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Request Quotation / View Details">
-                        <span class="text-white font-black">Quote</span>
-                        <span class="text-white font-black text-xs">&rarr;</span>
+                        <span>Request Quote</span>
+                        <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($product->isBooking())
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-black text-xs inline-flex items-center gap-1 whitespace-nowrap shadow-xs transition-all active:scale-95 cursor-pointer" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Book Service">
-                        <span class="text-white font-black">Book</span>
-                        <span class="text-white font-black text-xs">&rarr;</span>
+                        <span>Book Service</span>
+                        <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif(!$product->isPurchase())
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs inline-flex items-center gap-1 whitespace-nowrap shadow-xs transition-all active:scale-95 cursor-pointer" 
+                       class="text-[11px] font-black {{ $theme['accent_text'] }} hover:underline inline-flex items-center gap-1 whitespace-nowrap" 
                        title="View Listing">
-                        <span class="text-white font-black">View</span>
-                        <span class="text-white font-black text-xs">&rarr;</span>
+                        <span>View Listing</span>
+                        <span class="text-[12px] leading-none">&rarr;</span>
                     </a>
                 @elseif($hasMultipleVariants)
                     <a href="{{ $cardUrl }}" 
-                       class="px-3.5 py-1.5 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs transition-all inline-flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer active:scale-95" 
+                       class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1 whitespace-nowrap" 
                        title="Select options">
-                        <span class="font-black text-white">Options</span>
-                        <span class="font-black text-white text-xs">&rarr;</span>
+                        <span>Options ›</span>
                     </a>
                 @else
                     <!-- Themed Universal Quick Add Button -->
@@ -285,23 +284,23 @@
                                 }
                             });
                         "
-                        class="w-full py-1.5 px-3 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                        class="w-full py-1.5 px-3 rounded-xl {{ $theme['btn_bg'] }} text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
                         :class="added ? '!bg-emerald-600 !text-white' : ''"
                         :disabled="adding || added"
                         aria-label="Add {{ addslashes($product->title) }} to Cart"
                         title="Add to Cart"
                     >
-                        <span x-show="!adding && !added" class="flex items-center gap-1 whitespace-nowrap text-white font-black">
-                            <span class="text-white font-black">ADD</span>
-                            <span class="text-xs font-black leading-none text-white">+</span>
+                        <span x-show="!adding && !added" class="flex items-center gap-1 whitespace-nowrap">
+                            <span>ADD</span>
+                            <span class="text-sm font-bold leading-none">+</span>
                         </span>
-                        <span x-show="adding" class="flex items-center gap-1 text-white font-bold" style="display: none;">
+                        <span x-show="adding" class="flex items-center gap-1 text-white">
                             <svg class="animate-spin w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span class="text-white font-bold text-[11px]">...</span>
+                            <span>...</span>
                         </span>
-                        <span x-show="added" class="flex items-center gap-1 text-white font-bold" style="display: none;">
-                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                            <span class="text-white font-bold text-[11px]">Added</span>
+                        <span x-show="added" class="flex items-center gap-1 text-white">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            <span>✓</span>
                         </span>
                     </button>
                 @endif
