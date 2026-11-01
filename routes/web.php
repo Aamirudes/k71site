@@ -406,6 +406,8 @@ Route::get('/feato', [\App\Http\Controllers\FeastoController::class, 'index'])->
 // Earn on K71 by Delivery Partner Fleet
 Route::get('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'showOnboarding'])->name('delivery.onboarding');
 Route::post('/delivery-partner', [\App\Http\Controllers\DeliveryPartnerController::class, 'register'])->name('delivery.register');
+Route::get('/delivery/onboarding', [\App\Http\Controllers\DeliveryPartnerController::class, 'showOnboarding']);
+Route::post('/delivery/onboarding', [\App\Http\Controllers\DeliveryPartnerController::class, 'register']);
 Route::get('/delivery/dashboard', [\App\Http\Controllers\DeliveryPartnerController::class, 'dashboard'])->name('delivery.dashboard');
 Route::post('/delivery/location', [\App\Http\Controllers\DeliveryPartnerController::class, 'updateLocation'])->name('delivery.location');
 Route::post('/delivery/pricing', [\App\Http\Controllers\DeliveryPartnerController::class, 'updatePricing'])->name('delivery.pricing');
