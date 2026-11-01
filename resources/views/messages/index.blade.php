@@ -12,6 +12,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Instant Dark Mode Preload (Zero FOUC) -->
+    <script>
+        (function() {
+            try {
+                const saved = localStorage.getItem('k71_chat_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                if (saved === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            } catch(e) {}
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <x-k71-design-system />
 
@@ -40,19 +54,130 @@
         }
 
         .dark {
-            --glass-bg: rgba(15, 23, 42, 0.78);
-            --glass-surface: rgba(30, 41, 59, 0.65);
-            --glass-card: rgba(15, 23, 42, 0.88);
+            --glass-bg: #090d16;
+            --glass-surface: #0f172a;
+            --glass-card: #090d16;
             --glass-border: rgba(255, 255, 255, 0.12);
             --glass-specular: rgba(255, 255, 255, 0.18);
-            --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.55);
+            --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
             --glass-glow: rgba(99, 102, 241, 0.25);
-            --color-text-main: #F8FAFC;
+            --color-text-main: #ffffff;
             --color-text-muted: #94A3B8;
-            --color-bubble-received: rgba(30, 41, 59, 0.85);
-            --color-bubble-received-text: #F8FAFC;
-            --color-bubble-sent-grad: linear-gradient(135deg, #0600c2 0%, #4f46e5 60%, #7c3aed 100%);
-            --color-active-item: rgba(99, 102, 241, 0.14);
+            --color-bubble-received: #1e293b;
+            --color-bubble-received-text: #ffffff;
+            --color-bubble-sent-grad: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+            --color-active-item: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Dark / Light Toggle Icon Visibility */
+        html.dark .sun-icon { display: block !important; }
+        html.dark .moon-icon { display: none !important; }
+        html:not(.dark) .sun-icon { display: none !important; }
+        html:not(.dark) .moon-icon { display: block !important; }
+
+        /* Minimalist High Contrast Mode Guarantees */
+        html.dark body {
+            background-color: #030712 !important;
+            color: #ffffff !important;
+        }
+
+        html.dark #k71-chat-wrapper,
+        html.dark .glass-chat-frame {
+            background: #090d16 !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+
+        html.dark .glass-sidebar,
+        html.dark .glass-sidebar-header,
+        html.dark .glass-main-header,
+        html.dark .glass-composer-area {
+            background: #0d121f !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        html.dark .glass-user-name,
+        html.dark .glass-main-user-name,
+        html.dark .glass-conv-name,
+        html.dark .glass-header-title {
+            color: #ffffff !important;
+            font-weight: 700 !important;
+        }
+
+        html.dark .glass-conv-preview,
+        html.dark .glass-main-user-status {
+            color: #94a3b8 !important;
+        }
+
+        html.dark .glass-search-box,
+        html.dark .glass-search-input,
+        html.dark .glass-composer-input {
+            background-color: #161e31 !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.14) !important;
+        }
+
+        html.dark .glass-search-input::placeholder,
+        html.dark .glass-composer-input::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        html.dark .glass-bubble.received {
+            background: #1e293b !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        html.dark .glass-bubble.received * {
+            color: #ffffff !important;
+        }
+
+        html.dark .glass-bubble.sent {
+            background: #18181b !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        html.dark .glass-bubble.sent * {
+            color: #ffffff !important;
+        }
+
+        html.dark .glass-icon-btn {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        html.dark .glass-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.16) !important;
+            color: #ffffff !important;
+        }
+
+        html.dark .glass-tab-btn {
+            color: #94a3b8 !important;
+        }
+        html.dark .glass-tab-btn.active {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Light mode crystal-clear visibility */
+        html:not(.dark) .glass-user-name,
+        html:not(.dark) .glass-main-user-name,
+        html:not(.dark) .glass-conv-name {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+        }
+        html:not(.dark) .glass-bubble.received {
+            background: #f1f5f9 !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        html:not(.dark) .glass-bubble.received * {
+            color: #0f172a !important;
+        }
+        html:not(.dark) .glass-bubble.sent {
+            background: #0f172a !important;
+            color: #ffffff !important;
+        }
+        html:not(.dark) .glass-bubble.sent * {
+            color: #ffffff !important;
         }
 
         #k71-chat-wrapper {
@@ -2047,13 +2172,31 @@
                             <span style="font-size: 10px; font-weight: 700; color: #4f46e5; letter-spacing: 0.02em;">Edit Photo</span>
                         </div>
                     </div>
-                    <button type="button" class="glass-icon-btn" id="glassNewChatBtn" title="Search user or start message">
-                        <!-- Instagram / Pencil Edit Icon -->
-                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                        </svg>
-                    </button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="glass-icon-btn chat-theme-toggle-btn" id="chatThemeToggleSidebar" title="Toggle Dark / Light Mode" style="cursor: pointer;">
+                            <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                            <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
+                        <button type="button" class="glass-icon-btn" id="glassNewChatBtn" title="Search user or start message">
+                            <!-- Instagram / Pencil Edit Icon -->
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Instagram Dual Inbox Segmented Tabs (Primary vs Requests) -->
@@ -2142,6 +2285,24 @@
                                 </svg>
                             </button>
 
+                            <!-- Dark Mode Toggle Button (Main Chat Header) -->
+                            <button type="button" class="glass-icon-btn chat-theme-toggle-btn" id="chatThemeToggleMain" title="Toggle Dark / Light Mode" style="cursor: pointer;">
+                                <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                                <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                            </button>
+
                             <!-- Instagram 3-Dot Conversation Options Menu -->
                             <button type="button" class="glass-icon-btn" id="headerMoreOptionsBtn" title="More Options">
                                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2153,6 +2314,11 @@
 
                             <!-- 3-Dot Dropdown Menu -->
                             <div id="chatOptionsDropdown" class="hidden absolute right-0 top-12 w-52 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 py-1 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="py-1">
+                                    <button type="button" id="optToggleDarkMode" class="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+                                        <span>🌓</span> <span id="themeToggleLabel">Toggle Dark / Light Mode</span>
+                                    </button>
+                                </div>
                                 <div class="py-1">
                                     <button type="button" id="optViewProfile" class="w-full text-left px-3.5 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
                                         <span>👤</span> View Profile &amp; Store
@@ -4562,6 +4728,53 @@
                 e.preventDefault();
                 e.stopPropagation();
                 cancelVoiceRecording(e);
+            });
+        }
+
+        // ---------------------------------------------------------------------
+        // 13. MINIMAL PROFESSIONAL DARK / LIGHT THEME TOGGLE
+        // ---------------------------------------------------------------------
+        function applyChatTheme(theme) {
+            const isDark = (theme === 'dark');
+            const wrapper = document.getElementById('k71-chat-wrapper');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                if (wrapper) wrapper.classList.add('dark');
+                const lbl = document.getElementById('themeToggleLabel');
+                if (lbl) lbl.textContent = 'Switch to Light Mode';
+            } else {
+                document.documentElement.classList.remove('dark');
+                if (wrapper) wrapper.classList.remove('dark');
+                const lbl = document.getElementById('themeToggleLabel');
+                if (lbl) lbl.textContent = 'Switch to Dark Mode';
+            }
+        }
+
+        const savedTheme = localStorage.getItem('k71_chat_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyChatTheme(savedTheme);
+
+        document.querySelectorAll('.chat-theme-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isCurrentlyDark = document.documentElement.classList.contains('dark');
+                const newTheme = isCurrentlyDark ? 'light' : 'dark';
+                applyChatTheme(newTheme);
+                localStorage.setItem('k71_chat_theme', newTheme);
+            });
+        });
+
+        const optToggleDarkMode = document.getElementById('optToggleDarkMode');
+        if (optToggleDarkMode) {
+            optToggleDarkMode.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const isCurrentlyDark = document.documentElement.classList.contains('dark');
+                const newTheme = isCurrentlyDark ? 'light' : 'dark';
+                applyChatTheme(newTheme);
+                localStorage.setItem('k71_chat_theme', newTheme);
+                const dropdown = document.getElementById('chatOptionsDropdown');
+                if (dropdown) dropdown.classList.add('hidden');
             });
         }
 

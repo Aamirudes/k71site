@@ -121,9 +121,9 @@
         <!-- Top Left: Liquid Bubble Frosted Glass Theme Badge & Stock Pill -->
         <div class="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
             <!-- Liquid Bubble Glass Pill Badge -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ $theme['badge_bg'] }} transition-all group-hover:scale-102">
-                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-900 dark:bg-white' }} shadow-xs"></span>
-                <span>{{ $theme['label'] }}</span>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase {{ $theme['badge_bg'] }} text-slate-950 dark:text-white transition-all group-hover:scale-102">
+                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-950 dark:bg-white' }} shadow-xs"></span>
+                <span class="text-slate-950 dark:text-white font-black">{{ $theme['label'] }}</span>
             </span>
 
             @if($isOutOfStock)
@@ -240,9 +240,9 @@
                     </a>
                 @elseif($hasMultipleVariants)
                     <a href="{{ $cardUrl }}" 
-                       class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1 whitespace-nowrap" 
+                       class="px-3 py-1.5 rounded-full {{ $theme['btn_pill'] }} text-[11px] font-black transition-all inline-flex items-center gap-1 whitespace-nowrap shadow-2xs" 
                        title="Select options">
-                        <span>Options ›</span>
+                        <span class="font-black text-slate-950">Options ›</span>
                     </a>
                 @else
                     <!-- Themed Universal Quick Add Button -->
@@ -284,23 +284,23 @@
                                 }
                             });
                         "
-                        class="w-full py-1.5 px-3 rounded-xl {{ $theme['btn_bg'] }} text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
+                        class="w-full py-1.5 px-3 rounded-xl {{ $theme['btn_bg'] }} text-xs font-black text-white flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-95"
                         :class="added ? '!bg-emerald-600 !text-white' : ''"
                         :disabled="adding || added"
                         aria-label="Add {{ addslashes($product->title) }} to Cart"
                         title="Add to Cart"
                     >
-                        <span x-show="!adding && !added" class="flex items-center gap-1 whitespace-nowrap">
-                            <span>ADD</span>
-                            <span class="text-sm font-bold leading-none">+</span>
+                        <span x-show="!adding && !added" class="flex items-center gap-1 whitespace-nowrap text-white font-black">
+                            <span class="text-white font-black">ADD</span>
+                            <span class="text-sm font-black leading-none text-white">+</span>
                         </span>
                         <span x-show="adding" class="flex items-center gap-1 text-white">
                             <svg class="animate-spin w-3 h-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span>...</span>
+                            <span class="text-white font-bold">...</span>
                         </span>
                         <span x-show="added" class="flex items-center gap-1 text-white">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                            <span>✓</span>
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            <span class="text-white font-bold">✓</span>
                         </span>
                     </button>
                 @endif

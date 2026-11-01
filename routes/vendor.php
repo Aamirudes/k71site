@@ -34,6 +34,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::post('/orders/{order}/reject-payment', [\App\Http\Controllers\Vendor\OrderController::class, 'rejectPaymentProof'])->name('orders.reject_payment');
         Route::get('/orders/{order}/nearby-partners', [\App\Http\Controllers\Vendor\OrderController::class, 'getNearbyDeliveryPartners'])->name('orders.nearby_partners');
         Route::post('/orders/{order}/assign-partner', [\App\Http\Controllers\Vendor\OrderController::class, 'assignDeliveryPartner'])->name('orders.assign_partner');
+        Route::get('/delivery-partners', [\App\Http\Controllers\Vendor\OrderController::class, 'deliveryPartnersIndex'])->name('delivery_partners.index');
         Route::post('/orders/{order}/simulate-shipping', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateShipping'])->name('orders.simulate_shipping');
         Route::post('/orders/{order}/simulate-settlement', [\App\Http\Controllers\Vendor\OrderController::class, 'simulateSettlement'])->name('orders.simulate_settlement');
         Route::get('/orders/{order}/status', fn(\App\Models\Order $order) => redirect()->route('vendor.orders.show', $order));

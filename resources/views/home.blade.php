@@ -431,9 +431,9 @@
                 <!-- Load More Button -->
                 <div class="text-center pt-4">
                     <a href="{{ route('catalog.index') }}" 
-                       class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-zinc-100 font-semibold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer max-h-11">
-                        <span>Load More Products</span>
-                        <span>&rarr;</span>
+                       class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-950 hover:bg-black text-white font-black text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition cursor-pointer max-h-11">
+                        <span class="text-white font-black">Load More Products</span>
+                        <span class="text-white font-black">&rarr;</span>
                     </a>
                 </div>
             </section>
@@ -547,7 +547,7 @@
                                 @else
                                     <div class="w-full h-full flex items-center justify-center text-3xl">🍲</div>
                                 @endif
-                                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-900 text-white text-[9px] font-black uppercase tracking-wider">
+                                <span class="absolute top-2 left-2 px-2.5 py-1 rounded-md bg-slate-950 text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
                                     Fresh
                                 </span>
                             </div>

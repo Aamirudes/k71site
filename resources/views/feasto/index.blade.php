@@ -7,7 +7,8 @@
     <div class="min-h-screen bg-[#F4F6F8] text-slate-900 antialiased selection:bg-emerald-600 selection:text-white overflow-x-hidden"
          x-data="feastoApp({
             initialProducts: {{ Js::from($allProducts) }},
-            initialCategories: {{ Js::from($categories) }}
+            initialCategories: {{ Js::from($categories) }},
+            initialCart: {{ Js::from($initialCartState ?? []) }}
          })">
 
         <!-- ====================================================================
@@ -427,15 +428,15 @@
                             </button>
                         </div>
 
-                        <a href="{{ route('checkout.index') }}" 
-                           class="w-full py-2.5 px-4 rounded-xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-98 text-white font-bold text-sm flex items-center justify-between shadow-md transition-all cursor-pointer max-h-12">
+                        <a href="{{ route('cart.index') }}" 
+                           class="w-full py-2.5 px-4 rounded-xl bg-[#0C831F] hover:bg-[#0B721B] active:scale-98 text-white font-black text-sm flex items-center justify-between shadow-md transition-all cursor-pointer max-h-12">
                             <div class="flex flex-col text-left leading-tight">
-                                <span class="text-base font-black" x-text="`₹${cartTotal + 2 + tipAmount}`"></span>
-                                <span class="text-[10px] text-emerald-200 uppercase font-semibold">Total to Pay</span>
+                                <span class="text-base font-black text-white" x-text="`₹${cartTotal + 2 + tipAmount}`"></span>
+                                <span class="text-[10px] text-emerald-200 uppercase font-bold">Total to Pay</span>
                             </div>
-                            <div class="flex items-center gap-1.5 font-black uppercase text-xs tracking-wider">
-                                <span>Proceed to Checkout</span>
-                                <span>→</span>
+                            <div class="flex items-center gap-1.5 font-black uppercase text-xs tracking-wider text-white">
+                                <span class="text-white font-black">View Cart &amp; Checkout</span>
+                                <span class="text-white font-black">→</span>
                             </div>
                         </a>
                     </div>
@@ -671,15 +672,15 @@
                     'Jodhpur Sardarpura, Rajasthan (342003)',
                     'Kota Talwandi, Rajasthan (324005)'
                 ],
-                currentPlaceholder: 'Search "milk"',
+                currentPlaceholder: 'Search "biryani"',
                 placeholderList: [
-                    'Search "milk"', 
-                    'Search "dahi"', 
-                    'Search "chips"', 
-                    'Search "maggi"', 
-                    'Search "kaju katli"', 
-                    'Search "cola"', 
-                    'Search "bread"'
+                    'Search "biryani"', 
+                    'Search "dal makhani"', 
+                    'Search "pizza"', 
+                    'Search "burger"', 
+                    'Search "waffle"', 
+                    'Search "dosa"', 
+                    'Search "coffee"'
                 ],
                 placeholderIdx: 0,
 
@@ -690,14 +691,57 @@
                         this.currentPlaceholder = this.placeholderList[this.placeholderIdx];
                     }, 2500);
 
-                    // Load saved cart if present in session
+                    // 1. Initial cart from backend session if passed
+                    if (config.initialCart && Object.keys(config.initialCart).length > 0) {
+                        this.cart = config.initialCart;
+                        this.updateCartTotals();
+                    } else {
+                        // Check localStorage fallback or fetch from backend API
+                        try {
+                            const saved = localStorage.getItem('k71_feasto_cart');
+                            if (saved) {
+                                this.cart = JSON.parse(saved);
+                                this.updateCartTotals();
+                            }
+                        } catch(e) {}
+                    }
+
+                    // Always sync with live backend cart
+                    this.fetchBackendCart();
+                },
+
+                async fetchBackendCart() {
                     try {
-                        const saved = localStorage.getItem('k71_feasto_cart');
-                        if (saved) {
-                            this.cart = JSON.parse(saved);
-                            this.updateCartTotals();
+                        const res = await fetch('/cart/data', {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data && Array.isArray(data.items)) {
+                            const synced = {};
+                            data.items.forEach(ci => {
+                                const prodId = ci.product_id;
+                                if (prodId) {
+                                    const prod = this.allProducts.find(p => p.id === prodId);
+                                    synced[prodId] = {
+                                        id: prodId,
+                                        cart_item_id: ci.id,
+                                        title: ci.product_title,
+                                        base_price: parseFloat(ci.unit_price) / 100,
+                                        featured_image: ci.image_url || (prod ? prod.featured_image : ''),
+                                        weight: prod ? prod.weight : 'Portion Pack',
+                                        qty: ci.quantity
+                                    };
+                                }
+                            });
+                            // If backend has items, overwrite to maintain 100% parity
+                            if (Object.keys(synced).length > 0) {
+                                this.cart = synced;
+                                this.updateCartTotals();
+                            }
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        console.error('Error syncing backend cart:', e);
+                    }
                 },
 
                 openProductModal(product) {
@@ -742,23 +786,94 @@
                     this.filteredProducts = list;
                 },
 
-                addToCart(product) {
+                async addToCart(product) {
+                    // Optimistic instant UI
                     if (!this.cart[product.id]) {
                         this.cart[product.id] = { ...product, qty: 1 };
                     } else {
                         this.cart[product.id].qty++;
                     }
                     this.updateCartTotals();
+
+                    // Real backend persistence to Laravel Cart
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const res = await fetch('/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                product_id: product.id,
+                                quantity: 1
+                            })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            window.dispatchEvent(new CustomEvent('cart-updated'));
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(`${product.title} added to cart! 🛍️`);
+                            }
+                            // Re-fetch backend cart to store new cart_item_id
+                            this.fetchBackendCart();
+                        } else {
+                            if (typeof window.showToast === 'function') {
+                                window.showToast(data.message || 'Could not add to cart', false);
+                            }
+                        }
+                    } catch(e) {
+                        console.error('Error adding to cart:', e);
+                    }
                 },
 
-                decrementCart(productId) {
-                    if (this.cart[productId]) {
-                        this.cart[productId].qty--;
-                        if (this.cart[productId].qty <= 0) {
-                            delete this.cart[productId];
-                        }
+                async decrementCart(productId) {
+                    const item = this.cart[productId];
+                    if (!item) return;
+
+                    const cartItemId = item.cart_item_id;
+                    item.qty--;
+                    const newQty = item.qty;
+                    if (newQty <= 0) {
+                        delete this.cart[productId];
                     }
                     this.updateCartTotals();
+
+                    // Real backend synchronization
+                    try {
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        if (cartItemId) {
+                            if (newQty > 0) {
+                                await fetch(`/cart/${cartItemId}`, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({ quantity: newQty })
+                                });
+                            } else {
+                                await fetch(`/cart/${cartItemId}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': csrfToken,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json'
+                                    }
+                                });
+                            }
+                            window.dispatchEvent(new CustomEvent('cart-updated'));
+                        } else {
+                            this.fetchBackendCart();
+                        }
+                    } catch(e) {
+                        console.error('Error updating cart:', e);
+                    }
                 },
 
                 updateCartTotals() {

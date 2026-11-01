@@ -347,8 +347,8 @@ class Product extends Model
         $catSlug = strtolower($this->category?->slug ?? '');
         $titleLower = strtolower($this->title ?? '');
 
-        // Liquid Bubble Glassmorphic Standard Styling
-        $baseBubble = 'bg-white/80 dark:bg-black/70 backdrop-blur-md border border-white/60 dark:border-white/15 text-zinc-900 dark:text-white shadow-[0_2px_10px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)]';
+        // Liquid Bubble Glassmorphic Standard Styling - Solid High Contrast
+        $baseBubble = 'bg-white/95 dark:bg-black/90 backdrop-blur-md border border-slate-300 dark:border-white/25 text-slate-950 dark:text-white font-black shadow-xs';
 
         // 1. Electronics, Mobiles & Tech (Check FIRST to prevent service badge misclassification)
         if (str_contains($catSlug, 'electronic') || str_contains($catName, 'electronic') 
@@ -362,14 +362,14 @@ class Product extends Model
                 'vertical' => 'electronics',
                 'label' => 'TECH',
                 'icon' => '📱',
-                'dot_color' => 'bg-blue-500',
+                'dot_color' => 'bg-blue-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-slate-900 dark:hover:border-white',
-                'accent_text' => 'text-slate-900 dark:text-white',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-slate-100 hover:bg-slate-900 text-slate-900 hover:text-white border border-slate-200',
-                'pill_bg' => 'bg-slate-100 text-slate-800',
+                'accent_text' => 'text-slate-950 dark:text-white font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-slate-100 hover:bg-slate-950 text-slate-950 hover:text-white border border-slate-300 font-bold',
+                'pill_bg' => 'bg-slate-100 text-slate-950 font-bold',
             ];
         }
 
@@ -384,14 +384,14 @@ class Product extends Model
                 'vertical' => 'groceries',
                 'label' => 'KIRANA',
                 'icon' => '🛒',
-                'dot_color' => 'bg-emerald-500',
+                'dot_color' => 'bg-emerald-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-emerald-600',
-                'accent_text' => 'text-emerald-700 dark:text-emerald-400',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-emerald-50 hover:bg-emerald-600 text-emerald-800 hover:text-white border border-emerald-200',
-                'pill_bg' => 'bg-emerald-50 text-emerald-800',
+                'accent_text' => 'text-emerald-900 dark:text-emerald-400 font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-emerald-100 hover:bg-emerald-700 text-slate-950 hover:text-white border border-emerald-300 font-bold',
+                'pill_bg' => 'bg-emerald-100 text-slate-950 font-bold',
             ];
         }
 
@@ -402,14 +402,14 @@ class Product extends Model
                 'vertical' => 'food',
                 'label' => 'FOOD',
                 'icon' => '🍲',
-                'dot_color' => 'bg-amber-500',
+                'dot_color' => 'bg-amber-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-orange-500',
-                'accent_text' => 'text-amber-800 dark:text-amber-400',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-amber-50 hover:bg-amber-600 text-amber-800 hover:text-white border border-amber-200',
-                'pill_bg' => 'bg-amber-50 text-amber-800',
+                'accent_text' => 'text-amber-950 dark:text-amber-400 font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-amber-100 hover:bg-amber-700 text-slate-950 hover:text-white border border-amber-300 font-bold',
+                'pill_bg' => 'bg-amber-100 text-slate-950 font-bold',
             ];
         }
 
@@ -420,14 +420,14 @@ class Product extends Model
                 'vertical' => 'marble',
                 'label' => 'MARBLE',
                 'icon' => '🏛️',
-                'dot_color' => 'bg-stone-500',
+                'dot_color' => 'bg-stone-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-stone-800 dark:hover:border-stone-200',
-                'accent_text' => 'text-stone-800 dark:text-stone-200',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-stone-100 hover:bg-stone-800 text-stone-800 hover:text-white border border-stone-200',
-                'pill_bg' => 'bg-stone-100 text-stone-800',
+                'accent_text' => 'text-stone-950 dark:text-stone-200 font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-stone-100 hover:bg-stone-900 text-slate-950 hover:text-white border border-stone-300 font-bold',
+                'pill_bg' => 'bg-stone-100 text-slate-950 font-bold',
             ];
         }
 
@@ -438,14 +438,14 @@ class Product extends Model
                 'vertical' => 'enquiry',
                 'label' => 'MACHINERY',
                 'icon' => '⚙️',
-                'dot_color' => 'bg-cyan-500',
+                'dot_color' => 'bg-cyan-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-cyan-700',
-                'accent_text' => 'text-slate-900 dark:text-white',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-cyan-50 hover:bg-cyan-700 text-cyan-800 hover:text-white border border-cyan-200',
-                'pill_bg' => 'bg-cyan-50 text-cyan-800',
+                'accent_text' => 'text-slate-950 dark:text-white font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-cyan-100 hover:bg-cyan-800 text-slate-950 hover:text-white border border-cyan-300 font-bold',
+                'pill_bg' => 'bg-cyan-100 text-slate-950 font-bold',
             ];
         }
 
@@ -456,14 +456,14 @@ class Product extends Model
                 'vertical' => 'footwear',
                 'label' => 'FOOTWEAR',
                 'icon' => '👟',
-                'dot_color' => 'bg-slate-700',
+                'dot_color' => 'bg-slate-800',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-slate-900',
-                'accent_text' => 'text-slate-900 dark:text-white',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-slate-100 hover:bg-slate-900 text-slate-800 hover:text-white border border-slate-200',
-                'pill_bg' => 'bg-slate-100 text-slate-800',
+                'accent_text' => 'text-slate-950 dark:text-white font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-slate-100 hover:bg-slate-950 text-slate-950 hover:text-white border border-slate-300 font-bold',
+                'pill_bg' => 'bg-slate-100 text-slate-950 font-bold',
             ];
         }
 
@@ -474,14 +474,14 @@ class Product extends Model
                 'vertical' => 'used',
                 'label' => 'PRE-OWNED',
                 'icon' => '🔄',
-                'dot_color' => 'bg-sky-500',
+                'dot_color' => 'bg-sky-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-sky-600',
-                'accent_text' => 'text-sky-700 dark:text-sky-400',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-sky-50 hover:bg-sky-600 text-sky-800 hover:text-white border border-sky-200',
-                'pill_bg' => 'bg-sky-50 text-sky-800',
+                'accent_text' => 'text-sky-950 dark:text-sky-400 font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-sky-100 hover:bg-sky-700 text-slate-950 hover:text-white border border-sky-300 font-bold',
+                'pill_bg' => 'bg-sky-100 text-slate-950 font-bold',
             ];
         }
 
@@ -492,14 +492,14 @@ class Product extends Model
                 'vertical' => 'services',
                 'label' => 'SERVICE',
                 'icon' => '⚡',
-                'dot_color' => 'bg-violet-500',
+                'dot_color' => 'bg-violet-600',
                 'badge_bg' => $baseBubble,
                 'border_color' => 'border-slate-200/80 dark:border-zinc-800',
                 'card_border_hover' => 'hover:border-violet-600',
-                'accent_text' => 'text-violet-700 dark:text-violet-400',
-                'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-                'btn_pill' => 'bg-violet-50 hover:bg-violet-600 text-violet-800 hover:text-white border border-violet-200',
-                'pill_bg' => 'bg-violet-50 text-violet-800',
+                'accent_text' => 'text-violet-950 dark:text-violet-400 font-bold',
+                'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+                'btn_pill' => 'bg-violet-100 hover:bg-violet-700 text-slate-950 hover:text-white border border-violet-300 font-bold',
+                'pill_bg' => 'bg-violet-100 text-slate-950 font-bold',
             ];
         }
 
@@ -509,14 +509,14 @@ class Product extends Model
             'vertical' => 'fashion',
             'label' => 'FASHION',
             'icon' => '✨',
-            'dot_color' => 'bg-slate-900',
+            'dot_color' => 'bg-slate-950',
             'badge_bg' => $baseBubble,
             'border_color' => 'border-slate-200/80 dark:border-zinc-800',
             'card_border_hover' => 'hover:border-slate-900 dark:hover:border-white',
-            'accent_text' => 'text-slate-900 dark:text-white',
-            'btn_bg' => 'bg-slate-900 hover:bg-black text-white',
-            'btn_pill' => 'bg-slate-100 hover:bg-slate-900 text-slate-800 hover:text-white border border-slate-200',
-            'pill_bg' => 'bg-slate-100 text-slate-800',
+            'accent_text' => 'text-slate-950 dark:text-white font-bold',
+            'btn_bg' => 'bg-slate-950 hover:bg-black text-white font-black',
+            'btn_pill' => 'bg-slate-100 hover:bg-slate-950 text-slate-950 hover:text-white border border-slate-300 font-bold',
+            'pill_bg' => 'bg-slate-100 text-slate-950 font-bold',
         ];
     }
 

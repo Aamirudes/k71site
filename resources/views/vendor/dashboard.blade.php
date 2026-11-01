@@ -286,6 +286,178 @@
             </div>
         </div>
 
+        @if($isFoodOrFeasto || (isset($deliveryPartners) && $deliveryPartners->isNotEmpty()))
+        <!-- ====================================================================
+             ⚡ INSTANT DELIVERY FLEET & DELIVERY BOYS (FOOD & FEASTO LIVE STATUS)
+             ==================================================================== -->
+        <div class="bw-card p-6 border-2 border-black space-y-4" id="delivery-fleet" x-data="{
+            assigningRider: null,
+            selectedDispatchOrderId: '{{ $pendingDispatchOrders->first()?->id ?? '' }}',
+            assignRiderToOrder(dp) {
+                this.assigningRider = dp;
+            },
+            execDispatch() {
+                if (!this.selectedDispatchOrderId || !this.assigningRider) return;
+                fetch(`/vendor/orders/${this.selectedDispatchOrderId}/assign-partner`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ delivery_partner_id: this.assigningRider.id })
+                }).then(r => r.json()).then(data => {
+                    if (data.status === 'success') {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Failed to dispatch order');
+                    }
+                }).catch(() => alert('Network error dispatching order'));
+            }
+        }">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-black text-white flex items-center justify-center text-sm font-black">
+                        🛵
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm sm:text-base font-black text-black uppercase tracking-wider">
+                                Instant Delivery Boys &amp; Fleet (Live Status)
+                            </h2>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                                {{ $deliveryPartners->where('is_online', true)->count() }} RIDERS ONLINE
+                            </span>
+                        </div>
+                        <p class="text-xs text-zinc-500 mt-0.5">
+                            Real-time Makrana delivery partners for doorstep cloud kitchen &amp; 10-minute quick commerce dispatch.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('vendor.delivery_partners.index') }}" class="bw-btn-black px-3.5 py-1.5 text-xs font-bold flex items-center gap-1">
+                        <span>Fleet Management</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Riders Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @forelse($deliveryPartners as $dp)
+                @php
+                    $cleanPhone = preg_replace('/[^0-9]/', '', $dp->phone);
+                    if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
+                @endphp
+                <div class="p-4 rounded-xl border border-zinc-200 bg-white hover:border-black transition-all flex flex-col justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                            <div class="relative w-10 h-10 rounded-xl bg-zinc-100 border border-zinc-300 flex items-center justify-center text-base shrink-0">
+                                🛵
+                                @if($dp->is_online && !$dp->is_busy)
+                                    <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white animate-pulse" title="Online & Available"></span>
+                                @elseif($dp->is_busy)
+                                    <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-amber-500 border-2 border-white" title="On Delivery"></span>
+                                @else
+                                    <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-zinc-400 border-2 border-white" title="Offline"></span>
+                                @endif
+                            </div>
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-black text-sm text-black">{{ $dp->name }}</span>
+                                    @if($dp->is_online && !$dp->is_busy)
+                                        <span class="px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                            Online &amp; Ready
+                                        </span>
+                                    @elseif($dp->is_busy)
+                                        <span class="px-2 py-0.2 rounded-full text-[9px] font-black bg-amber-100 text-amber-900 border border-amber-300">
+                                            On Delivery
+                                        </span>
+                                    @else
+                                        <span class="px-2 py-0.2 rounded-full text-[9px] font-black bg-zinc-100 text-zinc-700 border border-zinc-300">
+                                            Offline
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="text-[11px] text-zinc-600 flex items-center gap-1.5 flex-wrap">
+                                    <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?? 'RJ-21-SD-4091' }}</strong></span>
+                                    <span>•</span>
+                                    <span>★ <strong class="text-black">{{ number_format($dp->rating, 2) }}</strong> ({{ $dp->total_deliveries }} done)</span>
+                                </div>
+                                <div class="text-[11px] text-zinc-500 flex items-center gap-1.5">
+                                    <span>📍 <strong>{{ $dp->distance_km }} km</strong> away</span>
+                                    <span>•</span>
+                                    <span>⏱️ ETA: ~<strong>{{ $dp->eta_minutes }} mins</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-1.5">
+                            <a href="tel:{{ $dp->phone }}" class="bw-btn-white px-2.5 py-1 text-xs font-bold flex items-center gap-1">
+                                <span>📞 Call</span>
+                                <span class="font-mono text-[10px] text-zinc-500">{{ $dp->phone }}</span>
+                            </a>
+                            @if($cleanPhone)
+                            <a href="https://wa.me/{{ $cleanPhone }}?text={{ rawurlencode('Namaste ' . $dp->name . '! Order ready for pickup at ' . $shopName) }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="px-2.5 py-1 rounded-xl bg-[#25D366] text-white font-bold text-xs flex items-center gap-1 hover:opacity-90">
+                                <span>💬 WhatsApp</span>
+                            </a>
+                            @endif
+                        </div>
+
+                        @if($pendingDispatchOrders->isNotEmpty() && $dp->is_online && !$dp->is_busy)
+                            <button type="button" 
+                                    @click="assignRiderToOrder({{ Js::from($dp) }})"
+                                    class="bw-btn-black px-3 py-1 text-xs font-black cursor-pointer shadow-xs">
+                                ⚡ Assign Order
+                            </button>
+                        @elseif($dp->is_busy)
+                            <span class="text-[11px] font-mono text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                On Active Run
+                            </span>
+                        @endif
+                    </div>
+                </div>
+                @empty
+                <div class="col-span-2 text-center py-6 bg-zinc-50 rounded-xl border border-dashed border-zinc-300">
+                    <p class="text-xs font-bold text-zinc-600">No registered delivery riders yet. Riders can register at /delivery-partner</p>
+                </div>
+                @endforelse
+            </div>
+
+            <!-- Quick Modal for Rider Assignment on Dashboard -->
+            <div x-show="assigningRider" x-cloak class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-xs" @click.self="assigningRider = null">
+                <div class="bg-white rounded-2xl max-w-md w-full p-5 border border-black space-y-3">
+                    <div class="flex items-center justify-between pb-2 border-b border-zinc-200">
+                        <h3 class="text-sm font-black text-black">Dispatch to <span x-text="assigningRider ? assigningRider.name : ''"></span></h3>
+                        <button type="button" @click="assigningRider = null" class="w-6 h-6 rounded-lg bg-zinc-100 hover:bg-black hover:text-white flex items-center justify-center text-xs font-black">✕</button>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black text-black uppercase tracking-wider">Select Pending Order:</label>
+                        <select x-model="selectedDispatchOrderId" class="w-full px-3 py-2 text-xs font-bold rounded-xl border border-zinc-300 bg-white text-black">
+                            @foreach($pendingDispatchOrders as $pOrder)
+                                <option value="{{ $pOrder->id }}">
+                                    Order #{{ $pOrder->order_number }} • ₹{{ number_format($pOrder->total_amount / 100, 2) }} • {{ $pOrder->user?->name ?? 'Customer' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button type="button" @click="assigningRider = null" class="bw-btn-white px-3 py-1.5 text-xs font-bold">Cancel</button>
+                        <button type="button" @click="execDispatch()" class="bw-btn-black px-4 py-1.5 text-xs font-black">Confirm Dispatch</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- ====================================================================
              3. TIME HORIZON FILTER BAR
              ==================================================================== -->

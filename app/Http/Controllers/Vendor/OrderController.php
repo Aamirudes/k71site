@@ -749,5 +749,47 @@ class OrderController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Dedicated full-page Delivery Fleet and Delivery Boy Management for Food and Feasto vendors
+     */
+    public function deliveryPartnersIndex(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $partners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+            $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
+        }])->get()->map(function($p) use ($vLat, $vLng) {
+            $activeAssignment = $p->assignments->first(function($a) {
+                return in_array($a->status, ['assigned', 'accepted', 'picked_up']);
+            });
+            $p->active_assignment = $activeAssignment;
+            $p->is_busy = !is_null($activeAssignment);
+            $p->distance_km = $p->distanceTo($vLat, $vLng);
+            $p->eta_minutes = max(3, (int) round($p->distance_km * 3.5));
+            return $p;
+        })->sortBy('distance_km')->values();
+
+        $activeOrdersNeedingDispatch = Order::where('vendor_id', $vendor->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->where(function($q) {
+                $q->whereDoesntHave('deliveryAssignment')
+                  ->orWhereHas('deliveryAssignment', function($aq) {
+                      $aq->whereIn('status', ['cancelled', 'failed']);
+                  });
+            })
+            ->latest()
+            ->get();
+
+        return view('vendor.delivery-partners.index', compact('vendor', 'partners', 'activeOrdersNeedingDispatch'));
+    }
 }
 

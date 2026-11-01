@@ -246,6 +246,41 @@ class DashboardController extends Controller
             }
         }
 
+        // 7. Delivery Partners & Boys Listing for Food, Feasto, Kirana & Express Vendors
+        $isFoodOrFeasto = in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana']) 
+            || (method_exists($vendor, 'isRestaurant') && $vendor->isRestaurant());
+
+        $vLat = 27.0425;
+        $vLng = 74.7214;
+        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+            $vLat = (float) $vendor->pickup_address['lat'];
+            $vLng = (float) $vendor->pickup_address['lng'];
+        }
+
+        $deliveryPartners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+            $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
+        }])->get()->map(function($dp) use ($vLat, $vLng) {
+            $activeAssignment = $dp->assignments->first(function($a) {
+                return in_array($a->status, ['assigned', 'accepted', 'picked_up']);
+            });
+            $dp->active_assignment = $activeAssignment;
+            $dp->is_busy = !is_null($activeAssignment);
+            $dp->distance_km = $dp->distanceTo($vLat, $vLng);
+            $dp->eta_minutes = max(3, (int) round($dp->distance_km * 3.5));
+            return $dp;
+        })->sortBy('distance_km')->values();
+
+        $pendingDispatchOrders = Order::where('vendor_id', $vendor->id)
+            ->whereIn('status', ['pending', 'processing'])
+            ->where(function($q) {
+                $q->whereDoesntHave('deliveryAssignment')
+                  ->orWhereHas('deliveryAssignment', function($aq) {
+                      $aq->whereIn('status', ['cancelled', 'failed']);
+                  });
+            })
+            ->latest()
+            ->get();
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -266,7 +301,10 @@ class DashboardController extends Controller
             'totalOrdersInPeriod',
             'recentOrders',
             'chartData',
-            'pendingPaymentClaims'
+            'pendingPaymentClaims',
+            'deliveryPartners',
+            'isFoodOrFeasto',
+            'pendingDispatchOrders'
         ));
     }
 }
