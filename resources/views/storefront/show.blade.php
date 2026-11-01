@@ -1425,9 +1425,9 @@
             <div class="max-w-7xl mx-auto mt-6 pt-6 border-t border-stone-200/60 dark:border-stone-800/60 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 gap-2">
                 <span>© {{ date('Y') }} {{ $vendor->shop_name }}. All rights reserved. Powered by {{ config('marketplace.name', 'K71') }}.</span>
                 <div class="flex items-center gap-4">
-                    <a href="{{ route('privacy') }}" class="hover:text-stone-900 dark:hover:text-white transition">Privacy</a>
-                    <a href="{{ route('terms') }}" class="hover:text-stone-900 dark:hover:text-white transition">Terms</a>
-                    <a href="{{ route('shipping') }}" class="hover:text-stone-900 dark:hover:text-white transition">Shipping Policy</a>
+                    <a href="{{ url('/privacy-policy') }}" class="hover:text-stone-900 dark:hover:text-white transition">Privacy</a>
+                    <a href="{{ url('/terms-and-conditions') }}" class="hover:text-stone-900 dark:hover:text-white transition">Terms</a>
+                    <a href="{{ url('/shipping-policy') }}" class="hover:text-stone-900 dark:hover:text-white transition">Shipping Policy</a>
                 </div>
             </div>
         </footer>
