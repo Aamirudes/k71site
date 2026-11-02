@@ -28,10 +28,10 @@
                 </span>
             </div>
             <div class="flex items-center gap-4 text-[11px] text-zinc-400">
-                <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
-                <a href="{{ route('delivery.onboarding') }}" class="text-amber-300 hover:text-amber-200 font-bold transition flex items-center gap-1">
-                    <span>🛵 Earn as Delivery Partner</span>
-                </a>
+                <span class="hidden md:inline font-mono">Kishangarh Fast Dispatch (Rajasthan)</span>
+                <span class="text-emerald-400 font-bold flex items-center gap-1">
+                    <span>⚡ 10-Min Flash Delivery</span>
+                </span>
             </div>
         </div>
 

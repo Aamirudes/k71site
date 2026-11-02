@@ -48,18 +48,17 @@ class DeliveryPartnerController extends Controller
             if (!auth()->check() && !empty($validated['email'])) {
                 $user = \App\Models\User::where('email', $validated['email'])->first();
                 if (!$user) {
+                    $nameParts = explode(' ', trim($validated['name']), 2);
+                    $firstName = $nameParts[0];
+                    $lastName = $nameParts[1] ?? '';
                     $user = \App\Models\User::create([
-                        'name' => $validated['name'],
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'username' => 'rider_' . substr(uniqid(), -6),
                         'email' => $validated['email'],
                         'password' => \Illuminate\Support\Facades\Hash::make($request->input('password', '12345678')),
                         'phone' => $validated['phone'],
-                        'role' => 'delivery_partner',
                     ]);
-                } else {
-                    if ($user->role !== 'admin') {
-                        $user->role = 'delivery_partner';
-                        $user->save();
-                    }
                 }
                 \Illuminate\Support\Facades\Auth::login($user);
             }
@@ -84,15 +83,6 @@ class DeliveryPartnerController extends Controller
                 $partner = DeliveryPartner::create($partnerData);
             } else {
                 $partner->update($partnerData);
-            }
-
-            // Assign role if authenticated user
-            if (auth()->check()) {
-                $user = auth()->user();
-                if ($user->role !== 'admin') {
-                    $user->role = 'delivery_partner';
-                    $user->save();
-                }
             }
 
             session(['delivery_partner_id' => $partner->id]);

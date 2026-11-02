@@ -61,6 +61,16 @@ class User extends Authenticatable
         return $this->hasOne(Vendor::class);
     }
 
+    public function deliveryPartner(): HasOne
+    {
+        return $this->hasOne(DeliveryPartner::class);
+    }
+
+    public function isDeliveryPartner(): bool
+    {
+        return DeliveryPartner::where('user_id', $this->id)->exists();
+    }
+
     public function hasRole(string $role): bool
     {
         return $this->roles->contains('name', $role);

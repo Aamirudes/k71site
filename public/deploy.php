@@ -460,6 +460,7 @@ try {
     try {
         DB::statement("UPDATE `delivery_partners` SET `city` = 'Kishangarh', `current_latitude` = 26.5744, `current_longitude` = 74.8654 WHERE `city` = 'Makrana' OR `city` IS NULL OR `city` = ''");
         DB::statement("UPDATE `delivery_partners` SET `name` = 'K71 Kishangarh Fleet Pilot' WHERE `name` LIKE '%Ramesh Kumar%'");
+        DB::statement("DELETE FROM `settings` WHERE `key` = 'floating_launcher_items'");
     } catch (\Throwable $e) {}
 
     echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof). Chat direct schema & legacy chats verified.</pre></div>";

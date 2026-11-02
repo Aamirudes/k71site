@@ -339,18 +339,19 @@
                                 </div>
                                 <div class="py-1">
                                     <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
-                                    <a href="{{ route('account.listings') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
-                                        <span>My Listings &amp; Gigs</span>
-                                        <span class="text-[9px] font-bold text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded">Classifieds</span>
-                                    </a>
                                     <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
-                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
-                                        <span>Delivery Pilot Hub</span>
-                                        <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">⚡ Fleet</span>
-                                    </a>
                                     <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
                                     <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
                                     <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Notifications</a>
+
+                                    @if(auth()->user()->isDeliveryPartner())
+                                        <div class="border-t border-slate-100 my-1"></div>
+                                        <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
+                                            <span>Delivery Pilot Hub</span>
+                                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">⚡ Fleet</span>
+                                        </a>
+                                    @endif
+
                                     @if(auth()->user()->hasRole('vendor'))
                                         <div class="border-t border-slate-100 my-1"></div>
                                         <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>

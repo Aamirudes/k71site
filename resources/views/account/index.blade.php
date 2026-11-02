@@ -7,7 +7,7 @@
     @endphp
 
     <div x-data="{
-        activeTab: window.location.hash ? window.location.hash.replace('#', '') : 'profile',
+        activeTab: (window.location.hash && ['profile', 'orders', 'wishlist'].includes(window.location.hash.replace('#', ''))) ? window.location.hash.replace('#', '') : 'profile',
         scrolledPastSummary: false,
         setTab(tabName) {
             this.activeTab = tabName;
@@ -50,7 +50,7 @@
             <!-- Settings Gear Right -->
             <div class="flex items-center gap-1">
                 <button type="button" 
-                        @click="setTab('privacy')"
+                        @click="setTab('profile'); document.getElementById('account-privacy-section')?.scrollIntoView({ behavior: 'smooth' });"
                         class="w-10 h-10 -mr-2 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                         aria-label="Account Settings">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -140,12 +140,6 @@
                         class="py-3 text-xs sm:text-sm whitespace-nowrap transition cursor-pointer">
                     Wishlist ({{ $wishlistCount }})
                 </button>
-                <button type="button" 
-                        @click="setTab('privacy')"
-                        :class="activeTab === 'privacy' ? 'border-b-2 font-bold text-indigo-600 border-indigo-600' : 'text-slate-500 hover:text-slate-900 font-medium border-b-2 border-transparent'"
-                        class="py-3 text-xs sm:text-sm whitespace-nowrap transition cursor-pointer">
-                    Privacy &amp; DPDP
-                </button>
             </div>
         </div>
 
@@ -155,7 +149,7 @@
         <main class="max-w-4xl mx-auto px-4 pt-5">
             
             <!-- A. PROFILE DETAILS TAB -->
-            <section x-show="activeTab === 'profile'" class="space-y-3">
+            <section x-show="activeTab === 'profile'" class="space-y-4">
                 <div class="k71-card p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-zinc-800">
                         <h3 class="text-base font-bold text-slate-900 dark:text-white">Personal Information</h3>
@@ -196,6 +190,58 @@
                         <div class="flex items-center justify-between py-2.5">
                             <span class="text-slate-500 font-medium">Account Created</span>
                             <span class="text-slate-700 dark:text-zinc-300">{{ $user->created_at->format('M d, Y') }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy & Data Controls (Integrated discreetly into Profile) -->
+                <div id="account-privacy-section" class="k71-card p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white">Account Security &amp; Data Privacy</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Manage your personal data archive and privacy settings.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <!-- Export Data -->
+                        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 flex flex-col justify-between gap-3">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-900 dark:text-white">Download Account Data</h4>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Export profile and order records in JSON.</p>
+                            </div>
+                            <a href="{{ route('account.export') }}" class="w-full py-1.5 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold text-center transition">
+                                Download Archive
+                            </a>
+                        </div>
+
+                        <!-- Right to Erasure -->
+                        <div class="p-3.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 flex flex-col justify-between gap-3" x-data="{ confirming: false }">
+                            <div>
+                                <h4 class="text-xs font-bold text-rose-900 dark:text-rose-200">Delete Account</h4>
+                                <p class="text-[11px] text-rose-700/80 dark:text-rose-300 mt-0.5">Permanently remove your account and data.</p>
+                            </div>
+                            <div>
+                                <button type="button" 
+                                        x-show="!confirming" 
+                                        @click="confirming = true"
+                                        class="w-full py-1.5 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-100 text-xs font-semibold transition cursor-pointer">
+                                    Request Deletion
+                                </button>
+                                <div x-show="confirming" class="space-y-2" x-cloak>
+                                    <p class="text-[10px] text-rose-800 font-bold">This action cannot be undone.</p>
+                                    <div class="flex items-center gap-2">
+                                        <form method="POST" action="{{ route('account.delete') }}" class="flex-1">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="w-full py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700">
+                                                Confirm Delete
+                                            </button>
+                                        </form>
+                                        <button type="button" @click="confirming = false" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -336,61 +382,6 @@
                     </div>
                 @endif
             </section>
-
-            <!-- D. PRIVACY & DPDP TAB -->
-            <section x-show="activeTab === 'privacy'" class="space-y-3">
-                <div class="k71-card p-5 sm:p-6 bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-xs space-y-4">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Digital Personal Data Protection (DPDP) Act</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Manage your personal data archive and exercise statutory rights.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                        <!-- Export Data -->
-                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-200 dark:border-zinc-700 flex flex-col justify-between gap-3">
-                            <div>
-                                <h4 class="text-xs font-bold text-slate-900 dark:text-white">📦 Download Data Package</h4>
-                                <p class="text-[11px] text-slate-500 mt-1">Export all your account profile, orders, bids, and enquiry records in JSON.</p>
-                            </div>
-                            <a href="{{ route('account.export') }}" class="w-full py-2 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-bold text-center transition">
-                                Download JSON Archive
-                            </a>
-                        </div>
-
-                        <!-- Right to Erasure -->
-                        <div class="p-4 rounded-xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/40 flex flex-col justify-between gap-3" x-data="{ confirming: false }">
-                            <div>
-                                <h4 class="text-xs font-bold text-rose-900 dark:text-rose-200">🗑️ Right to Permanent Erasure</h4>
-                                <p class="text-[11px] text-rose-700/80 dark:text-rose-300 mt-1">Permanently purge your account, data, and sessions from K71.</p>
-                            </div>
-                            <div>
-                                <button type="button" 
-                                        x-show="!confirming" 
-                                        @click="confirming = true"
-                                        class="w-full py-2 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-100 text-xs font-bold transition cursor-pointer">
-                                    Request Account Erasure
-                                </button>
-                                <div x-show="confirming" class="space-y-2" x-cloak>
-                                    <p class="text-[10px] text-rose-800 font-bold">This action cannot be undone.</p>
-                                    <div class="flex items-center gap-2">
-                                        <form method="POST" action="{{ route('account.delete') }}" class="flex-1">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="w-full py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700">
-                                                Confirm Delete
-                                            </button>
-                                        </form>
-                                        <button type="button" @click="confirming = false" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-semibold">
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
         </main>
     </div>
 
