@@ -409,10 +409,17 @@ function k71AuthModal() {
                     credentials: 'same-origin',
                     body: JSON.stringify({ email: this.forgotEmail })
                 });
-                this.successMessage = 'If an account exists, a recovery link has been sent to your email!';
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    this.errorMessage = data.message || (data.errors && Object.values(data.errors)[0] ? Object.values(data.errors)[0][0] : 'Could not send recovery link.');
+                    return;
+                }
+
+                this.successMessage = data.message || 'If an account exists, a recovery link has been sent to your email!';
                 setTimeout(() => {
                     this.tab = 'login';
-                }, 3000);
+                }, 4000);
             } catch(e) {
                 this.errorMessage = 'Could not request password reset right now. Please try again.';
             } finally {

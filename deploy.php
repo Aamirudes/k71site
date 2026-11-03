@@ -452,6 +452,18 @@ try {
     DB::statement("ALTER TABLE `products` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
     DB::statement("ALTER TABLE `pages` MODIFY `seo_title` VARCHAR(255) NULL, MODIFY `seo_description` TEXT NULL");
 
+    // Password reset tokens table safeguard
+    try {
+        if (!Schema::hasTable('password_reset_tokens')) {
+            DB::statement("CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+                `email` VARCHAR(255) NOT NULL,
+                `token` VARCHAR(255) NOT NULL,
+                `created_at` TIMESTAMP NULL,
+                PRIMARY KEY (`email`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+        }
+    } catch (\Throwable $e) {}
+
     // Chat schema auto-repair
     try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
     try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
