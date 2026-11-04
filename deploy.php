@@ -361,6 +361,45 @@ if (file_exists($baseDir . '/vendor/autoload.php')) {
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
+if (isset($_GET['restore_chat_safiya'])) {
+    header('Content-Type: application/json');
+    $results = [];
+    $sqlFile = $baseDir . '/sql/restore_chat_17_to_28.sql';
+    if (!file_exists($sqlFile)) {
+        echo json_encode(['success' => false, 'error' => 'SQL file not found at: ' . $sqlFile]);
+        exit;
+    }
+
+    try {
+        $sqlContent = file_get_contents($sqlFile);
+        $statements = array_filter(array_map('trim', explode(";\n\n", $sqlContent)));
+
+        $totalAffected = 0;
+        $errors = [];
+        foreach ($statements as $stmt) {
+            $stmt = trim($stmt);
+            if (empty($stmt) || str_starts_with($stmt, '--')) continue;
+            try {
+                $affected = DB::affectingStatement($stmt);
+                $totalAffected += $affected;
+            } catch (\Throwable $e) {
+                $errors[] = $e->getMessage();
+            }
+        }
+
+        $results['success'] = empty($errors);
+        $results['rows_affected'] = $totalAffected;
+        $results['errors'] = $errors;
+        $results['conversation_28_total_messages'] = DB::table('chat_messages')->where('conversation_id', 28)->count();
+    } catch (\Throwable $e) {
+        $results['success'] = false;
+        $results['error'] = $e->getMessage();
+    }
+
+    echo json_encode($results, JSON_PRETTY_PRINT);
+    exit;
+}
+
 if (isset($_GET['read_log'])) {
     header('Content-Type: text/plain');
     $logFile = $baseDir . '/storage/logs/laravel.log';
