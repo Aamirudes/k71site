@@ -2498,7 +2498,7 @@
                                         <span>🔔</span> Mute Notifications
                                     </button>
                                     <button type="button" id="optDeleteChat" class="w-full text-left px-3.5 py-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 font-bold text-rose-600 dark:text-rose-400">
-                                        <span>🗑️</span> Delete Conversation
+                                        <span>👁️‍🗨️</span> Hide / Clear Chat
                                     </button>
                                 </div>
                             </div>
@@ -4219,7 +4219,7 @@
             optDeleteChat.addEventListener('click', () => {
                 if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
                 if (!currentConversationId) return;
-                if (!confirm('Delete this conversation? All messages will be permanently deleted.')) return;
+                if (!confirm('Hide this conversation? It will be removed from your chat list, but messages are safely preserved.')) return;
                 fetch('/api/chat/delete_conversation.php', {
                     method: 'POST',
                     headers: {
@@ -4237,7 +4237,7 @@
                         activeChat.style.display = 'none';
                         emptyState.style.display = 'flex';
                         fetchConversations(false);
-                        showGlassToast('Conversation deleted', 'info');
+                        showGlassToast('Conversation hidden from your list', 'info');
                     } else {
                         alert(result.error || 'Failed to delete chat.');
                     }

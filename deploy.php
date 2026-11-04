@@ -464,6 +464,16 @@ try {
         }
     } catch (\Throwable $e) {}
 
+    // Chat soft-hide columns
+    try {
+        if (!Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+            DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN `user_one_hidden_at` TIMESTAMP NULL AFTER `last_message_at`");
+        }
+        if (!Schema::hasColumn('chat_conversations', 'user_two_hidden_at')) {
+            DB::statement("ALTER TABLE `chat_conversations` ADD COLUMN `user_two_hidden_at` TIMESTAMP NULL AFTER `user_one_hidden_at`");
+        }
+    } catch (\Throwable $e) {}
+
     // Chat schema auto-repair
     try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
     try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}

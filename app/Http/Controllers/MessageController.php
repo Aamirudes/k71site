@@ -470,6 +470,12 @@ class MessageController extends Controller
                     if (!Schema::hasColumn('chat_conversations', 'requested_by')) {
                         $table->unsignedBigInteger('requested_by')->nullable();
                     }
+                    if (!Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                        $table->timestamp('user_one_hidden_at')->nullable();
+                    }
+                    if (!Schema::hasColumn('chat_conversations', 'user_two_hidden_at')) {
+                        $table->timestamp('user_two_hidden_at')->nullable();
+                    }
                 });
             }
 
@@ -608,10 +614,32 @@ class MessageController extends Controller
         self::syncLegacyChats($userId);
 
         try {
-            $rawConversations = \Illuminate\Support\Facades\DB::table('chat_conversations')
-                ->where('user_one_id', $userId)
-                ->orWhere('user_two_id', $userId)
-                ->orderByDesc('last_message_at')
+            $hasHideCols = Schema::hasColumn('chat_conversations', 'user_one_hidden_at');
+            $query = \Illuminate\Support\Facades\DB::table('chat_conversations');
+
+            if ($hasHideCols) {
+                $query->where(function($q) use ($userId) {
+                    $q->where(function($sub) use ($userId) {
+                        $sub->where('user_one_id', $userId)
+                            ->where(function($h) {
+                                $h->whereNull('user_one_hidden_at')
+                                  ->orWhereRaw('last_message_at > user_one_hidden_at');
+                            });
+                    })->orWhere(function($sub) use ($userId) {
+                        $sub->where('user_two_id', $userId)
+                            ->where(function($h) {
+                                $h->whereNull('user_two_hidden_at')
+                                  ->orWhereRaw('last_message_at > user_two_hidden_at');
+                            });
+                    });
+                });
+            } else {
+                $query->where(function($q) use ($userId) {
+                    $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+                });
+            }
+
+            $rawConversations = $query->orderByDesc('last_message_at')
                 ->limit(50)
                 ->get();
 
@@ -782,6 +810,15 @@ class MessageController extends Controller
 
             $recipientId = ($conv->user_one_id == $userId) ? (int)$conv->user_two_id : (int)$conv->user_one_id;
 
+            // Automatically unhide conversation if this user opens it
+            if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                if ((int)$conv->user_one_id === (int)$userId && !empty($conv->user_one_hidden_at)) {
+                    \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $conversationId)->update(['user_one_hidden_at' => null]);
+                } elseif ((int)$conv->user_two_id === (int)$userId && !empty($conv->user_two_hidden_at)) {
+                    \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $conversationId)->update(['user_two_hidden_at' => null]);
+                }
+            }
+
             // Mark incoming messages as read only if unread exist
             \Illuminate\Support\Facades\DB::table('chat_messages')
                 ->where('conversation_id', $conversationId)
@@ -951,9 +988,14 @@ class MessageController extends Controller
                 $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId($baseInsert);
             }
 
+            $convUpdate = ['last_message_at' => $now, 'status' => 'accepted'];
+            if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                $convUpdate['user_one_hidden_at'] = null;
+                $convUpdate['user_two_hidden_at'] = null;
+            }
             \Illuminate\Support\Facades\DB::table('chat_conversations')
                 ->where('id', $conversationId)
-                ->update(['last_message_at' => $now, 'status' => 'accepted']);
+                ->update($convUpdate);
 
             $msgPayload = [
                 'id' => (int) $messageId,
@@ -1011,6 +1053,14 @@ class MessageController extends Controller
                     ->first();
 
                 if ($existing) {
+                    if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                        if ((int)$existing->user_one_id === (int)$userId && !empty($existing->user_one_hidden_at)) {
+                            \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $existing->id)->update(['user_one_hidden_at' => null]);
+                        } elseif ((int)$existing->user_two_id === (int)$userId && !empty($existing->user_two_hidden_at)) {
+                            \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $existing->id)->update(['user_two_hidden_at' => null]);
+                        }
+                    }
+
                     return response()->json([
                         'success' => true,
                         'conversation_id' => (int) $existing->id,
@@ -1265,12 +1315,31 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
         }
 
-        \Illuminate\Support\Facades\DB::table('chat_messages')->where('conversation_id', $conversationId)->delete();
-        \Illuminate\Support\Facades\DB::table('chat_conversations')->where('id', $conversationId)->delete();
+        self::ensureChatSchema();
+
+        $updateData = [];
+        $now = now()->toDateTimeString();
+
+        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+            if ((int)$conv->user_one_id === (int)$userId) {
+                $updateData['user_one_hidden_at'] = $now;
+            }
+            if ((int)$conv->user_two_id === (int)$userId) {
+                $updateData['user_two_hidden_at'] = $now;
+            }
+        }
+
+        if (!empty($updateData)) {
+            \Illuminate\Support\Facades\DB::table('chat_conversations')
+                ->where('id', $conversationId)
+                ->update($updateData);
+        }
 
         return response()->json([
             'success' => true,
-            'conversation_id' => $conversationId
+            'action' => 'hidden',
+            'conversation_id' => $conversationId,
+            'message' => 'Conversation hidden from your list.'
         ]);
     }
 
