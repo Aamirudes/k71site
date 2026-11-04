@@ -361,25 +361,6 @@ if (file_exists($baseDir . '/vendor/autoload.php')) {
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
-if (isset($_GET['check_dbs'])) {
-    header('Content-Type: application/json');
-    $info = [];
-    try {
-        $info['active_db'] = DB::connection()->getDatabaseName();
-        $info['config_db'] = config('database.connections.mysql.database');
-        $info['config_user'] = config('database.connections.mysql.username');
-        try {
-            $info['available_databases'] = DB::select('SHOW DATABASES');
-        } catch (\Throwable $e) {
-            $info['show_databases_error'] = $e->getMessage();
-        }
-    } catch (\Throwable $e) {
-        $info['error'] = $e->getMessage();
-    }
-    echo json_encode($info, JSON_PRETTY_PRINT);
-    exit;
-}
-
 if (isset($_GET['read_log'])) {
     header('Content-Type: text/plain');
     $logFile = $baseDir . '/storage/logs/laravel.log';
