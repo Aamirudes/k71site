@@ -366,40 +366,10 @@ if (isset($_GET['inspect_chat'])) {
     $data = [];
     try {
         $data['user_hashir'] = DB::table('users')->where('email', 'like', '%hashir%')->orWhere('username', 'like', '%hashir%')->get(['id', 'username', 'email']);
+        $data['user_1311'] = DB::table('users')->where('id', 1311)->first(['id', 'first_name', 'last_name', 'username', 'email', 'phone']);
         $data['all_chat_conversations'] = DB::table('chat_conversations')->get();
         $data['all_chat_messages_count'] = DB::table('chat_messages')->count();
         $data['recent_chat_messages'] = DB::table('chat_messages')->orderBy('id', 'desc')->limit(50)->get();
-        
-        // Scan for server backups
-        $backupCandidates = [];
-        $checkDirs = [
-            $baseDir,
-            $baseDir . '/storage',
-            $baseDir . '/storage/app',
-            $baseDir . '/database',
-            dirname($baseDir), // /home/u891587304/domains/marblemandi.org
-            dirname(dirname($baseDir)), // /home/u891587304/domains
-            dirname(dirname(dirname($baseDir))), // /home/u891587304
-            dirname(dirname(dirname($baseDir))) . '/backups',
-        ];
-        foreach ($checkDirs as $cd) {
-            if (is_dir($cd)) {
-                $items = @scandir($cd) ?: [];
-                foreach ($items as $it) {
-                    if (preg_match('/\.(sql|gz|zip|dump|bak)$/i', $it) || stripos($it, 'backup') !== false) {
-                        $backupCandidates[] = $cd . '/' . $it . ' (' . @filesize($cd . '/' . $it) . ' bytes)';
-                    }
-                }
-            }
-        }
-        $data['server_backups_found'] = $backupCandidates;
-        
-        // Check MySQL variables for binlog
-        try {
-            $binlog = DB::select("SHOW VARIABLES LIKE 'log_bin'");
-            $data['mysql_log_bin'] = $binlog;
-        } catch (\Throwable $e) {}
-
     } catch (\Throwable $e) {
         $data['error'] = $e->getMessage();
     }
