@@ -2654,7 +2654,7 @@
                 <div class="glass-action-sheet-header" id="actionSheetHeader">Options</div>
                 <div class="glass-action-sheet-actions">
                     <button type="button" class="glass-action-sheet-btn edit" id="actionSheetEditBtn" style="display: none;">Edit Message</button>
-                    <button type="button" class="glass-action-sheet-btn danger" id="actionSheetDangerBtn">Delete</button>
+                    <button type="button" class="glass-action-sheet-btn danger" id="actionSheetDangerBtn">Hide</button>
                     <button type="button" class="glass-action-sheet-btn cancel" id="actionSheetCancelBtn">Cancel</button>
                 </div>
             </div>
@@ -4044,7 +4044,7 @@
             if (type === 'conversation') {
                 actionSheetHeader.textContent = `Chat with @${label}`;
                 if (actionSheetEditBtn) actionSheetEditBtn.style.display = 'none';
-                actionSheetDangerBtn.textContent = 'Delete Chat';
+                actionSheetDangerBtn.textContent = 'Hide Chat';
             } else {
                 actionSheetHeader.textContent = 'Message Options';
                 actionSheetDangerBtn.textContent = 'Unsend Message';
@@ -4087,7 +4087,7 @@
             closeActionSheet();
 
             if (type === 'conversation') {
-                if (!confirm('Delete this conversation? All messages will be permanently deleted.')) return;
+                if (!confirm('Hide this conversation? It will be removed from your chat list, but messages are safely preserved.')) return;
                 fetch('/api/chat/delete_conversation.php', {
                     method: 'POST',
                     headers: {
@@ -4107,11 +4107,12 @@
                             emptyState.style.display = 'flex';
                         }
                         fetchConversations(false);
+                        showGlassToast('Conversation hidden from your list', 'info');
                     } else {
-                        alert(result.error || 'Failed to delete chat.');
+                        alert(result.error || 'Failed to hide chat.');
                     }
                 })
-                .catch(err => console.error('Delete chat error:', err));
+                .catch(err => console.error('Hide chat error:', err));
             } else if (type === 'message') {
                 unsendMessage(id);
             }
