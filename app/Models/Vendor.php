@@ -87,6 +87,32 @@ class Vendor extends Model
         return $this->hasOne(VendorSetting::class);
     }
 
+    public function storefrontConfig(): HasOne
+    {
+        return $this->hasOne(VendorStorefrontConfig::class);
+    }
+
+    public function storefrontRevisions(): HasMany
+    {
+        return $this->hasMany(VendorStorefrontRevision::class)->latest();
+    }
+
+    public function getStorefrontConfig(bool $preview = false): array
+    {
+        $configRecord = $this->storefrontConfig;
+        if ($configRecord) {
+            $effective = $configRecord->getEffectiveConfig($preview);
+            if (!empty($effective)) {
+                return $effective;
+            }
+        }
+
+        return app(\App\Services\Storefront\StorefrontPresetService::class)->getDefaultConfig(
+            $configRecord?->preset_key ?? $this->layout_preset ?? 'atelier',
+            $this
+        );
+    }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);

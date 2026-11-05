@@ -1,0 +1,44 @@
+@php
+    $title = $section['title'] ?? 'The Buyer Guarantee';
+    $items = $section['items'] ?? [
+        ['icon' => '✦', 'title' => 'Direct Workshop Dispatch', 'desc' => 'Packaged and authenticated straight from our studio.'],
+        ['icon' => '◈', 'title' => '100% Genuine Quality', 'desc' => 'Strict quality inspection before sealing.'],
+        ['icon' => '⚡', 'title' => 'Express Insured Delivery', 'desc' => 'Trackable transit across India.'],
+        ['icon' => '↺', 'title' => '7-Day Smooth Exchange', 'desc' => 'Direct seller exchange support.'],
+    ];
+@endphp
+
+<section id="{{ $section['id'] }}" 
+         data-section-id="{{ $section['id'] }}"
+         class="py-12 sm:py-16 border-b border-stone-200/60"
+         style="background-color: var(--sf-surface, #ffffff);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        @if(!empty($title))
+            <h2 class="text-center text-lg sm:text-xl font-bold font-heading text-stone-900 mb-8 sm:mb-10">
+                {{ $title }}
+            </h2>
+        @endif
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+            @foreach($items as $item)
+                <div class="flex items-start gap-4 p-4 rounded-xl bg-stone-50/70 border border-stone-200/60 transition hover:bg-stone-50">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-base shrink-0 shadow-2xs"
+                         style="background-color: rgba(var(--sf-accent-rgb, 197, 155, 39), 0.12); color: var(--sf-accent, #c59b27);">
+                        {{ $item['icon'] ?? '✦' }}
+                    </div>
+                    <div>
+                        <h3 class="text-xs sm:text-sm font-bold text-stone-900 font-heading">
+                            {{ $item['title'] ?? '' }}
+                        </h3>
+                        <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+                            {{ $item['desc'] ?? '' }}
+                        </p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+    </div>
+</section>
+

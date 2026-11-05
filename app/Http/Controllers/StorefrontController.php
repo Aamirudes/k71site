@@ -245,6 +245,10 @@ class StorefrontController extends Controller
             ->take(8)
             ->get();
 
-        return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts'));
+        // Check if viewing draft preview (permitted if owner is logged in)
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        $config = $vendor->getStorefrontConfig($isPreview);
+
+        return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'config', 'isPreview'));
     }
 }

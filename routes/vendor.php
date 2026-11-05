@@ -15,6 +15,18 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
+    // Store Design 2.0 Visual Storefront Builder & Presets
+    Route::get('/design', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'index'])->name('design.index');
+    Route::get('/design/editor', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'editor'])->name('design.editor');
+    Route::get('/design/preview', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'preview'])->name('design.preview');
+    Route::post('/design/save', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'saveDraft'])->name('design.save');
+    Route::post('/design/publish', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'publish'])->name('design.publish');
+    Route::post('/design/preset', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'applyPreset'])->name('design.preset');
+    Route::post('/design/reset', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'resetPreset'])->name('design.reset');
+    Route::get('/design/revisions', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'revisions'])->name('design.revisions');
+    Route::post('/design/restore', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'restoreRevision'])->name('design.restore');
+    Route::post('/design/upload', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'uploadMedia'])->name('design.upload');
+
     // Routes that require an approved store
     Route::middleware(['vendor.approved'])->group(function () {
         Route::get('/products/category-fields', [ProductController::class, 'getCategoryFields'])->name('products.category_fields');
