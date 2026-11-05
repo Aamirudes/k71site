@@ -139,6 +139,14 @@ class StorefrontDesignController extends Controller
         }
 
         $vendorShorts = $vendor->shorts()->where('status', 'published')->take(8)->get();
+        $vendorReviews = \App\Models\Review::whereIn('product_id', function($q) use ($vendor) {
+                $q->select('id')->from('products')->where('vendor_id', $vendor->id);
+            })
+            ->where('is_approved', true)
+            ->with(['user', 'product.images'])
+            ->latest()
+            ->take(6)
+            ->get();
         $isPreview = true;
 
         return view('storefront.show', compact(
@@ -147,6 +155,7 @@ class StorefrontDesignController extends Controller
             'vendorCategories',
             'featuredProducts',
             'vendorShorts',
+            'vendorReviews',
             'config',
             'isPreview'
         ));
@@ -261,32 +270,35 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $presetKey = $request->input('preset');
-        if (!in_array($presetKey, ['atelier', 'object', 'commerce', 'market', 'signature'])) {
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $requestedPreset = strtolower(trim((string)$request->input('preset')));
+        if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
         }
 
-        $newDraft = $this->presetService->getDefaultConfig($presetKey, $vendor);
+        $normalizedPreset = $this->presetService->normalizePresetKey($requestedPreset);
+        $newDraft = $this->presetService->getDefaultConfig($normalizedPreset, $vendor);
+        $newDraft['preset'] = $requestedPreset;
 
         $configRecord = $vendor->storefrontConfig()->firstOrCreate(
             ['vendor_id' => $vendor->id],
             [
-                'preset_key' => $presetKey,
+                'preset_key' => $requestedPreset,
                 'schema_version' => 2,
                 'published_config' => $newDraft,
             ]
         );
 
         $configRecord->update([
-            'preset_key' => $presetKey,
+            'preset_key' => $requestedPreset,
             'draft_config' => $newDraft,
             'last_saved_at' => now(),
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Applied preset ' . ucfirst($presetKey) . ' to draft.',
-            'preset' => $presetKey,
+            'message' => 'Applied preset ' . ucfirst($requestedPreset) . ' to draft.',
+            'preset' => $requestedPreset,
             'config' => $newDraft,
         ]);
     }
@@ -301,25 +313,29 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $presetKey = $request->input('preset');
-        if (!in_array($presetKey, ['atelier', 'object', 'commerce', 'market', 'signature'])) {
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $requestedPreset = strtolower(trim((string)$request->input('preset')));
+        if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
         }
 
-        $newConfig = $this->presetService->getDefaultConfig($presetKey, $vendor);
+        $normalizedPreset = $this->presetService->normalizePresetKey($requestedPreset);
+        $newConfig = $this->presetService->getDefaultConfig($normalizedPreset, $vendor);
+        $newConfig['preset'] = $requestedPreset;
         $sanitizedConfig = $this->presetService->sanitizeConfig($newConfig, $vendor);
+        $sanitizedConfig['preset'] = $requestedPreset;
 
         $configRecord = $vendor->storefrontConfig()->firstOrCreate(
             ['vendor_id' => $vendor->id],
             [
-                'preset_key' => $presetKey,
+                'preset_key' => $requestedPreset,
                 'schema_version' => 2,
                 'published_config' => $sanitizedConfig,
             ]
         );
 
         $configRecord->update([
-            'preset_key' => $presetKey,
+            'preset_key' => $requestedPreset,
             'draft_config' => $sanitizedConfig,
             'published_config' => $sanitizedConfig,
             'is_published' => true,
@@ -328,27 +344,27 @@ class StorefrontDesignController extends Controller
         ]);
 
         // Keep vendor table updated
-        $vendor->update(['layout_preset' => $presetKey]);
+        $vendor->update(['layout_preset' => $requestedPreset]);
 
         // Create revision entry
         VendorStorefrontRevision::create([
             'vendor_id' => $vendor->id,
-            'preset_key' => $presetKey,
+            'preset_key' => $requestedPreset,
             'config_data' => $sanitizedConfig,
-            'summary' => 'Activated ' . ucfirst($presetKey) . ' preset live',
+            'summary' => 'Activated ' . ucfirst($requestedPreset) . ' preset live',
             'created_by' => auth()->id(),
         ]);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Preset ' . ucfirst($presetKey) . ' is now activated and live on your storefront!',
-            'preset' => $presetKey,
+            'message' => 'Preset ' . ucfirst($requestedPreset) . ' is now activated and live on your storefront!',
+            'preset' => $requestedPreset,
             'public_url' => route('storefront.show', $vendor->slug),
         ]);
     }
 
     /**
-     * Save quick brand customizer settings (announcement, accent, tagline).
+     * Save quick brand customizer settings (essential controls: logo, name, banner, accent, layout).
      */
     public function saveQuickSettings(Request $request)
     {
@@ -358,8 +374,52 @@ class StorefrontDesignController extends Controller
         }
 
         $configRecord = $vendor->storefrontConfig;
-        $presetKey = $configRecord?->preset_key ?? 'atelier';
+        $presetKey = $configRecord?->preset_key ?? 'velora';
         $currentConfig = $configRecord?->getEffectiveConfig(false) ?: $this->presetService->getDefaultConfig($presetKey, $vendor);
+
+        // Store Name
+        if ($request->filled('shop_name')) {
+            $name = trim($request->input('shop_name'));
+            $vendor->shop_name = $name;
+            $currentConfig['brand']['store_name'] = $name;
+        }
+
+        // Store Logo File Upload
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('vendors/' . $vendor->id . '/logo', 'public');
+            $logoUrl = asset('storage/' . $path);
+            $vendor->logo = $path;
+            $currentConfig['brand']['logo_url'] = $logoUrl;
+        }
+
+        // Store Banner File Upload
+        if ($request->hasFile('banner')) {
+            $path = $request->file('banner')->store('vendors/' . $vendor->id . '/banner', 'public');
+            $bannerUrl = asset('storage/' . $path);
+            $vendor->banner = $path;
+            $currentConfig['brand']['banner_url'] = $bannerUrl;
+        }
+
+        // Banner Direct URL (if text URL given)
+        if ($request->filled('banner_url') && !$request->hasFile('banner')) {
+            $currentConfig['brand']['banner_url'] = trim($request->input('banner_url'));
+        }
+
+        // Hero Headline & Link
+        if ($request->has('hero_headline')) {
+            $hHeadline = trim($request->input('hero_headline', ''));
+            $currentConfig['hero']['title'] = $hHeadline;
+            $currentConfig['brand']['hero_headline'] = $hHeadline;
+        }
+        if ($request->has('hero_link')) {
+            $currentConfig['hero']['link'] = trim($request->input('hero_link', '#catalog'));
+        }
+
+        // Product Layout Mode: grid vs slider
+        if ($request->filled('product_layout')) {
+            $layout = in_array($request->input('product_layout'), ['grid', 'slider']) ? $request->input('product_layout') : 'grid';
+            $currentConfig['products']['layout'] = $layout;
+        }
 
         // Update brand values
         if ($request->has('tagline')) {
@@ -404,14 +464,13 @@ class StorefrontDesignController extends Controller
         $social['announcement_bar_enabled'] = !empty($sanitizedConfig['header']['announcement_enabled']);
         $social['announcement_link'] = $sanitizedConfig['header']['announcement_link'] ?? null;
 
-        $vendor->update([
-            'description' => $sanitizedConfig['brand']['description'] ?? $vendor->description,
-            'social_links' => $social,
-        ]);
+        $vendor->description = $sanitizedConfig['brand']['description'] ?? $vendor->description;
+        $vendor->social_links = $social;
+        $vendor->save();
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Store branding settings saved and published live!',
+            'message' => 'Storefront essentials saved and published live!',
             'public_url' => route('storefront.show', $vendor->slug),
         ]);
     }

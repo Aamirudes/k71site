@@ -263,5 +263,28 @@ class StorefrontDesignTest extends TestCase
         $publicResp->assertStatus(200);
         $publicResp->assertSee('Flash Sale: 20% off all drops today only!');
     }
+
+    public function test_vendor_can_activate_modern_signature_presets(): void
+    {
+        [$user, $vendor] = $this->createVendor('modern@test.com', 'Modern Maison', 'modern-maison');
+
+        $modernPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit'];
+
+        foreach ($modernPresets as $preset) {
+            $response = $this->actingAs($user)->postJson('/vendor/design/activate', [
+                'preset' => $preset,
+            ]);
+
+            $response->assertStatus(200)
+                     ->assertJson(['status' => 'success', 'preset' => $preset]);
+
+            $this->assertEquals($preset, $vendor->fresh()->storefrontConfig->preset_key);
+
+            // Public storefront renders with this preset and cart popup
+            $publicResp = $this->get("/s/{$vendor->slug}");
+            $publicResp->assertStatus(200);
+            $publicResp->assertSee('k71-glass-cart-popup');
+        }
+    }
 }
 

@@ -559,7 +559,10 @@ try {
     $admin->first_name = 'Hashir';
     $admin->last_name = 'Admin';
     $admin->username = 'masteradmin';
-    $admin->password = \Illuminate\Support\Facades\Hash::make('Hashir1284@0');
+    // Only set default password if account is brand new, NEVER overwrite existing user's password!
+    if (!$admin->exists || empty($admin->password)) {
+        $admin->password = \Illuminate\Support\Facades\Hash::make('Hashir1284@0');
+    }
     $admin->is_blocked = 0;
     $admin->blocked_reason = null;
     $admin->email_verified_at = $admin->email_verified_at ?: now();
@@ -569,7 +572,7 @@ try {
     $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
     $admin->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
 
-    echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   Password: Hashir1284@0\n   User ID: {$admin->id}</pre>";
+    echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   (Existing Password Preserved)\n   User ID: {$admin->id}</pre>";
 } catch (\Throwable $e) {
     echo "<pre class='error'>Failed to enforce admin account: " . htmlspecialchars($e->getMessage()) . "</pre>";
 }

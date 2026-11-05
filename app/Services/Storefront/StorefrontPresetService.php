@@ -14,91 +14,109 @@ class StorefrontPresetService
     public function getPresets(): array
     {
         return [
-            'atelier' => [
-                'id' => 'atelier',
-                'name' => 'Atelier',
-                'tagline' => 'Editorial Luxury · Fashion · Designer Brands',
-                'description' => 'A refined fashion editorial experience with high-fashion display serif typography, asymmetric lookbook storytelling, generous whitespace, and muted luxury tones.',
-                'best_for' => 'Fashion, clothing, couture, footwear, jewellery, and luxury designer labels.',
+            'velora' => [
+                'id' => 'velora',
+                'name' => 'Velora',
+                'tagline' => 'Liquid-Glass Luxury · Refined Editorial Typography',
+                'description' => 'A liquid-glass luxury shopping experience with refined editorial serif typography, elegant floating navigation capsule, champagne gold tones, and seamless boutique catalog discovery.',
+                'best_for' => 'Luxury fashion, couture, jewellery, footwear, designer apparel, and lifestyle brands.',
                 'preview_accent' => '#c59b27',
                 'preview_bg' => '#fafaf9',
                 'preview_card_bg' => '#ffffff',
                 'preview_text' => '#18181b',
                 'display_font' => 'Playfair Display',
                 'body_font' => 'Inter',
-                'badge' => 'Haute Couture',
+                'badge' => 'Liquid Luxury',
                 'recommended_for_types' => ['clothing', 'mens', 'fashion', 'footwear', 'beauty'],
             ],
-            'object' => [
-                'id' => 'object',
-                'name' => 'Object',
-                'tagline' => 'Minimal Contemporary · Premium Products · Lifestyle',
-                'description' => 'A product-first minimalist storefront inspired by Swiss and Bauhaus discipline: precise typography, clean neutral surfaces, geometric grids, and crisp product specification highlights.',
-                'best_for' => 'Modern home decor, furniture, consumer electronics, everyday carry, tech gadgets, and lifestyle goods.',
-                'preview_accent' => '#0284c7',
-                'preview_bg' => '#f8fafc',
+            'noire' => [
+                'id' => 'noire',
+                'name' => 'Noiré',
+                'tagline' => 'Premium Dark Commerce · Charcoal Surfaces',
+                'description' => 'A dramatic product-first storefront featuring deep charcoal surfaces, high-contrast product presentation, razor-sharp typography, and focused dark commerce.',
+                'best_for' => 'Contemporary fashion, footwear, electronics, luxury accessories, and modern design goods.',
+                'preview_accent' => '#f4f4f5',
+                'preview_bg' => '#121214',
+                'preview_card_bg' => '#18181b',
+                'preview_text' => '#f4f4f5',
+                'display_font' => 'Space Grotesk',
+                'body_font' => 'Inter',
+                'badge' => 'Dark Commerce',
+                'recommended_for_types' => ['streetwear', 'sneakers', 'sports', 'footwear', 'electronics'],
+            ],
+            'aurel' => [
+                'id' => 'aurel',
+                'name' => 'Aurel',
+                'tagline' => 'Refined Light Minimalism · Soft Surfaces',
+                'description' => 'A beautifully restrained, product-first storefront with soft neutral surfaces, precise product grids, architectural typography balance, and exceptional layout clarity.',
+                'best_for' => 'Everyday premium goods, modern lifestyle, home decor, furniture, and minimal apparel.',
+                'preview_accent' => '#0f172a',
+                'preview_bg' => '#f9fafb',
                 'preview_card_bg' => '#ffffff',
                 'preview_text' => '#0f172a',
                 'display_font' => 'Plus Jakarta Sans',
                 'body_font' => 'Inter',
-                'badge' => 'Design First',
+                'badge' => 'Light Minimal',
                 'recommended_for_types' => ['electronics', 'home_living', 'furniture', 'machinery', 'b2b'],
             ],
-            'commerce' => [
-                'id' => 'commerce',
-                'name' => 'Commerce',
-                'tagline' => 'Conversion-Focused · High Discovery · Product-Rich',
-                'description' => 'A high-performance online shop built for rapid discovery, intuitive category navigation, prominent sale indicators, and friction-free add-to-cart conversion.',
-                'best_for' => 'General retail, multi-category stores, footwear, electronics, FMCG, and fast-moving consumer items.',
+            'chroma' => [
+                'id' => 'chroma',
+                'name' => 'Chroma',
+                'tagline' => 'Bold Campaign Composition · Distinctive Typography',
+                'description' => 'A bold, campaign-led shopping composition with distinctive display typography, confident product arrangements, expressive visual hierarchy, and high conversion flow.',
+                'best_for' => 'Independent brands, creators, streetwear, sportswear, and distinctive collections.',
                 'preview_accent' => '#2563eb',
+                'preview_bg' => '#f8fafc',
+                'preview_card_bg' => '#ffffff',
+                'preview_text' => '#09090b',
+                'display_font' => 'Syne',
+                'body_font' => 'Space Grotesk',
+                'badge' => 'Bold Campaign',
+                'recommended_for_types' => ['creator', 'streetwear', 'crafts', 'organic', 'clothing'],
+            ],
+            'orbit' => [
+                'id' => 'orbit',
+                'name' => 'Orbit',
+                'tagline' => 'Immersive Modern Shopping · Tactile Glass Controls',
+                'description' => 'A high-performance modern shop featuring tactile frosted glass controls, subtle dimensional depth, fast product category discovery, and instant cart responsiveness.',
+                'best_for' => 'General retail, multi-category stores, footwear, electronics, and fast-moving lifestyle items.',
+                'preview_accent' => '#0284c7',
                 'preview_bg' => '#ffffff',
                 'preview_card_bg' => '#f8fafc',
                 'preview_text' => '#0f172a',
-                'display_font' => 'Inter',
+                'display_font' => 'Outfit',
                 'body_font' => 'Inter',
-                'badge' => 'High Velocity',
+                'badge' => 'Tactile Modern',
                 'recommended_for_types' => ['groceries', 'toys_sports', 'footwear', 'general', 'automotive'],
-            ],
-            'market' => [
-                'id' => 'market',
-                'name' => 'Market',
-                'tagline' => 'Warm Artisan · Independent Brands · Local Businesses',
-                'description' => 'A warm, human, character-rich storefront with earthy textures, terracotta tones, authentic craftsman notes, and personal brand warmth that builds emotional trust.',
-                'best_for' => 'Handicrafts, handmade products, regional goods, organic staples, home decor, and independent makers.',
-                'preview_accent' => '#c85a32',
-                'preview_bg' => '#fdfbf7',
-                'preview_card_bg' => '#ffffff',
-                'preview_text' => '#27272a',
-                'display_font' => 'Fraunces',
-                'body_font' => 'Outfit',
-                'badge' => 'Artisan Crafted',
-                'recommended_for_types' => ['crafts', 'organic', 'leather', 'regional', 'clothing', 'footwear'],
-            ],
-            'signature' => [
-                'id' => 'signature',
-                'name' => 'Signature',
-                'tagline' => 'Bold Modern · Campaign-Led · Distinctive Brands',
-                'description' => 'A confident, high-contrast storefront with oversized display headlines, high-impact campaign imagery, bold split-screen layouts, and unmistakable visual swagger.',
-                'best_for' => 'Streetwear, sneaker labels, sportswear, distinctive apparel, and cutting-edge creators.',
-                'preview_accent' => '#22c55e',
-                'preview_bg' => '#09090b',
-                'preview_card_bg' => '#18181b',
-                'preview_text' => '#ffffff',
-                'display_font' => 'Syne',
-                'body_font' => 'Space Grotesk',
-                'badge' => 'Bold Statement',
-                'recommended_for_types' => ['streetwear', 'sneakers', 'sports', 'creator', 'clothing'],
             ],
         ];
     }
 
     /**
-     * Get specific preset by key, falling back safely to 'atelier'.
+     * Map legacy preset key to modern preset key safely.
+     */
+    public function normalizePresetKey(string $key): string
+    {
+        $k = strtolower(trim($key));
+        $aliases = [
+            'atelier' => 'velora',
+            'signature' => 'noire',
+            'object' => 'aurel',
+            'commerce' => 'orbit',
+            'market' => 'chroma',
+        ];
+
+        return $aliases[$k] ?? (isset($this->getPresets()[$k]) ? $k : 'velora');
+    }
+
+    /**
+     * Get specific preset by key, falling back safely to 'velora'.
      */
     public function getPreset(string $key): array
     {
+        $key = $this->normalizePresetKey($key);
         $presets = $this->getPresets();
-        return $presets[$key] ?? $presets['atelier'];
+        return $presets[$key] ?? $presets['velora'];
     }
 
     /**
@@ -106,8 +124,11 @@ class StorefrontPresetService
      */
     public function getRecommendedPresetForVendor(Vendor $vendor): string
     {
-        if ($vendor->layout_preset && isset($this->getPresets()[$vendor->layout_preset])) {
-            return $vendor->layout_preset;
+        if ($vendor->layout_preset) {
+            $norm = $this->normalizePresetKey($vendor->layout_preset);
+            if (isset($this->getPresets()[$norm])) {
+                return $norm;
+            }
         }
 
         $type = $vendor->vendor_type ?? 'clothing';
@@ -117,7 +138,7 @@ class StorefrontPresetService
             }
         }
 
-        return 'atelier';
+        return 'velora';
     }
 
     /**
@@ -134,8 +155,81 @@ class StorefrontPresetService
         $tagline = $vendor->tagline ?: ($social['tagline'] ?? 'Curated authentic collections handcrafted with distinction');
         $description = $vendor->description ?: 'Welcome to our official flagship studio. Explore verified creations directly from our workshop with insured doorstep delivery across India.';
 
+        $normalizedKey = $this->normalizePresetKey($presetKey);
+
         // Preset-specific defaults
         $themes = [
+            'velora' => [
+                'font_heading' => 'Playfair Display',
+                'font_body' => 'Inter',
+                'font_scale' => 'normal',
+                'primary_color' => '#18181b',
+                'secondary_color' => '#71717a',
+                'accent_color' => '#c59b27',
+                'bg_color' => '#fafaf9',
+                'surface_color' => '#ffffff',
+                'text_color' => '#18181b',
+                'border_radius' => 'rounded-sm',
+                'content_width' => 'normal',
+                'dark_mode' => false,
+            ],
+            'noire' => [
+                'font_heading' => 'Space Grotesk',
+                'font_body' => 'Inter',
+                'font_scale' => 'normal',
+                'primary_color' => '#ffffff',
+                'secondary_color' => '#a1a1aa',
+                'accent_color' => '#f4f4f5',
+                'bg_color' => '#121214',
+                'surface_color' => '#18181b',
+                'text_color' => '#f4f4f5',
+                'border_radius' => 'rounded-xl',
+                'content_width' => 'normal',
+                'dark_mode' => true,
+            ],
+            'aurel' => [
+                'font_heading' => 'Plus Jakarta Sans',
+                'font_body' => 'Inter',
+                'font_scale' => 'normal',
+                'primary_color' => '#0f172a',
+                'secondary_color' => '#64748b',
+                'accent_color' => '#0f172a',
+                'bg_color' => '#f9fafb',
+                'surface_color' => '#ffffff',
+                'text_color' => '#0f172a',
+                'border_radius' => 'rounded-lg',
+                'content_width' => 'normal',
+                'dark_mode' => false,
+            ],
+            'chroma' => [
+                'font_heading' => 'Syne',
+                'font_body' => 'Space Grotesk',
+                'font_scale' => 'large',
+                'primary_color' => '#09090b',
+                'secondary_color' => '#64748b',
+                'accent_color' => '#2563eb',
+                'bg_color' => '#f8fafc',
+                'surface_color' => '#ffffff',
+                'text_color' => '#09090b',
+                'border_radius' => 'rounded-2xl',
+                'content_width' => 'wide',
+                'dark_mode' => false,
+            ],
+            'orbit' => [
+                'font_heading' => 'Outfit',
+                'font_body' => 'Inter',
+                'font_scale' => 'normal',
+                'primary_color' => '#0f172a',
+                'secondary_color' => '#475569',
+                'accent_color' => '#0284c7',
+                'bg_color' => '#ffffff',
+                'surface_color' => '#f8fafc',
+                'text_color' => '#0f172a',
+                'border_radius' => 'rounded-2xl',
+                'content_width' => 'wide',
+                'dark_mode' => false,
+            ],
+            // Legacy aliases for backward compatibility
             'atelier' => [
                 'font_heading' => 'Playfair Display',
                 'font_body' => 'Inter',
@@ -208,7 +302,7 @@ class StorefrontPresetService
             ],
         ];
 
-        $theme = $themes[$presetKey] ?? $themes['atelier'];
+        $theme = $themes[$presetKey] ?? $themes[$normalizedKey] ?? $themes['velora'];
 
         // Header configuration
         $header = [

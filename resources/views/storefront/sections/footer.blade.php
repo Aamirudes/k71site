@@ -99,12 +99,12 @@
             <!-- Column 3: Customer Care (2 cols) -->
             <div class="md:col-span-2 space-y-3">
                 <h4 class="text-xs uppercase font-bold tracking-widest text-white/60">
-                    Boutique Care
+                    Customer Care
                 </h4>
                 <ul class="space-y-2 text-xs sm:text-sm text-stone-300">
-                    <li><a href="#story" class="hover:text-white transition">About Us</a></li>
-                    <li><a href="#contact" class="hover:text-white transition">Shipping & Returns</a></li>
-                    <li><a href="#contact" class="hover:text-white transition">Help & Inquiries</a></li>
+                    <li><a href="#catalog" class="hover:text-white transition">Catalog</a></li>
+                    <li><a href="#trust" class="hover:text-white transition">Shipping &amp; Delivery</a></li>
+                    <li><a href="#contact" class="hover:text-white transition">Help &amp; Inquiries</a></li>
                     <li><a href="{{ route('catalog.index') }}" class="hover:text-white transition">K71 Directory</a></li>
                 </ul>
             </div>

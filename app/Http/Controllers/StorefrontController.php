@@ -245,10 +245,20 @@ class StorefrontController extends Controller
             ->take(8)
             ->get();
 
+        // Vendor's genuine customer reviews (only approved authentic reviews)
+        $vendorReviews = \App\Models\Review::whereIn('product_id', function($q) use ($vendor) {
+                $q->select('id')->from('products')->where('vendor_id', $vendor->id);
+            })
+            ->where('is_approved', true)
+            ->with(['user', 'product.images'])
+            ->latest()
+            ->take(6)
+            ->get();
+
         // Check if viewing draft preview (permitted if owner is logged in)
         $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
         $config = $vendor->getStorefrontConfig($isPreview);
 
-        return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'config', 'isPreview'));
+        return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'vendorReviews', 'config', 'isPreview'));
     }
 }
