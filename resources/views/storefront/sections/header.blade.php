@@ -5,71 +5,68 @@
     
     $storeName = $brandCfg['store_name'] ?? $vendor->shop_name;
     $storeLogo = $brandCfg['logo_url'] ?? $vendor->logo_url;
-    $logoHeight = $headerCfg['logo_height'] ?? 38;
-    $layout = $headerCfg['layout'] ?? 'split';
+    $logoHeight = $headerCfg['logo_height'] ?? 36;
     $isSticky = $headerCfg['sticky'] ?? true;
     $showSearch = $headerCfg['show_search'] ?? true;
-    $showCart = $headerCfg['show_cart'] ?? true;
-    $showWishlist = $headerCfg['show_wishlist'] ?? true;
     
     $cartCount = 0;
     if (auth()->check()) {
         $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
         $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
+    
     $waPhone = preg_replace('/[^0-9]/', '', (string) ($brandCfg['whatsapp'] ?? $vendor->contact_phone));
     if (strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
-    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode("Namaste {$storeName}! I am browsing your store on K71.") : null;
+    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode("Namaste {$storeName}! I am viewing your boutique on K71.") : null;
 
     $searchQuery = request('search', '');
 @endphp
 
-<header id="storefront-header" 
-        data-section-id="header"
-        class="w-full border-b transition-all duration-200 z-30 {{ $isSticky ? 'sticky top-0 backdrop-blur-md bg-opacity-95' : 'relative' }}"
-        style="background-color: var(--sf-surface, #ffffff); border-color: rgba(0,0,0,0.06);"
-        x-data="{ mobileMenuOpen: false, searchOpen: false }">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- FLOATING LIQUID GLASS HEADER CAPSULE -->
+<div class="w-full px-3 sm:px-6 pt-3 sm:pt-4 {{ $isSticky ? 'sticky top-0 z-40' : 'relative z-20' }}"
+     x-data="{ mobileMenuOpen: false }">
+    <header id="storefront-header"
+            class="max-w-7xl mx-auto rounded-3xl transition-all duration-300 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/60 dark:border-white/10"
+            style="background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);">
         
-        {{-- LAYOUT 1: SPLIT (Default Atelier & Luxury) --}}
-        @if($layout === 'split' || $layout === 'minimal')
-        <div class="flex items-center justify-between h-16 sm:h-20 gap-4">
-            <!-- Mobile Menu Button -->
-            <div class="flex items-center md:hidden">
-                <button type="button" 
-                        @click="mobileMenuOpen = !mobileMenuOpen" 
-                        class="p-2 -ml-2 rounded-xl text-stone-700 hover:text-stone-900 hover:bg-stone-100 transition"
-                        aria-label="Open navigation menu">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
-            </div>
+        <div class="px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-3 sm:gap-6">
+            
+            <!-- Mobile Menu Trigger -->
+            <button type="button" 
+                    @click="mobileMenuOpen = !mobileMenuOpen"
+                    class="p-2 -ml-2 rounded-2xl md:hidden text-stone-700 hover:text-stone-950 hover:bg-white/60 transition"
+                    aria-label="Toggle navigation">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
 
-            <!-- Store Brand / Logo -->
+            <!-- Store Brand / Liquid Logo -->
             <div class="flex items-center gap-3">
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
-                        <img src="{{ $storeLogo }}" 
-                             alt="{{ $storeName }}" 
-                             style="height: {{ $logoHeight }}px;" 
-                             class="w-auto object-contain transition-transform group-hover:scale-102"
-                             onerror="this.style.display='none'; document.getElementById('logo-fallback-text').style.display='block';">
-                        <span id="logo-fallback-text" style="display:none;" class="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 group-hover:opacity-80 transition font-heading">
+                        <div class="relative p-1 rounded-2xl bg-white/80 shadow-2xs border border-white/80 group-hover:scale-102 transition">
+                            <img src="{{ $storeLogo }}" 
+                                 alt="{{ $storeName }}" 
+                                 style="height: {{ $logoHeight }}px;" 
+                                 class="w-auto object-contain rounded-xl"
+                                 onerror="this.style.display='none'; document.getElementById('hdr-fallback-name').style.display='block';">
+                        </div>
+                        <span id="hdr-fallback-name" style="display:none;" class="text-lg sm:text-xl font-bold font-heading text-stone-950">
                             {{ $storeName }}
                         </span>
                     @else
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0"
-                             style="background-color: var(--sf-primary, #18181b);">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0 border border-white/20"
+                             style="background: linear-gradient(135deg, var(--sf-primary, #18181b), var(--sf-accent, #c59b27));">
                             {{ strtoupper(substr($storeName, 0, 1)) }}
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-lg sm:text-xl font-bold tracking-tight text-stone-900 font-heading leading-tight">
+                            <span class="text-base sm:text-lg font-black tracking-tight text-stone-950 font-heading leading-tight group-hover:opacity-85 transition">
                                 {{ $storeName }}
                             </span>
                             @if(!empty($brandCfg['city']))
-                                <span class="text-[10px] uppercase tracking-widest text-stone-400 font-semibold">
-                                    {{ $brandCfg['city'] }}
+                                <span class="text-[9px] uppercase tracking-widest text-stone-400 font-bold">
+                                    {{ $brandCfg['city'] }} · Studio
                                 </span>
                             @endif
                         </div>
@@ -77,33 +74,31 @@
                 </a>
             </div>
 
-            <!-- Desktop Nav Links -->
-            <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-stone-600">
-                <a href="{{ route('storefront.show', $vendor->slug) }}" 
-                   class="hover:text-stone-900 transition {{ !request()->filled('category') && !request()->filled('search') ? 'text-stone-950 font-bold border-b-2 border-stone-900 pb-0.5' : '' }}">
+            <!-- Center Navigation: Liquid Frosted Category Pills -->
+            <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-stone-100/70 border border-stone-200/60 shadow-inner">
+                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                   class="px-4 py-1.5 rounded-full text-xs font-bold transition-all {{ !request()->filled('category') && !request()->filled('search') ? 'bg-white text-stone-950 shadow-xs' : 'text-stone-600 hover:text-stone-950 hover:bg-white/50' }}">
                     All Items
                 </a>
                 @foreach($vendorCategories->take(4) as $cat)
-                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}" 
-                       class="hover:text-stone-900 transition {{ request('category') === $cat->slug ? 'text-stone-950 font-bold border-b-2 border-stone-900 pb-0.5' : '' }}">
+                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                       class="px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all {{ request('category') === $cat->slug ? 'bg-white text-stone-950 shadow-xs font-bold' : 'text-stone-600 hover:text-stone-950 hover:bg-white/50' }}">
                         {{ $cat->name }}
                     </a>
                 @endforeach
-                <a href="#story" class="hover:text-stone-900 transition">About Studio</a>
-                <a href="#contact" class="hover:text-stone-900 transition">Client Help</a>
             </nav>
 
-            <!-- Actions: Search, Wishlist, Cart, WhatsApp -->
+            <!-- Right Actions: Liquid Search, WhatsApp & Floating Popup Cart Capsule -->
             <div class="flex items-center gap-2 sm:gap-3">
                 @if($showSearch)
                     <div class="relative hidden sm:block">
-                        <form action="{{ route('storefront.show', $vendor->slug) }}" method="GET">
+                        <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET">
                             <input type="text" 
                                    name="search" 
                                    value="{{ $searchQuery }}" 
-                                   placeholder="Search {{ $storeName }}..." 
-                                   class="pl-9 pr-4 py-1.5 text-xs rounded-full border border-stone-200 bg-stone-50/70 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-900 focus:border-stone-900 w-36 lg:w-48 transition-all">
-                            <svg class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                   placeholder="Search catalog..." 
+                                   class="pl-8 pr-3 py-1.5 text-xs rounded-full border border-stone-200/80 bg-white/70 focus:bg-white focus:outline-none focus:ring-1 focus:ring-stone-800 w-32 md:w-44 transition-all">
+                            <svg class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                         </form>
@@ -114,173 +109,70 @@
                     <a href="{{ $waUrl }}" 
                        target="_blank" 
                        rel="noopener"
-                       title="Chat with {{ $storeName }}"
-                       class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition shadow-2xs">
+                       title="WhatsApp Stylist"
+                       class="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-500/10 border border-emerald-400/30 hover:bg-emerald-500/20 transition shadow-2xs">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>WhatsApp Stylist</span>
+                        <span>Stylist</span>
                     </a>
                 @endif
 
-                @if($showCart)
-                    <button type="button" 
-                            onclick="if(window.openK71Cart) { window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
-                            class="relative p-2 rounded-xl text-stone-700 hover:text-stone-950 hover:bg-stone-100 transition"
-                            aria-label="View shopping bag">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                        </svg>
-                        <span id="cart-counter-badge" 
-                              class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white rounded-full flex items-center justify-center shadow-xs transition-transform {{ $cartCount > 0 ? 'scale-100' : 'scale-0' }}"
-                              style="background-color: var(--sf-accent, #c59b27);">
-                            {{ $cartCount }}
-                        </span>
-                    </button>
-                @endif
-            </div>
-        </div>
-
-        {{-- LAYOUT 2: SEARCH PROMINENT (Commerce & High Velocity) --}}
-        @elseif($layout === 'search_prominent')
-        <div class="py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
-            <div class="w-full sm:w-auto flex items-center justify-between">
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3">
-                    @if(!empty($storeLogo))
-                        <img src="{{ $storeLogo }}" alt="{{ $storeName }}" style="height: {{ $logoHeight }}px;" class="w-auto object-contain">
-                    @else
-                        <div class="w-9 h-9 rounded-lg flex items-center justify-center font-bold text-white text-base shadow-sm shrink-0"
-                             style="background-color: var(--sf-primary, #1e40af);">
-                            {{ strtoupper(substr($storeName, 0, 1)) }}
-                        </div>
-                        <span class="text-xl font-black tracking-tight text-stone-900 font-heading">
-                            {{ $storeName }}
-                        </span>
-                    @endif
-                </a>
-
-                <div class="flex items-center gap-2 sm:hidden">
-                    <button type="button" 
-                            onclick="if(window.openK71Cart) { window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
-                            class="relative p-2 rounded-xl text-stone-800">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                        </svg>
-                        <span class="absolute top-0 right-0 min-w-[16px] h-[16px] px-1 text-[9px] font-bold text-white rounded-full flex items-center justify-center bg-blue-600">
-                            {{ $cartCount }}
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Large Center Search Bar -->
-            <div class="w-full flex-1 max-w-xl">
-                <form action="{{ route('storefront.show', $vendor->slug) }}" method="GET" class="relative">
-                    <input type="text" 
-                           name="search" 
-                           value="{{ $searchQuery }}" 
-                           placeholder="Search from {{ $products->total() ?? 'all' }} items in {{ $storeName }}..." 
-                           class="w-full pl-10 pr-24 py-2 text-xs sm:text-sm rounded-full border border-stone-300 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-inner">
-                    <svg class="w-4 h-4 text-stone-400 absolute left-3.5 top-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <button type="submit" 
-                            class="absolute right-1.5 top-1 px-4 py-1.5 rounded-full text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 transition">
-                        Find
-                    </button>
-                </form>
-            </div>
-
-            <!-- Actions Right -->
-            <div class="hidden sm:flex items-center gap-3 shrink-0">
-                @if($waUrl)
-                    <a href="{{ $waUrl }}" target="_blank" class="px-3 py-2 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 transition flex items-center gap-1.5">
-                        <span>💬 Quick Chat</span>
-                    </a>
-                @endif
+                <!-- FLOATING LIQUID CART POPUP BUTTON -->
                 <button type="button" 
-                        onclick="if(window.openK71Cart) { window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
-                        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-stone-900 hover:bg-stone-800 transition shadow-sm">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        onclick="if(window.openK71Cart){ window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
+                        class="group relative flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-102 cursor-pointer"
+                        style="background: linear-gradient(135deg, var(--sf-primary, #18181b), #27272a); border: 1px solid rgba(255, 255, 255, 0.2);"
+                        aria-label="Open Shopping Bag Popup">
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    <span>Bag ({{ $cartCount }})</span>
-                </button>
-            </div>
-        </div>
-
-        {{-- LAYOUT 3: CENTERED OR STACKED (Signature & Bold) --}}
-        @else
-        <div class="flex items-center justify-between h-16 sm:h-20">
-            <button type="button" @click="mobileMenuOpen = !mobileMenuOpen" class="p-2 md:hidden text-inherit">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-            </button>
-            <div class="flex-1 text-center">
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="inline-block">
-                    @if(!empty($storeLogo))
-                        <img src="{{ $storeLogo }}" alt="{{ $storeName }}" style="height: {{ $logoHeight }}px;" class="h-auto max-h-12 mx-auto object-contain">
-                    @else
-                        <span class="text-xl sm:text-2xl font-black uppercase tracking-wider font-heading">
-                            {{ $storeName }}
-                        </span>
-                    @endif
-                </a>
-            </div>
-            <div class="flex items-center gap-2">
-                <button type="button" 
-                        onclick="if(window.openK71Cart) { window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
-                        class="relative p-2 rounded-full hover:bg-stone-100 dark:hover:bg-zinc-800 transition">
-                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                    <span class="absolute top-0 right-0 w-4 h-4 rounded-full bg-emerald-500 text-black text-[9px] font-black flex items-center justify-center">
+                    <span class="hidden sm:inline">Bag</span>
+                    <span id="cart-counter-badge" 
+                          class="min-w-[18px] h-[18px] px-1 text-[10px] font-black text-stone-950 rounded-full flex items-center justify-center transition shadow-xs"
+                          style="background-color: var(--sf-accent, #c59b27);">
                         {{ $cartCount }}
                     </span>
                 </button>
             </div>
-        </div>
-        @endif
-    </div>
 
-    <!-- Mobile Navigation Drawer -->
-    <div x-show="mobileMenuOpen" 
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 -translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 -translate-y-2"
-         class="md:hidden border-t border-stone-200 bg-white dark:bg-zinc-900 px-4 py-6 shadow-xl space-y-4"
-         style="display: none;">
-        <!-- Mobile Search -->
-        <form action="{{ route('storefront.show', $vendor->slug) }}" method="GET" class="relative">
-            <input type="text" 
-                   name="search" 
-                   value="{{ $searchQuery }}" 
-                   placeholder="Search {{ $storeName }}..." 
-                   class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none">
-            <svg class="w-4 h-4 text-stone-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </form>
-
-        <!-- Categories List -->
-        <div class="space-y-1">
-            <div class="text-[10px] uppercase font-bold text-stone-400 tracking-wider px-2">Store Departments</div>
-            <a href="{{ route('storefront.show', $vendor->slug) }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-stone-800 hover:bg-stone-50">
-                All Products ({{ $products->total() ?? 0 }})
-            </a>
-            @foreach($vendorCategories as $cat)
-                <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}" 
-                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm text-stone-700 hover:bg-stone-50">
-                    <span>{{ $cat->name }}</span>
-                    <span class="text-xs text-stone-400 font-semibold">{{ $cat->products_count }}</span>
-                </a>
-            @endforeach
         </div>
 
-        @if($waUrl)
-            <div class="pt-2 border-t border-stone-100">
-                <a href="{{ $waUrl }}" target="_blank" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm">
-                    <span>💬 WhatsApp Studio Stylist</span>
+        <!-- Mobile Drawer Navigation -->
+        <div x-show="mobileMenuOpen" 
+             x-collapse
+             class="md:hidden border-t border-stone-200/60 p-4 space-y-3 bg-white/90 rounded-b-3xl"
+             style="display: none;">
+            <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative">
+                <input type="text" 
+                       name="search" 
+                       value="{{ $searchQuery }}" 
+                       placeholder="Search products in store..." 
+                       class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-stone-200 bg-stone-50 focus:bg-white focus:outline-none">
+                <svg class="w-4 h-4 text-stone-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </form>
+
+            <div class="space-y-1 pt-1">
+                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="block px-3 py-2 rounded-xl text-xs font-bold text-stone-900 hover:bg-stone-100">
+                    All Products ({{ $products->total() ?? 0 }})
                 </a>
+                @foreach($vendorCategories as $cat)
+                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                       class="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-stone-700 hover:bg-stone-100">
+                        <span>{{ $cat->name }}</span>
+                        <span class="text-[10px] text-stone-400 font-bold px-1.5 py-0.5 rounded-full bg-stone-100">{{ $cat->products_count }}</span>
+                    </a>
+                @endforeach
             </div>
-        @endif
-    </div>
-</header>
+
+            @if($waUrl)
+                <div class="pt-2 border-t border-stone-100">
+                    <a href="{{ $waUrl }}" target="_blank" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm">
+                        <span>💬 Message Stylist on WhatsApp</span>
+                    </a>
+                </div>
+            @endif
+        </div>
+
+    </header>
+</div>

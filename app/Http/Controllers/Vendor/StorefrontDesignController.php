@@ -292,6 +292,131 @@ class StorefrontDesignController extends Controller
     }
 
     /**
+     * Instantly activate and publish a preset to live storefront.
+     */
+    public function activatePreset(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $presetKey = $request->input('preset');
+        if (!in_array($presetKey, ['atelier', 'object', 'commerce', 'market', 'signature'])) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
+        }
+
+        $newConfig = $this->presetService->getDefaultConfig($presetKey, $vendor);
+        $sanitizedConfig = $this->presetService->sanitizeConfig($newConfig, $vendor);
+
+        $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'preset_key' => $presetKey,
+                'schema_version' => 2,
+                'published_config' => $sanitizedConfig,
+            ]
+        );
+
+        $configRecord->update([
+            'preset_key' => $presetKey,
+            'draft_config' => $sanitizedConfig,
+            'published_config' => $sanitizedConfig,
+            'is_published' => true,
+            'last_saved_at' => now(),
+            'last_published_at' => now(),
+        ]);
+
+        // Keep vendor table updated
+        $vendor->update(['layout_preset' => $presetKey]);
+
+        // Create revision entry
+        VendorStorefrontRevision::create([
+            'vendor_id' => $vendor->id,
+            'preset_key' => $presetKey,
+            'config_data' => $sanitizedConfig,
+            'summary' => 'Activated ' . ucfirst($presetKey) . ' preset live',
+            'created_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Preset ' . ucfirst($presetKey) . ' is now activated and live on your storefront!',
+            'preset' => $presetKey,
+            'public_url' => route('storefront.show', $vendor->slug),
+        ]);
+    }
+
+    /**
+     * Save quick brand customizer settings (announcement, accent, tagline).
+     */
+    public function saveQuickSettings(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $configRecord = $vendor->storefrontConfig;
+        $presetKey = $configRecord?->preset_key ?? 'atelier';
+        $currentConfig = $configRecord?->getEffectiveConfig(false) ?: $this->presetService->getDefaultConfig($presetKey, $vendor);
+
+        // Update brand values
+        if ($request->has('tagline')) {
+            $currentConfig['brand']['description'] = trim($request->input('tagline', ''));
+        }
+        if ($request->has('announcement_text')) {
+            $currentConfig['header']['announcement_text'] = trim($request->input('announcement_text', ''));
+        }
+        if ($request->has('announcement_enabled')) {
+            $currentConfig['header']['announcement_enabled'] = $request->boolean('announcement_enabled');
+        }
+        if ($request->has('announcement_link')) {
+            $currentConfig['header']['announcement_link'] = trim($request->input('announcement_link', ''));
+        }
+        if ($request->filled('accent_color')) {
+            $accent = $request->input('accent_color');
+            $currentConfig['theme']['accent_color'] = $accent;
+        }
+
+        $sanitizedConfig = $this->presetService->sanitizeConfig($currentConfig, $vendor);
+
+        $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'preset_key' => $presetKey,
+                'schema_version' => 2,
+                'published_config' => $sanitizedConfig,
+            ]
+        );
+
+        $configRecord->update([
+            'draft_config' => $sanitizedConfig,
+            'published_config' => $sanitizedConfig,
+            'is_published' => true,
+            'last_saved_at' => now(),
+            'last_published_at' => now(),
+        ]);
+
+        // Keep vendor table updated
+        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
+        $social['announcement_bar'] = $sanitizedConfig['header']['announcement_text'] ?? null;
+        $social['announcement_bar_enabled'] = !empty($sanitizedConfig['header']['announcement_enabled']);
+        $social['announcement_link'] = $sanitizedConfig['header']['announcement_link'] ?? null;
+
+        $vendor->update([
+            'description' => $sanitizedConfig['brand']['description'] ?? $vendor->description,
+            'social_links' => $social,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Store branding settings saved and published live!',
+            'public_url' => route('storefront.show', $vendor->slug),
+        ]);
+    }
+
+    /**
      * Reset draft to preset defaults.
      */
     public function resetPreset(Request $request)

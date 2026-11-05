@@ -1,85 +1,91 @@
 @php
-    $title = $section['title'] ?? 'Designed with Distinction';
-    $subtitle = $section['subtitle'] ?? $config['brand']['tagline'] ?? '';
-    $description = $section['description'] ?? $config['brand']['description'] ?? '';
-    $badge = $section['badge'] ?? null;
-    $ctaPrimaryText = $section['cta_primary_text'] ?? 'Explore Catalog';
-    $ctaPrimaryLink = $section['cta_primary_link'] ?? '#catalog';
-    $ctaSecondaryText = $section['cta_secondary_text'] ?? 'Maker Story';
-    $ctaSecondaryLink = $section['cta_secondary_link'] ?? '#story';
-    $imageUrl = $section['image_url'] ?? $config['brand']['banner_url'] ?? $vendor->banner_url;
+    $flagship = $featuredProducts->first() ?? $products->first();
+    $title = $section['title'] ?? ($flagship ? $flagship->title : 'Engineered Precision');
+    $subtitle = $section['subtitle'] ?? $config['brand']['tagline'] ?? 'Designed with purpose, finished by hand';
+    $badge = $section['badge'] ?? '✦ New Season Release';
+
+    if ($flagship) {
+        $priceRupees = number_format($flagship->base_price / 100, 2);
+        $flagshipImg = $flagship->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 800) : asset('images/product-placeholder.svg');
+        $defaultVariantId = $flagship->variants->first()?->id;
+    }
 @endphp
 
-<section id="{{ $section['id'] }}" 
-         data-section-id="{{ $section['id'] }}"
-         class="relative py-12 sm:py-20 lg:py-24 border-b border-stone-200/60 overflow-hidden"
-         style="background-color: var(--sf-surface, #ffffff);">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+<!-- CYBER-GLASS PRODUCT SPLIT HERO -->
+<section id="hero-split" class="relative overflow-hidden py-8 sm:py-14">
+    <!-- Ambient Blur Bubble -->
+    <div class="absolute top-0 right-1/4 w-80 h-80 rounded-full opacity-20 filter blur-3xl pointer-events-none"
+         style="background: var(--sf-accent, #0284c7);"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 border border-white/60 shadow-[0_15px_40px_rgba(0,0,0,0.05)]"
+             style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);">
             
-            <!-- Left Copy Column (7 cols) -->
-            <div class="lg:col-span-7 flex flex-col items-start pr-0 lg:pr-8">
-                @if(!empty($badge))
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-5 border"
-                         style="background-color: rgba(var(--sf-accent-rgb, 200, 90, 50), 0.08); border-color: rgba(var(--sf-accent-rgb, 200, 90, 50), 0.25); color: var(--sf-accent, #c85a32);">
-                        <span>{{ $badge }}</span>
-                    </div>
-                @endif
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <!-- Left Details Column (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col items-start pr-0 lg:pr-8">
+                    <span class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider mb-4 border"
+                          style="background: rgba(var(--sf-accent-rgb, 2, 132, 199), 0.1); border-color: rgba(var(--sf-accent-rgb, 2, 132, 199), 0.3); color: var(--sf-accent, #0284c7);">
+                        {{ $badge }}
+                    </span>
 
-                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-stone-900 font-heading leading-tight mb-5">
-                    {{ $title }}
-                </h1>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-stone-900 font-heading leading-tight mb-4">
+                        {{ $flagship ? $flagship->title : $vendor->shop_name }}
+                    </h1>
 
-                @if(!empty($subtitle))
-                    <p class="text-lg sm:text-xl font-medium text-stone-700 mb-4 leading-snug">
-                        {{ $subtitle }}
+                    <p class="text-sm sm:text-base text-stone-600 mb-6 leading-relaxed">
+                        {{ $flagship && !empty($flagship->short_description) ? $flagship->short_description : $subtitle }}
                     </p>
-                @endif
 
-                @if(!empty($description))
-                    <p class="text-sm sm:text-base text-stone-500 mb-8 max-w-xl leading-relaxed">
-                        {{ $description }}
-                    </p>
-                @endif
+                    @if($flagship)
+                        <!-- Tech Spec Chips / Interactive Pills -->
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <span class="px-3 py-1 rounded-xl text-xs font-semibold bg-stone-100/80 text-stone-700 border border-stone-200/60">
+                                📦 Express Direct Dispatch
+                            </span>
+                            <span class="px-3 py-1 rounded-xl text-xs font-semibold bg-stone-100/80 text-stone-700 border border-stone-200/60">
+                                🛡️ Verified Quality Guarantee
+                            </span>
+                            <span class="px-3 py-1 rounded-xl text-xs font-semibold bg-stone-100/80 text-stone-700 border border-stone-200/60">
+                                ↺ 7-Day Exchange
+                            </span>
+                        </div>
 
-                <div class="flex flex-wrap items-center gap-3 sm:gap-4">
-                    @if(!empty($ctaPrimaryText))
-                        <a href="{{ $ctaPrimaryLink }}" 
-                           class="px-6 sm:px-8 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-white rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:scale-101"
-                           style="background-color: var(--sf-primary, #0f172a);">
-                            {{ $ctaPrimaryText }}
-                        </a>
-                    @endif
+                        <!-- Price & Instant Cart Trigger -->
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="text-2xl font-black text-stone-950">
+                                ₹{{ $priceRupees }}
+                            </div>
 
-                    @if(!empty($ctaSecondaryText))
-                        <a href="{{ $ctaSecondaryLink }}" 
-                           class="px-5 sm:px-6 py-3.5 text-xs sm:text-sm font-bold uppercase tracking-wider text-stone-700 rounded-xl border border-stone-300 hover:border-stone-800 bg-white hover:bg-stone-50 transition-all duration-300">
-                            {{ $ctaSecondaryText }}
-                        </a>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Right Image Column (5 cols) -->
-            <div class="lg:col-span-5 w-full">
-                <div class="relative w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/5] rounded-2xl overflow-hidden shadow-lg border border-stone-200/80 bg-stone-100">
-                    @if(!empty($imageUrl))
-                        <img src="{{ $imageUrl }}" 
-                             alt="{{ $title }}" 
-                             class="w-full h-full object-cover transition-transform duration-700 hover:scale-103"
-                             loading="eager">
-                    @else
-                        <!-- Elegant Workshop Graphic Placeholder -->
-                        <div class="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-stone-100 to-stone-200">
-                            <span class="text-4xl mb-3">🏬</span>
-                            <span class="font-heading font-bold text-lg text-stone-800">{{ $config['brand']['store_name'] ?? $vendor->shop_name }}</span>
-                            <span class="text-xs text-stone-500 mt-1">Verified K71 Studio</span>
+                            <button type="button" 
+                                    onclick="window.quickAddToCart({{ $flagship->id }}, {{ $defaultVariantId ?: 'null' }})"
+                                    class="px-8 py-3.5 rounded-2xl text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-102 flex items-center gap-2 cursor-pointer"
+                                    style="background-color: var(--sf-primary, #0f172a);">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                </svg>
+                                <span>Quick Add · Open Bag</span>
+                            </button>
                         </div>
                     @endif
                 </div>
+
+                <!-- Right Flagship Image (5 cols) -->
+                <div class="lg:col-span-5 w-full">
+                    <div class="relative aspect-square sm:aspect-[4/3] lg:aspect-[4/5] rounded-3xl overflow-hidden shadow-xl border border-white/80 bg-stone-100">
+                        @if($flagship)
+                            <img src="{{ $flagshipImg }}" 
+                                 alt="{{ $flagship->title }}" 
+                                 class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-4xl">🛍️</div>
+                        @endif
+                    </div>
+                </div>
+
             </div>
 
         </div>
     </div>
 </section>
-

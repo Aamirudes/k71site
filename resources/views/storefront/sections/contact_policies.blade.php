@@ -17,7 +17,7 @@
 @endphp
 
 <section id="contact" 
-         data-section-id="{{ $section['id'] }}"
+         data-section-id="{{ $section['id'] ?? 'contact' }}"
          class="py-12 sm:py-16 border-b border-stone-200/60"
          style="background-color: var(--sf-bg, #fafaf9);">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

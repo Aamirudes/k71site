@@ -1,11 +1,9 @@
 @php
-    $title = $section['title'] ?? 'Featured Selections';
-    $subtitle = $section['subtitle'] ?? 'Handcrafted items available for immediate dispatch';
+    $title = $section['title'] ?? 'Boutique Catalog';
+    $subtitle = $section['subtitle'] ?? 'Handcrafted items available for immediate pan-India dispatch';
     $columns = (int) ($section['columns'] ?? 4);
     $aspectRatio = $section['aspect_ratio'] ?? '3:4';
-    $showQuickBuy = $section['show_quick_buy'] ?? true;
     
-    // Choose product list: either curated products, featured spotlight, or the paginated catalog products
     $source = $section['source'] ?? 'all';
     $displayProducts = match($source) {
         'featured' => $featuredProducts,
@@ -30,47 +28,43 @@
     $currentSort = request('sort', 'newest');
 @endphp
 
-<section id="catalog" 
-         data-section-id="{{ $section['id'] }}"
-         class="py-12 sm:py-16 lg:py-20"
-         style="background-color: var(--sf-bg, #fafaf9);">
+<!-- CORE PRODUCT-FIRST DISCOVERY GRID -->
+<section id="catalog" class="py-8 sm:py-14 relative z-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Header & In-Store Filters -->
-        <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 sm:mb-10 gap-4 border-b border-stone-200/60 pb-6">
+        <!-- Filter, Sort & Catalog Header -->
+        <div class="p-4 sm:p-6 rounded-3xl border border-white/60 shadow-xs mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4"
+             style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px);">
             <div>
-                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-stone-900 font-heading">
+                <h2 class="text-xl sm:text-2xl font-black tracking-tight text-stone-900 font-heading">
                     {{ $title }}
                 </h2>
-                @if(!empty($subtitle))
-                    <p class="text-xs sm:text-sm text-stone-500 mt-1 max-w-xl">
-                        {{ $subtitle }}
-                    </p>
-                @endif
+                <p class="text-xs text-stone-500 mt-0.5">
+                    Showing {{ $displayProducts->total() ?? $displayProducts->count() }} authentic items
+                </p>
                 
                 @if($currentSearch || $currentCategory)
-                    <div class="flex items-center gap-2 mt-3 text-xs">
-                        <span class="text-stone-400">Filtering:</span>
+                    <div class="flex items-center gap-2 mt-2">
                         @if($currentCategory)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-900 text-white font-medium text-[11px]">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 text-white text-[11px] font-bold">
                                 {{ $vendorCategories->firstWhere('slug', $currentCategory)?->name ?? $currentCategory }}
-                                <a href="{{ route('storefront.show', array_merge(request()->except('category', 'page'), ['slug' => $vendor->slug])) }}" class="ml-1 hover:text-stone-300">✕</a>
+                                <a href="{{ route('storefront.show', array_merge(request()->except('category', 'page'), ['slug' => $vendor->slug])) }}#catalog" class="opacity-75 hover:opacity-100">✕</a>
                             </span>
                         @endif
                         @if($currentSearch)
-                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-stone-900 text-white font-medium text-[11px]">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 text-white text-[11px] font-bold">
                                 "{{ $currentSearch }}"
-                                <a href="{{ route('storefront.show', array_merge(request()->except('search', 'page'), ['slug' => $vendor->slug])) }}" class="ml-1 hover:text-stone-300">✕</a>
+                                <a href="{{ route('storefront.show', array_merge(request()->except('search', 'page'), ['slug' => $vendor->slug])) }}#catalog" class="opacity-75 hover:opacity-100">✕</a>
                             </span>
                         @endif
                     </div>
                 @endif
             </div>
 
-            <!-- Sort Dropdown -->
-            <div class="flex items-center gap-3">
-                <span class="text-xs text-stone-400 hidden sm:inline">Sort:</span>
-                <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="flex items-center">
+            <!-- Sort Selector -->
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-semibold text-stone-500">Sort by:</span>
+                <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET">
                     @if(request('category'))
                         <input type="hidden" name="category" value="{{ request('category') }}">
                     @endif
@@ -79,7 +73,7 @@
                     @endif
                     <select name="sort" 
                             onchange="this.form.submit()" 
-                            class="text-xs font-semibold rounded-lg border border-stone-300 bg-white py-1.5 pl-3 pr-8 focus:outline-none focus:ring-1 focus:ring-stone-900 text-stone-700">
+                            class="text-xs font-bold rounded-2xl border border-stone-200/80 bg-white/90 py-2 pl-3.5 pr-8 focus:outline-none focus:ring-1 focus:ring-stone-900 shadow-2xs">
                         <option value="newest" {{ $currentSort === 'newest' ? 'selected' : '' }}>Newest Drops</option>
                         <option value="price_low" {{ $currentSort === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
                         <option value="price_high" {{ $currentSort === 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
@@ -89,24 +83,17 @@
         </div>
 
         @if($displayProducts->isEmpty())
-            <!-- Clean Empty State -->
-            <div class="py-16 text-center max-w-md mx-auto">
-                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-stone-100 flex items-center justify-center text-3xl">
-                    🛍️
-                </div>
-                <h3 class="text-lg font-bold text-stone-900 font-heading">No items found</h3>
-                <p class="text-xs text-stone-500 mt-1">
-                    {{ $currentSearch || $currentCategory ? 'Try adjusting your search or category filter.' : 'This boutique is currently updating its catalogue.' }}
-                </p>
-                @if($currentSearch || $currentCategory)
-                    <a href="{{ route('storefront.show', $vendor->slug) }}" 
-                       class="inline-block mt-4 px-4 py-2 text-xs font-bold rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition">
-                        View All Items
-                    </a>
-                @endif
+            <div class="py-16 text-center max-w-sm mx-auto p-8 rounded-3xl border border-white/60 bg-white/70 backdrop-blur-xl shadow-lg">
+                <span class="text-4xl block mb-3">🛍️</span>
+                <h3 class="text-base font-bold text-stone-900 font-heading">No items matched</h3>
+                <p class="text-xs text-stone-500 mt-1">Try resetting your category or search filter.</p>
+                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                   class="inline-block mt-4 px-5 py-2 rounded-full text-xs font-bold bg-stone-900 text-white hover:bg-stone-800 transition">
+                    View Entire Store
+                </a>
             </div>
         @else
-            <!-- Responsive Product Cards Grid -->
+            <!-- FROSTED GLASS PRODUCT CARDS GRID -->
             <div class="grid {{ $colClass }} gap-4 sm:gap-6">
                 @foreach($displayProducts as $product)
                     @php
@@ -122,61 +109,62 @@
                         $defaultVariantId = $product->variants->first()?->id;
                     @endphp
 
-                    <div class="group flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-stone-200/80 hover:shadow-xl transition-all duration-300 relative"
-                         style="background-color: var(--sf-surface, #ffffff);">
+                    <div class="group flex flex-col h-full rounded-3xl overflow-hidden border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.12)] transition-all duration-300 relative hover:-translate-y-1"
+                         style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
                         
-                        <!-- Product Media Canvas -->
+                        <!-- Media Canvas with Aspect Ratio -->
                         <div class="relative w-full {{ $ratioClass }} bg-stone-100 overflow-hidden">
                             <a href="{{ route('product.show', $product->slug) }}" class="block w-full h-full relative" aria-label="{{ $product->title }}">
                                 <img src="{{ $imgFirst }}" 
                                      alt="{{ $product->title }}" 
                                      loading="lazy"
-                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 {{ $isOutOfStock ? 'opacity-50 grayscale-[50%]' : '' }}">
+                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-106 {{ $isOutOfStock ? 'opacity-50 grayscale' : '' }}">
                                 
                                 @if($imgSecond)
                                     <img src="{{ $imgSecond }}" 
-                                         alt="{{ $product->title }} Alternate View" 
+                                         alt="{{ $product->title }}" 
                                          loading="lazy"
                                          class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                                 @endif
                             </a>
 
-                            <!-- Badges -->
-                            <div class="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+                            <!-- Sale Badge Pill & Status -->
+                            <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
                                 @if($hasComparePrice && $discountPct > 0)
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-xs">
                                         -{{ $discountPct }}%
                                     </span>
                                 @endif
                                 @if($product->is_featured)
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-amber-500 text-stone-950 shadow-xs">
-                                        Spotlight
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-400 text-stone-950 shadow-xs">
+                                        Boutique Pick
                                     </span>
                                 @endif
                                 @if($isOutOfStock)
-                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-stone-900/90 text-stone-200 backdrop-blur-xs">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-stone-900/90 text-stone-200">
                                         Sold Out
                                     </span>
                                 @endif
                             </div>
 
-                            <!-- Floating Action Overlay (Desktop) -->
-                            @if(!$isOutOfStock && $showQuickBuy)
-                                <div class="absolute bottom-2.5 inset-x-2.5 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 hidden sm:block">
+                            <!-- Floating Quick Add Button (Hover on Desktop) -->
+                            @if(!$isOutOfStock)
+                                <div class="absolute bottom-3 inset-x-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 hidden sm:block">
                                     <button type="button" 
-                                            onclick="if(window.quickAddToCart){ window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}); } else { window.location.href='{{ route('product.show', $product->slug) }}'; }"
-                                            class="w-full py-2.5 px-3 rounded-xl bg-stone-900/95 hover:bg-stone-900 text-white text-xs font-bold uppercase tracking-wider shadow-md backdrop-blur-xs flex items-center justify-center gap-1.5 transition">
+                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }})"
+                                            class="w-full py-3 px-4 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition flex items-center justify-center gap-2 cursor-pointer hover:scale-102"
+                                            style="background: linear-gradient(135deg, var(--sf-primary, #18181b), #27272a); border: 1px solid rgba(255,255,255,0.25);">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                         </svg>
-                                        <span>Quick Add</span>
+                                        <span>Quick Add to Bag</span>
                                     </button>
                                 </div>
                             @endif
                         </div>
 
-                        <!-- Product Information Details -->
-                        <div class="p-3.5 sm:p-4 flex flex-col flex-1 justify-between gap-2">
+                        <!-- Product Information Canvas -->
+                        <div class="p-4 flex flex-col flex-1 justify-between gap-3 bg-white/40">
                             <div>
                                 @if($product->category)
                                     <span class="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-1">
@@ -184,17 +172,17 @@
                                     </span>
                                 @endif
 
-                                <h3 class="text-xs sm:text-sm font-semibold text-stone-900 line-clamp-2 hover:text-stone-700 transition leading-snug">
+                                <h3 class="text-xs sm:text-sm font-bold text-stone-900 line-clamp-2 leading-snug group-hover:text-stone-700 transition">
                                     <a href="{{ route('product.show', $product->slug) }}">
                                         {{ $product->title }}
                                     </a>
                                 </h3>
                             </div>
 
-                            <!-- Pricing & Buy -->
-                            <div class="pt-1 flex items-center justify-between gap-2">
+                            <!-- Price & Mobile Action -->
+                            <div class="pt-2 border-t border-stone-100/80 flex items-center justify-between gap-2">
                                 <div class="flex items-baseline gap-1.5">
-                                    <span class="text-sm sm:text-base font-bold text-stone-950">
+                                    <span class="text-sm sm:text-base font-black text-stone-950">
                                         ₹{{ $priceRupees }}
                                     </span>
                                     @if($hasComparePrice)
@@ -204,12 +192,13 @@
                                     @endif
                                 </div>
 
-                                <!-- Mobile Buy Button -->
+                                <!-- Mobile Bag Action Button -->
                                 @if(!$isOutOfStock)
                                     <button type="button" 
-                                            onclick="if(window.quickAddToCart){ window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}); } else { window.location.href='{{ route('product.show', $product->slug) }}'; }"
-                                            class="sm:hidden p-1.5 rounded-lg bg-stone-900 text-white hover:bg-stone-800 transition"
-                                            aria-label="Add {{ $product->title }} to cart">
+                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }})"
+                                            class="sm:hidden p-2 rounded-xl text-white shadow-sm transition"
+                                            style="background-color: var(--sf-primary, #18181b);"
+                                            aria-label="Add {{ $product->title }} to bag">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                         </svg>
@@ -218,11 +207,12 @@
                             </div>
 
                         </div>
+
                     </div>
                 @endforeach
             </div>
 
-            <!-- Catalog Pagination (If paginated) -->
+            <!-- Pagination -->
             @if(method_exists($displayProducts, 'links') && $displayProducts->hasPages())
                 <div class="mt-10 sm:mt-12 flex justify-center">
                     {{ $displayProducts->fragment('catalog')->links() }}
@@ -232,4 +222,3 @@
 
     </div>
 </section>
-

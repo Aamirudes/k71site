@@ -19,6 +19,8 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::get('/design', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'index'])->name('design.index');
     Route::get('/design/editor', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'editor'])->name('design.editor');
     Route::get('/design/preview', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'preview'])->name('design.preview');
+    Route::post('/design/activate', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'activatePreset'])->name('design.activate');
+    Route::post('/design/quick-settings', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'saveQuickSettings'])->name('design.quick_settings');
     Route::post('/design/save', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'saveDraft'])->name('design.save');
     Route::post('/design/publish', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'publish'])->name('design.publish');
     Route::post('/design/preset', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'applyPreset'])->name('design.preset');

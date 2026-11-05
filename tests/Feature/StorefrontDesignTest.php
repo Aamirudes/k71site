@@ -210,6 +210,58 @@ class StorefrontDesignTest extends TestCase
         $response->assertSee('Pure Mulberry Kanjivaram Silk Saree');
         $response->assertSee('₹12,500.00');
         $response->assertSee('Handloom Silks');
+        $response->assertSee('k71-glass-cart-popup');
+    }
+
+    public function test_vendor_can_instantly_activate_and_publish_presets(): void
+    {
+        [$user, $vendor] = $this->createVendor('activator@test.com', 'Cyber Atelier', 'cyber-atelier');
+
+        $presets = ['atelier', 'object', 'commerce', 'market', 'signature'];
+
+        foreach ($presets as $preset) {
+            $response = $this->actingAs($user)->postJson('/vendor/design/activate', [
+                'preset' => $preset,
+            ]);
+
+            $response->assertStatus(200)
+                     ->assertJson(['status' => 'success', 'preset' => $preset]);
+
+            $this->assertEquals($preset, $vendor->fresh()->storefrontConfig->preset_key);
+            $this->assertTrue($vendor->fresh()->storefrontConfig->is_published);
+
+            // Public storefront renders with this preset and cart popup
+            $publicResp = $this->get("/s/{$vendor->slug}");
+            $publicResp->assertStatus(200);
+            $publicResp->assertSee('k71-glass-cart-popup');
+        }
+    }
+
+    public function test_vendor_can_save_quick_branding_settings(): void
+    {
+        [$user, $vendor] = $this->createVendor('branding@test.com', 'Branded Studio', 'branded-studio');
+
+        $response = $this->actingAs($user)->postJson('/vendor/design/quick-settings', [
+            'tagline' => 'Handcrafted luxury and bespoke tailoring.',
+            'accent_color' => '#06b6d4',
+            'announcement_enabled' => true,
+            'announcement_text' => 'Flash Sale: 20% off all drops today only!',
+            'announcement_link' => '#catalog',
+        ]);
+
+        $response->assertStatus(200)
+                 ->assertJson(['status' => 'success']);
+
+        $config = $vendor->fresh()->storefrontConfig->published_config;
+        $this->assertEquals('Handcrafted luxury and bespoke tailoring.', $config['brand']['description']);
+        $this->assertEquals('#06b6d4', $config['theme']['accent_color']);
+        $this->assertTrue($config['header']['announcement_enabled']);
+        $this->assertEquals('Flash Sale: 20% off all drops today only!', $config['header']['announcement_text']);
+
+        // Check public storefront has announcement and accent color
+        $publicResp = $this->get("/s/{$vendor->slug}");
+        $publicResp->assertStatus(200);
+        $publicResp->assertSee('Flash Sale: 20% off all drops today only!');
     }
 }
 
