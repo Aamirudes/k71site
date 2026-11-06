@@ -1440,6 +1440,108 @@ class MessageController extends Controller
     }
 
     /**
+     * API: Upload Video Attachment in chat (with instant inline video player).
+     */
+    public function apiUploadVideo(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in.'], 401);
+        }
+
+        $conversationId = (int) $request->input('conversation_id');
+        if ($conversationId <= 0) {
+            return response()->json(['success' => false, 'error' => 'Invalid conversation.'], 400);
+        }
+
+        $this->ensureChatSchema();
+
+        $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->where(function($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if (!$request->hasFile('video')) {
+            return response()->json(['success' => false, 'error' => 'No video uploaded.'], 400);
+        }
+
+        $file = $request->file('video');
+        if (!$file->isValid()) {
+            return response()->json(['success' => false, 'error' => 'Uploaded video is invalid.'], 400);
+        }
+
+        $allowedMimes = [
+            'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 
+            'video/3gpp', 'video/x-matroska', 'video/x-m4v'
+        ];
+        $mime = $file->getMimeType();
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
+        $validExts = ['mp4', 'webm', 'mov', 'ogg', 'ogv', 'avi', 'mkv', '3gp', 'm4v'];
+
+        if (!in_array($mime, $allowedMimes) && !in_array($ext, $validExts)) {
+            return response()->json(['success' => false, 'error' => 'Only MP4, WebM, MOV, and standard video formats are supported.'], 400);
+        }
+
+        if ($file->getSize() > 60 * 1024 * 1024) {
+            return response()->json(['success' => false, 'error' => 'Video size exceeds maximum limit of 60MB.'], 400);
+        }
+
+        $fileName = 'chat_video_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
+
+        $targetDir = public_path('storage/chat_videos');
+        if (!file_exists($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        $file->move($targetDir, $fileName);
+        $attachmentUrl = asset('storage/chat_videos/' . $fileName);
+
+        $caption = htmlspecialchars(trim((string)$request->input('caption', '')), ENT_QUOTES, 'UTF-8');
+        $body = $caption !== '' ? $caption : '🎥 Video';
+        $now = now()->toDateTimeString();
+
+        $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $conversationId,
+            'sender_id' => $userId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'video',
+            'is_read' => 0,
+            'created_at' => $now,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+
+        $msgPayload = [
+            'id' => (int) $messageId,
+            'conversation_id' => $conversationId,
+            'body' => $body,
+            'attachment_url' => $attachmentUrl,
+            'attachment_type' => 'video',
+            'sender_id' => $userId,
+            'is_mine' => true,
+            'is_read' => false,
+            'created_at' => $now,
+            'time_formatted' => date('g:i A', strtotime($now))
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $msgPayload,
+            'message' => $msgPayload,
+            'conversation_status' => 'accepted'
+        ]);
+    }
+
+    /**
      * API: Upload Voice Note / Audio Message (Instagram-style hold-to-speak).
      */
     public function apiUploadVoice(Request $request)

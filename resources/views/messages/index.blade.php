@@ -1753,6 +1753,24 @@
             line-height: 1.4;
         }
 
+        .glass-msg-video-wrap {
+            max-width: 320px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+            position: relative;
+            background: #000;
+        }
+        .glass-msg-video-wrap video {
+            width: 100%;
+            max-height: 380px;
+            object-fit: contain;
+            display: block;
+            border-radius: 18px;
+            background: #000;
+        }
+
         /* Unsend Message Trigger */
         .glass-msg-row {
             position: relative;
@@ -2579,6 +2597,14 @@
                                 </svg>
                             </button>
                             <input type="file" id="glassPhotoInput" accept="image/*" style="display: none;">
+
+                            <button type="button" class="glass-composer-emoji-btn" id="glassAttachVideoBtn" title="Send Video">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                </svg>
+                            </button>
+                            <input type="file" id="glassVideoInput" accept="video/mp4,video/webm,video/quicktime,video/mov,video/*" style="display: none;">
                             
                             <textarea id="glassMessageInput" 
                                       class="glass-composer-textarea" 
@@ -2809,6 +2835,8 @@
         // Upgraded Instagram Feature Elements
         const attachBtn = document.getElementById('glassAttachBtn');
         const photoInput = document.getElementById('glassPhotoInput');
+        const attachVideoBtn = document.getElementById('glassAttachVideoBtn');
+        const videoInput = document.getElementById('glassVideoInput');
         const actionSheetModal = document.getElementById('glassActionSheetModal');
         const actionSheetHeader = document.getElementById('actionSheetHeader');
         const actionSheetDangerBtn = document.getElementById('actionSheetDangerBtn');
@@ -3254,6 +3282,7 @@
 
                 const isSent = msg.is_mine;
                 const isVoice = (msg.attachment_type === 'voice') || (msg.attachment_url && (msg.attachment_url.includes('/chat_voice/') || /\.(webm|ogg|wav|mp3|m4a|aac)$/i.test(msg.attachment_url)));
+                const isVideo = (msg.attachment_type === 'video') || (msg.attachment_url && (msg.attachment_url.includes('/chat_videos/') || /\.(mp4|webm|mov|ogg|ogv|avi|mkv|3gp|m4v)$/i.test(msg.attachment_url)));
                 let attachmentHtml = '';
 
                 if (isVoice) {
@@ -3289,6 +3318,12 @@
                             </div>
                             <span class="glass-voice-duration">${escapeHtml(durationLabel)}</span>
                             <audio preload="auto" playsinline src="${escapeHtml(msg.attachment_url)}"></audio>
+                        </div>
+                    `;
+                } else if (isVideo) {
+                    attachmentHtml = `
+                        <div class="glass-msg-video-wrap" style="max-width: 320px; border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 4px 20px rgba(0,0,0,0.18); margin-bottom: ${msg.body && msg.body !== '🎥 Video' ? '6px' : '0'};">
+                            <video src="${escapeHtml(msg.attachment_url)}" controls playsinline preload="metadata" style="width: 100%; max-height: 400px; object-fit: contain; border-radius: 18px; display: block; outline: none; background: #000;"></video>
                         </div>
                     `;
                 } else if (msg.attachment_url) {
@@ -3535,7 +3570,7 @@
                 const msgId = parseInt(row.getAttribute('data-msg-id'), 10);
                 if (!msgId) return;
 
-                const bubble = row.querySelector('.glass-msg-bubble') || row.querySelector('.glass-voice-player') || row.querySelector('.glass-msg-image-wrap');
+                const bubble = row.querySelector('.glass-msg-bubble') || row.querySelector('.glass-voice-player') || row.querySelector('.glass-msg-image-wrap') || row.querySelector('.glass-msg-video-wrap');
                 const snippet = bubble ? (bubble.innerText.trim() || 'Attachment') : 'Message';
                 const authorName = isSent ? 'You' : ((recipient && recipient.name) ? recipient.name : ('@' + (recipient?.username || 'user')));
 
@@ -4022,6 +4057,95 @@
             });
         });
 
+        // Video Upload Handling (Direct Inline Playback)
+        if (attachVideoBtn && videoInput) {
+            attachVideoBtn.addEventListener('click', () => {
+                if (!currentConversationId) {
+                    alert('Please select or start a chat first to send a video.');
+                    return;
+                }
+                videoInput.click();
+            });
+
+            videoInput.addEventListener('change', () => {
+                const file = videoInput.files[0];
+                if (!file || !currentConversationId) return;
+
+                if (file.size > 60 * 1024 * 1024) {
+                    alert('Video size exceeds maximum limit of 60MB.');
+                    videoInput.value = '';
+                    return;
+                }
+
+                const optId = 'opt_vid_' + Date.now();
+                const tempUrl = URL.createObjectURL(file);
+                const optimisticMsg = {
+                    id: optId,
+                    body: '🎥 Uploading video...',
+                    attachment_url: tempUrl,
+                    attachment_type: 'video',
+                    sender_id: CURRENT_USER_ID,
+                    is_mine: true,
+                    is_optimistic: true,
+                    created_at: new Date().toISOString(),
+                    time_formatted: 'Sending video...'
+                };
+
+                messagesCache.push(optimisticMsg);
+                renderMessages(messagesCache, {
+                    username: headerUsername.textContent.replace('@', ''),
+                    name: headerStatus.textContent,
+                    profile_pic: headerAvatar.src
+                });
+                scrollFeedToBottom(true);
+
+                const formData = new FormData();
+                formData.append('conversation_id', currentConversationId);
+                formData.append('video', file);
+                formData.append('_token', '{{ csrf_token() }}');
+
+                fetch('/api/chat/upload_video.php', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(result => {
+                    videoInput.value = '';
+                    const sentMsg = result.data || result.message;
+                    if (result.success && sentMsg) {
+                        const idx = messagesCache.findIndex(m => m.id === optId);
+                        if (idx !== -1) {
+                            messagesCache[idx] = sentMsg;
+                        }
+                        renderMessages(messagesCache, {
+                            username: headerUsername.textContent.replace('@', ''),
+                            name: headerStatus.textContent,
+                            profile_pic: headerAvatar.src
+                        });
+                        scrollFeedToBottom(true);
+                        fetchConversations(true);
+                    } else {
+                        alert(result.error || 'Failed to upload video.');
+                        messagesCache = messagesCache.filter(m => m.id !== optId);
+                        renderMessages(messagesCache, {
+                            username: headerUsername.textContent.replace('@', ''),
+                            name: headerStatus.textContent,
+                            profile_pic: headerAvatar.src
+                        });
+                    }
+                })
+                .catch(err => {
+                    videoInput.value = '';
+                    console.error('Video upload error:', err);
+                    alert('Network error while uploading video.');
+                });
+            });
+        }
+
         // Lightbox Functions
         window.openLightbox = function(url) {
             lightboxImg.src = url;
@@ -4050,7 +4174,7 @@
                 actionSheetDangerBtn.textContent = 'Unsend Message';
 
                 const targetMsg = messagesCache.find(m => String(m.id) === String(id));
-                const isEditable = targetMsg && targetMsg.is_mine && !targetMsg.is_optimistic && !targetMsg.attachment_url && targetMsg.body && !targetMsg.body.startsWith('🎤') && targetMsg.body !== '📷 Photo';
+                const isEditable = targetMsg && targetMsg.is_mine && !targetMsg.is_optimistic && !targetMsg.attachment_url && targetMsg.body && !targetMsg.body.startsWith('🎤') && targetMsg.body !== '📷 Photo' && targetMsg.body !== '🎥 Video';
 
                 if (actionSheetEditBtn) {
                     actionSheetEditBtn.style.display = isEditable ? 'block' : 'none';
