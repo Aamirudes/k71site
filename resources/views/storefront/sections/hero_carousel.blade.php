@@ -58,6 +58,7 @@
 <!-- 100VH LUXURY AESTHETIC HERO IMAGE CAROUSEL WITH FAST SWIPE-TO-SLIDE -->
 <section id="hero" 
          class="relative w-full h-screen min-h-[640px] max-h-[1100px] overflow-hidden bg-black select-none"
+         style="position: relative; width: 100%; height: 100vh; min-height: 560px; max-height: 1080px; overflow: hidden; background-color: #09090b; flex-shrink: 0;"
          x-data="{
              activeSlide: 0,
              totalSlides: {{ count($slides) }},
@@ -88,17 +89,21 @@
                  this.activeSlide = (this.activeSlide - 1 + this.totalSlides) % this.totalSlides;
              },
              handleTouchStart(e) {
-                 this.touchStartX = e.changedTouches[0].screenX;
+                 if (e.changedTouches && e.changedTouches[0]) {
+                     this.touchStartX = e.changedTouches[0].screenX;
+                 }
                  this.stopAutoplay();
              },
              handleTouchEnd(e) {
-                 this.touchEndX = e.changedTouches[0].screenX;
-                 const diff = this.touchStartX - this.touchEndX;
-                 if (Math.abs(diff) > 40) {
-                     if (diff > 0) {
-                         this.nextSlide();
-                     } else {
-                         this.prevSlide();
+                 if (e.changedTouches && e.changedTouches[0]) {
+                     this.touchEndX = e.changedTouches[0].screenX;
+                     const diff = this.touchStartX - this.touchEndX;
+                     if (Math.abs(diff) > 40) {
+                         if (diff > 0) {
+                             this.nextSlide();
+                         } else {
+                             this.prevSlide();
+                         }
                      }
                  }
                  this.startAutoplay();
@@ -122,12 +127,13 @@
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
              class="absolute inset-0 w-full h-full"
-             style="{{ $idx === 0 ? 'display: block;' : 'display: none;' }}">
+             style="{{ $idx === 0 ? 'display: block;' : 'display: none;' }} position: absolute; inset: 0; width: 100%; height: 100%;">
 
             <!-- High-Res Background Image with Fast Loading & Preload -->
             <img src="{{ $slideImg }}" 
                  alt="{{ $slide['title'] ?? $headline }}" 
                  class="w-full h-full object-cover object-center filter brightness-[0.70] contrast-[1.05]"
+                 style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
                  {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>
 
             <!-- Deep Liquid Dark Vignette Gradient for Ultra Legibility -->

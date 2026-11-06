@@ -108,11 +108,11 @@
     <x-floating-six-nav />
 
     @if($fullWidth)
-        <main class="flex-1 w-full pb-24 md:pb-16">
+        <main class="flex-1 w-full {{ $hideFooter ? '' : 'pb-24 md:pb-16' }}">
             {{ $slot }}
         </main>
     @else
-        <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 pb-24 md:pb-12">
+        <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 {{ $hideFooter ? '' : 'pb-24 md:pb-12' }}">
             {{ $slot }}
         </main>
     @endif

@@ -50,14 +50,7 @@
     ];
 
     $rawKey = strtolower(trim((string)($config['preset'] ?? 'velora')));
-    $aliasMap = [
-        'atelier' => 'velora',
-        'signature' => 'noire',
-        'object' => 'aurel',
-        'commerce' => 'orbit',
-        'market' => 'chroma',
-    ];
-    $presetKey = $aliasMap[$rawKey] ?? $rawKey;
+    $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($rawKey);
     $presetView = 'storefront.presets.' . $presetKey;
     if (!view()->exists($presetView)) {
         $presetView = 'storefront.presets.velora';

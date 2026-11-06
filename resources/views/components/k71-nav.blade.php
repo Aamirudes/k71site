@@ -75,7 +75,7 @@
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
         @click.outside="expandedForms = false"
         @keydown.escape.window="expandedForms = false;"
-        class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
+        class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all relative">
     
     @if($currentVendor)
         <!-- Standalone Vendor Store Header: Small link Back to Marketplace -->
@@ -147,31 +147,6 @@
                         </a>
                     @endif
                 </div>
-            </div>
-
-            <!-- CENTER: DOWN ARROW BUTTON TO SLIDE IN FORMS 2 & 3 (SEARCH & CATEGORIES) -->
-            <div class="flex items-center justify-center">
-                <button type="button" 
-                        @click="expandedForms = !expandedForms"
-                        class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-all duration-200 border cursor-pointer select-none shadow-2xs"
-                        :class="{
-                            'bg-slate-900 text-white border-slate-900 shadow-md scale-102': expandedForms,
-                            'bg-slate-100/90 hover:bg-slate-200 text-slate-800 border-slate-200': !expandedForms
-                        }"
-                        aria-label="Toggle Search and Category Navigator"
-                        :aria-expanded="expandedForms.toString()">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-                    </svg>
-                    <span class="hidden sm:inline" x-text="expandedForms ? 'Close Explore' : 'Search & Categories'">Search &amp; Categories</span>
-                    <span class="sm:hidden" x-text="expandedForms ? 'Close' : 'Search'">Search</span>
-                    <!-- Interactive Down/Up Animated Arrow -->
-                    <svg class="w-3.5 h-3.5 transition-transform duration-300 transform" 
-                         :class="{ 'rotate-180': expandedForms }"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
             </div>
 
             <!-- Right Actions: Stores + Catalog + Messages + Wishlist + Cart + Account -->
@@ -308,7 +283,6 @@
                 </button>
             </div>
 
-            @if(!$hideSearch)
             <!-- FORM 2: FULL SEARCH BAR WITH AUTOCOMPLETE -->
             <div class="relative w-full"
                  x-data="{
@@ -376,7 +350,6 @@
                     </template>
                 </div>
             </div>
-            @endif
 
             <!-- FORM 3: CATEGORY NAVIGATION ROW -->
             @if(!$hideCategories)
@@ -401,6 +374,21 @@
             @endif
 
         </div>
+    </div>
+
+    <!-- Sleek Navigation Arrow Pull-Handle Centered on the Bottom Header Line -->
+    <div class="absolute -bottom-3 inset-x-0 flex justify-center pointer-events-none z-30">
+        <button type="button" 
+                @click="expandedForms = !expandedForms"
+                class="pointer-events-auto h-6 px-3.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700 shadow-xs hover:shadow-md hover:bg-slate-50 transition-all duration-200 flex items-center justify-center cursor-pointer group"
+                aria-label="Toggle Navigation & Search Drawer"
+                :title="expandedForms ? 'Close Search & Categories' : 'Explore Search & Categories'">
+            <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-black dark:text-zinc-400 dark:group-hover:text-white transition-transform duration-300 transform"
+                 :class="{ 'rotate-180 text-black dark:text-white': expandedForms }"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
     </div>
 
 </header>

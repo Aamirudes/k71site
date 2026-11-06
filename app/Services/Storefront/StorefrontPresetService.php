@@ -100,10 +100,16 @@ class StorefrontPresetService
         $k = strtolower(trim($key));
         $aliases = [
             'atelier' => 'velora',
+            'classic' => 'velora',
             'signature' => 'noire',
+            'dark' => 'noire',
             'object' => 'aurel',
+            'minimal' => 'aurel',
             'commerce' => 'orbit',
+            'grid' => 'orbit',
             'market' => 'chroma',
+            'editorial' => 'chroma',
+            'bold' => 'chroma',
         ];
 
         return $aliases[$k] ?? (isset($this->getPresets()[$k]) ? $k : 'velora');

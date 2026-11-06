@@ -259,6 +259,11 @@ class StorefrontController extends Controller
         $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
         $config = $vendor->getStorefrontConfig($isPreview);
 
-        return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'vendorReviews', 'config', 'isPreview'));
+        return response()
+            ->view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'vendorReviews', 'config', 'isPreview'))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            ->header('Pragma', 'no-cache')
+            ->header('X-LiteSpeed-Purge', '*')
+            ->header('X-LiteSpeed-Cache-Control', 'no-cache');
     }
 }

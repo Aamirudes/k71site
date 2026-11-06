@@ -103,7 +103,31 @@ class HomeController extends Controller
                 $featuredProducts = $latestQuery->latest()->take(6)->get();
             }
 
-            return view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts'));
+            $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+            $config = $vendor->getStorefrontConfig($isPreview);
+
+            $vendorReviews = \App\Models\Review::whereIn('product_id', function($q) use ($vendor) {
+                    $q->select('id')->from('products')->where('vendor_id', $vendor->id);
+                })
+                ->where('is_approved', true)
+                ->with(['user', 'product.images'])
+                ->latest()
+                ->take(6)
+                ->get();
+
+            $vendorShorts = $vendor->shorts()
+                ->where('status', 'published')
+                ->orderByDesc('is_boosted')
+                ->orderByDesc('id')
+                ->take(8)
+                ->get();
+
+            return response()
+                ->view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'vendorReviews', 'config', 'isPreview'))
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache')
+                ->header('X-LiteSpeed-Purge', '*')
+                ->header('X-LiteSpeed-Cache-Control', 'no-cache');
         }
 
         // Vertical-aware homepage dispatch: food.k71.in, used.k71.in, services.k71.in, feasto.k71.in
