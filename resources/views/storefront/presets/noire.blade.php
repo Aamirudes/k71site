@@ -1,15 +1,12 @@
-{{-- PRESET 02: NOIRÉ (Premium Dark Commerce · Charcoal Surfaces · Dramatic Product Presentation) --}}
-<div class="storefront-preset-noire min-h-screen flex flex-col font-body selection:bg-white selection:text-black bg-[#121214] text-[#f4f4f5]"
+{{-- PRESET 02: NOIRÉ (Liquid Obsidian Dark Luxury · Charcoal Surfaces · Dramatic Product Presentation) --}}
+<div class="storefront-preset-noire min-h-screen flex flex-col font-body selection:bg-white selection:text-black bg-[#09090b] text-[#f4f4f5]"
      style="--sf-accent: #f4f4f5;">
 
-    {{-- Top Sleek Announcement Bar --}}
-    @include('storefront.sections.announcement')
-
-    {{-- Dark Charcoal Floating Header Dock --}}
+    {{-- Transparent over 100vh Hero -> Sticky Opaque Frosted Obsidian on Scroll Header --}}
     @include('storefront.sections.header')
 
-    <main class="flex-1 space-y-6 sm:space-y-10">
-        {{-- Customizable Hero Banner / Campaign Carousel --}}
+    <main class="flex-1 space-y-8 sm:space-y-12">
+        {{-- 100vh 3-Slider Swipe Hero Carousel --}}
         @include('storefront.sections.hero_carousel')
 
         {{-- Dark Category Discovery Strip --}}
@@ -19,8 +16,8 @@
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Current Releases', 'columns' => 4, 'aspect_ratio' => '3:4']])
 
         {{-- Verified Shopping Trust Section (Real Capabilities Only) --}}
-        <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="p-8 sm:p-10 rounded-3xl bg-[#18181b] border border-zinc-800 shadow-xl">
+        <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="p-8 sm:p-10 rounded-3xl bg-[#121215] border border-zinc-800 shadow-2xl">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="flex items-start gap-3.5">
                         <div class="w-10 h-10 rounded-2xl bg-zinc-800 text-white flex items-center justify-center font-mono font-bold text-xs shrink-0 border border-zinc-700">

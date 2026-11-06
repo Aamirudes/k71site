@@ -2,14 +2,11 @@
 <div class="storefront-preset-aurel min-h-screen flex flex-col font-body selection:bg-slate-200 selection:text-slate-900 bg-[#f9fafb] text-[#0f172a]"
      style="--sf-accent: #0f172a;">
 
-    {{-- Top Announcement Bar --}}
-    @include('storefront.sections.announcement')
-
-    {{-- Refined Light Minimalist Header --}}
+    {{-- Transparent over 100vh Hero -> Sticky Opaque Minimalist Capsule on Scroll Header --}}
     @include('storefront.sections.header')
 
-    <main class="flex-1 space-y-6 sm:space-y-10">
-        {{-- Customizable Hero Banner / Campaign Carousel --}}
+    <main class="flex-1 space-y-8 sm:space-y-12">
+        {{-- 100vh 3-Slider Swipe Hero Carousel --}}
         @include('storefront.sections.hero_carousel')
 
         {{-- Minimalist Category Discovery Strip --}}
@@ -19,7 +16,7 @@
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Catalog', 'columns' => 4, 'aspect_ratio' => '1:1']])
 
         {{-- Verified Shopping Trust Section (Real Capabilities Only) --}}
-        <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-8 sm:p-10 rounded-3xl bg-white border border-stone-200/80 shadow-2xs">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="flex items-start gap-3.5">

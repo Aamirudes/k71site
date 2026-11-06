@@ -221,52 +221,131 @@
                         </div>
                     </div>
 
-                    <!-- Banner Image Upload / URL -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
-                            Hero Campaign Banner
-                        </label>
-                        @php
-                            $currBanner = $currentConfig['brand']['banner_url'] ?? $vendor->banner_url;
-                        @endphp
-                        @if($currBanner)
-                            <div class="h-24 rounded-2xl overflow-hidden border border-slate-200 dark:border-zinc-700 bg-slate-100 mb-2 relative">
-                                <img src="{{ $currBanner }}" id="banner-preview-img" class="w-full h-full object-cover">
-                                <span class="absolute bottom-1.5 right-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold">Current Banner</span>
+                    <!-- Hold & Drag Customizable Header Controls -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-700/80 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+                                    Header Elements Layout &amp; Reordering
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-zinc-400">
+                                    Hold and drag or use arrows to rearrange header components.
+                                </p>
                             </div>
-                        @endif
-                        <input type="file" 
-                               id="ctrl-banner-file" 
-                               name="banner"
-                               accept="image/*"
-                               class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-stone-900 file:text-white hover:file:bg-stone-800 cursor-pointer">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                                Drag &amp; Drop
+                            </span>
+                        </div>
+
+                        <!-- Draggable / Reorderable Elements List -->
+                        <div id="header-elements-container" class="flex flex-wrap items-center gap-2 pt-1">
+                            <!-- Items populated by JS -->
+                        </div>
+                        <input type="hidden" id="ctrl-header-elements-order" name="header_elements_order" value="[&quot;hamburger&quot;,&quot;logo&quot;,&quot;name&quot;,&quot;cart&quot;]">
+
+                        <!-- Transparent on 100vh Hero Carousel Toggle -->
+                        <div class="pt-2 border-t border-slate-200 dark:border-zinc-700 flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Transparent Header Over 100vh Carousel</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                       id="ctrl-transparent-hero-toggle" 
+                                       name="transparent_on_hero"
+                                       class="sr-only peer" 
+                                       {{ !empty($currentConfig['header']['transparent_on_hero'] ?? true) ? 'checked' : '' }}>
+                                <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                            </label>
+                        </div>
                     </div>
 
-                    <!-- Banner Heading & Shopping Link -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
-                                Banner Headline (Optional)
-                            </label>
-                            <input type="text" 
-                                   id="ctrl-hero-headline" 
-                                   name="hero_headline"
-                                   value="{{ $currentConfig['hero']['title'] ?? $currentConfig['brand']['hero_headline'] ?? $vendor->shop_name }}"
-                                   placeholder="e.g. Autumn / Winter Collection"
-                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-900">
+                    <!-- 100vh 3-Slide Hero Carousel Manager -->
+                    <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-700/80 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+                                    100vh Hero Carousel (3 Slides)
+                                </label>
+                                <p class="text-[11px] text-slate-500 dark:text-zinc-400">
+                                    Fast-loading full viewport swipe carousel with customizable images &amp; CTAs.
+                                </p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                                3 Slides Touch/Swipe
+                            </span>
                         </div>
 
-                        <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-zinc-400 mb-1">
-                                Shopping CTA Link
-                            </label>
-                            <input type="text" 
-                                   id="ctrl-hero-link" 
-                                   name="hero_link"
-                                   value="{{ $currentConfig['hero']['link'] ?? '#catalog' }}"
-                                   placeholder="#catalog"
-                                   class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-900">
+                        <!-- Slide Tabs -->
+                        <div class="flex items-center gap-1.5 p-1 rounded-xl bg-slate-200/80 dark:bg-zinc-800" id="slide-tabs">
+                            <button type="button" onclick="switchSlideTab(0)" id="slide-tab-btn-0" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition bg-white dark:bg-zinc-900 text-stone-900 dark:text-white shadow-xs">Slide 1 (Flagship)</button>
+                            <button type="button" onclick="switchSlideTab(1)" id="slide-tab-btn-1" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition text-stone-600 dark:text-zinc-400 hover:text-stone-900">Slide 2</button>
+                            <button type="button" onclick="switchSlideTab(2)" id="slide-tab-btn-2" class="flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition text-stone-600 dark:text-zinc-400 hover:text-stone-900">Slide 3</button>
                         </div>
+
+                        @php
+                            $cfgSlides = $currentConfig['hero']['slides'] ?? [];
+                            $s1 = $cfgSlides[0] ?? ['title' => $vendor->shop_name, 'subtitle' => $vendor->tagline ?? 'Handcrafted atelier collections', 'button_text' => 'Explore Boutique', 'link' => '#catalog', 'image' => $currentConfig['brand']['banner_url'] ?? $vendor->banner_url];
+                            $s2 = $cfgSlides[1] ?? ['title' => 'Artisan Editions 2026', 'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery.', 'button_text' => 'Discover New Drops', 'link' => '#catalog', 'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80'];
+                            $s3 = $cfgSlides[2] ?? ['title' => 'Signature Heritage', 'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection.', 'button_text' => 'Shop Collection', 'link' => '#catalog', 'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80'];
+                            $allThree = [$s1, $s2, $s3];
+                        @endphp
+
+                        @foreach($allThree as $idx => $s)
+                            <div id="slide-pane-{{ $idx }}" class="space-y-3 {{ $idx > 0 ? 'hidden' : '' }}">
+                                <!-- Slide Image File / Current -->
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                                        Slide {{ $idx + 1 }} Background Image
+                                    </label>
+                                    @if(!empty($s['image']))
+                                        <div class="h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-zinc-700 mb-1.5 relative">
+                                            <img src="{{ $s['image'] }}" class="w-full h-full object-cover">
+                                        </div>
+                                    @endif
+                                    <input type="file" 
+                                           name="slide_{{ $idx }}_file" 
+                                           accept="image/*"
+                                           class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-stone-900 file:text-white cursor-pointer">
+                                    <input type="hidden" name="slides[{{ $idx }}][image]" value="{{ $s['image'] ?? '' }}">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Headline</label>
+                                        <input type="text" 
+                                               name="slides[{{ $idx }}][title]" 
+                                               value="{{ $s['title'] ?? '' }}"
+                                               placeholder="Headline"
+                                               class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Button Label</label>
+                                        <input type="text" 
+                                               name="slides[{{ $idx }}][button_text]" 
+                                               value="{{ $s['button_text'] ?? 'Explore' }}"
+                                               placeholder="Button text"
+                                               class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Subtitle / Subtext</label>
+                                        <input type="text" 
+                                               name="slides[{{ $idx }}][subtitle]" 
+                                               value="{{ $s['subtitle'] ?? '' }}"
+                                               placeholder="Short tagline"
+                                               class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">CTA Link</label>
+                                        <input type="text" 
+                                               name="slides[{{ $idx }}][link]" 
+                                               value="{{ $s['link'] ?? '#catalog' }}"
+                                               placeholder="#catalog"
+                                               class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
 
                 </div>
@@ -367,6 +446,100 @@
     </div>
 
     <script>
+        function switchSlideTab(idx) {
+            for (let i = 0; i < 3; i++) {
+                const pane = document.getElementById('slide-pane-' + i);
+                const btn = document.getElementById('slide-tab-btn-' + i);
+                if (pane && btn) {
+                    if (i === idx) {
+                        pane.classList.remove('hidden');
+                        btn.className = 'flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition bg-white dark:bg-zinc-900 text-stone-900 dark:text-white shadow-xs';
+                    } else {
+                        pane.classList.add('hidden');
+                        btn.className = 'flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition text-stone-600 dark:text-zinc-400 hover:text-stone-900';
+                    }
+                }
+            }
+        }
+
+        // Header Elements Drag & Reorder Logic
+        let headerElementsOrder = {!! json_encode($currentConfig['header']['elements_order'] ?? ['hamburger', 'logo', 'name', 'cart']) !!};
+        if (!Array.isArray(headerElementsOrder) || headerElementsOrder.length === 0) {
+            headerElementsOrder = ['hamburger', 'logo', 'name', 'cart'];
+        }
+
+        const elementMeta = {
+            'hamburger': { label: '🍔 Menu Drawer', desc: 'Marketplace Navigation Icon' },
+            'logo': { label: '🏷️ Store Logo', desc: 'Vendor Brand Monogram / Image' },
+            'name': { label: '✍️ Store Name', desc: 'Typographic Brand Name' },
+            'cart': { label: '🛍️ Shopping Bag', desc: 'Bag & Popup Cart Drawer Trigger' }
+        };
+
+        function renderHeaderElements() {
+            const container = document.getElementById('header-elements-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            headerElementsOrder.forEach((elKey, idx) => {
+                const meta = elementMeta[elKey] || { label: elKey, desc: '' };
+                const pill = document.createElement('div');
+                pill.className = 'flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold shadow-2xs select-none';
+                pill.draggable = true;
+                pill.dataset.index = idx;
+
+                pill.innerHTML = `
+                    <span class="cursor-grab text-slate-400">⠿</span>
+                    <span class="text-slate-800 dark:text-zinc-200">${meta.label}</span>
+                    <div class="flex items-center gap-0.5 ml-1">
+                        ${idx > 0 ? `<button type="button" onclick="moveHeaderElement(${idx}, -1)" class="p-0.5 text-slate-400 hover:text-slate-800 dark:hover:text-white text-[10px]">◀</button>` : ''}
+                        ${idx < headerElementsOrder.length - 1 ? `<button type="button" onclick="moveHeaderElement(${idx}, 1)" class="p-0.5 text-slate-400 hover:text-slate-800 dark:hover:text-white text-[10px]">▶</button>` : ''}
+                    </div>
+                `;
+
+                // Drag and drop event listeners
+                pill.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', idx);
+                });
+                pill.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                pill.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIdx = idx;
+                    if (!isNaN(fromIdx) && fromIdx !== toIdx) {
+                        const item = headerElementsOrder.splice(fromIdx, 1)[0];
+                        headerElementsOrder.splice(toIdx, 0, item);
+                        updateHeaderElementsOrder();
+                    }
+                });
+
+                container.appendChild(pill);
+            });
+
+            const hiddenInput = document.getElementById('ctrl-header-elements-order');
+            if (hiddenInput) {
+                hiddenInput.value = JSON.stringify(headerElementsOrder);
+            }
+        }
+
+        function moveHeaderElement(idx, dir) {
+            const target = idx + dir;
+            if (target >= 0 && target < headerElementsOrder.length) {
+                const item = headerElementsOrder.splice(idx, 1)[0];
+                headerElementsOrder.splice(target, 0, item);
+                updateHeaderElementsOrder();
+            }
+        }
+
+        function updateHeaderElementsOrder() {
+            renderHeaderElements();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderHeaderElements();
+        });
+
         function showToast(msg, isSuccess = true) {
             const toast = document.getElementById('design-toast');
             const msgEl = document.getElementById('design-toast-msg');
@@ -458,6 +631,8 @@
             const form = document.getElementById('essential-settings-form');
             const formData = new FormData(form);
             formData.append('announcement_enabled', document.getElementById('ctrl-announcement-toggle').checked ? '1' : '0');
+            formData.append('transparent_on_hero', document.getElementById('ctrl-transparent-hero-toggle')?.checked ? '1' : '0');
+            formData.append('header_elements_order', JSON.stringify(headerElementsOrder));
 
             fetch('{{ route('vendor.design.quick_settings') }}', {
                 method: 'POST',

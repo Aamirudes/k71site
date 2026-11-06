@@ -415,6 +415,53 @@ class StorefrontDesignController extends Controller
             $currentConfig['hero']['link'] = trim($request->input('hero_link', '#catalog'));
         }
 
+        // Header elements reordering
+        if ($request->has('header_elements_order')) {
+            $rawOrder = $request->input('header_elements_order');
+            if (is_string($rawOrder)) {
+                $rawOrder = json_decode($rawOrder, true) ?: explode(',', $rawOrder);
+            }
+            if (is_array($rawOrder)) {
+                $currentConfig['header']['elements_order'] = array_values(array_unique(array_intersect($rawOrder, ['hamburger', 'logo', 'name', 'cart', 'search'])));
+            }
+        }
+
+        if ($request->has('transparent_on_hero')) {
+            $currentConfig['header']['transparent_on_hero'] = $request->boolean('transparent_on_hero');
+        }
+
+        // Multi-slides processing (for 100vh hero carousel)
+        $slidesInput = $request->input('slides', []);
+        if (is_string($slidesInput)) {
+            $slidesInput = json_decode($slidesInput, true) ?: [];
+        }
+
+        if (!empty($slidesInput) && is_array($slidesInput)) {
+            $existingSlides = $currentConfig['hero']['slides'] ?? [];
+            $processedSlides = [];
+            foreach ($slidesInput as $idx => $sData) {
+                $slideImg = $sData['image'] ?? ($existingSlides[$idx]['image'] ?? '');
+                
+                // Check if file uploaded for this slide index
+                if ($request->hasFile("slide_{$idx}_file")) {
+                    $sFile = $request->file("slide_{$idx}_file");
+                    if ($sFile && $sFile->isValid()) {
+                        $sPath = $sFile->store('vendors/' . $vendor->id . '/slides', 'public');
+                        $slideImg = asset('storage/' . $sPath);
+                    }
+                }
+
+                $processedSlides[] = [
+                    'image' => $slideImg,
+                    'title' => trim($sData['title'] ?? ''),
+                    'subtitle' => trim($sData['subtitle'] ?? ''),
+                    'button_text' => trim($sData['button_text'] ?? 'Explore Boutique'),
+                    'link' => trim($sData['link'] ?? '#catalog'),
+                ];
+            }
+            $currentConfig['hero']['slides'] = $processedSlides;
+        }
+
         // Product Layout Mode: grid vs slider
         if ($request->filled('product_layout')) {
             $layout = in_array($request->input('product_layout'), ['grid', 'slider']) ? $request->input('product_layout') : 'grid';

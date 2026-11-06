@@ -2,9 +2,6 @@
 <div class="storefront-preset-orbit min-h-screen flex flex-col font-body selection:bg-sky-500 selection:text-white bg-[#ffffff] text-[#0f172a]"
      style="--sf-accent: #0284c7;">
 
-    {{-- Top Announcement Bar --}}
-    @include('storefront.sections.announcement')
-
     {{-- Modern Tactile Frosted Header --}}
     @include('storefront.sections.header')
 
@@ -73,3 +70,4 @@
     @include('storefront.sections.footer')
 
 </div>
+

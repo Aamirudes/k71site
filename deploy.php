@@ -555,24 +555,29 @@ try {
 // 11. Enforce Master Administrator Credentials
 echo "<div class='step'><div class='step-title'>👤 Enforcing Master Administrator Account:</div>";
 try {
-    $admin = \App\Models\User::firstOrNew(['email' => 'crab.hashir@gmail.com']);
-    $admin->first_name = 'Hashir';
-    $admin->last_name = 'Admin';
-    $admin->username = 'masteradmin';
-    // Only set default password if account is brand new, NEVER overwrite existing user's password!
-    if (!$admin->exists || empty($admin->password)) {
+    $admin = \App\Models\User::where('email', 'crab.hashir@gmail.com')->first();
+    if (!$admin) {
+        $admin = new \App\Models\User();
+        $admin->email = 'crab.hashir@gmail.com';
+        $admin->first_name = 'Hashir';
+        $admin->last_name = 'Admin';
+        $admin->username = 'masteradmin';
         $admin->password = \Illuminate\Support\Facades\Hash::make('Hashir1284@0');
+        $admin->email_verified_at = now();
+        $admin->is_blocked = 0;
+        $admin->save();
+    } else {
+        // Absolutely preserve existing user password! NEVER touch $admin->password under any circumstance!
+        $admin->is_blocked = 0;
+        $admin->blocked_reason = null;
+        $admin->save();
     }
-    $admin->is_blocked = 0;
-    $admin->blocked_reason = null;
-    $admin->email_verified_at = $admin->email_verified_at ?: now();
-    $admin->save();
 
     $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
     $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
     $admin->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
 
-    echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   (Existing Password Preserved)\n   User ID: {$admin->id}</pre>";
+    echo "<pre class='success'>✅ Master Administrator verified:\n   Email: crab.hashir@gmail.com\n   Role: admin\n   (Existing Password Untouched & Preserved)\n   User ID: {$admin->id}</pre>";
 } catch (\Throwable $e) {
     echo "<pre class='error'>Failed to enforce admin account: " . htmlspecialchars($e->getMessage()) . "</pre>";
 }

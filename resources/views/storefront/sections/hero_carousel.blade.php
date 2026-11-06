@@ -6,120 +6,187 @@
     $bannerUrl = $brandCfg['banner_url'] ?? $vendor->banner_url;
     if (empty($bannerUrl) && $flagship) {
         $firstImg = $flagship->images->first();
-        $bannerUrl = $firstImg ? \App\Services\ImageService::url($firstImg->path, 1200) : null;
+        $bannerUrl = $firstImg ? \App\Services\ImageService::url($firstImg->path, 1600) : null;
     }
     
     $headline = $heroCfg['title'] ?? $brandCfg['hero_headline'] ?? $vendor->shop_name;
-    $subtitle = $heroCfg['subtitle'] ?? $brandCfg['tagline'] ?? $vendor->tagline ?? 'Direct Workshop Dispatch · Verified Merchant';
-    $buttonText = $heroCfg['button_text'] ?? 'Explore Catalog';
+    $subtitle = $heroCfg['subtitle'] ?? $brandCfg['tagline'] ?? $vendor->tagline ?? 'Curated authentic collections handcrafted with distinction';
+    $buttonText = $heroCfg['button_text'] ?? 'Explore Boutique';
     $buttonLink = $heroCfg['link'] ?? '#catalog';
 
-    // Optional multi-slides support if configured
-    $slides = $heroCfg['slides'] ?? [];
-    if (empty($slides) && !empty($bannerUrl)) {
-        $slides = [
-            [
-                'image' => $bannerUrl,
-                'title' => $headline,
-                'subtitle' => $subtitle,
-                'link' => $buttonLink,
-                'button_text' => $buttonText,
-            ]
-        ];
-    }
+    // 3 Curated Luxury Slides by default (customizable per vendor)
+    $defaultSlides = [
+        [
+            'image' => $bannerUrl ?: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80',
+            'title' => $headline,
+            'subtitle' => $subtitle,
+            'button_text' => $buttonText,
+            'link' => $buttonLink,
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80',
+            'title' => 'Artisan Editions 2026',
+            'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery across India.',
+            'button_text' => 'Discover New Drops',
+            'link' => '#catalog',
+        ],
+        [
+            'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80',
+            'title' => 'Signature Heritage',
+            'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection and direct merchant support.',
+            'button_text' => 'Shop Collection',
+            'link' => '#catalog',
+        ],
+    ];
+
+    $slides = (!empty($heroCfg['slides']) && is_array($heroCfg['slides'])) ? $heroCfg['slides'] : $defaultSlides;
 @endphp
 
-<!-- CUSTOMIZABLE HERO CAROUSEL / BANNER -->
-<section id="hero" class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-6 sm:pb-8">
-    <div x-data="{
-            activeSlide: 0,
-            slidesCount: {{ count($slides) ?: 1 }},
-            timer: null,
-            init() {
-                if (this.slidesCount > 1) {
-                    this.timer = setInterval(() => {
-                        this.activeSlide = (this.activeSlide + 1) % this.slidesCount;
-                    }, 5000);
-                }
-            }
-         }" 
-         class="relative rounded-3xl overflow-hidden shadow-[0_10px_35px_rgba(0,0,0,0.06)] border border-stone-200/80 dark:border-white/10 aspect-[16/9] sm:aspect-[21/9] lg:aspect-[24/9] min-h-[320px] sm:min-h-[380px] bg-stone-900 flex items-center">
+<!-- 100VH LUXURY AESTHETIC HERO IMAGE CAROUSEL WITH FAST SWIPE-TO-SLIDE -->
+<section id="hero" 
+         class="relative w-full h-screen min-h-[640px] max-h-[1100px] overflow-hidden bg-black select-none"
+         x-data="{
+             activeSlide: 0,
+             totalSlides: {{ count($slides) }},
+             touchStartX: 0,
+             touchEndX: 0,
+             timer: null,
+             init() {
+                 this.startAutoplay();
+             },
+             startAutoplay() {
+                 this.stopAutoplay();
+                 if (this.totalSlides > 1) {
+                     this.timer = setInterval(() => {
+                         this.nextSlide();
+                     }, 6000);
+                 }
+             },
+             stopAutoplay() {
+                 if (this.timer) {
+                     clearInterval(this.timer);
+                     this.timer = null;
+                 }
+             },
+             nextSlide() {
+                 this.activeSlide = (this.activeSlide + 1) % this.totalSlides;
+             },
+             prevSlide() {
+                 this.activeSlide = (this.activeSlide - 1 + this.totalSlides) % this.totalSlides;
+             },
+             handleTouchStart(e) {
+                 this.touchStartX = e.changedTouches[0].screenX;
+                 this.stopAutoplay();
+             },
+             handleTouchEnd(e) {
+                 this.touchEndX = e.changedTouches[0].screenX;
+                 const diff = this.touchStartX - this.touchEndX;
+                 if (Math.abs(diff) > 40) {
+                     if (diff > 0) {
+                         this.nextSlide();
+                     } else {
+                         this.prevSlide();
+                     }
+                 }
+                 this.startAutoplay();
+             }
+         }"
+         @mouseenter="stopAutoplay()"
+         @mouseleave="startAutoplay()"
+         @touchstart="handleTouchStart($event)"
+         @touchend="handleTouchEnd($event)">
 
-        <!-- Slide Background Images -->
-        @if(!empty($slides))
-            @foreach($slides as $idx => $slide)
-                <div x-show="activeSlide === {{ $idx }}"
-                     x-transition:enter="transition ease-out duration-700"
-                     x-transition:enter-start="opacity-0 scale-102"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-500"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-end="opacity-0 scale-98"
-                     class="absolute inset-0 z-0">
-                    <img src="{{ $slide['image'] }}" 
-                         alt="{{ $slide['title'] ?? $headline }}" 
-                         class="w-full h-full object-cover object-center filter brightness-[0.72]">
+    <!-- Carousel Slides Track -->
+    @foreach($slides as $idx => $slide)
+        <div x-show="activeSlide === {{ $idx }}"
+             x-transition:enter="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-800"
+             x-transition:enter-start="opacity-0 scale-105"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-600"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="absolute inset-0 w-full h-full">
+
+            <!-- High-Res Background Image with Fast Loading & Preload -->
+            <img src="{{ $slide['image'] }}" 
+                 alt="{{ $slide['title'] ?? $headline }}" 
+                 class="w-full h-full object-cover object-center filter brightness-[0.70] contrast-[1.05]"
+                 {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>
+
+            <!-- Deep Liquid Dark Vignette Gradient for Ultra Legibility -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/60 pointer-events-none"></div>
+
+            <!-- Content Stage / Central Typography -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4 sm:px-8 max-w-4xl mx-auto z-20 space-y-5 sm:space-y-6 pt-16 sm:pt-20">
+                
+                <!-- Verified Merchant Pill -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-widest text-white/95 bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Verified Flagship Atelier · Direct Dispatch</span>
                 </div>
-            @endforeach
-        @elseif($flagship && $flagship->images->first())
-            <div class="absolute inset-0 z-0">
-                <img src="{{ \App\Services\ImageService::url($flagship->images->first()->path, 1200) }}" 
-                     alt="{{ $headline }}" 
-                     class="w-full h-full object-cover object-center filter brightness-[0.70]">
-            </div>
-        @else
-            <!-- Neutral Architectural Surface -->
-            <div class="absolute inset-0 z-0 bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900"></div>
-        @endif
 
-        <!-- Subtle Dark Vignette Overlay for Text Legibility -->
-        <div class="absolute inset-0 z-10 bg-gradient-to-t sm:bg-gradient-to-r from-black/85 via-black/50 to-transparent"></div>
+                <!-- Main Headline -->
+                <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-white tracking-tight leading-[1.1] drop-shadow-md max-w-3xl">
+                    {{ $slide['title'] ?? $headline }}
+                </h1>
 
-        <!-- Content Stage -->
-        <div class="relative z-20 max-w-2xl px-6 sm:px-12 lg:px-16 py-8 text-white space-y-4">
-            
-            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/15 backdrop-blur-md border border-white/20 text-white">
-                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>Verified K71 Storefront</span>
-            </div>
+                <!-- Subtitle / Tagline -->
+                <p class="text-sm sm:text-base md:text-lg text-white/85 max-w-xl font-normal leading-relaxed drop-shadow-sm line-clamp-3">
+                    {{ $slide['subtitle'] ?? $subtitle }}
+                </p>
 
-            <h1 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight font-heading leading-[1.15] drop-shadow-sm text-white">
-                {{ $headline }}
-            </h1>
-
-            <p class="text-xs sm:text-sm text-stone-200 line-clamp-2 max-w-lg leading-relaxed font-sans">
-                {{ $subtitle }}
-            </p>
-
-            <div class="flex flex-wrap items-center gap-3 pt-2">
-                <a href="{{ $buttonLink }}" 
-                   class="px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 shadow-lg hover:scale-102 flex items-center gap-2"
-                   style="background-color: var(--sf-accent, #c59b27); color: #000000;">
-                    <span>{{ $buttonText }}</span>
-                    <span>&darr;</span>
-                </a>
-
-                @if($flagship)
-                    <a href="{{ route('product.show', $flagship->slug) }}" 
-                       class="px-5 py-3 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs sm:text-sm font-semibold border border-white/25 transition">
-                        Featured Drop &rarr;
+                <!-- CTA Button -->
+                <div class="pt-2 sm:pt-4">
+                    <a href="{{ $slide['link'] ?? '#catalog' }}" 
+                       class="inline-flex items-center gap-2.5 px-7 sm:px-9 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider text-black bg-white hover:bg-zinc-100 hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_10px_35px_rgba(255,255,255,0.25)] border border-white/80 cursor-pointer">
+                        <span>{{ $slide['button_text'] ?? 'Explore Boutique' }}</span>
+                        <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
                     </a>
-                @endif
-            </div>
+                </div>
 
+            </div>
         </div>
+    @endforeach
 
-        <!-- Slide Indicators (If Multi-Slide) -->
-        @if(count($slides) > 1)
-            <div class="absolute bottom-4 right-6 z-20 flex items-center gap-2">
-                @foreach($slides as $idx => $slide)
-                    <button type="button" 
-                            @click="activeSlide = {{ $idx }}" 
-                            class="h-1.5 rounded-full transition-all duration-300"
-                            :class="activeSlide === {{ $idx }} ? 'w-8 bg-white' : 'w-2 bg-white/40'"></button>
-                @endforeach
-            </div>
-        @endif
-
+    <!-- Bottom Carousel Indicators (3 Fast Navigation Pills) -->
+    <div class="absolute bottom-10 sm:bottom-12 inset-x-0 z-30 flex items-center justify-center gap-2 sm:gap-3">
+        @foreach($slides as $idx => $s)
+            <button type="button" 
+                    @click="activeSlide = {{ $idx }}; stopAutoplay(); startAutoplay();" 
+                    class="h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer"
+                    :class="activeSlide === {{ $idx }} ? 'w-8 sm:w-12 bg-white shadow-lg' : 'w-2 sm:w-3 bg-white/35 hover:bg-white/60'"
+                    aria-label="Go to slide {{ $idx + 1 }}">
+            </button>
+        @endforeach
     </div>
+
+    <!-- Previous / Next Sleek Arrow Buttons -->
+    <button type="button" 
+            @click="prevSlide(); stopAutoplay(); startAutoplay();"
+            class="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 items-center justify-center transition-all hover:scale-110 cursor-pointer"
+            aria-label="Previous slide">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </button>
+    <button type="button" 
+            @click="nextSlide(); stopAutoplay(); startAutoplay();"
+            class="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 items-center justify-center transition-all hover:scale-110 cursor-pointer"
+            aria-label="Next slide">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/>
+        </svg>
+    </button>
+
+    <!-- Smooth Scroll Down Prompt -->
+    <a href="#catalog" 
+       class="absolute bottom-2 inset-x-0 z-20 flex flex-col items-center justify-center text-white/60 hover:text-white transition-colors group">
+        <span class="text-[9px] uppercase tracking-widest font-bold">Scroll to Explore</span>
+        <svg class="w-4 h-4 animate-bounce mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+    </a>
+
 </section>

@@ -21,7 +21,6 @@
     $launcherItems = \App\Http\Controllers\Admin\FloatingLauncherController::getLauncherItems();
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
     $triggerImage = \App\Models\Setting::get('floating_launcher_trigger_image', null);
-    $triggerText = \App\Models\Setting::get('floating_launcher_trigger_text', 'NAV');
     $closeText = \App\Models\Setting::get('floating_launcher_close_text', '✕');
 @endphp
 
@@ -37,6 +36,13 @@
     .k71-nav-draggable-dock.is-dragging {
         cursor: grabbing;
         transition: none !important;
+    }
+    .k71-circle-img-holder {
+        border-radius: 100px !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.35) !important;
+        overflow: hidden !important;
     }
 </style>
 
@@ -77,80 +83,65 @@
                     return 'transform: translate3d(' + x + 'px, ' + y + 'px, 0);';
                  })()">
                 <a :href="item.url" 
-                   class="group flex flex-col items-center justify-center w-12 h-12 rounded-2xl bg-slate-950/95 backdrop-blur-2xl border border-white/20 shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer relative overflow-hidden text-center"
-                   :title="item.label">
+                   class="k71-circle-img-holder flex items-center justify-center w-12 h-12 bg-black hover:scale-110 active:scale-95 transition-transform cursor-pointer relative"
+                   style="border-radius: 100px; border: none; outline: none;">
                     
-                    <!-- Subtle Top Gradient Sheen -->
-                    <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r" :class="item.color"></div>
-
-                    <!-- Custom Image Icon if Uploaded -->
+                    <!-- Image Only (No text, no color bar, no outline) -->
                     <template x-if="item.image_url">
-                        <img :src="item.image_url" :alt="item.name" class="w-5 h-5 object-contain group-hover:scale-110 transition-transform">
+                        <img :src="item.image_url" :alt="item.name" class="w-full h-full object-cover" style="border-radius: 100px;">
                     </template>
 
-                    <!-- Clean Vector SVG Glyphs fallback -->
+                    <!-- Clean Monochrome SVG Glyph Fallback if no image uploaded -->
                     <template x-if="!item.image_url && item.id === 'mart'">
-                        <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </template>
                     <template x-if="!item.image_url && item.id === 'feasto'">
-                        <svg class="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </template>
                     <template x-if="!item.image_url && item.id === 'services'">
-                        <svg class="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     </template>
                     <template x-if="!item.image_url && item.id === 'used'">
-                        <svg class="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     </template>
                     <template x-if="!item.image_url && item.id === 'shorts'">
-                        <svg class="w-5 h-5 text-rose-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </template>
                     <template x-if="!item.image_url && item.id === 'enquiry'">
-                        <svg class="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     </template>
                     <template x-if="!item.image_url && !['mart', 'feasto', 'services', 'used', 'shorts', 'enquiry'].includes(item.id)">
-                        <svg class="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </template>
-
-                    <span class="text-[8px] font-black tracking-tight text-white/90 leading-none mt-1" x-text="item.name"></span>
-                    
-                    <!-- Crisp Hover Tooltip -->
-                    <span class="absolute -top-7 whitespace-nowrap bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl border border-white/10"
-                          x-text="item.label"></span>
                 </a>
             </div>
         </template>
     </div>
 
-    <!-- Center Trigger Button (Obsidian Glass Floating Action Button) -->
+    <!-- Center Trigger Button (Image Only, 100px border-radius circle, No Text, No Color, No Outline) -->
     <button type="button"
             @click="handleButtonClick($event)"
             aria-label="Toggle 6-in-1 Navigation"
-            class="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-slate-950/95 text-white shadow-[0_10px_35px_rgba(0,0,0,0.55)] border border-white/20 backdrop-blur-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 relative group overflow-hidden focus:outline-none">
+            class="k71-circle-img-holder w-13 h-13 sm:w-14 sm:h-14 bg-black text-white flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200 relative group overflow-hidden focus:outline-none"
+            style="border-radius: 100px; border: none; outline: none;">
         
-        <!-- Subtle Specular Edge Ring -->
-        <div class="absolute inset-0 rounded-full border border-white/15 pointer-events-none"></div>
-
-        <!-- Normal State: Custom Trigger Image or Multi-Portal Glyph -->
-        <div x-show="!open" class="flex flex-col items-center justify-center transition-all w-full h-full p-1.5">
+        <!-- Normal State: Image Only, No text, No color, No outline -->
+        <div x-show="!open" class="flex items-center justify-center w-full h-full" style="border-radius: 100px;">
             @if(!empty($triggerImage))
-                <img src="{{ $triggerImage }}" alt="{{ $triggerText }}" class="w-6 h-6 sm:w-7 sm:h-7 object-contain rounded-full shadow-xs">
-                @if(!empty($triggerText))
-                    <span class="text-[7px] font-black tracking-wider uppercase text-white/90 leading-none mt-0.5 truncate max-w-[44px]">{{ $triggerText }}</span>
-                @endif
+                <img src="{{ $triggerImage }}" alt="Nav" class="w-full h-full object-cover" style="border-radius: 100px;">
             @else
-                <svg class="w-5 h-5 text-white group-hover:text-amber-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="7" height="7" rx="2"></rect>
                     <rect x="14" y="3" width="7" height="7" rx="2"></rect>
                     <rect x="14" y="14" width="7" height="7" rx="2"></rect>
                     <rect x="3" y="14" width="7" height="7" rx="2"></rect>
                 </svg>
-                <span class="text-[7.5px] font-black tracking-wider uppercase text-white/90 leading-none mt-1">{{ $triggerText }}</span>
             @endif
         </div>
 
         <!-- Active Open State: Retract Close Symbol -->
-        <div x-show="open" class="flex items-center justify-center transition-all">
-            <span class="text-xl sm:text-2xl font-black text-amber-300 leading-none hover:rotate-90 transition-transform">{{ $closeText }}</span>
+        <div x-show="open" class="flex items-center justify-center w-full h-full">
+            <span class="text-xl sm:text-2xl font-black text-white leading-none">{{ $closeText }}</span>
         </div>
 
     </button>

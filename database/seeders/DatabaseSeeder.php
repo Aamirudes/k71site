@@ -26,26 +26,28 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Seed or Enforce Master Administrator Account
-        $admin = User::firstOrCreate(
-            ['email' => 'crab.hashir@gmail.com'],
-            [
+        $admin = User::where('email', 'crab.hashir@gmail.com')->first();
+        if (!$admin) {
+            $admin = User::create([
+                'email' => 'crab.hashir@gmail.com',
                 'first_name' => 'Hashir',
                 'last_name' => 'Admin',
                 'username' => 'masteradmin',
                 'password' => Hash::make('Hashir1284@0'),
                 'email_verified_at' => now(),
                 'terms_accepted_at' => now(),
-            ]
-        );
-
-        $admin->update([
-            'first_name' => 'Hashir',
-            'last_name' => 'Admin',
-            'password' => Hash::make('Hashir1284@0'),
-            'is_blocked' => 0,
-            'blocked_reason' => null,
-            'email_verified_at' => $admin->email_verified_at ?: now(),
-        ]);
+                'is_blocked' => 0,
+            ]);
+        } else {
+            // NEVER reset existing password in database!
+            $admin->update([
+                'first_name' => 'Hashir',
+                'last_name' => 'Admin',
+                'is_blocked' => 0,
+                'blocked_reason' => null,
+                'email_verified_at' => $admin->email_verified_at ?: now(),
+            ]);
+        }
 
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $custRole = Role::firstOrCreate(['name' => 'customer']);

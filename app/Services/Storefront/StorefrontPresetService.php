@@ -875,9 +875,10 @@ class StorefrontPresetService
      */
     public function sanitizeConfig(array $input, Vendor $vendor): array
     {
-        $presetKey = in_array($input['preset'] ?? '', ['atelier', 'object', 'commerce', 'market', 'signature']) 
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $presetKey = in_array($input['preset'] ?? '', $allowedPresets) 
             ? $input['preset'] 
-            : 'atelier';
+            : 'velora';
 
         $safeHex = function ($color, $default) {
             return (is_string($color) && preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $color)) ? $color : $default;
@@ -942,10 +943,13 @@ class StorefrontPresetService
 
         // 3. Header Sanitization
         $rawHeader = $input['header'] ?? [];
+        $rawElements = is_array($rawHeader['elements_order'] ?? null) ? $rawHeader['elements_order'] : ['hamburger', 'logo', 'name', 'cart'];
         $header = [
             'layout' => in_array($rawHeader['layout'] ?? '', ['minimal', 'split', 'centered', 'stacked', 'search_prominent']) ? $rawHeader['layout'] : 'split',
             'logo_height' => max(20, min(100, (int) ($rawHeader['logo_height'] ?? 38))),
             'sticky' => (bool) ($rawHeader['sticky'] ?? true),
+            'transparent_on_hero' => (bool) ($rawHeader['transparent_on_hero'] ?? true),
+            'elements_order' => array_values(array_unique(array_intersect($rawElements, ['hamburger', 'logo', 'name', 'cart', 'search']))),
             'show_search' => (bool) ($rawHeader['show_search'] ?? true),
             'show_cart' => (bool) ($rawHeader['show_cart'] ?? true),
             'show_wishlist' => (bool) ($rawHeader['show_wishlist'] ?? true),
@@ -955,6 +959,29 @@ class StorefrontPresetService
             'announcement_link' => $safeUrl($rawHeader['announcement_link'] ?? ''),
             'announcement_bg' => $safeHex($rawHeader['announcement_bg'] ?? null, '#18181b'),
             'announcement_text_color' => $safeHex($rawHeader['announcement_text_color'] ?? null, '#ffffff'),
+        ];
+
+        // 3b. Hero Carousel Sanitization
+        $rawHero = $input['hero'] ?? [];
+        $heroSlides = [];
+        if (!empty($rawHero['slides']) && is_array($rawHero['slides'])) {
+            foreach ($rawHero['slides'] as $s) {
+                if (!is_array($s)) continue;
+                $heroSlides[] = [
+                    'image' => $safeUrl($s['image'] ?? ''),
+                    'title' => $safeText($s['title'] ?? '', 100),
+                    'subtitle' => $safeText($s['subtitle'] ?? '', 200),
+                    'button_text' => $safeText($s['button_text'] ?? 'Explore', 40),
+                    'link' => $safeUrl($s['link'] ?? '#catalog'),
+                ];
+            }
+        }
+        $hero = [
+            'title' => $safeText($rawHero['title'] ?? '', 100),
+            'subtitle' => $safeText($rawHero['subtitle'] ?? '', 200),
+            'button_text' => $safeText($rawHero['button_text'] ?? 'Explore Collection', 40),
+            'link' => $safeUrl($rawHero['link'] ?? '#catalog'),
+            'slides' => $heroSlides,
         ];
 
         // 4. Sections Sanitization
@@ -1067,6 +1094,7 @@ class StorefrontPresetService
             'theme' => $theme,
             'brand' => $brand,
             'header' => $header,
+            'hero' => $hero,
             'sections' => $sections,
             'footer' => $footer,
         ];
