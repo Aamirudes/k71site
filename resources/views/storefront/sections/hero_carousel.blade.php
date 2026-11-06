@@ -39,7 +39,20 @@
         ],
     ];
 
-    $slides = (!empty($heroCfg['slides']) && is_array($heroCfg['slides'])) ? $heroCfg['slides'] : $defaultSlides;
+    // Guarantee that all 3 slides exist with high-res images and content for EVERY vendor
+    $finalSlides = [];
+    for ($i = 0; $i < 3; $i++) {
+        $custom = $heroCfg['slides'][$i] ?? [];
+        $def = $defaultSlides[$i];
+        $finalSlides[] = [
+            'image' => !empty($custom['image']) ? $custom['image'] : $def['image'],
+            'title' => !empty($custom['title']) ? $custom['title'] : $def['title'],
+            'subtitle' => !empty($custom['subtitle']) ? $custom['subtitle'] : $def['subtitle'],
+            'button_text' => !empty($custom['button_text']) ? $custom['button_text'] : $def['button_text'],
+            'link' => !empty($custom['link']) ? $custom['link'] : $def['link'],
+        ];
+    }
+    $slides = $finalSlides;
 @endphp
 
 <!-- 100VH LUXURY AESTHETIC HERO IMAGE CAROUSEL WITH FAST SWIPE-TO-SLIDE -->
@@ -99,7 +112,7 @@
     <!-- Carousel Slides Track -->
     @foreach($slides as $idx => $slide)
         @php
-            $slideImg = !empty($slide['image']) ? $slide['image'] : ($fallbackImages[$idx % 3] ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80');
+            $slideImg = !empty($slide['image']) ? $slide['image'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80';
         @endphp
         <div x-show="activeSlide === {{ $idx }}"
              x-transition:enter="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-800"

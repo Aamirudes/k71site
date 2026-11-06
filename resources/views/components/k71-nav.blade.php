@@ -64,35 +64,17 @@
         $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
     $navWishlistCount = count(\App\Models\Wishlist::getUserWishlistIds());
-    $navUnreadMessagesCount = 0;
-    if (auth()->check()) {
-        try {
-            $uid = (int) auth()->id();
-            if (\Illuminate\Support\Facades\Schema::hasTable('chat_messages') && \Illuminate\Support\Facades\Schema::hasTable('chat_conversations')) {
-                $navUnreadMessagesCount = (int) \Illuminate\Support\Facades\DB::table('chat_messages')
-                    ->join('chat_conversations', 'chat_messages.conversation_id', '=', 'chat_conversations.id')
-                    ->where(function ($q) use ($uid) {
-                        $q->where('chat_conversations.user_one_id', $uid)
-                          ->orWhere('chat_conversations.user_two_id', $uid);
-                    })
-                    ->where('chat_messages.sender_id', '!=', $uid)
-                    ->where('chat_messages.is_read', 0)
-                    ->count();
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('messages')) {
-                $navUnreadMessagesCount += (int) \App\Models\Message::where('recipient_id', $uid)->whereNull('read_at')->count();
-            }
-        } catch (\Throwable $e) {
-            $navUnreadMessagesCount = 0;
-        }
-    }
 @endphp
 
+<!-- MAIN K71 MARKETPLACE HEADER (1-FORM WITH DOWN-ARROW ACCORDION SLIDE-IN FOR SEARCH & CATEGORIES) -->
 <header x-data="{ 
             userMenuOpen: false, 
-            cartBadgeCount: {{ $cartCount }}
+            cartBadgeCount: {{ $cartCount }},
+            expandedForms: false
         }" 
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
+        @click.outside="expandedForms = false"
+        @keydown.escape.window="expandedForms = false;"
         class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all">
     
     @if($currentVendor)
@@ -116,10 +98,11 @@
     @endif
 
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-14 sm:h-16">
+        <!-- 1ST FORM: MAIN COMPACT SINGLE-LINE NAVBAR BAR -->
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-3">
             
             <!-- Left: Hamburger + Logo -->
-            <div class="flex items-center gap-2 sm:gap-3.5">
+            <div class="flex items-center gap-2 sm:gap-3.5 shrink-0">
                 <!-- Hamburger Trigger Button -->
                 <button @click="$dispatch('open-hamburger')" 
                         type="button"
@@ -166,88 +149,33 @@
                 </div>
             </div>
 
-            @if(!$hideSearch)
-            <!-- Desktop Middle: Clean Integrated Search Bar with Live Autocomplete -->
-            <div class="hidden md:flex flex-1 max-w-md lg:max-w-xl mx-4 lg:mx-8 relative"
-                 x-data="{
-                    q: '',
-                    suggestions: [],
-                    loading: false,
-                    open: false,
-                    fetchSuggest() {
-                        if(this.q.trim().length < 2) {
-                            this.suggestions = [];
-                            this.open = false;
-                            return;
-                        }
-                        this.loading = true;
-                        fetch('/api/search/suggest?q=' + encodeURIComponent(this.q))
-                            .then(r => r.json())
-                            .then(data => {
-                                this.suggestions = data.results || [];
-                                this.open = true;
-                                this.loading = false;
-                            })
-                            .catch(() => { this.loading = false; });
-                    }
-                 }"
-                 @click.away="open = false">
-                <form action="{{ route('catalog.index') }}" method="GET" class="w-full relative">
-                    <input type="text" name="search" x-model="q"
-                           @input.debounce.250ms="fetchSuggest()"
-                           @focus="if(suggestions.length > 0) open = true"
-                           autocomplete="off"
-                           placeholder="Search products, verified stores, brands..." 
-                           class="w-full pl-10 pr-20 py-2.5 rounded-full border border-slate-200/90 bg-slate-50/90 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
-                    <div class="absolute left-3.5 top-3 text-slate-400">
-                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
-                    </div>
-                    <button type="submit" class="absolute right-1.5 top-1.5 px-3.5 py-1 rounded-full bg-slate-900 hover:bg-black text-white text-[11px] font-bold tracking-wide transition shadow-xs cursor-pointer">
-                        Search
-                    </button>
-                </form>
-
-                <!-- Desktop Autocomplete Results Dropdown -->
-                <div x-show="open && (suggestions.length > 0 || loading)" 
-                     x-transition:enter="transition ease-out duration-150"
-                     x-transition:enter-start="opacity-0 translate-y-1"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100"
-                     style="display: none;">
-                    
-                    <div x-show="loading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                        <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                        </svg>
-                        <span>Searching marketplace...</span>
-                    </div>
-
-                    <template x-for="item in suggestions" :key="item.id">
-                        <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition group">
-                            <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-xs font-bold text-slate-900 truncate group-hover:text-black" x-text="item.title"></p>
-                                <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                    <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
-                                    <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
-                                    <span class="truncate text-slate-400" x-text="item.vendor"></span>
-                                </div>
-                            </div>
-                        </a>
-                    </template>
-                    
-                    <div x-show="suggestions.length > 0" class="p-2 bg-slate-50/80 text-center border-t border-slate-100">
-                        <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(q)" class="text-[11px] font-bold text-slate-700 hover:text-black">
-                            See all results for "<span x-text="q"></span>" →
-                        </a>
-                    </div>
-                </div>
+            <!-- CENTER: DOWN ARROW BUTTON TO SLIDE IN FORMS 2 & 3 (SEARCH & CATEGORIES) -->
+            <div class="flex items-center justify-center">
+                <button type="button" 
+                        @click="expandedForms = !expandedForms"
+                        class="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold transition-all duration-200 border cursor-pointer select-none shadow-2xs"
+                        :class="{
+                            'bg-slate-900 text-white border-slate-900 shadow-md scale-102': expandedForms,
+                            'bg-slate-100/90 hover:bg-slate-200 text-slate-800 border-slate-200': !expandedForms
+                        }"
+                        aria-label="Toggle Search and Category Navigator"
+                        :aria-expanded="expandedForms.toString()">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+                    </svg>
+                    <span class="hidden sm:inline" x-text="expandedForms ? 'Close Explore' : 'Search & Categories'">Search &amp; Categories</span>
+                    <span class="sm:hidden" x-text="expandedForms ? 'Close' : 'Search'">Search</span>
+                    <!-- Interactive Down/Up Animated Arrow -->
+                    <svg class="w-3.5 h-3.5 transition-transform duration-300 transform" 
+                         :class="{ 'rotate-180': expandedForms }"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
             </div>
-            @endif
 
             <!-- Right Actions: Stores + Catalog + Messages + Wishlist + Cart + Account -->
-            <div class="flex items-center gap-1 sm:gap-1.5">
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
 
                 <!-- Stores Directory Link (Desktop) -->
                 <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('stores.index') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
@@ -298,70 +226,49 @@
                           class="absolute top-1 right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
                 </button>
 
-                <!-- User Profile / Sign In (Visible on mobile and desktop) -->
-                <div class="relative ml-0.5 sm:ml-1">
+                <!-- User Account Profile Button & Dropdown -->
+                <div class="relative" x-data="{ open: false }">
                     @guest
-                        <button type="button" 
-                                @click="window.openAuthModal ? window.openAuthModal() : $dispatch('open-auth-modal')"
-                                class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-slate-900 text-white text-[11px] sm:text-xs font-bold hover:bg-black transition-all cursor-pointer">
-                            Sign In
+                        <button @click="$dispatch('open-auth-modal', { view: 'login' })"
+                                type="button"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            <span class="hidden sm:inline">Sign In</span>
                         </button>
                     @else
-                        <div class="relative">
-                            <button @click="userMenuOpen = !userMenuOpen" 
-                                    @click.away="userMenuOpen = false" 
-                                    class="w-8 h-8 rounded-full bg-slate-900 text-white font-black flex items-center justify-center text-xs shadow-xs focus:outline-none hover:bg-black transition-colors cursor-pointer overflow-hidden border border-slate-200"
-                                    aria-label="User Account Menu">
-                                @if(auth()->user()->avatar)
-                                    <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
-                                @else
-                                    {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                        <button @click="open = !open" 
+                                type="button" 
+                                class="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition focus:outline-none cursor-pointer"
+                                aria-label="User Account Menu">
+                            <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                                {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
+                            </div>
+                        </button>
+
+                        <div x-show="open" 
+                             @click.away="open = false" 
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             class="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-100 py-2 z-50 divide-y divide-slate-100"
+                             style="display: none;">
+                            <div class="px-4 py-2">
+                                <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
+                                <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
+                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
+                                <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
+                                <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
+                                @if(auth()->user()->hasRole('vendor'))
+                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>
                                 @endif
-                            </button>
-
-                            <div x-show="userMenuOpen" 
-                                 x-transition:enter="transition ease-out duration-150"
-                                 x-transition:enter-start="opacity-0 scale-95"
-                                 x-transition:enter-end="opacity-100 scale-100"
-                                 x-transition:leave="transition ease-in duration-100"
-                                 x-transition:leave-start="opacity-100 scale-100"
-                                 x-transition:leave-end="opacity-0 scale-95"
-                                 class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl py-2 border border-slate-200 z-50 origin-top-right text-slate-900"
-                                 style="display: none;">
-                                <div class="px-4 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-200 shadow-xs bg-slate-100">
-                                        <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
-                                        <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
-                                    </div>
-                                </div>
-                                <div class="py-1">
-                                    <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
-                                    <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
-                                    <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
-                                    <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
-                                    <a href="{{ route('notifications.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Notifications</a>
-
-                                    @if(auth()->user()->isDeliveryPartner())
-                                        <div class="border-t border-slate-100 my-1"></div>
-                                        <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 flex items-center justify-between">
-                                            <span>Delivery Pilot Hub</span>
-                                            <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">⚡ Fleet</span>
-                                        </a>
-                                    @endif
-
-                                    @if(auth()->user()->hasRole('vendor'))
-                                        <div class="border-t border-slate-100 my-1"></div>
-                                        <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>
-                                    @endif
-                                    @if(auth()->user()->hasRole('admin'))
-                                        <div class="border-t border-slate-100 my-1"></div>
-                                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Admin Console</a>
-                                    @endif
-                                </div>
-                                <div class="border-t border-slate-100 my-1"></div>
+                                @if(auth()->user()->hasRole('admin'))
+                                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Admin Console</a>
+                                @endif
+                            </div>
+                            <div class="py-1">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="block w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer">
@@ -376,143 +283,124 @@
             </div>
 
         </div>
+    </div>
 
-        @if(!$hideSearch)
-        <!-- Mobile Integrated Search Bar (Always visible on mobile screens) -->
-        <div class="md:hidden pb-2.5 pt-0.5"
-             x-data="{
-                mq: '',
-                msuggestions: [],
-                mloading: false,
-                mopen: false,
-                fetchSuggest() {
-                    if(this.mq.trim().length < 2) {
-                        this.msuggestions = [];
-                        this.mopen = false;
-                        return;
+    <!-- SLIDE-IN ACCORDION: FORM 2 (SEARCH) & FORM 3 (CATEGORIES) -->
+    <div x-show="expandedForms" 
+         x-cloak
+         x-transition:enter="transition-all duration-300 ease-out"
+         x-transition:enter-start="opacity-0 -translate-y-3 max-h-0"
+         x-transition:enter-end="opacity-100 translate-y-0 max-h-[600px]"
+         x-transition:leave="transition-all duration-200 ease-in"
+         x-transition:leave-start="opacity-100 translate-y-0 max-h-[600px]"
+         x-transition:leave-end="opacity-0 -translate-y-3 max-h-0"
+         class="overflow-hidden border-t border-slate-200/90 bg-white/98 backdrop-blur-2xl shadow-xl">
+        
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3.5 space-y-3">
+            
+            <div class="flex items-center justify-between pb-1">
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Marketplace Search &amp; Verticals</span>
+                <button type="button" 
+                        @click="expandedForms = false" 
+                        class="text-[11px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 cursor-pointer transition">
+                    <span>Close</span>
+                    <span>✕</span>
+                </button>
+            </div>
+
+            @if(!$hideSearch)
+            <!-- FORM 2: FULL SEARCH BAR WITH AUTOCOMPLETE -->
+            <div class="relative w-full"
+                 x-data="{
+                    q: '',
+                    suggestions: [],
+                    loading: false,
+                    open: false,
+                    fetchSuggest() {
+                        if(this.q.trim().length < 2) {
+                            this.suggestions = [];
+                            this.open = false;
+                            return;
+                        }
+                        this.loading = true;
+                        fetch('/api/search/suggest?q=' + encodeURIComponent(this.q))
+                            .then(r => r.json())
+                            .then(data => {
+                                this.suggestions = data.results || [];
+                                this.open = true;
+                                this.loading = false;
+                            })
+                            .catch(() => { this.loading = false; });
                     }
-                    this.mloading = true;
-                    fetch('/api/search/suggest?q=' + encodeURIComponent(this.mq))
-                        .then(r => r.json())
-                        .then(data => {
-                            this.msuggestions = data.results || [];
-                            this.mopen = true;
-                            this.mloading = false;
-                        })
-                        .catch(() => { this.mloading = false; });
-                }
-             }"
-             @click.away="mopen = false">
-            <form action="{{ route('catalog.index') }}" method="GET" class="relative">
-                <div class="relative flex items-center">
-                    <input type="text" name="search" x-model="mq"
+                 }"
+                 @click.away="open = false">
+                <form action="{{ route('catalog.index') }}" method="GET" class="w-full relative">
+                    <input type="text" name="search" x-model="q"
                            @input.debounce.250ms="fetchSuggest()"
-                           @focus="if(msuggestions.length > 0) mopen = true"
+                           @focus="if(suggestions.length > 0) open = true"
                            autocomplete="off"
-                           placeholder="Search products, stores, brands..." 
-                           class="w-full pl-9 pr-16 py-2 rounded-xl border border-slate-200/90 bg-slate-100/80 text-xs text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
-                    <div class="absolute left-2.5 text-slate-400">
-                        <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                           placeholder="Search products, verified stores, brands..." 
+                           class="w-full pl-10 pr-24 py-2.5 rounded-full border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
+                    <div class="absolute left-3.5 top-3 text-slate-400">
+                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                     </div>
-                    <button type="submit" class="absolute right-1 px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[10px] font-bold tracking-wide">
+                    <button type="submit" class="absolute right-1.5 top-1.5 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold tracking-wide transition shadow-xs cursor-pointer">
                         Search
                     </button>
-                </div>
-            </form>
+                </form>
 
-            <!-- Mobile Live Autocomplete Dropdown -->
-            <div x-show="mopen && (msuggestions.length > 0 || mloading)" 
-                 x-transition:enter="transition ease-out duration-150"
-                 x-transition:enter-start="opacity-0 translate-y-1"
-                 x-transition:enter-end="opacity-100 translate-y-0"
-                 class="absolute left-3 right-3 mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100 max-h-72 overflow-y-auto"
-                 style="display: none;">
-                
-                <div x-show="mloading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
-                    <svg class="animate-spin h-3.5 w-3.5 text-slate-600" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                    <span>Searching...</span>
-                </div>
+                <!-- Autocomplete Dropdown -->
+                <div x-show="open && (suggestions.length > 0 || loading)" 
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100"
+                     style="display: none;">
+                    
+                    <div x-show="loading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                        <span>Searching marketplace...</span>
+                    </div>
 
-                <template x-for="item in msuggestions" :key="item.id">
-                    <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition">
-                        <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-slate-900 truncate" x-text="item.title"></p>
-                            <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
-                                <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
+                    <template x-for="item in suggestions" :key="item.id">
+                        <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition group">
+                            <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-slate-900 truncate group-hover:text-black" x-text="item.title"></p>
+                                <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+                                    <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
+                                    <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
+                                    <span class="truncate text-slate-400" x-text="item.vendor"></span>
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                </template>
-                
-                <div x-show="msuggestions.length > 0" class="p-2 bg-slate-50 text-center">
-                    <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(mq)" class="text-xs font-bold text-slate-900">
-                        View all results for "<span x-text="mq"></span>" →
-                    </a>
+                        </a>
+                    </template>
                 </div>
             </div>
-        </div>
-        @endif
+            @endif
 
+            <!-- FORM 3: CATEGORY NAVIGATION ROW -->
+            @if(!$hideCategories)
+            <div class="pt-2 border-t border-slate-100">
+                <nav class="flex items-center gap-1.5 sm:gap-2 py-1 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
+                     aria-label="Commerce Categories">
+                    @foreach($navCategories as $catKey => $cat)
+                        <a href="{{ $cat['url'] }}"
+                           @click="expandedForms = false"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 select-none {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 active:scale-95' }}">
+                            <span class="text-xs leading-none">{{ $cat['icon'] }}</span>
+                            <span>{{ $cat['name'] }}</span>
+                            @if(!empty($cat['badge']))
+                                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
+                                    {{ $cat['badge'] }}
+                                </span>
+                            @endif
+                        </a>
+                    @endforeach
+                </nav>
+            </div>
+            @endif
+
+        </div>
     </div>
 
-    <!-- Integrated Category Navigation Row -->
-    @if(!$hideCategories)
-    @if(!$currentVendor)
-    <div class="{{ request()->routeIs('home') ? 'hidden md:block' : '' }} border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <nav class="flex items-center gap-1.5 sm:gap-2 py-1.5 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
-                 style="-webkit-overflow-scrolling: touch;"
-                 aria-label="Commerce Categories">
-                @foreach($navCategories as $catKey => $cat)
-                    <a href="{{ $cat['url'] }}"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 select-none {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 active:scale-95' }}">
-                        <span class="text-xs leading-none">{{ $cat['icon'] }}</span>
-                        <span>{{ $cat['name'] }}</span>
-                        @if(!empty($cat['badge']))
-                            <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
-                                {{ $cat['badge'] }}
-                            </span>
-                        @endif
-                    </a>
-                @endforeach
-            </nav>
-        </div>
-    </div>
-    @else
-    <div class="border-t border-slate-100/90 bg-white/70 backdrop-blur-md relative">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <nav class="flex items-center gap-2 sm:gap-3 py-2 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
-                 aria-label="Store Navigation">
-                <a href="#store-products" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-950 text-white shadow-xs">
-                    <span>🛍️</span>
-                    <span>All Products</span>
-                </a>
-                <a href="#store-about" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>🏛️</span>
-                    <span>About Atelier</span>
-                </a>
-                <a href="#store-reviews" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>⭐</span>
-                    <span>Store Reviews</span>
-                </a>
-                <a href="#store-contact" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80 transition">
-                    <span>📞</span>
-                    <span>Contact Seller</span>
-                </a>
-            </nav>
-        </div>
-    </div>
-    @endif
-    @endif
 </header>
-
-<script>
-(function() {
-    // Unread red dots removed per user design specifications
-})();
-</script>
