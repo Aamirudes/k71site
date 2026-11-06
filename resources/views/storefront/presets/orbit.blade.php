@@ -9,9 +9,6 @@
         {{-- Customizable Hero Banner / Campaign Carousel --}}
         @include('storefront.sections.hero_carousel')
 
-        {{-- Tactile Category Discovery Strip --}}
-        @include('storefront.sections.category_bubbles')
-
         {{-- Product Catalog Grid (Dominant Shopping Focus) --}}
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Catalog', 'columns' => 4, 'aspect_ratio' => '3:4']])
 

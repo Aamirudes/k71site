@@ -98,6 +98,9 @@
 
     <!-- Carousel Slides Track -->
     @foreach($slides as $idx => $slide)
+        @php
+            $slideImg = !empty($slide['image']) ? $slide['image'] : ($fallbackImages[$idx % 3] ?? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80');
+        @endphp
         <div x-show="activeSlide === {{ $idx }}"
              x-transition:enter="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-800"
              x-transition:enter-start="opacity-0 scale-105"
@@ -105,10 +108,11 @@
              x-transition:leave="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-600"
              x-transition:leave-start="opacity-100 scale-100"
              x-transition:leave-end="opacity-0 scale-95"
-             class="absolute inset-0 w-full h-full">
+             class="absolute inset-0 w-full h-full"
+             style="{{ $idx === 0 ? 'display: block;' : 'display: none;' }}">
 
             <!-- High-Res Background Image with Fast Loading & Preload -->
-            <img src="{{ $slide['image'] }}" 
+            <img src="{{ $slideImg }}" 
                  alt="{{ $slide['title'] ?? $headline }}" 
                  class="w-full h-full object-cover object-center filter brightness-[0.70] contrast-[1.05]"
                  {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>

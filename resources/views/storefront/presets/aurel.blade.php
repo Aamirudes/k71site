@@ -9,9 +9,6 @@
         {{-- 100vh 3-Slider Swipe Hero Carousel --}}
         @include('storefront.sections.hero_carousel')
 
-        {{-- Minimalist Category Discovery Strip --}}
-        @include('storefront.sections.category_bubbles')
-
         {{-- Product Catalog Grid (Dominant Geometric Focus) --}}
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Catalog', 'columns' => 4, 'aspect_ratio' => '1:1']])
 

@@ -18,6 +18,8 @@ ini_set('max_execution_time', 600);
 ini_set('memory_limit', '512M');
 
 header('Content-Type: text/html; charset=utf-8');
+header('X-LiteSpeed-Purge: *');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 ?>
 <!DOCTYPE html>
 <html>

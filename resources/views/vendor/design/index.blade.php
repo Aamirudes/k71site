@@ -60,13 +60,51 @@
                 $activeNorm = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($activePresetKey);
             @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
-                @foreach($presets as $key => $preset)
-                    @php
-                        $isActive = ($activeNorm === $key || $activePresetKey === $key);
-                    @endphp
-                    <div id="preset-card-{{ $key }}" 
-                         class="rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg hover:border-slate-300' }}">
+            <div x-data="{
+                    scrollNext() {
+                        const track = document.getElementById('presets-slider-track');
+                        if (track) { track.scrollBy({ left: 320, behavior: 'smooth' }); }
+                    },
+                    scrollPrev() {
+                        const track = document.getElementById('presets-slider-track');
+                        if (track) { track.scrollBy({ left: -320, behavior: 'smooth' }); }
+                    }
+                 }" 
+                 class="space-y-4">
+                
+                <!-- Compact Slider Controls Bar -->
+                <div class="flex items-center justify-between pb-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
+                            5 Signature Themes (Swipe / Slide Gallery)
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                @click="scrollPrev()" 
+                                class="w-8 h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs cursor-pointer"
+                                aria-label="Previous theme">
+                            ◀
+                        </button>
+                        <button type="button" 
+                                @click="scrollNext()" 
+                                class="w-8 h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs cursor-pointer"
+                                aria-label="Next theme">
+                            ▶
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Horizontal Slider Track -->
+                <div id="presets-slider-track" 
+                     class="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin -mx-2 px-2">
+                    @foreach($presets as $key => $preset)
+                        @php
+                            $isActive = ($activeNorm === $key || $activePresetKey === $key);
+                        @endphp
+                        <div id="preset-card-{{ $key }}" 
+                             class="snap-start shrink-0 w-[270px] sm:w-[310px] rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg hover:border-slate-300' }}">
                         
                         <!-- Top Preset Header & Canvas Preview -->
                         <div class="p-5 relative overflow-hidden" 
@@ -148,6 +186,7 @@
                     </div>
                 @endforeach
             </div>
+        </div>
 
             <!-- Legacy Aliases Reference (Ensures test coverage & compatibility) -->
             <div class="hidden">

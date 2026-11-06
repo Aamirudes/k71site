@@ -9,9 +9,6 @@
         {{-- 100vh 3-Slider Swipe Image Carousel --}}
         @include('storefront.sections.hero_carousel')
 
-        {{-- Liquid Glass Category Discovery Strip --}}
-        @include('storefront.sections.category_bubbles')
-
         {{-- Product Catalog Grid (The Main Focus of the Entire Website) --}}
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Boutique Collection', 'columns' => 4, 'aspect_ratio' => '3:4']])
 

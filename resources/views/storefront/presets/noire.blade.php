@@ -9,9 +9,6 @@
         {{-- 100vh 3-Slider Swipe Hero Carousel --}}
         @include('storefront.sections.hero_carousel')
 
-        {{-- Dark Category Discovery Strip --}}
-        @include('storefront.sections.category_bubbles')
-
         {{-- Product Catalog Grid (Dominant Focus) --}}
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Current Releases', 'columns' => 4, 'aspect_ratio' => '3:4']])
 
