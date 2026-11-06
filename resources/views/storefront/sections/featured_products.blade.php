@@ -131,7 +131,7 @@
                             <!-- Sale Badge Pill & Status -->
                             <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
                                 @if($hasComparePrice && $discountPct > 0)
-                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500 text-white shadow-xs">
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
                                         -{{ $discountPct }}%
                                     </span>
                                 @endif
@@ -147,17 +147,24 @@
                                 @endif
                             </div>
 
+                            <!-- Verified Studio Dispatch Seal (Trust Signal) -->
+                            <div class="absolute top-3 right-3 z-10">
+                                <span class="px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1 shadow-xs">
+                                    <span class="text-amber-400">✦</span> Verified
+                                </span>
+                            </div>
+
                             <!-- Floating Quick Add Button (Hover on Desktop) -->
                             @if(!$isOutOfStock)
                                 <div class="absolute bottom-3 inset-x-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 hidden sm:block">
                                     <button type="button" 
-                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }})"
-                                            class="w-full py-3 px-4 rounded-2xl text-xs font-extrabold uppercase tracking-wider text-white shadow-xl transition flex items-center justify-center gap-2 cursor-pointer hover:scale-102"
+                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}, this)"
+                                            class="w-full py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl transition flex items-center justify-center gap-2 cursor-pointer hover:scale-102 active:scale-95"
                                             style="background: linear-gradient(135deg, var(--sf-primary, #18181b), #27272a); border: 1px solid rgba(255,255,255,0.25);">
                                         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                                         </svg>
-                                        <span>Quick Add to Bag</span>
+                                        <span>+ Quick Add to Bag</span>
                                     </button>
                                 </div>
                             @endif
@@ -165,9 +172,9 @@
 
                         <!-- Product Information Canvas -->
                         <div class="p-4 flex flex-col flex-1 justify-between gap-3 bg-white/40">
-                            <div>
+                            <div class="space-y-1">
                                 @if($product->category)
-                                    <span class="text-[10px] uppercase font-bold tracking-wider text-stone-400 block mb-1">
+                                    <span class="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
                                         {{ $product->category->name }}
                                     </span>
                                 @endif
@@ -177,17 +184,30 @@
                                         {{ $product->title }}
                                     </a>
                                 </h3>
+
+                                <!-- Authenticity & Dispatch Trust Guarantee -->
+                                <div class="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-emerald-700 pt-0.5">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                    <span class="truncate">100% Authentic · Studio Dispatch</span>
+                                </div>
                             </div>
 
                             <!-- Price & Mobile Action -->
                             <div class="pt-2 border-t border-stone-100/80 flex items-center justify-between gap-2">
-                                <div class="flex items-baseline gap-1.5">
-                                    <span class="text-sm sm:text-base font-black text-stone-950">
-                                        ₹{{ $priceRupees }}
-                                    </span>
-                                    @if($hasComparePrice)
-                                        <span class="text-xs text-stone-400 line-through">
-                                            ₹{{ $comparePriceRupees }}
+                                <div class="flex flex-col">
+                                    <div class="flex items-baseline gap-1.5">
+                                        <span class="text-sm sm:text-base font-black text-stone-950">
+                                            ₹{{ $priceRupees }}
+                                        </span>
+                                        @if($hasComparePrice)
+                                            <span class="text-xs text-stone-400 line-through">
+                                                ₹{{ $comparePriceRupees }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if($hasComparePrice && $product->compare_at_price > $product->base_price)
+                                        <span class="text-[10px] font-bold text-rose-600">
+                                            Save ₹{{ number_format(($product->compare_at_price - $product->base_price) / 100, 2) }}
                                         </span>
                                     @endif
                                 </div>
@@ -195,13 +215,12 @@
                                 <!-- Mobile Bag Action Button -->
                                 @if(!$isOutOfStock)
                                     <button type="button" 
-                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }})"
-                                            class="sm:hidden p-2 rounded-xl text-white shadow-sm transition"
+                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}, this)"
+                                            class="sm:hidden px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition flex items-center gap-1 active:scale-95 cursor-pointer shrink-0"
                                             style="background-color: var(--sf-primary, #18181b);"
                                             aria-label="Add {{ $product->title }} to bag">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                        </svg>
+                                        <span>+</span>
+                                        <span>Add</span>
                                     </button>
                                 @endif
                             </div>

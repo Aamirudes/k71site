@@ -131,18 +131,28 @@
     </div>
 
     <script>
-        // High-Performance Quick Add to Bag Bridge
-        window.quickAddToCart = function(productId, variantId) {
-            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        // High-Performance Quick Add to Bag Bridge (Subdomain Same-Origin Aware)
+        window.quickAddToCart = function(productId, variantId, btnElement) {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
             const toast = document.getElementById('quick-cart-toast');
             const toastMsg = document.getElementById('quick-cart-toast-msg');
 
-            fetch('{{ route('cart.add') }}', {
+            let origHtml = null;
+            if (btnElement && btnElement instanceof HTMLElement) {
+                origHtml = btnElement.innerHTML;
+                btnElement.disabled = true;
+                btnElement.innerHTML = '<span class="inline-block animate-spin mr-1">↻</span> Adding...';
+            }
+
+            // Always use relative /cart/add to maintain same-origin session on vendor subdomains
+            fetch('/cart/add', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token || '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': token,
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
                     product_id: productId,
@@ -152,37 +162,55 @@
             })
             .then(res => res.json())
             .then(data => {
+                if (btnElement && origHtml) {
+                    btnElement.innerHTML = '✓ Added';
+                    setTimeout(() => {
+                        btnElement.innerHTML = origHtml;
+                        btnElement.disabled = false;
+                    }, 1600);
+                }
+
                 if (data.status === 'success' || data.success) {
-                    // Update badges
-                    const badges = document.querySelectorAll('#cart-counter-badge');
-                    badges.forEach(b => {
-                        b.textContent = data.cart_count || (parseInt(b.textContent || 0) + 1);
-                        b.classList.remove('scale-0');
+                    const newCount = data.cart_count || 1;
+                    
+                    // Update all badge elements across header and UI
+                    document.querySelectorAll('#cart-counter-badge, .cart-counter-badge, .k71-cart-badge').forEach(b => {
+                        b.textContent = newCount;
+                        b.classList.remove('scale-0', 'hidden');
                         b.classList.add('scale-100');
                     });
 
-                    // Trigger toast
+                    // Toast notification
                     if (toast && toastMsg) {
-                        toastMsg.textContent = '✓ Item added to bag';
+                        toastMsg.textContent = '✓ Added to your boutique bag';
                         toast.classList.remove('translate-y-20', 'opacity-0');
                         toast.classList.add('translate-y-0', 'opacity-100');
                         setTimeout(() => {
                             toast.classList.remove('translate-y-0', 'opacity-100');
                             toast.classList.add('translate-y-20', 'opacity-0');
-                        }, 2500);
+                        }, 2200);
                     }
 
-                    // Open mini-cart drawer if defined
-                    if (window.openK71Cart) {
+                    // Refresh and open popup cart drawer instantly
+                    window.dispatchEvent(new CustomEvent('cart-updated'));
+                    window.dispatchEvent(new CustomEvent('open-mini-cart'));
+                    if (typeof window.refreshK71Cart === 'function') {
+                        window.refreshK71Cart();
+                    }
+                    if (typeof window.openK71Cart === 'function') {
                         window.openK71Cart();
                     }
                 } else {
-                    window.location.href = '{{ route('cart.index') }}';
+                    alert(data.message || 'Could not add item to bag.');
                 }
             })
             .catch(err => {
-                console.warn('Quick cart fallback:', err);
-                window.location.href = '{{ route('cart.index') }}';
+                console.warn('Quick cart issue, falling back to full cart:', err);
+                if (btnElement && origHtml) {
+                    btnElement.innerHTML = origHtml;
+                    btnElement.disabled = false;
+                }
+                window.location.href = '/cart';
             });
         };
 

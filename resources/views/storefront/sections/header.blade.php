@@ -38,7 +38,7 @@
      }"
      @keydown.escape.window="mobileMenuOpen = false; mobileSearchOpen = false;">
 
-    @if(!empty($headerCfg['announcement_enabled']) && !empty($headerCfg['announcement_text']))
+    @if(!empty($headerCfg['announcement_enabled']) && !empty($headerCfg['announcement_text']) && trim($headerCfg['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
     @endif
 
@@ -233,93 +233,154 @@
                 </form>
             </div>
 
-            <!-- FULL SIDE NAVIGATION DRAWER (ACCESSED VIA HAMBURGER ICON) -->
-            <div x-show="mobileMenuOpen" 
-                 x-cloak
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex justify-start"
-                 @click.self="mobileMenuOpen = false">
-                
-                <div x-show="mobileMenuOpen"
-                     x-transition:enter="transition ease-out duration-300"
-                     x-transition:enter-start="-translate-x-full"
-                     x-transition:enter-end="translate-x-0"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="translate-x-0"
-                     x-transition:leave-end="-translate-x-full"
-                     class="w-full max-w-sm bg-white dark:bg-zinc-950 h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
-                    
-                    <div>
-                        <!-- Drawer Header -->
-                        <div class="flex items-center justify-between pb-6 border-b border-zinc-200 dark:border-zinc-800">
-                            <div class="flex items-center gap-3">
-                                @if(!empty($storeLogo))
-                                    <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-8 w-auto object-contain">
-                                @endif
-                                <span class="font-black font-heading text-lg text-zinc-950 dark:text-white">{{ $storeName }}</span>
-                            </div>
-                            <button type="button" 
-                                    @click="mobileMenuOpen = false" 
-                                    class="p-2 rounded-xl text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition cursor-pointer">
-                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            </button>
-                        </div>
+        </header>
+    </div>
 
-                        <!-- Mobile In-Drawer Search -->
-                        <div class="mt-4">
-                            <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative">
-                                <input type="text" 
-                                       name="search" 
-                                       value="{{ $searchQuery }}" 
-                                       placeholder="Search {{ $storeName }}..." 
-                                       class="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none">
-                                <svg class="w-4 h-4 text-zinc-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                            </form>
-                        </div>
+    <!-- FULL 100VH HALF-WIDTH SLIDE DRAWER (SLIDES DIRECT FROM LEFT TO FRONT) -->
+    <div x-show="mobileMenuOpen" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[70] bg-black/75 backdrop-blur-md"
+         @click="mobileMenuOpen = false">
+    </div>
 
-                        <!-- Catalog Navigation Links -->
-                        <div class="mt-6 space-y-1">
-                            <span class="text-[10px] font-black uppercase tracking-wider text-zinc-400 block px-3 mb-2">Boutique Sections</span>
-                            <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
-                               @click="mobileMenuOpen = false"
-                               class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
-                                <span>All Products</span>
-                                <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">{{ $products->total() ?? 0 }}</span>
-                            </a>
-
-                            @foreach($vendorCategories as $cat)
-                                <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
-                                   @click="mobileMenuOpen = false"
-                                   class="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
-                                    <span>{{ $cat->name }}</span>
-                                    <span class="text-[10px] font-mono text-zinc-400">{{ $cat->products_count }}</span>
-                                </a>
-                            @endforeach
+    <div x-show="mobileMenuOpen"
+         x-cloak
+         x-transition:enter="transform transition ease-[cubic-bezier(0.16,1,0.3,1)] duration-350"
+         x-transition:enter-start="-translate-x-full"
+         x-transition:enter-end="translate-x-0"
+         x-transition:leave="transform transition ease-[cubic-bezier(0.16,1,0.3,1)] duration-250"
+         x-transition:leave-start="translate-x-0"
+         x-transition:leave-end="-translate-x-full"
+         class="fixed inset-y-0 left-0 z-[80] w-full sm:w-1/2 md:w-1/2 lg:w-1/2 max-w-2xl h-screen min-h-screen bg-white dark:bg-zinc-950 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] flex flex-col justify-between overflow-y-auto border-r border-zinc-200/80 dark:border-zinc-800 selection:bg-amber-100">
+        
+        <div class="p-6 sm:p-8 space-y-6">
+            <!-- Drawer Top: Brand Identity & Close -->
+            <div class="flex items-center justify-between pb-5 border-b border-zinc-200 dark:border-zinc-800">
+                <div class="flex items-center gap-3.5 min-w-0">
+                    @if(!empty($storeLogo))
+                        <div class="p-1 rounded-2xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shrink-0">
+                            <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-9 sm:h-10 w-auto max-w-[100px] object-contain rounded-xl">
                         </div>
+                    @else
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-white text-base shadow-sm shrink-0 border border-white/20"
+                             style="background: linear-gradient(135deg, var(--sf-primary, #18181b), var(--sf-accent, #c59b27));">
+                            {{ strtoupper(substr($storeName, 0, 1)) }}
+                        </div>
+                    @endif
+                    <div class="min-w-0">
+                        <span class="font-black font-heading text-lg sm:text-xl text-zinc-950 dark:text-white truncate block">
+                            {{ $storeName }}
+                        </span>
+                        <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                            <span>✦</span> Verified Boutique Studio
+                        </span>
                     </div>
-
-                    <!-- Drawer Footer -->
-                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
-                        @if($waUrl)
-                            <a href="{{ $waUrl }}" target="_blank" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition">
-                                <span>💬 WhatsApp Stylist Desk</span>
-                            </a>
-                        @endif
-                        <a href="{{ route('stores.index') }}" class="block text-center text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 transition">
-                            &larr; Return to K71 Stores Directory
-                        </a>
-                    </div>
-
                 </div>
+                <button type="button" 
+                        @click="mobileMenuOpen = false" 
+                        class="w-10 h-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:text-zinc-950 dark:hover:text-white flex items-center justify-center transition cursor-pointer shrink-0"
+                        aria-label="Close navigation menu">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
 
-        </header>
+            <!-- In-Drawer Quick Search Form -->
+            <div>
+                <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative">
+                    <input type="text" 
+                           name="search" 
+                           value="{{ $searchQuery }}" 
+                           placeholder="Search creations in {{ $storeName }}..." 
+                           class="w-full pl-10 pr-4 py-3 text-xs sm:text-sm font-medium rounded-2xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:focus:ring-white">
+                    <svg class="w-4 h-4 text-zinc-400 absolute left-3.5 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </form>
+            </div>
+
+            <!-- Interactive Bag Quick Link Strip Inside Menu -->
+            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">🛍️</span>
+                    <div>
+                        <div class="text-xs font-bold text-zinc-900 dark:text-white">Boutique Bag</div>
+                        <div class="text-[11px] text-zinc-500">Tap to inspect or checkout</div>
+                    </div>
+                </div>
+                <button type="button" 
+                        @click="mobileMenuOpen = false; if(window.openK71Cart) window.openK71Cart();"
+                        class="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90 transition cursor-pointer">
+                    View Bag →
+                </button>
+            </div>
+
+            <!-- Catalog Navigation Links -->
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500 block px-2 mb-2">
+                    Boutique Departments
+                </span>
+
+                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                   @click="mobileMenuOpen = false"
+                   class="flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                    <span class="flex items-center gap-2.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        <span>Complete Collection</span>
+                    </span>
+                    <span class="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                        {{ $products->total() ?? $products->count() }}
+                    </span>
+                </a>
+
+                @foreach($vendorCategories as $cat)
+                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                       @click="mobileMenuOpen = false"
+                       class="flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                        <span>{{ $cat->name }}</span>
+                        <span class="text-[11px] font-mono text-zinc-400 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800">
+                            {{ $cat->products_count }}
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+
+            <!-- Direct Store Anchor Jumps -->
+            <div class="pt-2 space-y-1 border-t border-zinc-100 dark:border-zinc-800">
+                <a href="{{ route('storefront.show', $vendor->slug) }}#trust" 
+                   @click="mobileMenuOpen = false"
+                   class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition">
+                    <span>◈</span> Verified Workshop & Dispatch Guarantees
+                </a>
+                <a href="{{ route('storefront.show', $vendor->slug) }}#reviews" 
+                   @click="mobileMenuOpen = false"
+                   class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition">
+                    <span>★</span> Genuine Customer Reviews
+                </a>
+            </div>
+        </div>
+
+        <!-- Drawer Footer: WhatsApp Stylist Concierge & Return Link -->
+        <div class="p-6 sm:p-8 border-t border-zinc-200 dark:border-zinc-800 space-y-3 bg-zinc-50/70 dark:bg-zinc-900/50">
+            @if($waUrl)
+                <a href="{{ $waUrl }}" target="_blank" 
+                   class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition hover:scale-[1.01] cursor-pointer">
+                    <span>💬</span>
+                    <span>Chat with Boutique Stylist on WhatsApp</span>
+                </a>
+            @endif
+            <a href="{{ route('stores.index') }}" 
+               class="block text-center text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition py-1">
+                &larr; Return to K71 Marketplace Stores Directory
+            </a>
+        </div>
+
     </div>
 </div>

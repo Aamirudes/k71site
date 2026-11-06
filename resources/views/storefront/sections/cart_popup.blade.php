@@ -2,12 +2,12 @@
      x-data="glassCartModal()" 
      x-init="initCart()"
      x-cloak
-     class="fixed inset-0 z-50 overflow-hidden" 
+     class="fixed inset-0 z-[90] overflow-hidden" 
      x-show="isOpen" 
      style="display: none;">
     
     <!-- Ultra-blurred Ambient Backdrop with Smooth Fade -->
-    <div class="fixed inset-0 bg-stone-950/60 backdrop-blur-md transition-opacity duration-300"
+    <div class="fixed inset-0 z-[90] bg-stone-950/70 backdrop-blur-md transition-opacity duration-300"
          @click="closeCart()"
          x-show="isOpen"
          x-transition:enter="ease-out duration-300"
@@ -17,7 +17,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"></div>
 
-    <div class="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10 z-[100]">
         <!-- Frosted Glassmorphic Slide-Out Drawer -->
         <div class="w-screen max-w-md relative flex flex-col shadow-2xl transition-all duration-300 transform overflow-hidden"
              style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border-left: 1px solid rgba(255, 255, 255, 0.4);"
@@ -246,8 +246,13 @@
             fetchCartData(showSpinner = false) {
                 if (showSpinner) this.loading = true;
 
-                fetch('{{ route('cart.data') }}', {
-                    headers: { 'Accept': 'application/json' }
+                // Always use relative /cart/data with same-origin credentials for subdomain compatibility
+                fetch('/cart/data', {
+                    credentials: 'same-origin',
+                    headers: { 
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 })
                 .then(r => r.json())
                 .then(data => {
@@ -257,11 +262,11 @@
                     this.subtotalRaw = data.subtotal || 0;
                     this.subtotalFormatted = data.subtotal_formatted || '₹0.00';
 
-                    // Update any static header badges
-                    document.querySelectorAll('#cart-counter-badge').forEach(badge => {
+                    // Update all static and dynamic header badges
+                    document.querySelectorAll('#cart-counter-badge, .cart-counter-badge, .k71-cart-badge').forEach(badge => {
                         badge.textContent = this.cartCount;
                         if (this.cartCount > 0) {
-                            badge.classList.remove('scale-0');
+                            badge.classList.remove('scale-0', 'hidden');
                             badge.classList.add('scale-100');
                         } else {
                             badge.classList.add('scale-0');
@@ -274,34 +279,54 @@
             },
 
             updateQty(itemId, newQty) {
-                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
                 if (newQty <= 0) {
                     this.removeItem(itemId);
                     return;
                 }
 
+                this.loading = true;
                 fetch('/cart/' + itemId, {
                     method: 'PUT',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token || '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({ quantity: newQty })
                 })
-                .then(() => this.fetchCartData(false));
+                .then(r => r.json())
+                .then(() => {
+                    this.fetchCartData(false);
+                    window.dispatchEvent(new CustomEvent('cart-updated'));
+                })
+                .catch(() => {
+                    this.loading = false;
+                });
             },
 
             removeItem(itemId) {
-                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+                this.loading = true;
                 fetch('/cart/' + itemId, {
                     method: 'DELETE',
+                    credentials: 'same-origin',
                     headers: {
                         'Accept': 'application/json',
-                        'X-CSRF-TOKEN': token || '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 })
-                .then(() => this.fetchCartData(false));
+                .then(r => r.json())
+                .then(() => {
+                    this.fetchCartData(false);
+                    window.dispatchEvent(new CustomEvent('cart-updated'));
+                })
+                .catch(() => {
+                    this.loading = false;
+                });
             }
         };
     }
