@@ -36,9 +36,10 @@
          }
      }"
      @keydown.escape.window="mobileMenuOpen = false;">
-    
-    {{-- Top Announcement Bar --}}
-    @include('storefront.sections.announcement')
+
+    @if(!empty($headerCfg['announcement_enabled']) && !empty($headerCfg['announcement_text']))
+        @include('storefront.sections.announcement')
+    @endif
 
     <div class="px-3 sm:px-6 transition-all duration-400"
          :class="{

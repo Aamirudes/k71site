@@ -132,54 +132,53 @@
             <!-- High-Res Background Image with Fast Loading & Preload -->
             <img src="{{ $slideImg }}" 
                  alt="{{ $slide['title'] ?? $headline }}" 
-                 class="w-full h-full object-cover object-center filter brightness-[0.70] contrast-[1.05]"
+                 class="w-full h-full object-cover object-center filter contrast-[1.03]"
                  style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
                  {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>
 
-            <!-- Deep Liquid Dark Vignette Gradient for Ultra Legibility -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/60 pointer-events-none"></div>
+            <!-- Top Header Protection Gradient (Ensures Transparent Header Is Razor Sharp) -->
+            <div class="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/75 via-black/35 to-transparent pointer-events-none z-10"></div>
 
-            <!-- Content Stage / Central Typography -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4 sm:px-8 max-w-4xl mx-auto z-20 space-y-5 sm:space-y-6 pt-16 sm:pt-20">
-                
-                <!-- Verified Merchant Pill -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-bold uppercase tracking-widest text-white/95 bg-white/10 backdrop-blur-xl border border-white/20 shadow-lg">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span>Verified Flagship Atelier · Direct Dispatch</span>
+            <!-- Bottom Content Stage Vignette (Deep Cinematic Luxury Gradient) -->
+            <div class="absolute inset-x-0 bottom-0 h-[65%] sm:h-[60%] bg-gradient-to-t from-black/95 via-black/50 to-transparent pointer-events-none z-10"></div>
+
+            <!-- Content Stage: Lower-Third Placement Keeps Subject, Model & Photos Unobstructed -->
+            <div class="absolute inset-x-0 bottom-0 z-20 pb-20 sm:pb-24 lg:pb-28 px-4 sm:px-8 lg:px-12 pointer-events-none">
+                <div class="max-w-3xl mx-auto flex flex-col items-center text-center space-y-3 sm:space-y-4 pointer-events-auto">
+                    
+                    <!-- Subtitle / Tagline Eyebrow -->
+                    <p class="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-white/85 drop-shadow">
+                        {{ $slide['subtitle'] ?? $subtitle }}
+                    </p>
+
+                    <!-- Main Headline with Signature Fashion Display Typography -->
+                    <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-white tracking-tight leading-[1.08] drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] max-w-2xl">
+                        {{ $slide['title'] ?? $headline }}
+                    </h1>
+
+                    <!-- CTA Button (Liquid Glass / High-Contrast Boutique Pill) -->
+                    <div class="pt-2 sm:pt-3">
+                        <a href="{{ $slide['link'] ?? '#catalog' }}" 
+                           class="group inline-flex items-center gap-3 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm font-extrabold uppercase tracking-widest text-black bg-white hover:bg-zinc-100 hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_12px_40px_rgba(0,0,0,0.5)] border border-white cursor-pointer">
+                            <span>{{ $slide['button_text'] ?? 'Explore Boutique' }}</span>
+                            <svg class="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                            </svg>
+                        </a>
+                    </div>
+
                 </div>
-
-                <!-- Main Headline -->
-                <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-white tracking-tight leading-[1.1] drop-shadow-md max-w-3xl">
-                    {{ $slide['title'] ?? $headline }}
-                </h1>
-
-                <!-- Subtitle / Tagline -->
-                <p class="text-sm sm:text-base md:text-lg text-white/85 max-w-xl font-normal leading-relaxed drop-shadow-sm line-clamp-3">
-                    {{ $slide['subtitle'] ?? $subtitle }}
-                </p>
-
-                <!-- CTA Button -->
-                <div class="pt-2 sm:pt-4">
-                    <a href="{{ $slide['link'] ?? '#catalog' }}" 
-                       class="inline-flex items-center gap-2.5 px-7 sm:px-9 py-3.5 sm:py-4 rounded-full text-xs sm:text-sm font-black uppercase tracking-wider text-black bg-white hover:bg-zinc-100 hover:scale-105 active:scale-95 transition-all duration-300 shadow-[0_10px_35px_rgba(255,255,255,0.25)] border border-white/80 cursor-pointer">
-                        <span>{{ $slide['button_text'] ?? 'Explore Boutique' }}</span>
-                        <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                        </svg>
-                    </a>
-                </div>
-
             </div>
         </div>
     @endforeach
 
-    <!-- Bottom Carousel Indicators (3 Fast Navigation Pills) -->
-    <div class="absolute bottom-10 sm:bottom-12 inset-x-0 z-30 flex items-center justify-center gap-2 sm:gap-3">
+    <!-- Bottom Carousel Indicators (Sleek Minimalist Navigation Pills) -->
+    <div class="absolute bottom-6 sm:bottom-8 inset-x-0 z-30 flex items-center justify-center gap-2 sm:gap-2.5">
         @foreach($slides as $idx => $s)
             <button type="button" 
                     @click="activeSlide = {{ $idx }}; stopAutoplay(); startAutoplay();" 
-                    class="h-1.5 sm:h-2 rounded-full transition-all duration-300 cursor-pointer"
-                    :class="activeSlide === {{ $idx }} ? 'w-8 sm:w-12 bg-white shadow-lg' : 'w-2 sm:w-3 bg-white/35 hover:bg-white/60'"
+                    class="h-1.5 rounded-full transition-all duration-300 cursor-pointer"
+                    :class="activeSlide === {{ $idx }} ? 'w-8 sm:w-10 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)]' : 'w-2 bg-white/40 hover:bg-white/70'"
                     aria-label="Go to slide {{ $idx + 1 }}">
             </button>
         @endforeach
@@ -188,7 +187,7 @@
     <!-- Previous / Next Sleek Arrow Buttons -->
     <button type="button" 
             @click="prevSlide(); stopAutoplay(); startAutoplay();"
-            class="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 items-center justify-center transition-all hover:scale-110 cursor-pointer"
+            class="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-xl border border-white/20 items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-xl"
             aria-label="Previous slide">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/>
@@ -196,20 +195,11 @@
     </button>
     <button type="button" 
             @click="nextSlide(); stopAutoplay(); startAutoplay();"
-            class="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-11 h-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md border border-white/20 items-center justify-center transition-all hover:scale-110 cursor-pointer"
+            class="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-xl border border-white/20 items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-xl"
             aria-label="Next slide">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/>
         </svg>
     </button>
-
-    <!-- Smooth Scroll Down Prompt -->
-    <a href="#catalog" 
-       class="absolute bottom-2 inset-x-0 z-20 flex flex-col items-center justify-center text-white/60 hover:text-white transition-colors group">
-        <span class="text-[9px] uppercase tracking-widest font-bold">Scroll to Explore</span>
-        <svg class="w-4 h-4 animate-bounce mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-    </a>
 
 </section>
