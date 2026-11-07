@@ -80,17 +80,41 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    @php
+        $isDarkPreset = in_array($presetKey, ['orbit', 'noire']) || !empty($theme['dark_mode']);
+        $defaultSfBg = $isDarkPreset ? '#050711' : '#fafaf9';
+        $defaultSfText = $isDarkPreset ? '#f8fafc' : '#18181b';
+        $defaultSfSurface = $isDarkPreset ? '#0c1228' : '#ffffff';
+    @endphp
+
+    <script>
+        (function() {
+            if ({{ $isDarkPreset ? 'true' : 'false' }}) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+            }
+        })();
+    </script>
+
     <!-- Storefront CSS Theme Variables -->
     <style>
         :root {
-            --sf-primary: {{ $theme['primary_color'] ?? '#18181b' }};
-            --sf-secondary: {{ $theme['secondary_color'] ?? '#71717a' }};
-            --sf-accent: {{ $theme['accent_color'] ?? '#c59b27' }};
-            --sf-bg: {{ $theme['bg_color'] ?? '#fafaf9' }};
-            --sf-surface: {{ $theme['surface_color'] ?? '#ffffff' }};
-            --sf-text: {{ $theme['text_color'] ?? '#18181b' }};
+            --sf-primary: {{ $theme['primary_color'] ?? ($isDarkPreset ? '#ffffff' : '#18181b') }};
+            --sf-secondary: {{ $theme['secondary_color'] ?? ($isDarkPreset ? '#94a3b8' : '#71717a') }};
+            --sf-accent: {{ $theme['accent_color'] ?? ($isDarkPreset ? '#38bdf8' : '#c59b27') }};
+            --sf-bg: {{ $isDarkPreset ? '#050711' : ($theme['bg_color'] ?? $defaultSfBg) }};
+            --sf-surface: {{ $isDarkPreset ? '#0c1228' : ($theme['surface_color'] ?? $defaultSfSurface) }};
+            --sf-text: {{ $isDarkPreset ? '#f8fafc' : ($theme['text_color'] ?? $defaultSfText) }};
             --sf-font-heading: '{{ $headingFont }}', serif, sans-serif;
             --sf-font-body: '{{ $bodyFont }}', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--sf-bg) !important;
+            color: var(--sf-text) !important;
         }
 
         .font-heading {

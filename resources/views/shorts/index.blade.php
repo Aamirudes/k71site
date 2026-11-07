@@ -98,6 +98,22 @@
         .animate-heart-pop {
             animation: heart-pop 0.35s ease-out;
         }
+
+        /* Instagram / YouTube Reels Sliding Animation */
+        @keyframes reelSlideUp {
+            0% { transform: translateY(100%); opacity: 0.8; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes reelSlideDown {
+            0% { transform: translateY(-100%); opacity: 0.8; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-reel-slide-up {
+            animation: reelSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .animate-reel-slide-down {
+            animation: reelSlideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased bg-[#09090b] text-white selection:bg-white selection:text-black"
@@ -244,114 +260,7 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 space-y-6">
 
-        <!-- 1. HERO SPOTLIGHT SHOPPABLE BANNER (MINIMAL B&W) -->
-        @if($heroShort)
-        <section class="bg-zinc-900 rounded-2xl shadow-sm border border-zinc-800 overflow-hidden text-white">
-            <div class="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-                <!-- Left: 9:16 Video Player Preview Card -->
-                <div class="lg:col-span-5 flex justify-center">
-                    <div class="relative w-full max-w-[280px] sm:max-w-[310px] aspect-[9/16] rounded-2xl overflow-hidden shadow-lg bg-black cursor-pointer group"
-                         @click="openPlayerById({{ $heroShort->id }})">
-                        <img src="{{ $heroShort->thumb_url }}"
-                             alt="{{ $heroShort->title }}"
-                             class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        
-                        <!-- Top Badges -->
-                        <div class="absolute top-3 left-3 flex items-center gap-1.5">
-                            <span class="bg-white text-black text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 live-dot"></span> SPOTLIGHT
-                            </span>
-                        </div>
-                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur text-white text-[11px] font-medium px-2 py-0.5 rounded-md">
-                            {{ $heroShort->duration ? gmdate('i:s', $heroShort->duration) : '0:30' }}
-                        </div>
-
-                        <!-- Center Play Button Overlay -->
-                        <div class="absolute inset-0 flex items-center justify-center">
-                            <div class="w-14 h-14 rounded-full bg-white/95 text-black flex items-center justify-center shadow-xl group-hover:scale-110 transition duration-300">
-                                <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Card Overlay -->
-                        <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-white">
-                            <div class="flex items-center gap-2 mb-1">
-                                <img src="{{ $heroShort->vendor?->logo ? asset('storage/' . $heroShort->vendor->logo) : asset('images/default-avatar.png') }}"
-                                     class="w-6 h-6 rounded-full object-cover border border-white/40">
-                                <span class="text-xs font-semibold truncate">{{ $heroShort->vendor?->shop_name ?? 'Verified Store' }}</span>
-                            </div>
-                            <p class="text-xs font-bold line-clamp-1 text-zinc-100">{{ $heroShort->title }}</p>
-                            <div class="mt-1 flex items-center justify-between text-[11px] text-zinc-300">
-                                <span>{{ \App\Models\Short::formatNumber($heroShort->views) }} views</span>
-                                <span class="text-zinc-300 font-bold">🛍️ {{ $heroShort->products->count() }} Tagged Products</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Featured Product Showcase in This Video -->
-                <div class="lg:col-span-7 flex flex-col justify-center">
-                    <div class="inline-flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">
-                        <span>✦ WATCH &amp; BUY DIRECTLY</span>
-                    </div>
-                    <h1 class="text-lg sm:text-2xl font-black text-white leading-snug">
-                        {{ $heroShort->title }}
-                    </h1>
-                    <p class="text-xs sm:text-sm text-zinc-400 mt-2 line-clamp-2">
-                        {{ $heroShort->description ?: 'Discover authentic quality products showcased in high-definition video. Instant delivery, verified ratings, and easy checkout.' }}
-                    </p>
-
-                    <!-- Tagged Products Mini Carousel / Cards -->
-                    @if($heroShort->products->isNotEmpty())
-                    @php $firstProd = $heroShort->products->first(); @endphp
-                    <div class="mt-4 p-3 sm:p-4 bg-zinc-950 border border-zinc-800 rounded-xl flex flex-col sm:flex-row items-center gap-4">
-                        <img src="{{ $firstProd->primary_image_url }}"
-                             alt="{{ $firstProd->title }}"
-                             class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg border border-zinc-800 shrink-0">
-                        
-                        <div class="flex-1 w-full text-center sm:text-left">
-                            <div class="flex items-center justify-center sm:justify-start gap-2">
-                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-zinc-800 text-white border border-zinc-700">
-                                    ★ {{ number_format($firstProd->avg_rating ?? 4.8, 1) }}
-                                </span>
-                                <span class="text-xs text-zinc-400">({{ $firstProd->review_count ?? 24 }} ratings)</span>
-                                <span class="text-xs text-emerald-400 font-bold">In Stock</span>
-                            </div>
-                            <h2 class="text-sm sm:text-base font-bold text-white mt-1 line-clamp-1">
-                                {{ $firstProd->title }}
-                            </h2>
-                            <div class="mt-1 flex items-baseline justify-center sm:justify-start gap-2">
-                                <span class="text-base sm:text-xl font-black text-white">₹{{ number_format($firstProd->base_price / 100, 0) }}</span>
-                                @if($firstProd->compare_at_price && ($firstProd->compare_at_price > $firstProd->base_price))
-                                <span class="text-xs text-zinc-400 line-through">₹{{ number_format($firstProd->compare_at_price / 100, 0) }}</span>
-                                <span class="text-xs font-bold text-emerald-400">
-                                    {{ round((1 - ($firstProd->base_price / $firstProd->compare_at_price)) * 100) }}% OFF
-                                </span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- CTA Buttons -->
-                        <div class="flex flex-col w-full sm:w-auto gap-2 shrink-0">
-                            <button @click="addToCartDirect({{ $firstProd->id }})"
-                                    class="w-full sm:w-auto bg-white hover:bg-zinc-200 text-black font-extrabold text-xs sm:text-sm px-5 py-2.5 rounded-lg shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                                Add to Cart
-                            </button>
-                            <button @click="openPlayerById({{ $heroShort->id }})"
-                                    class="w-full sm:w-auto bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-lg border border-zinc-700 shadow transition flex items-center justify-center gap-1.5 cursor-pointer">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                Watch Video
-                            </button>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </section>
-        @endif
-
-        <!-- 2. TRENDING SHOPPABLE REELS RAIL -->
+        <!-- TRENDING SHOPPABLE REELS RAIL -->
         <section class="space-y-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -371,12 +280,6 @@
                     <img src="{{ $s->thumb_url }}"
                          alt="{{ $s->title }}"
                          class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    
-                    <!-- Views Badge -->
-                    <div class="absolute top-2 left-2 bg-black/60 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <svg class="w-3 h-3 fill-current text-amber-400" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                        {{ \App\Models\Short::formatNumber($s->views) }}
-                    </div>
 
                     <!-- Duration Badge -->
                     <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
@@ -505,10 +408,10 @@
                                  :alt="short.title"
                                  class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             
-                            <!-- Duration & Views Badges -->
+                            <!-- Duration Badge (No view counts) -->
                             <div class="absolute top-2 left-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <svg class="w-2.5 h-2.5 fill-current text-white" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                <span x-text="short.views"></span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                <span x-text="short.duration ? short.duration : '0:30'"></span>
                             </div>
 
                             <!-- Play Icon Hover -->
@@ -584,20 +487,23 @@
                 </button>
             </div>
 
-            <!-- Main Native HTML5 Video Element -->
+            <!-- Main Native HTML5 Video Element with Real Reel Sliding Animation -->
             <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden cursor-pointer"
                  @click="togglePlay()">
-                <video x-ref="videoElement"
-                       class="w-full h-full object-cover"
-                       playsinline
-                       webkit-playsinline
-                       loop
-                       :muted="isMuted"
-                       @timeupdate="updateProgress()"
-                       @play="isPlaying = true"
-                       @pause="isPlaying = false"
-                       @ended="nextVideo()">
-                </video>
+                <div :class="{ 'animate-reel-slide-up': slideDirection === 'up' && isSliding, 'animate-reel-slide-down': slideDirection === 'down' && isSliding }"
+                     class="w-full h-full flex items-center justify-center">
+                    <video x-ref="videoElement"
+                           class="w-full h-full object-cover"
+                           playsinline
+                           webkit-playsinline
+                           loop
+                           :muted="isMuted"
+                           @timeupdate="updateProgress()"
+                           @play="isPlaying = true"
+                           @pause="isPlaying = false"
+                           @ended="nextVideo()">
+                    </video>
+                </div>
 
                 <!-- Animated Play / Pause Indicator -->
                 <div x-show="!isPlaying"
@@ -843,6 +749,8 @@
                 isLiked: false,
                 isFollowed: false,
                 touchStartY: 0,
+                isSliding: false,
+                slideDirection: 'up',
                 toast: { show: false, message: '', icon: '' },
 
                 get currentShort() {
@@ -957,6 +865,8 @@
                 },
 
                 nextVideo() {
+                    this.slideDirection = 'up';
+                    this.isSliding = true;
                     if (this.currentIndex < this.filteredShorts.length - 1) {
                         this.currentIndex++;
                     } else {
@@ -964,10 +874,15 @@
                     }
                     this.drawerOpen = false;
                     this.isLiked = false;
-                    this.$nextTick(() => this.loadCurrentVideo());
+                    this.$nextTick(() => {
+                        this.loadCurrentVideo();
+                        setTimeout(() => { this.isSliding = false; }, 340);
+                    });
                 },
 
                 prevVideo() {
+                    this.slideDirection = 'down';
+                    this.isSliding = true;
                     if (this.currentIndex > 0) {
                         this.currentIndex--;
                     } else {
@@ -975,7 +890,10 @@
                     }
                     this.drawerOpen = false;
                     this.isLiked = false;
-                    this.$nextTick(() => this.loadCurrentVideo());
+                    this.$nextTick(() => {
+                        this.loadCurrentVideo();
+                        setTimeout(() => { this.isSliding = false; }, 340);
+                    });
                 },
 
                 closePlayer() {

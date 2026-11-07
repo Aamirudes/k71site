@@ -308,6 +308,9 @@
 
         </section>
 
+        {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
+        @include('storefront.sections.video_showcase')
+
         {{-- MONOSPACE DIAGNOSTIC TRUST PROTOCOL --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-6 sm:p-10 border border-zinc-800 bg-[#121215]">
@@ -342,9 +345,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Studio Shorts & Video Reels Showcase --}}
-        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Customer Reviews --}}
         @include('storefront.sections.reviews_section')

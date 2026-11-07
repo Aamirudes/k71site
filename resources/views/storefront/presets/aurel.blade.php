@@ -293,6 +293,9 @@
 
         </section>
 
+        {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
+        @include('storefront.sections.video_showcase')
+
         {{-- SLOW CRAFT ATELIER STANDARDS --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-8 sm:p-12 rounded-3xl bg-white border border-stone-200/80 shadow-xs">
@@ -321,9 +324,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Studio Shorts & Video Reels Showcase --}}
-        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Reviews --}}
         @include('storefront.sections.reviews_section')

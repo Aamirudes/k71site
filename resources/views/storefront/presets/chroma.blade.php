@@ -316,6 +316,9 @@
 
         </section>
 
+        {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
+        @include('storefront.sections.video_showcase')
+
         {{-- BOLD GRAPHIC TRUST BOXES --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-8 sm:p-10 rounded-3xl border-3 border-black bg-yellow-300 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
@@ -348,9 +351,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Studio Shorts & Video Reels Showcase --}}
-        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Reviews --}}
         @include('storefront.sections.reviews_section')

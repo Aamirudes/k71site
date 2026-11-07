@@ -12,6 +12,9 @@
         {{-- Product Catalog Grid (The Main Focus of the Entire Website) --}}
         @include('storefront.sections.featured_products', ['section' => ['title' => 'Boutique Collection', 'columns' => 4, 'aspect_ratio' => '3:4']])
 
+        {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
+        @include('storefront.sections.video_showcase')
+
         {{-- Verified Shopping Trust Guarantees (Only real capabilities) --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-8 sm:p-10 rounded-3xl bg-white/90 backdrop-blur-xl border border-stone-200/80 shadow-xs">
@@ -55,9 +58,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Studio Shorts & Video Reels Showcase --}}
-        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Customer Reviews (Only real reviews, omitted if empty) --}}
         @include('storefront.sections.reviews_section')
