@@ -68,7 +68,16 @@ class User extends Authenticatable
 
     public function isDeliveryPartner(): bool
     {
-        return DeliveryPartner::where('user_id', $this->id)->exists();
+        // Admins and Vendors are not fleet delivery partners
+        if ($this->isAdmin() || $this->isVendor()) {
+            return false;
+        }
+        return $this->hasRole('fleet') || DeliveryPartner::where('user_id', $this->id)->exists();
+    }
+
+    public function isFleet(): bool
+    {
+        return $this->isDeliveryPartner();
     }
 
     public function hasRole(string $role): bool
@@ -93,6 +102,9 @@ class User extends Authenticatable
         }
         if ($this->isVendor()) {
             return 'vendor';
+        }
+        if ($this->isFleet()) {
+            return 'fleet';
         }
         return 'customer';
     }

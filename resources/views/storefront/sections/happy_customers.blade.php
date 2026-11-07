@@ -121,7 +121,19 @@
                 @php
                     $isVid = ($item['type'] ?? 'image') === 'video';
                     $mediaUrl = $item['media_url'] ?? '';
+                    if (!empty($mediaUrl) && !str_starts_with($mediaUrl, 'http') && !str_starts_with($mediaUrl, '/')) {
+                        $mediaUrl = '/storage/' . $mediaUrl;
+                    }
+                    if (empty($mediaUrl)) {
+                        $mediaUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
+                    }
                     $thumbUrl = $item['thumb_url'] ?? $mediaUrl;
+                    if (!empty($thumbUrl) && !str_starts_with($thumbUrl, 'http') && !str_starts_with($thumbUrl, '/')) {
+                        $thumbUrl = '/storage/' . $thumbUrl;
+                    }
+                    if (empty($thumbUrl)) {
+                        $thumbUrl = $mediaUrl;
+                    }
                     $rating = (int)($item['rating'] ?? 5);
                 @endphp
                 {{-- Compact 9:16 Story Card (Identical form factor to Shorts Cards, 2.5/view on mobile) --}}

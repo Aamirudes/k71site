@@ -8,6 +8,7 @@ enum UserRole: string
     case Vendor = 'vendor';
     case Admin = 'admin';
     case Staff = 'staff';
+    case Fleet = 'fleet';
 
     public function label(): string
     {
@@ -16,6 +17,7 @@ enum UserRole: string
             self::Vendor => 'Vendor',
             self::Admin => 'Admin',
             self::Staff => 'Staff',
+            self::Fleet => 'Fleet Delivery Boy',
         };
     }
 }

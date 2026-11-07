@@ -511,6 +511,12 @@ class StorefrontPresetService
             'header' => $header,
             'sections' => $sections,
             'footer' => $footer,
+            'happy_customers' => [
+                'enabled' => true,
+                'title' => 'Happy Customers & Real Stories',
+                'subtitle' => 'Real customer unboxings, doorstep deliveries, and verified reviews',
+                'items' => [],
+            ],
         ];
     }
 

@@ -44,8 +44,11 @@ class DeliveryPartnerController extends Controller
             }
             $validated['phone'] = $cleanPhone ?: $validated['phone'];
 
-            // If guest and email provided, register/login user account
-            if (!auth()->check() && !empty($validated['email'])) {
+            // Resolve or create dedicated fleet rider account
+            $user = null;
+            $fleetRole = \App\Models\Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Delivery Boy', 'guard_name' => 'web']);
+
+            if (!empty($validated['email'])) {
                 $user = \App\Models\User::where('email', $validated['email'])->first();
                 if (!$user) {
                     $nameParts = explode(' ', trim($validated['name']), 2);
@@ -60,19 +63,28 @@ class DeliveryPartnerController extends Controller
                         'phone' => $validated['phone'],
                     ]);
                 }
+                // Attach fleet role to this user account (distinct from vendor/customer/admin)
+                $user->roles()->syncWithoutDetaching([$fleetRole->id]);
                 \Illuminate\Support\Facades\Auth::login($user);
+            } elseif (auth()->check()) {
+                $currentUser = auth()->user();
+                // Never hijack an admin or vendor account into a fleet account!
+                if (!$currentUser->isAdmin() && !$currentUser->isVendor()) {
+                    $user = $currentUser;
+                    $user->roles()->syncWithoutDetaching([$fleetRole->id]);
+                }
             }
 
             $partner = null;
-            if (auth()->check()) {
-                $partner = DeliveryPartner::where('user_id', auth()->id())->first();
+            if ($user) {
+                $partner = DeliveryPartner::where('user_id', $user->id)->first();
             }
             if (!$partner) {
                 $partner = DeliveryPartner::where('phone', $validated['phone'])->first();
             }
 
             $partnerData = array_merge($validated, [
-                'user_id' => auth()->id(),
+                'user_id' => $user?->id,
                 'is_online' => true,
                 'is_verified' => true,
                 'last_active_at' => now(),
@@ -87,7 +99,7 @@ class DeliveryPartnerController extends Controller
 
             session(['delivery_partner_id' => $partner->id]);
 
-            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! You are now online.');
+            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! Your Fleet Delivery Boy account is now active.');
         } catch (\Throwable $e) {
             \Log::error('Delivery partner registration error: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Registration encountered an issue: ' . $e->getMessage());
@@ -95,7 +107,7 @@ class DeliveryPartnerController extends Controller
     }
 
     /**
-     * Get active partner from session or auth
+     * Get active partner from session or auth safely (never hijacking admin or vendor)
      */
     protected function getActivePartner()
     {
@@ -106,62 +118,46 @@ class DeliveryPartnerController extends Controller
         }
 
         if (auth()->check()) {
-            $partner = DeliveryPartner::where('user_id', auth()->id())->first();
-            if ($partner) {
-                session(['delivery_partner_id' => $partner->id]);
+            $user = auth()->user();
+
+            // 1. Admin can inspect the fleet dashboard in administrative oversight mode
+            if ($user->isAdmin()) {
+                // Return an active fleet pilot without tying the record to the admin user
+                $partner = DeliveryPartner::where('user_id', '!=', $user->id)->first() ?? DeliveryPartner::first();
+                if (!$partner) {
+                    $partner = DeliveryPartner::create([
+                        'name' => 'K71 Fleet Pilot',
+                        'phone' => '9829012345',
+                        'vehicle_type' => 'bike',
+                        'vehicle_number' => 'RJ-01-AB-1234',
+                        'city' => 'Kishangarh',
+                        'state' => 'Rajasthan',
+                        'is_online' => true,
+                        'is_verified' => true,
+                        'current_latitude' => 26.5744,
+                        'current_longitude' => 74.8654,
+                        'payout_upi_id' => 'k71fleet@okhdfcbank',
+                        'total_deliveries' => 25,
+                        'rating' => 4.95,
+                    ]);
+                }
                 return $partner;
             }
 
-            // Create personal partner profile for logged in user
-            $user = auth()->user();
-            $partner = DeliveryPartner::create([
-                'user_id' => $user->id,
-                'name' => $user->name,
-                'phone' => $user->phone ?: '9829012345',
-                'vehicle_type' => 'bike',
-                'vehicle_number' => 'RJ-01-AB-1234',
-                'city' => 'Kishangarh',
-                'state' => 'Rajasthan',
-                'is_online' => true,
-                'is_verified' => true,
-                'current_latitude' => 26.5744,
-                'current_longitude' => 74.8654,
-                'total_deliveries' => 0,
-                'rating' => 5.0,
-            ]);
-            session(['delivery_partner_id' => $partner->id]);
-            return $partner;
+            // 2. Dedicated Fleet Delivery Boy user account
+            if ($user->hasRole('fleet')) {
+                $partner = DeliveryPartner::where('user_id', $user->id)->first();
+                if ($partner) {
+                    session(['delivery_partner_id' => $partner->id]);
+                    return $partner;
+                }
+            }
+
+            // 3. Normal customer or vendor: DO NOT auto-create a delivery partner!
+            return null;
         }
 
-        // Fallback demo/active partner for Kishangarh
-        $partner = DeliveryPartner::first();
-        if (!$partner) {
-            $partner = DeliveryPartner::create([
-                'name' => 'K71 Kishangarh Fleet Pilot',
-                'phone' => '9829012345',
-                'vehicle_type' => 'bike',
-                'vehicle_number' => 'RJ-01-AB-1234',
-                'city' => 'Kishangarh',
-                'state' => 'Rajasthan',
-                'is_online' => true,
-                'is_verified' => true,
-                'current_latitude' => 26.5744,
-                'current_longitude' => 74.8654,
-                'payout_upi_id' => 'k71fleet@okhdfcbank',
-                'total_deliveries' => 25,
-                'rating' => 4.95,
-            ]);
-        } else {
-            // Update default city and placeholder name if needed
-            if (in_array(strtolower($partner->city), ['makrana', ''])) {
-                $partner->update(['city' => 'Kishangarh']);
-            }
-            if (str_contains(strtolower($partner->name), 'ramesh kumar')) {
-                $partner->update(['name' => 'K71 Kishangarh Fleet Pilot', 'city' => 'Kishangarh']);
-            }
-        }
-        session(['delivery_partner_id' => $partner->id]);
-        return $partner;
+        return null;
     }
 
     /**
@@ -171,7 +167,8 @@ class DeliveryPartnerController extends Controller
     {
         $partner = $this->getActivePartner();
         if (!$partner) {
-            return redirect()->route('delivery.onboarding');
+            return redirect()->route('delivery.onboarding')
+                ->with('error', 'You must register or log into your dedicated Fleet Delivery Boy account to access the pilot dashboard.');
         }
 
         $activeAssignments = DeliveryAssignment::with(['order', 'vendor'])

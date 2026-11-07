@@ -737,26 +737,33 @@
                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white"></textarea>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">
-                                        Upload Photo / Video Reel File
-                                    </label>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1 flex items-center justify-between">
+                                    <span>Upload Customer Photo or Video Reel *</span>
+                                    <span class="text-[9px] font-normal text-slate-400">MP4, WEBM, MOV, JPG, PNG</span>
+                                </label>
+                                <div class="relative border-2 border-dashed border-amber-300 dark:border-amber-700/60 rounded-xl p-3 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-50/80 transition-colors flex flex-col items-center justify-center text-center cursor-pointer">
                                     <input type="file" 
                                            id="new-hc-media-file" 
                                            name="new_hc_media_file" 
                                            accept="image/*,video/*" 
-                                           class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-amber-100 dark:file:bg-amber-900/50 file:text-amber-800 dark:file:text-amber-200 hover:file:bg-amber-200 cursor-pointer">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">
-                                        Or External Media URL (Optional)
-                                    </label>
-                                    <input type="url" 
-                                           id="new-hc-media-url" 
-                                           name="new_hc_media_url" 
-                                           placeholder="https://... photo or mp4 link" 
-                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                                           onchange="previewHcFile(this)"
+                                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <div id="hc-file-prompt" class="space-y-1 py-1">
+                                        <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center mx-auto text-base">
+                                            🎬
+                                        </div>
+                                        <p class="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                                            Tap or click to upload photo or video reel
+                                        </p>
+                                        <p class="text-[10px] text-slate-500 dark:text-zinc-400">
+                                            Direct media upload • Displayed instantly on storefront
+                                        </p>
+                                    </div>
+                                    <div id="hc-file-selected" class="hidden text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1.5 py-1">
+                                        <span>✓</span>
+                                        <span id="hc-file-name">File selected</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1005,6 +1012,18 @@
             });
         }
 
+        function previewHcFile(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const prompt = document.getElementById('hc-file-prompt');
+                if (prompt) prompt.classList.add('hidden');
+                const selected = document.getElementById('hc-file-selected');
+                if (selected) selected.classList.remove('hidden');
+                const nameEl = document.getElementById('hc-file-name');
+                if (nameEl) nameEl.textContent = file.name + ' (' + (file.size / (1024 * 1024)).toFixed(1) + ' MB)';
+            }
+        }
+
         function deleteHappyCustomer(idx) {
             if (!confirm('Are you sure you want to delete this customer story?')) return;
             const form = document.getElementById('essential-settings-form');
@@ -1068,7 +1087,8 @@
                 btn.innerHTML = originalText;
                 if (data.status === 'success') {
                     const newHcInput = document.getElementById('new-hc-name');
-                    if (newHcInput && newHcInput.value.trim() !== '') {
+                    const newHcFile = document.getElementById('new-hc-media-file');
+                    if ((newHcInput && newHcInput.value.trim() !== '') || (newHcFile && newHcFile.files && newHcFile.files.length > 0)) {
                         showToast('✓ Story added and store settings published!');
                         setTimeout(() => window.location.reload(), 700);
                     } else {

@@ -531,33 +531,33 @@ class StorefrontDesignController extends Controller
         }
 
         // Add a New Vendor Happy Customer Story
-        if ($request->filled('new_hc_name') && ($request->filled('new_hc_comment') || $request->hasFile('new_hc_media_file') || $request->filled('new_hc_media_url'))) {
-            $hcName = trim($request->input('new_hc_name'));
+        if ($request->hasFile('new_hc_media_file') || $request->filled('new_hc_name') || $request->filled('new_hc_comment')) {
+            $hcName = trim($request->input('new_hc_name', '')) ?: 'Verified Buyer';
             $hcLocation = trim($request->input('new_hc_location', 'India')) ?: 'India';
             $hcRating = max(1, min(5, (int) $request->input('new_hc_rating', 5)));
-            $hcComment = trim($request->input('new_hc_comment', 'Excellent craftsmanship and speedy delivery!'));
-            $hcType = in_array($request->input('new_hc_type'), ['video', 'image']) ? $request->input('new_hc_type') : 'image';
+            $hcComment = trim($request->input('new_hc_comment', '')) ?: 'Exceptional craftsmanship and fast doorstep delivery!';
+            $hcType = 'image';
             $mediaUrl = '';
             $thumbUrl = '';
 
-            // Handle file upload
+            // Handle direct photo or video file upload
             if ($request->hasFile('new_hc_media_file')) {
                 $file = $request->file('new_hc_media_file');
                 if ($file && $file->isValid()) {
                     $mime = $file->getMimeType() ?: '';
-                    if (str_starts_with($mime, 'video/')) {
+                    $ext = strtolower($file->getClientOriginalExtension());
+                    if (str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'mov', 'm4v'])) {
                         $hcType = 'video';
                     } else {
                         $hcType = 'image';
                     }
                     $savedPath = $file->store('vendors/' . $vendor->id . '/happy_customers', 'public');
-                    $mediaUrl = asset('storage/' . $savedPath);
+                    $mediaUrl = '/storage/' . $savedPath;
                     $thumbUrl = $mediaUrl;
                 }
-            } elseif ($request->filled('new_hc_media_url')) {
-                $mediaUrl = trim($request->input('new_hc_media_url'));
-                $thumbUrl = $mediaUrl;
-            } else {
+            }
+
+            if (empty($mediaUrl)) {
                 $mediaUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
                 $thumbUrl = $mediaUrl;
             }

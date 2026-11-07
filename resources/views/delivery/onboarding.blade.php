@@ -51,15 +51,34 @@
             <!-- Onboarding Card Form -->
             <div class="bg-white/95 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-xl p-6 sm:p-10">
                 
-                <div class="flex items-center gap-3 pb-4 border-b border-slate-100 mb-6">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                        🛵
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                            🛵
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-950">Fleet Delivery Boy Registration</h2>
+                            <p class="text-xs text-slate-500">Dedicated Fleet Rider Account (Independent of Customer &amp; Vendor profiles).</p>
+                        </div>
                     </div>
-                    <div>
-                        <h2 class="text-lg font-bold text-slate-950">Pilot Registration Form</h2>
-                        <p class="text-xs text-slate-500">Fill your contact details to start taking orders today.</p>
-                    </div>
+                    <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold uppercase">
+                        Role: Fleet Pilot
+                    </span>
                 </div>
+
+                @if(session('error'))
+                    <div class="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                        <span>⚠️</span>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
+
+                @if(auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isVendor()))
+                    <div class="mb-6 p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs">
+                        <strong>Logged in as {{ ucfirst(auth()->user()->role) }} ({{ auth()->user()->email }}):</strong>
+                        Your store/admin account will remain untouched. Fill in the rider credentials below to create a dedicated <strong>Fleet Delivery Boy</strong> account.
+                    </div>
+                @endif
 
                 @if($errors->any())
                     <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
@@ -74,27 +93,27 @@
                 <form action="{{ route('delivery.register') }}" method="POST" class="space-y-6">
                     @csrf
 
-                    @guest
+                    @if(!auth()->check() || auth()->user()->isAdmin() || auth()->user()->isVendor())
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                Email Address <span class="text-rose-500">*</span>
+                                Rider Email Address <span class="text-rose-500">*</span>
                             </label>
                             <input type="email" name="email" value="{{ old('email') }}" required
-                                   placeholder="delivery@example.com"
+                                   placeholder="rider@example.com"
                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none">
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                                Account Password <span class="text-rose-500">*</span>
+                                Rider Password <span class="text-rose-500">*</span>
                             </label>
                             <input type="password" name="password" required minlength="6"
                                    placeholder="Minimum 6 characters"
                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none">
                         </div>
                     </div>
-                    @endguest
+                    @endif
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -177,7 +196,15 @@
                     </div>
 
                     <div class="text-center text-xs text-slate-400">
-                        Already registered? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Delivery Pilot Dashboard →</a>
+                        @if(auth()->check() && auth()->user()->isFleet())
+                            Already registered as Fleet Pilot? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Delivery Pilot Dashboard →</a>
+                        @elseif(auth()->check() && auth()->user()->isAdmin())
+                            Signed in as Admin. Want fleet monitoring? <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Fleet Administrative Oversight →</a>
+                        @elseif(auth()->check() && auth()->user()->isVendor())
+                            Signed in as Vendor. To deliver, please create a dedicated Fleet Rider profile above.
+                        @else
+                            Already registered? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Delivery Pilot Dashboard →</a>
+                        @endif
                     </div>
                 </form>
 
