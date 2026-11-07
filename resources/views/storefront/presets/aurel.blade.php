@@ -13,7 +13,8 @@
 @endphp
 
 <div class="storefront-preset-aurel min-h-screen flex flex-col font-body selection:bg-amber-200 selection:text-amber-950 bg-[#faf8f5] text-[#1c1917]"
-     style="--sf-accent: #c28422; --sf-primary: #1c1917;">
+     style="--sf-accent: #c28422; --sf-primary: #1c1917;"
+     x-data="{ drawerOpen: false }">
 
     @if(!empty($config['header']['announcement_enabled']) && !empty($config['header']['announcement_text']) && trim($config['header']['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
@@ -23,8 +24,17 @@
     <header class="sticky top-0 z-40 bg-[#faf8f5]/90 backdrop-blur-xl border-b border-stone-200/70 text-stone-900 transition-all">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-22 flex items-center justify-between gap-6">
             
-            <!-- Left: Refined Serif Logotype -->
+            <!-- Left: Hamburger Drawer Trigger + Refined Serif Logotype -->
             <div class="flex items-center gap-3 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-2 -ml-2 text-stone-700 hover:text-stone-950 transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 bg-white p-1">
@@ -59,14 +69,18 @@
                 <a href="#trust" class="hover:text-stone-950 transition">Atelier Standards</a>
             </nav>
 
-            <!-- Right: Elegant Cart Counter & Concierge Desk -->
+            <!-- Right: Elegant Cart Counter with Bag Icon (No Plain Text) -->
             <div class="flex items-center gap-4">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-4 py-2 rounded-full border border-stone-300 hover:border-stone-900 bg-white text-stone-900 text-xs font-semibold tracking-wider transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-2xs hover:shadow-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
-                    <span>Bag</span>
-                    <span id="cart-counter-badge" class="font-mono text-stone-500 font-bold">({{ $cartCount }})</span>
+                        class="p-2 sm:px-3 sm:py-2 rounded-full border border-stone-300 hover:border-stone-900 bg-white text-stone-900 transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-2xs hover:shadow-sm"
+                        aria-label="Shopping Cart">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-stone-900 text-white font-mono text-[10px] font-bold">
+                        {{ $cartCount }}
+                    </span>
                 </button>
             </div>
 
@@ -338,5 +352,8 @@
 
     {{-- Minimalist Atelier Footer --}}
     @include('storefront.sections.footer')
+
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
 
 </div>

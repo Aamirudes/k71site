@@ -13,7 +13,8 @@
 @endphp
 
 <div class="storefront-preset-chroma min-h-screen flex flex-col font-body selection:bg-blue-600 selection:text-white bg-[#f8fafc] text-[#09090b]"
-     style="--sf-accent: #2563eb; --sf-primary: #09090b;">
+     style="--sf-accent: #2563eb; --sf-primary: #09090b;"
+     x-data="{ drawerOpen: false }">
 
     @if(!empty($config['header']['announcement_enabled']) && !empty($config['header']['announcement_text']) && trim($config['header']['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
@@ -42,8 +43,17 @@
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b-2 border-black text-black">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between gap-4">
             
-            <!-- Left: Chunky Graphic Sticker Brand -->
+            <!-- Left: Hamburger Drawer Trigger + Chunky Graphic Sticker Brand -->
             <div class="flex items-center gap-3 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-2 -ml-2 text-black hover:opacity-75 transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="p-1 rounded-xl border-2 border-black bg-yellow-300 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
@@ -79,13 +89,16 @@
                 @endforeach
             </nav>
 
-            <!-- Right: Vibrant Electric Bag Button -->
+            <!-- Right: Vibrant Electric Bag Button (With Bag Icon, No Plain Text) -->
             <div class="flex items-center gap-3">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-4 sm:px-5 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer">
-                    <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-2 py-0.5 rounded-full bg-white text-blue-600 text-[10px] font-black">
+                        class="p-2 sm:px-3 sm:py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer"
+                        aria-label="Shopping Cart">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-white text-blue-600 text-[10px] font-black">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -363,5 +376,8 @@
 
     {{-- Minimal Bold Footer --}}
     @include('storefront.sections.footer')
+
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
 
 </div>

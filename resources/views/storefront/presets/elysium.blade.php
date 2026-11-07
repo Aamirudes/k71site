@@ -15,7 +15,8 @@
 @endphp
 
 <div class="storefront-preset-elysium min-h-screen flex flex-col font-body selection:bg-[#d4af37] selection:text-black bg-[#060913] text-[#fcfbf7]"
-     style="--sf-accent: #d4af37; --sf-primary: #060913;">
+     style="--sf-accent: #d4af37; --sf-primary: #060913;"
+     x-data="{ drawerOpen: false }">
 
     @if(!empty($config['header']['announcement_enabled']) && !empty($config['header']['announcement_text']) && trim($config['header']['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
@@ -37,8 +38,17 @@
     <div class="sticky top-0 z-40 px-3 sm:px-6 py-2.5 transition-all">
         <header class="max-w-7xl mx-auto rounded-3xl bg-[#060913]/95 backdrop-blur-2xl border border-[#d4af37]/40 shadow-[0_15px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(212,175,55,0.15)] px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4 text-white">
             
-            <!-- Left: Royal Crest Brand -->
-            <div class="flex items-center gap-3.5 shrink-0">
+            <!-- Left: Hamburger Drawer Trigger + Royal Crest Brand -->
+            <div class="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-2 -ml-2 text-[#d4af37] hover:text-white transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-[#d4af37] bg-[#0d1326] p-1 overflow-hidden shadow-[0_0_12px_rgba(212,175,55,0.3)]">
@@ -77,13 +87,16 @@
                 </a>
             </nav>
 
-            <!-- Right: Gilded Bag Button -->
+            <!-- Right: Gilded Bag Button (With Bag Icon, No Plain Text) -->
             <div class="flex items-center gap-2">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-4 py-2 rounded-full bg-gradient-to-r from-[#b38728] via-[#d4af37] to-[#f5d77f] hover:brightness-110 text-black font-mono text-xs font-black uppercase tracking-wider transition-all duration-200 shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95">
-                    <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.5 rounded-full bg-black text-[#f5d77f] text-[10px] font-black">
+                        class="p-2 sm:px-3 sm:py-2 rounded-full bg-gradient-to-r from-[#b38728] via-[#d4af37] to-[#f5d77f] hover:brightness-110 text-black transition-all duration-200 shadow-[0_0_20px_rgba(212,175,55,0.4)] flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+                        aria-label="Shopping Cart">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-black text-[#f5d77f] text-[10px] font-black font-mono">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -340,4 +353,8 @@
     {{-- Dark Opulent Footer --}}
     @include('storefront.sections.footer')
 
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
+
 </div>
+

@@ -14,7 +14,8 @@
 @endphp
 
 <div class="storefront-preset-noire min-h-screen flex flex-col font-mono selection:bg-white selection:text-black bg-[#09090b] text-[#fafafa]"
-     style="--sf-accent: #ffffff; --sf-primary: #09090b;">
+     style="--sf-accent: #ffffff; --sf-primary: #09090b;"
+     x-data="{ drawerOpen: false }">
 
     @if(!empty($config['header']['announcement_enabled']) && !empty($config['header']['announcement_text']) && trim($config['header']['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
@@ -36,8 +37,17 @@
     <header class="sticky top-0 z-40 bg-[#09090b]/95 backdrop-blur-xl border-b border-zinc-800/90 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
             
-            <!-- Left: Minimalist Store Logo & Coordinates -->
+            <!-- Left: Hamburger Drawer Trigger + Minimalist Store Logo & Coordinates -->
             <div class="flex items-center gap-3 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-2 -ml-2 text-white hover:text-zinc-300 transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-8 sm:h-10 w-auto object-contain filter invert contrast-200">
@@ -70,13 +80,16 @@
                 <a href="#trust" class="hover:text-white transition">[ PROTOCOL ]</a>
             </nav>
 
-            <!-- Right: Search & Stark Bag Counter Button -->
+            <!-- Right: Search & Stark Bag Counter Button (With Bag Icon, No Plain Text) -->
             <div class="flex items-center gap-3">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-3.5 sm:px-4 py-2 rounded-none border border-white/80 hover:bg-white hover:text-black font-mono text-xs font-black tracking-widest uppercase transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-sm">
-                    <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-white text-black text-[10px] font-bold">
+                        class="p-2 sm:px-3 sm:py-2 rounded-none border border-white hover:bg-white hover:text-black transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-sm text-white"
+                        aria-label="Shopping Cart">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-white text-black text-[10px] font-mono font-bold">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -358,5 +371,8 @@
 
     {{-- Minimal Dark Footer --}}
     @include('storefront.sections.footer')
+
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
 
 </div>

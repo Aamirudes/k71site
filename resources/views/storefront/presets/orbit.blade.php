@@ -15,7 +15,8 @@
 @endphp
 
 <div class="storefront-preset-orbit min-h-screen flex flex-col font-body selection:bg-cyan-400 selection:text-black bg-[#050711] text-[#f8fafc] relative overflow-hidden"
-     style="--sf-accent: #38bdf8; --sf-primary: #050711;">
+     style="--sf-accent: #38bdf8; --sf-primary: #050711;"
+     x-data="{ drawerOpen: false }">
 
     {{-- Layered Cosmic Nebula Ambient Glows --}}
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-b from-indigo-600/25 via-cyan-500/15 to-transparent blur-[120px] pointer-events-none -z-10"></div>
@@ -30,8 +31,17 @@
     <div class="fixed top-3 sm:top-5 inset-x-3 sm:inset-x-6 lg:inset-x-8 z-50 pointer-events-none">
         <header class="max-w-6xl mx-auto p-2 sm:p-2.5 rounded-full bg-slate-950/60 backdrop-blur-3xl border border-white/25 ring-1 ring-cyan-400/40 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.4)] text-white pointer-events-auto flex items-center justify-between gap-3">
             
-            <!-- Left: Pulsing Celestial Orbital Bezel & Identity -->
-            <div class="flex items-center gap-2.5 pl-2 sm:pl-3 shrink-0">
+            <!-- Left: Hamburger Drawer Trigger + Pulsing Celestial Orbital Bezel & Identity -->
+            <div class="flex items-center gap-2 pl-1 sm:pl-2 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-1.5 sm:p-2 text-cyan-300 hover:text-white transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-2.5 group">
                     <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-600 p-[1.5px] shadow-[0_0_15px_rgba(34,211,238,0.7)] shrink-0">
                         @if($storeLogo)
@@ -84,9 +94,12 @@
 
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:brightness-110 text-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-[0_0_20px_rgba(34,211,238,0.6)] flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95">
-                    <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.5 rounded-full bg-black text-white text-[10px] font-bold">
+                        class="p-2 sm:px-3 sm:py-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:brightness-110 text-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-[0_0_20px_rgba(34,211,238,0.6)] flex items-center gap-1.5 cursor-pointer hover:scale-105 active:scale-95"
+                        aria-label="Shopping Cart">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-black text-white text-[10px] font-bold">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -400,5 +413,8 @@
 
     {{-- Dark High-Contrast Minimal Footer --}}
     @include('storefront.sections.footer')
+
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
 
 </div>

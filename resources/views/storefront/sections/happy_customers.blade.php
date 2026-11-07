@@ -112,9 +112,9 @@
             </div>
         </div>
 
-        <!-- Horizontal Slider: Exactly 2.5 Slides Per View on Mobile (w-[38vw]), Multi-Card on Desktop -->
+        <!-- Horizontal Slider: Exactly 2.5 Compact Shorts-Style Cards Per View on Mobile (w-[36vw]), Multi-Card on Desktop -->
         <div x-ref="hcTrack"
-             class="flex items-stretch gap-2.5 sm:gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+             class="flex items-center gap-2.5 sm:gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             @foreach($items as $idx => $item)
                 @php
                     $isVid = ($item['type'] ?? 'image') === 'video';
@@ -122,71 +122,63 @@
                     $thumbUrl = $item['thumb_url'] ?? $mediaUrl;
                     $rating = (int)($item['rating'] ?? 5);
                 @endphp
-                <div class="snap-start shrink-0 w-[38vw] sm:w-[220px] md:w-[240px] rounded-2xl overflow-hidden border border-black/10 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
+                {{-- Compact 9:16 Story Card (Identical form factor to Shorts Cards, 2.5/view on mobile) --}}
+                <div class="snap-start shrink-0 w-[36vw] sm:w-40 md:w-44 aspect-[9/16] rounded-2xl overflow-hidden relative bg-black group border border-black/10 dark:border-white/20 shadow-md transition-all duration-300 hover:scale-[1.02]">
                     
-                    <!-- Media Showcase (Photo or Video Reel) -->
-                    <div class="relative aspect-square bg-black overflow-hidden">
-                        @if($isVid)
-                            <video src="{{ $mediaUrl }}" 
-                                   poster="{{ $thumbUrl }}"
-                                   playsinline 
-                                   webkit-playsinline 
-                                   loop 
-                                   muted
-                                   preload="metadata"
-                                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
-                                   onclick="this.paused ? this.play() : this.pause()">
-                            </video>
-                            <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20 pointer-events-none">
-                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> REEL
-                            </div>
-                        @else
-                            <img src="{{ $thumbUrl }}" 
-                                 alt="{{ $item['customer_name'] ?? 'Happy Customer' }}" 
-                                 loading="lazy"
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20">
-                                <span>📸 VERIFIED</span>
-                            </div>
-                        @endif
-
-                        <!-- Top-Left Verified Purchase Badge -->
-                        <div class="absolute top-1.5 left-1.5">
-                            <span class="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white font-mono font-black text-[8px] uppercase tracking-wider shadow-sm flex items-center gap-0.5">
-                                <span>✓</span> BUYER
-                            </span>
+                    <!-- Background Media (Photo or Video Loop) -->
+                    @if($isVid)
+                        <video src="{{ $mediaUrl }}" 
+                               poster="{{ $thumbUrl }}"
+                               playsinline 
+                               webkit-playsinline 
+                               loop 
+                               muted
+                               preload="metadata"
+                               class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+                               onclick="this.paused ? this.play() : this.pause()">
+                        </video>
+                        <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20 pointer-events-none z-10">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> REEL
                         </div>
+                    @else
+                        <img src="{{ $thumbUrl }}" 
+                             alt="{{ $item['customer_name'] ?? 'Happy Customer' }}" 
+                             loading="lazy"
+                             class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20 z-10">
+                            <span>📸 PHOTO</span>
+                        </div>
+                    @endif
+
+                    <!-- Top-Left Verified Purchase Badge -->
+                    <div class="absolute top-2 left-2 z-10">
+                        <span class="px-1.5 py-0.5 rounded-full bg-emerald-500/90 backdrop-blur-xs text-white font-mono font-black text-[7.5px] uppercase tracking-wider shadow-sm flex items-center gap-0.5">
+                            <span>✓</span> BUYER
+                        </span>
                     </div>
 
-                    <!-- Customer Story Content (Cute & Compact) -->
-                    <div class="p-2.5 sm:p-3 flex-1 flex flex-col justify-between space-y-2">
-                        <div class="space-y-1">
-                            <!-- Star Rating -->
-                            <div class="flex items-center gap-0.5 text-amber-400 text-[10px]">
-                                @for($s = 1; $s <= 5; $s++)
-                                    <span>{{ $s <= $rating ? '★' : '☆' }}</span>
-                                @endfor
-                                <span class="text-[9px] font-bold text-stone-500 dark:text-zinc-400 ml-0.5">5.0</span>
-                            </div>
-
-                            <!-- Testimonial Quote -->
-                            <p class="text-[11px] sm:text-xs font-medium leading-snug line-clamp-2 text-stone-700 dark:text-zinc-200">
-                                "{{ $item['comment'] ?? 'Wonderful experience and genuine product!' }}"
-                            </p>
+                    <!-- Bottom Scrim Overlay with Compact Review Text -->
+                    <div class="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/95 via-black/75 to-transparent pt-10 pb-2.5 px-2.5 sm:px-3 text-white flex flex-col justify-end pointer-events-none">
+                        
+                        <!-- Star Rating -->
+                        <div class="flex items-center gap-0.5 text-amber-400 text-[9px] mb-1">
+                            @for($s = 1; $s <= 5; $s++)
+                                <span>{{ $s <= $rating ? '★' : '☆' }}</span>
+                            @endfor
                         </div>
 
-                        <!-- Customer Info Footer -->
-                        <div class="pt-2 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-[10px]">
-                            <div class="min-w-0">
-                                <h4 class="font-bold text-stone-900 dark:text-white truncate text-[11px]">
-                                    {{ $item['customer_name'] ?? 'Verified Customer' }}
-                                </h4>
-                                <span class="text-[9px] text-stone-400 dark:text-zinc-500 block truncate">
-                                    {{ $item['location'] ?? 'India' }}
-                                </span>
-                            </div>
-                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] flex items-center justify-center shrink-0">
-                                ✓
+                        <!-- Micro Customer Quote (2-line limit) -->
+                        <p class="text-[9.5px] sm:text-[10.5px] font-medium leading-tight line-clamp-2 text-white/95 drop-shadow-sm mb-1.5">
+                            "{{ $item['comment'] ?? 'Wonderful experience and genuine product!' }}"
+                        </p>
+
+                        <!-- Customer Name & City -->
+                        <div class="flex items-center justify-between text-[9px] text-white/80 border-t border-white/15 pt-1">
+                            <span class="font-bold truncate max-w-[80%] text-white">
+                                {{ $item['customer_name'] ?? 'Verified Customer' }}
+                            </span>
+                            <span class="text-[8px] text-zinc-300 font-mono">
+                                {{ $item['location'] ?? 'IN' }}
                             </span>
                         </div>
 

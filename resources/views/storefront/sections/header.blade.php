@@ -177,18 +177,16 @@
                     <!-- Cart / Bag Trigger Button (Opens Glassmorphic Cart Popup Drawer) -->
                     <button type="button" 
                             onclick="if(window.openK71Cart){ window.openK71Cart(); } else { window.location.href='{{ route('cart.index') }}'; }" 
-                            class="group relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-md"
+                            class="group relative flex items-center justify-center gap-1.5 p-2 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-md"
                             :class="{
                                 'bg-zinc-950 text-white dark:bg-white dark:text-zinc-950': isScrolled,
                                 'bg-white text-zinc-950': !isScrolled
                             }"
                             aria-label="Open shopping bag">
                         
-                        <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                         </svg>
-                        
-                        <span class="hidden sm:inline font-sans">Bag</span>
                         
                         <!-- Real-time Count Badge -->
                         <span class="px-1.5 py-0.2 rounded-full text-[10px] font-black font-mono transition-transform group-hover:scale-110"

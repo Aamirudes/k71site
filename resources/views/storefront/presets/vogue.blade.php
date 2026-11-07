@@ -15,7 +15,8 @@
 @endphp
 
 <div class="storefront-preset-vogue min-h-screen flex flex-col font-body selection:bg-[#e11d48] selection:text-white bg-white text-[#09090b]"
-     style="--sf-accent: #e11d48; --sf-primary: #09090b;">
+     style="--sf-accent: #e11d48; --sf-primary: #09090b;"
+     x-data="{ drawerOpen: false }">
 
     @if(!empty($config['header']['announcement_enabled']) && !empty($config['header']['announcement_text']) && trim($config['header']['announcement_text']) !== 'Free Delivery')
         @include('storefront.sections.announcement')
@@ -37,8 +38,17 @@
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b-2 border-black text-[#09090b]">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-22 flex items-center justify-between gap-4">
             
-            <!-- Left: Magazine Masthead Logo -->
-            <div class="flex items-center gap-3.5 shrink-0">
+            <!-- Left: Hamburger Drawer Trigger + Magazine Masthead Logo -->
+            <div class="flex items-center gap-3 shrink-0">
+                <button type="button" 
+                        @click="drawerOpen = true"
+                        class="p-2 -ml-2 text-black hover:text-[#e11d48] transition cursor-pointer flex items-center justify-center shrink-0"
+                        aria-label="Open boutique menu">
+                    <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+
                 <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="h-10 sm:h-12 w-auto p-1 border-2 border-black bg-white">
@@ -77,13 +87,16 @@
                 </a>
             </nav>
 
-            <!-- Right: Bold Crimson Bag Button -->
+            <!-- Right: Bold Crimson Bag Button (With Bag Icon, No Plain Text) -->
             <div class="flex items-center gap-3">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="px-4 py-2 border-2 border-black bg-[#e11d48] hover:bg-black text-white font-mono text-xs font-black tracking-widest uppercase transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                    <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-white text-black text-[10px] font-black">
+                        class="p-2 sm:px-3 sm:py-2 border-2 border-black bg-[#e11d48] hover:bg-black text-white transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                        aria-label="Shopping Cart">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-white text-black text-[10px] font-mono font-black">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -338,4 +351,8 @@
     {{-- Minimal Bold Editorial Footer --}}
     @include('storefront.sections.footer')
 
+    {{-- Slide-From-Left Menu Drawer --}}
+    @include('storefront.sections.theme_drawer')
+
 </div>
+
