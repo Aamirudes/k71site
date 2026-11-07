@@ -98,5 +98,25 @@
 
     </div>
 </section>
+@else
+<section id="reviews" class="py-10 sm:py-14 border-t border-stone-200/60 dark:border-white/10 relative z-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="p-8 sm:p-10 rounded-3xl border border-stone-200/80 dark:border-white/10 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl text-center space-y-3">
+            <span class="text-xl sm:text-2xl text-amber-400">★ ★ ★ ★ ★</span>
+            <h3 class="text-base sm:text-lg font-bold text-stone-900 dark:text-white font-heading">
+                Verified Product Reviews &amp; Merchant Escrow
+            </h3>
+            <p class="text-xs text-stone-500 dark:text-zinc-400 max-w-md mx-auto leading-relaxed">
+                All catalog items from {{ $vendor->shop_name }} are backed by K71 Buyer Protection. Ordered an item? Leave your review directly from your orders dashboard.
+            </p>
+            <div class="pt-2">
+                <a href="{{ route('orders.index') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-bold text-xs shadow-xs hover:scale-102 transition">
+                    <span>Review Past Orders</span>
+                    <span>→</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
 @endif
 

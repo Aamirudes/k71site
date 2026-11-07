@@ -24,11 +24,11 @@
     <div class="w-full bg-[#121215] border-b border-zinc-800/80 py-1.5 px-4 overflow-hidden text-[10px] font-mono tracking-[0.2em] uppercase text-zinc-400 select-none">
         <div class="flex items-center justify-between max-w-7xl mx-auto">
             <span class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
                 <span>// LIVE STUDIO DISPATCH: {{ strtoupper($vendor->city ?: 'DIRECT WORKSHOP') }} //</span>
             </span>
-            <span class="hidden sm:inline-block text-zinc-500">100% VERIFIED AUTHENTIC • DOORSTEP PAN-INDIA TRANSIT</span>
-            <span>K71 MERCHANT ARCHIVE [ACTIVE]</span>
+            <span class="hidden sm:inline-block text-zinc-400">100% VERIFIED AUTHENTIC • DOORSTEP PAN-INDIA TRANSIT</span>
+            <span class="text-white">K71 MERCHANT ARCHIVE [ACTIVE]</span>
         </div>
     </div>
 
@@ -85,10 +85,10 @@
         </div>
     </header>
 
-    <main class="flex-1 space-y-12 sm:space-y-16">
+    <main class="flex-1 space-y-4 sm:space-y-6">
         
         {{-- ASYMMETRIC HIGH-FASHION CAMPAIGN SPLIT STAGE --}}
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8">
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4">
             <div class="grid grid-cols-1 lg:grid-cols-12 border border-zinc-800 bg-[#121215] overflow-hidden shadow-2xl">
                 
                 <!-- Left Campaign Visual (7 Cols) -->
@@ -100,7 +100,7 @@
 
                     <!-- Top Monospace Tag -->
                     <div class="relative z-10 flex items-center justify-between text-[11px] font-mono tracking-widest text-white/80">
-                        <span class="px-2.5 py-1 bg-black/80 border border-white/20 uppercase">
+                        <span class="px-2.5 py-1 bg-black/80 border border-white/20 uppercase text-zinc-300">
                             CAMPAIGN NO. 01 // {{ strtoupper($vendor->city ?: 'STUDIO') }}
                         </span>
                         <span class="px-2.5 py-1 bg-white text-black font-bold uppercase">
@@ -128,9 +128,9 @@
                     <!-- Diagnostic Terminal Header -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between pb-3 border-b border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest">
-                            <span>TERMINAL TELEMETRY</span>
-                            <span class="text-emerald-400 flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            <span class="text-zinc-400">TERMINAL TELEMETRY</span>
+                            <span class="text-white font-bold flex items-center gap-1.5">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                                 READY FOR DISPATCH
                             </span>
                         </div>
@@ -147,11 +147,11 @@
                             </div>
                             <div class="flex justify-between py-1 border-b border-zinc-800/60">
                                 <span class="text-zinc-500 uppercase">ACTIVE CATALOG:</span>
-                                <span class="text-white">{{ $products->total() ?? $products->count() }} SKUs</span>
+                                <span class="text-white font-bold">{{ $products->total() ?? $products->count() }} SKUs</span>
                             </div>
                             <div class="flex justify-between py-1 border-b border-zinc-800/60">
                                 <span class="text-zinc-500 uppercase">BUYER PROTOCOL:</span>
-                                <span class="text-emerald-400 font-bold">K71 ESCROW PROTECTED</span>
+                                <span class="text-white font-bold">K71 ESCROW PROTECTED</span>
                             </div>
                         </div>
                     </div>
@@ -169,16 +169,16 @@
             </div>
         </section>
 
-        {{-- ARCHITECTURAL LOOKBOOK PRODUCT GRID --}}
-        <section id="catalog" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        {{-- ARCHITECTURAL LOOKBOOK PRODUCT GRID (ZERO TOP GAP) --}}
+        <section id="catalog" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-4">
             
             <!-- Category Filtering & Sort Bar -->
-            <div class="p-4 sm:p-5 border border-zinc-800 bg-[#121215] mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="p-4 sm:p-5 border border-zinc-800 bg-[#121215] mb-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg sm:text-xl font-mono font-black uppercase tracking-wider text-white">
                         PRODUCT ARCHIVE // 2026
                     </h2>
-                    <p class="text-xs text-zinc-500 font-mono mt-0.5">
+                    <p class="text-xs text-zinc-400 font-mono mt-0.5">
                         Showing {{ $products->total() ?? $products->count() }} authentic pieces ready for doorstep courier
                     </p>
                 </div>
@@ -311,6 +311,9 @@
         {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
         @include('storefront.sections.video_showcase')
 
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        @include('storefront.sections.happy_customers')
+
         {{-- MONOSPACE DIAGNOSTIC TRUST PROTOCOL --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div class="p-6 sm:p-10 border border-zinc-800 bg-[#121215]">
@@ -318,7 +321,7 @@
                     <span class="text-xs font-mono font-bold tracking-[0.2em] uppercase text-zinc-400">
                         // PROTOCOL SPECIFICATIONS & GUARANTEES
                     </span>
-                    <span class="text-[10px] font-mono text-emerald-400">AUTHENTICATED MERCHANT</span>
+                    <span class="text-[10px] font-mono text-zinc-300 font-bold">AUTHENTICATED MERCHANT</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono">

@@ -26,9 +26,9 @@
         @include('storefront.sections.announcement')
     @endif
 
-    {{-- Aerodynamic Layered Glass Island Capsule (Creative Depth Header) --}}
+    {{-- Aerodynamic Layered Glass Island Capsule (Ultra-Glassmorphic Floating Header) --}}
     <div class="fixed top-3 sm:top-5 inset-x-3 sm:inset-x-6 lg:inset-x-8 z-50 pointer-events-none">
-        <header class="max-w-6xl mx-auto p-2 sm:p-2.5 rounded-full bg-gradient-to-r from-[#0a0e24]/92 via-[#111738]/92 to-[#0a0e24]/92 backdrop-blur-3xl border border-white/20 ring-1 ring-cyan-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.8),_inset_0_1px_1px_rgba(255,255,255,0.4)] text-white pointer-events-auto flex items-center justify-between gap-3">
+        <header class="max-w-6xl mx-auto p-2 sm:p-2.5 rounded-full bg-slate-950/60 backdrop-blur-3xl border border-white/25 ring-1 ring-cyan-400/40 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.4)] text-white pointer-events-auto flex items-center justify-between gap-3">
             
             <!-- Left: Pulsing Celestial Orbital Bezel & Identity -->
             <div class="flex items-center gap-2.5 pl-2 sm:pl-3 shrink-0">
@@ -47,26 +47,26 @@
                         <span class="font-black text-sm sm:text-base tracking-tight text-white group-hover:text-cyan-300 transition truncate max-w-[130px] sm:max-w-xs drop-shadow-sm">
                             {{ $storeName }}
                         </span>
-                        <span class="text-[9px] font-mono font-bold text-cyan-300 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ORBIT 2.0 // VERIFIED
+                        <span class="text-[9px] font-mono font-bold text-slate-300 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,1)]"></span> ORBIT // GLASS 2.0
                         </span>
                     </div>
                 </a>
             </div>
 
-            <!-- Center: High-Contrast Planetary Department Pills (Desktop) -->
-            <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-black/40 border border-white/10 text-xs font-mono">
+            <!-- Center: High-Contrast Planetary Department Pills (Desktop Glassmorphic) -->
+            <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/15 text-xs font-mono">
                 <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
-                   class="px-3.5 py-1.5 rounded-full transition {{ !$currentCategory ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/10' }}">
+                   class="px-3.5 py-1.5 rounded-full transition {{ !$currentCategory ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/15' }}">
                     ALL ({{ $products->total() ?? $products->count() }})
                 </a>
                 @foreach($vendorCategories->take(3) as $c)
                     <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
-                       class="px-3 py-1.5 rounded-full transition {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/10' }}">
+                       class="px-3 py-1.5 rounded-full transition {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/15' }}">
                         {{ strtoupper($c->name) }}
                     </a>
                 @endforeach
-                <a href="#trust" class="px-3 py-1.5 rounded-full text-cyan-300 hover:text-white hover:bg-white/10 transition font-bold">
+                <a href="#trust" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition font-bold">
                     PROTOCOL
                 </a>
             </nav>
@@ -74,7 +74,7 @@
             <!-- Right: Search & Interactive Bag Capsule -->
             <div class="flex items-center gap-2 pr-1">
                 <a href="{{ route('storefront.show', $vendor->slug) }}#catalog"
-                   class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold border border-white/20 transition shadow-xs"
+                   class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/20 text-white text-xs font-mono font-bold border border-white/20 backdrop-blur-xl transition shadow-xs"
                    title="Search store catalog">
                     <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -86,7 +86,7 @@
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
                         class="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:brightness-110 text-slate-950 font-mono font-black text-xs uppercase tracking-wider transition-all duration-200 shadow-[0_0_20px_rgba(34,211,238,0.6)] flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95">
                     <span>BAG</span>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.5 rounded-full bg-black text-cyan-300 text-[10px] font-bold">
+                    <span id="cart-counter-badge" class="px-1.5 py-0.5 rounded-full bg-black text-white text-[10px] font-bold">
                         {{ $cartCount }}
                     </span>
                 </button>
@@ -354,6 +354,9 @@
 
         {{-- Studio Shorts & Video Reels Showcase --}}
         @include('storefront.sections.video_showcase')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        @include('storefront.sections.happy_customers')
 
         {{-- THE ORBITAL ARCHITECTURE PROTOCOL (DIAGNOSTICS MATRIX) --}}
         <section id="trust" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

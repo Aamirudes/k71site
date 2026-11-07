@@ -50,6 +50,8 @@
      :class="{ 'is-dragging': isDragging }"
      x-data="floatingSixNav()"
      x-init="init()"
+     x-show="!modalHidden"
+     x-cloak
      :style="dockStyle"
      @pointerdown="onPointerDown($event)"
      @click.outside="close()"
@@ -160,11 +162,12 @@
             initialY: null,
             posX: null,
             posY: null,
+            modalHidden: false,
             navItems: @json($activeLauncherItems),
 
             get dockStyle() {
                 if (this.posX === null || this.posY === null) {
-                    return 'right: 16px; bottom: 85px;';
+                    return 'right: 12px; top: 50%; transform: translateY(-50%);';
                 }
                 return `left: ${this.posX}px; top: ${this.posY}px; right: auto; bottom: auto;`;
             },
@@ -183,15 +186,29 @@
                     }
                 } catch(e) {}
 
+                // Default Position: Middle Center Right
                 if (this.posX === null || this.posY === null) {
-                    if (window.innerWidth <= 640) {
-                        this.posX = Math.max(10, window.innerWidth - 68);
-                        this.posY = Math.max(10, window.innerHeight - 150);
-                    } else {
-                        this.posX = Math.max(10, window.innerWidth - 75);
-                        this.posY = Math.max(10, Math.round((window.innerHeight / 2) - 30));
-                    }
+                    this.posX = Math.max(10, window.innerWidth - (window.innerWidth <= 640 ? 65 : 75));
+                    this.posY = Math.max(10, Math.round((window.innerHeight / 2) - 28));
                 }
+
+                // Modal / Lightbox listener: Completely hide 6-in-1 nav when any video player modal is open
+                window.addEventListener('shorts-modal-state', (e) => {
+                    this.modalHidden = !!(e.detail && e.detail.open);
+                    if (this.modalHidden) this.open = false;
+                });
+
+                const checkModal = () => {
+                    const active = document.body.classList.contains('shorts-modal-active') ||
+                                   document.querySelector('[data-shorts-player-open="true"]') !== null;
+                    if (this.modalHidden !== active) {
+                        this.modalHidden = active;
+                        if (this.modalHidden) this.open = false;
+                    }
+                };
+
+                const observer = new MutationObserver(checkModal);
+                observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-shorts-player-open'] });
 
                 window.addEventListener('pointermove', (e) => this.onPointerMove(e));
                 window.addEventListener('pointerup', (e) => this.onPointerUp(e));

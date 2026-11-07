@@ -1,3 +1,7 @@
+@php
+    $isDarkTheme = in_array($presetKey ?? '', ['noire', 'orbit']) || !empty($theme['dark_mode']);
+@endphp
+
 <div id="k71-glass-cart-popup" 
      x-data="glassCartModal()" 
      x-init="initCart()"
@@ -7,7 +11,7 @@
      style="display: none;">
     
     <!-- Ultra-blurred Ambient Backdrop with Smooth Fade -->
-    <div class="fixed inset-0 z-[90] bg-stone-950/70 backdrop-blur-md transition-opacity duration-300"
+    <div class="fixed inset-0 z-[90] bg-black/75 backdrop-blur-md transition-opacity duration-300"
          @click="closeCart()"
          x-show="isOpen"
          x-transition:enter="ease-out duration-300"
@@ -19,8 +23,8 @@
 
     <div class="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10 z-[100]">
         <!-- Frosted Glassmorphic Slide-Out Drawer -->
-        <div class="w-screen max-w-md relative flex flex-col shadow-2xl transition-all duration-300 transform overflow-hidden"
-             style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); border-left: 1px solid rgba(255, 255, 255, 0.4);"
+        <div class="w-screen max-w-md relative flex flex-col shadow-2xl transition-all duration-300 transform overflow-hidden {{ $isDarkTheme ? 'bg-[#09090b]/95 text-white border-l border-zinc-800' : 'bg-white/90 text-stone-900 border-l border-stone-200/80' }}"
+             style="backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);"
              x-show="isOpen"
              x-transition:enter="transform transition ease-out duration-300"
              x-transition:enter-start="translate-x-full"
@@ -36,17 +40,17 @@
                  style="background: radial-gradient(circle, var(--sf-primary, #18181b) 0%, transparent 70%);"></div>
 
             <!-- Drawer Header -->
-            <div class="relative z-10 p-5 sm:p-6 border-b border-stone-200/60 flex items-center justify-between bg-white/40">
+            <div class="relative z-10 p-5 sm:p-6 border-b {{ $isDarkTheme ? 'border-zinc-800 bg-[#0d0d10]/80' : 'border-stone-200/60 bg-white/40' }} flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-lg shadow-sm"
                          style="background: rgba(var(--sf-accent-rgb, 197, 155, 39), 0.15); color: var(--sf-accent, #c59b27);">
                         🛍️
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-extrabold tracking-tight text-stone-900 font-heading">
+                        <h3 class="text-base sm:text-lg font-extrabold tracking-tight {{ $isDarkTheme ? 'text-white' : 'text-stone-900' }} font-heading">
                             Boutique Bag
                         </h3>
-                        <span class="text-xs font-semibold text-stone-500">
+                        <span class="text-xs font-semibold {{ $isDarkTheme ? 'text-zinc-400' : 'text-stone-500' }}">
                             <span x-text="cartCount"></span> <span x-text="cartCount === 1 ? 'item' : 'items'"></span> in your bag
                         </span>
                     </div>
@@ -54,7 +58,7 @@
 
                 <button type="button" 
                         @click="closeCart()" 
-                        class="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 hover:text-stone-900 flex items-center justify-center transition"
+                        class="w-9 h-9 rounded-full {{ $isDarkTheme ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300' : 'bg-stone-100 hover:bg-stone-200 text-stone-600' }} flex items-center justify-center transition cursor-pointer"
                         aria-label="Close cart drawer">
                     ✕
                 </button>
@@ -153,18 +157,18 @@
             </div>
 
             <!-- Drawer Footer (Subtotal & Direct Checkout) -->
-            <div x-show="items.length > 0" class="relative z-10 p-5 sm:p-6 border-t border-stone-200/70 bg-white/70 space-y-4">
+            <div x-show="items.length > 0" class="relative z-10 p-5 sm:p-6 border-t {{ $isDarkTheme ? 'border-zinc-800 bg-[#0d0d10]/95 text-white' : 'border-stone-200/70 bg-white/70 text-stone-900' }} space-y-4">
                 
                 <div class="space-y-1.5 text-xs">
-                    <div class="flex items-center justify-between text-stone-600">
+                    <div class="flex items-center justify-between {{ $isDarkTheme ? 'text-zinc-400' : 'text-stone-600' }}">
                         <span>Bag Subtotal</span>
-                        <span class="font-bold text-stone-900" x-text="subtotalFormatted"></span>
+                        <span class="font-bold {{ $isDarkTheme ? 'text-white' : 'text-stone-900' }}" x-text="subtotalFormatted"></span>
                     </div>
-                    <div class="flex items-center justify-between text-stone-600">
+                    <div class="flex items-center justify-between {{ $isDarkTheme ? 'text-zinc-400' : 'text-stone-600' }}">
                         <span>Pan-India Shipping</span>
-                        <span class="font-bold text-emerald-600" x-text="subtotalRaw >= 199900 ? 'FREE' : 'Calculated at Checkout'"></span>
+                        <span class="font-bold text-emerald-400" x-text="subtotalRaw >= 199900 ? 'FREE' : 'Calculated at Checkout'"></span>
                     </div>
-                    <div class="pt-2 border-t border-stone-200 flex items-center justify-between text-sm sm:text-base font-extrabold text-stone-950">
+                    <div class="pt-2 border-t {{ $isDarkTheme ? 'border-zinc-800 text-white' : 'border-stone-200 text-stone-950' }} flex items-center justify-between text-sm sm:text-base font-extrabold">
                         <span>Total Due</span>
                         <span x-text="subtotalFormatted"></span>
                     </div>
@@ -173,20 +177,19 @@
                 <!-- Instant 1-Click Checkout Action -->
                 <div class="space-y-2">
                     <a :href="'{{ route('checkout.vendor', $vendor->id) }}'" 
-                       class="w-full py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-extrabold uppercase tracking-wider text-white shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-102"
-                       style="background-color: var(--sf-primary, #18181b);">
-                        <span>Proceed to Boutique Checkout</span>
-                        <span>→</span>
+                       class="w-full py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider {{ $isDarkTheme ? 'bg-white hover:bg-zinc-200 text-black' : 'bg-stone-900 hover:bg-stone-800 text-white' }} shadow-xl hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-102 cursor-pointer">
+                        <span class="{{ $isDarkTheme ? 'text-black' : 'text-white' }} font-black">Proceed to Boutique Checkout</span>
+                        <span class="{{ $isDarkTheme ? 'text-black' : 'text-white' }} font-black">→</span>
                     </a>
                     
                     <button type="button" 
                             @click="closeCart()" 
-                            class="w-full py-2 text-center text-xs font-semibold text-stone-500 hover:text-stone-800 transition">
+                            class="w-full py-2 text-center text-xs font-semibold {{ $isDarkTheme ? 'text-zinc-400 hover:text-white' : 'text-stone-500 hover:text-stone-800' }} transition cursor-pointer">
                         Continue Exploring Store
                     </button>
                 </div>
 
-                <div class="flex items-center justify-center gap-3 text-[11px] text-stone-400 font-medium pt-1">
+                <div class="flex items-center justify-center gap-3 text-[11px] {{ $isDarkTheme ? 'text-zinc-500' : 'text-stone-400' }} font-medium pt-1">
                     <span>🔒 256-Bit SSL Encrypted</span>
                     <span>•</span>
                     <span>Verified Seller Guarantee</span>

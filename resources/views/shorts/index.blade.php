@@ -98,22 +98,6 @@
         .animate-heart-pop {
             animation: heart-pop 0.35s ease-out;
         }
-
-        /* Instagram / YouTube Reels Sliding Animation */
-        @keyframes reelSlideUp {
-            0% { transform: translateY(100%); opacity: 0.8; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes reelSlideDown {
-            0% { transform: translateY(-100%); opacity: 0.8; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-        .animate-reel-slide-up {
-            animation: reelSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        .animate-reel-slide-down {
-            animation: reelSlideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased bg-[#09090b] text-white selection:bg-white selection:text-black"
@@ -408,10 +392,10 @@
                                  :alt="short.title"
                                  class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             
-                            <!-- Duration Badge (No view counts) -->
+                            <!-- Duration & Views Badges -->
                             <div class="absolute top-2 left-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                <span x-text="short.duration ? short.duration : '0:30'"></span>
+                                <svg class="w-2.5 h-2.5 fill-current text-white" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span x-text="short.views"></span>
                             </div>
 
                             <!-- Play Icon Hover -->
@@ -487,23 +471,20 @@
                 </button>
             </div>
 
-            <!-- Main Native HTML5 Video Element with Real Reel Sliding Animation -->
+            <!-- Main Native HTML5 Video Element -->
             <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden cursor-pointer"
                  @click="togglePlay()">
-                <div :class="{ 'animate-reel-slide-up': slideDirection === 'up' && isSliding, 'animate-reel-slide-down': slideDirection === 'down' && isSliding }"
-                     class="w-full h-full flex items-center justify-center">
-                    <video x-ref="videoElement"
-                           class="w-full h-full object-cover"
-                           playsinline
-                           webkit-playsinline
-                           loop
-                           :muted="isMuted"
-                           @timeupdate="updateProgress()"
-                           @play="isPlaying = true"
-                           @pause="isPlaying = false"
-                           @ended="nextVideo()">
-                    </video>
-                </div>
+                <video x-ref="videoElement"
+                       class="w-full h-full object-cover"
+                       playsinline
+                       webkit-playsinline
+                       loop
+                       :muted="isMuted"
+                       @timeupdate="updateProgress()"
+                       @play="isPlaying = true"
+                       @pause="isPlaying = false"
+                       @ended="nextVideo()">
+                </video>
 
                 <!-- Animated Play / Pause Indicator -->
                 <div x-show="!isPlaying"
@@ -749,8 +730,6 @@
                 isLiked: false,
                 isFollowed: false,
                 touchStartY: 0,
-                isSliding: false,
-                slideDirection: 'up',
                 toast: { show: false, message: '', icon: '' },
 
                 get currentShort() {
@@ -798,6 +777,8 @@
                     this.drawerOpen = false;
                     this.isLiked = false;
                     this.isFollowed = false;
+                    document.body.classList.add('shorts-modal-active');
+                    window.dispatchEvent(new CustomEvent('shorts-modal-state', { detail: { open: true } }));
                     this.$nextTick(() => {
                         this.loadCurrentVideo();
                     });
@@ -865,8 +846,6 @@
                 },
 
                 nextVideo() {
-                    this.slideDirection = 'up';
-                    this.isSliding = true;
                     if (this.currentIndex < this.filteredShorts.length - 1) {
                         this.currentIndex++;
                     } else {
@@ -874,15 +853,10 @@
                     }
                     this.drawerOpen = false;
                     this.isLiked = false;
-                    this.$nextTick(() => {
-                        this.loadCurrentVideo();
-                        setTimeout(() => { this.isSliding = false; }, 340);
-                    });
+                    this.$nextTick(() => this.loadCurrentVideo());
                 },
 
                 prevVideo() {
-                    this.slideDirection = 'down';
-                    this.isSliding = true;
                     if (this.currentIndex > 0) {
                         this.currentIndex--;
                     } else {
@@ -890,10 +864,7 @@
                     }
                     this.drawerOpen = false;
                     this.isLiked = false;
-                    this.$nextTick(() => {
-                        this.loadCurrentVideo();
-                        setTimeout(() => { this.isSliding = false; }, 340);
-                    });
+                    this.$nextTick(() => this.loadCurrentVideo());
                 },
 
                 closePlayer() {
@@ -901,6 +872,8 @@
                     if (video) video.pause();
                     this.playerOpen = false;
                     this.drawerOpen = false;
+                    document.body.classList.remove('shorts-modal-active');
+                    window.dispatchEvent(new CustomEvent('shorts-modal-state', { detail: { open: false } }));
                 },
 
                 touchStart(e) {

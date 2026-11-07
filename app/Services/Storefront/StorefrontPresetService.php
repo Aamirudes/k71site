@@ -1097,6 +1097,27 @@ class StorefrontPresetService
             'text_color' => $safeHex($rawFooter['text_color'] ?? null, '#fafaf9'),
         ];
 
+        // 6. Happy Customers Slider Sanitization
+        $rawHc = $input['happy_customers'] ?? [];
+        $happyCustomers = [
+            'enabled' => isset($rawHc['enabled']) ? (bool) $rawHc['enabled'] : true,
+            'title' => $safeText($rawHc['title'] ?? 'Happy Customers & Real Stories', 150),
+            'subtitle' => $safeText($rawHc['subtitle'] ?? 'Real customer unboxings, doorstep deliveries, and verified reviews', 250),
+            'items' => is_array($rawHc['items'] ?? null) ? array_map(function($item) use ($safeText, $safeUrl) {
+                return [
+                    'type' => in_array($item['type'] ?? '', ['image', 'video']) ? $item['type'] : 'image',
+                    'media_url' => $safeUrl($item['media_url'] ?? ''),
+                    'thumb_url' => $safeUrl($item['thumb_url'] ?? ''),
+                    'customer_name' => $safeText($item['customer_name'] ?? 'Verified Customer', 80),
+                    'location' => $safeText($item['location'] ?? 'India', 60),
+                    'rating' => max(1, min(5, (int)($item['rating'] ?? 5))),
+                    'comment' => $safeText($item['comment'] ?? '', 500),
+                    'product_name' => $safeText($item['product_name'] ?? 'Boutique Item', 100),
+                    'verified' => true,
+                ];
+            }, array_slice($rawHc['items'], 0, 15)) : [],
+        ];
+
         return [
             'preset' => $presetKey,
             'schema_version' => 2,
@@ -1106,6 +1127,7 @@ class StorefrontPresetService
             'hero' => $hero,
             'sections' => $sections,
             'footer' => $footer,
+            'happy_customers' => $happyCustomers,
         ];
     }
 }

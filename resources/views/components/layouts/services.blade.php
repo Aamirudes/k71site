@@ -24,6 +24,8 @@
         [x-cloak] { display: none !important; }
         .font-services { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
     </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Professional Services Schema -->
     <script type="application/ld+json">

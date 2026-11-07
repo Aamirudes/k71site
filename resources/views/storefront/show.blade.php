@@ -147,6 +147,9 @@
     {{-- Interactive Glassmorphic Cart Popup Drawer --}}
     @include('storefront.sections.cart_popup')
 
+    {{-- Dynamic Social Media Float Dock (WhatsApp & Instagram) --}}
+    @include('storefront.sections.social_floating_bar')
+
     <!-- K71 Unified Cart Integration & Quick Add Bridge -->
     <div id="quick-cart-toast" 
          class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold">

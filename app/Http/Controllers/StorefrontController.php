@@ -245,14 +245,14 @@ class StorefrontController extends Controller
             ->take(8)
             ->get();
 
-        // Vendor's genuine customer reviews (only approved authentic reviews)
+        // Vendor's genuine customer reviews (all approved authentic product reviews)
         $vendorReviews = \App\Models\Review::whereIn('product_id', function($q) use ($vendor) {
                 $q->select('id')->from('products')->where('vendor_id', $vendor->id);
             })
             ->where('is_approved', true)
             ->with(['user', 'product.images'])
             ->latest()
-            ->take(6)
+            ->take(24)
             ->get();
 
         // Check if viewing draft preview (permitted if owner is logged in)

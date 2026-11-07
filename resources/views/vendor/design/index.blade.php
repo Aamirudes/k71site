@@ -287,6 +287,33 @@
                         </div>
                     </div>
 
+                    <!-- WhatsApp & Instagram Dynamic Connect Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                                <span class="text-emerald-500">💬</span> WhatsApp Number (Floating Button)
+                            </label>
+                            <input type="text" 
+                                   id="ctrl-whatsapp" 
+                                   name="whatsapp"
+                                   value="{{ $currentConfig['brand']['whatsapp'] ?? $vendor->contact_phone }}"
+                                   placeholder="e.g. 9876543210"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-900 font-mono">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
+                                <span class="text-pink-500">📸</span> Instagram Handle / URL
+                            </label>
+                            <input type="text" 
+                                   id="ctrl-instagram" 
+                                   name="instagram"
+                                   value="{{ $currentConfig['brand']['instagram'] ?? ($vendor->settings?->instagram ?? '') }}"
+                                   placeholder="e.g. @yourbrand or full URL"
+                                   class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-900 font-mono">
+                        </div>
+                    </div>
+
                     <!-- Hold & Drag Customizable Header Controls -->
                     <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-850 border border-slate-200 dark:border-zinc-700/80 space-y-3">
                         <div class="flex items-center justify-between">
@@ -549,6 +576,51 @@
                         </div>
                     </div>
 
+                    <!-- Happy Customers Slider Controls (Customizable Below Shorts) -->
+                    <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+                                    Happy Customers Slider
+                                </label>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 font-mono font-bold">Slider Below Shorts</span>
+                            </div>
+                            @php
+                                $isHcOn = isset($currentConfig['happy_customers']['enabled']) ? (bool)$currentConfig['happy_customers']['enabled'] : true;
+                            @endphp
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                       id="ctrl-happy-customers-toggle" 
+                                       name="happy_customers_enabled"
+                                       class="sr-only peer" 
+                                       {{ $isHcOn ? 'checked' : '' }}>
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Section Title</label>
+                                <input type="text" 
+                                       id="ctrl-happy-customers-title" 
+                                       name="happy_customers_title"
+                                       value="{{ $currentConfig['happy_customers']['title'] ?? 'Happy Customers & Real Stories' }}"
+                                       placeholder="Happy Customers Title"
+                                       class="w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Section Subtitle</label>
+                                <input type="text" 
+                                       id="ctrl-happy-customers-subtitle" 
+                                       name="happy_customers_subtitle"
+                                       value="{{ $currentConfig['happy_customers']['subtitle'] ?? 'Real customer unboxings, doorstep deliveries, and verified reviews' }}"
+                                       placeholder="Subtitle"
+                                       class="w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </form>
@@ -745,6 +817,10 @@
             const chromaToggle = document.getElementById('ctrl-chroma-strip-toggle');
             if (chromaToggle) {
                 formData.append('chroma_strip_enabled', chromaToggle.checked ? '1' : '0');
+            }
+            const hcToggle = document.getElementById('ctrl-happy-customers-toggle');
+            if (hcToggle) {
+                formData.append('happy_customers_enabled', hcToggle.checked ? '1' : '0');
             }
             formData.append('transparent_on_hero', document.getElementById('ctrl-transparent-hero-toggle')?.checked ? '1' : '0');
             formData.append('header_elements_order', JSON.stringify(headerElementsOrder));

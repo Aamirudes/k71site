@@ -495,6 +495,32 @@ class StorefrontDesignController extends Controller
             $currentConfig['theme']['accent_color'] = $accent;
         }
 
+        // WhatsApp & Instagram Social Connect
+        if ($request->has('whatsapp')) {
+            $wa = trim($request->input('whatsapp'));
+            $currentConfig['brand']['whatsapp'] = $wa;
+        }
+        if ($request->has('instagram')) {
+            $ig = trim($request->input('instagram'));
+            $currentConfig['brand']['instagram'] = $ig;
+            $vSettings = $vendor->settings;
+            if ($vSettings) {
+                $vSettings->instagram = $ig;
+                $vSettings->save();
+            }
+        }
+
+        // Happy Customers Slider Settings
+        if ($request->has('happy_customers_enabled') || $request->has('happy_customers_title')) {
+            $currentConfig['happy_customers']['enabled'] = $request->boolean('happy_customers_enabled');
+            if ($request->filled('happy_customers_title')) {
+                $currentConfig['happy_customers']['title'] = trim($request->input('happy_customers_title'));
+            }
+            if ($request->filled('happy_customers_subtitle')) {
+                $currentConfig['happy_customers']['subtitle'] = trim($request->input('happy_customers_subtitle'));
+            }
+        }
+
         $sanitizedConfig = $this->presetService->sanitizeConfig($currentConfig, $vendor);
 
         $configRecord = $vendor->storefrontConfig()->firstOrCreate(
