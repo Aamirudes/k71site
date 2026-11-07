@@ -112,9 +112,9 @@
             </div>
         </div>
 
-        <!-- Horizontal Slider: 1.25 view peek on mobile, multi-card on desktop -->
+        <!-- Horizontal Slider: Exactly 2.5 Slides Per View on Mobile (w-[38vw]), Multi-Card on Desktop -->
         <div x-ref="hcTrack"
-             class="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
+             class="flex items-stretch gap-2.5 sm:gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             @foreach($items as $idx => $item)
                 @php
                     $isVid = ($item['type'] ?? 'image') === 'video';
@@ -122,10 +122,10 @@
                     $thumbUrl = $item['thumb_url'] ?? $mediaUrl;
                     $rating = (int)($item['rating'] ?? 5);
                 @endphp
-                <div class="snap-start shrink-0 w-[78vw] sm:w-[320px] md:w-[340px] rounded-3xl overflow-hidden border border-black/10 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-md flex flex-col justify-between group hover:shadow-xl transition-all duration-300">
+                <div class="snap-start shrink-0 w-[38vw] sm:w-[220px] md:w-[240px] rounded-2xl overflow-hidden border border-black/10 dark:border-white/15 bg-white dark:bg-zinc-900 shadow-xs flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
                     
                     <!-- Media Showcase (Photo or Video Reel) -->
-                    <div class="relative aspect-[4/3] bg-black overflow-hidden">
+                    <div class="relative aspect-square bg-black overflow-hidden">
                         @if($isVid)
                             <video src="{{ $mediaUrl }}" 
                                    poster="{{ $thumbUrl }}"
@@ -137,55 +137,55 @@
                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
                                    onclick="this.paused ? this.play() : this.pause()">
                             </video>
-                            <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[9px] font-mono font-bold flex items-center gap-1 border border-white/20 pointer-events-none">
-                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> VIDEO REEL
+                            <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20 pointer-events-none">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> REEL
                             </div>
                         @else
                             <img src="{{ $thumbUrl }}" 
                                  alt="{{ $item['customer_name'] ?? 'Happy Customer' }}" 
                                  loading="lazy"
                                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                            <div class="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[9px] font-mono font-bold flex items-center gap-1 border border-white/20">
-                                <span>📸 VERIFIED PHOTO</span>
+                            <div class="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20">
+                                <span>📸 VERIFIED</span>
                             </div>
                         @endif
 
                         <!-- Top-Left Verified Purchase Badge -->
-                        <div class="absolute top-2.5 left-2.5">
-                            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500 text-white font-mono font-black text-[9px] uppercase tracking-wider shadow-sm flex items-center gap-1">
-                                <span>✓</span> VERIFIED BUYER
+                        <div class="absolute top-1.5 left-1.5">
+                            <span class="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white font-mono font-black text-[8px] uppercase tracking-wider shadow-sm flex items-center gap-0.5">
+                                <span>✓</span> BUYER
                             </span>
                         </div>
                     </div>
 
-                    <!-- Customer Story Content -->
-                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
-                        <div class="space-y-2">
+                    <!-- Customer Story Content (Cute & Compact) -->
+                    <div class="p-2.5 sm:p-3 flex-1 flex flex-col justify-between space-y-2">
+                        <div class="space-y-1">
                             <!-- Star Rating -->
-                            <div class="flex items-center gap-1 text-amber-400 text-xs">
+                            <div class="flex items-center gap-0.5 text-amber-400 text-[10px]">
                                 @for($s = 1; $s <= 5; $s++)
                                     <span>{{ $s <= $rating ? '★' : '☆' }}</span>
                                 @endfor
-                                <span class="text-[11px] font-bold text-stone-500 dark:text-zinc-400 ml-1">5.0</span>
+                                <span class="text-[9px] font-bold text-stone-500 dark:text-zinc-400 ml-0.5">5.0</span>
                             </div>
 
                             <!-- Testimonial Quote -->
-                            <p class="text-xs sm:text-sm font-medium leading-relaxed line-clamp-3 text-stone-700 dark:text-zinc-200">
+                            <p class="text-[11px] sm:text-xs font-medium leading-snug line-clamp-2 text-stone-700 dark:text-zinc-200">
                                 "{{ $item['comment'] ?? 'Wonderful experience and genuine product!' }}"
                             </p>
                         </div>
 
                         <!-- Customer Info Footer -->
-                        <div class="pt-3 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-xs">
+                        <div class="pt-2 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-[10px]">
                             <div class="min-w-0">
-                                <h4 class="font-bold text-stone-900 dark:text-white truncate">
+                                <h4 class="font-bold text-stone-900 dark:text-white truncate text-[11px]">
                                     {{ $item['customer_name'] ?? 'Verified Customer' }}
                                 </h4>
-                                <span class="text-[10px] text-stone-500 dark:text-zinc-400 block truncate">
-                                    {{ $item['location'] ?? 'India' }} • {{ $item['product_name'] ?? 'Boutique Item' }}
+                                <span class="text-[9px] text-stone-400 dark:text-zinc-500 block truncate">
+                                    {{ $item['location'] ?? 'India' }}
                                 </span>
                             </div>
-                            <span class="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center shrink-0">
+                            <span class="w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[9px] flex items-center justify-center shrink-0">
                                 ✓
                             </span>
                         </div>
@@ -199,3 +199,4 @@
     </div>
 </section>
 @endif
+

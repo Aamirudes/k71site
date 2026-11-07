@@ -15,7 +15,10 @@
         {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
         @include('storefront.sections.video_showcase')
 
-        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        {{-- Genuine Customer Reviews (Immediately Above Happy Customers) --}}
+        @include('storefront.sections.reviews_section')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Reviews) --}}
         @include('storefront.sections.happy_customers')
 
         {{-- Verified Shopping Trust Guarantees (Only real capabilities) --}}
@@ -61,9 +64,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Genuine Customer Reviews (Only real reviews, omitted if empty) --}}
-        @include('storefront.sections.reviews_section')
 
         {{-- Client Services & WhatsApp Stylist Desk --}}
         @include('storefront.sections.contact_policies')

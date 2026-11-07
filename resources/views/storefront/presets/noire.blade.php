@@ -92,7 +92,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-12 border border-zinc-800 bg-[#121215] overflow-hidden shadow-2xl">
                 
                 <!-- Left Campaign Visual (7 Cols) -->
-                <div class="lg:col-span-7 relative min-h-[420px] sm:min-h-[540px] lg:min-h-[640px] overflow-hidden bg-black flex flex-col justify-between p-6 sm:p-10 group">
+                <div class="lg:col-span-7 relative min-h-[240px] sm:min-h-[380px] lg:min-h-[600px] overflow-hidden bg-black flex flex-col justify-between p-5 sm:p-8 lg:p-10 group">
                     <img src="{{ $flagshipImg }}" 
                          alt="{{ $flagship->title ?? $storeName }}" 
                          class="absolute inset-0 w-full h-full object-cover object-center filter grayscale contrast-[1.15] opacity-80 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-700">
@@ -123,7 +123,7 @@
                 </div>
 
                 <!-- Right Diagnostic Dispatch Terminal (5 Cols) -->
-                <div class="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-zinc-800 bg-[#0d0d10] space-y-8">
+                <div class="lg:col-span-5 p-5 sm:p-8 lg:p-10 flex flex-col justify-between border-t lg:border-t-0 lg:border-l border-zinc-800 bg-[#0d0d10] space-y-5 sm:space-y-6">
                     
                     <!-- Diagnostic Terminal Header -->
                     <div class="space-y-4">
@@ -158,10 +158,9 @@
 
                     <!-- Bottom Anchor Trigger -->
                     <div>
-                        <a href="#catalog" class="block text-center py-4 px-6 bg-white hover:bg-zinc-200 text-black font-mono font-black text-xs uppercase tracking-widest transition-all duration-200 shadow-lg cursor-pointer">
+                        <a href="#catalog" class="block text-center py-3.5 px-6 bg-white hover:bg-zinc-200 text-black font-mono font-black text-xs uppercase tracking-widest transition-all duration-200 shadow-lg cursor-pointer">
                             [ EXPLORE CATALOG ({{ $products->total() ?? $products->count() }} SKUS) ↓ ]
                         </a>
-                    </div>
                     </div>
 
                 </div>
@@ -311,7 +310,10 @@
         {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
         @include('storefront.sections.video_showcase')
 
-        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        {{-- Genuine Customer Reviews (Immediately Above Happy Customers) --}}
+        @include('storefront.sections.reviews_section')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Reviews) --}}
         @include('storefront.sections.happy_customers')
 
         {{-- MONOSPACE DIAGNOSTIC TRUST PROTOCOL --}}
@@ -348,9 +350,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Genuine Customer Reviews --}}
-        @include('storefront.sections.reviews_section')
 
         {{-- Client Services & WhatsApp Concierge Desk --}}
         @include('storefront.sections.contact_policies')

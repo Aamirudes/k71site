@@ -296,7 +296,10 @@
         {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
         @include('storefront.sections.video_showcase')
 
-        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        {{-- Genuine Reviews (Immediately Above Happy Customers) --}}
+        @include('storefront.sections.reviews_section')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Reviews) --}}
         @include('storefront.sections.happy_customers')
 
         {{-- SLOW CRAFT ATELIER STANDARDS --}}
@@ -327,9 +330,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Genuine Reviews --}}
-        @include('storefront.sections.reviews_section')
 
         {{-- Direct Concierge & Policies --}}
         @include('storefront.sections.contact_policies')

@@ -21,9 +21,7 @@
 
     @php
         $rawChromaEnabled = $config['header']['chroma_strip_enabled'] ?? null;
-        $chromaStripEnabled = ($rawChromaEnabled === false || $rawChromaEnabled === 0 || $rawChromaEnabled === '0' || $rawChromaEnabled === 'false') 
-            ? false 
-            : (!isset($config['header']['chroma_strip_enabled']) ? true : (bool)$config['header']['chroma_strip_enabled']);
+        $chromaStripEnabled = !empty($rawChromaEnabled) && $rawChromaEnabled !== '0' && $rawChromaEnabled !== 0 && $rawChromaEnabled !== false && $rawChromaEnabled !== 'false';
         $chromaStripText = $config['header']['chroma_strip_text'] ?? '⚡ LIMITED EDITION RUN LIVE • DISPATCH WITHIN 24 HOURS • 100% AUTHENTIC CREATIONS ⚡';
         $chromaStripBg = $config['header']['chroma_strip_bg'] ?? '#2563eb';
     @endphp
@@ -319,7 +317,10 @@
         {{-- Studio Shorts & Video Reels Showcase (Shown Just Below Product) --}}
         @include('storefront.sections.video_showcase')
 
-        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        {{-- Genuine Reviews (Immediately Above Happy Customers) --}}
+        @include('storefront.sections.reviews_section')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Reviews) --}}
         @include('storefront.sections.happy_customers')
 
         {{-- BOLD GRAPHIC TRUST BOXES --}}
@@ -354,9 +355,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Genuine Reviews --}}
-        @include('storefront.sections.reviews_section')
 
         {{-- Client Services & WhatsApp Concierge --}}
         @include('storefront.sections.contact_policies')

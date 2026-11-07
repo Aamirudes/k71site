@@ -184,8 +184,8 @@
         @endforeach
     </div>
 
-    <!-- Right-Aligned Dual Arrow Capsule (Docked Right Side, Not Centered) -->
-    <div class="absolute bottom-5 sm:bottom-7 right-4 sm:right-8 lg:right-10 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur-xl border border-white/20 p-1.5 rounded-full shadow-2xl">
+    <!-- Right-Aligned Dual Arrow Capsule (Docked Right Side, Just Below Floating Header) -->
+    <div class="absolute top-22 sm:top-26 right-3 sm:right-8 lg:right-10 z-30 flex items-center gap-1.5 bg-black/60 backdrop-blur-xl border border-white/25 p-1.5 rounded-full shadow-2xl">
         <button type="button" 
                 @click="prevSlide(); stopAutoplay(); startAutoplay();"
                 class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"

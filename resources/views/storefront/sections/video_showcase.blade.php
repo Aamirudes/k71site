@@ -112,14 +112,15 @@
     <template x-teleport="body">
         <div x-show="isOpen" 
              x-cloak
-             class="fixed inset-0 z-[99999] bg-black/95 backdrop-blur-md flex items-center justify-center overflow-hidden"
+             style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; z-index: 9999999 !important; background-color: rgba(0, 0, 0, 0.98) !important; margin: 0 !important; padding: 0 !important;"
+             class="flex items-center justify-center overflow-hidden"
              @keydown.window.escape="closeModal()"
              @keydown.window.arrow-down.prevent="nextVideo()"
              @keydown.window.arrow-up.prevent="prevVideo()"
              @keydown.window.space.prevent="togglePlay()">
 
             <!-- Centered 9:16 Phone Mockup Container (Exact Shorts Page Style) -->
-            <div class="relative w-full h-full sm:h-[94vh] sm:max-h-[880px] sm:max-w-[440px] sm:rounded-2xl bg-black overflow-hidden flex flex-col shadow-2xl border sm:border-zinc-800"
+            <div class="relative w-full h-full sm:h-[94vh] sm:max-h-[880px] sm:max-w-[440px] sm:rounded-2xl bg-black overflow-hidden flex flex-col shadow-2xl border sm:border-zinc-800 mx-auto"
                  @touchstart="touchStart($event)"
                  @touchend="touchEnd($event)">
 
@@ -329,6 +330,26 @@
         </div>
     </template>
 </section>
+
+<style>
+    @keyframes reelSlideUp {
+        0% { transform: translateY(40%); opacity: 0.3; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes reelSlideDown {
+        0% { transform: translateY(-40%); opacity: 0.3; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+    .animate-reel-slide-up {
+        animation: reelSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .animate-reel-slide-down {
+        animation: reelSlideDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    body.shorts-modal-active {
+        overflow: hidden !important;
+    }
+</style>
 
 <script>
     function storefrontReelsManager(reelsList) {

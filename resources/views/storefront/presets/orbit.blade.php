@@ -355,7 +355,10 @@
         {{-- Studio Shorts & Video Reels Showcase --}}
         @include('storefront.sections.video_showcase')
 
-        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Shorts) --}}
+        {{-- Genuine Reviews (Immediately Above Happy Customers) --}}
+        @include('storefront.sections.reviews_section')
+
+        {{-- Happy Customers Photos & Videos Slider (Shown Just Below Reviews) --}}
         @include('storefront.sections.happy_customers')
 
         {{-- THE ORBITAL ARCHITECTURE PROTOCOL (DIAGNOSTICS MATRIX) --}}
@@ -363,7 +366,7 @@
             <div class="p-6 sm:p-10 rounded-[2.5rem] bg-[#0b0f20]/90 backdrop-blur-xl border border-white/20 shadow-2xl">
                 <div class="pb-5 mb-6 border-b border-white/15 flex items-center justify-between font-mono">
                     <span class="text-xs font-bold uppercase tracking-widest text-cyan-300 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                        <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,1)]"></span>
                         ORBITAL PROTOCOL // BUYER GUARANTEES
                     </span>
                     <span class="text-[10px] text-emerald-400 font-bold">100% AUTHENTICATED</span>
@@ -389,9 +392,6 @@
                 </div>
             </div>
         </section>
-
-        {{-- Genuine Reviews --}}
-        @include('storefront.sections.reviews_section')
 
         {{-- Client Services & WhatsApp Concierge --}}
         @include('storefront.sections.contact_policies')
