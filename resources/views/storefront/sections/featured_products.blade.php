@@ -153,28 +153,13 @@
                                     <span class="text-amber-400">✦</span> Verified
                                 </span>
                             </div>
-
-                            <!-- Floating Quick Add Button (Hover on Desktop) -->
-                            @if(!$isOutOfStock)
-                                <div class="absolute bottom-3 inset-x-3 z-10 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 hidden sm:block">
-                                    <button type="button" 
-                                            onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}, this)"
-                                            class="w-full py-3 px-4 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-xl transition flex items-center justify-center gap-2 cursor-pointer hover:scale-102 active:scale-95"
-                                            style="background: linear-gradient(135deg, var(--sf-primary, #18181b), #27272a); border: 1px solid rgba(255,255,255,0.25);">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                        </svg>
-                                        <span>+ Quick Add to Bag</span>
-                                    </button>
-                                </div>
-                            @endif
                         </div>
 
                         <!-- Product Information Canvas -->
                         <div class="p-4 flex flex-col flex-1 justify-between gap-3 bg-white/40">
                             <div class="space-y-1">
                                 @if($product->category)
-                                    <span class="text-[10px] uppercase font-bold tracking-wider text-stone-400 block">
+                                    <span class="text-[10px] uppercase font-bold tracking-wider text-stone-500 block">
                                         {{ $product->category->name }}
                                     </span>
                                 @endif
@@ -192,9 +177,9 @@
                                 </div>
                             </div>
 
-                            <!-- Price & Mobile Action -->
-                            <div class="pt-2 border-t border-stone-100/80 flex items-center justify-between gap-2">
-                                <div class="flex flex-col">
+                            <!-- Price & Always Visible Add to Bag on Single Line Down -->
+                            <div class="pt-2 border-t border-stone-100/80 space-y-2">
+                                <div class="flex items-baseline justify-between">
                                     <div class="flex items-baseline gap-1.5">
                                         <span class="text-sm sm:text-base font-black text-stone-950">
                                             ₹{{ $priceRupees }}
@@ -212,16 +197,22 @@
                                     @endif
                                 </div>
 
-                                <!-- Mobile Bag Action Button -->
+                                <!-- Add to Bag on Single Line Down -->
                                 @if(!$isOutOfStock)
                                     <button type="button" 
                                             onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}, this)"
-                                            class="sm:hidden px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition flex items-center gap-1 active:scale-95 cursor-pointer shrink-0"
-                                            style="background-color: var(--sf-primary, #18181b);"
+                                            class="w-full py-2.5 px-3 rounded-2xl text-xs font-black uppercase tracking-wider text-white shadow-sm transition flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer hover:brightness-110"
+                                            style="background: linear-gradient(135deg, var(--sf-primary, #18181b), #27272a); border: 1px solid rgba(255,255,255,0.2);"
                                             aria-label="Add {{ $product->title }} to bag">
-                                        <span>+</span>
-                                        <span>Add</span>
+                                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                                        </svg>
+                                        <span>+ Add to Bag</span>
                                     </button>
+                                @else
+                                    <div class="w-full py-2 text-center text-[10px] font-bold text-stone-400 uppercase tracking-wider bg-stone-100 rounded-xl">
+                                        Sold Out
+                                    </div>
                                 @endif
                             </div>
 

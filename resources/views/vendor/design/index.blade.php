@@ -514,12 +514,15 @@
                                 </label>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-700 dark:text-blue-300 font-mono font-bold">Chroma Theme</span>
                             </div>
+                            @php
+                                $isChromaStripOn = isset($currentConfig['header']['chroma_strip_enabled']) ? (bool)$currentConfig['header']['chroma_strip_enabled'] : true;
+                            @endphp
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" 
                                        id="ctrl-chroma-strip-toggle" 
                                        name="chroma_strip_enabled"
                                        class="sr-only peer" 
-                                       {{ !isset($currentConfig['header']['chroma_strip_enabled']) || !empty($currentConfig['header']['chroma_strip_enabled']) ? 'checked' : '' }}>
+                                       {{ $isChromaStripOn ? 'checked' : '' }}>
                                 <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>

@@ -484,7 +484,7 @@ class StorefrontDesignController extends Controller
         if ($request->has('chroma_strip_text')) {
             $currentConfig['header']['chroma_strip_text'] = trim($request->input('chroma_strip_text', ''));
         }
-        if ($request->has('chroma_strip_enabled')) {
+        if ($request->has('chroma_strip_enabled') || $request->has('chroma_strip_text')) {
             $currentConfig['header']['chroma_strip_enabled'] = $request->boolean('chroma_strip_enabled');
         }
         if ($request->filled('chroma_strip_bg')) {

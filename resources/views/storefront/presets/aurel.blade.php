@@ -250,25 +250,31 @@
                                     </div>
                                 </div>
 
-                                <!-- Pricing & Discreet Action -->
-                                <div class="pt-2.5 border-t border-stone-100 flex items-center justify-between gap-2">
-                                    <div class="flex items-baseline gap-1.5">
-                                        <span class="text-sm sm:text-base font-bold text-stone-900 font-serif">
-                                            ₹{{ $priceRupees }}
-                                        </span>
-                                        @if($hasComparePrice)
-                                            <span class="text-xs text-stone-400 line-through">
-                                                ₹{{ $comparePriceRupees }}
+                                <!-- Pricing & Add to Bag on Single Line Down -->
+                                <div class="pt-2.5 border-t border-stone-100 space-y-2">
+                                    <div class="flex items-baseline justify-between">
+                                        <div class="flex items-baseline gap-1.5">
+                                            <span class="text-sm sm:text-base font-bold text-stone-900 font-serif">
+                                                ₹{{ $priceRupees }}
                                             </span>
-                                        @endif
+                                            @if($hasComparePrice)
+                                                <span class="text-xs text-stone-400 line-through">
+                                                    ₹{{ $comparePriceRupees }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
 
                                     @if(!$isOutOfStock)
                                         <button type="button" 
                                                 onclick="window.quickAddToCart({{ $product->id }}, {{ $defaultVariantId ?: 'null' }}, this)"
-                                                class="px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-100 hover:bg-stone-900 text-stone-800 hover:text-white transition duration-200 cursor-pointer">
-                                            + Add
+                                                class="w-full py-2 px-3 rounded-xl text-xs font-bold bg-stone-100 hover:bg-stone-900 text-stone-900 hover:text-white transition duration-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs">
+                                            <span>+ Add to Bag</span>
                                         </button>
+                                    @else
+                                        <div class="w-full py-1.5 text-center text-[10px] font-medium text-stone-400 bg-stone-50 rounded-lg">
+                                            Archived
+                                        </div>
                                     @endif
                                 </div>
 
@@ -315,6 +321,9 @@
                 </div>
             </div>
         </section>
+
+        {{-- Studio Shorts & Video Reels Showcase --}}
+        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Reviews --}}
         @include('storefront.sections.reviews_section')

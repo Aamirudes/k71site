@@ -257,7 +257,7 @@
                             <div class="p-3.5 sm:p-4 flex flex-col justify-between flex-1 gap-3">
                                 <div>
                                     @if($product->category)
-                                        <span class="text-[9px] font-mono uppercase tracking-widest text-zinc-500 block mb-1">
+                                        <span class="text-[9px] font-mono uppercase tracking-widest text-zinc-400 block mb-1 font-bold">
                                             // {{ $product->category->name }}
                                         </span>
                                     @endif
@@ -266,7 +266,7 @@
                                             {{ $product->title }}
                                         </a>
                                     </h3>
-                                    <div class="text-[10px] font-mono text-zinc-500 pt-1">
+                                    <div class="text-[10px] font-mono text-zinc-300 pt-1 font-semibold">
                                         DISPATCH: {{ strtoupper($vendor->city ?: 'STUDIO') }}
                                     </div>
                                 </div>
@@ -342,6 +342,9 @@
                 </div>
             </div>
         </section>
+
+        {{-- Studio Shorts & Video Reels Showcase --}}
+        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Customer Reviews --}}
         @include('storefront.sections.reviews_section')

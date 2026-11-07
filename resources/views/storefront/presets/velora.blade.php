@@ -56,6 +56,9 @@
             </div>
         </section>
 
+        {{-- Studio Shorts & Video Reels Showcase --}}
+        @include('storefront.sections.video_showcase')
+
         {{-- Genuine Customer Reviews (Only real reviews, omitted if empty) --}}
         @include('storefront.sections.reviews_section')
 

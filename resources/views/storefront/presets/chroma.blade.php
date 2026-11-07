@@ -20,7 +20,10 @@
     @endif
 
     @php
-        $chromaStripEnabled = !isset($config['header']['chroma_strip_enabled']) ? true : (bool)$config['header']['chroma_strip_enabled'];
+        $rawChromaEnabled = $config['header']['chroma_strip_enabled'] ?? null;
+        $chromaStripEnabled = ($rawChromaEnabled === false || $rawChromaEnabled === 0 || $rawChromaEnabled === '0' || $rawChromaEnabled === 'false') 
+            ? false 
+            : (!isset($config['header']['chroma_strip_enabled']) ? true : (bool)$config['header']['chroma_strip_enabled']);
         $chromaStripText = $config['header']['chroma_strip_text'] ?? '⚡ LIMITED EDITION RUN LIVE • DISPATCH WITHIN 24 HOURS • 100% AUTHENTIC CREATIONS ⚡';
         $chromaStripBg = $config['header']['chroma_strip_bg'] ?? '#2563eb';
     @endphp
@@ -271,7 +274,7 @@
                                             {{ $product->title }}
                                         </a>
                                     </h3>
-                                    <div class="text-[10px] font-mono text-slate-500 pt-0.5">
+                                    <div class="text-[10px] font-mono text-slate-800 pt-0.5 font-bold">
                                         STUDIO DISPATCH: {{ strtoupper($vendor->city ?: 'IN') }}
                                     </div>
                                 </div>
@@ -345,6 +348,9 @@
                 </div>
             </div>
         </section>
+
+        {{-- Studio Shorts & Video Reels Showcase --}}
+        @include('storefront.sections.video_showcase')
 
         {{-- Genuine Reviews --}}
         @include('storefront.sections.reviews_section')

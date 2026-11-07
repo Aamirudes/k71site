@@ -376,14 +376,14 @@
         </div>
     </div>
 
-    <!-- Sleek Navigation Arrow Pull-Handle Positioned Fully Left on the Bottom Header Line -->
-    <div class="absolute -bottom-3 left-4 sm:left-8 flex justify-start pointer-events-none z-30">
+    <!-- Navigation Arrow Pull-Handle Positioned Fully Left Side (0 Margin, 0 Padding, 0 Border-Radius) -->
+    <div class="absolute -bottom-3.5 left-0 m-0 p-0 z-30 pointer-events-none">
         <button type="button" 
                 @click="expandedForms = !expandedForms"
-                class="pointer-events-auto h-6 px-3.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700 shadow-xs hover:shadow-md hover:bg-slate-50 transition-all duration-200 flex items-center justify-center cursor-pointer group"
+                class="pointer-events-auto h-7 w-7 m-0 p-0 rounded-none bg-white dark:bg-zinc-900 border-r border-b border-t border-slate-300 dark:border-zinc-700 shadow-xs hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200 flex items-center justify-center cursor-pointer group"
                 aria-label="Toggle Navigation & Search Drawer"
                 :title="expandedForms ? 'Close Search & Categories' : 'Explore Search & Categories'">
-            <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-black dark:text-zinc-400 dark:group-hover:text-white transition-transform duration-300 transform"
+            <svg class="w-3.5 h-3.5 text-slate-700 group-hover:text-black dark:text-zinc-300 dark:group-hover:text-white transition-transform duration-300 transform"
                  :class="{ 'rotate-180 text-black dark:text-white': expandedForms }"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>

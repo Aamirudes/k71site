@@ -965,6 +965,9 @@ class StorefrontPresetService
             'announcement_link' => $safeUrl($rawHeader['announcement_link'] ?? ''),
             'announcement_bg' => $safeHex($rawHeader['announcement_bg'] ?? null, '#18181b'),
             'announcement_text_color' => $safeHex($rawHeader['announcement_text_color'] ?? null, '#ffffff'),
+            'chroma_strip_enabled' => isset($rawHeader['chroma_strip_enabled']) ? (bool) $rawHeader['chroma_strip_enabled'] : true,
+            'chroma_strip_text' => $safeText($rawHeader['chroma_strip_text'] ?? '⚡ LIMITED EDITION RUN LIVE • DISPATCH WITHIN 24 HOURS • 100% AUTHENTIC CREATIONS ⚡', 200),
+            'chroma_strip_bg' => $safeHex($rawHeader['chroma_strip_bg'] ?? null, '#2563eb'),
         ];
 
         // 3b. Hero Carousel Sanitization
