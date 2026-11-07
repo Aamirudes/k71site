@@ -173,7 +173,7 @@
     @endforeach
 
     <!-- Bottom Carousel Indicators (Sleek Minimalist Navigation Pills) -->
-    <div class="absolute bottom-6 sm:bottom-8 inset-x-0 z-30 flex items-center justify-center gap-2 sm:gap-2.5">
+    <div class="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 z-30 flex items-center gap-2 sm:gap-2.5">
         @foreach($slides as $idx => $s)
             <button type="button" 
                     @click="activeSlide = {{ $idx }}; stopAutoplay(); startAutoplay();" 
@@ -184,22 +184,28 @@
         @endforeach
     </div>
 
-    <!-- Previous / Next Sleek Arrow Buttons -->
-    <button type="button" 
-            @click="prevSlide(); stopAutoplay(); startAutoplay();"
-            class="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-xl border border-white/20 items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-xl"
-            aria-label="Previous slide">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/>
-        </svg>
-    </button>
-    <button type="button" 
-            @click="nextSlide(); stopAutoplay(); startAutoplay();"
-            class="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-xl border border-white/20 items-center justify-center transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-xl"
-            aria-label="Next slide">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/>
-        </svg>
-    </button>
+    <!-- Right-Aligned Dual Arrow Capsule (Docked Right Side, Not Centered) -->
+    <div class="absolute bottom-5 sm:bottom-7 right-4 sm:right-8 lg:right-10 z-30 flex items-center gap-1.5 bg-black/50 backdrop-blur-xl border border-white/20 p-1.5 rounded-full shadow-2xl">
+        <button type="button" 
+                @click="prevSlide(); stopAutoplay(); startAutoplay();"
+                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
+                aria-label="Previous slide">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </button>
+
+        <span class="text-[10px] sm:text-xs font-mono font-bold text-white/90 px-1.5 select-none" 
+              x-text="'0' + (activeSlide + 1) + ' / 0' + totalSlides"></span>
+
+        <button type="button" 
+                @click="nextSlide(); stopAutoplay(); startAutoplay();"
+                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95"
+                aria-label="Next slide">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+            </svg>
+        </button>
+    </div>
 
 </section>

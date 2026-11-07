@@ -63,40 +63,44 @@
             <div x-data="{
                     scrollNext() {
                         const track = document.getElementById('presets-slider-track');
-                        if (track) { track.scrollBy({ left: 320, behavior: 'smooth' }); }
+                        if (track) { track.scrollBy({ left: track.offsetWidth * 0.78, behavior: 'smooth' }); }
                     },
                     scrollPrev() {
                         const track = document.getElementById('presets-slider-track');
-                        if (track) { track.scrollBy({ left: -320, behavior: 'smooth' }); }
+                        if (track) { track.scrollBy({ left: -track.offsetWidth * 0.78, behavior: 'smooth' }); }
                     }
                  }" 
                  class="space-y-4">
                 
-                <!-- Compact Slider Controls Bar -->
+                <!-- Compact Slider Controls Bar (Right-Aligned Nav Arrows) -->
                 <div class="flex items-center justify-between pb-1">
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                            5 Signature Themes (Swipe / Slide Gallery)
+                            5 Distinct Storefront Layouts
+                        </span>
+                        <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                            Swipeable · 1.25 Peek on Mobile
                         </span>
                     </div>
 
+                    <!-- Right-Aligned Navigation Controls -->
                     <div class="flex items-center gap-2">
                         <button type="button" 
                                 @click="scrollPrev()" 
-                                class="w-8 h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs cursor-pointer"
+                                class="w-9 h-9 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-sm font-bold cursor-pointer hover:scale-105 active:scale-95"
                                 aria-label="Previous theme">
-                            ◀
+                            ←
                         </button>
                         <button type="button" 
                                 @click="scrollNext()" 
-                                class="w-8 h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs cursor-pointer"
+                                class="w-9 h-9 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-sm font-bold cursor-pointer hover:scale-105 active:scale-95"
                                 aria-label="Next theme">
-                            ▶
+                            →
                         </button>
                     </div>
                 </div>
 
-                <!-- Horizontal Slider Track -->
+                <!-- Horizontal Slider Track: 1.25 View on Mobile, Multi-Column on Desktop -->
                 <div id="presets-slider-track" 
                      class="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin -mx-2 px-2">
                     @foreach($presets as $key => $preset)
@@ -104,7 +108,7 @@
                             $isActive = ($activeNorm === $key || $activePresetKey === $key);
                         @endphp
                         <div id="preset-card-{{ $key }}" 
-                             class="snap-start shrink-0 w-[270px] sm:w-[310px] rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg hover:border-slate-300' }}">
+                             class="snap-start shrink-0 w-[78vw] sm:w-[310px] md:w-[330px] lg:w-[350px] rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg hover:border-slate-300' }}">
                         
                         <!-- Top Preset Header & Canvas Preview -->
                         <div class="p-5 relative overflow-hidden" 
@@ -129,21 +133,93 @@
                                 {{ $preset['tagline'] }}
                             </p>
 
-                            <!-- Micro Visual Wireframe Layout -->
-                            <div class="p-2.5 rounded-xl border bg-white/75 dark:bg-black/40 backdrop-blur-md space-y-2 text-[9px]" style="border-color: rgba(0,0,0,0.08);">
-                                <div class="flex items-center justify-between pb-1 border-b border-black/5 dark:border-white/5">
-                                    <span class="font-bold truncate max-w-[100px]">{{ $vendor->shop_name }}</span>
-                                    <span class="opacity-75 font-mono">Bag (1)</span>
-                                </div>
-                                <div class="h-9 rounded-lg flex items-center justify-center font-bold text-[10px] uppercase tracking-wider shadow-inner"
-                                     style="background-color: {{ $preset['preview_accent'] }}22; color: {{ $preset['preview_accent'] }};">
-                                    HERO BANNER
-                                </div>
-                                <div class="grid grid-cols-3 gap-1 pt-0.5">
-                                    <div class="aspect-square rounded bg-black/5 dark:bg-white/5"></div>
-                                    <div class="aspect-square rounded bg-black/5 dark:bg-white/5"></div>
-                                    <div class="aspect-square rounded bg-black/5 dark:bg-white/5"></div>
-                                </div>
+                            <!-- Micro Visual Layout Representation -->
+                            <div class="p-2.5 rounded-2xl border bg-white/80 dark:bg-black/50 backdrop-blur-md space-y-2 text-[9px] shadow-xs" style="border-color: rgba(0,0,0,0.08);">
+                                @if($key === 'velora')
+                                    {{-- Velora: 100vh Fullscreen Hero Carousel --}}
+                                    <div class="flex items-center justify-between pb-1 border-b border-black/5 dark:border-white/5">
+                                        <span class="font-bold truncate max-w-[100px]">{{ $vendor->shop_name }}</span>
+                                        <span class="opacity-75 font-mono">Bag (1)</span>
+                                    </div>
+                                    <div class="h-14 rounded-xl flex flex-col justify-end p-2 bg-gradient-to-t from-black/80 to-stone-800 text-white shadow-inner relative overflow-hidden">
+                                        <span class="text-[8px] font-mono tracking-widest uppercase opacity-75">100vh Fullscreen</span>
+                                        <span class="text-[10px] font-black font-heading leading-tight truncate">Aesthetic Carousel</span>
+                                        <div class="absolute bottom-1.5 right-1.5 flex gap-1">
+                                            <span class="w-3 h-3 rounded-full bg-white/20 text-[7px] flex items-center justify-center">←</span>
+                                            <span class="w-3 h-3 rounded-full bg-white/20 text-[7px] flex items-center justify-center">→</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-1 pt-0.5">
+                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
+                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
+                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
+                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
+                                    </div>
+                                @elseif($key === 'noire')
+                                    {{-- Noiré: Asymmetric Brutalist Split-Screen --}}
+                                    <div class="text-[7px] font-mono tracking-wider opacity-60 pb-1 border-b border-white/10 uppercase">// LIVE DISPATCH TERMINAL //</div>
+                                    <div class="grid grid-cols-5 gap-1.5 h-14">
+                                        <div class="col-span-3 rounded-lg bg-zinc-900 border border-zinc-700 p-1.5 flex flex-col justify-between text-white">
+                                            <span class="text-[7px] font-mono text-zinc-400">DROP // 2026</span>
+                                            <span class="text-[9px] font-black font-mono uppercase tracking-tight">CAMPAIGN POSTER</span>
+                                        </div>
+                                        <div class="col-span-2 rounded-lg bg-zinc-950 border border-zinc-800 p-1 flex flex-col justify-between text-[7px] font-mono text-zinc-400">
+                                            <span>LOC: {{ strtoupper($vendor->city ?: 'IN') }}</span>
+                                            <span class="bg-white text-black font-bold text-center rounded py-0.5">[ COP ]</span>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
+                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
+                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
+                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
+                                    </div>
+                                @elseif($key === 'aurel')
+                                    {{-- Aurel: Scandinavian Framed Linen Atelier --}}
+                                    <div class="flex items-center justify-between pb-1 border-b border-stone-200/60 text-stone-800">
+                                        <span class="font-serif italic font-bold">Atelier</span>
+                                        <span class="text-[8px] font-mono text-stone-500">Bag · 1</span>
+                                    </div>
+                                    <div class="p-2 rounded-xl bg-amber-500/5 border border-amber-500/15 space-y-1 text-center">
+                                        <span class="text-[8px] uppercase tracking-widest text-stone-500 block">Curated Edition</span>
+                                        <span class="text-[10px] font-serif italic text-stone-900 font-bold block">The Art of Slow Craft</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1.5 pt-0.5">
+                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
+                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
+                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
+                                    </div>
+                                @elseif($key === 'chroma')
+                                    {{-- Chroma: Bold Avant-Garde Magazine Poster --}}
+                                    <div class="bg-blue-600 text-white text-[7px] font-mono font-bold px-1.5 py-0.5 rounded text-center tracking-wider">
+                                        ⚡ DROP LIVE // PAN-INDIA ⚡
+                                    </div>
+                                    <div class="p-2 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between">
+                                        <div>
+                                            <span class="text-[8px] font-black text-blue-600 block">VOL. 02</span>
+                                            <span class="text-[10px] font-black tracking-tight text-black">DROP MATRIX</span>
+                                        </div>
+                                        <span class="px-1.5 py-0.5 bg-blue-600 text-white font-bold text-[8px] rounded">COP</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
+                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
+                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
+                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
+                                    </div>
+                                @else
+                                    {{-- Orbit: Cyber-Spatial Tactile Pod --}}
+                                    <div class="p-1 rounded-full bg-slate-900 border border-cyan-500/40 text-cyan-400 text-center text-[7px] font-mono">
+                                        • SYSTEM ACTIVE // SPATIAL DOCK
+                                    </div>
+                                    <div class="p-2 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-cyan-300 space-y-1 shadow-[0_0_10px_rgba(6,182,212,0.15)]">
+                                        <span class="text-[7px] font-mono text-cyan-400/80 block">TELEMETRY STAGE</span>
+                                        <span class="text-[9px] font-bold text-white block">Interactive Spec Pod</span>
+                                    </div>
+                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
+                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
+                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
+                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Typography & Palette Badges -->
