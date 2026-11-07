@@ -270,7 +270,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
@@ -313,7 +313,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);

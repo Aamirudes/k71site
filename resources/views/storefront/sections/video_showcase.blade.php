@@ -4,7 +4,7 @@
     $subtitle = $section['subtitle'] ?? 'Watch real product unboxings, live craftsmanship, and styling sessions';
     $shortsToDisplay = (isset($vendorShorts) && $vendorShorts->isNotEmpty()) 
         ? $vendorShorts 
-        : \App\Models\Short::where('status', 'published')->latest()->take(10)->get();
+        : collect();
 @endphp
 
 @if(isset($shortsToDisplay) && $shortsToDisplay->isNotEmpty())

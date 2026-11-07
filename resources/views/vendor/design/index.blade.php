@@ -6,13 +6,13 @@
             <div class="relative z-10 max-w-2xl space-y-3">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/10 text-amber-300 border border-white/10">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Product-First Store Engine · Five Signature Presets</span>
+                    <span>Product-First Store Engine · Ten Signature Presets</span>
                 </div>
                 <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-heading">
                     Store Design &amp; Presets
                 </h1>
                 <p class="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                    Choose from five signature website designs crafted exclusively for selling products. No blogs or about essays — just a dominant product catalog, verified shopping trust, real customer reviews, and an interactive popup cart.
+                    Choose from ten signature website designs crafted exclusively for selling products. No blogs or about essays — just a dominant product catalog, verified shopping trust, real customer reviews, and an interactive popup cart.
                 </p>
                 <div class="flex flex-wrap items-center gap-4 text-xs text-stone-300 pt-1">
                     <span class="flex items-center gap-2">
@@ -43,12 +43,12 @@
             </div>
         </div>
 
-        <!-- 5 Signature Storefront Presets Gallery (Compact 30vh Slider Box, 1.25 View) -->
+        <!-- 10 Signature Storefront Presets Gallery (Compact 30vh Slider Box, 1.25 View) -->
         <div class="space-y-3">
             <div class="flex items-center justify-between gap-2">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
-                        Five Signature Storefront Presets
+                        Ten Signature Storefront Presets
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-zinc-400">
                         Choose your store layout. Instant live switch with 1-tap.
@@ -170,7 +170,7 @@
                                             <span class="bg-black text-white text-[7px] font-bold px-1.5 py-0.5 rounded">DROP</span>
                                         </div>
                                     </div>
-                                @else
+                                @elseif($key === 'orbit')
                                     {{-- Orbit: Celestial Kinetic Spatial Pods --}}
                                     <div class="h-16 rounded-xl bg-[#07080d] text-cyan-300 p-1.5 border border-indigo-500/40 flex flex-col justify-between shadow-xs relative overflow-hidden">
                                         <div class="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-cyan-500/20 blur-sm pointer-events-none"></div>
@@ -184,6 +184,72 @@
                                             <span class="text-[8px] font-bold text-white tracking-wider">KINETIC POD</span>
                                             <span class="px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[6px] font-mono border border-cyan-500/40">DOCK</span>
                                         </div>
+                                    </div>
+                                @elseif($key === 'zenith')
+                                    {{-- Zenith: Architectural Swiss Gallery --}}
+                                    <div class="h-16 rounded-none bg-[#f5f5f0] text-[#111813] p-1.5 border border-stone-300 flex flex-col justify-between shadow-xs">
+                                        <div class="flex items-center justify-between text-[7px] font-mono text-stone-500">
+                                            <span>ISSUE // 2026</span>
+                                            <span class="text-[#1b3b2b] font-bold">EXHIBIT</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-serif italic font-black text-black">Fraunces Slab</span>
+                                            <span class="px-1 py-0.2 bg-[#111813] text-white text-[6px] font-mono">[ ART ]</span>
+                                        </div>
+                                    </div>
+                                @elseif($key === 'solaris')
+                                    {{-- Solaris: Sun-Drenched Mediterranean Arches --}}
+                                    <div class="h-16 rounded-t-2xl rounded-b-lg bg-[#f8f2e9] text-[#291a13] p-1.5 border border-[#e8dccb] flex flex-col justify-between shadow-xs">
+                                        <div class="flex items-center justify-between text-[7px] font-mono text-[#785b4f]">
+                                            <span>◈ SUN-CURED</span>
+                                            <span class="text-[#c25e3e] font-bold">ATELIER</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-serif font-black text-[#291a13]">Cinzel Arches</span>
+                                            <span class="px-1.5 py-0.2 rounded-full bg-[#c25e3e] text-white text-[6px] font-mono font-bold">CLAY</span>
+                                        </div>
+                                    </div>
+                                @elseif($key === 'nexus')
+                                    {{-- Nexus: Neo-Tokyo Cyber Techwear HUD --}}
+                                    <div class="h-16 rounded-none bg-[#0a0b0e] text-[#a3e635] p-1.5 border border-zinc-800 flex flex-col justify-between shadow-xs">
+                                        <div class="flex items-center justify-between text-[7px] font-mono">
+                                            <span class="text-[#a3e635] font-bold">// SYS: 01</span>
+                                            <span class="text-zinc-500">LAT: 8ms</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-mono font-black text-white">CHAKRA HUD</span>
+                                            <span class="px-1 py-0.2 bg-[#a3e635] text-black text-[6px] font-mono font-black">[ + ]</span>
+                                        </div>
+                                    </div>
+                                @elseif($key === 'elysium')
+                                    {{-- Elysium: Royal Velvet & 24K Gold Gilt --}}
+                                    <div class="h-16 rounded-xl bg-[#060913] text-[#f5d77f] p-1.5 border border-[#d4af37]/50 flex flex-col justify-between shadow-xs">
+                                        <div class="flex items-center justify-between text-[7px] font-mono text-[#d4af37]">
+                                            <span>👑 ROYAL GUILD</span>
+                                            <span>24K</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-serif font-bold text-white">Prata Gilded</span>
+                                            <span class="px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#b38728] to-[#d4af37] text-black text-[6px] font-mono font-bold">VAULT</span>
+                                        </div>
+                                    </div>
+                                @elseif($key === 'vogue')
+                                    {{-- Vogue: Paris Runway Editorial Lookbook --}}
+                                    <div class="h-16 rounded-none bg-white text-black p-1.5 border-2 border-black flex flex-col justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        <div class="flex items-center justify-between text-[7px] font-mono">
+                                            <span class="bg-black text-white px-1">PARIS // 2026</span>
+                                            <span class="text-[#e11d48] font-black">VOL. 24</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-serif font-black uppercase text-black">Bodoni Moda</span>
+                                            <span class="bg-[#e11d48] text-white text-[6px] font-mono font-black px-1">HAUTE</span>
+                                        </div>
+                                    </div>
+                                @else
+                                    {{-- Generic Fallback Wireframe --}}
+                                    <div class="h-16 rounded-xl bg-slate-100 dark:bg-zinc-800 p-2 border border-slate-200 dark:border-zinc-700 flex flex-col justify-between text-xs">
+                                        <span class="font-bold text-[9px]">{{ $preset['name'] }}</span>
+                                        <span class="text-[8px] text-slate-500 font-mono">{{ $preset['badge'] }}</span>
                                     </div>
                                 @endif
                             </div>
@@ -767,7 +833,7 @@
                     showToast('✓ ' + name + ' preset activated and live!');
                     document.getElementById('hero-active-preset').textContent = key;
 
-                    const allPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit'];
+                    const allPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue'];
                     allPresets.forEach(k => {
                         const card = document.getElementById('preset-card-' + k);
                         const b = document.getElementById('btn-activate-' + k);

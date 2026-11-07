@@ -78,10 +78,10 @@
     <!-- Dynamic Google Fonts Preload for Signature Presets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;600;700&family=Cinzel:wght@600;700;800;900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,800;0,6..96,900;1,6..96,600&family=Chakra+Petch:wght@500;700;800&family=Prata&display=swap" rel="stylesheet">
 
     @php
-        $isDarkPreset = in_array($presetKey, ['orbit', 'noire']) || !empty($theme['dark_mode']);
+        $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium']) || !empty($theme['dark_mode']);
         $defaultSfBg = $isDarkPreset ? '#050711' : '#fafaf9';
         $defaultSfText = $isDarkPreset ? '#f8fafc' : '#18181b';
         $defaultSfSurface = $isDarkPreset ? '#0c1228' : '#ffffff';
