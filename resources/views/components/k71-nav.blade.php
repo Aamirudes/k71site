@@ -376,8 +376,8 @@
         </div>
     </div>
 
-    <!-- Sleek Navigation Arrow Pull-Handle Centered on the Bottom Header Line -->
-    <div class="absolute -bottom-3 inset-x-0 flex justify-center pointer-events-none z-30">
+    <!-- Sleek Navigation Arrow Pull-Handle Positioned Fully Left on the Bottom Header Line -->
+    <div class="absolute -bottom-3 left-4 sm:left-8 flex justify-start pointer-events-none z-30">
         <button type="button" 
                 @click="expandedForms = !expandedForms"
                 class="pointer-events-auto h-6 px-3.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-700 shadow-xs hover:shadow-md hover:bg-slate-50 transition-all duration-200 flex items-center justify-center cursor-pointer group"

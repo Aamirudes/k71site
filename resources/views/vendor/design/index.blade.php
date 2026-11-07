@@ -43,205 +43,157 @@
             </div>
         </div>
 
-        <!-- 5 Signature Storefront Presets Gallery (Compact & Swipeable) -->
-        <div class="space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <!-- 5 Signature Storefront Presets Gallery (Compact 30vh Slider Box, 1.25 View) -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between gap-2">
                 <div>
-                    <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
+                    <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
                         Five Signature Storefront Presets
                     </h2>
-                    <p class="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
-                        Each preset provides a distinct composition, header styling, banner treatment, and product cards. Select any preset to activate it immediately.
+                    <p class="text-xs text-slate-500 dark:text-zinc-400">
+                        Choose your store layout. Instant live switch with 1-tap.
                     </p>
+                </div>
+                
+                @php
+                    $activeNorm = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($activePresetKey);
+                @endphp
+
+                <!-- Right-Aligned Nav Arrows -->
+                <div x-data="{
+                        scrollNext() {
+                            const track = document.getElementById('presets-slider-track');
+                            if (track) { track.scrollBy({ left: track.offsetWidth * 0.78, behavior: 'smooth' }); }
+                        },
+                        scrollPrev() {
+                            const track = document.getElementById('presets-slider-track');
+                            if (track) { track.scrollBy({ left: -track.offsetWidth * 0.78, behavior: 'smooth' }); }
+                        }
+                     }"
+                     class="flex items-center gap-1.5 shrink-0">
+                    <button type="button" 
+                            @click="scrollPrev()" 
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
+                            aria-label="Previous theme">
+                        ←
+                    </button>
+                    <button type="button" 
+                            @click="scrollNext()" 
+                            class="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-xs font-bold cursor-pointer hover:scale-105 active:scale-95"
+                            aria-label="Next theme">
+                        →
+                    </button>
                 </div>
             </div>
 
-            @php
-                $activeNorm = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($activePresetKey);
-            @endphp
-
-            <div x-data="{
-                    scrollNext() {
-                        const track = document.getElementById('presets-slider-track');
-                        if (track) { track.scrollBy({ left: track.offsetWidth * 0.78, behavior: 'smooth' }); }
-                    },
-                    scrollPrev() {
-                        const track = document.getElementById('presets-slider-track');
-                        if (track) { track.scrollBy({ left: -track.offsetWidth * 0.78, behavior: 'smooth' }); }
-                    }
-                 }" 
-                 class="space-y-4">
-                
-                <!-- Compact Slider Controls Bar (Right-Aligned Nav Arrows) -->
-                <div class="flex items-center justify-between pb-1">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-black uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-                            5 Distinct Storefront Layouts
-                        </span>
-                        <span class="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300">
-                            Swipeable · 1.25 Peek on Mobile
-                        </span>
-                    </div>
-
-                    <!-- Right-Aligned Navigation Controls -->
-                    <div class="flex items-center gap-2">
-                        <button type="button" 
-                                @click="scrollPrev()" 
-                                class="w-9 h-9 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-sm font-bold cursor-pointer hover:scale-105 active:scale-95"
-                                aria-label="Previous theme">
-                            ←
-                        </button>
-                        <button type="button" 
-                                @click="scrollNext()" 
-                                class="w-9 h-9 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-700 transition shadow-xs text-sm font-bold cursor-pointer hover:scale-105 active:scale-95"
-                                aria-label="Next theme">
-                            →
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Horizontal Slider Track: 1.25 View on Mobile, Multi-Column on Desktop -->
+            <!-- Compact 30vh Slider Box: 1.25 View on Mobile, Multi-Card on Desktop -->
+            <div class="rounded-3xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/40 p-3 sm:p-4 max-h-[30vh] min-h-[220px] flex flex-col justify-center overflow-hidden">
                 <div id="presets-slider-track" 
-                     class="flex items-stretch gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-thin -mx-2 px-2">
+                     class="flex items-stretch gap-3 sm:gap-4 overflow-x-auto py-1 scroll-smooth snap-x snap-mandatory scrollbar-none">
                     @foreach($presets as $key => $preset)
                         @php
                             $isActive = ($activeNorm === $key || $activePresetKey === $key);
                         @endphp
                         <div id="preset-card-{{ $key }}" 
-                             class="snap-start shrink-0 w-[78vw] sm:w-[310px] md:w-[330px] lg:w-[350px] rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.03] shadow-xl ring-2 ring-amber-500/30' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-lg hover:border-slate-300' }}">
+                             class="snap-start shrink-0 w-[78vw] sm:w-[220px] md:w-[235px] lg:w-[245px] h-[190px] rounded-2xl border transition-all duration-300 overflow-hidden flex flex-col justify-between {{ $isActive ? 'border-amber-500 bg-amber-500/[0.04] shadow-md ring-2 ring-amber-500/25' : 'border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:shadow-md hover:border-slate-300' }}">
                         
-                        <!-- Top Preset Header & Canvas Preview -->
-                        <div class="p-5 relative overflow-hidden" 
-                             style="background-color: {{ $preset['preview_bg'] }}; color: {{ $preset['preview_text'] }}; border-bottom: 1px solid rgba(0,0,0,0.06);">
-                            
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                                      style="background-color: {{ $preset['preview_accent'] }}22; color: {{ $preset['preview_accent'] }};">
-                                    {{ $preset['badge'] }}
-                                </span>
-                                
-                                <span id="status-badge-{{ $key }}" 
-                                      class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider {{ $isActive ? 'bg-stone-900 text-white shadow-xs' : 'hidden' }}">
-                                    Active Live
-                                </span>
+                            <!-- Compact Preset Header -->
+                            <div class="px-3 py-2 flex items-center justify-between border-b border-black/5 dark:border-white/5"
+                                 style="background-color: {{ $preset['preview_bg'] }}; color: {{ $preset['preview_text'] }};">
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $preset['preview_accent'] }};"></span>
+                                    <h3 class="text-xs sm:text-sm font-black font-heading truncate leading-tight">
+                                        {{ $preset['name'] }}
+                                    </h3>
+                                </div>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <span class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
+                                          style="background-color: {{ $preset['preview_accent'] }}22; color: {{ $preset['preview_accent'] }};">
+                                        {{ $preset['badge'] }}
+                                    </span>
+                                    <span id="status-badge-{{ $key }}" 
+                                          class="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider {{ $isActive ? 'bg-stone-900 text-white' : 'hidden' }}">
+                                        Active
+                                    </span>
+                                </div>
                             </div>
 
-                            <h3 class="text-xl font-black font-heading mb-0.5" style="font-family: '{{ $preset['display_font'] }}', serif;">
-                                {{ $preset['name'] }}
-                            </h3>
-                            <p class="text-[11px] opacity-75 font-medium mb-3 line-clamp-1">
-                                {{ $preset['tagline'] }}
-                            </p>
-
-                            <!-- Micro Visual Layout Representation -->
-                            <div class="p-2.5 rounded-2xl border bg-white/80 dark:bg-black/50 backdrop-blur-md space-y-2 text-[9px] shadow-xs" style="border-color: rgba(0,0,0,0.08);">
+                            <!-- Mini 45px Signature Layout Wireframe -->
+                            <div class="px-3 py-1.5 flex-1 flex flex-col justify-center">
                                 @if($key === 'velora')
-                                    {{-- Velora: 100vh Fullscreen Hero Carousel --}}
-                                    <div class="flex items-center justify-between pb-1 border-b border-black/5 dark:border-white/5">
-                                        <span class="font-bold truncate max-w-[100px]">{{ $vendor->shop_name }}</span>
-                                        <span class="opacity-75 font-mono">Bag (1)</span>
-                                    </div>
-                                    <div class="h-14 rounded-xl flex flex-col justify-end p-2 bg-gradient-to-t from-black/80 to-stone-800 text-white shadow-inner relative overflow-hidden">
-                                        <span class="text-[8px] font-mono tracking-widest uppercase opacity-75">100vh Fullscreen</span>
-                                        <span class="text-[10px] font-black font-heading leading-tight truncate">Aesthetic Carousel</span>
-                                        <div class="absolute bottom-1.5 right-1.5 flex gap-1">
-                                            <span class="w-3 h-3 rounded-full bg-white/20 text-[7px] flex items-center justify-center">←</span>
-                                            <span class="w-3 h-3 rounded-full bg-white/20 text-[7px] flex items-center justify-center">→</span>
+                                    {{-- Velora: 100vh Fullscreen Carousel Capsule --}}
+                                    <div class="h-16 rounded-xl bg-stone-900 text-amber-300 p-2 border border-amber-500/30 flex flex-col justify-between relative overflow-hidden shadow-xs">
+                                        <div class="flex items-center justify-between text-[8px] font-mono opacity-80">
+                                            <span class="truncate">100vh Hero Carousel</span>
+                                            <span>Bag (1)</span>
                                         </div>
-                                    </div>
-                                    <div class="grid grid-cols-4 gap-1 pt-0.5">
-                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
-                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
-                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
-                                        <div class="aspect-[3/4] rounded bg-black/5 dark:bg-white/5 border border-black/5"></div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[9px] font-serif italic text-white font-bold">Liquid Luxury</span>
+                                            <div class="flex gap-0.5">
+                                                <span class="w-3 h-3 rounded-full bg-amber-400 text-black text-[6px] font-bold flex items-center justify-center">←</span>
+                                                <span class="w-3 h-3 rounded-full bg-amber-400 text-black text-[6px] font-bold flex items-center justify-center">→</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 @elseif($key === 'noire')
-                                    {{-- Noiré: Asymmetric Brutalist Split-Screen --}}
-                                    <div class="text-[7px] font-mono tracking-wider opacity-60 pb-1 border-b border-white/10 uppercase">// LIVE DISPATCH TERMINAL //</div>
-                                    <div class="grid grid-cols-5 gap-1.5 h-14">
-                                        <div class="col-span-3 rounded-lg bg-zinc-900 border border-zinc-700 p-1.5 flex flex-col justify-between text-white">
+                                    {{-- Noiré: Asymmetric Brutalist Terminal Split --}}
+                                    <div class="h-16 rounded-xl bg-black text-white p-2 border border-zinc-700 grid grid-cols-5 gap-1.5 shadow-xs">
+                                        <div class="col-span-3 bg-zinc-900 rounded p-1 flex flex-col justify-between">
                                             <span class="text-[7px] font-mono text-zinc-400">DROP // 2026</span>
-                                            <span class="text-[9px] font-black font-mono uppercase tracking-tight">CAMPAIGN POSTER</span>
+                                            <span class="text-[8px] font-mono font-bold uppercase truncate">POSTER SPLIT</span>
                                         </div>
-                                        <div class="col-span-2 rounded-lg bg-zinc-950 border border-zinc-800 p-1 flex flex-col justify-between text-[7px] font-mono text-zinc-400">
-                                            <span>LOC: {{ strtoupper($vendor->city ?: 'IN') }}</span>
-                                            <span class="bg-white text-black font-bold text-center rounded py-0.5">[ COP ]</span>
+                                        <div class="col-span-2 bg-zinc-950 rounded p-1 flex flex-col justify-between text-[7px] font-mono text-center">
+                                            <span class="text-zinc-500 truncate">{{ strtoupper($vendor->city ?: 'IN') }}</span>
+                                            <span class="bg-white text-black font-bold rounded py-0.5 text-[6px]">[ COP ]</span>
                                         </div>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
-                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
-                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
-                                        <div class="aspect-square rounded-none bg-zinc-900 border border-zinc-800"></div>
                                     </div>
                                 @elseif($key === 'aurel')
-                                    {{-- Aurel: Scandinavian Framed Linen Atelier --}}
-                                    <div class="flex items-center justify-between pb-1 border-b border-stone-200/60 text-stone-800">
-                                        <span class="font-serif italic font-bold">Atelier</span>
-                                        <span class="text-[8px] font-mono text-stone-500">Bag · 1</span>
-                                    </div>
-                                    <div class="p-2 rounded-xl bg-amber-500/5 border border-amber-500/15 space-y-1 text-center">
-                                        <span class="text-[8px] uppercase tracking-widest text-stone-500 block">Curated Edition</span>
-                                        <span class="text-[10px] font-serif italic text-stone-900 font-bold block">The Art of Slow Craft</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-1.5 pt-0.5">
-                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
-                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
-                                        <div class="aspect-[4/5] rounded-lg bg-stone-100 border border-stone-200"></div>
+                                    {{-- Aurel: Framed Scandinavian Atelier Linen --}}
+                                    <div class="h-16 rounded-xl bg-[#faf7f2] text-stone-800 p-2 border border-stone-200 flex flex-col justify-between shadow-xs">
+                                        <div class="flex items-center justify-between text-[7px] font-serif italic text-stone-500">
+                                            <span>Atelier Studio</span>
+                                            <span>Bag · 1</span>
+                                        </div>
+                                        <div class="text-center py-0.5">
+                                            <span class="text-[9px] font-serif italic font-bold text-stone-900 block truncate">The Art of Slow Craft</span>
+                                            <span class="text-[7px] uppercase tracking-wider text-stone-500 block">Linen Framed</span>
+                                        </div>
                                     </div>
                                 @elseif($key === 'chroma')
-                                    {{-- Chroma: Bold Avant-Garde Magazine Poster --}}
-                                    <div class="bg-blue-600 text-white text-[7px] font-mono font-bold px-1.5 py-0.5 rounded text-center tracking-wider">
-                                        ⚡ DROP LIVE // PAN-INDIA ⚡
-                                    </div>
-                                    <div class="p-2 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between">
-                                        <div>
-                                            <span class="text-[8px] font-black text-blue-600 block">VOL. 02</span>
-                                            <span class="text-[10px] font-black tracking-tight text-black">DROP MATRIX</span>
+                                    {{-- Chroma: Bold Pop Magazine Marquee Poster --}}
+                                    <div class="h-16 rounded-xl bg-white text-black p-1.5 border-2 border-black flex flex-col justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        <div class="bg-blue-600 text-white text-[7px] font-mono font-bold px-1 rounded text-center truncate">
+                                            ⚡ DROP LIVE // PAN-INDIA ⚡
                                         </div>
-                                        <span class="px-1.5 py-0.5 bg-blue-600 text-white font-bold text-[8px] rounded">COP</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
-                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
-                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
-                                        <div class="aspect-square rounded border-2 border-black/40 bg-slate-50"></div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-black text-blue-600">VOL. 02</span>
+                                            <span class="bg-black text-white text-[7px] font-bold px-1.5 py-0.5 rounded">DROP</span>
+                                        </div>
                                     </div>
                                 @else
-                                    {{-- Orbit: Cyber-Spatial Tactile Pod --}}
-                                    <div class="p-1 rounded-full bg-slate-900 border border-cyan-500/40 text-cyan-400 text-center text-[7px] font-mono">
-                                        • SYSTEM ACTIVE // SPATIAL DOCK
-                                    </div>
-                                    <div class="p-2 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-cyan-300 space-y-1 shadow-[0_0_10px_rgba(6,182,212,0.15)]">
-                                        <span class="text-[7px] font-mono text-cyan-400/80 block">TELEMETRY STAGE</span>
-                                        <span class="text-[9px] font-bold text-white block">Interactive Spec Pod</span>
-                                    </div>
-                                    <div class="grid grid-cols-3 gap-1 pt-0.5">
-                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
-                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
-                                        <div class="aspect-square rounded-xl bg-slate-800/80 border border-cyan-500/20"></div>
+                                    {{-- Orbit: Celestial Kinetic Spatial Pods --}}
+                                    <div class="h-16 rounded-xl bg-[#07080d] text-cyan-300 p-1.5 border border-indigo-500/40 flex flex-col justify-between shadow-xs relative overflow-hidden">
+                                        <div class="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-cyan-500/20 blur-sm pointer-events-none"></div>
+                                        <div class="flex items-center justify-between text-[7px] font-mono">
+                                            <span class="flex items-center gap-1 text-cyan-400">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> ORBITAL HALO
+                                            </span>
+                                            <span class="text-[7px] text-indigo-300">SPATIAL</span>
+                                        </div>
+                                        <div class="flex items-center justify-between px-1">
+                                            <span class="text-[8px] font-bold text-white tracking-wider">KINETIC POD</span>
+                                            <span class="px-1 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[6px] font-mono border border-cyan-500/40">DOCK</span>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
 
-                            <!-- Typography & Palette Badges -->
-                            <div class="mt-3 pt-2.5 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-[10px] opacity-75">
-                                <span>{{ $preset['display_font'] }}</span>
-                                <span class="w-3 h-3 rounded-full border border-black/20" style="background-color: {{ $preset['preview_accent'] }};"></span>
-                            </div>
-                        </div>
-
-                        <!-- Description & Action Button -->
-                        <div class="p-4 space-y-3 flex flex-col justify-between flex-1">
-                            <div>
-                                <p class="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2">
-                                    {{ $preset['description'] }}
-                                </p>
-                            </div>
-
-                            <div class="pt-3 border-t border-slate-100 dark:border-zinc-800 flex items-center gap-2">
+                            <!-- Preset Actions -->
+                            <div class="px-3 py-2 border-t border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-850/50 flex items-center gap-1.5">
                                 <button type="button" 
                                         id="btn-activate-{{ $key }}"
                                         onclick="activatePresetInstant('{{ $key }}', '{{ $preset['name'] }}')"
-                                        class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-center transition-all duration-200 {{ $isActive ? 'bg-stone-100 text-stone-400 cursor-default' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-md hover:scale-[1.01]' }}"
+                                        class="flex-1 py-1 px-2.5 rounded-lg text-[11px] font-bold text-center transition-all duration-200 {{ $isActive ? 'bg-stone-100 text-stone-400 cursor-default' : 'bg-stone-900 hover:bg-stone-800 text-white shadow-xs hover:scale-[1.01]' }}"
                                         {{ $isActive ? 'disabled' : '' }}>
                                     {{ $isActive ? '✓ Active' : '⚡ Activate' }}
                                 </button>
@@ -249,7 +201,7 @@
                                 <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'preview' => 1]) }}"
                                    target="_blank"
                                    rel="noopener"
-                                   class="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-600 dark:text-zinc-300 transition"
+                                   class="p-1 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition"
                                    title="Preview in new tab">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -257,12 +209,11 @@
                                     </svg>
                                 </a>
                             </div>
-                        </div>
 
-                    </div>
-                @endforeach
+                        </div>
+                    @endforeach
+                </div>
             </div>
-        </div>
 
             <!-- Legacy Aliases Reference (Ensures test coverage & compatibility) -->
             <div class="hidden">
@@ -553,6 +504,48 @@
                                class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-900">
                     </div>
 
+                    <!-- Chroma Marquee Ribbon Controls (Customizable / Removable) -->
+                    <div class="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                                <label class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-zinc-200">
+                                    Chroma Marquee Ribbon
+                                </label>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-700 dark:text-blue-300 font-mono font-bold">Chroma Theme</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" 
+                                       id="ctrl-chroma-strip-toggle" 
+                                       name="chroma_strip_enabled"
+                                       class="sr-only peer" 
+                                       {{ !isset($currentConfig['header']['chroma_strip_enabled']) || !empty($currentConfig['header']['chroma_strip_enabled']) ? 'checked' : '' }}>
+                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div class="sm:col-span-3">
+                                <input type="text" 
+                                       id="ctrl-chroma-strip-text" 
+                                       name="chroma_strip_text"
+                                       value="{{ $currentConfig['header']['chroma_strip_text'] ?? 'PAN-INDIA EXPRESS COURIER DISPATCH // 100% VERIFIED AUTHENTIC DROP' }}"
+                                       placeholder="Marquee ticker text"
+                                       class="w-full px-3 py-2 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-600 font-mono">
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" 
+                                           id="ctrl-chroma-strip-bg" 
+                                           name="chroma_strip_bg"
+                                           value="{{ $currentConfig['header']['chroma_strip_bg'] ?? '#2563eb' }}"
+                                           class="w-8 h-8 rounded-lg cursor-pointer border border-blue-200 bg-transparent">
+                                    <span class="text-[11px] text-slate-500 font-mono">Strip Color</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
             </form>
@@ -707,16 +700,16 @@
 
                         if (card && b && badge) {
                             if (k === key) {
-                                card.classList.add('border-amber-500', 'bg-amber-500/[0.03]', 'shadow-xl', 'ring-2', 'ring-amber-500/30');
+                                card.classList.add('border-amber-500', 'bg-amber-500/[0.04]', 'shadow-md', 'ring-2', 'ring-amber-500/25');
                                 card.classList.remove('border-slate-200', 'dark:border-zinc-800');
-                                b.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-center transition-all duration-200 bg-stone-100 text-stone-400 cursor-default';
+                                b.className = 'flex-1 py-1 px-2.5 rounded-lg text-[11px] font-bold text-center transition-all duration-200 bg-stone-100 text-stone-400 cursor-default';
                                 b.textContent = '✓ Active';
                                 b.disabled = true;
                                 badge.classList.remove('hidden');
                             } else {
-                                card.classList.remove('border-amber-500', 'bg-amber-500/[0.03]', 'shadow-xl', 'ring-2', 'ring-amber-500/30');
+                                card.classList.remove('border-amber-500', 'bg-amber-500/[0.04]', 'shadow-md', 'ring-2', 'ring-amber-500/25');
                                 card.classList.add('border-slate-200', 'dark:border-zinc-800');
-                                b.className = 'flex-1 py-2.5 px-3 rounded-xl text-xs font-bold text-center transition-all duration-200 bg-stone-900 hover:bg-stone-800 text-white shadow-md hover:scale-[1.01]';
+                                b.className = 'flex-1 py-1 px-2.5 rounded-lg text-[11px] font-bold text-center transition-all duration-200 bg-stone-900 hover:bg-stone-800 text-white shadow-xs hover:scale-[1.01]';
                                 b.textContent = '⚡ Activate';
                                 b.disabled = false;
                                 badge.classList.add('hidden');
@@ -746,6 +739,10 @@
             const form = document.getElementById('essential-settings-form');
             const formData = new FormData(form);
             formData.append('announcement_enabled', document.getElementById('ctrl-announcement-toggle').checked ? '1' : '0');
+            const chromaToggle = document.getElementById('ctrl-chroma-strip-toggle');
+            if (chromaToggle) {
+                formData.append('chroma_strip_enabled', chromaToggle.checked ? '1' : '0');
+            }
             formData.append('transparent_on_hero', document.getElementById('ctrl-transparent-hero-toggle')?.checked ? '1' : '0');
             formData.append('header_elements_order', JSON.stringify(headerElementsOrder));
 

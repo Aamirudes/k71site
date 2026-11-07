@@ -481,6 +481,15 @@ class StorefrontDesignController extends Controller
         if ($request->has('announcement_link')) {
             $currentConfig['header']['announcement_link'] = trim($request->input('announcement_link', ''));
         }
+        if ($request->has('chroma_strip_text')) {
+            $currentConfig['header']['chroma_strip_text'] = trim($request->input('chroma_strip_text', ''));
+        }
+        if ($request->has('chroma_strip_enabled')) {
+            $currentConfig['header']['chroma_strip_enabled'] = $request->boolean('chroma_strip_enabled');
+        }
+        if ($request->filled('chroma_strip_bg')) {
+            $currentConfig['header']['chroma_strip_bg'] = trim($request->input('chroma_strip_bg', '#2563eb'));
+        }
         if ($request->filled('accent_color')) {
             $accent = $request->input('accent_color');
             $currentConfig['theme']['accent_color'] = $accent;

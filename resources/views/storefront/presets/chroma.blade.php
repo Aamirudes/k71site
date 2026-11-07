@@ -19,14 +19,23 @@
         @include('storefront.sections.announcement')
     @endif
 
-    {{-- High-Velocity Royal Blue Marquee Tape --}}
-    <div class="w-full bg-blue-600 text-white font-mono text-[11px] font-bold py-2 px-4 overflow-hidden border-b-2 border-black tracking-wider uppercase select-none shadow-sm">
-        <div class="flex items-center justify-between max-w-7xl mx-auto">
-            <span>⚡ LIMITED EDITION RUN LIVE • DISPATCH WITHIN 24 HOURS • 100% AUTHENTIC CREATIONS ⚡</span>
-            <span class="hidden sm:inline-block">DIRECT FROM {{ strtoupper($vendor->city ?: 'STUDIO') }} • VERIFIED K71 BOUTIQUE</span>
-            <span>DOORSTEP PAN-INDIA DELIVERY</span>
+    @php
+        $chromaStripEnabled = !isset($config['header']['chroma_strip_enabled']) ? true : (bool)$config['header']['chroma_strip_enabled'];
+        $chromaStripText = $config['header']['chroma_strip_text'] ?? '⚡ LIMITED EDITION RUN LIVE • DISPATCH WITHIN 24 HOURS • 100% AUTHENTIC CREATIONS ⚡';
+        $chromaStripBg = $config['header']['chroma_strip_bg'] ?? '#2563eb';
+    @endphp
+
+    @if($chromaStripEnabled && !empty($chromaStripText))
+        {{-- High-Velocity Royal Blue Marquee Tape (Vendor Customizable & Removable) --}}
+        <div class="w-full text-white font-mono text-[11px] font-bold py-2 px-4 overflow-hidden border-b-2 border-black tracking-wider uppercase select-none shadow-sm"
+             style="background-color: {{ $chromaStripBg }};">
+            <div class="flex items-center justify-between max-w-7xl mx-auto">
+                <span>{{ $chromaStripText }}</span>
+                <span class="hidden sm:inline-block">DIRECT FROM {{ strtoupper($vendor->city ?: 'STUDIO') }} • VERIFIED K71 BOUTIQUE</span>
+                <span>DOORSTEP PAN-INDIA DELIVERY</span>
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- Avant-Garde Graphic Header --}}
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b-2 border-black text-black">

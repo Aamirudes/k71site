@@ -156,33 +156,12 @@
                         </div>
                     </div>
 
-                    <!-- Spotlight Flagship Item -->
-                    @if($flagship)
-                        @php
-                            $fPrice = number_format($flagship->base_price / 100, 2);
-                            $fDefVariant = $flagship->variants->first()?->id;
-                        @endphp
-                        <div class="p-5 border border-zinc-800 bg-[#121215] space-y-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[9px] font-mono uppercase tracking-widest text-zinc-400">SPOTLIGHT SKU</span>
-                                <span class="text-xs font-bold text-white">₹{{ $fPrice }}</span>
-                            </div>
-                            <h3 class="text-sm font-bold text-white uppercase truncate">
-                                {{ $flagship->title }}
-                            </h3>
-                            <button type="button" 
-                                    onclick="window.quickAddToCart({{ $flagship->id }}, {{ $fDefVariant ?: 'null' }}, this)"
-                                    class="w-full py-3.5 px-4 bg-white hover:bg-zinc-200 text-black font-mono font-black text-xs uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-lg active:scale-95">
-                                <span>[ + COP THIS DROP ]</span>
-                            </button>
-                        </div>
-                    @endif
-
                     <!-- Bottom Anchor Trigger -->
                     <div>
-                        <a href="#catalog" class="block text-center py-3 border border-zinc-800 hover:border-zinc-500 text-xs font-mono tracking-widest uppercase text-zinc-400 hover:text-white transition">
-                            EXPLORE COMPLETE ARCHIVE ({{ $products->total() ?? $products->count() }} ITEMS) ↓
+                        <a href="#catalog" class="block text-center py-4 px-6 bg-white hover:bg-zinc-200 text-black font-mono font-black text-xs uppercase tracking-widest transition-all duration-200 shadow-lg cursor-pointer">
+                            [ EXPLORE CATALOG ({{ $products->total() ?? $products->count() }} SKUS) ↓ ]
                         </a>
+                    </div>
                     </div>
 
                 </div>
