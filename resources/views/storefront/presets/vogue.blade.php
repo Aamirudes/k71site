@@ -91,12 +91,12 @@
             <div class="flex items-center gap-3">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="p-2 sm:px-3 sm:py-2 border-2 border-black bg-[#e11d48] hover:bg-black text-white transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                        class="p-2 sm:px-3 sm:py-2 border-2 border-black bg-white text-black transition-all duration-200 flex items-center gap-2 cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-[#e11d48] hover:text-white group"
                         aria-label="Shopping Cart">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 text-black group-hover:text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-white text-black text-[10px] font-mono font-black">
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 bg-black text-white group-hover:bg-white group-hover:text-black text-[10px] font-mono font-black">
                         {{ $cartCount }}
                     </span>
                 </button>

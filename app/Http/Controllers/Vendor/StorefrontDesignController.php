@@ -368,12 +368,13 @@ class StorefrontDesignController extends Controller
      */
     public function saveQuickSettings(Request $request)
     {
-        $vendor = auth()->user()->vendor;
+        $vendor = auth()->user()?->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $configRecord = $vendor->storefrontConfig;
+        try {
+            $configRecord = $vendor->storefrontConfig;
         $presetKey = $configRecord?->preset_key ?? 'velora';
         $currentConfig = $configRecord?->getEffectiveConfig(false) ?: $this->presetService->getDefaultConfig($presetKey, $vendor);
 
@@ -496,21 +497,19 @@ class StorefrontDesignController extends Controller
         }
 
         // WhatsApp & Instagram Social Connect
+        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
         if ($request->has('whatsapp')) {
             $wa = trim($request->input('whatsapp'));
             $currentConfig['brand']['whatsapp'] = $wa;
+            $social['whatsapp'] = $wa;
         }
         if ($request->has('instagram')) {
             $ig = trim($request->input('instagram'));
             $currentConfig['brand']['instagram'] = $ig;
-            $vSettings = $vendor->settings;
-            if ($vSettings) {
-                $vSettings->instagram = $ig;
-                $vSettings->save();
-            }
+            $social['instagram'] = $ig;
         }
 
-        // Happy Customers Slider Settings
+        // Happy Customers Slider Settings & Items Management
         if ($request->has('happy_customers_enabled') || $request->has('happy_customers_title')) {
             $currentConfig['happy_customers']['enabled'] = $request->boolean('happy_customers_enabled');
             if ($request->filled('happy_customers_title')) {
@@ -519,6 +518,69 @@ class StorefrontDesignController extends Controller
             if ($request->filled('happy_customers_subtitle')) {
                 $currentConfig['happy_customers']['subtitle'] = trim($request->input('happy_customers_subtitle'));
             }
+        }
+
+        // Delete an existing Happy Customer item by index
+        if ($request->filled('delete_hc_idx')) {
+            $delIdx = (int) $request->input('delete_hc_idx');
+            $existingHc = $currentConfig['happy_customers']['items'] ?? [];
+            if (isset($existingHc[$delIdx])) {
+                array_splice($existingHc, $delIdx, 1);
+                $currentConfig['happy_customers']['items'] = $existingHc;
+            }
+        }
+
+        // Add a New Vendor Happy Customer Story
+        if ($request->filled('new_hc_name') && ($request->filled('new_hc_comment') || $request->hasFile('new_hc_media_file') || $request->filled('new_hc_media_url'))) {
+            $hcName = trim($request->input('new_hc_name'));
+            $hcLocation = trim($request->input('new_hc_location', 'India')) ?: 'India';
+            $hcRating = max(1, min(5, (int) $request->input('new_hc_rating', 5)));
+            $hcComment = trim($request->input('new_hc_comment', 'Excellent craftsmanship and speedy delivery!'));
+            $hcType = in_array($request->input('new_hc_type'), ['video', 'image']) ? $request->input('new_hc_type') : 'image';
+            $mediaUrl = '';
+            $thumbUrl = '';
+
+            // Handle file upload
+            if ($request->hasFile('new_hc_media_file')) {
+                $file = $request->file('new_hc_media_file');
+                if ($file && $file->isValid()) {
+                    $mime = $file->getMimeType() ?: '';
+                    if (str_starts_with($mime, 'video/')) {
+                        $hcType = 'video';
+                    } else {
+                        $hcType = 'image';
+                    }
+                    $savedPath = $file->store('vendors/' . $vendor->id . '/happy_customers', 'public');
+                    $mediaUrl = asset('storage/' . $savedPath);
+                    $thumbUrl = $mediaUrl;
+                }
+            } elseif ($request->filled('new_hc_media_url')) {
+                $mediaUrl = trim($request->input('new_hc_media_url'));
+                $thumbUrl = $mediaUrl;
+            } else {
+                $mediaUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
+                $thumbUrl = $mediaUrl;
+            }
+
+            $existingHc = $currentConfig['happy_customers']['items'] ?? [];
+            if (!is_array($existingHc)) {
+                $existingHc = [];
+            }
+
+            array_unshift($existingHc, [
+                'type' => $hcType,
+                'media_url' => $mediaUrl,
+                'thumb_url' => $thumbUrl,
+                'customer_name' => $hcName,
+                'location' => $hcLocation,
+                'rating' => $hcRating,
+                'comment' => $hcComment,
+                'product_name' => 'Verified Studio Purchase',
+                'verified' => true,
+            ]);
+
+            $currentConfig['happy_customers']['items'] = array_slice($existingHc, 0, 20);
+            $currentConfig['happy_customers']['enabled'] = true;
         }
 
         $sanitizedConfig = $this->presetService->sanitizeConfig($currentConfig, $vendor);
@@ -541,7 +603,6 @@ class StorefrontDesignController extends Controller
         ]);
 
         // Keep vendor table updated
-        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
         $social['announcement_bar'] = $sanitizedConfig['header']['announcement_text'] ?? null;
         $social['announcement_bar_enabled'] = !empty($sanitizedConfig['header']['announcement_enabled']);
         $social['announcement_link'] = $sanitizedConfig['header']['announcement_link'] ?? null;
@@ -550,11 +611,18 @@ class StorefrontDesignController extends Controller
         $vendor->social_links = $social;
         $vendor->save();
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Storefront essentials saved and published live!',
-            'public_url' => route('storefront.show', $vendor->slug),
-        ]);
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Storefront essentials & customer stories saved and published live!',
+                'public_url' => route('storefront.show', $vendor->slug),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error saving quick settings: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to save settings: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

@@ -643,7 +643,7 @@
                     </div>
 
                     <!-- Happy Customers Slider Controls (Customizable Below Shorts) -->
-                    <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-3">
+                    <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -685,6 +685,140 @@
                                        class="w-full px-3 py-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-white dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
                             </div>
                         </div>
+
+                        <!-- Add a Custom Customer Story Box -->
+                        <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-amber-200/80 dark:border-amber-900/50 space-y-3">
+                            <div class="flex items-center justify-between border-b border-amber-100 dark:border-zinc-800 pb-2">
+                                <span class="text-xs font-bold text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                                    <span class="text-amber-500">⭐</span> Add Customer Story (Photo or Video Reel)
+                                </span>
+                                <span class="text-[9px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded font-mono">
+                                    Shows in 2.5/view slider
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                <div class="sm:col-span-1">
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">Customer Name</label>
+                                    <input type="text" 
+                                           id="new-hc-name" 
+                                           name="new_hc_name" 
+                                           placeholder="e.g. Priya Sharma" 
+                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">City / Location</label>
+                                    <input type="text" 
+                                           id="new-hc-location" 
+                                           name="new_hc_location" 
+                                           placeholder="e.g. Mumbai, MH" 
+                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">Rating</label>
+                                    <select id="new-hc-rating" 
+                                            name="new_hc_rating" 
+                                            class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                                        <option value="5" selected>★★★★★ (5 Stars)</option>
+                                        <option value="4">★★★★☆ (4 Stars)</option>
+                                        <option value="3">★★★☆☆ (3 Stars)</option>
+                                        <option value="2">★★☆☆☆ (2 Stars)</option>
+                                        <option value="1">★☆☆☆☆ (1 Star)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">Review Comment / Quote</label>
+                                <textarea id="new-hc-comment" 
+                                          name="new_hc_comment" 
+                                          rows="2" 
+                                          placeholder="e.g. Received my order in pristine condition! Exceeded expectations and super fast delivery." 
+                                          class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">
+                                        Upload Photo / Video Reel File
+                                    </label>
+                                    <input type="file" 
+                                           id="new-hc-media-file" 
+                                           name="new_hc_media_file" 
+                                           accept="image/*,video/*" 
+                                           class="w-full text-[11px] text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-amber-100 dark:file:bg-amber-900/50 file:text-amber-800 dark:file:text-amber-200 hover:file:bg-amber-200 cursor-pointer">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-1">
+                                        Or External Media URL (Optional)
+                                    </label>
+                                    <input type="url" 
+                                           id="new-hc-media-url" 
+                                           name="new_hc_media_url" 
+                                           placeholder="https://... photo or mp4 link" 
+                                           class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-1">
+                                <span class="text-[10px] text-slate-500 dark:text-zinc-400">
+                                    Click below or "Save &amp; Publish" to add this story.
+                                </span>
+                                <button type="button" 
+                                        onclick="saveEssentialSettings()" 
+                                        class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1">
+                                    <span>+ Add Story</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Existing Custom Stories -->
+                        @php
+                            $customHcItems = $currentConfig['happy_customers']['items'] ?? [];
+                        @endphp
+                        @if(is_array($customHcItems) && count($customHcItems) > 0)
+                            <div class="pt-3 border-t border-amber-200/60 dark:border-amber-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                                        Your Custom Stories ({{ count($customHcItems) }})
+                                    </h4>
+                                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">● Active on Store</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                                    @foreach($customHcItems as $hcIdx => $hcItem)
+                                        <div class="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 flex items-center gap-2.5 relative">
+                                            <div class="w-11 h-14 rounded-lg bg-black overflow-hidden relative shrink-0">
+                                                @if(($hcItem['type'] ?? '') === 'video')
+                                                    <video src="{{ $hcItem['media_url'] ?? '' }}" class="w-full h-full object-cover" muted></video>
+                                                    <span class="absolute bottom-0.5 right-0.5 text-[6.5px] bg-rose-600 text-white font-bold px-0.5 rounded leading-none">REEL</span>
+                                                @else
+                                                    <img src="{{ $hcItem['thumb_url'] ?? $hcItem['media_url'] ?? '' }}" class="w-full h-full object-cover">
+                                                @endif
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center gap-0.5 text-amber-500 text-[9px]">
+                                                    @for($s = 1; $s <= ($hcItem['rating'] ?? 5); $s++) ★ @endfor
+                                                </div>
+                                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{{ $hcItem['customer_name'] ?? 'Customer' }}</p>
+                                                <p class="text-[9.5px] text-slate-500 truncate">{{ $hcItem['location'] ?? 'India' }}</p>
+                                                <p class="text-[9.5px] text-slate-600 dark:text-zinc-400 line-clamp-1 italic">"{{ $hcItem['comment'] ?? '' }}"</p>
+                                            </div>
+                                            <button type="button" 
+                                                    onclick="deleteHappyCustomer({{ $hcIdx }})" 
+                                                    class="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded transition" 
+                                                    title="Delete this story">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-900/30 text-[11px] text-amber-900 dark:text-amber-200 flex items-center gap-2">
+                                <span>💡</span>
+                                <span>Currently displaying 5 curated verified buyer spotlight reels &amp; reviews. Add your custom customer story above to personalize your storefront slider!</span>
+                            </div>
+                        @endif
                     </div>
 
                 </div>
@@ -871,6 +1005,35 @@
             });
         }
 
+        function deleteHappyCustomer(idx) {
+            if (!confirm('Are you sure you want to delete this customer story?')) return;
+            const form = document.getElementById('essential-settings-form');
+            const formData = new FormData(form);
+            formData.append('delete_hc_idx', idx);
+
+            fetch('{{ route('vendor.design.quick_settings') }}', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast('✓ Story deleted successfully');
+                    setTimeout(() => window.location.reload(), 500);
+                } else {
+                    showToast(data.message || 'Error deleting story', false);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showToast('Failed to delete story', false);
+            });
+        }
+
         function saveEssentialSettings() {
             const btn = document.getElementById('save-branding-btn');
             const originalText = btn.innerHTML;
@@ -904,7 +1067,13 @@
                 btn.disabled = false;
                 btn.innerHTML = originalText;
                 if (data.status === 'success') {
-                    showToast('✓ Store essentials saved and live!');
+                    const newHcInput = document.getElementById('new-hc-name');
+                    if (newHcInput && newHcInput.value.trim() !== '') {
+                        showToast('✓ Story added and store settings published!');
+                        setTimeout(() => window.location.reload(), 700);
+                    } else {
+                        showToast('✓ Store essentials saved and live!');
+                    }
                 } else {
                     showToast(data.message || 'Error saving settings', false);
                 }

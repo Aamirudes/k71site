@@ -291,5 +291,46 @@ class StorefrontDesignTest extends TestCase
             $publicResp->assertSee('k71-glass-cart-popup');
         }
     }
+
+    public function test_vendor_can_manage_happy_customer_stories_and_social_links(): void
+    {
+        [$user, $vendor] = $this->createVendor('stories@test.com', 'Stories Boutique', 'stories-boutique');
+
+        // 1. Add a custom story and social links
+        $response = $this->actingAs($user)->postJson('/vendor/design/quick-settings', [
+            'instagram' => 'https://instagram.com/storiesboutique',
+            'whatsapp' => '9876543210',
+            'happy_customers_enabled' => true,
+            'new_hc_name' => 'Kavita Sen',
+            'new_hc_location' => 'Jaipur, RJ',
+            'new_hc_rating' => 5,
+            'new_hc_comment' => 'Spectacular pure silk quality and arrived within 24 hours!',
+            'new_hc_media_url' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
+        ]);
+
+        $response->assertStatus(200)
+                 ->assertJson(['status' => 'success']);
+
+        $config = $vendor->fresh()->storefrontConfig->published_config;
+        $this->assertEquals('https://instagram.com/storiesboutique', $config['brand']['instagram']);
+        $this->assertEquals('9876543210', $config['brand']['whatsapp']);
+        $this->assertCount(1, $config['happy_customers']['items']);
+        $this->assertEquals('Kavita Sen', $config['happy_customers']['items'][0]['customer_name']);
+
+        // Check public storefront has the customer story
+        $publicResp = $this->get("/s/{$vendor->slug}");
+        $publicResp->assertStatus(200);
+        $publicResp->assertSee('Kavita Sen');
+        $publicResp->assertSee('Spectacular pure silk quality');
+
+        // 2. Delete the custom story
+        $delResp = $this->actingAs($user)->postJson('/vendor/design/quick-settings', [
+            'delete_hc_idx' => 0,
+        ]);
+        $delResp->assertStatus(200)->assertJson(['status' => 'success']);
+
+        $configAfter = $vendor->fresh()->storefrontConfig->published_config;
+        $this->assertCount(0, $configAfter['happy_customers']['items']);
+    }
 }
 

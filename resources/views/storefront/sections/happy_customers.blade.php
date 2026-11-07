@@ -62,7 +62,9 @@
         ],
     ];
 
-    $items = (!empty($hcConfig['items']) && is_array($hcConfig['items'])) ? $hcConfig['items'] : $defaultItems;
+    $rawItems = $hcConfig['items'] ?? null;
+    $items = (is_array($rawItems) && count($rawItems) > 0) ? $rawItems : $defaultItems;
+    $isEnabled = !isset($hcConfig['enabled']) || (bool)$hcConfig['enabled'] || $hcConfig['enabled'] === '1' || $hcConfig['enabled'] === 1;
 @endphp
 
 @if($isEnabled && !empty($items))

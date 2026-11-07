@@ -91,9 +91,9 @@
             <div class="flex items-center gap-2">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="p-2 sm:px-3 sm:py-2 rounded-full bg-[#291a13] hover:bg-[#c25e3e] text-white transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+                        class="p-2 sm:px-3 sm:py-2 rounded-full bg-white text-black border border-[#e8dccb] hover:border-[#c25e3e] transition-all duration-200 shadow-md flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
                         aria-label="Shopping Cart">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
                     <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-[#c25e3e] text-white text-[10px] font-mono font-black">

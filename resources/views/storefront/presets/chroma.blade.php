@@ -93,12 +93,12 @@
             <div class="flex items-center gap-3">
                 <button type="button" 
                         onclick="window.openK71Cart ? window.openK71Cart() : window.location.href='{{ route('cart.index') }}'"
-                        class="p-2 sm:px-3 sm:py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-mono font-black text-xs uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer"
+                        class="p-2 sm:px-3 sm:py-2 rounded-2xl bg-white text-black border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer"
                         aria-label="Shopping Cart">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 shrink-0 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                     </svg>
-                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-white text-blue-600 text-[10px] font-black">
+                    <span id="cart-counter-badge" class="px-1.5 py-0.2 rounded-full bg-black text-white text-[10px] font-black">
                         {{ $cartCount }}
                     </span>
                 </button>
