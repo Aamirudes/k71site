@@ -104,11 +104,13 @@
         <div class="block sm:hidden space-y-4">
             @foreach($orders as $order)
                 @php
-                    $rawPhone = $order->address_snapshot['phone'] ?? $order->user->phone ?? '';
-                    $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+                    $snap = is_array($order->address_snapshot) ? $order->address_snapshot : [];
+                    $rawPhone = $snap['phone'] ?? $order->user?->phone ?? '';
+                    $cleanPhone = preg_replace('/[^0-9]/', '', (string) $rawPhone);
                     if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
-                    $customerGreeting = $order->user->first_name ?? $order->user->name ?? 'Customer';
-                    $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$order->vendor->shop_name} regarding your Order #{$order->order_number}.");
+                    $customerGreeting = $order->user?->first_name ?? $order->user?->name ?? ($snap['name'] ?? 'Customer');
+                    $vendorShopName = $order->vendor?->shop_name ?? ($curVendor?->shop_name ?? 'our store');
+                    $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$vendorShopName} regarding your Order #{$order->order_number}.");
                 @endphp
                 <div class="bg-white/80 backdrop-blur-xl shadow-sm border border-gray-100 rounded-3xl p-5 hover:shadow-md transition-shadow relative overflow-hidden group">
                     <div class="absolute top-0 left-0 w-1.5 h-full 
@@ -122,7 +124,7 @@
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <span class="font-mono font-bold text-gray-900 text-sm bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{{ $order->order_number }}</span>
-                            <p class="text-xs text-gray-400 mt-1">{{ $order->created_at->format('d M, Y · g:i A') }}</p>
+                            <p class="text-xs text-gray-400 mt-1">{{ $order->created_at?->format('d M, Y · g:i A') ?? '—' }}</p>
                         </div>
                         <span class="inline-flex items-center rounded-xl px-2.5 py-1 text-xs font-bold ring-1 ring-inset 
                             {{ $order->status === 'pending' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' : '' }}
@@ -137,7 +139,7 @@
                     <div class="flex items-center justify-between py-2 border-y border-gray-100 text-xs">
                         <div>
                             <span class="text-gray-400">Customer:</span>
-                            <span class="font-bold text-gray-800 ml-1">{{ $order->user->name ?? 'Customer' }}</span>
+                            <span class="font-bold text-gray-800 ml-1">{{ $order->user?->name ?? ($snap['name'] ?? 'Customer') }}</span>
                         </div>
                         @if(!empty($cleanPhone))
                             <a href="https://wa.me/{{ $cleanPhone }}?text={{ $waMsg }}" target="_blank"
@@ -185,11 +187,13 @@
                 <tbody class="divide-y divide-gray-100 bg-white">
                     @foreach($orders as $order)
                         @php
-                            $rawPhone = $order->address_snapshot['phone'] ?? $order->user->phone ?? '';
-                            $cleanPhone = preg_replace('/[^0-9]/', '', $rawPhone);
+                            $snap = is_array($order->address_snapshot) ? $order->address_snapshot : [];
+                            $rawPhone = $snap['phone'] ?? $order->user?->phone ?? '';
+                            $cleanPhone = preg_replace('/[^0-9]/', '', (string) $rawPhone);
                             if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
-                            $customerGreeting = $order->user->first_name ?? $order->user->name ?? 'Customer';
-                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$order->vendor->shop_name} regarding your Order #{$order->order_number}.");
+                            $customerGreeting = $order->user?->first_name ?? $order->user?->name ?? ($snap['name'] ?? 'Customer');
+                            $vendorShopName = $order->vendor?->shop_name ?? ($curVendor?->shop_name ?? 'our store');
+                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$vendorShopName} regarding your Order #{$order->order_number}.");
                         @endphp
                         <tr class="hover:bg-stone-50/60 transition-colors group">
                             <!-- Order & Date -->
@@ -204,7 +208,7 @@
                                     "></div>
                                     <div>
                                         <div class="font-mono font-bold text-gray-900 text-xs">{{ $order->order_number }}</div>
-                                        <div class="text-[11px] text-gray-400 mt-0.5">{{ $order->created_at->format('d M, Y · h:i A') }}</div>
+                                        <div class="text-[11px] text-gray-400 mt-0.5">{{ $order->created_at?->format('d M, Y · h:i A') ?? '—' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -213,10 +217,10 @@
                             <td class="whitespace-nowrap px-3 py-4">
                                 <div class="flex items-center gap-2">
                                     @if($order->payment_method === 'phonepe' && $order->settlement_status === 'pending')
-                                        <span class="text-xs font-bold text-gray-700">{{ substr($order->user->first_name ?? 'Customer', 0, 1) }}**** {{ substr($order->user->last_name ?? '', 0, 1) }}****</span>
+                                        <span class="text-xs font-bold text-gray-700">{{ substr($order->user?->first_name ?? ($snap['name'] ?? 'Customer'), 0, 1) }}**** {{ substr($order->user?->last_name ?? '', 0, 1) }}****</span>
                                         <span class="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-medium">🔒 Locked</span>
                                     @else
-                                        <span class="text-xs font-bold text-gray-900">{{ $order->user->name ?? 'Customer' }}</span>
+                                        <span class="text-xs font-bold text-gray-900">{{ $order->user?->name ?? ($snap['name'] ?? 'Customer') }}</span>
                                         @if(!empty($cleanPhone))
                                             <a href="https://wa.me/{{ $cleanPhone }}?text={{ $waMsg }}" target="_blank" 
                                                title="Chat with Customer on WhatsApp"
@@ -226,7 +230,7 @@
                                         @endif
                                     @endif
                                 </div>
-                                <div class="text-[11px] text-gray-400">{{ $order->address_snapshot['city'] ?? '' }} - {{ $order->address_snapshot['pincode'] ?? '' }}</div>
+                                <div class="text-[11px] text-gray-400">{{ $snap['city'] ?? '' }} - {{ $snap['pincode'] ?? '' }}</div>
                             </td>
 
                             <!-- Total & Payment -->
@@ -278,7 +282,7 @@
                                         </span>
                                         @if($order->deliveryAssignment && in_array($order->deliveryAssignment->status, ['assigned', 'accepted', 'picked_up']))
                                             <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                                🛵 Rider: {{ $order->deliveryAssignment->partner->name ?? 'Dispatched' }}
+                                                🛵 Rider: {{ $order->deliveryAssignment->deliveryPartner?->name ?? 'Dispatched' }}
                                             </span>
                                         @endif
                                     </div>

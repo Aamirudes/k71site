@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\DeliveryAssignment;
+use App\Models\DeliveryPartner;
 use App\Models\Order;
+use App\Models\OrderStatusLog;
 use App\Models\PaymentClaim;
 use App\Models\Role;
 use App\Models\User;
@@ -194,5 +197,112 @@ class VendorDashboardPaymentClaimsTest extends TestCase
             'order_id' => $order->id,
             'utr_number' => null,
         ]);
+    }
+
+    public function test_vendor_dashboard_chart_periods_and_delivery_fleet_do_not_error_or_leak_pii(): void
+    {
+        $buyer = User::factory()->create();
+        [$gadditoUser, $gadditoVendor] = $this->createVendor('gaddito', 'Gaddito', 'electronics', null);
+        $firstOrder = $this->createUpiOrder($buyer, $gadditoVendor, 'ORD-GAD-FLT-1', 'pending', 'pending');
+        $secondOrder = $this->createUpiOrder($buyer, $gadditoVendor, 'ORD-GAD-FLT-2', 'pending', 'pending');
+
+        $partner = DeliveryPartner::create([
+            'name' => 'Raju Rider',
+            'phone' => '9829098290',
+            'vehicle_type' => 'bike',
+            'vehicle_number' => 'RJ-01-AA-1111',
+            'aadhaar_number' => '999988887777',
+            'driving_license' => 'RJ0120200012345',
+            'city' => 'Kishangarh',
+            'state' => 'Rajasthan',
+            'current_latitude' => 26.5744,
+            'current_longitude' => 74.8654,
+            'is_online' => true,
+            'is_verified' => true,
+        ]);
+
+        // Distance at identical coords must never produce NAN
+        $this->assertFalse(is_nan($partner->distanceTo(26.5744, 74.8654)));
+
+        // Period 7_days must produce exactly 7 daily chart points in Carbon 3
+        $response = $this->actingAs($gadditoUser)->get(route('vendor.dashboard', ['period' => '7_days']));
+        $response->assertOk()
+            ->assertViewHas('chartData', fn ($chartData) => count($chartData) === 7)
+            ->assertSee('Raju Rider')
+            ->assertDontSee('999988887777')
+            ->assertDontSee('RJ0120200012345');
+
+        // Polling endpoint must report real total_amount (₹2,550.00), not ₹0.00
+        $poll = $this->actingAs($gadditoUser)
+            ->getJson(route('vendor.orders.check_new', ['last_order_id' => $firstOrder->id]));
+        $poll->assertOk()
+            ->assertJsonPath('has_new', true)
+            ->assertJsonPath('new_orders.0.order_number', $secondOrder->order_number)
+            ->assertJsonPath('new_orders.0.total', '₹2,550.00');
+    }
+
+    public function test_vendor_orders_pages_survive_deleted_buyer_and_active_delivery_assignment(): void
+    {
+        $buyer = User::factory()->create(['first_name' => 'Deleted', 'last_name' => 'Buyer']);
+        [$vendorUser, $vendor] = $this->createVendor('gaddito', 'Gaddito', 'food', null);
+        $order = $this->createUpiOrder($buyer, $vendor, 'ORD-GAD-DEL-1', 'pending', 'pending');
+
+        $partner = DeliveryPartner::create([
+            'name' => 'Vikram Pilot',
+            'phone' => '9876501234',
+            'vehicle_type' => 'scooter',
+            'vehicle_number' => 'RJ-21-CD-2026',
+            'aadhaar_number' => '111122223333',
+            'city' => 'Kishangarh',
+            'state' => 'Rajasthan',
+            'is_online' => true,
+            'is_verified' => true,
+        ]);
+
+        DeliveryAssignment::create([
+            'order_id' => $order->id,
+            'delivery_partner_id' => $partner->id,
+            'vendor_id' => $vendor->id,
+            'status' => 'assigned',
+            'pickup_distance_km' => 1.5,
+            'payout_amount' => 30.00,
+            'assigned_at' => now(),
+        ]);
+
+        // Soft-delete buyer so $order->user resolves to null
+        $buyer->delete();
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.orders.index'))
+            ->assertOk()
+            ->assertSee('ORD-GAD-DEL-1')
+            ->assertSee('Vikram Pilot');
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.orders.show', $order))
+            ->assertOk()
+            ->assertSee('Vikram Pilot')
+            ->assertSee('30.00');
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.orders.shipping_label', $order))
+            ->assertOk()
+            ->assertSee('ORD-GAD-DEL-1');
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.delivery_partners.index'))
+            ->assertOk()
+            ->assertSee('Vikram Pilot')
+            ->assertDontSee('111122223333');
+
+        // Approving payment records true pre-update from_status ('pending') -> to_status ('processing')
+        $this->actingAs($vendorUser)
+            ->post(route('vendor.orders.approve_payment', $order))
+            ->assertRedirect();
+
+        $log = OrderStatusLog::where('order_id', $order->id)->latest('id')->first();
+        $this->assertNotNull($log);
+        $this->assertSame('pending', $log->from_status);
+        $this->assertSame('processing', $log->to_status);
     }
 }

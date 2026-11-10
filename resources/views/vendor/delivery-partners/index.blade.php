@@ -205,7 +205,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach($partners as $dp)
                     @php
-                        $cleanPhone = preg_replace('/[^0-9]/', '', $dp->phone);
+                        $cleanPhone = preg_replace('/[^0-9]/', '', (string) ($dp->phone ?? ''));
                         if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
                     @endphp
                     <div class="p-5 rounded-2xl border border-zinc-200 bg-white hover:border-black transition-all flex flex-col justify-between gap-4 shadow-2xs">
@@ -242,7 +242,7 @@
                                     <div class="text-xs text-zinc-600 flex items-center gap-2 flex-wrap">
                                         <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?? 'RJ-21-SD-4091' }}</strong></span>
                                         <span>•</span>
-                                        <span>★ <strong class="text-black">{{ number_format($dp->rating, 2) }}</strong> ({{ $dp->total_deliveries }} completed)</span>
+                                        <span>★ <strong class="text-black">{{ number_format((float) ($dp->rating ?? 5.0), 2) }}</strong> ({{ (int) ($dp->total_deliveries ?? 0) }} completed)</span>
                                     </div>
 
                                     <div class="text-xs text-zinc-500 flex items-center gap-2 pt-0.5">
@@ -261,12 +261,14 @@
                         <!-- Action Bar: Call, WhatsApp & Assign -->
                         <div class="pt-3 border-t border-zinc-100 flex items-center justify-between gap-2 flex-wrap">
                             <div class="flex items-center gap-2">
+                                @if($dp->phone)
                                 <a href="tel:{{ $dp->phone }}" 
                                    class="bw-btn-white px-3 py-1.5 text-xs font-bold flex items-center gap-1.5"
                                    title="Call Delivery Boy">
                                     <span>📞 Call</span>
                                     <span class="font-mono text-[11px] text-zinc-500">{{ $dp->phone }}</span>
                                 </a>
+                                @endif
 
                                 @if($cleanPhone)
                                 <a href="https://wa.me/{{ $cleanPhone }}?text={{ rawurlencode('Namaste ' . $dp->name . '! I have an order ready for pickup at ' . $shopName) }}" 
@@ -280,7 +282,7 @@
 
                             @if($ordersCount > 0 && $dp->is_online && !$dp->is_busy)
                                 <button type="button" 
-                                        @click="assignPartner({{ Js::from($dp) }})"
+                                        @click="assignPartner({{ Js::from(['id' => $dp->id, 'name' => $dp->name, 'vehicle_number' => $dp->vehicle_number ?? 'Unregistered', 'distance_km' => $dp->distance_km]) }})"
                                         class="bw-btn-black px-4 py-1.5 text-xs font-black cursor-pointer shadow-xs">
                                     ⚡ Assign Order
                                 </button>

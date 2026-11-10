@@ -349,7 +349,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @forelse($deliveryPartners as $dp)
                 @php
-                    $cleanPhone = preg_replace('/[^0-9]/', '', $dp->phone);
+                    $cleanPhone = preg_replace('/[^0-9]/', '', (string) ($dp->phone ?? ''));
                     if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
                 @endphp
                 <div class="p-4 rounded-xl border border-zinc-200 bg-white hover:border-black transition-all flex flex-col justify-between gap-3">
@@ -385,7 +385,7 @@
                                 <div class="text-[11px] text-zinc-600 flex items-center gap-1.5 flex-wrap">
                                     <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?? 'RJ-21-SD-4091' }}</strong></span>
                                     <span>•</span>
-                                    <span>★ <strong class="text-black">{{ number_format($dp->rating, 2) }}</strong> ({{ $dp->total_deliveries }} done)</span>
+                                    <span>★ <strong class="text-black">{{ number_format((float) ($dp->rating ?? 5.0), 2) }}</strong> ({{ (int) ($dp->total_deliveries ?? 0) }} done)</span>
                                 </div>
                                 <div class="text-[11px] text-zinc-500 flex items-center gap-1.5">
                                     <span>📍 <strong>{{ $dp->distance_km }} km</strong> away</span>
@@ -398,10 +398,12 @@
 
                     <div class="pt-2.5 border-t border-zinc-100 flex items-center justify-between gap-2 flex-wrap">
                         <div class="flex items-center gap-1.5">
+                            @if($dp->phone)
                             <a href="tel:{{ $dp->phone }}" class="bw-btn-white px-2.5 py-1 text-xs font-bold flex items-center gap-1">
                                 <span>📞 Call</span>
                                 <span class="font-mono text-[10px] text-zinc-500">{{ $dp->phone }}</span>
                             </a>
+                            @endif
                             @if($cleanPhone)
                             <a href="https://wa.me/{{ $cleanPhone }}?text={{ rawurlencode('Namaste ' . $dp->name . '! Order ready for pickup at ' . $shopName) }}" 
                                target="_blank" 
@@ -414,7 +416,7 @@
 
                         @if($pendingDispatchOrders->isNotEmpty() && $dp->is_online && !$dp->is_busy)
                             <button type="button" 
-                                    @click="assignRiderToOrder({{ Js::from($dp) }})"
+                                    @click="assignRiderToOrder({{ Js::from(['id' => $dp->id, 'name' => $dp->name]) }})"
                                     class="bw-btn-black px-3 py-1 text-xs font-black cursor-pointer shadow-xs">
                                 ⚡ Assign Order
                             </button>

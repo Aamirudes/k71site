@@ -143,6 +143,10 @@ class DashboardController extends Controller
 
         // 6. Dynamic Chart Data based on period (STRICTLY realized paid revenue)
         $chartData = [];
+        $rangeDays = ($startDate && $endDate)
+            ? (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay())
+            : null;
+
         if ($period === 'today' || $period === 'yesterday') {
             // Group by 4-hour intervals
             for ($h = 0; $h < 24; $h += 4) {
@@ -159,25 +163,9 @@ class DashboardController extends Controller
                     'net' => round(($sum * 0.95) / 100, 2),
                 ];
             }
-        } elseif ($period === '7_days' || ($startDate && $endDate && $startDate->diffInDays($endDate) <= 14)) {
+        } elseif ($period === '7_days' || $period === 'this_month' || $period === 'last_month' || ($rangeDays !== null && $rangeDays <= 31)) {
             // Group by each day
-            $days = $startDate->diffInDays($endDate) + 1;
-            for ($d = 0; $d < $days; $d++) {
-                $currentDay = $startDate->copy()->addDays($d);
-                $sum = Order::where('vendor_id', $vendor->id)
-                    ->where('payment_status', 'paid')
-                    ->where('status', '!=', 'cancelled')
-                    ->whereDate('created_at', $currentDay->toDateString())
-                    ->sum(DB::raw('subtotal - discount_amount'));
-                $chartData[] = [
-                    'label' => $currentDay->format('d M'),
-                    'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * 0.95) / 100, 2),
-                ];
-            }
-        } elseif ($period === 'this_month' || $period === 'last_month' || ($startDate && $endDate && $startDate->diffInDays($endDate) <= 31)) {
-            // Group by day
-            $days = $startDate->diffInDays($endDate) + 1;
+            $days = ($rangeDays ?? 6) + 1;
             for ($d = 0; $d < $days; $d++) {
                 $currentDay = $startDate->copy()->addDays($d);
                 $sum = Order::where('vendor_id', $vendor->id)

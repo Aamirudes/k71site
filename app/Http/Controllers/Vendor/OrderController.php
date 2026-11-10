@@ -44,7 +44,7 @@ class OrderController extends Controller
             'cancelled' => Order::where('vendor_id', $vendor->id)->where('status', 'cancelled')->count(),
         ];
 
-        $query = Order::with(['user', 'items.product.images', 'items.variant', 'paymentClaim'])
+        $query = Order::with(['user', 'vendor', 'items.product.images', 'items.variant', 'paymentClaim', 'deliveryAssignment.deliveryPartner'])
             ->where('vendor_id', $vendor->id);
 
         // Apply status filter
@@ -99,7 +99,7 @@ class OrderController extends Controller
         }
 
         $order->refresh();
-        $order->load(['user', 'vendor.settings', 'items.product.images', 'items.variant.product', 'paymentClaim', 'shipment', 'statusLogs']);
+        $order->load(['user', 'vendor.settings', 'items.product.images', 'items.variant.product', 'paymentClaim', 'shipment', 'statusLogs', 'deliveryAssignment.deliveryPartner']);
 
         // Calculate package weight safely
         $totalWeightGrams = 0;
@@ -261,7 +261,7 @@ class OrderController extends Controller
 
             // Notify user
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
 
             return back()->with('success', 'Order status updated successfully.');
@@ -328,7 +328,7 @@ class OrderController extends Controller
 
             // Notify customer
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
 
             return back()->with('success', "🚀 1-Click Shipment Booked Successfully! Courier: {$shipment->courier_name} | AWB: {$shipment->awb_code}. Doorstep pickup scheduled.");
@@ -375,6 +375,7 @@ class OrderController extends Controller
         if ($order->payment_method === 'cod') {
             DB::beginTransaction();
             try {
+                $oldStatus = $order->status;
                 $order->update([
                     'status' => 'processing',
                     'packed_at' => $order->packed_at ?: now(),
@@ -383,7 +384,7 @@ class OrderController extends Controller
 
                 OrderStatusLog::create([
                     'order_id' => $order->id,
-                    'from_status' => $order->status,
+                    'from_status' => $oldStatus,
                     'to_status' => 'processing',
                     'actor_type' => 'vendor',
                     'actor_id' => auth()->id(),
@@ -395,7 +396,7 @@ class OrderController extends Controller
 
                 // Notify customer
                 try {
-                    $order->user->notify(new OrderStatusUpdated($order));
+                    $order->user?->notify(new OrderStatusUpdated($order));
                 } catch (\Throwable $e) {}
 
                 return back()->with('success', "🎉 COD Order Accepted! Please pack the garment for courier pickup. Cash will be collected upon delivery.");
@@ -427,6 +428,7 @@ class OrderController extends Controller
             // Disburse instant payout to vendor's UPI ID
             $payoutResult = $payoutService->disburseVendorPayout($order);
 
+            $oldStatus = $order->status;
             $order->update([
                 'status' => 'processing',
                 'packed_at' => $order->packed_at ?: now(),
@@ -435,7 +437,7 @@ class OrderController extends Controller
 
             OrderStatusLog::create([
                 'order_id' => $order->id,
-                'from_status' => $order->status,
+                'from_status' => $oldStatus,
                 'to_status' => 'processing',
                 'actor_type' => 'vendor',
                 'actor_id' => auth()->id(),
@@ -447,7 +449,7 @@ class OrderController extends Controller
 
             // Notify customer
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
 
             // Notify Admin with Vendor UPI and exact payout amount
@@ -486,6 +488,7 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            $oldStatus = $order->status;
             $order->update([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
@@ -501,7 +504,7 @@ class OrderController extends Controller
 
             OrderStatusLog::create([
                 'order_id' => $order->id,
-                'from_status' => $order->status,
+                'from_status' => $oldStatus,
                 'to_status' => 'cancelled',
                 'actor_type' => 'vendor',
                 'actor_id' => auth()->id(),
@@ -513,7 +516,7 @@ class OrderController extends Controller
 
             // Notify customer
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
 
             return back()->with('success', "Order #{$order->order_number} has been rejected. Stock restored to inventory and customer refund initiated.");
@@ -567,10 +570,10 @@ class OrderController extends Controller
             'new_orders' => $newOrders->map(fn($o) => [
                 'id' => $o->id,
                 'order_number' => $o->order_number,
-                'total' => '₹' . number_format($o->total / 100, 2),
+                'total' => '₹' . number_format(($o->total_amount ?? 0) / 100, 2),
                 'items_count' => $o->items->count(),
                 'customer' => $o->user?->name ?? 'Guest Buyer',
-                'created_at' => $o->created_at->diffForHumans(),
+                'created_at' => $o->created_at?->diffForHumans() ?? 'Just now',
                 'url' => route('vendor.orders.show', $o->id),
             ]),
             'latest_order_id' => $latestOrder?->id ?? 0,
@@ -596,15 +599,18 @@ class OrderController extends Controller
                 ]);
             }
 
+            $oldStatus = $order->status;
+            $newStatus = $oldStatus === 'pending' ? 'processing' : $oldStatus;
+
             $order->update([
                 'payment_status' => 'paid',
-                'status' => $order->status === 'pending' ? 'processing' : $order->status,
+                'status' => $newStatus,
             ]);
 
             \App\Models\OrderStatusLog::create([
                 'order_id' => $order->id,
-                'from_status' => $order->status,
-                'to_status' => $order->status,
+                'from_status' => $oldStatus,
+                'to_status' => $newStatus,
                 'actor_type' => 'vendor',
                 'actor_id' => auth()->id(),
                 'note' => "Payment verified and approved by vendor. Bank UTR/Proof confirmed.",
@@ -674,7 +680,7 @@ class OrderController extends Controller
 
         $vLat = 26.5744; // default Kishangarh, Rajasthan
         $vLng = 74.8654;
-        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+        if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
@@ -692,10 +698,10 @@ class OrderController extends Controller
                     'id' => $p->id,
                     'name' => $p->name,
                     'phone' => $p->phone,
-                    'vehicle_type' => ucfirst($p->vehicle_type),
+                    'vehicle_type' => ucfirst($p->vehicle_type ?? 'bike'),
                     'vehicle_number' => $p->vehicle_number ?: 'Unregistered',
-                    'rating' => number_format($p->rating, 1),
-                    'total_deliveries' => $p->total_deliveries,
+                    'rating' => number_format((float) ($p->rating ?? 5.0), 1),
+                    'total_deliveries' => (int) ($p->total_deliveries ?? 0),
                     'distance_km' => $dist,
                     'eta_minutes' => max(3, round($dist * 3.5)),
                     'base_delivery_fee' => (float) ($p->base_delivery_fee ?? 30.00),
@@ -711,7 +717,7 @@ class OrderController extends Controller
 
         return response()->json([
             'partners' => $partners,
-            'vendor_location' => $vendor->pickup_address['line_1'] ?? 'Kishangarh Hub',
+            'vendor_location' => is_array($vendor->pickup_address) ? ($vendor->pickup_address['line_1'] ?? 'Kishangarh Hub') : 'Kishangarh Hub',
         ]);
     }
 
@@ -730,7 +736,7 @@ class OrderController extends Controller
 
         $vLat = 27.0425;
         $vLng = 74.7214;
-        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+        if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
@@ -748,13 +754,14 @@ class OrderController extends Controller
             'assigned_at' => now(),
         ]);
 
+        $oldStatus = $order->status;
         $order->update([
             'status' => 'processing',
         ]);
 
         \App\Models\OrderStatusLog::create([
             'order_id' => $order->id,
-            'from_status' => $order->status,
+            'from_status' => $oldStatus,
             'to_status' => 'processing',
             'actor_type' => 'vendor',
             'actor_id' => auth()->id(),
@@ -763,6 +770,7 @@ class OrderController extends Controller
         ]);
 
         return response()->json([
+            'success' => true,
             'status' => 'success',
             'message' => "Order dispatched to {$partner->name}! Alert ring sent to delivery partner.",
             'partner' => [
@@ -785,7 +793,7 @@ class OrderController extends Controller
 
         $vLat = 27.0425;
         $vLng = 74.7214;
-        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+        if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }

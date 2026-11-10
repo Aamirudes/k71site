@@ -268,19 +268,23 @@
         </div>
 
         <!-- TO / DELIVERY ADDRESS (LARGEST FOR CARRIER SORTING) -->
+        @php
+            $shipSnap = is_array($order->address_snapshot) ? $order->address_snapshot : [];
+            $pickupAddr = is_array($vendor->pickup_address) ? $vendor->pickup_address : [];
+        @endphp
         <div class="address-box">
             <div class="address-title">SHIP TO (CONSIGNEE):</div>
             <div class="recipient-name">
-                {{ $order->user->name ?? 'Valued Customer' }}
+                {{ $order->user?->name ?? ($shipSnap['name'] ?? 'Valued Customer') }}
             </div>
-            @if($order->address_snapshot)
+            @if(!empty($shipSnap))
                 <div class="address-lines">
-                    {{ $order->address_snapshot['line_1'] ?? '' }}<br>
-                    {{ $order->address_snapshot['city'] ?? '' }}, {{ $order->address_snapshot['state'] ?? '' }}
+                    {{ $shipSnap['line_1'] ?? '' }}<br>
+                    {{ $shipSnap['city'] ?? '' }}, {{ $shipSnap['state'] ?? '' }}
                 </div>
                 <div class="pincode-highlight">
-                    <span class="pin-number">PIN: {{ $order->address_snapshot['pincode'] ?? '000000' }}</span>
-                    <span class="phone-number">TEL: {{ $order->address_snapshot['phone'] ?? $order->user->phone ?? 'N/A' }}</span>
+                    <span class="pin-number">PIN: {{ $shipSnap['pincode'] ?? '000000' }}</span>
+                    <span class="phone-number">TEL: {{ $shipSnap['phone'] ?? $order->user?->phone ?? 'N/A' }}</span>
                 </div>
             @else
                 <div class="address-lines">Standard Customer Delivery Address</div>
@@ -291,10 +295,10 @@
         <div class="sender-box">
             <div class="address-title">SHIPPER (RETURN ADDRESS):</div>
             <strong style="font-size: 11px;">{{ $vendor->shop_name }}</strong><br>
-            @if(!empty($vendor->pickup_address))
-                {{ $vendor->pickup_address['line_1'] ?? '' }}, 
-                {{ $vendor->pickup_address['city'] ?? '' }}, 
-                {{ $vendor->pickup_address['state'] ?? '' }} - {{ $vendor->pickup_address['pincode'] ?? '' }}<br>
+            @if(!empty($pickupAddr))
+                {{ $pickupAddr['line_1'] ?? '' }}, 
+                {{ $pickupAddr['city'] ?? '' }}, 
+                {{ $pickupAddr['state'] ?? '' }} - {{ $pickupAddr['pincode'] ?? '' }}<br>
             @endif
             Phone: {{ $vendor->contact_phone ?? 'Seller Support' }} | GSTIN: {{ $vendor->gstin ?? 'Unregistered' }}
         </div>
@@ -312,9 +316,9 @@
             <tbody>
                 @foreach($order->items as $item)
                     <tr>
-                        <td>{{ \Illuminate\Support\Str::limit($item->product->title ?? $item->snapshot['title'] ?? 'Product', 28) }}</td>
-                        <td>{{ $item->variant->sku ?? $item->snapshot['variant_sku'] ?? 'Standard' }}</td>
-                        <td style="text-align: center; font-size: 8.5px; color: #4b5563;">{{ $item->product->weight_grams ?? 250 }}g/pc</td>
+                        <td>{{ \Illuminate\Support\Str::limit($item->product?->title ?? $item->snapshot['title'] ?? 'Product', 28) }}</td>
+                        <td>{{ $item->variant?->sku ?? $item->snapshot['variant_sku'] ?? 'Standard' }}</td>
+                        <td style="text-align: center; font-size: 8.5px; color: #4b5563;">{{ $item->product?->weight_grams ?? 250 }}g/pc</td>
                         <td style="text-align: center; font-weight: 700;">{{ $item->quantity }}</td>
                     </tr>
                 @endforeach
@@ -323,12 +327,12 @@
 
         @php
             $actualConsignmentGrams = $order->items->sum(function($i) {
-                return ($i->product->weight_grams ?? 250) * $i->quantity;
+                return ($i->product?->weight_grams ?? 250) * $i->quantity;
             });
         @endphp
         <!-- FOOTER DETAILS -->
         <div class="footer-strip">
-            <span>Date: {{ $order->created_at->format('d/m/Y') }}</span>
+            <span>Date: {{ $order->created_at?->format('d/m/Y') ?? '—' }}</span>
             <span>Items: {{ $order->items->sum('quantity') }} pcs</span>
             <span>Total Weight: {{ $actualConsignmentGrams >= 1000 ? number_format($actualConsignmentGrams / 1000, 2) . ' kg' : $actualConsignmentGrams . 'g' }}</span>
         </div>

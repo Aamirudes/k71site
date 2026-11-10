@@ -93,25 +93,52 @@ if ($syncRequested) {
     }
     
     if ($downloadSuccess && class_exists('ZipArchive')) {
+        $removeTree = function (string $dir) use (&$removeTree): void {
+            if (!is_dir($dir)) {
+                return;
+            }
+            $it = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS),
+                RecursiveIteratorIterator::CHILD_FIRST
+            );
+            foreach ($it as $item) {
+                $path = $item->getPathname();
+                if ($item->isDir() && !$item->isLink()) {
+                    @rmdir($path);
+                } else {
+                    @unlink($path);
+                }
+            }
+            @rmdir($dir);
+        };
+
         $zip = new ZipArchive;
         if ($zip->open($tempZip) === TRUE) {
-            $extractDir = $baseDir . '/storage/github_extract';
-            if (!file_exists($extractDir)) {
+            $extractDir = $baseDir . '/storage/github_extract_' . time();
+            $removeTree($baseDir . '/storage/github_extract');
+            if (!is_dir($extractDir)) {
                 @mkdir($extractDir, 0775, true);
             }
             $zip->extractTo($extractDir);
             $zip->close();
             @unlink($tempZip);
-            
-            // Move folders: app, config, database, resources, routes, public (except storage and .env)
+
+            // Move folders: app, config, database, resources, routes, public (except public/storage and .env)
+            $expectedSubdir = $extractDir . '/k71site-main';
             $subdirs = glob($extractDir . '/*', GLOB_ONLYDIR);
-            $sourceDir = !empty($subdirs) ? $subdirs[0] : ($extractDir . '/k71site-main');
-            if (file_exists($sourceDir)) {
+            $sourceDir = is_dir($expectedSubdir) ? $expectedSubdir : (!empty($subdirs) ? $subdirs[0] : $expectedSubdir);
+            if (is_dir($sourceDir)) {
+                $copyErrors = [];
+                $copiedFiles = 0;
                 $copyDirs = ['app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'public', 'api', 'includes', 'sql'];
                 foreach ($copyDirs as $d) {
                     $src = $sourceDir . '/' . $d;
                     $dst = $baseDir . '/' . $d;
-                    if (file_exists($src)) {
+                    if (is_dir($src)) {
+                        if (!is_dir($dst) && !@mkdir($dst, 0775, true)) {
+                            $copyErrors[] = "mkdir failed: {$dst}";
+                            continue;
+                        }
                         $iterator = new RecursiveIteratorIterator(
                             new RecursiveDirectoryIterator($src, RecursiveDirectoryIterator::SKIP_DOTS),
                             RecursiveIteratorIterator::SELF_FIRST
@@ -120,45 +147,52 @@ if ($syncRequested) {
                             $subPath = $iterator->getSubPathName();
                             $targetPath = $dst . DIRECTORY_SEPARATOR . $subPath;
                             if ($item->isDir()) {
-                                if (!file_exists($targetPath)) {
-                                    @mkdir($targetPath, 0775, true);
+                                if (!is_dir($targetPath) && !@mkdir($targetPath, 0775, true)) {
+                                    $copyErrors[] = "mkdir failed: {$targetPath}";
                                 }
                             } else {
                                 // Do not overwrite .env or public/storage
-                                if ($subPath === '.env' || str_starts_with($subPath, 'storage')) {
+                                if ($subPath === '.env' || ($d === 'public' && str_starts_with(str_replace('\\', '/', $subPath), 'storage'))) {
                                     continue;
                                 }
-                                @copy($item, $targetPath);
+                                if (@copy($item, $targetPath)) {
+                                    $copiedFiles++;
+                                } else {
+                                    $copyErrors[] = "copy failed: {$targetPath}";
+                                }
                             }
                         }
                     }
                 }
-                
+
                 // Copy root standalone files if present (never copy root index.php into public/)
-                if (file_exists($sourceDir . '/index.php')) {
-                    @copy($sourceDir . '/index.php', $baseDir . '/index.php');
+                if (file_exists($sourceDir . '/index.php') && !@copy($sourceDir . '/index.php', $baseDir . '/index.php')) {
+                    $copyErrors[] = 'copy failed: index.php';
                 }
-                if (file_exists($sourceDir . '/public/index.php')) {
-                    @copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php');
+                if (file_exists($sourceDir . '/public/index.php') && !@copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php')) {
+                    $copyErrors[] = 'copy failed: public/index.php';
                 }
                 $standaloneFiles = ['deploy.php', 'messages.php', 'db.php', '.user.ini', '.htaccess'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
-                        @copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf);
-                        if (file_exists($baseDir . '/public')) {
-                            @copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf);
+                        if (!@copy($sourceDir . '/' . $sf, $baseDir . '/' . $sf)) {
+                            $copyErrors[] = "copy failed: {$sf}";
+                        }
+                        if (is_dir($baseDir . '/public') && !@copy($sourceDir . '/' . $sf, $baseDir . '/public/' . $sf)) {
+                            $copyErrors[] = "copy failed: public/{$sf}";
                         }
                     }
                 }
-                
+
                 // Mirror public/assets and public/build into document root for direct web server static delivery
                 $mirrorDirs = ['assets', 'build', 'images'];
                 foreach ($mirrorDirs as $md) {
                     $srcDir = $baseDir . '/public/' . $md;
                     $dstDir = $baseDir . '/' . $md;
-                    if (file_exists($srcDir) && $srcDir !== $dstDir) {
-                        if (!file_exists($dstDir)) {
-                            @mkdir($dstDir, 0775, true);
+                    if (is_dir($srcDir) && $srcDir !== $dstDir) {
+                        if (!is_dir($dstDir) && !@mkdir($dstDir, 0775, true)) {
+                            $copyErrors[] = "mkdir failed: {$dstDir}";
+                            continue;
                         }
                         $it = new RecursiveIteratorIterator(
                             new RecursiveDirectoryIterator($srcDir, RecursiveDirectoryIterator::SKIP_DOTS),
@@ -167,16 +201,31 @@ if ($syncRequested) {
                         foreach ($it as $item) {
                             $target = $dstDir . DIRECTORY_SEPARATOR . $it->getSubPathName();
                             if ($item->isDir()) {
-                                if (!file_exists($target)) @mkdir($target, 0775, true);
+                                if (!is_dir($target) && !@mkdir($target, 0775, true)) {
+                                    $copyErrors[] = "mkdir failed: {$target}";
+                                }
                             } else {
-                                @copy($item, $target);
+                                if (!@copy($item, $target)) {
+                                    $copyErrors[] = "copy failed: {$target}";
+                                }
                             }
                         }
                     }
                 }
 
-                echo "<pre class='success'>✅ Successfully updated all application code & chat files from GitHub main branch!</pre>";
+                $removeTree($extractDir);
+                if (function_exists('opcache_reset')) {
+                    @opcache_reset();
+                }
+
+                if (empty($copyErrors)) {
+                    echo "<pre class='success'>✅ Successfully updated {$copiedFiles} application files from GitHub main branch (OPcache reset)!</pre>";
+                } else {
+                    $preview = implode("\n", array_slice($copyErrors, 0, 15));
+                    echo "<pre class='error'>⚠️ Copied {$copiedFiles} files with " . count($copyErrors) . " error(s):\n" . htmlspecialchars($preview) . "</pre>";
+                }
             } else {
+                $removeTree($extractDir);
                 echo "<pre class='error'>Error: Archive directory structure not recognized.</pre>";
             }
         } else {

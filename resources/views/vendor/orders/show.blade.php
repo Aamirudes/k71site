@@ -5,7 +5,7 @@
                 <a href="{{ route('vendor.orders.index') }}" class="text-sm text-gray-500 hover:text-gray-700">← Back to Orders</a>
             </div>
             <h1 class="text-2xl font-serif font-bold text-gray-900">Order {{ $order->order_number }}</h1>
-            <p class="text-sm text-gray-500 mt-1">Placed on {{ $order->created_at->format('F d, Y h:i A') }}</p>
+            <p class="text-sm text-gray-500 mt-1">Placed on {{ $order->created_at?->format('F d, Y h:i A') ?? '—' }}</p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
             <a href="{{ route('vendor.orders.shipping_label', $order) }}" target="_blank" 
@@ -28,7 +28,7 @@
                 <h3 class="text-base font-bold text-red-900">Order Cancelled</h3>
                 <p class="text-sm text-red-700 mt-0.5">
                     Cancelled by <span class="font-semibold">{{ ucfirst($order->cancelled_by ?? 'vendor') }}</span> 
-                    on {{ $order->cancelled_at ? $order->cancelled_at->format('M d, Y h:i A') : $order->updated_at->format('M d, Y') }}.
+                    on {{ $order->cancelled_at ? $order->cancelled_at->format('M d, Y h:i A') : ($order->updated_at?->format('M d, Y') ?? '—') }}.
                 </p>
                 @if($order->cancel_reason)
                     <p class="text-sm text-red-800 mt-2 bg-red-100/70 px-3 py-1.5 rounded-lg inline-block">
@@ -1042,12 +1042,12 @@
                             .then(r => r.json())
                             .then(d => {
                                 this.dispatching = false;
-                                if (d.success) {
+                                if (d.success || d.status === 'success') {
                                     this.dispatchedSuccess = true;
                                     this.dispatchedMsg = d.message;
                                     setTimeout(() => window.location.reload(), 1200);
                                 } else {
-                                    alert(d.message || 'Error dispatching rider');
+                                    alert(d.error || d.message || 'Error dispatching rider');
                                 }
                             })
                             .catch(() => {
@@ -1072,6 +1072,7 @@
 
                     <div class="p-4 text-xs space-y-4">
                         @if($activeAssignment && in_array($activeAssignment->status, ['assigned', 'accepted', 'picked_up', 'delivered']))
+                            @php $assignedPartner = $activeAssignment->deliveryPartner; @endphp
                             <!-- Active Dispatched Rider Info -->
                             <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
                                 <div class="flex items-center justify-between">
@@ -1079,34 +1080,34 @@
                                         Rider Dispatched ({{ ucfirst(str_replace('_', ' ', $activeAssignment->status)) }})
                                     </span>
                                     <span class="text-xs font-black text-emerald-900 font-mono">
-                                        Payout: ₹{{ number_format(($activeAssignment->payout_amount ?? 0) / 100, 2) }}
+                                        Payout: ₹{{ number_format((float) ($activeAssignment->payout_amount ?? 0), 2) }}
                                     </span>
                                 </div>
                                 
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                                        {{ substr($activeAssignment->partner->name ?? 'R', 0, 1) }}
+                                        {{ substr($assignedPartner?->name ?? 'R', 0, 1) }}
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-black text-slate-900 text-sm truncate">{{ $activeAssignment->partner->name ?? 'Delivery Partner' }}</p>
+                                        <p class="font-black text-slate-900 text-sm truncate">{{ $assignedPartner?->name ?? 'Delivery Partner' }}</p>
                                         <p class="text-[11px] text-slate-600">
-                                            {{ ucfirst($activeAssignment->partner->vehicle_type ?? 'Motorcycle') }} 
-                                            @if($activeAssignment->partner->vehicle_number)
-                                                • <span class="font-mono font-bold">{{ $activeAssignment->partner->vehicle_number }}</span>
+                                            {{ ucfirst($assignedPartner?->vehicle_type ?? 'Motorcycle') }} 
+                                            @if($assignedPartner?->vehicle_number)
+                                                • <span class="font-mono font-bold">{{ $assignedPartner->vehicle_number }}</span>
                                             @endif
                                         </p>
                                     </div>
                                 </div>
 
-                                @if($activeAssignment->partner?->phone)
+                                @if($assignedPartner?->phone)
                                     @php
-                                        $riderPhone = preg_replace('/[^0-9]/', '', $activeAssignment->partner->phone);
+                                        $riderPhone = preg_replace('/[^0-9]/', '', (string) $assignedPartner->phone);
                                         $riderWa = strlen($riderPhone) === 10 ? '91' . $riderPhone : $riderPhone;
                                         $orderNum = $order->order_number;
-                                        $waText = rawurlencode("Namaste {$activeAssignment->partner->name}! This is {$order->vendor?->shop_name} regarding Order #{$orderNum}. The food packet is packed and ready for pickup!");
+                                        $waText = rawurlencode("Namaste {$assignedPartner->name}! This is {$order->vendor?->shop_name} regarding Order #{$orderNum}. The food packet is packed and ready for pickup!");
                                     @endphp
                                     <div class="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200">
-                                        <a href="tel:{{ $activeAssignment->partner->phone }}" 
+                                        <a href="tel:{{ $assignedPartner->phone }}" 
                                            class="py-2 px-3 rounded-xl bg-black hover:bg-zinc-800 text-white font-bold text-center flex items-center justify-center gap-1.5 transition cursor-pointer">
                                             <span>📞 Call Rider</span>
                                         </a>

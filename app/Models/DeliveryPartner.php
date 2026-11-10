@@ -49,16 +49,17 @@ class DeliveryPartner extends Model
         }
 
         $earthRadius = 6371; // km
-        $latFrom = deg2rad($this->current_latitude);
-        $lonFrom = deg2rad($this->current_longitude);
-        $latTo = deg2rad($latitude);
-        $lonTo = deg2rad($longitude);
+        $latFrom = deg2rad((float) $this->current_latitude);
+        $lonFrom = deg2rad((float) $this->current_longitude);
+        $latTo = deg2rad((float) $latitude);
+        $lonTo = deg2rad((float) $longitude);
 
         $latDelta = $latTo - $latFrom;
         $lonDelta = $lonTo - $lonFrom;
 
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
+        $haversine = pow(sin($latDelta / 2), 2) +
+            cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2);
+        $angle = 2 * asin(min(1.0, sqrt(max(0.0, $haversine))));
 
         return round($angle * $earthRadius, 2);
     }
