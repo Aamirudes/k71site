@@ -26,6 +26,12 @@
     RewriteRule ^ index.php [L]
 </IfModule>
 
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|mjs|ico|jpe?g|png|gif|webp|svg|woff2?|ttf|otf|eot)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_security.c>
     SecFilterEngine Off
     SecFilterScanPOST Off
