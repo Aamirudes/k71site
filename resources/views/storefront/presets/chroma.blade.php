@@ -54,7 +54,7 @@
                     </svg>
                 </button>
 
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
+                <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="p-1 rounded-xl border-2 border-black bg-yellow-300 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                             <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-8 sm:h-10 w-auto object-contain">
@@ -77,12 +77,12 @@
 
             <!-- Center: Graphic Category Pills (Desktop) -->
             <nav class="hidden md:flex items-center gap-3">
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border-2 border-black transition {{ !$currentCategory ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(37,99,235,1)]' : 'bg-white hover:bg-zinc-100 text-black' }}">
                     ALL RELEASES
                 </a>
                 @foreach($vendorCategories->take(3) as $c)
-                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                        class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider border-2 border-black transition {{ $currentCategory === $c->slug ? 'bg-black text-white shadow-[2px_2px_0px_0px_rgba(37,99,235,1)]' : 'bg-white hover:bg-zinc-100 text-black' }}">
                         {{ $c->name }}
                     </a>
@@ -204,12 +204,12 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                        class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 border-black transition {{ !$currentCategory ? 'bg-blue-600 text-white' : 'bg-slate-100 text-black hover:bg-slate-200' }}">
                         ALL ({{ $products->total() ?? $products->count() }})
                     </a>
                     @foreach($vendorCategories as $c)
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                            class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase border-2 border-black transition {{ $currentCategory === $c->slug ? 'bg-blue-600 text-white' : 'bg-slate-100 text-black hover:bg-slate-200' }}">
                             {{ $c->name }} ({{ $c->products_count }})
                         </a>
@@ -222,7 +222,7 @@
                 <div class="py-16 text-center border-2 border-black rounded-3xl bg-white p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-3">
                     <span class="text-3xl font-black block">📦</span>
                     <h3 class="text-base font-black uppercase">No active items in this category</h3>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="inline-block px-5 py-2.5 rounded-xl bg-black text-white font-mono font-bold text-xs uppercase">
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" class="inline-block px-5 py-2.5 rounded-xl bg-black text-white font-mono font-bold text-xs uppercase">
                         Reset Category Filter
                     </a>
                 </div>

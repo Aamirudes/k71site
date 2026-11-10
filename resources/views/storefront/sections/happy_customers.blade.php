@@ -1,73 +1,19 @@
 @php
     $secId = 'happy_customers';
     $hcConfig = $config['happy_customers'] ?? [];
-    $isEnabled = isset($hcConfig['enabled']) ? (bool)$hcConfig['enabled'] : true;
+    $isEnabled = isset($hcConfig['enabled']) ? filter_var($hcConfig['enabled'], FILTER_VALIDATE_BOOLEAN) : true;
     
     $title = $hcConfig['title'] ?? 'Happy Customers & Real Stories';
     $subtitle = $hcConfig['subtitle'] ?? 'Real customer unboxings, doorstep deliveries, and verified reviews';
-    
-    $storeName = $config['brand']['store_name'] ?? $vendor->shop_name;
-    $defaultItems = [
-        [
-            'type' => 'image',
-            'media_url' => 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
-            'customer_name' => 'Ananya Sharma',
-            'location' => 'Mumbai, MH',
-            'rating' => 5,
-            'comment' => "Received my order in pristine packaging! The craftsmanship exceeds expectations. Will definitely order again from {$storeName}!",
-            'product_name' => 'Verified Studio Purchase',
-            'verified' => true,
-        ],
-        [
-            'type' => 'video',
-            'media_url' => 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-a-traditional-dress-smiling-41229-large.mp4',
-            'thumb_url' => 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
-            'customer_name' => 'Meera & Rajesh Patel',
-            'location' => 'Ahmedabad, GJ',
-            'rating' => 5,
-            'comment' => "Live unboxing was unbelievable! Authentic quality, insured transit arrived within 48 hours. Five stars all the way!",
-            'product_name' => 'Express Courier Dispatch',
-            'verified' => true,
-        ],
-        [
-            'type' => 'image',
-            'media_url' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80',
-            'customer_name' => 'Vikram Malhotra',
-            'location' => 'New Delhi, DL',
-            'rating' => 5,
-            'comment' => "Direct workshop provenance makes all the difference. Escrow protection gives absolute peace of mind.",
-            'product_name' => 'Authentic Batch Order',
-            'verified' => true,
-        ],
-        [
-            'type' => 'video',
-            'media_url' => 'https://assets.mixkit.co/videos/preview/mixkit-woman-showing-a-new-dress-in-a-mirror-41474-large.mp4',
-            'thumb_url' => 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
-            'customer_name' => 'Sneha Kulkarni',
-            'location' => 'Pune, MH',
-            'rating' => 5,
-            'comment' => "Customer support on WhatsApp helped with custom sizing right away. Perfect fit and luxury feel!",
-            'product_name' => 'Verified Customer Delivery',
-            'verified' => true,
-        ],
-        [
-            'type' => 'image',
-            'media_url' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
-            'customer_name' => 'Arjun Reddy',
-            'location' => 'Hyderabad, TS',
-            'rating' => 5,
-            'comment' => "Top notch experience. Tracking updates at every milestone. 100% genuine products directly from maker.",
-            'product_name' => 'Curated Workshop Piece',
-            'verified' => true,
-        ],
-    ];
 
+    // Show ONLY merchant-added real customer stories (zero seeded/fake spotlight entries)
     $rawItems = $hcConfig['items'] ?? null;
-    $items = (is_array($rawItems) && count($rawItems) > 0) ? $rawItems : $defaultItems;
-    $isEnabled = !isset($hcConfig['enabled']) || (bool)$hcConfig['enabled'] || $hcConfig['enabled'] === '1' || $hcConfig['enabled'] === 1;
+    $items = is_array($rawItems)
+        ? array_values(array_filter($rawItems, fn ($item) => is_array($item) && !empty($item['media_url'])))
+        : [];
 @endphp
 
-@if($isEnabled && !empty($items))
+@if($isEnabled && count($items) > 0)
 <section id="{{ $secId }}" 
          class="py-10 sm:py-16 border-b border-black/5 dark:border-white/10 relative z-10"
          x-data="{
@@ -78,6 +24,28 @@
                 $refs.hcTrack.scrollBy({ left: $refs.hcTrack.offsetWidth * 0.75, behavior: 'smooth' });
             }
          }">
+    <style>
+        #happy_customers .hc-card {
+            width: 38vw;
+            min-width: 138px;
+            max-width: 185px;
+            aspect-ratio: 9 / 16;
+            flex-shrink: 0;
+        }
+        @media (min-width: 640px) {
+            #happy_customers .hc-card {
+                width: 10.5rem;
+                min-width: 10.5rem;
+                max-width: none;
+            }
+        }
+        @media (min-width: 768px) {
+            #happy_customers .hc-card {
+                width: 11.5rem;
+                min-width: 11.5rem;
+            }
+        }
+    </style>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Header with Slider Arrow Controls -->
@@ -114,7 +82,7 @@
             </div>
         </div>
 
-        <!-- Horizontal Slider: Exactly 2.5 Compact Shorts-Style Cards Per View on Mobile (w-[36vw]), Multi-Card on Desktop -->
+        <!-- Horizontal Slider: 2.4+ Cards Per View on Mobile, Multi-Card on Desktop -->
         <div x-ref="hcTrack"
              class="flex items-center gap-2.5 sm:gap-4 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             @foreach($items as $idx => $item)
@@ -123,9 +91,6 @@
                     $mediaUrl = $item['media_url'] ?? '';
                     if (!empty($mediaUrl) && !str_starts_with($mediaUrl, 'http') && !str_starts_with($mediaUrl, '/')) {
                         $mediaUrl = '/storage/' . $mediaUrl;
-                    }
-                    if (empty($mediaUrl)) {
-                        $mediaUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
                     }
                     $thumbUrl = $item['thumb_url'] ?? $mediaUrl;
                     if (!empty($thumbUrl) && !str_starts_with($thumbUrl, 'http') && !str_starts_with($thumbUrl, '/')) {
@@ -136,8 +101,8 @@
                     }
                     $rating = (int)($item['rating'] ?? 5);
                 @endphp
-                {{-- Compact 9:16 Story Card (Identical form factor to Shorts Cards, 2.5/view on mobile) --}}
-                <div class="snap-start shrink-0 w-[36vw] sm:w-40 md:w-44 aspect-[9/16] rounded-2xl overflow-hidden relative bg-black group border border-black/10 dark:border-white/20 shadow-md transition-all duration-300 hover:scale-[1.02]">
+                {{-- Compact 9:16 Story Card --}}
+                <div class="hc-card snap-start shrink-0 w-[38vw] sm:w-40 md:w-44 aspect-[9/16] rounded-2xl overflow-hidden relative bg-black group border border-black/10 dark:border-white/20 shadow-md transition-all duration-300 hover:scale-[1.02]">
                     
                     <!-- Background Media (Photo or Video Loop) -->
                     @if($isVid)
@@ -157,7 +122,8 @@
                     @else
                         <img src="{{ $thumbUrl }}" 
                              alt="{{ $item['customer_name'] ?? 'Happy Customer' }}" 
-                             loading="lazy"
+                             loading="eager"
+                             decoding="async"
                              class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[8px] font-mono font-bold flex items-center gap-1 border border-white/20 z-10">
                             <span>📸 PHOTO</span>
@@ -183,15 +149,15 @@
 
                         <!-- Micro Customer Quote (2-line limit) -->
                         <p class="text-[9.5px] sm:text-[10.5px] font-medium leading-tight line-clamp-2 text-white/95 drop-shadow-sm mb-1.5">
-                            "{{ $item['comment'] ?? 'Wonderful experience and genuine product!' }}"
+                            "{{ $item['comment'] ?? 'Verified customer experience!' }}"
                         </p>
 
                         <!-- Customer Name & City -->
-                        <div class="flex items-center justify-between text-[9px] text-white/80 border-t border-white/15 pt-1">
-                            <span class="font-bold truncate max-w-[80%] text-white">
+                        <div class="flex items-center justify-between gap-1 text-[9px] text-white/80 border-t border-white/15 pt-1">
+                            <span class="font-bold min-w-0 flex-1 truncate text-white">
                                 {{ $item['customer_name'] ?? 'Verified Customer' }}
                             </span>
-                            <span class="text-[8px] text-zinc-300 font-mono">
+                            <span class="shrink-0 text-[8px] text-zinc-300 font-mono">
                                 {{ $item['location'] ?? 'IN' }}
                             </span>
                         </div>

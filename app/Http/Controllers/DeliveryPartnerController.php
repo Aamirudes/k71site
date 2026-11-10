@@ -22,10 +22,12 @@ class DeliveryPartnerController extends Controller
      */
     public function register(Request $request)
     {
+        $needsCredentials = !auth()->check() || auth()->user()->isAdmin() || auth()->user()->isVendor();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'phone' => ['required', 'string', 'max:25'],
-            'email' => ['nullable', 'email', 'max:100'],
+            'email' => [$needsCredentials ? 'required' : 'nullable', 'email', 'max:100'],
             'password' => ['nullable', 'string', 'min:6'],
             'vehicle_type' => ['required', 'string', 'in:bike,scooter,ev,bicycle'],
             'vehicle_number' => ['nullable', 'string', 'max:20'],
@@ -47,7 +49,10 @@ class DeliveryPartnerController extends Controller
 
             // Resolve or create dedicated fleet rider account
             $user = null;
-            $fleetRole = \App\Models\Role::firstOrCreate(['name' => 'fleet'], ['guard_name' => 'web']);
+            $fleetRole = \App\Models\Role::firstOrCreate(
+                ['name' => 'fleet'],
+                ['display_name' => 'Fleet Partner', 'guard_name' => 'web']
+            );
 
             if (!empty($validated['email'])) {
                 $normalizedEmail = strtolower(trim($validated['email']));
@@ -57,7 +62,19 @@ class DeliveryPartnerController extends Controller
                         'email' => 'This email address is associated with a deactivated account. Please use another email.',
                     ]);
                 }
-                if (!$user) {
+                if ($user) {
+                    if ($user->isAdmin() || $user->isVendor() || $user->vendor()->exists()) {
+                        return back()->withInput()->withErrors([
+                            'email' => 'This email belongs to a store or admin account. Please register with a separate email for your Fleet account.',
+                        ]);
+                    }
+                    $rawPassword = (string) $request->input('password', '');
+                    if ($rawPassword === '' || !\Illuminate\Support\Facades\Hash::check($rawPassword, $user->password)) {
+                        return back()->withInput()->withErrors([
+                            'email' => 'An account with this email already exists. Sign in at /login or enter the matching password.',
+                        ]);
+                    }
+                } else {
                     $nameParts = explode(' ', trim($validated['name']), 2);
                     $firstName = \Illuminate\Support\Str::limit(trim($nameParts[0] ?? '') ?: 'Rider', 50, '');
                     $lastName = \Illuminate\Support\Str::limit(trim($nameParts[1] ?? ''), 50, '');
@@ -67,41 +84,46 @@ class DeliveryPartnerController extends Controller
                         $riderUsername = 'r_' . substr(md5($normalizedEmail . \Illuminate\Support\Str::random(6)), 0, 14);
                     }
 
+                    $rawNewPassword = (string) $request->input('password', '');
                     $user = \App\Models\User::create([
                         'first_name' => $firstName,
                         'last_name' => $lastName,
                         'username' => $riderUsername,
                         'email' => $normalizedEmail,
-                        'password' => \Illuminate\Support\Facades\Hash::make($request->input('password', \Illuminate\Support\Str::random(16))),
+                        'password' => \Illuminate\Support\Facades\Hash::make($rawNewPassword !== '' ? $rawNewPassword : \Illuminate\Support\Str::random(24)),
                         'phone' => $userPhone ?: null,
                         'email_verified_at' => now(),
                         'is_blocked' => false,
                     ]);
                 }
-                // Attach fleet role to this user account (distinct from vendor/customer/admin)
+
                 $user->roles()->syncWithoutDetaching([$fleetRole->id]);
                 $user->unsetRelation('roles');
-                \Illuminate\Support\Facades\Auth::login($user);
+                \Illuminate\Support\Facades\Auth::login($user, true);
             } elseif (auth()->check()) {
                 $currentUser = auth()->user();
-                // Never hijack an admin or vendor account into a fleet account!
-                if (!$currentUser->isAdmin() && !$currentUser->isVendor()) {
-                    $user = $currentUser;
-                    $user->roles()->syncWithoutDetaching([$fleetRole->id]);
-                    $user->unsetRelation('roles');
+                if ($currentUser->isAdmin() || $currentUser->isVendor()) {
+                    return back()->withInput()->withErrors([
+                        'email' => 'Store and Admin accounts must register a separate email for a Fleet Partner profile.',
+                    ]);
                 }
+                $user = $currentUser;
+                $user->roles()->syncWithoutDetaching([$fleetRole->id]);
+                $user->unsetRelation('roles');
             }
 
-            $partner = null;
-            if ($user) {
-                $partner = DeliveryPartner::where('user_id', $user->id)->first();
+            if (!$user) {
+                return back()->withInput()->withErrors([
+                    'email' => 'Please provide a valid email and password to create your Fleet account.',
+                ]);
             }
-            if (!$partner) {
-                $partner = DeliveryPartner::where('phone', $validated['phone'])->first();
-            }
+
+            $partner = DeliveryPartner::where('user_id', $user->id)->first();
 
             $partnerData = array_merge($validated, [
-                'user_id' => $user?->id,
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'vehicle_number' => !empty($validated['vehicle_number']) ? strtoupper(trim($validated['vehicle_number'])) : null,
                 'is_online' => true,
                 'is_verified' => true,
                 'last_active_at' => now(),
@@ -109,6 +131,8 @@ class DeliveryPartnerController extends Controller
             unset($partnerData['password']);
 
             if (!$partner) {
+                $partnerData['rating'] = 5.0;
+                $partnerData['total_deliveries'] = 0;
                 $partner = DeliveryPartner::create($partnerData);
             } else {
                 $partner->update($partnerData);
@@ -116,7 +140,7 @@ class DeliveryPartnerController extends Controller
 
             session(['delivery_partner_id' => $partner->id]);
 
-            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! Your Fleet Delivery Boy account is now active.');
+            return redirect()->route('delivery.dashboard')->with('success', 'Welcome to K71 Hyperlocal Fleet! Your Fleet Partner account is now active.');
         } catch (\Throwable $e) {
             \Log::error('Delivery partner registration error: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Registration encountered an issue: ' . $e->getMessage());
@@ -124,45 +148,34 @@ class DeliveryPartnerController extends Controller
     }
 
     /**
-     * Get active partner from session or auth safely (never hijacking admin or vendor)
+     * Get active partner from session or auth safely (never hijacking admin or vendor, never inventing fake pilots)
      */
     protected function getActivePartner()
     {
         $partnerId = session('delivery_partner_id');
         if ($partnerId) {
-            $partner = DeliveryPartner::find($partnerId);
-            if ($partner) return $partner;
+            $partner = DeliveryPartner::realFleet()->find($partnerId);
+            if ($partner) {
+                if (auth()->check() && !auth()->user()->isAdmin() && $partner->user_id !== auth()->id()) {
+                    session()->forget('delivery_partner_id');
+                } else {
+                    return $partner;
+                }
+            } else {
+                session()->forget('delivery_partner_id');
+            }
         }
 
         if (auth()->check()) {
             $user = auth()->user();
 
-            // 1. Admin can inspect the fleet dashboard in administrative oversight mode
+            // 1. Admin can inspect the fleet dashboard in administrative oversight mode (real registered riders only)
             if ($user->isAdmin()) {
-                // Return an active fleet pilot without tying the record to the admin user
-                $partner = DeliveryPartner::where('user_id', '!=', $user->id)->first() ?? DeliveryPartner::first();
-                if (!$partner) {
-                    $partner = DeliveryPartner::create([
-                        'name' => 'K71 Fleet Pilot',
-                        'phone' => '9829012345',
-                        'vehicle_type' => 'bike',
-                        'vehicle_number' => 'RJ-01-AB-1234',
-                        'city' => 'Kishangarh',
-                        'state' => 'Rajasthan',
-                        'is_online' => true,
-                        'is_verified' => true,
-                        'current_latitude' => 26.5744,
-                        'current_longitude' => 74.8654,
-                        'payout_upi_id' => 'k71fleet@okhdfcbank',
-                        'total_deliveries' => 25,
-                        'rating' => 4.95,
-                    ]);
-                }
-                return $partner;
+                return DeliveryPartner::realFleet()->latest('id')->first();
             }
 
-            // 2. Dedicated Fleet Delivery Boy user account
-            if ($user->hasRole('fleet')) {
+            // 2. Dedicated Fleet Partner user account
+            if ($user->isFleet()) {
                 $partner = DeliveryPartner::where('user_id', $user->id)->first();
                 if ($partner) {
                     session(['delivery_partner_id' => $partner->id]);
@@ -183,9 +196,23 @@ class DeliveryPartnerController extends Controller
     public function dashboard()
     {
         $partner = $this->getActivePartner();
+        $adminOversight = auth()->check() && auth()->user()->isAdmin();
+        $fleetRidersCount = DeliveryPartner::realFleet()->count();
+
         if (!$partner) {
+            if ($adminOversight) {
+                return view('delivery.dashboard', [
+                    'partner' => null,
+                    'adminOversight' => true,
+                    'fleetRidersCount' => $fleetRidersCount,
+                    'activeAssignments' => collect(),
+                    'completedAssignments' => collect(),
+                    'totalEarningsToday' => 0,
+                ]);
+            }
+
             return redirect()->route('delivery.onboarding')
-                ->with('error', 'You must register or log into your dedicated Fleet Delivery Boy account to access the pilot dashboard.');
+                ->with('error', 'Please register or sign in with your Fleet Partner account to access the Fleet Dashboard.');
         }
 
         $activeAssignments = DeliveryAssignment::with(['order', 'vendor'])
@@ -206,7 +233,7 @@ class DeliveryPartnerController extends Controller
             ->whereDate('delivered_at', today())
             ->sum('payout_amount');
 
-        return view('delivery.dashboard', compact('partner', 'activeAssignments', 'completedAssignments', 'totalEarningsToday'));
+        return view('delivery.dashboard', compact('partner', 'adminOversight', 'fleetRidersCount', 'activeAssignments', 'completedAssignments', 'totalEarningsToday'));
     }
 
     /**
@@ -296,9 +323,9 @@ class DeliveryPartnerController extends Controller
                 'order_id' => $newAssigned->order_id,
                 'order_number' => $newAssigned->order ? $newAssigned->order->order_number : ('#ORD-' . $newAssigned->order_id),
                 'vendor_name' => $newAssigned->vendor ? $newAssigned->vendor->shop_name : 'K71 Merchant',
-                'pickup_address' => $newAssigned->vendor ? ($newAssigned->vendor->pickup_address['line_1'] ?? 'Kishangarh Center') : 'Vendor Store',
+                'pickup_address' => $newAssigned->vendor ? ($newAssigned->vendor->pickup_address['line_1'] ?? $newAssigned->vendor->shop_name) : 'Vendor Store',
                 'payout' => '₹' . number_format($newAssigned->payout_amount, 2),
-                'distance' => $newAssigned->pickup_distance_km ? ($newAssigned->pickup_distance_km . ' km') : '0.8 km',
+                'distance' => $newAssigned->pickup_distance_km !== null ? ($newAssigned->pickup_distance_km . ' km') : 'Distance pending',
             ] : null,
         ]);
     }

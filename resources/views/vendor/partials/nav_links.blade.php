@@ -142,7 +142,7 @@
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.design.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">
                     <span class="text-base">🎨</span>
-                    <span>Store Design & Presets</span>
+                    <span>Store Design &amp; Presets</span>
                 </span>
                 <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                     2.0

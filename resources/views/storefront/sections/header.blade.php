@@ -76,7 +76,7 @@
                     </button>
 
                     <!-- Store Logo & Name -->
-                    <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-2 sm:gap-3 group min-w-0">
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-2 sm:gap-3 group min-w-0">
                         @if(!empty($storeLogo))
                             <div class="relative p-0.5 sm:p-1 rounded-xl sm:rounded-2xl transition-all duration-300 group-hover:scale-105 shrink-0"
                                  :class="{
@@ -122,7 +122,7 @@
 
                 <!-- CENTER: Desktop Search Bar (Hidden on Mobile, Visible >= 768px) -->
                 <div class="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md mx-3 lg:mx-6 min-w-0">
-                    <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="w-full relative">
+                    <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="w-full relative">
                         <input type="text" 
                                name="search" 
                                value="{{ $searchQuery }}" 
@@ -204,7 +204,7 @@
                  x-transition:leave-start="opacity-100 translate-y-0 scale-100"
                  x-transition:leave-end="opacity-0 -translate-y-2 scale-98"
                  class="md:hidden px-3 pb-3 pt-1">
-                <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative flex items-center">
+                <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="relative flex items-center">
                     <input type="text" 
                            name="search" 
                            x-ref="mobileSearchInput"
@@ -292,7 +292,7 @@
 
                     <!-- In-Drawer Quick Search Form -->
                     <div>
-                        <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative">
+                        <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="relative">
                             <input type="text" 
                                    name="search" 
                                    value="{{ $searchQuery }}" 
@@ -330,7 +330,7 @@
                             Boutique Departments
                         </span>
 
-                        <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                            @click="mobileMenuOpen = false"
                            class="flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
                             <span class="flex items-center gap-2.5">
@@ -343,7 +343,7 @@
                         </a>
 
                         @foreach($vendorCategories as $cat)
-                            <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                            <a href="{{ $vendor->storefrontUrl(['category' => $cat->slug], 'catalog') }}" 
                                @click="mobileMenuOpen = false"
                                class="flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
                                 <span>{{ $cat->name }}</span>
@@ -356,17 +356,17 @@
 
                     <!-- Direct Store Anchor Jumps -->
                     <div class="pt-2 space-y-1 border-t border-zinc-100 dark:border-zinc-800">
-                        <a href="{{ route('storefront.show', $vendor->slug) }}#reviews" 
+                        <a href="{{ $vendor->storefrontUrl([], 'reviews') }}" 
                            @click="mobileMenuOpen = false"
                            class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition">
                             <span>★</span> Genuine Customer Reviews
                         </a>
-                        <a href="{{ route('storefront.show', $vendor->slug) }}#happy_customers" 
+                        <a href="{{ $vendor->storefrontUrl([], 'happy_customers') }}" 
                            @click="mobileMenuOpen = false"
                            class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition">
                             <span>📸</span> Happy Customer Stories
                         </a>
-                        <a href="{{ route('storefront.show', $vendor->slug) }}#trust" 
+                        <a href="{{ $vendor->storefrontUrl([], 'trust') }}" 
                            @click="mobileMenuOpen = false"
                            class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:hover:text-white transition">
                             <span>◈</span> Verified Workshop &amp; Dispatch Guarantees

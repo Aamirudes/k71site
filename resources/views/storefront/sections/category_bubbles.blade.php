@@ -14,7 +14,7 @@
             </h2>
 
             @if($activeCat)
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="text-xs font-bold px-3 py-1 rounded-full bg-stone-900 text-white hover:bg-stone-800 transition flex items-center gap-1">
                     <span>✕ Clear</span>
                 </a>
@@ -24,7 +24,7 @@
         <!-- Horizontal Scrollable Liquid Bubble Strip -->
         <div class="flex items-center gap-4 sm:gap-6 overflow-x-auto pb-4 pt-1 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             <!-- All Items Liquid Bubble -->
-            <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+            <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                class="flex flex-col items-center group shrink-0 text-center w-20 sm:w-24">
                 <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 transition-all duration-300 {{ empty($activeCat) ? 'scale-105 shadow-xl ring-2' : 'hover:scale-105' }}"
                      style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border: 2px solid {{ empty($activeCat) ? 'var(--sf-accent, #c59b27)' : 'rgba(255,255,255,0.7)' }};">
@@ -44,7 +44,7 @@
                     $isCur = ($activeCat === $cat->slug);
                     $sampleImg = $cat->sample_image ? (str_starts_with($cat->sample_image, 'http') ? $cat->sample_image : asset('storage/' . $cat->sample_image)) : null;
                 @endphp
-                <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl(['category' => $cat->slug], 'catalog') }}" 
                    class="flex flex-col items-center group shrink-0 text-center w-20 sm:w-24">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full p-1 transition-all duration-300 {{ $isCur ? 'scale-105 shadow-xl ring-2' : 'hover:scale-105' }}"
                          style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); border: 2px solid {{ $isCur ? 'var(--sf-accent, #c59b27)' : 'rgba(255,255,255,0.7)' }};">

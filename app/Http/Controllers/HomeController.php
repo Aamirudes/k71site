@@ -112,7 +112,7 @@ class HomeController extends Controller
                 ->where('is_approved', true)
                 ->with(['user', 'product.images'])
                 ->latest()
-                ->take(6)
+                ->take(24)
                 ->get();
 
             $vendorShorts = $vendor->shorts()

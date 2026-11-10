@@ -361,7 +361,7 @@
                          class="w-14 h-14 rounded-full object-cover border border-zinc-700 shadow-sm">
                     <h3 class="text-xs font-bold text-white mt-2 line-clamp-1">{{ $c->shop_name }}</h3>
                     <span class="text-[10px] font-semibold text-zinc-400 mt-0.5">{{ $c->shorts_count }} Shoppable Reels</span>
-                    <a href="{{ route('storefront.show', $c->slug) }}"
+                    <a href="{{ $c->storefront_url }}"
                        class="mt-2.5 w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 font-bold text-[11px] py-1 rounded transition">
                         Visit Store
                     </a>

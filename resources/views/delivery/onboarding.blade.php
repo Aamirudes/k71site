@@ -154,7 +154,7 @@
                                 Vehicle Plate Number
                             </label>
                             <input type="text" name="vehicle_number" value="{{ old('vehicle_number') }}"
-                                   placeholder="e.g. RJ-01-AB-1234"
+                                   placeholder="Your vehicle registration no."
                                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 outline-none">
                         </div>
 
@@ -195,15 +195,15 @@
                         </button>
                     </div>
 
-                    <div class="text-center text-xs text-slate-400">
+                    <div class="text-center text-xs text-slate-500">
                         @if(auth()->check() && auth()->user()->isFleet())
-                            Already registered as Fleet Pilot? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Delivery Pilot Dashboard →</a>
+                            Already registered as Fleet Partner? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Fleet Partner Dashboard →</a>
                         @elseif(auth()->check() && auth()->user()->isAdmin())
                             Signed in as Admin. Want fleet monitoring? <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Fleet Administrative Oversight →</a>
                         @elseif(auth()->check() && auth()->user()->isVendor())
                             Signed in as Vendor. To deliver, please create a dedicated Fleet Rider profile above.
                         @else
-                            Already registered? Head straight to <a href="{{ route('delivery.dashboard') }}" class="font-bold text-emerald-600 hover:underline">Delivery Pilot Dashboard →</a>
+                            Already registered as Fleet Partner? <a href="{{ route('login', ['role' => 'fleet']) }}" class="font-bold text-emerald-600 hover:underline">Sign in to Fleet Dashboard →</a>
                         @endif
                     </div>
                 </form>

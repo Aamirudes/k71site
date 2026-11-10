@@ -1,58 +1,52 @@
 @php
     $hasReviews = isset($vendorReviews) && $vendorReviews->isNotEmpty();
-    if (!$hasReviews) {
-        $firstProd = (isset($featuredProducts) && $featuredProducts->isNotEmpty()) ? $featuredProducts->first() : ((isset($products) && $products->isNotEmpty()) ? $products->first() : null);
-        $secondProd = (isset($products) && $products->count() > 1) ? $products->skip(1)->first() : $firstProd;
-        $vendorReviews = collect([
-            (object)[
-                'rating' => 5,
-                'is_verified_purchase' => true,
-                'title' => 'Exquisite Quality & Fast Studio Shipping',
-                'body' => 'Received the order in immaculate condition. The material feel and finish completely match the boutique showcase photos. Escrow protection gave great peace of mind.',
-                'user' => (object)['first_name' => 'Aditi Sharma', 'name' => 'Aditi Sharma'],
-                'created_at' => now()->subDays(2),
-                'product' => $firstProd,
-                'vendor_reply' => 'Thank you Aditi! We take immense pride in handcrafting every unit at our studio.',
-                'hasVendorReply' => fn() => true,
-            ],
-            (object)[
-                'rating' => 5,
-                'is_verified_purchase' => true,
-                'title' => 'Authentic Piece, Direct from Maker',
-                'body' => 'Exceptional buying experience! WhatsApp sizing support answered my exact questions within minutes. Doorstep delivery arrived in 48 hours.',
-                'user' => (object)['first_name' => 'Karan Verma', 'name' => 'Karan Verma'],
-                'created_at' => now()->subDays(5),
-                'product' => $secondProd,
-                'vendor_reply' => null,
-                'hasVendorReply' => fn() => false,
-            ],
-            (object)[
-                'rating' => 5,
-                'is_verified_purchase' => true,
-                'title' => 'Will definitely order again from this store',
-                'body' => 'Very pleased with the packaging speed and premium presentation. Verified 100% genuine craftsmanship on K71.',
-                'user' => (object)['first_name' => 'Pooja Reddy', 'name' => 'Pooja Reddy'],
-                'created_at' => now()->subDays(9),
-                'product' => $firstProd,
-                'vendor_reply' => null,
-                'hasVendorReply' => fn() => false,
-            ],
-        ]);
-        $hasReviews = true;
-    }
     $avgRating = 5.0;
     if ($hasReviews && method_exists($vendorReviews, 'avg')) {
         $avgRating = round($vendorReviews->avg('rating'), 1) ?: 5.0;
     }
-    $totalCount = $vendorReviews->count();
+    $totalCount = $hasReviews ? $vendorReviews->count() : 0;
 @endphp
 
 @if($hasReviews)
-<section id="reviews" class="py-10 sm:py-14 border-t border-stone-200/60 dark:border-white/10 relative z-20">
+<section id="reviews"
+         class="py-10 sm:py-14 border-t border-stone-200/60 dark:border-white/10 relative z-20"
+         x-data="{
+            scrollLeft() {
+                if ($refs.reviewsTrack) {
+                    $refs.reviewsTrack.scrollBy({ left: -$refs.reviewsTrack.offsetWidth * 0.86, behavior: 'smooth' });
+                }
+            },
+            scrollRight() {
+                if ($refs.reviewsTrack) {
+                    $refs.reviewsTrack.scrollBy({ left: $refs.reviewsTrack.offsetWidth * 0.86, behavior: 'smooth' });
+                }
+            }
+         }">
+    <style>
+        #reviews .rev-slide-card {
+            width: 84vw;
+            min-width: 260px;
+            max-width: 360px;
+            flex-shrink: 0;
+        }
+        @media (min-width: 640px) {
+            #reviews .rev-slide-card {
+                width: 47%;
+                min-width: 300px;
+                max-width: none;
+            }
+        }
+        @media (min-width: 1024px) {
+            #reviews .rev-slide-card {
+                width: calc(33.333% - 0.9rem);
+                min-width: 320px;
+            }
+        }
+    </style>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Reviews Section Header -->
-        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6 sm:mb-8">
             <div>
                 <div class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1">
                     <span>★ Customer Feedback</span>
@@ -62,28 +56,47 @@
                 </h2>
             </div>
 
-            <!-- Average Rating Summary -->
-            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-stone-200/80 dark:border-white/10 shadow-2xs">
-                <div class="text-2xl font-black text-stone-950 dark:text-white font-heading">
-                    {{ number_format($avgRating, 1) }}
-                </div>
-                <div class="text-xs">
-                    <div class="flex text-amber-400 text-sm">
-                        @for($i = 1; $i <= 5; $i++)
-                            <span>{{ $i <= round($avgRating) ? '★' : '☆' }}</span>
-                        @endfor
+            <div class="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
+                <!-- Average Rating Summary -->
+                <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-stone-200/80 dark:border-white/10 shadow-2xs">
+                    <div class="text-2xl font-black text-stone-950 dark:text-white font-heading">
+                        {{ number_format($avgRating, 1) }}
                     </div>
-                    <span class="text-stone-500 dark:text-stone-400 font-medium">
-                        Based on {{ $totalCount }} {{ Str::plural('verified review', $totalCount) }}
-                    </span>
+                    <div class="text-xs">
+                        <div class="flex text-amber-400 text-sm">
+                            @for($i = 1; $i <= 5; $i++)
+                                <span>{{ $i <= round($avgRating) ? '★' : '☆' }}</span>
+                            @endfor
+                        </div>
+                        <span class="text-stone-500 dark:text-stone-400 font-medium">
+                            Based on {{ $totalCount }} {{ Str::plural('verified review', $totalCount) }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Slider Nav Arrows -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button"
+                            @click="scrollLeft()"
+                            class="w-9 h-9 rounded-full border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-stone-800 dark:text-white flex items-center justify-center hover:bg-stone-100 dark:hover:bg-zinc-700 transition shadow-xs cursor-pointer text-xs font-bold active:scale-95"
+                            aria-label="Previous review">
+                        ←
+                    </button>
+                    <button type="button"
+                            @click="scrollRight()"
+                            class="w-9 h-9 rounded-full border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-stone-800 dark:text-white flex items-center justify-center hover:bg-stone-100 dark:hover:bg-zinc-700 transition shadow-xs cursor-pointer text-xs font-bold active:scale-95"
+                            aria-label="Next review">
+                        →
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Reviews Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Horizontal Reviews Slider: 1.1 Reviews Per Mobile View, Multi-Card on Tablet/Desktop -->
+        <div x-ref="reviewsTrack"
+             class="flex items-stretch gap-3 sm:gap-5 overflow-x-auto pb-4 pt-1 scroll-smooth snap-x snap-mandatory scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0">
             @foreach($vendorReviews as $review)
-                <div class="p-6 rounded-3xl bg-white/90 dark:bg-zinc-900/80 border border-stone-200/80 dark:border-white/10 shadow-xs flex flex-col justify-between space-y-4">
+                <div class="rev-slide-card snap-start shrink-0 w-[84vw] sm:w-[47%] lg:w-[32%] p-5 sm:p-6 rounded-3xl bg-white/90 dark:bg-zinc-900/80 border border-stone-200/80 dark:border-white/10 shadow-xs flex flex-col justify-between space-y-4">
                     <div>
                         <!-- Rating & Verified Badge -->
                         <div class="flex items-center justify-between mb-2.5">

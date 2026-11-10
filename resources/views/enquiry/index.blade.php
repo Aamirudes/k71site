@@ -318,7 +318,7 @@
                                         class="w-full py-2.5 rounded-lg bg-[#F59E0B] hover:bg-amber-400 active:scale-[0.98] text-[#1C1917] text-xs font-bold text-center shadow-xs transition cursor-pointer">
                                     Get Best Price
                                 </button>
-                                <a href="{{ route('storefront.show', $sup->slug) }}" 
+                                <a href="{{ $sup->storefront_url }}" 
                                    class="w-full py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold text-center transition">
                                     View Storefront &amp; Catalog &rarr;
                                 </a>

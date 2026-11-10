@@ -137,7 +137,7 @@
             <div class="bw-card p-4 sm:p-5">
                 <div class="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-bold">Total Fleet</div>
                 <div class="text-2xl sm:text-3xl font-black text-black mt-1">{{ $totalRiders }}</div>
-                <div class="text-[11px] text-zinc-500 mt-0.5">Verified riders in Kishangarh</div>
+                <div class="text-[11px] text-zinc-500 mt-0.5">Verified fleet partners</div>
             </div>
 
             <div class="bw-card p-4 sm:p-5 border-emerald-200">
@@ -240,15 +240,17 @@
                                     </div>
                                     
                                     <div class="text-xs text-zinc-600 flex items-center gap-2 flex-wrap">
-                                        <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?? 'RJ-21-SD-4091' }}</strong></span>
+                                        <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?: 'Plate not added' }}</strong></span>
                                         <span>•</span>
                                         <span>★ <strong class="text-black">{{ number_format((float) ($dp->rating ?? 5.0), 2) }}</strong> ({{ (int) ($dp->total_deliveries ?? 0) }} completed)</span>
                                     </div>
 
                                     <div class="text-xs text-zinc-500 flex items-center gap-2 pt-0.5">
-                                        <span>📍 <strong>{{ $dp->distance_km }} km</strong> away</span>
-                                        <span>•</span>
-                                        <span>⏱️ ETA: ~<strong>{{ $dp->eta_minutes }} mins</strong></span>
+                                        <span>📍 <strong>{{ $dp->distance_km !== null ? ($dp->distance_km . ' km away') : 'GPS pending' }}</strong></span>
+                                        @if($dp->eta_minutes !== null)
+                                            <span>•</span>
+                                            <span>⏱️ ETA: ~<strong>{{ $dp->eta_minutes }} mins</strong></span>
+                                        @endif
                                         @if($dp->city)
                                             <span>•</span>
                                             <span>{{ $dp->city }}</span>
@@ -282,7 +284,7 @@
 
                             @if($ordersCount > 0 && $dp->is_online && !$dp->is_busy)
                                 <button type="button" 
-                                        @click="assignPartner({{ Js::from(['id' => $dp->id, 'name' => $dp->name, 'vehicle_number' => $dp->vehicle_number ?? 'Unregistered', 'distance_km' => $dp->distance_km]) }})"
+                                        @click="assignPartner({{ Js::from(['id' => $dp->id, 'name' => $dp->name, 'vehicle_number' => $dp->vehicle_number ?: 'Plate not added', 'distance_km' => $dp->distance_km]) }})"
                                         class="bw-btn-black px-4 py-1.5 text-xs font-black cursor-pointer shadow-xs">
                                     ⚡ Assign Order
                                 </button>
@@ -317,7 +319,7 @@
                     <div class="p-3 bg-zinc-50 rounded-xl border border-zinc-200 space-y-1">
                         <div class="text-xs text-zinc-500 font-bold uppercase tracking-wider">Assigning To:</div>
                         <div class="font-black text-sm text-black" x-text="assigningPartner ? assigningPartner.name : ''"></div>
-                        <div class="text-xs text-zinc-600 font-mono" x-text="assigningPartner ? (assigningPartner.vehicle_number + ' • ' + assigningPartner.distance_km + ' km away') : ''"></div>
+                        <div class="text-xs text-zinc-600 font-mono" x-text="assigningPartner ? (assigningPartner.vehicle_number + ' • ' + (assigningPartner.distance_km !== null ? assigningPartner.distance_km + ' km away' : 'GPS pending')) : ''"></div>
                     </div>
 
                     <div class="space-y-1.5">

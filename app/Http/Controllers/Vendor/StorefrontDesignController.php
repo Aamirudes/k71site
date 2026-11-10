@@ -145,7 +145,7 @@ class StorefrontDesignController extends Controller
             ->where('is_approved', true)
             ->with(['user', 'product.images'])
             ->latest()
-            ->take(6)
+            ->take(24)
             ->get();
         $isPreview = true;
 
@@ -271,7 +271,7 @@ class StorefrontDesignController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Congratulations! Your custom store design is published and live.',
-            'public_url' => route('storefront.show', $vendor->slug),
+            'public_url' => $vendor->storefront_url,
             'last_published_at' => now()->format('M d, Y h:i A'),
         ]);
     }
@@ -375,7 +375,7 @@ class StorefrontDesignController extends Controller
             'status' => 'success',
             'message' => 'Preset ' . ucfirst($requestedPreset) . ' is now activated and live on your storefront!',
             'preset' => $requestedPreset,
-            'public_url' => route('storefront.show', $vendor->slug),
+            'public_url' => $vendor->storefront_url,
         ]);
     }
 
@@ -390,6 +390,15 @@ class StorefrontDesignController extends Controller
         }
 
         try {
+            $mirrorToPublic = function (string $relativePath): void {
+                $source = storage_path('app/public/' . $relativePath);
+                $target = public_path('storage/' . $relativePath);
+                if (file_exists($source) && is_file($source)) {
+                    @mkdir(dirname($target), 0755, true);
+                    @copy($source, $target);
+                }
+            };
+
             $configRecord = $vendor->storefrontConfig;
         $presetKey = $configRecord?->preset_key ?? 'velora';
         $currentConfig = $configRecord?->getEffectiveConfig(false) ?: $this->presetService->getDefaultConfig($presetKey, $vendor);
@@ -404,7 +413,8 @@ class StorefrontDesignController extends Controller
         // Store Logo File Upload
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('vendors/' . $vendor->id . '/logo', 'public');
-            $logoUrl = asset('storage/' . $path);
+            $mirrorToPublic($path);
+            $logoUrl = '/storage/' . $path;
             $vendor->logo = $path;
             $currentConfig['brand']['logo_url'] = $logoUrl;
         }
@@ -412,7 +422,8 @@ class StorefrontDesignController extends Controller
         // Store Banner File Upload
         if ($request->hasFile('banner')) {
             $path = $request->file('banner')->store('vendors/' . $vendor->id . '/banner', 'public');
-            $bannerUrl = asset('storage/' . $path);
+            $mirrorToPublic($path);
+            $bannerUrl = '/storage/' . $path;
             $vendor->banner = $path;
             $currentConfig['brand']['banner_url'] = $bannerUrl;
         }
@@ -457,6 +468,7 @@ class StorefrontDesignController extends Controller
             $existingSlides = $currentConfig['hero']['slides'] ?? [];
             $processedSlides = [];
             foreach ($slidesInput as $idx => $sData) {
+                if (!is_array($sData)) continue;
                 $slideImg = $sData['image'] ?? ($existingSlides[$idx]['image'] ?? '');
                 
                 // Check if file uploaded for this slide index
@@ -464,9 +476,13 @@ class StorefrontDesignController extends Controller
                     $sFile = $request->file("slide_{$idx}_file");
                     if ($sFile && $sFile->isValid()) {
                         $sPath = $sFile->store('vendors/' . $vendor->id . '/slides', 'public');
-                        $slideImg = asset('storage/' . $sPath);
+                        $mirrorToPublic($sPath);
+                        $slideImg = '/storage/' . $sPath;
                     }
                 }
+
+                $rawTextColor = trim((string) ($sData['text_color'] ?? ($existingSlides[$idx]['text_color'] ?? '#ffffff')));
+                $slideTextColor = preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $rawTextColor) ? $rawTextColor : '#ffffff';
 
                 $processedSlides[] = [
                     'image' => $slideImg,
@@ -474,6 +490,7 @@ class StorefrontDesignController extends Controller
                     'subtitle' => trim($sData['subtitle'] ?? ''),
                     'button_text' => trim($sData['button_text'] ?? 'Explore Boutique'),
                     'link' => trim($sData['link'] ?? '#catalog'),
+                    'text_color' => $slideTextColor,
                 ];
             }
             $currentConfig['hero']['slides'] = $processedSlides;
@@ -546,12 +563,17 @@ class StorefrontDesignController extends Controller
             }
         }
 
-        // Add a New Vendor Happy Customer Story
-        if ($request->hasFile('new_hc_media_file') || $request->filled('new_hc_name') || $request->filled('new_hc_comment')) {
-            $hcName = trim($request->input('new_hc_name', '')) ?: 'Verified Buyer';
-            $hcLocation = trim($request->input('new_hc_location', 'India')) ?: 'India';
+        // Add a New Vendor Happy Customer Story (real uploaded media or explicit URL only — zero fake stock photos)
+        $wantsHcStory = $request->hasFile('new_hc_media_file')
+            || $request->filled('new_hc_media_url')
+            || $request->filled('new_hc_name')
+            || $request->filled('new_hc_comment');
+
+        if ($wantsHcStory) {
+            $hcName = trim($request->input('new_hc_name', '')) ?: 'Verified Customer';
+            $hcLocation = trim($request->input('new_hc_location', '')) ?: 'India';
             $hcRating = max(1, min(5, (int) $request->input('new_hc_rating', 5)));
-            $hcComment = trim($request->input('new_hc_comment', '')) ?: 'Exceptional craftsmanship and fast doorstep delivery!';
+            $hcComment = trim($request->input('new_hc_comment', '')) ?: 'Verified customer experience!';
             $hcType = 'image';
             $mediaUrl = '';
             $thumbUrl = '';
@@ -568,14 +590,26 @@ class StorefrontDesignController extends Controller
                         $hcType = 'image';
                     }
                     $savedPath = $file->store('vendors/' . $vendor->id . '/happy_customers', 'public');
+                    $mirrorToPublic($savedPath);
                     $mediaUrl = '/storage/' . $savedPath;
                     $thumbUrl = $mediaUrl;
+                }
+            } elseif ($request->filled('new_hc_media_url')) {
+                $rawUrl = trim((string) $request->input('new_hc_media_url'));
+                if (str_starts_with($rawUrl, '/') || filter_var($rawUrl, FILTER_VALIDATE_URL)) {
+                    $mediaUrl = $rawUrl;
+                    $thumbUrl = $rawUrl;
+                    if (preg_match('/\.(mp4|webm|mov|m4v)(\?|$)/i', $rawUrl)) {
+                        $hcType = 'video';
+                    }
                 }
             }
 
             if (empty($mediaUrl)) {
-                $mediaUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80';
-                $thumbUrl = $mediaUrl;
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Please upload a customer photo or video reel before adding a story.',
+                ], 422);
             }
 
             $existingHc = $currentConfig['happy_customers']['items'] ?? [];
@@ -630,7 +664,7 @@ class StorefrontDesignController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Storefront essentials & customer stories saved and published live!',
-                'public_url' => route('storefront.show', $vendor->slug),
+                'public_url' => $vendor->storefront_url,
             ]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('Error saving quick settings: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);

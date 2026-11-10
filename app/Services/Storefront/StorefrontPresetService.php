@@ -1134,6 +1134,7 @@ class StorefrontPresetService
                     'subtitle' => $safeText($s['subtitle'] ?? '', 200),
                     'button_text' => $safeText($s['button_text'] ?? 'Explore', 40),
                     'link' => $safeUrl($s['link'] ?? '#catalog'),
+                    'text_color' => $safeHex($s['text_color'] ?? null, '#ffffff'),
                 ];
             }
         }
@@ -1270,6 +1271,10 @@ class StorefrontPresetService
             }, array_slice($rawHc['items'], 0, 15)) : [],
         ];
 
+        $productsCfg = [
+            'layout' => in_array($input['products']['layout'] ?? '', ['grid', 'slider']) ? $input['products']['layout'] : 'grid',
+        ];
+
         return [
             'preset' => $presetKey,
             'schema_version' => 2,
@@ -1277,6 +1282,7 @@ class StorefrontPresetService
             'brand' => $brand,
             'header' => $header,
             'hero' => $hero,
+            'products' => $productsCfg,
             'sections' => $sections,
             'footer' => $footer,
             'happy_customers' => $happyCustomers,

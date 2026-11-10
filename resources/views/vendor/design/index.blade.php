@@ -1,39 +1,16 @@
 <x-layouts.vendor>
-    <div class="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
-        
-        <!-- Header Banner with Ambient Refraction -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 p-6 sm:p-10 rounded-3xl bg-gradient-to-br from-stone-900 via-stone-850 to-stone-950 text-white shadow-2xl relative overflow-hidden border border-white/10">
-            <div class="relative z-10 max-w-2xl space-y-3">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/10 text-amber-300 border border-white/10">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>Product-First Store Engine · Ten Signature Presets</span>
-                </div>
-                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-heading">
-                    Store Design &amp; Presets
-                </h1>
-                <p class="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                    Choose from ten signature website designs crafted exclusively for selling products. No blogs or about essays — just a dominant product catalog, verified shopping trust, real customer reviews, and an interactive popup cart.
-                </p>
-                <div class="flex flex-wrap items-center gap-4 text-xs text-stone-300 pt-1">
-                    <span class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                        <span>Active Preset: <strong id="hero-active-preset" class="text-white uppercase font-bold tracking-wider">{{ $activePresetKey }}</strong></span>
-                    </span>
-                    <span>•</span>
-                    <span>Products Connected: <strong class="text-white">{{ $vendor->products()->where('status', 'active')->count() }} live items</strong></span>
-                </div>
-            </div>
+    <style>
+        .k71-switch input:checked + .k71-switch-track { background-color: #10b981; }
+        .k71-switch.k71-switch-amber input:checked + .k71-switch-track { background-color: #f59e0b; }
+        .k71-switch.k71-switch-blue input:checked + .k71-switch-track { background-color: #2563eb; }
+        .k71-switch.k71-switch-dark input:checked + .k71-switch-track { background-color: #18181b; }
+        .k71-switch input:checked + .k71-switch-track::after {
+            transform: translateX(100%);
+            border-color: #ffffff;
+        }
+    </style>
 
-            <div class="flex flex-col sm:flex-row gap-3 shrink-0 relative z-10">
-                <a href="{{ route('storefront.show', $vendor->slug) }}" 
-                   target="_blank" 
-                   rel="noopener"
-                   class="px-6 py-4 rounded-2xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-sm shadow-xl transition-all duration-200 flex items-center justify-center gap-2 group hover:scale-[1.02]">
-                    <span>👁️ Open Live Store</span>
-                    <span class="text-xs">↗</span>
-                </a>
-            </div>
-        </div>
+    <div class="py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
 
         <!-- Notification Toast -->
         <div id="design-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
@@ -264,7 +241,7 @@
                                     {{ $isActive ? '✓ Active' : '⚡ Activate' }}
                                 </button>
                                 
-                                <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'preview' => 1]) }}"
+                                <a href="{{ $vendor->storefrontUrl(['preview' => 1]) }}"
                                    target="_blank"
                                    rel="noopener"
                                    class="p-1 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition"
@@ -303,12 +280,25 @@
                     </p>
                 </div>
 
-                <button type="button" 
-                        id="save-branding-btn"
-                        onclick="saveEssentialSettings()"
-                        class="px-6 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs shadow-md transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.01]">
-                    <span>💾 Apply &amp; Save Live</span>
-                </button>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <a href="{{ $vendor->storefront_url }}"
+                       target="_blank"
+                       rel="noopener"
+                       class="px-4 py-3 rounded-2xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-slate-50 text-slate-800 dark:text-zinc-200 font-bold text-xs transition flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Open Live Store ↗</span>
+                    </a>
+                    <button type="button" 
+                            id="save-branding-btn"
+                            onclick="saveEssentialSettings('main')"
+                            class="px-6 py-3.5 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs shadow-md transition-all duration-200 flex items-center justify-center gap-2 hover:scale-[1.01] cursor-pointer disabled:opacity-60">
+                        <svg id="save-branding-spinner" class="hidden w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        <span id="save-branding-label">💾 Apply &amp; Save Live</span>
+                    </button>
+                </div>
             </div>
 
             <form id="essential-settings-form" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -405,13 +395,13 @@
                         <!-- Transparent on 100vh Hero Carousel Toggle -->
                         <div class="pt-2 border-t border-slate-200 dark:border-zinc-700 flex items-center justify-between">
                             <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300">Transparent Header Over 100vh Carousel</span>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="k71-switch k71-switch-dark relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" 
                                        id="ctrl-transparent-hero-toggle" 
                                        name="transparent_on_hero"
                                        class="sr-only peer" 
                                        {{ !empty($currentConfig['header']['transparent_on_hero'] ?? true) ? 'checked' : '' }}>
-                                <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                                <div class="k71-switch-track w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
                             </label>
                         </div>
                     </div>
@@ -441,13 +431,16 @@
 
                         @php
                             $cfgSlides = $currentConfig['hero']['slides'] ?? [];
-                            $s1 = $cfgSlides[0] ?? ['title' => $vendor->shop_name, 'subtitle' => $vendor->tagline ?? 'Handcrafted atelier collections', 'button_text' => 'Explore Boutique', 'link' => '#catalog', 'image' => $currentConfig['brand']['banner_url'] ?? $vendor->banner_url];
-                            $s2 = $cfgSlides[1] ?? ['title' => 'Artisan Editions 2026', 'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery.', 'button_text' => 'Discover New Drops', 'link' => '#catalog', 'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80'];
-                            $s3 = $cfgSlides[2] ?? ['title' => 'Signature Heritage', 'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection.', 'button_text' => 'Shop Collection', 'link' => '#catalog', 'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80'];
+                            $s1 = $cfgSlides[0] ?? ['title' => $vendor->shop_name, 'subtitle' => $vendor->tagline ?? 'Handcrafted atelier collections', 'button_text' => 'Explore Boutique', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => $currentConfig['brand']['banner_url'] ?? $vendor->banner_url];
+                            $s2 = $cfgSlides[1] ?? ['title' => 'Artisan Editions 2026', 'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery.', 'button_text' => 'Discover New Drops', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80'];
+                            $s3 = $cfgSlides[2] ?? ['title' => 'Signature Heritage', 'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection.', 'button_text' => 'Shop Collection', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80'];
                             $allThree = [$s1, $s2, $s3];
                         @endphp
 
                         @foreach($allThree as $idx => $s)
+                            @php
+                                $slideTextColorVal = $s['text_color'] ?? '#ffffff';
+                            @endphp
                             <div id="slide-pane-{{ $idx }}" class="space-y-3 {{ $idx > 0 ? 'hidden' : '' }}">
                                 <!-- Slide Image File / Current -->
                                 <div>
@@ -485,7 +478,7 @@
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                                     <div>
                                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Subtitle / Subtext</label>
                                         <input type="text" 
@@ -501,6 +494,20 @@
                                                value="{{ $s['link'] ?? '#catalog' }}"
                                                placeholder="#catalog"
                                                class="w-full px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs bg-white dark:bg-zinc-800 text-slate-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-0.5">Slide {{ $idx + 1 }} Text Color</label>
+                                        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800">
+                                            <input type="color"
+                                                   id="slide-text-color-{{ $idx }}"
+                                                   name="slides[{{ $idx }}][text_color]"
+                                                   value="{{ $slideTextColorVal }}"
+                                                   oninput="document.getElementById('slide-text-hex-{{ $idx }}').textContent = this.value"
+                                                   class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent p-0 shrink-0">
+                                            <span id="slide-text-hex-{{ $idx }}" class="text-[10px] font-mono text-slate-700 dark:text-zinc-300 flex-1 truncate">{{ $slideTextColorVal }}</span>
+                                            <button type="button" onclick="setSlideTextColor({{ $idx }}, '#ffffff')" class="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 font-semibold cursor-pointer" title="White">W</button>
+                                            <button type="button" onclick="setSlideTextColor({{ $idx }}, '#fbbf24')" class="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold cursor-pointer" title="Gold">G</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -579,13 +586,13 @@
                             <label class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300">
                                 Announcement Ribbon
                             </label>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="k71-switch relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" 
                                        id="ctrl-announcement-toggle" 
                                        name="announcement_enabled"
                                        class="sr-only peer" 
                                        {{ !empty($currentConfig['header']['announcement_enabled']) ? 'checked' : '' }}>
-                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                                <div class="k71-switch-track w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
                             </label>
                         </div>
 
@@ -608,15 +615,15 @@
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-700 dark:text-blue-300 font-mono font-bold">Chroma Theme</span>
                             </div>
                             @php
-                                $isChromaStripOn = isset($currentConfig['header']['chroma_strip_enabled']) ? (bool)$currentConfig['header']['chroma_strip_enabled'] : true;
+                                $isChromaStripOn = isset($currentConfig['header']['chroma_strip_enabled']) ? filter_var($currentConfig['header']['chroma_strip_enabled'], FILTER_VALIDATE_BOOLEAN) : true;
                             @endphp
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="k71-switch k71-switch-blue relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" 
                                        id="ctrl-chroma-strip-toggle" 
                                        name="chroma_strip_enabled"
                                        class="sr-only peer" 
                                        {{ $isChromaStripOn ? 'checked' : '' }}>
-                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                <div class="k71-switch-track w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                         </div>
                         
@@ -653,15 +660,15 @@
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 font-mono font-bold">Slider Below Shorts</span>
                             </div>
                             @php
-                                $isHcOn = isset($currentConfig['happy_customers']['enabled']) ? (bool)$currentConfig['happy_customers']['enabled'] : true;
+                                $isHcOn = isset($currentConfig['happy_customers']['enabled']) ? filter_var($currentConfig['happy_customers']['enabled'], FILTER_VALIDATE_BOOLEAN) : true;
                             @endphp
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <label class="k71-switch k71-switch-amber relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" 
                                        id="ctrl-happy-customers-toggle" 
                                        name="happy_customers_enabled"
                                        class="sr-only peer" 
                                        {{ $isHcOn ? 'checked' : '' }}>
-                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                                <div class="k71-switch-track w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                             </label>
                         </div>
                         
@@ -767,16 +774,38 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between pt-1">
+                            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                                 <span class="text-[10px] text-slate-500 dark:text-zinc-400">
-                                    Click below or "Save &amp; Publish" to add this story.
+                                    Uploads &amp; publishes immediately to your storefront slider.
                                 </span>
                                 <button type="button" 
-                                        onclick="saveEssentialSettings()" 
-                                        class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1">
-                                    <span>+ Add Story</span>
+                                        id="add-hc-story-btn"
+                                        onclick="saveEssentialSettings('hc')" 
+                                        class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl transition shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed">
+                                    <svg id="add-hc-spinner" class="hidden w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                    </svg>
+                                    <span id="add-hc-label">+ Add Story</span>
                                 </button>
                             </div>
+
+                            <!-- Real-Time Upload Progress Indicator -->
+                            <div id="hc-upload-progress-wrap" class="hidden p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 space-y-1.5">
+                                <div class="flex items-center justify-between text-[11px] font-bold text-amber-900 dark:text-amber-200">
+                                    <span id="hc-upload-progress-text" class="flex items-center gap-1.5">
+                                        <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                                        Uploading customer story...
+                                    </span>
+                                    <span id="hc-upload-progress-pct" class="font-mono">0%</span>
+                                </div>
+                                <div class="w-full h-2 bg-amber-200/70 dark:bg-amber-900/50 rounded-full overflow-hidden">
+                                    <div id="hc-upload-progress-bar" class="h-full bg-amber-500 transition-all duration-150 rounded-full" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Inline Validation / Server Error Feedback -->
+                            <div id="hc-upload-error" class="hidden p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold"></div>
                         </div>
 
                         <!-- Existing Custom Stories -->
@@ -789,7 +818,7 @@
                                     <h4 class="text-xs font-bold text-slate-800 dark:text-zinc-200">
                                         Your Custom Stories ({{ count($customHcItems) }})
                                     </h4>
-                                    <span class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">● Active on Store</span>
+                                    <a href="{{ $vendor->storefrontUrl([], 'happy_customers') }}" target="_blank" rel="noopener" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline">● View Live Slider ↗</a>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 overflow-y-auto pr-1">
                                     @foreach($customHcItems as $hcIdx => $hcItem)
@@ -823,7 +852,7 @@
                         @else
                             <div class="p-2.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-900/30 text-[11px] text-amber-900 dark:text-amber-200 flex items-center gap-2">
                                 <span>💡</span>
-                                <span>Currently displaying 5 curated verified buyer spotlight reels &amp; reviews. Add your custom customer story above to personalize your storefront slider!</span>
+                                <span>No custom customer stories added yet. Upload a real customer photo or video reel above to showcase stories on your storefront.</span>
                             </div>
                         @endif
                     </div>
@@ -952,6 +981,13 @@
             document.getElementById('ctrl-accent-color').value = hex;
         }
 
+        function setSlideTextColor(idx, hex) {
+            const el = document.getElementById('slide-text-color-' + idx);
+            const lbl = document.getElementById('slide-text-hex-' + idx);
+            if (el) el.value = hex;
+            if (lbl) lbl.textContent = hex;
+        }
+
         function activatePresetInstant(key, name) {
             const btn = document.getElementById('btn-activate-' + key);
             if (!btn) return;
@@ -972,7 +1008,8 @@
             .then(data => {
                 if (data.status === 'success') {
                     showToast('✓ ' + name + ' preset activated and live!');
-                    document.getElementById('hero-active-preset').textContent = key;
+                    const heroBadge = document.getElementById('hero-active-preset');
+                    if (heroBadge) heroBadge.textContent = key;
 
                     const allPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue'];
                     allPresets.forEach(k => {
@@ -1013,6 +1050,11 @@
         }
 
         function previewHcFile(input) {
+            const errBox = document.getElementById('hc-upload-error');
+            if (errBox) {
+                errBox.classList.add('hidden');
+                errBox.textContent = '';
+            }
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 const prompt = document.getElementById('hc-file-prompt');
@@ -1053,11 +1095,56 @@
             });
         }
 
-        function saveEssentialSettings() {
-            const btn = document.getElementById('save-branding-btn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<span>Saving...</span>';
+        function saveEssentialSettings(source = 'main') {
+            const mainBtn = document.getElementById('save-branding-btn');
+            const mainSpinner = document.getElementById('save-branding-spinner');
+            const mainLabel = document.getElementById('save-branding-label');
+
+            const hcBtn = document.getElementById('add-hc-story-btn');
+            const hcSpinner = document.getElementById('add-hc-spinner');
+            const hcLabel = document.getElementById('add-hc-label');
+
+            const hcFile = document.getElementById('new-hc-media-file');
+            const hcNameInput = document.getElementById('new-hc-name');
+            const hcCommentInput = document.getElementById('new-hc-comment');
+            const progressWrap = document.getElementById('hc-upload-progress-wrap');
+            const progressBar = document.getElementById('hc-upload-progress-bar');
+            const progressPct = document.getElementById('hc-upload-progress-pct');
+            const progressText = document.getElementById('hc-upload-progress-text');
+            const errBox = document.getElementById('hc-upload-error');
+
+            if (errBox) {
+                errBox.classList.add('hidden');
+                errBox.textContent = '';
+            }
+
+            const hasHcFile = Boolean(hcFile && hcFile.files && hcFile.files.length > 0);
+            if (source === 'hc' && !hasHcFile) {
+                if (errBox) {
+                    errBox.textContent = 'Please select a customer photo or video reel before clicking + Add Story.';
+                    errBox.classList.remove('hidden');
+                }
+                showToast('Select a photo or video reel first', false);
+                return;
+            }
+
+            const setLoadingState = (isLoading) => {
+                if (mainBtn) mainBtn.disabled = isLoading;
+                if (hcBtn) hcBtn.disabled = isLoading;
+                if (mainSpinner) mainSpinner.classList.toggle('hidden', !isLoading);
+                if (mainLabel) mainLabel.textContent = isLoading ? (hasHcFile ? 'Uploading & Saving...' : 'Saving Live...') : '💾 Apply & Save Live';
+                if (hcSpinner) hcSpinner.classList.toggle('hidden', !(isLoading && (source === 'hc' || hasHcFile)));
+                if (hcLabel) hcLabel.textContent = (isLoading && (source === 'hc' || hasHcFile)) ? 'Uploading Story...' : '+ Add Story';
+            };
+
+            setLoadingState(true);
+
+            if ((source === 'hc' || hasHcFile) && progressWrap) {
+                progressWrap.classList.remove('hidden');
+                if (progressBar) progressBar.style.width = '5%';
+                if (progressPct) progressPct.textContent = '0%';
+                if (progressText) progressText.textContent = 'Preparing customer media upload...';
+            }
 
             const form = document.getElementById('essential-settings-form');
             const formData = new FormData(form);
@@ -1073,37 +1160,87 @@
             formData.append('transparent_on_hero', document.getElementById('ctrl-transparent-hero-toggle')?.checked ? '1' : '0');
             formData.append('header_elements_order', JSON.stringify(headerElementsOrder));
 
-            fetch('{{ route('vendor.design.quick_settings') }}', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                if (data.status === 'success') {
-                    const newHcInput = document.getElementById('new-hc-name');
-                    const newHcFile = document.getElementById('new-hc-media-file');
-                    if ((newHcInput && newHcInput.value.trim() !== '') || (newHcFile && newHcFile.files && newHcFile.files.length > 0)) {
-                        showToast('✓ Story added and store settings published!');
-                        setTimeout(() => window.location.reload(), 700);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '{{ route('vendor.design.quick_settings') }}', true);
+            xhr.setRequestHeader('Accept', 'application/json');
+            xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+
+            xhr.upload.onprogress = function (e) {
+                if (!progressWrap || !(source === 'hc' || hasHcFile)) return;
+                if (e.lengthComputable && e.total > 0) {
+                    const pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+                    if (progressBar) progressBar.style.width = Math.max(8, pct) + '%';
+                    if (progressPct) progressPct.textContent = pct + '%';
+                    if (progressText) {
+                        progressText.textContent = pct >= 99
+                            ? 'Processing media & publishing to storefront...'
+                            : 'Uploading customer media... ' + pct + '%';
+                    }
+                } else {
+                    if (progressBar) progressBar.style.width = '65%';
+                    if (progressText) progressText.textContent = 'Uploading customer media...';
+                }
+            };
+
+            xhr.onload = function () {
+                let data = null;
+                try {
+                    data = JSON.parse(xhr.responseText);
+                } catch (parseErr) {
+                    data = null;
+                }
+
+                if (xhr.status >= 200 && xhr.status < 300 && data && data.status === 'success') {
+                    if (progressBar) progressBar.style.width = '100%';
+                    if (progressPct) progressPct.textContent = '100%';
+                    if (progressText) progressText.textContent = '✓ Story uploaded & published live!';
+
+                    const hadStoryInput = hasHcFile
+                        || (hcNameInput && hcNameInput.value.trim() !== '')
+                        || (hcCommentInput && hcCommentInput.value.trim() !== '');
+
+                    setLoadingState(false);
+
+                    if (hadStoryInput || source === 'hc') {
+                        showToast('✓ Customer story published to storefront!');
+                        setTimeout(() => window.location.reload(), 650);
                     } else {
                         showToast('✓ Store essentials saved and live!');
                     }
-                } else {
-                    showToast(data.message || 'Error saving settings', false);
+                    return;
                 }
-            })
-            .catch(err => {
-                console.error(err);
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                showToast('Failed to save settings', false);
-            });
+
+                setLoadingState(false);
+                if (progressWrap) progressWrap.classList.add('hidden');
+
+                let errMsg = (data && data.message) ? data.message : 'Failed to save settings.';
+                if (xhr.status === 413) {
+                    errMsg = 'File size exceeds server upload limit. Please use a smaller photo or video reel.';
+                } else if (xhr.status === 422 && data && data.errors) {
+                    const firstKey = Object.keys(data.errors)[0];
+                    if (firstKey && Array.isArray(data.errors[firstKey]) && data.errors[firstKey][0]) {
+                        errMsg = data.errors[firstKey][0];
+                    }
+                }
+
+                if ((source === 'hc' || hasHcFile || xhr.status === 422) && errBox) {
+                    errBox.textContent = errMsg;
+                    errBox.classList.remove('hidden');
+                }
+                showToast(errMsg, false);
+            };
+
+            xhr.onerror = function () {
+                setLoadingState(false);
+                if (progressWrap) progressWrap.classList.add('hidden');
+                if (errBox && (source === 'hc' || hasHcFile)) {
+                    errBox.textContent = 'Network error during upload. Please check your connection and try again.';
+                    errBox.classList.remove('hidden');
+                }
+                showToast('Network error while saving settings', false);
+            };
+
+            xhr.send(formData);
         }
     </script>
 </x-layouts.vendor>

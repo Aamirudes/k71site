@@ -139,7 +139,7 @@
 
                 <!-- Storefront link or more options -->
                 @if($conversation->vendor)
-                    <a href="{{ route('storefront.show', $conversation->vendor->slug) }}" 
+                    <a href="{{ $conversation->vendor->storefront_url }}" 
                        class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold transition"
                        title="View Storefront">
                         Store

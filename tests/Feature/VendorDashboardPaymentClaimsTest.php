@@ -206,7 +206,12 @@ class VendorDashboardPaymentClaimsTest extends TestCase
         $firstOrder = $this->createUpiOrder($buyer, $gadditoVendor, 'ORD-GAD-FLT-1', 'pending', 'pending');
         $secondOrder = $this->createUpiOrder($buyer, $gadditoVendor, 'ORD-GAD-FLT-2', 'pending', 'pending');
 
+        $fleetRole = Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Partner']);
+        $riderUser = User::factory()->create(['first_name' => 'Raju', 'last_name' => 'Rider']);
+        $riderUser->roles()->syncWithoutDetaching([$fleetRole->id]);
+
         $partner = DeliveryPartner::create([
+            'user_id' => $riderUser->id,
             'name' => 'Raju Rider',
             'phone' => '9829098290',
             'vehicle_type' => 'bike',
@@ -247,7 +252,12 @@ class VendorDashboardPaymentClaimsTest extends TestCase
         [$vendorUser, $vendor] = $this->createVendor('gaddito', 'Gaddito', 'food', null);
         $order = $this->createUpiOrder($buyer, $vendor, 'ORD-GAD-DEL-1', 'pending', 'pending');
 
+        $fleetRole = Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Partner']);
+        $vikramUser = User::factory()->create(['first_name' => 'Vikram', 'last_name' => 'Pilot']);
+        $vikramUser->roles()->syncWithoutDetaching([$fleetRole->id]);
+
         $partner = DeliveryPartner::create([
+            'user_id' => $vikramUser->id,
             'name' => 'Vikram Pilot',
             'phone' => '9876501234',
             'vehicle_type' => 'scooter',

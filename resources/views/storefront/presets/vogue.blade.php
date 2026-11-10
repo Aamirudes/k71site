@@ -49,7 +49,7 @@
                     </svg>
                 </button>
 
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
+                <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="h-10 sm:h-12 w-auto p-1 border-2 border-black bg-white">
                             <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-full w-auto object-contain">
@@ -72,12 +72,12 @@
 
             <!-- Center: Editorial Lookbook Tabs -->
             <nav class="hidden md:flex items-center gap-1 border-2 border-black bg-white p-1 text-xs font-mono">
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="px-4 py-1.5 transition {{ !$currentCategory ? 'bg-black text-white font-bold' : 'text-[#09090b] hover:bg-black hover:text-white' }}">
                     LOOKBOOK ({{ $products->total() ?? $products->count() }})
                 </a>
                 @foreach($vendorCategories->take(3) as $c)
-                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                        class="px-4 py-1.5 transition {{ $currentCategory === $c->slug ? 'bg-black text-white font-bold' : 'text-[#09090b] hover:bg-black hover:text-white' }}">
                         {{ strtoupper($c->name) }}
                     </a>
@@ -179,12 +179,12 @@
 
                 <!-- Categories -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                        class="px-4 py-1.5 text-xs font-mono uppercase tracking-wider transition {{ !$currentCategory ? 'bg-black text-white font-bold' : 'bg-white border-2 border-black text-black hover:bg-zinc-100' }}">
                         ALL ({{ $products->total() ?? $products->count() }})
                     </a>
                     @foreach($vendorCategories as $c)
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                            class="px-4 py-1.5 text-xs font-mono uppercase tracking-wider transition {{ $currentCategory === $c->slug ? 'bg-black text-white font-bold' : 'bg-white border-2 border-black text-black hover:bg-zinc-100' }}">
                             {{ strtoupper($c->name) }} ({{ $c->products_count }})
                         </a>
@@ -197,7 +197,7 @@
                 <div class="py-16 text-center border-2 border-black bg-white p-8 space-y-3">
                     <span class="text-2xl font-heading italic text-zinc-400 block">[ Lookbook Depleted ]</span>
                     <p class="text-xs text-zinc-600">No items match this category filter.</p>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="inline-block mt-3 px-6 py-2 border-2 border-black text-xs font-mono uppercase tracking-widest text-black hover:bg-black hover:text-white transition">
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" class="inline-block mt-3 px-6 py-2 border-2 border-black text-xs font-mono uppercase tracking-widest text-black hover:bg-black hover:text-white transition">
                         Reset Lookbook
                     </a>
                 </div>

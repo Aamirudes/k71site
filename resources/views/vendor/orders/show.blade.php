@@ -486,8 +486,8 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="text-right">
-                                                                    <span class="text-xs font-black text-emerald-600 block" x-text="p.distance_km + ' km away'"></span>
-                                                                    <span class="text-[10px] text-slate-400 font-mono" x-text="'ETA ~' + p.eta_minutes + ' mins'"></span>
+                                                                    <span class="text-xs font-black text-emerald-600 block" x-text="p.distance_km !== null ? (p.distance_km + ' km away') : 'GPS pending'"></span>
+                                                                    <span class="text-[10px] text-slate-400 font-mono" x-text="p.eta_minutes !== null ? ('ETA ~' + p.eta_minutes + ' mins') : 'Location updating'"></span>
                                                                 </div>
                                                             </label>
                                                         </template>
@@ -1155,7 +1155,7 @@
                                                 </div>
                                                 <div class="text-right">
                                                     <span class="text-xs font-black text-emerald-700 block" x-text="p.fare_formatted"></span>
-                                                    <span class="text-[10px] text-slate-500 font-mono" x-text="p.distance_km + ' km • ~' + p.eta_minutes + 'm'"></span>
+                                                    <span class="text-[10px] text-slate-500 font-mono" x-text="p.distance_km !== null ? (p.distance_km + ' km • ~' + p.eta_minutes + 'm') : 'GPS pending'"></span>
                                                 </div>
                                             </div>
 

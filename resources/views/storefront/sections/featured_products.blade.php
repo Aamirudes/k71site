@@ -48,13 +48,13 @@
                         @if($currentCategory)
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 text-white text-[11px] font-bold">
                                 {{ $vendorCategories->firstWhere('slug', $currentCategory)?->name ?? $currentCategory }}
-                                <a href="{{ route('storefront.show', array_merge(request()->except('category', 'page'), ['slug' => $vendor->slug])) }}#catalog" class="opacity-75 hover:opacity-100">✕</a>
+                                <a href="{{ $vendor->storefrontUrl(request()->except('category', 'page'), 'catalog') }}" class="opacity-75 hover:opacity-100">✕</a>
                             </span>
                         @endif
                         @if($currentSearch)
                             <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 text-white text-[11px] font-bold">
                                 "{{ $currentSearch }}"
-                                <a href="{{ route('storefront.show', array_merge(request()->except('search', 'page'), ['slug' => $vendor->slug])) }}#catalog" class="opacity-75 hover:opacity-100">✕</a>
+                                <a href="{{ $vendor->storefrontUrl(request()->except('search', 'page'), 'catalog') }}" class="opacity-75 hover:opacity-100">✕</a>
                             </span>
                         @endif
                     </div>
@@ -64,7 +64,7 @@
             <!-- Sort Selector -->
             <div class="flex items-center gap-2">
                 <span class="text-xs font-semibold text-stone-500">Sort by:</span>
-                <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET">
+                <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET">
                     @if(request('category'))
                         <input type="hidden" name="category" value="{{ request('category') }}">
                     @endif
@@ -87,7 +87,7 @@
                 <span class="text-4xl block mb-3">🛍️</span>
                 <h3 class="text-base font-bold text-stone-900 font-heading">No items matched</h3>
                 <p class="text-xs text-stone-500 mt-1">Try resetting your category or search filter.</p>
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="inline-block mt-4 px-5 py-2 rounded-full text-xs font-bold bg-stone-900 text-white hover:bg-stone-800 transition">
                     View Entire Store
                 </a>

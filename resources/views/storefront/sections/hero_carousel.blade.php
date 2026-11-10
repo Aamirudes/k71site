@@ -44,12 +44,15 @@
     for ($i = 0; $i < 3; $i++) {
         $custom = $heroCfg['slides'][$i] ?? [];
         $def = $defaultSlides[$i];
+        $rawSlideTextColor = trim((string) ($custom['text_color'] ?? '#ffffff'));
+        $slideTextColor = preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $rawSlideTextColor) ? $rawSlideTextColor : '#ffffff';
         $finalSlides[] = [
             'image' => !empty($custom['image']) ? $custom['image'] : $def['image'],
             'title' => !empty($custom['title']) ? $custom['title'] : $def['title'],
             'subtitle' => !empty($custom['subtitle']) ? $custom['subtitle'] : $def['subtitle'],
             'button_text' => !empty($custom['button_text']) ? $custom['button_text'] : $def['button_text'],
             'link' => !empty($custom['link']) ? $custom['link'] : $def['link'],
+            'text_color' => $slideTextColor,
         ];
     }
     $slides = $finalSlides;
@@ -118,6 +121,7 @@
     @foreach($slides as $idx => $slide)
         @php
             $slideImg = !empty($slide['image']) ? $slide['image'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80';
+            $slideTextColor = $slide['text_color'] ?? '#ffffff';
         @endphp
         <div x-show="activeSlide === {{ $idx }}"
              x-transition:enter="transition-all ease-[cubic-bezier(0.16,1,0.3,1)] duration-800"
@@ -147,12 +151,14 @@
                 <div class="max-w-3xl mx-auto flex flex-col items-center text-center space-y-3 sm:space-y-4 pointer-events-auto">
                     
                     <!-- Subtitle / Tagline Eyebrow -->
-                    <p class="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] text-white/85 drop-shadow">
+                    <p class="text-[11px] sm:text-xs font-bold uppercase tracking-[0.25em] drop-shadow"
+                       style="color: {{ $slideTextColor }}; opacity: 0.9;">
                         {{ $slide['subtitle'] ?? $subtitle }}
                     </p>
 
                     <!-- Main Headline with Signature Fashion Display Typography -->
-                    <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading text-white tracking-tight leading-[1.08] drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] max-w-2xl">
+                    <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black font-heading tracking-tight leading-[1.08] drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)] max-w-2xl"
+                        style="color: {{ $slideTextColor }};">
                         {{ $slide['title'] ?? $headline }}
                     </h1>
 

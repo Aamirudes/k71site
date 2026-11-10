@@ -1,15 +1,17 @@
-<x-layouts.public title="Delivery Pilot Command | K71 Hyperlocal">
+<x-layouts.public title="Fleet Partner Dashboard | K71 Hyperlocal">
     <div class="py-6 sm:py-10 max-w-5xl mx-auto px-4 sm:px-6"
          x-data="{
+            canTrack: {{ $partner ? 'true' : 'false' }},
             isOnline: {{ ($partner?->is_online) ? 'true' : 'false' }},
-            lat: {{ $partner?->current_latitude ?? 27.0425 }},
-            lng: {{ $partner?->current_longitude ?? 74.7214 }},
+            lat: {{ $partner?->current_latitude !== null ? $partner->current_latitude : 'null' }},
+            lng: {{ $partner?->current_longitude !== null ? $partner->current_longitude : 'null' }},
             audioRingActive: false,
             audioCtx: null,
             ringInterval: null,
             newAssignmentModal: null,
 
             init() {
+                if (!this.canTrack) return;
                 this.startLocationTracking();
                 this.startAssignmentPolling();
             },
@@ -76,32 +78,38 @@
             },
 
             syncLocation() {
+                if (!this.canTrack) return;
+                const payload = { is_online: this.isOnline };
+                if (this.lat !== null && this.lng !== null) {
+                    payload.latitude = this.lat;
+                    payload.longitude = this.lng;
+                }
                 fetch('{{ route('delivery.location') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        latitude: this.lat,
-                        longitude: this.lng,
-                        is_online: this.isOnline
-                    })
+                    body: JSON.stringify(payload)
                 }).catch(() => {});
             },
 
             toggleOnline() {
+                if (!this.canTrack) return;
                 this.isOnline = !this.isOnline;
                 this.syncLocation();
             },
 
             startAssignmentPolling() {
                 setInterval(() => {
-                    if (!this.isOnline) return;
+                    if (!this.canTrack || !this.isOnline) return;
                     fetch('{{ route('delivery.check_assignments') }}')
-                        .then(r => r.json())
+                        .then(r => {
+                            if (!r.ok) return null;
+                            return r.json();
+                        })
                         .then(data => {
-                            if (data.has_new && data.assignment) {
+                            if (data && data.has_new && data.assignment) {
                                 this.newAssignmentModal = data.assignment;
                                 this.startRinging();
                             }
@@ -181,6 +189,53 @@
             </div>
         </div>
 
+        <!-- Fleet Navigation & Account Controls -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-5 bg-white/90 rounded-2xl border border-slate-200 px-4 py-3 shadow-xs">
+            <div class="flex items-center gap-2 text-xs">
+                <span class="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                    Fleet Partner Portal
+                </span>
+                @if(!empty($adminOversight))
+                    <span class="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-bold">
+                        Admin Oversight ({{ $fleetRidersCount ?? 0 }} Real Riders)
+                    </span>
+                @endif
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold">
+                <a href="{{ route('home') }}" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition">Marketplace</a>
+                <a href="{{ route('account') }}" class="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition">My Account</a>
+                @auth
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition cursor-pointer font-bold">
+                        Sign Out
+                    </button>
+                </form>
+                @endauth
+            </div>
+        </div>
+
+        @if(!$partner)
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 text-center space-y-4">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center text-2xl">🛵</div>
+            <div class="space-y-1">
+                <h1 class="text-xl font-black text-slate-900">No Real Fleet Partners Registered Yet</h1>
+                <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                    All synthetic demo riders have been removed. Register a real Fleet Partner account at <span class="font-mono text-slate-800">/delivery-partner</span> to go online and receive delivery dispatches.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="{{ route('delivery.onboarding') }}" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm">
+                    + Register Fleet Partner
+                </a>
+                @if(auth()->check() && auth()->user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold transition">
+                        Back to Admin Console
+                    </a>
+                @endif
+            </div>
+        </div>
+        @else
         <!-- Pilot Header Card -->
         <div class="bg-white/90 backdrop-blur-xl rounded-3xl border border-slate-200/90 shadow-sm p-6 mb-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -189,18 +244,18 @@
                         🛵
                     </div>
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <h1 class="text-lg font-black text-slate-900">{{ $partner->name }}</h1>
                             <span class="text-[10px] font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full uppercase">
-                                {{ $partner->vehicle_type }} ({{ $partner->vehicle_number ?: 'K71 Pilot' }})
+                                {{ $partner->vehicle_type }} ({{ $partner->vehicle_number ?: 'Plate not added' }})
                             </span>
                         </div>
                         <div class="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                             <span>📍 {{ $partner->city }}, {{ $partner->state }}</span>
                             <span>•</span>
-                            <span class="text-amber-600 font-bold">★ {{ number_format($partner->rating, 1) }}</span>
+                            <span class="text-amber-600 font-bold">★ {{ number_format((float) $partner->rating, 1) }}</span>
                             <span>•</span>
-                            <span>{{ $partner->total_deliveries }} completed trips</span>
+                            <span>{{ (int) $partner->total_deliveries }} completed trips</span>
                         </div>
                     </div>
                 </div>
@@ -377,11 +432,11 @@
                                 </span>
                             </div>
                             @php
-                                $pickupText = 'Kishangarh Center';
+                                $pickupText = 'Pickup Hub';
                                 if ($assignment->vendor) {
                                     $pAddr = $assignment->vendor->pickup_address;
                                     if (is_array($pAddr)) {
-                                        $pickupText = $pAddr['line_1'] ?? $pAddr['address_line1'] ?? $pAddr['city'] ?? 'Kishangarh Center';
+                                        $pickupText = $pAddr['line_1'] ?? $pAddr['address_line1'] ?? $pAddr['city'] ?? $assignment->vendor->shop_name;
                                     } elseif (is_string($pAddr) && !empty($pAddr)) {
                                         $pickupText = $pAddr;
                                     } else {
@@ -464,6 +519,7 @@
                 @endforelse
             </div>
         </div>
+        @endif
 
     </div>
 </x-layouts.public>

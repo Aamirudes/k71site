@@ -84,7 +84,7 @@
 
                 <!-- Quick Search Form -->
                 <div>
-                    <form action="{{ route('storefront.show', $vendor->slug) }}#catalog" method="GET" class="relative">
+                    <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="relative">
                         <input type="text" 
                                name="search" 
                                value="{{ $searchQuery }}" 
@@ -124,7 +124,7 @@
                         Departments &amp; Categories
                     </span>
 
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                        @click="drawerOpen = false"
                        class="flex items-center justify-between px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
                         <span class="flex items-center gap-2.5">
@@ -137,7 +137,7 @@
                     </a>
 
                     @foreach($vendorCategories as $cat)
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl(['category' => $cat->slug], 'catalog') }}" 
                            @click="drawerOpen = false"
                            class="flex items-center justify-between px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-medium {{ $isDark ? 'text-zinc-300 hover:text-white hover:bg-zinc-900' : 'text-stone-700 hover:text-stone-950 hover:bg-stone-100' }} transition">
                             <span>{{ $cat->name }}</span>
@@ -150,17 +150,17 @@
 
                 <!-- Direct Anchor Links -->
                 <div class="pt-2 space-y-1 border-t {{ $isDark ? 'border-zinc-800' : 'border-stone-200' }}">
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#reviews" 
+                    <a href="{{ $vendor->storefrontUrl([], 'reviews') }}" 
                        @click="drawerOpen = false"
                        class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold {{ $isDark ? 'text-zinc-400 hover:text-white' : 'text-stone-500 hover:text-stone-900' }} transition">
                         <span>★</span> Genuine Customer Reviews
                     </a>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#happy_customers" 
+                    <a href="{{ $vendor->storefrontUrl([], 'happy_customers') }}" 
                        @click="drawerOpen = false"
                        class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold {{ $isDark ? 'text-zinc-400 hover:text-white' : 'text-stone-500 hover:text-stone-900' }} transition">
                         <span>📸</span> Happy Customer Stories
                     </a>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#trust" 
+                    <a href="{{ $vendor->storefrontUrl([], 'trust') }}" 
                        @click="drawerOpen = false"
                        class="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold {{ $isDark ? 'text-zinc-400 hover:text-white' : 'text-stone-500 hover:text-stone-900' }} transition">
                         <span>◈</span> Verified Workshop &amp; Dispatch Guarantees

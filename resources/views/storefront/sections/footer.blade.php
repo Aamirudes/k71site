@@ -162,10 +162,10 @@
                 Boutique Drops
             </h4>
             <ul class="space-y-2.5 text-xs text-zinc-400">
-                <li><a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="hover:text-white transition-colors">All Boutique Drops ({{ $products->total() ?? 0 }})</a></li>
+                <li><a href="{{ $vendor->storefrontUrl([], 'catalog') }}" class="hover:text-white transition-colors">All Boutique Drops ({{ $products->total() ?? 0 }})</a></li>
                 @foreach($vendorCategories->take(6) as $cat)
                     <li>
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" class="hover:text-white transition-colors flex items-center justify-between">
+                        <a href="{{ $vendor->storefrontUrl(['category' => $cat->slug], 'catalog') }}" class="hover:text-white transition-colors flex items-center justify-between">
                             <span class="truncate">{{ $cat->name }}</span>
                             <span class="text-[10px] text-zinc-500 font-mono">{{ $cat->products_count }}</span>
                         </a>

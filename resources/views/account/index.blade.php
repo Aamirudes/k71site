@@ -87,6 +87,11 @@
                                 Seller
                             </span>
                         @endif
+                        @if($user->isFleet())
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                Fleet Partner
+                            </span>
+                        @endif
                     </div>
                     <p class="text-[13px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-medium">
                         {{ $user->phone ?? $user->email }}
@@ -101,6 +106,12 @@
                             <a href="{{ route('vendor.dashboard') }}" 
                                class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold transition">
                                 Seller Portal &rarr;
+                            </a>
+                        @endif
+                        @if($user->isFleet())
+                            <a href="{{ route('delivery.dashboard') }}" 
+                               class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold transition">
+                                Fleet Portal &rarr;
                             </a>
                         @endif
                         <form method="POST" action="{{ route('logout') }}" class="inline">

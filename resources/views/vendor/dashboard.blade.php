@@ -332,7 +332,7 @@
                             </span>
                         </div>
                         <p class="text-xs text-zinc-500 mt-0.5">
-                            Real-time Kishangarh delivery partners for doorstep cloud kitchen &amp; 10-minute quick commerce dispatch.
+                            Live registered fleet partners available for instant pickup &amp; quick commerce dispatch.
                         </p>
                     </div>
                 </div>
@@ -383,14 +383,16 @@
                                     @endif
                                 </div>
                                 <div class="text-[11px] text-zinc-600 flex items-center gap-1.5 flex-wrap">
-                                    <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?? 'RJ-21-SD-4091' }}</strong></span>
+                                    <span>🏍️ {{ ucfirst($dp->vehicle_type ?? 'Bike') }}: <strong class="text-black font-mono">{{ $dp->vehicle_number ?: 'Plate not added' }}</strong></span>
                                     <span>•</span>
                                     <span>★ <strong class="text-black">{{ number_format((float) ($dp->rating ?? 5.0), 2) }}</strong> ({{ (int) ($dp->total_deliveries ?? 0) }} done)</span>
                                 </div>
                                 <div class="text-[11px] text-zinc-500 flex items-center gap-1.5">
-                                    <span>📍 <strong>{{ $dp->distance_km }} km</strong> away</span>
+                                    <span>📍 <strong>{{ $dp->distance_km !== null ? ($dp->distance_km . ' km away') : ($dp->city ? ($dp->city . ' • GPS pending') : 'GPS pending') }}</strong></span>
+                                    @if($dp->eta_minutes !== null)
                                     <span>•</span>
                                     <span>⏱️ ETA: ~<strong>{{ $dp->eta_minutes }} mins</strong></span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

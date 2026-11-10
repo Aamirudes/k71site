@@ -53,17 +53,31 @@
                         </div>
                     </div>
                     
+                    @php
+                        $selectedRole = old('role', request('role', 'customer'));
+                        if (!in_array($selectedRole, ['customer', 'vendor', 'fleet'], true)) {
+                            $selectedRole = 'customer';
+                        }
+                    @endphp
                     <div>
                         <label class="block text-sm font-medium text-brand-text mb-2">Login as</label>
-                        <div class="flex space-x-4">
+                        <div class="flex flex-wrap gap-4">
                             <label class="flex items-center">
-                                <input type="radio" name="role" value="customer" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ old('role', 'customer') === 'customer' ? 'checked' : '' }}>
+                                <input type="radio" name="role" value="customer" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'customer' ? 'checked' : '' }}>
                                 <span class="ml-2 text-sm text-brand-text">Customer</span>
                             </label>
                             <label class="flex items-center">
-                                <input type="radio" name="role" value="vendor" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ old('role') === 'vendor' ? 'checked' : '' }}>
+                                <input type="radio" name="role" value="vendor" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'vendor' ? 'checked' : '' }}>
                                 <span class="ml-2 text-sm text-brand-text">Vendor</span>
                             </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="role" value="fleet" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'fleet' ? 'checked' : '' }}>
+                                <span class="ml-2 text-sm text-brand-text">Fleet Partner</span>
+                            </label>
+                        </div>
+                        <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-brand-muted">
+                            <a href="{{ route('vendor.register') }}" class="font-semibold text-brand-sage hover:underline">Register as Vendor &rarr;</a>
+                            <a href="{{ route('delivery.onboarding') }}" class="font-semibold text-emerald-700 hover:underline">Register as Fleet Partner &rarr;</a>
                         </div>
                     </div>
                 </div>

@@ -849,6 +849,10 @@ class Vendor extends Model
 
     public function getStorefrontUrlAttribute(): string
     {
+        if (!config('marketplace.use_subdomains', true)) {
+            return route('storefront.show', $this->slug);
+        }
+
         $domain = config('marketplace.domain', 'marblemandi.org');
         $scheme = (app()->environment('production') || request()->secure()) ? 'https' : 'http';
         $requestHost = strtolower(request()->getHost());
@@ -862,6 +866,14 @@ class Vendor extends Model
         }
 
         return "{$scheme}://{$this->slug}.{$domain}{$portSuffix}";
+    }
+
+    public function storefrontUrl(array $params = [], string $fragment = ''): string
+    {
+        $base = rtrim($this->storefront_url, '/');
+        $query = !empty($params) ? '?' . http_build_query($params) : '';
+        $hash = $fragment !== '' ? '#' . ltrim($fragment, '#') : '';
+        return $base . $query . $hash;
     }
 
     public function conversations(): HasMany

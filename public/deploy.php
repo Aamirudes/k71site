@@ -458,10 +458,8 @@ try {
     try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
     try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
 
-    // Delivery Fleet Kishangarh default enforcement
+    // Remove legacy launcher settings key if present
     try {
-        DB::statement("UPDATE `delivery_partners` SET `city` = 'Kishangarh', `current_latitude` = 26.5744, `current_longitude` = 74.8654 WHERE `city` = 'Makrana' OR `city` IS NULL OR `city` = ''");
-        DB::statement("UPDATE `delivery_partners` SET `name` = 'K71 Kishangarh Fleet Pilot' WHERE `name` LIKE '%Ramesh Kumar%'");
         DB::statement("DELETE FROM `settings` WHERE `key` = 'floating_launcher_items'");
     } catch (\Throwable $e) {}
 

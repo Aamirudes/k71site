@@ -278,6 +278,32 @@
                 </div>
             </div>
 
+            <!-- Fleet Partner Hub -->
+            <div class="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/60">
+                <h5 class="text-xs uppercase font-semibold tracking-wider text-emerald-950 dark:text-emerald-200">Fleet Partner Hub</h5>
+                <p class="text-xs text-emerald-700 dark:text-emerald-300/80 mt-1">Earn instant delivery payouts or manage active local pickups.</p>
+                <div class="mt-3 flex flex-col gap-2">
+                    @auth
+                        @if(auth()->user()->isFleet())
+                            <a href="{{ route('delivery.dashboard') }}" class="block w-full text-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-xs">
+                                Open Fleet Dashboard
+                            </a>
+                        @else
+                            <a href="{{ route('delivery.onboarding') }}" class="block w-full text-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-xs">
+                                Register as Fleet Partner
+                            </a>
+                        @endif
+                    @else
+                        <a href="{{ route('delivery.onboarding') }}" class="block w-full text-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-xs">
+                            Become a Fleet Partner
+                        </a>
+                        <a href="{{ route('login', ['role' => 'fleet']) }}" class="block w-full text-center py-2 rounded-xl border border-emerald-300 text-emerald-800 bg-white text-xs font-semibold hover:bg-emerald-50 transition-colors">
+                            Fleet Partner Login
+                        </a>
+                    @endauth
+                </div>
+            </div>
+
             @auth
                 @if(auth()->user()->hasRole('admin'))
                     <div class="pt-1">

@@ -50,14 +50,14 @@
     $vendorWaClean = $vendorWa ? preg_replace('/[^0-9]/', '', $vendorWa) : null;
     if ($vendorWaClean && strlen($vendorWaClean) === 10) { $vendorWaClean = '91' . $vendorWaClean; }
     $productMsg = rawurlencode("Namaste " . ($product->vendor?->shop_name ?: '') . "! I saw '{$product->title}' on K71: " . url('/product/' . $product->slug));
-    $vendorWaUrl = $vendorWaClean ? "https://wa.me/{$vendorWaClean}?text={$productMsg}" : ($product->vendor ? route('storefront.show', $product->vendor->slug) : route('product.show', $product->slug));
+    $vendorWaUrl = $vendorWaClean ? "https://wa.me/{$vendorWaClean}?text={$productMsg}" : ($product->vendor ? $product->vendor->storefront_url : route('product.show', $product->slug));
 
     $vendorInsta = $vendorSocial['instagram'] ?? ($product->vendor?->user?->username ?: null);
     if ($vendorInsta) {
         $vendorInstaHandle = ltrim($vendorInsta, '@');
         $vendorInstaUrl = Str::startsWith($vendorInsta, 'http') ? $vendorInsta : 'https://instagram.com/' . $vendorInstaHandle;
     } else {
-        $vendorInstaUrl = $product->vendor ? route('storefront.show', $product->vendor->slug) : route('product.show', $product->slug);
+        $vendorInstaUrl = $product->vendor ? $product->vendor->storefront_url : route('product.show', $product->slug);
     }
 @endphp
 

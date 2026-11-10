@@ -239,6 +239,9 @@
                                 @if(auth()->user()->hasRole('vendor'))
                                     <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>
                                 @endif
+                                @if(auth()->user()->isFleet())
+                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50">Fleet Dashboard</a>
+                                @endif
                                 @if(auth()->user()->hasRole('admin'))
                                     <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Admin Console</a>
                                 @endif

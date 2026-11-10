@@ -678,14 +678,14 @@ class OrderController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $vLat = 26.5744; // default Kishangarh, Rajasthan
-        $vLng = 74.8654;
+        $vLat = null;
+        $vLng = null;
         if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
 
-        $partners = \App\Models\DeliveryPartner::where('is_online', true)
+        $partners = \App\Models\DeliveryPartner::realFleet()->where('is_online', true)
             ->with(['activeAssignments' => function($q) {
                 $q->with('order');
             }])
@@ -699,11 +699,11 @@ class OrderController extends Controller
                     'name' => $p->name,
                     'phone' => $p->phone,
                     'vehicle_type' => ucfirst($p->vehicle_type ?? 'bike'),
-                    'vehicle_number' => $p->vehicle_number ?: 'Unregistered',
+                    'vehicle_number' => $p->vehicle_number ?: 'Plate not added',
                     'rating' => number_format((float) ($p->rating ?? 5.0), 1),
                     'total_deliveries' => (int) ($p->total_deliveries ?? 0),
                     'distance_km' => $dist,
-                    'eta_minutes' => max(3, round($dist * 3.5)),
+                    'eta_minutes' => $dist !== null ? max(3, round($dist * 3.5)) : null,
                     'base_delivery_fee' => (float) ($p->base_delivery_fee ?? 30.00),
                     'per_km_rate' => (float) ($p->per_km_rate ?? 15.00),
                     'calculated_payout' => $fare,
@@ -712,12 +712,12 @@ class OrderController extends Controller
                     'status_label' => $isBusy ? 'On Active Delivery' : 'Available for Pickup',
                 ];
             })
-            ->sortBy('distance_km')
+            ->sortBy(fn ($p) => $p['distance_km'] ?? 999999)
             ->values();
 
         return response()->json([
             'partners' => $partners,
-            'vendor_location' => is_array($vendor->pickup_address) ? ($vendor->pickup_address['line_1'] ?? 'Kishangarh Hub') : 'Kishangarh Hub',
+            'vendor_location' => is_array($vendor->pickup_address) ? ($vendor->pickup_address['line_1'] ?? $vendor->shop_name) : $vendor->shop_name,
         ]);
     }
 
@@ -732,10 +732,10 @@ class OrderController extends Controller
         }
 
         $partnerId = $request->input('delivery_partner_id');
-        $partner = \App\Models\DeliveryPartner::findOrFail($partnerId);
+        $partner = \App\Models\DeliveryPartner::realFleet()->findOrFail($partnerId);
 
-        $vLat = 27.0425;
-        $vLng = 74.7214;
+        $vLat = null;
+        $vLng = null;
         if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
@@ -759,13 +759,14 @@ class OrderController extends Controller
             'status' => 'processing',
         ]);
 
+        $distText = $dist !== null ? "{$dist} km away • " : '';
         \App\Models\OrderStatusLog::create([
             'order_id' => $order->id,
             'from_status' => $oldStatus,
             'to_status' => 'processing',
             'actor_type' => 'vendor',
             'actor_id' => auth()->id(),
-            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$dist} km away • ₹{$fare} delivery fare). Pickup alert ring dispatched.",
+            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$distText}₹{$fare} delivery fare). Pickup alert ring dispatched.",
             'ip_address' => $request->ip(),
         ]);
 
@@ -776,9 +777,9 @@ class OrderController extends Controller
             'partner' => [
                 'name' => $partner->name,
                 'phone' => $partner->phone,
-                'vehicle' => $partner->vehicle_number,
+                'vehicle' => $partner->vehicle_number ?: 'Plate not added',
                 'fare' => '₹' . number_format($fare, 2),
-                'distance' => $dist . ' km',
+                'distance' => $dist !== null ? ($dist . ' km') : 'Distance pending',
             ]
         ]);
     }
@@ -791,14 +792,14 @@ class OrderController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor) abort(403);
 
-        $vLat = 27.0425;
-        $vLng = 74.7214;
+        $vLat = null;
+        $vLng = null;
         if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
 
-        $partners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+        $partners = \App\Models\DeliveryPartner::realFleet()->with(['assignments' => function($q) {
             $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
         }])->get()->map(function($p) use ($vLat, $vLng) {
             $activeAssignment = $p->assignments->first(function($a) {
@@ -807,9 +808,9 @@ class OrderController extends Controller
             $p->active_assignment = $activeAssignment;
             $p->is_busy = !is_null($activeAssignment);
             $p->distance_km = $p->distanceTo($vLat, $vLng);
-            $p->eta_minutes = max(3, (int) round($p->distance_km * 3.5));
+            $p->eta_minutes = $p->distance_km !== null ? max(3, (int) round($p->distance_km * 3.5)) : null;
             return $p;
-        })->sortBy('distance_km')->values();
+        })->sortBy(fn ($p) => [$p->is_online ? 0 : 1, $p->distance_km ?? 999999])->values();
 
         $activeOrdersNeedingDispatch = Order::where('vendor_id', $vendor->id)
             ->whereIn('status', ['pending', 'processing'])

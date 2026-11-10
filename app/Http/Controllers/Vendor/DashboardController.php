@@ -241,14 +241,14 @@ class DashboardController extends Controller
         $isFoodOrFeasto = in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana']) 
             || (method_exists($vendor, 'isRestaurant') && $vendor->isRestaurant());
 
-        $vLat = 26.5744; // Kishangarh default
-        $vLng = 74.8654;
+        $vLat = null;
+        $vLng = null;
         if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
 
-        $deliveryPartners = \App\Models\DeliveryPartner::with(['assignments' => function($q) {
+        $deliveryPartners = \App\Models\DeliveryPartner::realFleet()->with(['assignments' => function($q) {
             $q->whereIn('status', ['assigned', 'accepted', 'picked_up'])->with('order');
         }])->get()->map(function($dp) use ($vLat, $vLng) {
             $activeAssignment = $dp->assignments->first(function($a) {
@@ -256,10 +256,11 @@ class DashboardController extends Controller
             });
             $dp->active_assignment = $activeAssignment;
             $dp->is_busy = !is_null($activeAssignment);
-            $dp->distance_km = round(abs((float) $dp->distanceTo($vLat, $vLng)), 1);
-            $dp->eta_minutes = max(3, (int) round($dp->distance_km * 3.5));
+            $dist = $dp->distanceTo($vLat, $vLng);
+            $dp->distance_km = $dist !== null ? round(abs($dist), 1) : null;
+            $dp->eta_minutes = $dp->distance_km !== null ? max(3, (int) round($dp->distance_km * 3.5)) : null;
             return $dp;
-        })->sortBy('distance_km')->values();
+        })->sortBy(fn ($dp) => [$dp->is_online ? 0 : 1, $dp->distance_km ?? 999999])->values();
 
         $pendingDispatchOrders = Order::where('vendor_id', $vendor->id)
             ->whereIn('status', ['pending', 'processing'])

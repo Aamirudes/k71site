@@ -39,13 +39,25 @@ class DeliveryPartner extends Model
         return $this->hasMany(DeliveryAssignment::class)->whereIn('status', ['assigned', 'accepted', 'picked_up']);
     }
 
+    public function scopeRealFleet($query)
+    {
+        return $query->whereNotNull('user_id')
+            ->whereHas('user', function ($uq) {
+                $uq->whereNull('deleted_at')
+                    ->whereHas('roles', fn ($rq) => $rq->where('name', 'fleet'))
+                    ->whereDoesntHave('roles', fn ($rq) => $rq->where('name', 'admin'))
+                    ->whereDoesntHave('vendor');
+            });
+    }
+
     /**
-     * Compute approximate distance in KM from a target coordinate (Haversine formula)
+     * Compute approximate distance in KM from a target coordinate (Haversine formula).
+     * Returns null when real GPS coordinates are not yet shared by either party.
      */
-    public function distanceTo($latitude, $longitude): float
+    public function distanceTo($latitude, $longitude): ?float
     {
         if (!$this->current_latitude || !$this->current_longitude || !$latitude || !$longitude) {
-            return 1.2; // default fallback 1.2 km in town
+            return null;
         }
 
         $earthRadius = 6371; // km
@@ -67,9 +79,12 @@ class DeliveryPartner extends Model
     /**
      * Compute dynamic real-time delivery fee based on distance (Blinkit style)
      */
-    public function calculateDeliveryFee(float $distanceKm): float
+    public function calculateDeliveryFee(?float $distanceKm): float
     {
         $base = (float) ($this->base_delivery_fee ?? 30.00);
+        if ($distanceKm === null) {
+            return round($base, 2);
+        }
         $perKm = (float) ($this->per_km_rate ?? 15.00);
         
         // Base fee covers first 2.0 km. Beyond that, per_km_rate is added.

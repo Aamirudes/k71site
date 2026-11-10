@@ -26,7 +26,7 @@
                 @php
                     $sampleImg = $cat->sample_image ? (str_starts_with($cat->sample_image, 'http') ? $cat->sample_image : asset('storage/' . $cat->sample_image)) : null;
                 @endphp
-                <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $cat->slug]) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl(['category' => $cat->slug], 'catalog') }}" 
                    class="group relative rounded-2xl overflow-hidden aspect-[4/3] bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-lg transition-all duration-300">
                     @if($sampleImg)
                         <img src="{{ $sampleImg }}" 

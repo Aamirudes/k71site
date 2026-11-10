@@ -42,7 +42,7 @@
                     </svg>
                 </button>
 
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-2.5 group">
+                <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-2.5 group">
                     <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-600 p-[1.5px] shadow-[0_0_15px_rgba(34,211,238,0.7)] shrink-0">
                         @if($storeLogo)
                             <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full rounded-full object-cover">
@@ -66,12 +66,12 @@
 
             <!-- Center: High-Contrast Planetary Department Pills (Desktop Glassmorphic) -->
             <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/15 text-xs font-mono">
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="px-3.5 py-1.5 rounded-full transition {{ !$currentCategory ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/15' }}">
                     ALL ({{ $products->total() ?? $products->count() }})
                 </a>
                 @foreach($vendorCategories->take(3) as $c)
-                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                        class="px-3 py-1.5 rounded-full transition {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)]' : 'text-slate-200 hover:text-white hover:bg-white/15' }}">
                         {{ strtoupper($c->name) }}
                     </a>
@@ -83,7 +83,7 @@
 
             <!-- Right: Search & Interactive Bag Capsule -->
             <div class="flex items-center gap-2 pr-1">
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog"
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}"
                    class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.08] hover:bg-white/20 text-white text-xs font-mono font-bold border border-white/20 backdrop-blur-xl transition shadow-xs"
                    title="Search store catalog">
                     <svg class="w-3.5 h-3.5 text-cyan-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,12 +240,12 @@
                 </div>
 
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                        class="px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition shrink-0 {{ !$currentCategory ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)] ring-2 ring-cyan-400 ring-offset-2 ring-offset-[#050711]' : 'bg-white/10 text-slate-200 hover:text-white border border-white/15' }}">
                         ALL ({{ $products->total() ?? $products->count() }})
                     </a>
                     @foreach($vendorCategories as $c)
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                            class="px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider transition shrink-0 {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(6,182,212,0.6)] ring-2 ring-cyan-400 ring-offset-2 ring-offset-[#050711]' : 'bg-white/10 text-slate-200 hover:text-white border border-white/15' }}">
                             {{ $c->name }} ({{ $c->products_count }})
                         </a>
@@ -258,7 +258,7 @@
                 <div class="py-20 text-center border border-white/15 rounded-3xl bg-[#0b0f20]/60 p-8 space-y-4">
                     <span class="text-3xl font-mono text-cyan-400 block">[ NO PIECES FOUND ]</span>
                     <p class="text-xs text-slate-300">Reset your department query to view full store inventory.</p>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="inline-block px-6 py-2.5 rounded-full bg-cyan-500 text-slate-950 font-mono font-bold text-xs uppercase shadow-md">
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" class="inline-block px-6 py-2.5 rounded-full bg-cyan-500 text-slate-950 font-mono font-bold text-xs uppercase shadow-md">
                         Reset Filter
                     </a>
                 </div>

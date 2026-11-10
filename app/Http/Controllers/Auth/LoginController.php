@@ -19,7 +19,7 @@ class LoginController extends Controller
         $credentials = $request->validate([
             'login' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:customer,vendor'],
+            'role' => ['required', 'in:customer,vendor,fleet'],
         ]);
 
         $rawLogin = trim($credentials['login']);
@@ -139,6 +139,11 @@ class LoginController extends Controller
             }
 
             if ($request->expectsJson() || $request->wantsJson()) {
+                $jsonRedirect = match ($credentials['role']) {
+                    'vendor' => route('vendor.dashboard'),
+                    'fleet' => $user->isFleet() ? route('delivery.dashboard') : route('delivery.onboarding'),
+                    default => null,
+                };
                 return response()->json([
                     'success' => true,
                     'message' => 'Signed in successfully!',
@@ -149,7 +154,7 @@ class LoginController extends Controller
                         'email' => $user->email,
                         'role' => $credentials['role'],
                     ],
-                    'redirect' => $credentials['role'] === 'vendor' ? route('vendor.dashboard') : null,
+                    'redirect' => $jsonRedirect,
                 ]);
             }
 
@@ -171,10 +176,31 @@ class LoginController extends Controller
                 return redirect()->route('vendor.dashboard');
             }
 
-            // If logging in as customer, clear any stale vendor intended URLs so customer isn't trapped in vendor area
+            if ($credentials['role'] === 'fleet') {
+                $hasFleetPartner = !$user->isAdmin() && !$user->isVendor()
+                    && ($user->isFleet() || \App\Models\DeliveryPartner::where('user_id', $user->id)->exists());
+
+                if ($request->session()->has('url.intended')) {
+                    $request->session()->forget('url.intended');
+                }
+
+                if (!$hasFleetPartner) {
+                    return redirect()->route('delivery.onboarding')
+                        ->with('info', 'Complete your Fleet Partner profile to access the Fleet Dashboard.');
+                }
+
+                $partner = \App\Models\DeliveryPartner::where('user_id', $user->id)->first();
+                if ($partner) {
+                    session(['delivery_partner_id' => $partner->id]);
+                }
+
+                return redirect()->route('delivery.dashboard');
+            }
+
+            // If logging in as customer, clear any stale vendor or fleet intended URLs
             if ($request->session()->has('url.intended')) {
                 $intended = $request->session()->get('url.intended');
-                if (str_contains($intended, '/vendor/')) {
+                if (str_contains($intended, '/vendor/') || str_contains($intended, '/delivery/')) {
                     $request->session()->forget('url.intended');
                 }
             }

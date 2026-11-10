@@ -49,7 +49,7 @@
                     </svg>
                 </button>
 
-                <a href="{{ route('storefront.show', $vendor->slug) }}" class="flex items-center gap-3 group">
+                <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
                     @if(!empty($storeLogo))
                         <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-[#d4af37] bg-[#0d1326] p-1 overflow-hidden shadow-[0_0_12px_rgba(212,175,55,0.3)]">
                             <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full object-contain">
@@ -72,12 +72,12 @@
 
             <!-- Center: Royal Department Navigation -->
             <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-[#0d1326]/90 border border-[#d4af37]/30 text-xs font-mono">
-                <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                    class="px-4 py-1.5 rounded-full transition {{ !$currentCategory ? 'bg-gradient-to-r from-[#b38728] via-[#d4af37] to-[#f5d77f] text-black font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]' : 'text-slate-300 hover:text-white hover:bg-white/10' }}">
                     TREASURY ({{ $products->total() ?? $products->count() }})
                 </a>
                 @foreach($vendorCategories->take(3) as $c)
-                    <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                        class="px-4 py-1.5 rounded-full transition {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-[#b38728] via-[#d4af37] to-[#f5d77f] text-black font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]' : 'text-slate-300 hover:text-white hover:bg-white/10' }}">
                         {{ strtoupper($c->name) }}
                     </a>
@@ -181,12 +181,12 @@
 
                 <!-- Categories -->
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" 
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" 
                        class="px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition {{ !$currentCategory ? 'bg-gradient-to-r from-[#b38728] to-[#d4af37] text-black font-bold shadow-xs' : 'bg-[#060913] border border-[#d4af37]/30 text-slate-300 hover:text-white' }}">
                         ALL ({{ $products->total() ?? $products->count() }})
                     </a>
                     @foreach($vendorCategories as $c)
-                        <a href="{{ route('storefront.show', ['slug' => $vendor->slug, 'category' => $c->slug]) }}#catalog" 
+                        <a href="{{ $vendor->storefrontUrl(['category' => $c->slug], 'catalog') }}" 
                            class="px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition {{ $currentCategory === $c->slug ? 'bg-gradient-to-r from-[#b38728] to-[#d4af37] text-black font-bold shadow-xs' : 'bg-[#060913] border border-[#d4af37]/30 text-slate-300 hover:text-white' }}">
                             {{ strtoupper($c->name) }} ({{ $c->products_count }})
                         </a>
@@ -199,7 +199,7 @@
                 <div class="py-16 text-center rounded-3xl border border-[#d4af37]/30 bg-[#0d1326] p-8 space-y-3">
                     <span class="text-2xl font-heading text-[#d4af37] block">👑 Treasury Empty 👑</span>
                     <p class="text-xs text-slate-400">No items match this category chamber.</p>
-                    <a href="{{ route('storefront.show', $vendor->slug) }}#catalog" class="inline-block mt-3 px-6 py-2 rounded-full border border-[#d4af37] text-xs font-mono uppercase tracking-widest text-[#f5d77f] hover:bg-[#d4af37] hover:text-black transition">
+                    <a href="{{ $vendor->storefrontUrl([], 'catalog') }}" class="inline-block mt-3 px-6 py-2 rounded-full border border-[#d4af37] text-xs font-mono uppercase tracking-widest text-[#f5d77f] hover:bg-[#d4af37] hover:text-black transition">
                         Reset Chamber
                     </a>
                 </div>
