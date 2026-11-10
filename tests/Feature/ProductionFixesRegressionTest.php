@@ -142,32 +142,33 @@ class ProductionFixesRegressionTest extends TestCase
             ->assertDontSee('1.2 km');
     }
 
-    public function test_vendor_design_omits_top_banner_and_storefront_redirects_apex_slug_to_subdomain(): void
+    public function test_vendor_design_omits_top_banner_and_uses_canonical_subdomain_links(): void
     {
+        config([
+            'marketplace.domain' => 'marblemandi.org',
+            'marketplace.use_subdomains' => true,
+        ]);
+
         [$vendorUser, $vendor] = $this->createVendorAccount('gaddito', 'Gaddito');
 
         $designResp = $this->actingAs($vendorUser)->get('/vendor/design');
         $designResp->assertOk()
             ->assertDontSee('PRODUCT-FIRST STORE ENGINE')
             ->assertDontSee('Choose from ten signature website designs')
-            ->assertSee('gaddito.')
+            ->assertSee('gaddito.marblemandi.org')
+            ->assertDontSee('/s/gaddito')
             ->assertSee('Slide 1 Text Color')
             ->assertSee('Slide 2 Text Color')
             ->assertSee('Slide 3 Text Color')
             ->assertSee('hc-upload-progress-wrap')
             ->assertDontSee('Currently displaying 5 curated');
 
-        // Visiting apex /s/{slug} on marblemandi.org redirects 302 to https://{slug}.marblemandi.org
-        config([
-            'marketplace.domain' => 'marblemandi.org',
-            'marketplace.use_subdomains' => true,
-            'marketplace.force_subdomain_redirect_in_tests' => true,
-        ]);
-
-        $redirectResp = $this->get('https://marblemandi.org/s/gaddito');
-        $redirectResp->assertStatus(302);
-        $location = $redirectResp->headers->get('Location');
-        $this->assertStringContainsString('gaddito.marblemandi.org', (string) $location);
+        // /s/{slug} must render 200 (never 302 loop when reverse-proxied by Cloudflare Worker)
+        // while canonical & subdomain URLs resolve to gaddito.marblemandi.org
+        $this->assertStringEndsWith('gaddito.marblemandi.org', $vendor->storefront_url);
+        $this->get('https://marblemandi.org/s/gaddito')
+            ->assertOk()
+            ->assertSee('gaddito.marblemandi.org');
     }
 
     public function test_hero_slide_text_colors_happy_customers_upload_and_reviews_slider(): void

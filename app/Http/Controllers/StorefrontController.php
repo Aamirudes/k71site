@@ -134,20 +134,9 @@ class StorefrontController extends Controller
         $vendor = Vendor::with('settings')->where('slug', $slug)->firstOrFail();
         app()->instance('current_vendor', $vendor);
 
-        $requestHost = strtolower(request()->getHost());
-        $currentSubdomain = k71_extract_subdomain($requestHost);
-        $isIp = in_array($requestHost, ['127.0.0.1', '::1']) || filter_var($requestHost, FILTER_VALIDATE_IP);
-        $isLocalApex = $requestHost === 'localhost' || str_ends_with($requestHost, '.localhost');
-        $shouldRedirectSubdomain = config('marketplace.use_subdomains', true)
-            && !$currentSubdomain
-            && !$isIp
-            && !$isLocalApex
-            && !$request->expectsJson()
-            && (!app()->runningUnitTests() || config('marketplace.force_subdomain_redirect_in_tests', false));
-
-        if ($shouldRedirectSubdomain) {
-            return redirect()->away($vendor->storefrontUrl($request->query()), 302);
-        }
+        // Never 302-redirect /s/{slug}: Cloudflare Origin/Worker routes proxy https://{slug}.domain/
+        // to https://domain/s/{slug} on Host=domain, so redirecting /s/{slug} causes an infinite loop.
+        // All UI/navigation links and <link rel="canonical"> point directly to $vendor->storefront_url.
 
         
         $query = Product::with(['images', 'category', 'variants'])
