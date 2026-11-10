@@ -920,7 +920,7 @@
                                     <div class="mt-3 pt-3 border-t border-purple-200/60 grid grid-cols-2 gap-2 text-xs">
                                         <div>
                                             <span class="text-gray-500">Transaction ID:</span>
-                                            <span class="font-mono font-semibold text-gray-900 block truncate">{{ $order->paymentClaim->utr_number ?? $order->idempotency_key ?? ($order->tracking_number && \Illuminate\Support\Str::startsWith($order->tracking_number, 'TXN_') ? $order->tracking_number : 'TXN_PENDING') }}</span>
+                                            <span class="font-mono font-semibold text-gray-900 block truncate">{{ $order->paymentClaim?->utr_number ?? $order->idempotency_key ?? ($order->tracking_number && \Illuminate\Support\Str::startsWith($order->tracking_number, 'TXN_') ? $order->tracking_number : 'TXN_PENDING') }}</span>
                                         </div>
                                         <div>
                                             <span class="text-gray-500">Payment Status:</span>
@@ -947,7 +947,7 @@
                                 <div class="bg-gray-50 p-3 rounded-md mb-3 text-sm">
                                     <p class="flex justify-between items-center">
                                         <span class="text-gray-500 font-semibold">Customer Submitted UTR:</span> 
-                                        <span class="font-mono font-bold text-gray-900 bg-white px-2 py-1 rounded border select-all">{{ $order->paymentClaim->utr_number ?? 'Not provided' }}</span>
+                                        <span class="font-mono font-bold text-gray-900 bg-white px-2 py-1 rounded border select-all">{{ $order->paymentClaim?->utr_number ?? 'Not provided' }}</span>
                                     </p>
                                     <p class="text-xs text-gray-500 mt-1">Check your bank statement or UPI app to confirm ₹{{ number_format($order->total_amount / 100, 2) }} was credited.</p>
                                     

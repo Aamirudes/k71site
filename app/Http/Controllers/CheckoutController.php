@@ -682,8 +682,16 @@ class CheckoutController extends Controller
         }
 
         $request->validate([
-            'upi_transaction_id' => 'nullable|string|min:6|max:40',
+            'upi_transaction_id' => [
+                'nullable',
+                'string',
+                'min:6',
+                'max:30',
+                \Illuminate\Validation\Rule::unique('payment_claims', 'utr_number')->ignore($order->paymentClaim?->id),
+            ],
             'payment_screenshot' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'upi_transaction_id.unique' => 'This UTR / Transaction Reference ID has already been submitted for another order. Please verify your exact transaction reference.',
         ]);
 
         if (empty($request->upi_transaction_id) && !$request->hasFile('payment_screenshot')) {

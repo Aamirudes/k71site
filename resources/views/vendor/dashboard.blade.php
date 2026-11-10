@@ -193,12 +193,12 @@
                                     <span class="bw-badge text-[10px] font-bold px-2 py-0.5">
                                         ₹{{ number_format(($claim->amount_claimed ?: $o->total_amount) / 100, 2) }}
                                     </span>
-                                    <span class="text-[11px] text-zinc-400 font-mono">{{ $claim->created_at->format('d M, g:i A') }}</span>
+                                    <span class="text-[11px] text-zinc-400 font-mono">{{ ($claim->created_at ?? $o->created_at ?? now())->format('d M, g:i A') }}</span>
                                 </div>
                                 <div class="text-xs text-zinc-700 font-medium">
                                     Customer: <strong class="text-black">{{ $o->user?->name ?? 'Guest Buyer' }}</strong>
-                                    @if($o->user?->phone || !empty($o->address_snapshot['phone']))
-                                        • <span class="font-mono text-zinc-500">{{ $o->user?->phone ?? $o->address_snapshot['phone'] }}</span>
+                                    @if($o->user?->phone || (is_array($o->address_snapshot) && !empty($o->address_snapshot['phone'])))
+                                        • <span class="font-mono text-zinc-500">{{ $o->user?->phone ?? ($o->address_snapshot['phone'] ?? '') }}</span>
                                     @endif
                                 </div>
                                 <div class="flex items-center gap-2 text-xs pt-1">
@@ -691,7 +691,7 @@
                                     <div class="text-[10px] text-zinc-400 font-mono">{{ $o->user?->email ?? $o->phone }}</div>
                                 </td>
                                 <td class="py-3 px-3 text-zinc-500 whitespace-nowrap font-mono text-[11px]">
-                                    {{ $o->created_at->format('d M, g:i A') }}
+                                    {{ $o->created_at?->format('d M, g:i A') ?? '—' }}
                                 </td>
                                 <td class="py-3 px-3 font-medium text-zinc-700">
                                     {{ $o->items_count ?? ($o->items ? $o->items->count() : 1) }} items

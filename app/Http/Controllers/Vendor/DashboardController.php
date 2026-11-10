@@ -221,29 +221,32 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
-        // Also ensure any UPI orders awaiting payment review appear in the vendor queue
+        // Also ensure any active UPI orders awaiting payment review appear in the vendor queue
+        // without mutating payment_claims or colliding on the unique utr_number constraint.
         $unclaimedUpiOrders = Order::with('user')
             ->where('vendor_id', $vendor->id)
             ->where('payment_method', 'upi')
             ->whereIn('payment_status', ['processing', 'pending'])
+            ->where('status', '!=', 'cancelled')
             ->whereDoesntHave('paymentClaim')
             ->latest()
             ->get();
 
         foreach ($unclaimedUpiOrders as $uOrder) {
-            $claim = \App\Models\PaymentClaim::firstOrCreate(
-                ['order_id' => $uOrder->id],
-                [
-                    'user_id' => $uOrder->user_id,
-                    'utr_number' => 'WAITING_PROOF',
-                    'amount_claimed' => $uOrder->total_amount,
-                    'status' => 'pending',
-                ]
-            );
-            if ($claim && !$pendingPaymentClaims->contains('id', $claim->id)) {
-                $claim->setRelation('order', $uOrder);
-                $pendingPaymentClaims->push($claim);
+            if ($pendingPaymentClaims->contains('order_id', $uOrder->id)) {
+                continue;
             }
+
+            $claim = new \App\Models\PaymentClaim([
+                'order_id' => $uOrder->id,
+                'user_id' => $uOrder->user_id,
+                'utr_number' => null,
+                'amount_claimed' => $uOrder->total_amount,
+                'status' => 'pending',
+            ]);
+            $claim->created_at = $uOrder->created_at ?? now();
+            $claim->setRelation('order', $uOrder);
+            $pendingPaymentClaims->push($claim);
         }
 
         // 7. Delivery Partners & Boys Listing for Food, Feasto, Kirana & Express Vendors
@@ -252,7 +255,7 @@ class DashboardController extends Controller
 
         $vLat = 26.5744; // Kishangarh default
         $vLng = 74.8654;
-        if ($vendor->pickup_address && !empty($vendor->pickup_address['lat'])) {
+        if (is_array($vendor->pickup_address) && !empty($vendor->pickup_address['lat']) && !empty($vendor->pickup_address['lng'])) {
             $vLat = (float) $vendor->pickup_address['lat'];
             $vLng = (float) $vendor->pickup_address['lng'];
         }
