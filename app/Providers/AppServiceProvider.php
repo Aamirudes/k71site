@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
     {
         date_default_timezone_set('Asia/Kolkata');
 
+        // Serve Vite CSS/JS cleanly as root-relative URLs so ES modules load same-origin on all subdomains
+        \Illuminate\Support\Facades\Vite::createAssetPathsUsing(
+            fn (string $path, ?bool $secure = null) => '/' . ltrim($path, '/')
+        );
+
         // Centralized brand detection shared with all views & layouts
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
             $sub = strtolower(explode('.', request()->getHost())[0] ?? '');
