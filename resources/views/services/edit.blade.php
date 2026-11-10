@@ -3,7 +3,7 @@
         
         <div class="flex items-center justify-between mb-6">
             <div>
-                <a href="{{ route('account.listings', ['tab' => 'services']) }}" class="text-xs text-slate-500 hover:text-slate-900 font-bold flex items-center gap-1 mb-2">
+                <a href="{{ $backRoute ?? route('account.listings', ['tab' => 'services']) }}" class="text-xs text-slate-500 hover:text-slate-900 font-bold flex items-center gap-1 mb-2">
                     <span>← Back to My Listings</span>
                 </a>
                 <h1 class="text-2xl font-black text-slate-950">Edit Freelance Gig &amp; Packages</h1>
@@ -25,7 +25,7 @@
         @endif
 
         <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
-            <form action="{{ route('services.gig.update', $product) }}" method="POST" class="space-y-6">
+            <form action="{{ $updateRoute ?? route('services.gig.update', $product) }}" method="POST" class="space-y-6">
                 @csrf
                 @method('PUT')
 
@@ -88,11 +88,11 @@
                             <span class="text-xs font-bold text-slate-900 block">Tier 1: Basic</span>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Package Name</label>
-                                <input type="text" name="packages[basic][name]" value="{{ $basicPkg?->name ?? 'Basic Starter' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                <input type="text" name="packages[basic][name]" value="{{ $basicPkg?->title ?? $basicPkg?->name ?? 'Basic Starter' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Price (₹)</label>
-                                <input type="number" name="packages[basic][price]" value="{{ $basicPkg ? ($basicPkg->price / 100) : ($product->base_price / 100) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
+                                <input type="number" step="0.01" name="packages[basic][price]" value="{{ $basicPkg ? (float) $basicPkg->price : ($product->base_price / 100) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
@@ -101,7 +101,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Revisions</label>
-                                    <input type="text" name="packages[basic][revisions]" value="{{ $basicPkg?->revisions ?? '1 Revision' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                    <input type="number" min="0" name="packages[basic][revisions]" value="{{ $basicPkg?->revisions ?? 1 }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono">
                                 </div>
                             </div>
                             <div>
@@ -118,11 +118,11 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Package Name</label>
-                                <input type="text" name="packages[standard][name]" value="{{ $standardPkg?->name ?? 'Standard Pro' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                <input type="text" name="packages[standard][name]" value="{{ $standardPkg?->title ?? $standardPkg?->name ?? 'Standard Pro' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Price (₹)</label>
-                                <input type="number" name="packages[standard][price]" value="{{ $standardPkg ? ($standardPkg->price / 100) : (($product->base_price / 100) * 2) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
+                                <input type="number" step="0.01" name="packages[standard][price]" value="{{ $standardPkg ? (float) $standardPkg->price : (($product->base_price / 100) * 2) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
@@ -131,7 +131,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Revisions</label>
-                                    <input type="text" name="packages[standard][revisions]" value="{{ $standardPkg?->revisions ?? '3 Revisions' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                    <input type="number" min="0" name="packages[standard][revisions]" value="{{ $standardPkg?->revisions ?? 3 }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono">
                                 </div>
                             </div>
                             <div>
@@ -145,11 +145,11 @@
                             <span class="text-xs font-bold text-amber-900 block">Tier 3: Premium</span>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Package Name</label>
-                                <input type="text" name="packages[premium][name]" value="{{ $premiumPkg?->name ?? 'VIP Executive' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                <input type="text" name="packages[premium][name]" value="{{ $premiumPkg?->title ?? $premiumPkg?->name ?? 'VIP Executive' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase">Price (₹)</label>
-                                <input type="number" name="packages[premium][price]" value="{{ $premiumPkg ? ($premiumPkg->price / 100) : (($product->base_price / 100) * 3.5) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
+                                <input type="number" step="0.01" name="packages[premium][price]" value="{{ $premiumPkg ? (float) $premiumPkg->price : (($product->base_price / 100) * 3.5) }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono font-bold">
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
@@ -158,7 +158,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Revisions</label>
-                                    <input type="text" name="packages[premium][revisions]" value="{{ $premiumPkg?->revisions ?? 'Unlimited' }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white">
+                                    <input type="number" min="0" name="packages[premium][revisions]" value="{{ $premiumPkg?->revisions ?? 10 }}" class="w-full px-3 py-1.5 rounded-lg border text-xs bg-white font-mono">
                                 </div>
                             </div>
                             <div>
@@ -171,7 +171,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
-                    <a href="{{ route('account.listings', ['tab' => 'services']) }}" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                    <a href="{{ $backRoute ?? route('account.listings', ['tab' => 'services']) }}" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
                         Cancel
                     </a>
                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition cursor-pointer">

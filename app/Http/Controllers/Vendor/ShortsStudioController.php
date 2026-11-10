@@ -206,7 +206,7 @@ class ShortsStudioController extends Controller
             $thumbUrl = $this->saveBase64Thumbnail($thumbDataUri);
         }
 
-        $slug = Str::slug($title) . '-' . Str::random(5);
+        $slug = (Str::slug($title) ?: 'short') . '-' . Str::random(5);
 
         if ($shortId > 0) {
             $short = Short::where('vendor_id', $vendor->id)->findOrFail($shortId);
@@ -354,6 +354,9 @@ class ShortsStudioController extends Controller
     {
         $vendor = $this->getVendor();
         $user = auth()->user();
+        if (!$vendor || !$user) {
+            return response()->json(['success' => false, 'message' => 'Vendor store required.'], 403);
+        }
         $shortId = (int) $request->input('short_id', 0);
         $tier = $request->input('tier', 'standard'); // standard, prime, elite
 

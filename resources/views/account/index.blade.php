@@ -231,7 +231,7 @@
                                     <div class="flex items-center gap-2">
                                         <form method="POST" action="{{ route('account.delete') }}" class="flex-1">
                                             @csrf
-                                            @method('DELETE')
+                                            <input type="hidden" name="confirm_delete" value="1">
                                             <button type="submit" class="w-full py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold hover:bg-rose-700">
                                                 Confirm Delete
                                             </button>
@@ -297,7 +297,7 @@
                                 </div>
 
                                 <h4 class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white truncate">
-                                    {{ $firstItem ? ($firstItem->product->title ?? 'Store Item') : 'Order Item' }}
+                                    {{ $firstItem ? ($firstItem->product?->title ?? 'Store Item') : 'Order Item' }}
                                 </h4>
                                 <div class="text-[11px] text-slate-500 mt-0.5">
                                     {{ $totalQty }} {{ Str::plural('item', $totalQty) }} • Total: <strong class="text-slate-900 dark:text-white">₹{{ number_format($order->total_amount / 100, 2) }}</strong>

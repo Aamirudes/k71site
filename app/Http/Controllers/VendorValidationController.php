@@ -10,7 +10,7 @@ class VendorValidationController extends Controller
 {
     public function check(Request $request)
     {
-        $slug = $request->query('slug');
+        $slug = strtolower(trim((string) $request->query('slug', '')));
 
         if (!$slug || strlen($slug) < 3) {
             return response()->json([
@@ -18,12 +18,26 @@ class VendorValidationController extends Controller
                 'message' => 'Slug must be at least 3 characters.'
             ]);
         }
-        
-        // Ensure slug is properly formatted
-        if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+
+        if (strlen($slug) > 30) {
             return response()->json([
                 'available' => false,
-                'message' => 'Invalid characters. Use lowercase letters, numbers, and hyphens only.'
+                'message' => 'Slug cannot exceed 30 characters.'
+            ]);
+        }
+
+        // Ensure slug is properly formatted (matches registration rule)
+        if (!preg_match('/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', $slug)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'Invalid characters. Use lowercase letters, numbers, and hyphens between characters only.'
+            ]);
+        }
+
+        if (in_array($slug, config('marketplace.reserved_subdomains', []), true)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'This URL is unavailable (reserved).'
             ]);
         }
 
@@ -36,8 +50,8 @@ class VendorValidationController extends Controller
             ]);
         }
 
-        // Check if exists in vendors
-        $vendorExists = Vendor::where('slug', $slug)->exists();
+        // Check if exists in vendors (including soft-deleted due to UNIQUE index on slug)
+        $vendorExists = Vendor::withTrashed()->where('slug', $slug)->exists();
         if ($vendorExists) {
             return response()->json([
                 'available' => false,
@@ -53,7 +67,7 @@ class VendorValidationController extends Controller
 
     public function checkUsername(Request $request)
     {
-        $username = $request->query('username');
+        $username = strtolower(trim((string) $request->query('username', '')));
 
         if (!$username || strlen($username) < 3) {
             return response()->json([
@@ -61,16 +75,23 @@ class VendorValidationController extends Controller
                 'message' => 'Username must be at least 3 characters.'
             ]);
         }
-        
-        if (!preg_match('/^[a-zA-Z0-9_.-]+$/', $username)) {
+
+        if (strlen($username) > 20) {
             return response()->json([
                 'available' => false,
-                'message' => 'Use letters, numbers, dots, dashes, or underscores only.'
+                'message' => 'Username cannot exceed 20 characters.'
             ]);
         }
 
-        $userExists = \App\Models\User::where('username', $username)->exists();
-        
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'Use letters, numbers, and underscores only.'
+            ]);
+        }
+
+        $userExists = \App\Models\User::withTrashed()->where('username', $username)->exists();
+
         if ($userExists) {
             return response()->json([
                 'available' => false,

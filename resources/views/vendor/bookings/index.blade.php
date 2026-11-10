@@ -50,7 +50,8 @@
                 @php
                     $cleanPhone = preg_replace('/[^0-9]/', '', $booking->customer_phone);
                     if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
-                    $waLink = "https://wa.me/{$cleanPhone}?text=" . urlencode("Hi {$booking->customer_name}, regarding your appointment #{$booking->booking_number} for {$booking->product->title} on {$booking->formatted_date}.");
+                    $serviceTitle = $booking->product?->title ?? 'Service Booking';
+                    $waLink = "https://wa.me/{$cleanPhone}?text=" . urlencode("Hi {$booking->customer_name}, regarding your appointment #{$booking->booking_number} for {$serviceTitle} on {$booking->formatted_date}.");
                 @endphp
                 <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs transition hover:border-gray-300">
                     <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
@@ -92,7 +93,7 @@
                                 </div>
 
                                 <h3 class="text-base font-bold text-gray-900 leading-snug">
-                                    {{ $booking->product->title }}
+                                    {{ $booking->product?->title ?? 'Service Booking' }}
                                 </h3>
 
                                 <div class="p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs space-y-1 mt-2">

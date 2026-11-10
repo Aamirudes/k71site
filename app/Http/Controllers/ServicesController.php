@@ -102,9 +102,11 @@ class ServicesController extends Controller
             ->get();
 
         // Recommended Professionals / Freelancers
-        $topProviders = Vendor::where('vendor_type', 'service')
-            ->orWhereHas('products', fn($q) => $q->where('vertical', 'services')->where('status', 'active'))
-            ->where('status', 'approved')
+        $topProviders = Vendor::where('status', 'approved')
+            ->where(function ($q) {
+                $q->whereIn('vendor_type', ['service', 'services', 'local_services', 'digital_services'])
+                  ->orWhereHas('products', fn($pq) => $pq->where('vertical', 'services')->where('status', 'active'));
+            })
             ->withCount(['products' => fn($q) => $q->where('vertical', 'services')->where('status', 'active')])
             ->orderByDesc('rating')
             ->take(8)
@@ -252,36 +254,64 @@ class ServicesController extends Controller
             : ['English', 'Hindi'];
 
         $vendor = $user->vendor;
+        $cleanPhone = preg_replace('/\D+/', '', (string) ($validated['contact_phone'] ?? $user->phone ?? '')) ?: null;
+        if ($cleanPhone && strlen($cleanPhone) > 15) {
+            $cleanPhone = substr($cleanPhone, -10);
+        }
 
         if (!$vendor) {
-            $baseSlug = Str::slug($validated['shop_name']);
-            $slug = $baseSlug;
-            $counter = 1;
-            while (Vendor::where('slug', $slug)->exists()) {
-                $slug = $baseSlug . '-' . $counter++;
+            $trashedVendor = Vendor::onlyTrashed()->where('user_id', $user->id)->first();
+            if ($trashedVendor) {
+                $trashedVendor->restore();
+                $trashedVendor->update([
+                    'shop_name' => $validated['shop_name'],
+                    'vendor_type' => 'service',
+                    'description' => $validated['description'],
+                    'tagline' => $validated['tagline'],
+                    'skills_json' => $skillsArray,
+                    'languages_json' => $languagesArray,
+                    'hourly_rate' => $validated['hourly_rate'] ?? null,
+                    'city' => $validated['city'] ?? 'India',
+                    'contact_phone' => $cleanPhone ?: $trashedVendor->contact_phone,
+                    'email' => $user->email,
+                    'status' => 'approved',
+                    'approved_at' => $trashedVendor->approved_at ?: now(),
+                    'vacation_mode' => false,
+                ]);
+                $vendor = $trashedVendor;
+            } else {
+                $reservedSlugs = array_unique(array_merge(
+                    config('marketplace.reserved_subdomains', []) ?? [],
+                    config('marketplace.reserved_slugs', []) ?? []
+                ));
+                $baseSlug = Str::limit(Str::slug($validated['shop_name']) ?: 'service-pro', 22, '');
+                $baseSlug = trim($baseSlug, '-') ?: 'service-pro';
+                $slug = $baseSlug;
+                $counter = 1;
+                while (in_array($slug, $reservedSlugs, true) || Vendor::withTrashed()->where('slug', $slug)->exists()) {
+                    $suffix = '-' . $counter++;
+                    $slug = Str::limit($baseSlug, max(1, 30 - strlen($suffix)), '') . $suffix;
+                }
+
+                $vendor = Vendor::create([
+                    'user_id' => $user->id,
+                    'shop_name' => $validated['shop_name'],
+                    'slug' => $slug,
+                    'vendor_type' => 'service',
+                    'description' => $validated['description'],
+                    'tagline' => $validated['tagline'],
+                    'skills_json' => $skillsArray,
+                    'languages_json' => $languagesArray,
+                    'hourly_rate' => $validated['hourly_rate'] ?? null,
+                    'city' => $validated['city'] ?? 'India',
+                    'contact_phone' => $cleanPhone,
+                    'email' => $user->email,
+                    'status' => 'approved', // Instant onboarding for marketplace agility
+                    'approved_at' => now(),
+                    'rating' => 5.0,
+                    'completed_projects' => 0,
+                ]);
             }
-
-            $vendor = Vendor::create([
-                'user_id' => $user->id,
-                'shop_name' => $validated['shop_name'],
-                'slug' => $slug,
-                'vendor_type' => 'service',
-                'description' => $validated['description'],
-                'tagline' => $validated['tagline'],
-                'skills_json' => $skillsArray,
-                'languages_json' => $languagesArray,
-                'hourly_rate' => $validated['hourly_rate'] ?? null,
-                'city' => $validated['city'] ?? 'India',
-                'contact_phone' => $validated['contact_phone'] ?? $user->phone,
-                'email' => $user->email,
-                'status' => 'approved', // Instant onboarding for marketplace agility
-                'approved_at' => now(),
-                'rating' => 5.0,
-                'completed_projects' => 0,
-            ]);
-
-            // Update user role to vendor
-            $user->update(['role' => 'vendor']);
         } else {
             $vendor->update([
                 'shop_name' => $validated['shop_name'],
@@ -291,9 +321,32 @@ class ServicesController extends Controller
                 'languages_json' => $languagesArray,
                 'hourly_rate' => $validated['hourly_rate'] ?? $vendor->hourly_rate,
                 'city' => $validated['city'] ?? $vendor->city,
+                'contact_phone' => $cleanPhone ?? $vendor->contact_phone,
                 'vendor_type' => 'service',
             ]);
         }
+
+        // Ensure vendor settings & roles are consistently initialized
+        \App\Models\VendorSetting::firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'shipping_type' => 'flat',
+                'shipping_flat_rate' => 0,
+                'processing_days' => 1,
+                'return_window_days' => 0,
+                'upi_enabled' => true,
+                'cod_enabled' => false,
+                'service_radius_km' => 25,
+                'service_experience_years' => 1,
+                'service_working_hours' => '9:00 AM - 7:00 PM',
+            ]
+        );
+
+        $vendorRole = \App\Models\Role::firstOrCreate(['name' => 'vendor'], ['guard_name' => 'web']);
+        $customerRole = \App\Models\Role::firstOrCreate(['name' => 'customer'], ['guard_name' => 'web']);
+        $user->roles()->syncWithoutDetaching([$customerRole->id, $vendorRole->id]);
+        $user->unsetRelation('roles');
+        $user->unsetRelation('vendor');
 
         return redirect()->route('account.listings', ['tab' => 'services'])
             ->with('success', 'Your Freelancer Service Profile is active! Manage your gigs below.');
@@ -335,11 +388,12 @@ class ServicesController extends Controller
             'description' => 'required|string|max:5000',
             'base_price' => 'required|numeric|min:10',
             'packages' => 'nullable|array',
-            'packages.*.name' => 'nullable|string',
-            'packages.*.price' => 'nullable|numeric',
-            'packages.*.delivery_days' => 'nullable|integer',
-            'packages.*.revisions' => 'nullable|string',
-            'packages.*.description' => 'nullable|string',
+            'packages.*.name' => 'nullable|string|max:100',
+            'packages.*.title' => 'nullable|string|max:100',
+            'packages.*.price' => 'nullable|numeric|min:1',
+            'packages.*.delivery_days' => 'nullable|integer|min:1|max:90',
+            'packages.*.revisions' => 'nullable',
+            'packages.*.description' => 'nullable|string|max:1000',
         ]);
 
         $product->update([
@@ -347,20 +401,31 @@ class ServicesController extends Controller
             'category_id' => $validated['category_id'],
             'description' => $validated['description'],
             'short_description' => Str::limit($validated['description'], 120),
-            'base_price' => (int) ($validated['base_price'] * 100),
+            'base_price' => (int) round(((float) $validated['base_price']) * 100),
         ]);
 
         if (!empty($validated['packages'])) {
             foreach ($validated['packages'] as $tier => $pkg) {
                 if (!empty($pkg['price'])) {
-                    \App\Models\GigPackage::updateOrCreate(
+                    $rawRev = (string) ($pkg['revisions'] ?? '');
+                    $revCount = str_contains(strtolower($rawRev), 'unlim')
+                        ? 99
+                        : (int) (preg_replace('/\D+/', '', $rawRev) ?: 2);
+
+                    $desc = trim((string) ($pkg['description'] ?? 'Standard tier delivery')) ?: 'Standard tier delivery';
+                    $existingPkg = \App\Models\ProductGigPackage::where('product_id', $product->id)
+                        ->where('tier', $tier)
+                        ->first();
+
+                    \App\Models\ProductGigPackage::updateOrCreate(
                         ['product_id' => $product->id, 'tier' => $tier],
                         [
-                            'name' => $pkg['name'] ?? ucfirst($tier),
-                            'price' => (int) ($pkg['price'] * 100),
-                            'delivery_days' => (int) ($pkg['delivery_days'] ?? 3),
-                            'revisions' => $pkg['revisions'] ?? '2 Revisions',
-                            'description' => $pkg['description'] ?? 'Standard tier delivery',
+                            'title' => trim((string) ($pkg['title'] ?? $pkg['name'] ?? '')) ?: ucfirst((string) $tier),
+                            'price' => round((float) $pkg['price'], 2),
+                            'delivery_days' => max(1, (int) ($pkg['delivery_days'] ?? 3)),
+                            'revisions' => max(0, $revCount),
+                            'description' => $desc,
+                            'features_json' => $existingPkg?->features_json ?? [$desc],
                         ]
                     );
                 }

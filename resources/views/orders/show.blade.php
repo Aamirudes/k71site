@@ -221,9 +221,9 @@
                             @endif
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-sm sm:text-base text-brand-text truncate">{{ $item->product->title ?? $item->snapshot['title'] ?? 'Product' }}</h4>
+                            <h4 class="font-bold text-sm sm:text-base text-brand-text truncate">{{ $item->product?->title ?? $item->snapshot['title'] ?? 'Product' }}</h4>
                             <div class="flex flex-wrap items-center gap-2 mt-1">
-                                <span class="bg-stone-100 text-stone-700 px-2 py-0.5 rounded text-xs font-medium">{{ $item->variant->sku ?? $item->snapshot['variant_sku'] ?? 'Standard' }}</span>
+                                <span class="bg-stone-100 text-stone-700 px-2 py-0.5 rounded text-xs font-medium">{{ $item->variant?->sku ?? $item->snapshot['variant_sku'] ?? 'Standard' }}</span>
                                 <span class="text-xs text-gray-500 font-medium">Qty: {{ $item->quantity }}</span>
                             </div>
                             @if(!empty($item->selected_modifiers_json))

@@ -70,7 +70,7 @@
             <div class="space-y-3">
                 <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Service Information</h3>
                 <div class="p-4 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center gap-4">
-                    @if($booking->product->images->isNotEmpty())
+                    @if($booking->product && $booking->product->images->isNotEmpty())
                         <img src="{{ format_image_url($booking->product->images->first()->path) }}" alt="{{ $booking->product->title }}" class="w-16 h-16 rounded-xl object-cover shrink-0">
                     @else
                         <div class="w-16 h-16 rounded-xl bg-white border border-zinc-200 flex items-center justify-center text-zinc-400 shrink-0">
@@ -80,9 +80,9 @@
                         </div>
                     @endif
                     <div class="flex-1">
-                        <div class="text-xs text-indigo-600 font-semibold">{{ $booking->product->category?->name ?? 'Professional Service' }}</div>
-                        <h4 class="text-base font-bold text-zinc-950">{{ $booking->product->title }}</h4>
-                        <p class="text-xs text-zinc-500 line-clamp-1 mt-0.5">{{ $booking->product->description }}</p>
+                        <div class="text-xs text-indigo-600 font-semibold">{{ $booking->product?->category?->name ?? 'Professional Service' }}</div>
+                        <h4 class="text-base font-bold text-zinc-950">{{ $booking->product?->title ?? 'Service Appointment' }}</h4>
+                        <p class="text-xs text-zinc-500 line-clamp-1 mt-0.5">{{ $booking->product?->description ?? '' }}</p>
                     </div>
                 </div>
             </div>
@@ -127,15 +127,17 @@
                     </div>
                     <div>
                         <div class="text-xs text-zinc-500">Assigned Professional</div>
-                        <div class="text-sm font-bold text-zinc-950">{{ $booking->vendor->shop_name }}</div>
-                        <div class="text-[11px] text-zinc-500">{{ $booking->vendor->city ?? 'Local Provider' }}</div>
+                        <div class="text-sm font-bold text-zinc-950">{{ $booking->vendor?->shop_name ?? 'Service Provider' }}</div>
+                        <div class="text-[11px] text-zinc-500">{{ $booking->vendor?->city ?? 'Local Provider' }}</div>
                     </div>
                 </div>
 
                 @php
-                    $cleanPhone = preg_replace('/[^0-9]/', '', $booking->vendor->phone ?? $booking->vendor->contact_phone ?? '919876543210');
+                    $cleanPhone = preg_replace('/[^0-9]/', '', $booking->vendor?->phone ?? $booking->vendor?->contact_phone ?? '919876543210');
                     if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
-                    $msg = "Hi {$booking->vendor->shop_name}, I have an appointment booked (Booking #{$booking->booking_number}) for {$booking->product->title} on {$booking->formatted_date} at slot {$booking->booking_slot}.";
+                    $vendorName = $booking->vendor?->shop_name ?? 'Provider';
+                    $serviceTitle = $booking->product?->title ?? 'Service';
+                    $msg = "Hi {$vendorName}, I have an appointment booked (Booking #{$booking->booking_number}) for {$serviceTitle} on {$booking->formatted_date} at slot {$booking->booking_slot}.";
                     $waLink = "https://wa.me/{$cleanPhone}?text=" . urlencode($msg);
                 @endphp
                 <div class="flex items-center gap-3 w-full sm:w-auto">

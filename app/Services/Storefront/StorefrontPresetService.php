@@ -228,7 +228,7 @@ class StorefrontPresetService
     public function getDefaultConfig(string $presetKey, Vendor $vendor): array
     {
         $preset = $this->getPreset($presetKey);
-        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
+        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode((string) ($vendor->social_links ?? ''), true) ?: []);
 
         $vendorLogo = $vendor->logo ? (str_starts_with($vendor->logo, 'http') ? $vendor->logo : asset('storage/' . $vendor->logo)) : null;
         $vendorBanner = $vendor->banner ? (str_starts_with($vendor->banner, 'http') ? $vendor->banner : asset('storage/' . $vendor->banner)) : null;

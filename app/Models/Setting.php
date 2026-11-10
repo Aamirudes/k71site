@@ -29,7 +29,7 @@ class Setting extends Model
         return match ($setting->type) {
             'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $setting->value,
-            'json' => json_decode($setting->value, true) ?: [],
+            'json' => json_decode((string) ($setting->value ?? ''), true) ?: [],
             default => $setting->value,
         };
     }
@@ -66,7 +66,7 @@ class Setting extends Model
             $result[$setting->key] = match ($setting->type) {
                 'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
                 'integer' => (int) $setting->value,
-                'json' => json_decode($setting->value, true) ?: [],
+                'json' => json_decode((string) ($setting->value ?? ''), true) ?: [],
                 default => $setting->value,
             };
         }

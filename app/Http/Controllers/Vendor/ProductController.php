@@ -244,8 +244,10 @@ class ProductController extends Controller
                        ->orWhere('vertical', 'enquiry');
                 });
                 break;
+            case 'service':
             case 'services':
             case 'local_services':
+            case 'digital_services':
                 $q->where(function($sq) {
                     $sq->where('slug', 'LIKE', '%service%')
                        ->orWhere('slug', 'LIKE', '%on-demand%')
@@ -382,7 +384,7 @@ class ProductController extends Controller
             $validated['service_config_json'] = $request->service_config;
         }
 
-        $baseSlug = Str::slug($validated['title']);
+        $baseSlug = Str::slug($validated['title']) ?: 'product';
         $slug = $baseSlug;
         $counter = 1;
         while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
@@ -1146,7 +1148,7 @@ class ProductController extends Controller
 
         $clone->title = $product->title . ' (Copy)';
         
-        $baseSlug = Str::slug($clone->title);
+        $baseSlug = Str::slug($clone->title) ?: 'product-copy';
         $slug = $baseSlug;
         $counter = 1;
         while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
@@ -1166,7 +1168,7 @@ class ProductController extends Controller
             ]);
             $variantClone->product_id = $clone->id;
             if ($variantClone->sku) {
-                $variantClone->sku = $variantClone->sku . '-COPY';
+                $variantClone->sku = Str::limit($variantClone->sku, 90, '') . '-COPY';
             }
             $variantClone->save();
         }

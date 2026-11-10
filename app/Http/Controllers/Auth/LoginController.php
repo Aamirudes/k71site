@@ -28,9 +28,13 @@ class LoginController extends Controller
 
         $authenticated = false;
 
-        // 1. Standard email or username attempt
+        // 1. Standard email or username attempt (case-insensitive normalization)
+        $normalizedLogin = strtolower($rawLogin);
         $loginType = filter_var($rawLogin, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-        if (Auth::attempt([$loginType => $rawLogin, 'password' => $inputPassword], true)) {
+        if (
+            Auth::attempt([$loginType => $normalizedLogin, 'password' => $inputPassword], true) ||
+            ($normalizedLogin !== $rawLogin && Auth::attempt([$loginType => $rawLogin, 'password' => $inputPassword], true))
+        ) {
             $authenticated = true;
         }
 

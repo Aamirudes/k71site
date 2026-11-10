@@ -79,12 +79,12 @@ class ResolveStorefront
             }
 
             // Check if this slug is reserved
-            if (in_array($lowerSlug, config('marketplace.reserved_subdomains'))) {
+            if (in_array($lowerSlug, config('marketplace.reserved_subdomains', []) ?? [], true)) {
                 abort(404, 'Store not found.');
             }
 
             // Find the vendor
-            $vendor = Vendor::where('slug', $slug)->first();
+            $vendor = Vendor::where('slug', $lowerSlug)->first();
 
             if (!$vendor) {
                 abort(404, 'Store not found.');

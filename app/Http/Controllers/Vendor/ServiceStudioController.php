@@ -102,10 +102,10 @@ class ServiceStudioController extends Controller
             'images.*' => 'nullable|image|max:5120',
         ]);
 
-        $baseSlug = Str::slug($validated['title']);
+        $baseSlug = Str::slug($validated['title']) ?: 'service-gig';
         $slug = $baseSlug;
         $counter = 1;
-        while (Product::where('slug', $slug)->exists()) {
+        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
             $slug = $baseSlug . '-' . $counter++;
         }
 
@@ -186,12 +186,97 @@ class ServiceStudioController extends Controller
     }
 
     /**
+     * Show edit form for a service gig.
+     */
+    public function edit(Request $request, Product $product): View
+    {
+        $vendor = $this->getVendor($request);
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $categories = Category::where('vertical', 'services')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+        $packages = $product->gigPackages()->get();
+        $updateRoute = route('vendor.services.update', $product);
+        $backRoute = route('vendor.services.index');
+
+        return view('services.edit', compact('product', 'categories', 'packages', 'updateRoute', 'backRoute'));
+    }
+
+    /**
+     * Update a vendor's service gig.
+     */
+    public function update(Request $request, Product $product): RedirectResponse
+    {
+        $vendor = $this->getVendor($request);
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:150',
+            'category_id' => 'required|exists:categories,id',
+            'description' => 'required|string|max:5000',
+            'base_price' => 'required|numeric|min:10',
+            'packages' => 'nullable|array',
+            'packages.*.name' => 'nullable|string|max:100',
+            'packages.*.title' => 'nullable|string|max:100',
+            'packages.*.price' => 'nullable|numeric|min:1',
+            'packages.*.delivery_days' => 'nullable|integer|min:1|max:90',
+            'packages.*.revisions' => 'nullable',
+            'packages.*.description' => 'nullable|string|max:1000',
+        ]);
+
+        $product->update([
+            'title' => $validated['title'],
+            'category_id' => $validated['category_id'],
+            'description' => $validated['description'],
+            'short_description' => Str::limit($validated['description'], 120),
+            'base_price' => (int) round(((float) $validated['base_price']) * 100),
+        ]);
+
+        if (!empty($validated['packages'])) {
+            foreach ($validated['packages'] as $tier => $pkg) {
+                if (!empty($pkg['price'])) {
+                    $rawRev = (string) ($pkg['revisions'] ?? '');
+                    $revCount = str_contains(strtolower($rawRev), 'unlim')
+                        ? 99
+                        : (int) (preg_replace('/\D+/', '', $rawRev) ?: 2);
+
+                    $desc = trim((string) ($pkg['description'] ?? 'Standard tier delivery')) ?: 'Standard tier delivery';
+                    $existingPkg = ProductGigPackage::where('product_id', $product->id)
+                        ->where('tier', $tier)
+                        ->first();
+
+                    ProductGigPackage::updateOrCreate(
+                        ['product_id' => $product->id, 'tier' => $tier],
+                        [
+                            'title' => trim((string) ($pkg['title'] ?? $pkg['name'] ?? '')) ?: ucfirst((string) $tier),
+                            'price' => round((float) $pkg['price'], 2),
+                            'delivery_days' => max(1, (int) ($pkg['delivery_days'] ?? 3)),
+                            'revisions' => max(0, $revCount),
+                            'description' => $desc,
+                            'features_json' => $existingPkg?->features_json ?? [$desc],
+                        ]
+                    );
+                }
+            }
+        }
+
+        return redirect()->route('vendor.services.index')
+            ->with('success', 'Service Gig updated successfully!');
+    }
+
+    /**
      * Delete service gig.
      */
     public function destroy(Request $request, Product $product): RedirectResponse
     {
         $vendor = $this->getVendor($request);
-        if ($product->vendor_id !== $vendor->id) {
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
             abort(403, 'Unauthorized.');
         }
 

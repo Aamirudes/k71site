@@ -183,13 +183,14 @@ class AccountController extends Controller
             ]);
         }
 
-        // Anonymize personal identifiable information (PII) before soft-deleting
-        $anonymizedTag = 'deleted_' . $user->id . '_' . time();
+        // Anonymize personal identifiable information (PII) before soft-deleting (username <= 20 chars)
+        $anonymizedUsername = substr('del_' . $user->id . '_' . base_convert((string) time(), 10, 36), 0, 20);
+        $anonymizedEmailTag = 'deleted_' . $user->id . '_' . time();
         $user->update([
             'first_name' => 'Deleted',
             'last_name' => 'User',
-            'username' => $anonymizedTag,
-            'email' => $anonymizedTag . '@erased.k71.in',
+            'username' => $anonymizedUsername,
+            'email' => $anonymizedEmailTag . '@erased.k71.in',
             'phone' => null,
             'avatar' => null,
             'two_factor_secret' => null,

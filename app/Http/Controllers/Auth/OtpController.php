@@ -24,6 +24,10 @@ class OtpController extends Controller
 
     public function verify(Request $request)
     {
+        if ($request->has('code')) {
+            $request->merge(['code' => preg_replace('/\s+/', '', (string) $request->input('code'))]);
+        }
+
         $request->validate([
             'code' => ['required', 'string', 'size:6'],
         ]);
@@ -38,7 +42,11 @@ class OtpController extends Controller
         try {
             $this->otpService->verify($email, $request->code, $purpose);
 
-            $user = User::where('email', $email)->first();
+            $user = User::where('email', strtolower(trim((string) $email)))->first();
+            if (!$user) {
+                $request->session()->forget(['verify_email', 'verify_purpose', 'dev_otp_code', 'login_role']);
+                return redirect()->route('login')->withErrors(['login' => 'Account not found. Please register or sign in again.']);
+            }
             
             if ($purpose === 'registration') {
                 $user->update(['email_verified_at' => now()]);
@@ -113,7 +121,7 @@ class OtpController extends Controller
         }
 
         try {
-            $user = User::where('email', $email)->first();
+            $user = User::where('email', strtolower(trim((string) $email)))->first();
             $this->otpService->generateAndSend($email, $purpose, $user?->id);
             
             $response = ['message' => 'Code sent successfully'];

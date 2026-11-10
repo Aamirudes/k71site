@@ -381,6 +381,8 @@
                         this.slug = this.shopName.toLowerCase()
                             .replace(/[^\w\s-]/g, '')
                             .replace(/[\s_-]+/g, '-')
+                            .replace(/^-+|-+$/g, '')
+                            .slice(0, 30)
                             .replace(/^-+|-+$/g, '');
                         
                         if (this.slug.length >= 3) {

@@ -38,17 +38,17 @@
                         <div class="flex items-center gap-4">
                             <!-- Vendor Logo -->
                             <div class="w-12 h-12 rounded-xl bg-white p-0.5 shadow-sm border border-gray-100 flex-shrink-0 relative overflow-hidden">
-                                @if($vendor->logo)
+                                @if($vendor?->logo)
                                     <img src="{{ Storage::url($vendor->logo) }}" alt="{{ $vendor->shop_name }}" class="w-full h-full rounded-lg object-cover">
                                 @else
                                     <div class="w-full h-full rounded-lg bg-gradient-to-br from-brand-rose to-[#D9B8B0] text-white flex items-center justify-center text-lg font-serif font-bold">
-                                        {{ strtoupper(substr($vendor->shop_name, 0, 1)) }}
+                                        {{ strtoupper(substr($vendor?->shop_name ?? 'S', 0, 1)) }}
                                     </div>
                                 @endif
                             </div>
                             <div>
                                 <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Sold by</span>
-                                <a href="{{ $vendor->storefront_url }}" class="block font-serif font-bold text-lg text-brand-text hover:text-brand-sage transition-colors leading-tight">{{ $vendor->shop_name }}</a>
+                                <a href="{{ $vendor?->storefront_url ?? '#' }}" class="block font-serif font-bold text-lg text-brand-text hover:text-brand-sage transition-colors leading-tight">{{ $vendor?->shop_name ?? 'Seller' }}</a>
                             </div>
                         </div>
                     </div>
@@ -56,7 +56,9 @@
                     @php
                         $vendorHasOutOfStock = false;
                         foreach($items as $i) {
-                            if(!$i->variant || $i->variant->stock <= 0) {
+                            $p = $i->product ?? $i->variant?->product;
+                            $avail = $i->gig_package_id ? 99 : ($i->variant ? (int) $i->variant->stock : (int) ($p?->total_stock ?? 100));
+                            if (!$i->gig_package_id && $avail <= 0) {
                                 $vendorHasOutOfStock = true;
                                 break;
                             }
@@ -72,8 +74,9 @@
                                     $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
                                     $itemTotal = $price * $item->quantity;
                                     $subtotal += $itemTotal;
-                                    $isItemOutOfStock = !$item->gig_package_id && (!$item->variant || $item->variant->stock <= 0);
-                                    $hasInsufficientStock = !$item->gig_package_id && ($item->variant && $item->variant->stock < $item->quantity);
+                                    $availStock = $item->gig_package_id ? 99 : ($item->variant ? (int) $item->variant->stock : (int) ($product?->total_stock ?? 100));
+                                    $isItemOutOfStock = !$item->gig_package_id && $availStock <= 0;
+                                    $hasInsufficientStock = !$item->gig_package_id && $availStock < $item->quantity;
                                 @endphp
                                 <li class="py-6 flex flex-col sm:flex-row gap-6 items-center sm:items-start {{ $isItemOutOfStock ? 'opacity-75 bg-rose-50/30 rounded-2xl p-4' : '' }}">
                                     <!-- Image -->
@@ -135,7 +138,7 @@
                                                     @elseif($hasInsufficientStock)
                                                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                                            <span>Only {{ $item->variant->stock }} left</span>
+                                                            <span>Only {{ $availStock }} left</span>
                                                         </span>
                                                     @endif
                                                 </div>
@@ -158,8 +161,8 @@
                                                     <button type="submit" @click="qty = Math.max(1, qty - 1)" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
                                                     </button>
-                                                    <input type="number" name="quantity" min="1" max="{{ $item->gig_package_id ? 99 : ($item->variant?->stock ?? 10) }}" x-model="qty" class="w-12 text-center bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-text p-0" onchange="this.form.submit()">
-                                                    <button type="submit" @click="qty++" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors" {{ (!$item->gig_package_id && $item->variant && $item->quantity >= $item->variant->stock) ? 'disabled' : '' }}>
+                                                    <input type="number" name="quantity" min="1" max="{{ $availStock }}" x-model="qty" class="w-12 text-center bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-text p-0" onchange="this.form.submit()">
+                                                    <button type="submit" @click="qty++" class="w-10 h-10 flex items-center justify-center text-gray-500 hover:bg-gray-200 hover:text-brand-text transition-colors" {{ (!$item->gig_package_id && $item->quantity >= $availStock) ? 'disabled' : '' }}>
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                                     </button>
                                                 </form>
@@ -189,10 +192,10 @@
                             <p class="text-sm font-bold text-brand-text">Subtotal: <span class="text-xl">₹{{ number_format($subtotal / 100, 0) }}</span></p>
                             <p class="text-xs text-brand-muted mt-1">Shipping & taxes calculated at checkout.</p>
                         </div>
-                        @if($vendorHasOutOfStock)
+                        @if($vendorHasOutOfStock || !$vendor)
                             <button type="button" disabled class="w-full sm:w-auto px-8 py-4 bg-gray-200 text-gray-500 font-sans font-bold uppercase text-[11px] tracking-wider rounded-full cursor-not-allowed flex items-center justify-center gap-2 border border-gray-300">
                                 <svg class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                <span>Remove Out-of-Stock Items to Checkout</span>
+                                <span>{{ !$vendor ? 'Store Unavailable — Remove Item' : 'Remove Out-of-Stock Items to Checkout' }}</span>
                             </button>
                         @else
                             <a href="{{ route('checkout.vendor', $vendor->id) }}" class="w-full sm:w-auto px-7 py-3.5 bg-zinc-900 text-white font-sans font-semibold text-xs tracking-wider uppercase rounded-full hover:bg-black transition-all flex items-center justify-center gap-2.5 shadow-sm active:scale-95">

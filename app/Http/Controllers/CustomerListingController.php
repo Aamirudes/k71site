@@ -40,7 +40,7 @@ class CustomerListingController extends Controller
             ->latest()
             ->get();
 
-        $freelanceProfile = $user->vendor && $user->vendor->vendor_type === 'service' ? $user->vendor : null;
+        $freelanceProfile = $user->vendor && in_array($user->vendor->vendor_type, ['service', 'services', 'local_services', 'digital_services'], true) ? $user->vendor : null;
 
         return view('account.listings', compact('user', 'activeTab', 'usedAds', 'services', 'freelanceProfile'));
     }

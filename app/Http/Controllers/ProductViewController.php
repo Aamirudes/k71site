@@ -30,7 +30,8 @@ class ProductViewController extends Controller
 
         // High-CTR SEO Data (Google SERP optimized)
         $priceRupees = number_format($product->base_price / 100, 0);
-        $brandName = $product->brand ?: $product->vendor->shop_name;
+        $vendorShopName = $product->vendor?->shop_name ?? config('marketplace.name', 'K71');
+        $brandName = $product->brand ?: $vendorShopName;
         $appName = config('marketplace.name', 'K71');
         $defaultSeoTitle = "Buy {$product->title} Online at ₹{$priceRupees} | {$brandName} - {$appName}";
         $seoTitle = $product->seo_title ?: $defaultSeoTitle;
@@ -49,7 +50,7 @@ class ProductViewController extends Controller
         }
 
         // Inventory & Logistics
-        $vendorSettings = $product->vendor->settings;
+        $vendorSettings = $product->vendor?->settings;
         $processingDays = $vendorSettings ? (int) ($vendorSettings->processing_days ?: 2) : 2;
         $returnDays = $product->return_window_days !== null ? (int) $product->return_window_days : ($vendorSettings ? (int) ($vendorSettings->return_window_days ?: 7) : 7);
         $isReturnable = $product->is_returnable ?? ($returnDays > 0);
@@ -66,7 +67,7 @@ class ProductViewController extends Controller
             'sku' => $product->sku ?: 'SKU-' . $product->id,
             'brand' => [
                 '@type' => 'Brand',
-                'name' => $product->brand ?: $product->vendor->shop_name,
+                'name' => $brandName,
             ],
             'offers' => [
                 '@type' => 'Offer',
@@ -78,8 +79,8 @@ class ProductViewController extends Controller
                 'availability' => $inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 'seller' => [
                     '@type' => 'Organization',
-                    'name' => $product->vendor->shop_name,
-                    'url' => $product->vendor->storefront_url,
+                    'name' => $vendorShopName,
+                    'url' => $product->vendor?->storefront_url ?? url('/'),
                 ],
                 'shippingDetails' => [
                     '@type' => 'OfferShippingDetails',

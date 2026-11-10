@@ -80,8 +80,8 @@
                         @foreach($order->items as $item)
                         <tr>
                             <td class="p-4">
-                                <p class="font-medium text-gray-900">{{ $item->product->title ?? $item->snapshot['title'] ?? 'Product' }}</p>
-                                <p class="text-xs text-gray-500 mt-0.5">SKU: {{ $item->variant->sku ?? $item->snapshot['variant_sku'] ?? 'N/A' }}</p>
+                                <p class="font-medium text-gray-900">{{ $item->product?->title ?? $item->snapshot['title'] ?? 'Product' }}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">SKU: {{ $item->variant?->sku ?? $item->snapshot['variant_sku'] ?? 'N/A' }}</p>
                             </td>
                             <td class="p-4 text-center text-gray-500">{{ $item->hsn_code ?? 'N/A' }}</td>
                             <td class="p-4 text-center font-medium">{{ $item->quantity }}</td>

@@ -301,7 +301,7 @@
                             Pickup Point Contact Person
                         </label>
                         <input type="text" name="pickup_address[contact_name]" id="pickup_contact_name" 
-                               value="{{ old('pickup_address.contact_name', $pAddr['contact_name'] ?? $vendor->user->name ?? '') }}" 
+                               value="{{ old('pickup_address.contact_name', $pAddr['contact_name'] ?? $vendor->user?->name ?? '') }}" 
                                placeholder="Person handing parcel to courier rider" 
                                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage text-sm py-2.5 px-3">
                     </div>
@@ -311,7 +311,7 @@
                             Pickup Contact Phone Number (10 Digits) <span class="text-red-500">*</span>
                         </label>
                         <input type="tel" name="pickup_address[contact_phone]" id="pickup_contact_phone" 
-                               value="{{ old('pickup_address.contact_phone', $pAddr['contact_phone'] ?? $vendor->contact_phone ?? $vendor->user->phone ?? '') }}" 
+                               value="{{ old('pickup_address.contact_phone', $pAddr['contact_phone'] ?? $vendor->contact_phone ?? $vendor->user?->phone ?? '') }}" 
                                required
                                maxlength="15"
                                placeholder="e.g. 9876543210" 

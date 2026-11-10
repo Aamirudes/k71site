@@ -50,7 +50,7 @@
                     <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-800">
                         <span class="truncate max-w-[240px]">
                             @if($order->items && $order->items->count() > 0)
-                                {{ $order->items->first()->product->title ?? 'Order Item' }}
+                                {{ $order->items->first()?->product?->title ?? 'Order Item' }}
                                 @if($order->items->count() > 1)
                                     <span class="text-gray-400 font-normal"> +{{ $order->items->count() - 1 }} more</span>
                                 @endif

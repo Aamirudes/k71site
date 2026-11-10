@@ -214,7 +214,8 @@ class StorefrontDesignController extends Controller
 
         $configRecord = $vendor->storefrontConfig;
         if (!$configRecord || empty($configRecord->draft_config)) {
-            $draftConfig = $this->presetService->getDefaultConfig('atelier', $vendor);
+            $recommended = $vendor->layout_preset ?: $this->presetService->getRecommendedPresetForVendor($vendor);
+            $draftConfig = $this->presetService->getDefaultConfig($recommended, $vendor);
         } else {
             $draftConfig = $configRecord->draft_config;
         }
@@ -222,15 +223,30 @@ class StorefrontDesignController extends Controller
         // Validate and sanitize before publishing
         $sanitizedConfig = $this->presetService->sanitizeConfig($draftConfig, $vendor);
 
-        // Atomic publish update
-        $configRecord->update([
-            'preset_key' => $sanitizedConfig['preset'],
-            'published_config' => $sanitizedConfig,
-            'draft_config' => $sanitizedConfig,
-            'is_published' => true,
-            'last_published_at' => now(),
-            'last_saved_at' => now(),
-        ]);
+        if (!$configRecord) {
+            $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+                ['vendor_id' => $vendor->id],
+                [
+                    'preset_key' => $sanitizedConfig['preset'],
+                    'schema_version' => 2,
+                    'draft_config' => $sanitizedConfig,
+                    'published_config' => $sanitizedConfig,
+                    'is_published' => true,
+                    'last_published_at' => now(),
+                    'last_saved_at' => now(),
+                ]
+            );
+        } else {
+            // Atomic publish update
+            $configRecord->update([
+                'preset_key' => $sanitizedConfig['preset'],
+                'published_config' => $sanitizedConfig,
+                'draft_config' => $sanitizedConfig,
+                'is_published' => true,
+                'last_published_at' => now(),
+                'last_saved_at' => now(),
+            ]);
+        }
 
         // Create revision entry for rollback capability
         VendorStorefrontRevision::create([
@@ -242,7 +258,7 @@ class StorefrontDesignController extends Controller
         ]);
 
         // Keep core vendor table fields backward-compatible
-        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
+        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode((string) ($vendor->social_links ?? ''), true) ?: []);
         $social['announcement_bar'] = $sanitizedConfig['header']['announcement_text'] ?? null;
         $social['announcement_bar_enabled'] = !empty($sanitizedConfig['header']['announcement_enabled']);
         $social['announcement_link'] = $sanitizedConfig['header']['announcement_link'] ?? null;
@@ -497,7 +513,7 @@ class StorefrontDesignController extends Controller
         }
 
         // WhatsApp & Instagram Social Connect
-        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode($vendor->social_links, true) ?: []);
+        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode((string) ($vendor->social_links ?? ''), true) ?: []);
         if ($request->has('whatsapp')) {
             $wa = trim($request->input('whatsapp'));
             $currentConfig['brand']['whatsapp'] = $wa;
@@ -685,7 +701,15 @@ class StorefrontDesignController extends Controller
         $revisionId = $request->input('revision_id');
         $revision = VendorStorefrontRevision::where('vendor_id', $vendor->id)->findOrFail($revisionId);
 
-        $configRecord = $vendor->storefrontConfig;
+        $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'preset_key' => $revision->preset_key,
+                'schema_version' => 2,
+                'draft_config' => $revision->config_data,
+                'published_config' => $revision->config_data,
+            ]
+        );
         $configRecord->update([
             'preset_key' => $revision->preset_key,
             'draft_config' => $revision->config_data,

@@ -58,15 +58,27 @@ class CheckoutController extends Controller
                 return redirect()->route('cart.index')->with('error', "{$title} is an enquiry or booking item and cannot be purchased directly through checkout.");
             }
             if (!$item->gig_package_id) {
-                if (!$item->variant || $item->variant->stock <= 0) {
-                    $title = $product?->title ?? 'Item';
-                    $sku = $item->variant?->sku ?? 'Size';
-                    return redirect()->route('cart.index')->with('error', "{$title} ({$sku}) has run out of stock. Please remove it from your cart before proceeding.");
-                }
-                if ($item->variant->stock < $item->quantity) {
-                    $title = $product?->title ?? 'Item';
-                    $sku = $item->variant?->sku ?? 'Size';
-                    return redirect()->route('cart.index')->with('error', "Only {$item->variant->stock} pieces available for {$title} ({$sku}). Please adjust your cart quantity.");
+                if ($item->variant_id) {
+                    if (!$item->variant || $item->variant->stock <= 0) {
+                        $title = $product?->title ?? 'Item';
+                        $sku = $item->variant?->sku ?? 'Size';
+                        return redirect()->route('cart.index')->with('error', "{$title} ({$sku}) has run out of stock. Please remove it from your cart before proceeding.");
+                    }
+                    if ($item->variant->stock < $item->quantity) {
+                        $title = $product?->title ?? 'Item';
+                        $sku = $item->variant?->sku ?? 'Size';
+                        return redirect()->route('cart.index')->with('error', "Only {$item->variant->stock} pieces available for {$title} ({$sku}). Please adjust your cart quantity.");
+                    }
+                } else {
+                    $availStock = (int) ($product?->total_stock ?? 100);
+                    if ($availStock <= 0) {
+                        $title = $product?->title ?? 'Item';
+                        return redirect()->route('cart.index')->with('error', "{$title} has run out of stock. Please remove it from your cart before proceeding.");
+                    }
+                    if ($availStock < $item->quantity) {
+                        $title = $product?->title ?? 'Item';
+                        return redirect()->route('cart.index')->with('error', "Only {$availStock} pieces available for {$title}. Please adjust your cart quantity.");
+                    }
                 }
             }
         }
@@ -256,50 +268,71 @@ class CheckoutController extends Controller
             }
 
             $digitsPhone = preg_replace('/[^0-9]/', '', $validated['phone']);
-            $last10 = strlen($digitsPhone) >= 10 ? substr($digitsPhone, -10) : $digitsPhone;
-            $candidatePhones = [
-                $validated['phone'],
-                $digitsPhone,
+            $last10 = strlen($digitsPhone) >= 10 ? substr($digitsPhone, -10) : substr($digitsPhone, 0, 15);
+            $candidatePhones = array_filter([
+                Str::limit($validated['phone'], 15, ''),
+                Str::limit($digitsPhone, 15, ''),
                 $last10,
-                '+91' . $last10,
-                '91' . $last10,
-            ];
+                $last10 ? '+91' . $last10 : null,
+                $last10 ? '91' . $last10 : null,
+            ]);
 
             $user = \App\Models\User::whereIn('phone', $candidatePhones)->first();
             if (!$user && !empty($validated['email'])) {
-                $user = \App\Models\User::where('email', strtolower(trim($validated['email'])))->first();
+                $user = \App\Models\User::withTrashed()
+                    ->where('email', strtolower(trim($validated['email'])))
+                    ->first();
+                if ($user && $user->trashed()) {
+                    $user = null;
+                }
             }
 
             if (!$user) {
+                $customerEmail = !empty($validated['email'])
+                    ? strtolower(trim($validated['email']))
+                    : ('guest_' . ($last10 ?: 'u') . '_' . Str::lower(Str::random(5)) . '@k71.in');
+
+                $customerName = !empty($validated['name']) ? trim($validated['name']) : 'Guest Customer';
+                $nameParts = explode(' ', $customerName, 2);
+                $firstName = Str::limit(trim($nameParts[0] ?? '') ?: 'Guest', 50, '');
+                $lastName = Str::limit(trim($nameParts[1] ?? ''), 50, '');
+                $safePhoneToken = substr($last10 ?: '0000', -6);
+
                 try {
-                    $customerEmail = !empty($validated['email']) 
-                        ? strtolower(trim($validated['email']))
-                        : ('guest_' . $last10 . '_' . Str::lower(Str::random(5)) . '@k71.in');
-                    
-                    $customerName = !empty($validated['name']) ? trim($validated['name']) : 'Guest Customer';
-                    $nameParts = explode(' ', $customerName, 2);
+                    if (\App\Models\User::withTrashed()->where('email', $customerEmail)->exists()) {
+                        $customerEmail = 'guest_' . base_convert((string) time(), 10, 36) . '_' . Str::lower(Str::random(5)) . '@k71.in';
+                    }
+
+                    $guestUsername = 'cu_' . $safePhoneToken . '_' . Str::lower(Str::random(4));
+                    while (\App\Models\User::withTrashed()->where('username', $guestUsername)->exists()) {
+                        $guestUsername = 'cu_' . substr(md5($safePhoneToken . Str::random(6)), 0, 15);
+                    }
 
                     $user = \App\Models\User::create([
-                        'first_name' => !empty($nameParts[0]) ? $nameParts[0] : 'Guest',
-                        'last_name' => $nameParts[1] ?? '',
-                        'username' => 'cust_' . $last10 . '_' . Str::lower(Str::random(4)),
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'username' => Str::limit($guestUsername, 20, ''),
                         'email' => $customerEmail,
-                        'phone' => $last10,
+                        'phone' => $last10 ?: null,
                         'password' => bcrypt(Str::random(24)),
                         'email_verified_at' => !empty($validated['email']) ? now() : null,
                         'is_blocked' => false,
                     ]);
                 } catch (\Throwable $e) {
-                    $user = \App\Models\User::where('phone', 'LIKE', "%{$last10}%")
-                        ->orWhere('email', $customerEmail ?? '')
-                        ->first();
+                    $user = $last10
+                        ? \App\Models\User::where('phone', 'LIKE', "%{$last10}%")->first()
+                        : null;
                     if (!$user) {
+                        $user = \App\Models\User::where('email', $customerEmail)->first();
+                    }
+                    if (!$user) {
+                        $fallbackUsername = 'g_' . substr(base_convert((string) time(), 10, 36), -6) . '_' . Str::lower(Str::random(4));
                         $user = \App\Models\User::create([
                             'first_name' => 'Guest',
                             'last_name' => 'Customer',
-                            'username' => 'guest_' . time() . '_' . Str::lower(Str::random(4)),
+                            'username' => Str::limit($fallbackUsername, 20, ''),
                             'email' => 'guest_' . time() . '_' . Str::lower(Str::random(6)) . '@k71.in',
-                            'phone' => $last10,
+                            'phone' => $last10 ?: null,
                             'password' => bcrypt(Str::random(24)),
                             'email_verified_at' => now(),
                             'is_blocked' => false,
@@ -307,8 +340,9 @@ class CheckoutController extends Controller
                     }
                 }
 
-                $customerRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
+                $customerRole = \App\Models\Role::firstOrCreate(['name' => 'customer'], ['guard_name' => 'web']);
                 $user->roles()->syncWithoutDetaching([$customerRole->id]);
+                $user->unsetRelation('roles');
             }
 
             Auth::login($user, true);
@@ -422,6 +456,18 @@ class CheckoutController extends Controller
                             $parentProduct->update(['total_stock' => 0]);
                         }
                     }
+                } elseif (!$item->gig_package_id && $product) {
+                    // Simple product without variant row: lock and decrement total_stock safely
+                    $lockedProduct = \App\Models\Product::withoutGlobalScopes()
+                        ->where('id', $product->id)
+                        ->lockForUpdate()
+                        ->first();
+                    if ($lockedProduct && $lockedProduct->total_stock !== null) {
+                        if ($lockedProduct->total_stock < $item->quantity) {
+                            throw new \Exception("Only {$lockedProduct->total_stock} pieces left in stock for '{$lockedProduct->title}'. Please adjust your quantity.");
+                        }
+                        $lockedProduct->decrement('total_stock', $item->quantity);
+                    }
                 }
 
                 $price = $item->price_at_add ?? ($lockedVariant?->price_override ?? ($product?->base_price ?? 0));
@@ -472,7 +518,7 @@ class CheckoutController extends Controller
                     'snapshot' => [
                         'title' => $product?->title ?? 'Item',
                         'variant_sku' => $variantLabel,
-                        'image' => $product?->images->first()->path ?? null,
+                        'image' => $product?->images->first()?->path ?? null,
                     ],
                     'meta_json' => $metaJson,
                 ];
@@ -496,7 +542,7 @@ class CheckoutController extends Controller
                     try {
                         $totalWeightGrams = 0;
                         foreach ($items as $item) {
-                            $w = $item->variant->product->weight_grams ?? $item->product->weight_grams ?? 450;
+                            $w = $item->variant?->product?->weight_grams ?? $item->product?->weight_grams ?? 450;
                             $totalWeightGrams += ($w * $item->quantity);
                         }
                         $weightKg = round(max(0.25, $totalWeightGrams / 1000), 2);
@@ -814,9 +860,10 @@ class CheckoutController extends Controller
             : Cart::where('session_id', session()->getId())->first();
         $subtotal = 0;
         if ($cart) {
-            $items = $cart->items()->where('vendor_id', $vendor->id)->with('variant.product')->get();
+            $items = $cart->items()->where('vendor_id', $vendor->id)->with(['variant.product', 'product', 'gigPackage'])->get();
             foreach ($items as $item) {
-                $price = $item->variant->price_override ?? $item->variant->product->base_price;
+                $product = $item->product ?? $item->variant?->product;
+                $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
                 $subtotal += $price * $item->quantity;
             }
         }
@@ -850,7 +897,7 @@ class CheckoutController extends Controller
             return response()->json(['success' => false, 'message' => 'Cart not found'], 404);
         }
 
-        $items = $cart->items()->where('vendor_id', $vendor->id)->with('variant.product')->get();
+        $items = $cart->items()->where('vendor_id', $vendor->id)->with(['variant.product', 'product', 'gigPackage'])->get();
         if ($items->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'No items in cart for this vendor'], 404);
         }
@@ -858,9 +905,10 @@ class CheckoutController extends Controller
         $subtotal = 0;
         $totalWeightGrams = 0;
         foreach ($items as $item) {
-            $price = $item->variant->price_override ?? $item->variant->product->base_price;
+            $product = $item->product ?? $item->variant?->product;
+            $price = $item->price_at_add ?? ($item->variant?->price_override ?? ($product?->base_price ?? 0));
             $subtotal += ($price * $item->quantity);
-            $w = $item->variant->product->weight_grams ?? $item->product->weight_grams ?? 450;
+            $w = $item->variant?->product?->weight_grams ?? $item->product?->weight_grams ?? 450;
             $totalWeightGrams += ($w * $item->quantity);
         }
 

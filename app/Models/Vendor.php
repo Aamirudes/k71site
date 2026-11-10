@@ -196,13 +196,13 @@ class Vendor extends Model
         }
         $c = $this->settings->cuisine_types;
         if (is_array($c)) return $c;
-        $decoded = json_decode($c, true);
+        $decoded = json_decode((string) $c, true);
         return is_array($decoded) ? $decoded : [$c];
     }
 
     public function isServices(): bool
     {
-        return in_array($this->vendor_type, ['services', 'local_services']);
+        return in_array($this->vendor_type, ['service', 'services', 'local_services', 'digital_services']);
     }
 
     public function isUsed(): bool
@@ -730,6 +730,8 @@ class Vendor extends Model
         // Aliases
         if ($type === 'grocery' || $type === 'kirana') {
             $type = 'kirana';
+        } elseif ($type === 'service') {
+            $type = 'services';
         }
 
         $config = $sectors[$type] ?? $sectors['clothing'];
@@ -763,7 +765,7 @@ class Vendor extends Model
                 'food' => 'food',
                 'feasto' => 'feasto',
                 'kirana', 'groceries', 'grocery' => 'marketplace',
-                'services', 'local_services', 'digital_services' => 'services',
+                'service', 'services', 'local_services', 'digital_services' => 'services',
                 'used' => 'used',
                 'machinery', 'b2b', 'real_estate', 'marble' => 'enquiry',
                 default => 'marketplace',
@@ -780,7 +782,7 @@ class Vendor extends Model
      */
     public function isMarketplacePhysical(): bool
     {
-        $nonPhysical = ['food', 'services', 'local_services', 'digital_services', 'used', 'machinery', 'b2b', 'real_estate', 'marble'];
+        $nonPhysical = ['food', 'service', 'services', 'local_services', 'digital_services', 'used', 'machinery', 'b2b', 'real_estate', 'marble'];
         return !in_array($this->vendor_type, $nonPhysical) && $this->getVerticalKey() === 'marketplace';
     }
 

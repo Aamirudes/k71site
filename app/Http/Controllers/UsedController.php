@@ -235,19 +235,35 @@ class UsedController extends Controller
                 $q->where('name', 'like', "%{$validated['category']}%")
                   ->orWhere('slug', 'like', "%" . Str::slug($validated['category']) . "%");
             })
-            ->first() ?: Category::where('vertical', 'used')->first();
+            ->first()
+            ?: Category::where('vertical', 'used')->first()
+            ?: Category::firstOrCreate(
+                ['slug' => 'general-classifieds'],
+                ['name' => 'General Classifieds', 'vertical' => 'used', 'is_active' => true]
+            );
 
         // Default or active vendor
         $vendor = auth()->user()?->vendor ?: (Vendor::where('vendor_type', 'used')->first() ?: Vendor::first());
+        if (!$vendor) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Classifieds marketplace is not initialized yet.'], 422);
+            }
+            return back()->withInput()->with('error', 'Classifieds marketplace is currently unavailable. Please register a store first.');
+        }
+
         $userId = auth()->id();
 
-        $slug = Str::slug($validated['title']) . '-' . random_int(1000, 9999);
+        $baseSlug = Str::slug($validated['title']) ?: 'classified';
+        $slug = $baseSlug . '-' . random_int(1000, 9999);
+        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . random_int(10000, 99999);
+        }
         $adId = (string) random_int(1857000000, 1857999999);
         $cond = $validated['condition'] ?? 'Good Condition';
 
         $product = Product::create([
             'vendor_id' => $vendor->id,
-            'category_id' => $category?->id ?? 16,
+            'category_id' => $category->id,
             'vertical' => 'used',
             'listing_type' => 'classified',
             'title' => $validated['title'],

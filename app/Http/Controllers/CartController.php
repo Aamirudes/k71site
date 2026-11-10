@@ -225,20 +225,38 @@ class CartController extends Controller
             return back()->with('success', 'Cart updated.');
         }
 
-        $variant = ProductVariant::withoutGlobalScopes()->findOrFail($item->variant_id);
-        
-        if ($variant->stock <= 0) {
+        if ($item->variant_id) {
+            $variant = ProductVariant::withoutGlobalScopes()->find($item->variant_id);
+            if (!$variant) {
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => 'This item is no longer available.'], 404);
+                }
+                return back()->with('error', 'This item is no longer available.');
+            }
+            $availableStock = (int) $variant->stock;
+        } else {
+            $product = Product::withoutGlobalScopes()->find($item->product_id);
+            if (!$product) {
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => 'This product is no longer available.'], 404);
+                }
+                return back()->with('error', 'This product is no longer available.');
+            }
+            $availableStock = (int) ($product->total_stock ?? 100);
+        }
+
+        if ($availableStock <= 0) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'This item is now out of stock.'], 400);
             }
             return back()->with('error', 'This item is now out of stock.');
         }
 
-        if ($validated['quantity'] > $variant->stock) {
+        if ($validated['quantity'] > $availableStock) {
             if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => "Only {$variant->stock} items available in stock."], 400);
+                return response()->json(['success' => false, 'message' => "Only {$availableStock} items available in stock."], 400);
             }
-            return back()->with('error', "Only {$variant->stock} items available in stock.");
+            return back()->with('error', "Only {$availableStock} items available in stock.");
         }
 
         $item->update(['quantity' => $validated['quantity']]);

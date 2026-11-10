@@ -424,10 +424,10 @@
                                             <!-- Info -->
                                             <div class="flex-1 min-w-0">
                                                 <h5 class="font-bold text-sm text-brand-text truncate">
-                                                    {{ $item->product->title ?? $item->snapshot['title'] ?? 'Fashion Garment' }}
+                                                    {{ $item->product?->title ?? $item->snapshot['title'] ?? 'Fashion Garment' }}
                                                 </h5>
                                                 <div class="flex flex-wrap items-center gap-2 mt-1">
-                                                    @if($item->variant && $item->variant->sku)
+                                                    @if($item->variant?->sku)
                                                         <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-medium">
                                                             {{ $item->variant->sku }}
                                                         </span>

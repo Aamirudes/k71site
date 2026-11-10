@@ -58,7 +58,11 @@
 
                         <div class="flex flex-wrap items-center gap-4 pb-6 border-b border-purple-100 text-xs">
                             <!-- Seller Pill -->
-                            <a href="{{ route('services.provider', $vendor?->slug ?? '') }}" class="flex items-center gap-2 group">
+                            @if($vendor && $vendor->slug)
+                                <a href="{{ route('services.provider', $vendor->slug) }}" class="flex items-center gap-2 group">
+                            @else
+                                <div class="flex items-center gap-2">
+                            @endif
                                 <img src="{{ $vendorAvatar }}" alt="{{ $vendor?->shop_name }}" class="w-8 h-8 rounded-full object-cover border border-purple-200">
                                 <div>
                                     <div class="font-bold text-zinc-900 group-hover:text-purple-700 transition flex items-center gap-1">
@@ -71,7 +75,11 @@
                                         Level 2 Verified Freelancer
                                     </div>
                                 </div>
-                            </a>
+                            @if($vendor && $vendor->slug)
+                                </a>
+                            @else
+                                </div>
+                            @endif
 
                             <div class="h-6 w-px bg-purple-100 hidden sm:block"></div>
 

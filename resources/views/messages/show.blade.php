@@ -99,7 +99,7 @@
                         <img src="{{ $conversation->vendor->logo_url }}" alt="{{ $conversation->vendor->shop_name }}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-2xs">
                     @else
                         <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-                            {{ substr($conversation->vendor->shop_name ?? 'S', 0, 1) }}
+                            {{ substr($conversation->vendor?->shop_name ?? 'S', 0, 1) }}
                         </div>
                     @endif
                     <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
@@ -109,7 +109,7 @@
                 <div class="min-w-0">
                     <div class="flex items-center gap-1.5 truncate">
                         <h1 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate leading-tight">
-                            {{ $conversation->vendor->shop_name ?? 'Verified Seller' }}
+                            {{ $conversation->vendor?->shop_name ?? 'Verified Seller' }}
                         </h1>
                         @if($conversation->vendor)
                             <span class="hidden sm:inline-flex px-1.5 py-0.2 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">

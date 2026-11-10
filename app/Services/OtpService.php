@@ -12,6 +12,8 @@ class OtpService
 {
     public function generateAndSend(string $email, string $purpose, ?int $userId = null): void
     {
+        $email = strtolower(trim($email));
+
         // Rate limiting check for resends
         $recentOtp = DB::table('otp_codes')
             ->where('email', $email)
@@ -30,7 +32,7 @@ class OtpService
 
         // Generate 6 digit code
         $code = (string) random_int(100000, 999999);
-        $expiresAt = now()->addMinutes(config('marketplace.otp.expiry_minutes'));
+        $expiresAt = now()->addMinutes((int) config('marketplace.otp.expiry_minutes', 10));
 
         DB::table('otp_codes')->insert([
             'user_id' => $userId,
@@ -58,6 +60,8 @@ class OtpService
 
     public function verify(string $email, string $code, string $purpose): bool
     {
+        $email = strtolower(trim($email));
+
         $otp = DB::table('otp_codes')
             ->where('email', $email)
             ->where('purpose', $purpose)
@@ -79,11 +83,11 @@ class OtpService
 
         if (!Hash::check($code, $otp->code_hash)) {
             $attempts = $otp->attempts + 1;
-            $maxAttempts = config('marketplace.otp.max_attempts');
+            $maxAttempts = (int) config('marketplace.otp.max_attempts', 5);
             
             $updateData = ['attempts' => $attempts];
             if ($attempts >= $maxAttempts) {
-                $updateData['locked_until'] = now()->addMinutes(config('marketplace.otp.lockout_minutes'));
+                $updateData['locked_until'] = now()->addMinutes((int) config('marketplace.otp.lockout_minutes', 15));
             }
             
             DB::table('otp_codes')->where('id', $otp->id)->update($updateData);

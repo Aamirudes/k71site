@@ -42,29 +42,45 @@ class DeliveryPartnerController extends Controller
             if (strlen($cleanPhone) === 12 && str_starts_with($cleanPhone, '91')) {
                 $cleanPhone = substr($cleanPhone, 2);
             }
-            $validated['phone'] = $cleanPhone ?: $validated['phone'];
+            $validated['phone'] = substr($cleanPhone ?: $validated['phone'], 0, 25);
+            $userPhone = substr($cleanPhone ?: $validated['phone'], 0, 15);
 
             // Resolve or create dedicated fleet rider account
             $user = null;
-            $fleetRole = \App\Models\Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Delivery Boy', 'guard_name' => 'web']);
+            $fleetRole = \App\Models\Role::firstOrCreate(['name' => 'fleet'], ['guard_name' => 'web']);
 
             if (!empty($validated['email'])) {
-                $user = \App\Models\User::where('email', $validated['email'])->first();
+                $normalizedEmail = strtolower(trim($validated['email']));
+                $user = \App\Models\User::withTrashed()->where('email', $normalizedEmail)->first();
+                if ($user && $user->trashed()) {
+                    return back()->withInput()->withErrors([
+                        'email' => 'This email address is associated with a deactivated account. Please use another email.',
+                    ]);
+                }
                 if (!$user) {
                     $nameParts = explode(' ', trim($validated['name']), 2);
-                    $firstName = $nameParts[0];
-                    $lastName = $nameParts[1] ?? '';
+                    $firstName = \Illuminate\Support\Str::limit(trim($nameParts[0] ?? '') ?: 'Rider', 50, '');
+                    $lastName = \Illuminate\Support\Str::limit(trim($nameParts[1] ?? ''), 50, '');
+
+                    $riderUsername = 'r_' . substr(\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10)), 0, 14);
+                    while (\App\Models\User::withTrashed()->where('username', $riderUsername)->exists()) {
+                        $riderUsername = 'r_' . substr(md5($normalizedEmail . \Illuminate\Support\Str::random(6)), 0, 14);
+                    }
+
                     $user = \App\Models\User::create([
                         'first_name' => $firstName,
                         'last_name' => $lastName,
-                        'username' => 'rider_' . substr(uniqid(), -6),
-                        'email' => $validated['email'],
-                        'password' => \Illuminate\Support\Facades\Hash::make($request->input('password', '12345678')),
-                        'phone' => $validated['phone'],
+                        'username' => $riderUsername,
+                        'email' => $normalizedEmail,
+                        'password' => \Illuminate\Support\Facades\Hash::make($request->input('password', \Illuminate\Support\Str::random(16))),
+                        'phone' => $userPhone ?: null,
+                        'email_verified_at' => now(),
+                        'is_blocked' => false,
                     ]);
                 }
                 // Attach fleet role to this user account (distinct from vendor/customer/admin)
                 $user->roles()->syncWithoutDetaching([$fleetRole->id]);
+                $user->unsetRelation('roles');
                 \Illuminate\Support\Facades\Auth::login($user);
             } elseif (auth()->check()) {
                 $currentUser = auth()->user();
@@ -72,6 +88,7 @@ class DeliveryPartnerController extends Controller
                 if (!$currentUser->isAdmin() && !$currentUser->isVendor()) {
                     $user = $currentUser;
                     $user->roles()->syncWithoutDetaching([$fleetRole->id]);
+                    $user->unsetRelation('roles');
                 }
             }
 
@@ -198,6 +215,9 @@ class DeliveryPartnerController extends Controller
     public function updateLocation(Request $request)
     {
         $partner = $this->getActivePartner();
+        if (!$partner) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
         $lat = $request->input('latitude');
         $lng = $request->input('longitude');
@@ -259,6 +279,9 @@ class DeliveryPartnerController extends Controller
     public function checkNewAssignments()
     {
         $partner = $this->getActivePartner();
+        if (!$partner) {
+            return response()->json(['has_new' => false, 'assignment' => null, 'error' => 'Unauthorized'], 401);
+        }
 
         $newAssigned = DeliveryAssignment::with(['order.items', 'vendor'])
             ->where('delivery_partner_id', $partner->id)
@@ -285,6 +308,11 @@ class DeliveryPartnerController extends Controller
      */
     public function acceptAssignment(DeliveryAssignment $assignment)
     {
+        $partner = $this->getActivePartner();
+        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $assignment->update([
             'status' => 'accepted',
             'accepted_at' => now(),
@@ -302,6 +330,11 @@ class DeliveryPartnerController extends Controller
      */
     public function pickupAssignment(DeliveryAssignment $assignment)
     {
+        $partner = $this->getActivePartner();
+        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $assignment->update([
             'status' => 'picked_up',
             'picked_up_at' => now(),
@@ -319,12 +352,17 @@ class DeliveryPartnerController extends Controller
      */
     public function deliverAssignment(DeliveryAssignment $assignment)
     {
+        $partner = $this->getActivePartner();
+        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $assignment->update([
             'status' => 'delivered',
             'delivered_at' => now(),
         ]);
 
-        $assignment->deliveryPartner()->increment('total_deliveries');
+        $assignment->deliveryPartner?->increment('total_deliveries');
 
         if ($assignment->order) {
             $assignment->order->update(['status' => 'delivered']);

@@ -136,7 +136,8 @@ class SettingsController extends Controller
             $validated['serviceable_pincodes'] = null;
         }
 
-        if ($settings->upi_id !== $validated['upi_id'] && !empty($validated['upi_id'])) {
+        $newUpiId = $validated['upi_id'] ?? null;
+        if (!empty($newUpiId) && $settings->upi_id !== $newUpiId) {
             $validated['upi_id_previous'] = $settings->upi_id;
             $validated['upi_id_changed_at'] = now();
         }
