@@ -21,8 +21,10 @@
                 const saved = localStorage.getItem('k71_chat_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 if (saved === 'dark') {
                     document.documentElement.classList.add('dark');
+                    document.documentElement.classList.remove('light');
                 } else {
                     document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
                 }
             } catch(e) {}
         })();
@@ -138,13 +140,14 @@
         html.dark .glass-msg-row.sent .glass-msg-bubble,
         html.dark .glass-bubble.sent {
             background: linear-gradient(135deg, #ECD2F3 0%, #FFCDFF 100%) !important;
-            color: #1A1018 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
             border: none !important;
         }
         html.dark .glass-msg-row.sent .glass-msg-bubble *,
         html.dark .glass-bubble.sent * {
-            color: #1A1018 !important;
-            -webkit-text-fill-color: #1A1018 !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
         }
 
         html.dark .glass-icon-btn {
@@ -3363,18 +3366,17 @@
                 }
 
                 let bodyHtml = '';
-                const bubbleColorStyle = isSent ? 'color: #ffffff !important;' : (document.documentElement.classList.contains('dark') ? 'color: #f8fafc !important;' : 'color: #0f172a !important;');
                 if (isVoice) {
                     // Do not show duplicated text bubble if body is voice note indicator
                     if (msg.body && !msg.body.startsWith('🎤 Voice message') && !msg.body.startsWith('🎤 Voice note')) {
-                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}" style="${bubbleColorStyle}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                        bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
                     } else if (replyQuoteHtml) {
-                        bodyHtml = `<div class="glass-msg-bubble" style="${bubbleColorStyle}">${replyQuoteHtml}</div>`;
+                        bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}</div>`;
                     }
                 } else if (msg.body && msg.body !== '📷 Photo') {
-                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}" style="${bubbleColorStyle}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble ${msg.is_optimistic ? 'optimistic' : ''}">${replyQuoteHtml}${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>`;
                 } else if (!attachmentHtml) {
-                    bodyHtml = `<div class="glass-msg-bubble" style="${bubbleColorStyle}">${replyQuoteHtml}📷 Photo</div>`;
+                    bodyHtml = `<div class="glass-msg-bubble">${replyQuoteHtml}📷 Photo</div>`;
                 }
 
                 const unsendBtnHtml = (isSent && !msg.is_optimistic)
@@ -5204,11 +5206,13 @@
             const wrapper = document.getElementById('k71-chat-wrapper');
             if (isDark) {
                 document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
                 if (wrapper) wrapper.classList.add('dark');
                 const lbl = document.getElementById('themeToggleLabel');
                 if (lbl) lbl.textContent = 'Switch to Light Mode';
             } else {
                 document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
                 if (wrapper) wrapper.classList.remove('dark');
                 const lbl = document.getElementById('themeToggleLabel');
                 if (lbl) lbl.textContent = 'Switch to Dark Mode';

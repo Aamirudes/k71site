@@ -47,7 +47,7 @@
 
         .bubble-sent {
             background-color: #ECD2F3;
-            color: #1A1018;
+            color: #000000;
             border-radius: 18px 18px 4px 18px;
         }
 

@@ -76,4 +76,16 @@ class InstagramDirectChatTest extends TestCase
             'body' => 'Hey how are you?'
         ]);
     }
+
+    public function test_messages_index_uses_black_text_on_sent_bubbles_in_dark_mode(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('messages.index'));
+
+        $response->assertOk();
+        $response->assertSee('color: #000000 !important;', false);
+        $response->assertSee('-webkit-text-fill-color: #000000 !important;', false);
+        $response->assertDontSee("const bubbleColorStyle = isSent ? 'color: #ffffff !important;'", false);
+    }
 }
