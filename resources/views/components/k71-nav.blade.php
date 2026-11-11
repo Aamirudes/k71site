@@ -1,6 +1,7 @@
 @props([
     'hideSearch' => false,
     'hideCategories' => false,
+    'grailTheme' => false,
 ])
 
 @php
@@ -75,7 +76,8 @@
         @cart-count-updated.window="cartBadgeCount = $event.detail.count"
         @click.outside="expandedForms = false"
         @keydown.escape.window="expandedForms = false;"
-        class="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs transition-all relative">
+        @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif
+        class="sticky top-0 z-50 {{ $grailTheme ? 'bg-black/82 backdrop-blur-2xl border-b border-white/10 text-[#EFE9F2]' : 'bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-xs' }} transition-all relative">
     
     @if($currentVendor)
         <!-- Standalone Vendor Store Header: Small link Back to Marketplace -->
@@ -106,7 +108,7 @@
                 <!-- Hamburger Trigger Button -->
                 <button @click="$dispatch('open-hamburger')" 
                         type="button"
-                        class="p-2 -ml-1 rounded-xl text-slate-800 hover:text-slate-950 hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
+                        class="p-2 -ml-1 rounded-xl {{ $grailTheme ? 'text-[#EFE9F2] hover:text-white hover:bg-white/10' : 'text-slate-800 hover:text-slate-950 hover:bg-slate-100' }} transition-colors focus:outline-none cursor-pointer"
                         aria-label="Open Navigation Menu">
                     <svg width="22" height="22" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
@@ -132,15 +134,15 @@
                             </div>
                         </a>
                     @else
-                        <a href="{{ route('home') }}" class="flex items-center gap-2 group" aria-label="K71 Homepage">
-                            <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
+                        <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="K71 Homepage">
+                            <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 {{ $grailTheme ? 'rounded-xl bg-[#ECD2F3] p-1 shadow-[0_0_20px_rgba(236,210,243,0.22)]' : '' }}">
                                 <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                             </div>
-                            <div class="flex items-baseline gap-1 leading-none">
-                                <span class="font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black transition-colors">
+                            <div class="flex items-baseline gap-1.5 leading-none">
+                                <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-white' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black' }} transition-colors">
                                     K71
                                 </span>
-                                <span class="text-[9px] font-black uppercase tracking-wider text-slate-400 font-mono hidden sm:inline">
+                                <span class="text-[9px] font-semibold uppercase tracking-[0.16em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-slate-400 font-mono' }} hidden sm:inline">
                                     MARKETPLACE
                                 </span>
                             </div>
@@ -153,19 +155,19 @@
             <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
 
                 <!-- Stores Directory Link (Desktop) -->
-                <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('stores.index') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
-                    <span>🏪 Stores</span>
+                <a href="{{ route('stores.index') }}" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold {{ $grailTheme ? (request()->routeIs('stores.index') ? 'bg-white/15 text-white' : 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10') : (request()->routeIs('stores.index') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100') }} transition">
+                    <span>Stores</span>
                 </a>
 
                 <!-- Catalog Link (Desktop) -->
-                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ request()->routeIs('catalog.*') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition">
+                <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold {{ $grailTheme ? (request()->routeIs('catalog.*') ? 'bg-white/15 text-white' : 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10') : (request()->routeIs('catalog.*') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100') }} transition">
                     <span>Catalog</span>
                 </a>
 
                 <!-- Direct Messages Quick Access -->
                 <a href="{{ route('messages.index') }}" 
                    id="nav-messages-link"
-                   class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
+                   class="p-2 rounded-xl {{ $grailTheme ? 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition relative cursor-pointer"
                    title="Direct Messages"
                    aria-label="Direct Messages">
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,13 +178,13 @@
                 <!-- Wishlist (Visible on mobile and desktop) -->
                 <button type="button" 
                         @click="$dispatch('open-mini-wishlist')" 
-                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
+                        class="p-2 rounded-xl {{ $grailTheme ? 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition relative cursor-pointer"
                         aria-label="Wishlist">
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
                     </svg>
                     <span id="global-wishlist-badge" 
-                          class="absolute top-1 right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
+                          class="absolute top-1 right-1 {{ $grailTheme ? 'bg-[#FFCDFF] text-[#1A1018]' : 'bg-rose-500 text-white' }} text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center {{ $navWishlistCount > 0 ? '' : 'hidden' }}">
                         {{ $navWishlistCount }}
                     </span>
                 </button>
@@ -190,7 +192,7 @@
                 <!-- Cart Bag Button -->
                 <button @click="$dispatch('open-mini-cart')" 
                         type="button"
-                        class="p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition relative cursor-pointer"
+                        class="p-2 rounded-xl {{ $grailTheme ? 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100' }} transition relative cursor-pointer"
                         aria-label="View Shopping Cart">
                     <svg width="22" height="22" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"></path>
@@ -198,7 +200,7 @@
                     <!-- Counter Badge -->
                     <span x-show="cartBadgeCount > 0"
                           x-text="cartBadgeCount"
-                          class="absolute top-1 right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
+                          class="absolute top-1 right-1 {{ $grailTheme ? 'bg-[#ECD2F3] text-[#1A1018]' : 'bg-slate-900 text-white' }} text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-tight min-w-[16px] text-center shadow-xs"></span>
                 </button>
 
                 <!-- User Account Profile Button & Dropdown -->
@@ -206,16 +208,16 @@
                     @guest
                         <button @click="$dispatch('open-auth-modal', { view: 'login' })"
                                 type="button"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 transition cursor-pointer">
+                                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs {{ $grailTheme ? 'grail-cta-pill' : 'font-bold text-slate-900 hover:text-black bg-slate-100 hover:bg-slate-200 transition' }} cursor-pointer">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                             <span class="hidden sm:inline">Sign In</span>
                         </button>
                     @else
                         <button @click="open = !open" 
                                 type="button" 
-                                class="flex items-center gap-1.5 p-1 rounded-full hover:bg-slate-100 transition focus:outline-none cursor-pointer"
+                                class="flex items-center gap-1.5 p-1 rounded-full {{ $grailTheme ? 'hover:bg-white/10' : 'hover:bg-slate-100' }} transition focus:outline-none cursor-pointer"
                                 aria-label="User Account Menu">
-                            <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                            <div class="w-8 h-8 rounded-full {{ $grailTheme ? 'bg-[#ECD2F3] text-[#1A1018]' : 'bg-slate-900 text-white' }} flex items-center justify-center font-bold text-xs shadow-xs">
                                 {{ strtoupper(substr(auth()->user()->first_name ?? 'U', 0, 1)) }}
                             </div>
                         </button>
@@ -272,15 +274,15 @@
          x-transition:leave="transition-all duration-200 ease-in"
          x-transition:leave-start="opacity-100 translate-y-0 max-h-[600px]"
          x-transition:leave-end="opacity-0 -translate-y-3 max-h-0"
-         class="overflow-hidden border-t border-slate-200/90 bg-white/98 backdrop-blur-2xl shadow-xl">
+         class="overflow-hidden border-t {{ $grailTheme ? 'border-white/10 bg-[#060606]/96 text-[#EFE9F2]' : 'border-slate-200/90 bg-white/98' }} backdrop-blur-2xl shadow-xl">
         
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3.5 space-y-3">
             
             <div class="flex items-center justify-between pb-1">
-                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Marketplace Search &amp; Verticals</span>
+                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-slate-400 font-black' }}">Marketplace Search &amp; Verticals</span>
                 <button type="button" 
                         @click="expandedForms = false" 
-                        class="text-[11px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 cursor-pointer transition">
+                        class="text-[11px] font-semibold {{ $grailTheme ? 'text-[#EFE9F2]/60 hover:text-white' : 'text-slate-500 hover:text-slate-900' }} flex items-center gap-1 cursor-pointer transition">
                     <span>Close</span>
                     <span>✕</span>
                 </button>
@@ -317,11 +319,11 @@
                            @focus="if(suggestions.length > 0) open = true"
                            autocomplete="off"
                            placeholder="Search products, verified stores, brands..." 
-                           class="w-full pl-10 pr-24 py-2.5 rounded-full border border-slate-200 bg-slate-50 text-xs sm:text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition-all placeholder:text-slate-400 font-medium">
-                    <div class="absolute left-3.5 top-3 text-slate-400">
-                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
+                           class="w-full pl-10 pr-24 py-2.5 rounded-full border {{ $grailTheme ? 'border-white/15 bg-white/5 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-[#ECD2F3] focus:ring-2 focus:ring-[#ECD2F3]/20' : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-400' }} text-xs sm:text-sm outline-none transition-all font-medium">
+                    <div class="absolute left-3.5 top-3 {{ $grailTheme ? 'text-white/60' : 'text-slate-400' }}">
+                        <svg class="w-4 h-4 {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-700' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
                     </div>
-                    <button type="submit" class="absolute right-1.5 top-1.5 px-4 py-1.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold tracking-wide transition shadow-xs cursor-pointer">
+                    <button type="submit" class="absolute right-1.5 top-1.5 px-4 py-1.5 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs' : 'bg-slate-900 hover:bg-black text-white text-xs font-bold tracking-wide shadow-xs' }} transition cursor-pointer">
                         Search
                     </button>
                 </form>
@@ -331,22 +333,22 @@
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl overflow-hidden z-50 divide-y divide-slate-100"
+                     class="absolute top-full left-0 right-0 mt-2 {{ $grailTheme ? 'bg-[#161616]/98 border-white/15 text-[#EFE9F2] divide-white/10' : 'bg-white/95 border-slate-200/80 divide-slate-100' }} backdrop-blur-xl border rounded-2xl shadow-xl overflow-hidden z-50 divide-y"
                      style="display: none;">
                     
-                    <div x-show="loading" class="p-3 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                    <div x-show="loading" class="p-3 text-center text-xs {{ $grailTheme ? 'text-white/50' : 'text-slate-400' }} flex items-center justify-center gap-2">
                         <span>Searching marketplace...</span>
                     </div>
 
                     <template x-for="item in suggestions" :key="item.id">
-                        <a :href="item.url" class="flex items-center gap-3 p-2.5 hover:bg-slate-50 transition group">
-                            <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0">
+                        <a :href="item.url" class="flex items-center gap-3 p-2.5 {{ $grailTheme ? 'hover:bg-white/5' : 'hover:bg-slate-50' }} transition group">
+                            <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border {{ $grailTheme ? 'border-white/10' : 'border-slate-200' }} shrink-0">
                             <div class="flex-1 min-w-0">
-                                <p class="text-xs font-bold text-slate-900 truncate group-hover:text-black" x-text="item.title"></p>
-                                <div class="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
-                                    <span class="font-mono font-bold text-slate-900" x-text="item.price"></span>
-                                    <span class="uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-bold" x-text="item.vertical"></span>
-                                    <span class="truncate text-slate-400" x-text="item.vendor"></span>
+                                <p class="text-xs font-bold {{ $grailTheme ? 'text-white group-hover:text-[#FFCDFF]' : 'text-slate-900 group-hover:text-black' }} truncate" x-text="item.title"></p>
+                                <div class="flex items-center gap-2 text-[10px] {{ $grailTheme ? 'text-white/55' : 'text-slate-500' }} mt-0.5">
+                                    <span class="font-mono font-bold {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-900' }}" x-text="item.price"></span>
+                                    <span class="uppercase px-1.5 py-0.2 rounded {{ $grailTheme ? 'bg-white/10 text-white/80' : 'bg-slate-100 text-slate-600' }} font-bold" x-text="item.vertical"></span>
+                                    <span class="truncate {{ $grailTheme ? 'text-white/40' : 'text-slate-400' }}" x-text="item.vendor"></span>
                                 </div>
                             </div>
                         </a>
@@ -356,17 +358,17 @@
 
             <!-- FORM 3: CATEGORY NAVIGATION ROW -->
             @if(!$hideCategories)
-            <div class="pt-2 border-t border-slate-100">
+            <div class="pt-2 border-t {{ $grailTheme ? 'border-white/10' : 'border-slate-100' }}">
                 <nav class="flex items-center gap-1.5 sm:gap-2 py-1 overflow-x-auto no-scrollbar scroll-smooth overscroll-x-contain touch-pan-x" 
                      aria-label="Commerce Categories">
                     @foreach($navCategories as $catKey => $cat)
                         <a href="{{ $cat['url'] }}"
                            @click="expandedForms = false"
-                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 select-none {{ $cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 active:scale-95' }}">
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-150 shrink-0 select-none {{ $grailTheme ? ($cat['active'] ? 'bg-[#ECD2F3] text-[#1A1018]' : 'text-[#EFE9F2]/75 hover:text-white hover:bg-white/10 active:scale-95') : ($cat['active'] ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 active:scale-95') }}">
                             <span class="text-xs leading-none">{{ $cat['icon'] }}</span>
                             <span>{{ $cat['name'] }}</span>
                             @if(!empty($cat['badge']))
-                                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider uppercase {{ $cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700' }}">
+                                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black tracking-wider uppercase {{ $grailTheme ? 'bg-[#FFCDFF] text-[#221826]' : ($cat['active'] ? 'bg-rose-500 text-white' : 'bg-rose-100 text-rose-700') }}">
                                     {{ $cat['badge'] }}
                                 </span>
                             @endif
@@ -383,11 +385,11 @@
     <div class="absolute -bottom-3.5 left-0 m-0 p-0 z-30 pointer-events-none">
         <button type="button" 
                 @click="expandedForms = !expandedForms"
-                class="pointer-events-auto h-7 w-7 m-0 p-0 rounded-none bg-white dark:bg-zinc-900 border-r border-b border-t border-slate-300 dark:border-zinc-700 shadow-xs hover:bg-slate-100 dark:hover:bg-zinc-800 transition-all duration-200 flex items-center justify-center cursor-pointer group"
+                class="pointer-events-auto h-7 w-7 m-0 p-0 rounded-none {{ $grailTheme ? 'bg-[#161616] border-r border-b border-t border-white/20 text-[#EFE9F2] hover:bg-[#221826]' : 'bg-white dark:bg-zinc-900 border-r border-b border-t border-slate-300 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800' }} shadow-xs transition-all duration-200 flex items-center justify-center cursor-pointer group"
                 aria-label="Toggle Navigation & Search Drawer"
                 :title="expandedForms ? 'Close Search & Categories' : 'Explore Search & Categories'">
-            <svg class="w-3.5 h-3.5 text-slate-700 group-hover:text-black dark:text-zinc-300 dark:group-hover:text-white transition-transform duration-300 transform"
-                 :class="{ 'rotate-180 text-black dark:text-white': expandedForms }"
+            <svg class="w-3.5 h-3.5 {{ $grailTheme ? 'text-[#EFE9F2] group-hover:text-[#FFCDFF]' : 'text-slate-700 group-hover:text-black dark:text-zinc-300 dark:group-hover:text-white' }} transition-transform duration-300 transform"
+                 :class="{ 'rotate-180 {{ $grailTheme ? 'text-[#FFCDFF]' : 'text-black dark:text-white' }}': expandedForms }"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
             </svg>

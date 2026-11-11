@@ -12,6 +12,7 @@
     'fullWidth' => false,
     'hideMainHeader' => false,
     'hideFooter' => false,
+    'grailTheme' => false,
 ])
 
 <!DOCTYPE html>
@@ -50,7 +51,7 @@
 
     <!-- Favicon & PWA Icons -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1F2A26">
+    <meta name="theme-color" content="{{ $grailTheme ? '#000000' : '#1F2A26' }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -60,7 +61,13 @@
     <!-- Fonts & Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Dancing+Script:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap">
+    @if($grailTheme)
+        <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700,800&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Outfit:wght@300;400;500;600;700&display=swap">
+    @else
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Dancing+Script:wght@400;700&family=Outfit:wght@300;400;500;600;700&display=swap">
+    @endif
 
     <!-- Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -82,7 +89,7 @@
         })();
     </script>
 </head>
-<body class="bg-[#f8fafc] text-slate-900 font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden selection:bg-indigo-600 selection:text-white">
+<body class="{{ $grailTheme ? 'bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018]' : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-600 selection:text-white' }} font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden" @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif>
     
     
     @php
@@ -98,7 +105,7 @@
 
     @if(!$suppressMainHeader)
         <!-- K71 Top Navigation Header -->
-        <x-k71-nav />
+        <x-k71-nav :grailTheme="$grailTheme" />
     @endif
 
     <!-- K71 Glass Hamburger Menu Drawer -->
@@ -108,7 +115,7 @@
     <x-floating-six-nav />
 
     @if($fullWidth)
-        <main class="flex-1 w-full {{ $hideFooter ? '' : 'pb-24 md:pb-16' }}">
+        <main class="flex-1 w-full {{ ($hideFooter || $grailTheme) ? '' : 'pb-24 md:pb-16' }}">
             {{ $slot }}
         </main>
     @else
@@ -140,7 +147,8 @@
         }
     @endphp
 
-    <footer class="bg-[#0C1310] text-stone-200 mt-16 border-t border-stone-800 rounded-t-[2.5rem] shadow-2xl relative overflow-hidden"
+    <footer class="{{ $grailTheme ? 'bg-[#000000] text-[#EFE9F2] mt-0 border-t border-white/10 rounded-none' : 'bg-[#0C1310] text-stone-200 mt-16 border-t border-stone-800 rounded-t-[2.5rem] shadow-2xl' }} relative overflow-hidden"
+            @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif
             x-data="{ 
                 newsletterEmail: '', 
                 newsletterSuccess: false,
@@ -157,8 +165,13 @@
             }">
 
         <!-- Background Atmospheric Radial Texture -->
-        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none"></div>
-        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent"></div>
+        @if($grailTheme)
+            <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[360px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(233,184,255,0.16)_0%,rgba(201,162,74,0.06)_45%,transparent_72%)] pointer-events-none blur-2xl"></div>
+            <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#E9B8FF]/35 to-transparent"></div>
+        @else
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none"></div>
+            <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent"></div>
+        @endif
 
         <!-- VENDOR STOREFRONT ATELIER BANNER (If browsing a boutique) -->
         @if($footerVendor)
@@ -208,37 +221,37 @@
         @endif
 
         <!-- NEWSLETTER SECTION -->
-        <div class="border-b border-zinc-800/80 py-10 px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="border-b {{ $grailTheme ? 'border-white/10 py-14' : 'border-zinc-800/80 py-10' }} px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8">
                 <div class="text-center lg:text-left max-w-xl">
-                    <span class="text-[11px] font-bold uppercase tracking-widest text-zinc-400 flex items-center justify-center lg:justify-start gap-1.5 mb-1.5">
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                    <span class="text-[11px] font-medium uppercase tracking-[0.14em] {{ $grailTheme ? 'text-[#FFCDFF]' : 'text-zinc-400' }} flex items-center justify-center lg:justify-start gap-1.5 mb-2">
+                        <svg class="w-3.5 h-3.5 {{ $grailTheme ? 'text-[#FFCDFF]' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                        <span>K71 Newsletter</span>
+                        <span>K71 Dispatch</span>
                     </span>
-                    <h3 class="text-xl sm:text-2xl font-sans font-bold text-white tracking-tight">Curated Releases &amp; Exclusive Drops</h3>
-                    <p class="text-xs sm:text-sm text-zinc-400 mt-1 leading-relaxed">
+                    <h3 class="{{ $grailTheme ? 'grail-display text-3xl sm:text-4xl text-white' : 'text-xl sm:text-2xl font-sans font-bold text-white tracking-tight' }}">Curated Releases &amp; Exclusive Drops</h3>
+                    <p class="text-xs sm:text-sm {{ $grailTheme ? 'text-[#B8B8B8]' : 'text-zinc-400' }} mt-2 leading-relaxed">
                         Subscribe to receive timely updates on new arrivals, exclusive discounts, and seasonal launches.
                     </p>
                 </div>
 
                 <!-- Form -->
                 <div class="w-full sm:w-auto flex-1 max-w-md">
-                    <form @submit.prevent="submitNewsletter()" class="flex flex-col sm:flex-row gap-2">
+                    <form @submit.prevent="submitNewsletter()" class="flex flex-col sm:flex-row gap-2.5">
                         <div class="relative flex-1">
                             <input type="email" 
                                    x-model="newsletterEmail" 
                                    required
                                    placeholder="Enter your email address..." 
-                                   class="w-full px-4 py-3 rounded-full bg-zinc-900/90 border border-zinc-700 text-white placeholder-zinc-500 text-xs focus:ring-1 focus:ring-white focus:border-white outline-none transition-all">
+                                   class="w-full px-4 py-3 {{ $grailTheme ? 'rounded-none border-0 border-b border-white/40 bg-transparent text-white placeholder-white/40 focus:border-[#FFCDFF] focus:ring-0 px-1' : 'rounded-full bg-zinc-900/90 border border-zinc-700 text-white placeholder-zinc-500 focus:ring-1 focus:ring-white focus:border-white' }} text-xs outline-none transition-all">
                         </div>
                         <button type="submit" 
-                                class="px-6 py-3 rounded-full bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs tracking-wider uppercase transition-all shadow-md shrink-0 active:scale-95">
+                                class="px-6 py-3 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs tracking-wide' : 'bg-white hover:bg-zinc-100 text-zinc-950 font-bold text-xs tracking-wider uppercase shadow-md' }} transition-all shrink-0 active:scale-95">
                             Subscribe
                         </button>
                     </form>
-                    <div x-show="newsletterSuccess" x-transition class="mt-2 text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <div x-show="newsletterSuccess" x-transition class="mt-2 text-xs font-semibold {{ $grailTheme ? 'text-[#FFCDFF]' : 'text-emerald-400' }} flex items-center gap-1.5">
                         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                         <span>Subscribed! Welcome to K71. Check your inbox for updates.</span>
                     </div>
@@ -336,7 +349,7 @@
         </div>
 
         <!-- TRUST PILLARS STRIP -->
-        <div class="border-t border-zinc-800/80 bg-zinc-950/60 py-6 px-4 sm:px-6 lg:px-8">
+        <div class="border-t {{ $grailTheme ? 'border-white/10 bg-[#060606]' : 'border-zinc-800/80 bg-zinc-950/60' }} py-6 px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center sm:text-left">
                 <div class="flex items-center gap-3 justify-center sm:justify-start">
                     <div class="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
@@ -378,22 +391,22 @@
         </div>
 
         <!-- PAYMENT METHODS RAIL -->
-        <div class="border-t border-zinc-800/80 py-4 px-4 sm:px-6 lg:px-8">
+        <div class="border-t {{ $grailTheme ? 'border-white/10 bg-[#010101]' : 'border-zinc-800/80' }} py-4 px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-                <span class="text-[10px] uppercase font-medium tracking-wider text-zinc-500">Supported Payments:</span>
-                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-medium text-zinc-400">
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">UPI</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">PhonePe</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">Google Pay</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">Paytm</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">Visa / Mastercard</span>
-                    <span class="px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">Cash on Delivery</span>
+                <span class="text-[10px] uppercase font-medium tracking-wider {{ $grailTheme ? 'text-[#EFE9F2]/50' : 'text-zinc-500' }}">Supported Payments:</span>
+                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px] font-medium {{ $grailTheme ? 'text-[#EFE9F2]/75' : 'text-zinc-400' }}">
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">UPI</span>
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">PhonePe</span>
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">Google Pay</span>
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">Paytm</span>
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">Visa / Mastercard</span>
+                    <span class="px-2 py-0.5 rounded {{ $grailTheme ? 'bg-white/5 border border-white/10' : 'bg-zinc-900 border border-zinc-800' }}">Cash on Delivery</span>
                 </div>
             </div>
         </div>
 
         <!-- BOTTOM LEGAL RAIL -->
-        <div class="border-t border-zinc-800/80 py-5 px-4 sm:px-6 lg:px-8 bg-black/60">
+        <div class="border-t {{ $grailTheme ? 'border-white/10 bg-black pb-20 sm:pb-5 pt-5' : 'border-zinc-800/80 bg-black/60 py-5' }} px-4 sm:px-6 lg:px-8">
             <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">
                 <div class="text-center sm:text-left">
                     <span>&copy; {{ date('Y') }} <strong>K71</strong>. Creative Agency &bull; ESTD 1992 (MSME: <span class="font-mono text-zinc-400">UDYAM-RJ-01-0176167</span>). All rights reserved.</span>

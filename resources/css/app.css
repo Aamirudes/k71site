@@ -299,5 +299,413 @@
         -ms-overflow-style: none !important;
         scrollbar-width: none !important;
     }
+
+    /* ==========================================================================
+       GRAIL DESIGN SYSTEM (Verified Tokens, Typography & Scroll Choreography)
+       ========================================================================== */
+    :root {
+        --grail-void: #000000;
+        --grail-obsidian: #010101;
+        --grail-obsidian-soft: #060606;
+        --grail-surface-dark: #161616;
+        --grail-ivory: #EFE9F2;
+        --grail-parchment: #FAFAF8;
+        --grail-stone: #F6F6F6;
+        --grail-warm-cream: #F4F1EC;
+        --grail-shell: #EEEAE3;
+        --grail-orchid-soft: #ECD2F3;
+        --grail-orchid-hover: #F6E3FB;
+        --grail-orchid-bright: #FFCDFF;
+        --grail-orchid-glow: #FFE4FF;
+        --grail-orchid-mid: #E7AFE7;
+        --grail-orchid-deep: #D29CE2;
+        --grail-orchid-link: #E9B8FF;
+        --grail-plum-ink: #1A1018;
+        --grail-plum-dark: #221826;
+        --grail-plum-text: #623562;
+        --grail-plum-muted: #7C4F74;
+        --grail-gold: #C9A24A;
+        --grail-gold-muted: #837052;
+        --grail-gold-deep: #5F5138;
+        --grail-ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --grail-panel-ease: cubic-bezier(0.32, 0.72, 0, 1);
+        --font-grail-sans: 'Switzer', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+        --font-grail-display: 'PP Pangaia', 'Cormorant Garamond', 'Fraunces', Georgia, serif;
+    }
+
+    .grail-home-root {
+        font-family: var(--font-grail-sans);
+        background-color: var(--grail-void);
+        color: var(--grail-ivory);
+        isolation: isolate;
+        overflow-x: clip;
+    }
+
+    .grail-home-root h1,
+    .grail-home-root h2,
+    .grail-home-root h3,
+    .grail-home-root h4 {
+        font-family: var(--font-grail-sans);
+        color: inherit;
+    }
+
+    .grail-home-root p {
+        color: inherit;
+    }
+
+    .grail-display {
+        font-family: var(--font-grail-display) !important;
+        font-weight: 300 !important;
+        text-transform: uppercase;
+        letter-spacing: -0.012em !important;
+        line-height: 0.90 !important;
+        font-variation-settings: "SOFT" 45, "WONK" 0, "opsz" 144;
+    }
+
+    .grail-heading-flex {
+        display: flex;
+        flex-wrap: wrap;
+        column-gap: 0.25em;
+        row-gap: 0.06em;
+    }
+
+    /* Masked Word / Line Rise Animation (Grail Hero & Statement) */
+    .grail-mask {
+        display: inline-block;
+        overflow: hidden;
+        vertical-align: top;
+        margin: -0.08em -0.02em 0;
+        padding: 0.08em 0.02em 0.04em;
+    }
+
+    .grail-line-mask {
+        display: block;
+        overflow: hidden;
+        margin: -0.06em -0.02em 0;
+        padding: 0.06em 0.02em 0.04em;
+    }
+
+    @keyframes grailWordRise {
+        0% {
+            opacity: 0.01;
+            transform: translateY(118%);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .grail-word-rise {
+        display: inline-block;
+        animation: grailWordRise 0.78s var(--grail-ease) both;
+        will-change: transform;
+    }
+
+    .grail-line-rise {
+        display: block;
+        opacity: 0;
+        transform: translateY(112%);
+        transition: transform 0.78s var(--grail-ease), opacity 0.6s var(--grail-ease);
+        will-change: transform, opacity;
+    }
+
+    .is-in .grail-line-rise,
+    .grail-line-rise.is-in {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Scroll-Scrubbed Word Reveal (--hl in [0..1]) */
+    .grail-scrub-word {
+        --w: clamp(0, calc((var(--hl, 1) - var(--i, 0) * 0.075) / 0.35), 1);
+        display: inline-block;
+        opacity: var(--w);
+        transform: translateY(calc((1 - var(--w)) * 0.48em));
+        will-change: opacity, transform;
+    }
+
+    /* Scroll-Drawn Hairline Divider (--dgrow in [0..1]) */
+    .grail-hairline-draw {
+        height: 1px;
+        transform: scaleX(var(--dgrow, 0));
+        transform-origin: 0 50%;
+        will-change: transform;
+    }
+    .grail-hairline-center {
+        transform-origin: 50% 50%;
+    }
+
+    /* Progressive Blur Top Scrim (Grail Hero) */
+    .grail-scrim-b1 {
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        mask-image: linear-gradient(#000 0% 50%, transparent 92%);
+        -webkit-mask-image: linear-gradient(#000 0% 50%, transparent 92%);
+    }
+    .grail-scrim-b2 {
+        backdrop-filter: blur(9px);
+        -webkit-backdrop-filter: blur(9px);
+        mask-image: linear-gradient(#000 0% 22%, transparent 52%);
+        -webkit-mask-image: linear-gradient(#000 0% 22%, transparent 52%);
+    }
+
+    /* 3D Perspective Stage Tilt & Unblur (Grail _phone / showcase) */
+    .grail-stage-3d {
+        transform-origin: 50% 45%;
+        transform:
+            perspective(1400px)
+            rotateY(calc((1 - var(--stage, 1)) * -14deg))
+            rotateX(calc((1 - var(--stage, 1)) * 7deg))
+            translateY(calc((1 - var(--stage, 1)) * 36px))
+            scale(calc(0.92 + 0.08 * var(--stage, 1)));
+        opacity: clamp(0.15, var(--stage, 1), 1);
+        filter: blur(calc((1 - var(--stage, 1)) * 6px));
+        will-change: transform, opacity, filter;
+    }
+
+    /* Budget Stat Upward Fill Reveal (Grail @property --fill) */
+    @property --grail-fill {
+        syntax: "<percentage>";
+        inherits: false;
+        initial-value: 0%;
+    }
+
+    .grail-stat-tile {
+        position: relative;
+        overflow: hidden;
+        transition: background-color 0.35s var(--grail-ease), border-color 0.35s var(--grail-ease);
+    }
+
+    .grail-stat-tile::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        --grail-fill: 0%;
+        background: linear-gradient(to top, rgba(236, 210, 243, 0.12) 0%, rgba(201, 162, 74, 0.06) 55%, transparent 100%);
+        mask-image: linear-gradient(to top, #000 0, #000 var(--grail-fill), transparent var(--grail-fill));
+        -webkit-mask-image: linear-gradient(to top, #000 0, #000 var(--grail-fill), transparent var(--grail-fill));
+        transition: --grail-fill 1.15s var(--grail-ease);
+    }
+
+    .is-in .grail-stat-tile::after {
+        --grail-fill: var(--target-fill, 78%);
+    }
+
+    .grail-stat-tile:hover::after {
+        --grail-fill: 100%;
+    }
+
+    /* Grail Expanding Radial Orchid Ink-Flood */
+    .grail-ink-flood {
+        background: radial-gradient(circle at 50% 42%, #FBCFFA 0%, #F7C6F7 36%, #D29CE2 76%, #B87CCB 100%);
+        mask-image: radial-gradient(circle at 50% 45%, #000 calc(var(--ink, 0.25) * 100vmax - 9vmax), transparent calc(var(--ink, 0.25) * 100vmax));
+        -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 calc(var(--ink, 0.25) * 100vmax - 9vmax), transparent calc(var(--ink, 0.25) * 100vmax));
+        will-change: mask-image, -webkit-mask-image;
+    }
+
+    /* Grail Peel-Deck Light Sheet (#F6F6F6 rounded 24px) */
+    .grail-peel-sheet {
+        background-color: var(--grail-stone);
+        color: #000000;
+        border-radius: 24px;
+        transform-origin: 50% 65%;
+        transform: rotate(calc(var(--s5off, 0) * 2.2deg)) scale(calc(1 - var(--s5off, 0) * 0.045));
+        will-change: transform;
+    }
+
+    @media (max-width: 768px) {
+        .grail-peel-sheet {
+            border-radius: 20px;
+            transform: rotate(calc(var(--s5off, 0) * 1.1deg)) scale(calc(1 - var(--s5off, 0) * 0.03));
+        }
+    }
+
+    /* Grail Split-Reveal Rows (_s5row: Center Line + Horizontal Slide + Clip-Path Unveil) */
+    .grail-split-row {
+        position: relative;
+    }
+
+    .grail-split-row::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(0, 0, 0, 0.11);
+        transform-origin: 50% 50%;
+        transform: scaleX(var(--rp, 0));
+    }
+
+    .grail-split-left {
+        opacity: var(--rp, 0);
+        transform: translateX(calc((1 - var(--rp, 0)) * 7vw));
+        will-change: transform, opacity;
+    }
+
+    .grail-split-media {
+        clip-path: inset(calc((1 - var(--rp, 0)) * 46%));
+        will-change: clip-path;
+    }
+
+    .grail-split-right {
+        opacity: var(--rp, 0);
+        transform: translateX(calc((1 - var(--rp, 0)) * -7vw));
+        will-change: transform, opacity;
+    }
+
+    @media (max-width: 768px) {
+        .grail-split-row::before { transform: scaleX(1); }
+        .grail-split-left,
+        .grail-split-right {
+            opacity: calc(0.25 + 0.75 * var(--rp, 1));
+            transform: translateY(calc((1 - var(--rp, 1)) * 18px));
+        }
+        .grail-split-media {
+            clip-path: inset(calc((1 - var(--rp, 1)) * 18%));
+        }
+    }
+
+    /* Grail Card Staggered Entrance */
+    .grail-card-reveal {
+        opacity: 0;
+        transform: translateY(24px) scale(0.985);
+        transition: opacity 0.65s var(--grail-ease), transform 0.65s var(--grail-ease);
+        transition-delay: var(--delay, 0ms);
+        will-change: opacity, transform;
+    }
+    .is-in .grail-card-reveal,
+    .grail-card-reveal.is-in {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    /* Grail Product Card Harmonization inside Light Sheet */
+    .grail-light-sheet .group.flex.flex-col.h-full.relative {
+        background-color: #FFFFFF !important;
+        border-color: rgba(0, 0, 0, 0.08) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 6px 24px -12px rgba(24, 24, 27, 0.08) !important;
+        transition: transform 0.38s var(--grail-ease), box-shadow 0.38s var(--grail-ease), border-color 0.3s ease !important;
+    }
+    .grail-light-sheet .group.flex.flex-col.h-full.relative:hover {
+        transform: translateY(-4px);
+        border-color: rgba(98, 53, 98, 0.32) !important;
+        box-shadow: 0 22px 44px -14px rgba(34, 24, 38, 0.14) !important;
+    }
+    .grail-light-sheet .group button[title="Add to Cart"] {
+        background-color: #1A1018 !important;
+        color: #EFE9F2 !important;
+        border-radius: 9999px !important;
+    }
+    .grail-light-sheet .group button[title="Add to Cart"]:hover {
+        background-color: #623562 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Grail Orchid Primary Pill CTA */
+    .grail-cta-pill {
+        background: #ECD2F3;
+        color: #1A1018;
+        font-family: var(--font-grail-sans);
+        font-weight: 600;
+        border-radius: 9999px;
+        transition: background 0.18s ease, transform 0.22s var(--grail-ease), box-shadow 0.22s ease;
+    }
+    .grail-cta-pill:hover,
+    .grail-cta-pill:focus-visible {
+        background: #F6E3FB;
+        transform: translateY(-2px) scale(1.03);
+        box-shadow: 0 8px 22px rgba(236, 210, 243, 0.30);
+    }
+    .grail-cta-pill:active {
+        transform: translateY(0) scale(0.99);
+    }
+
+    /* Grail Orchid Emblem Tile (Luminous Radial Tile) */
+    .grail-emblem-tile {
+        background: radial-gradient(120% 120% at 45% 32%, #FFE4FF 0%, #FFCDFF 55%, #F6BDF6 100%);
+        color: #221826;
+        box-shadow: 0 24px 60px -12px rgba(233, 184, 255, 0.32);
+    }
+
+    /* Grail Adaptive Floating Action Pill (_waitPill) */
+    .grail-adaptive-pill {
+        --pill-accent: #FFCDFF;
+        --pill-btn-bg: rgba(255, 255, 255, 0.14);
+        --pill-btn-fg: #FFCDFF;
+        --pill-body: rgba(24, 24, 24, 0.72);
+        --pill-border: rgba(255, 255, 255, 0.16);
+        background: var(--pill-body);
+        border: 1px solid var(--pill-border);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-radius: 84px;
+        transition: opacity 0.35s ease, transform 0.35s var(--grail-ease), background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+    }
+    .grail-adaptive-pill[data-pill-theme="light"] {
+        --pill-accent: #5F5138;
+        --pill-btn-bg: #F4F1EC;
+        --pill-btn-fg: #5F5138;
+        --pill-body: rgba(255, 255, 255, 0.94);
+        --pill-border: rgba(0, 0, 0, 0.14);
+        box-shadow: 0 14px 36px rgba(24, 24, 27, 0.12);
+    }
+    .grail-adaptive-pill[data-pill-theme="orchid"] {
+        --pill-accent: #221826;
+        --pill-btn-bg: rgba(255, 255, 255, 0.62);
+        --pill-btn-fg: #623562;
+        --pill-body: rgba(96, 42, 86, 0.24);
+        --pill-border: rgba(255, 255, 255, 0.36);
+        box-shadow: 0 14px 36px rgba(98, 53, 98, 0.22);
+    }
+    .grail-adaptive-pill:hover {
+        transform: translateY(-3px);
+    }
+    .grail-adaptive-pill:hover .grail-pill-mark {
+        transform: rotate(-8deg) scale(1.06);
+    }
+    .grail-pill-mark {
+        transition: color 0.35s ease, background-color 0.35s ease, transform 0.3s var(--grail-ease);
+    }
+
+    /* Grail Hover Letter Wave (_hl) */
+    .grail-wave-link .grail-hl {
+        display: inline-block;
+        transition: transform 0.3s var(--grail-ease), color 0.3s ease;
+    }
+    .grail-wave-link:hover .grail-hl,
+    .grail-wave-link:focus-visible .grail-hl {
+        color: #FFFFFF;
+        transform: translateY(-3px);
+        transition-delay: calc(var(--i, 0) * 22ms);
+    }
+
+    /* Reduced Motion Safety (Grail Spec) */
+    @media (prefers-reduced-motion: reduce) {
+        .grail-word-rise,
+        .grail-line-rise,
+        .grail-scrub-word,
+        .grail-stage-3d,
+        .grail-peel-sheet,
+        .grail-split-left,
+        .grail-split-right,
+        .grail-split-media,
+        .grail-card-reveal {
+            animation: none !important;
+            transition-duration: 0.001ms !important;
+            transform: none !important;
+            opacity: 1 !important;
+            filter: none !important;
+            clip-path: none !important;
+        }
+        .grail-ink-flood {
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
+        }
+    }
 }
 
