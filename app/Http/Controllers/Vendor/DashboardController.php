@@ -273,6 +273,21 @@ class DashboardController extends Controller
             ->latest()
             ->get();
 
+        $serviceMetrics = null;
+        if ($vendor->isServices()) {
+            $serviceMetrics = [
+                'active_services' => Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->where('vertical', 'services')->where('status', 'active')->count(),
+                'published_portfolio' => \App\Models\PortfolioProject::where('vendor_id', $vendor->id)->where('status', 'published')->count(),
+                'active_orders' => \App\Models\ServiceOrder::where('vendor_id', $vendor->id)->whereIn('status', ['in_progress', 'delivered', 'revision_requested'])->count(),
+                'completed_orders' => \App\Models\ServiceOrder::where('vendor_id', $vendor->id)->where('status', 'completed')->count(),
+                'open_proposals' => \App\Models\ProjectProposal::where('vendor_id', $vendor->id)->whereIn('status', ['pending', 'shortlisted'])->count(),
+                'active_contracts' => \App\Models\ProjectContract::where('vendor_id', $vendor->id)->where('status', 'active')->count(),
+                'direct_enquiries' => \App\Models\Enquiry::where('vendor_id', $vendor->id)->where('status', 'open')->count(),
+                'website_views_30d' => \App\Models\StorefrontAnalyticsEvent::where('vendor_id', $vendor->id)->where('event_type', 'website_view')->where('created_at', '>=', Carbon::now()->subDays(30))->count(),
+                'readiness' => app(\App\Services\Services\ServiceWebsitePresenter::class)->evaluatePublishReadiness($vendor),
+            ];
+        }
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -296,7 +311,8 @@ class DashboardController extends Controller
             'pendingPaymentClaims',
             'deliveryPartners',
             'isFoodOrFeasto',
-            'pendingDispatchOrders'
+            'pendingDispatchOrders',
+            'serviceMetrics'
         ));
     }
 }

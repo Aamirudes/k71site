@@ -5,6 +5,9 @@
     {{-- Transparent over 100vh Hero -> Sticky Opaque Glass on Scroll Header --}}
     @include('storefront.sections.header')
 
+    @if(!empty($isServiceWebsite))
+        @include('storefront.sections.service.main')
+    @else
     <main class="flex-1 space-y-8 sm:space-y-12">
         {{-- 100vh 3-Slider Swipe Image Carousel --}}
         @include('storefront.sections.hero_carousel')
@@ -71,5 +74,6 @@
 
     {{-- Minimal Premium Boutique Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
 </div>

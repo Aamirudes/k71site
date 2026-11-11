@@ -107,6 +107,30 @@ Route::get('/services', [\App\Http\Controllers\ServicesController::class, 'index
 Route::get('/services/category/{slug}', [\App\Http\Controllers\ServicesController::class, 'category'])->name('services.category');
 Route::get('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'becomeSeller'])->name('services.become_seller');
 Route::post('/services/become-seller', [\App\Http\Controllers\ServicesController::class, 'storeSeller'])->name('services.store_seller');
+Route::get('/services/onboarding', [\App\Http\Controllers\ServiceOnboardingController::class, 'show'])->name('services.onboarding');
+Route::post('/services/onboarding', [\App\Http\Controllers\ServiceOnboardingController::class, 'saveStep'])->name('services.onboarding.save');
+Route::get('/services/check-subdomain', [\App\Http\Controllers\ServiceOnboardingController::class, 'checkSubdomain'])->name('services.check_subdomain');
+Route::post('/services/enquire/{slug}', [\App\Http\Controllers\StorefrontController::class, 'submitEnquiry'])->name('services.enquire');
+
+// Upwork-Style Custom Project Briefs, Proposals & Contracts Marketplace
+Route::get('/services/projects', [\App\Http\Controllers\ProjectMarketplaceController::class, 'index'])->name('services.projects.index');
+Route::middleware('auth')->group(function () {
+    Route::get('/services/projects/create', [\App\Http\Controllers\ProjectMarketplaceController::class, 'create'])->name('services.projects.create');
+    Route::post('/services/projects', [\App\Http\Controllers\ProjectMarketplaceController::class, 'store'])->name('services.projects.store');
+    Route::post('/services/projects/{project}/proposals', [\App\Http\Controllers\ProjectMarketplaceController::class, 'submitProposal'])->name('services.proposals.store');
+    Route::post('/services/proposals/{proposal}/shortlist', [\App\Http\Controllers\ProjectMarketplaceController::class, 'shortlistProposal'])->name('services.proposals.shortlist');
+    Route::post('/services/proposals/{proposal}/reject', [\App\Http\Controllers\ProjectMarketplaceController::class, 'rejectProposal'])->name('services.proposals.reject');
+    Route::post('/services/proposals/{proposal}/withdraw', [\App\Http\Controllers\ProjectMarketplaceController::class, 'withdrawProposal'])->name('services.proposals.withdraw');
+    Route::post('/services/proposals/{proposal}/interview', [\App\Http\Controllers\ProjectMarketplaceController::class, 'interviewProposal'])->name('services.proposals.interview');
+    Route::post('/services/proposals/{proposal}/hire', [\App\Http\Controllers\ProjectMarketplaceController::class, 'hireProposal'])->name('services.proposals.hire');
+    Route::get('/services/contracts/{contract}', [\App\Http\Controllers\ProjectMarketplaceController::class, 'showContract'])->name('services.contracts.show');
+    Route::post('/services/contracts/{contract}/milestones/{milestone}/submit', [\App\Http\Controllers\ProjectMarketplaceController::class, 'submitMilestone'])->name('services.milestones.submit');
+    Route::post('/services/contracts/{contract}/milestones/{milestone}/approve', [\App\Http\Controllers\ProjectMarketplaceController::class, 'approveMilestone'])->name('services.milestones.approve');
+    Route::post('/services/contracts/{contract}/milestones/{milestone}/revision', [\App\Http\Controllers\ProjectMarketplaceController::class, 'requestMilestoneRevision'])->name('services.milestones.revision');
+    Route::post('/services/contracts/{contract}/complete', [\App\Http\Controllers\ProjectMarketplaceController::class, 'completeContract'])->name('services.contracts.complete');
+});
+Route::get('/services/projects/{project}', [\App\Http\Controllers\ProjectMarketplaceController::class, 'show'])->name('services.projects.show');
+
 Route::get('/services/provider/{slug}', [\App\Http\Controllers\ServicesController::class, 'provider'])->name('services.provider');
 Route::get('/services/gig/{product}/edit', [\App\Http\Controllers\ServicesController::class, 'editService'])->middleware('auth')->name('services.gig.edit');
 Route::get('/services/{product}/edit', [\App\Http\Controllers\ServicesController::class, 'editService'])->middleware('auth')->name('services.item.edit');
@@ -259,8 +283,14 @@ Route::get('/s/vendor', fn() => redirect()->route('vendor.register'))->name('sto
 Route::get('/stores', [\App\Http\Controllers\StorefrontController::class, 'index'])->name('stores.index');
 Route::get('/vendors', fn() => redirect()->route('stores.index'));
 
-// Public Vendor Storefronts
+// Public Vendor Storefronts & Personal Service Websites
+Route::get('/s/{slug}/portfolio/{projectSlug}', [\App\Http\Controllers\StorefrontController::class, 'portfolioDetail'])->name('storefront.portfolio.show');
+Route::post('/s/{slug}/enquire', [\App\Http\Controllers\StorefrontController::class, 'submitEnquiry'])->name('storefront.enquire');
 Route::get('/s/{slug}', [\App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.show');
+
+// Direct Subdomain Portfolio & Enquiry Paths (resolved via ResolveStorefront current_vendor)
+Route::get('/portfolio/{projectSlug}', [\App\Http\Controllers\StorefrontController::class, 'subdomainPortfolioDetail'])->name('subdomain.portfolio.show');
+Route::post('/enquire', [\App\Http\Controllers\StorefrontController::class, 'subdomainEnquire'])->name('subdomain.enquire');
 
 // Cart Routes
 Route::get('/cart', [\App\Http\Controllers\CartController::class, 'index'])->name('cart.index');

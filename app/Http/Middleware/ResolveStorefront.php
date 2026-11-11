@@ -79,7 +79,8 @@ class ResolveStorefront
             }
 
             // Check if this slug is reserved
-            if (in_array($lowerSlug, config('marketplace.reserved_subdomains', []) ?? [], true)) {
+            $subdomainManager = app(\App\Services\Services\SubdomainManagerService::class);
+            if ($subdomainManager->isReserved($lowerSlug)) {
                 abort(404, 'Store not found.');
             }
 
@@ -87,6 +88,20 @@ class ResolveStorefront
             $vendor = Vendor::where('slug', $lowerSlug)->first();
 
             if (!$vendor) {
+                $redirectVendor = $subdomainManager->resolveRedirectVendor($lowerSlug);
+                if ($redirectVendor) {
+                    $path = trim($request->path(), '/');
+                    $prefix = trim((string) config('marketplace.storefront_path_prefix', 's'), '/');
+                    $extraPath = '';
+                    if ($prefix !== '' && str_starts_with(strtolower($path), $prefix . '/' . $lowerSlug)) {
+                        $extraPath = ltrim(substr($path, strlen($prefix . '/' . $lowerSlug)), '/');
+                    } elseif ($path !== '') {
+                        $extraPath = $path;
+                    }
+                    $targetUrl = $subdomainManager->buildRedirectTarget($request, $redirectVendor, $extraPath);
+                    return redirect()->away($targetUrl, 301);
+                }
+
                 abort(404, 'Store not found.');
             }
 

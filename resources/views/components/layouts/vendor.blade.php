@@ -156,12 +156,14 @@
 
         <!-- Desktop Sidebar Footer -->
         <div class="p-4 border-t border-slate-200 dark:border-white/[0.08] space-y-2 bg-slate-50/40 dark:bg-white/[0.01]">
-            <!-- Live Store Link -->
+            <!-- Live Store / Website Link -->
             @if($curVendor?->storefront_url)
-            <a href="{{ $curVendor->storefront_url }}" target="_blank" class="group flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-all">
+            <a href="{{ $curVendor->isServices() && !$curVendor->isWebsitePublished() ? $curVendor->storefrontUrl(['preview' => 1]) : $curVendor->storefront_url }}" target="_blank" class="group flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-purple-500/50 hover:bg-purple-50/50 dark:hover:bg-purple-500/5 transition-all">
                 <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-300">Live Storefront</span>
+                    <span class="w-2 h-2 rounded-full {{ ($curVendor->isServices() && !$curVendor->isWebsitePublished()) ? 'bg-amber-500' : 'bg-emerald-500 animate-pulse' }}"></span>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-300">
+                        {{ $curVendor->isServices() ? ($curVendor->isWebsitePublished() ? 'My Live Website' : 'Preview Draft Site') : 'Live Storefront' }}
+                    </span>
                 </div>
                 <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             </a>
@@ -202,31 +204,64 @@
             <!-- Left Desktop Breadcrumbs / Status -->
             <div class="hidden md:flex items-center gap-4">
                 <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 font-bold">K71 Enterprise</span>
+                    <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 font-bold">{{ $curVendor?->isServices() ? 'K71 Provider Studio' : 'K71 Enterprise' }}</span>
                     <span>/</span>
-                    <span class="text-slate-900 dark:text-white font-semibold">{{ $title ?? 'Merchant Operations' }}</span>
+                    <span class="text-slate-900 dark:text-white font-semibold">{{ $title ?? ($curVendor?->isServices() ? 'Provider Operations' : 'Merchant Operations') }}</span>
                 </div>
-                <div class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Store Active
-                </div>
+                @if($curVendor?->isServices())
+                    @if($curVendor->isWebsitePublished())
+                        <div class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-700 border border-emerald-500/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Website Live
+                        </div>
+                    @else
+                        <div class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-700 border border-amber-500/20">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            Website Draft
+                        </div>
+                    @endif
+                @else
+                    <div class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Store Active
+                    </div>
+                @endif
             </div>
 
-            <!-- Right Controls: Quick Action, Live Store -->
+            <!-- Right Controls: Quick Action, Live Store / Website -->
             <div class="flex items-center gap-3">
-                <!-- Quick Action New Product -->
-                <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-md shadow-stone-900/10 active:scale-95 transition-all">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                    <span class="hidden sm:inline">{{ $currentVInfo['add_btn'] ?? 'Add Product' }}</span>
-                    <span class="sm:hidden">Add</span>
-                </a>
+                @if($curVendor?->isServices())
+                    <a href="{{ route('vendor.services.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-md shadow-stone-900/10 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        <span class="hidden sm:inline">New Service</span>
+                        <span class="sm:hidden">New</span>
+                    </a>
 
-                <!-- View Live Store -->
-                @if($curVendor?->storefront_url)
-                <a href="{{ $curVendor->storefront_url }}" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors">
-                    <svg class="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                    <span>Store</span>
-                </a>
+                    @if($curVendor->isWebsitePublished())
+                        <a href="{{ $curVendor->storefront_url }}" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors">
+                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                            <span>Live Website</span>
+                        </a>
+                    @else
+                        <a href="{{ $curVendor->storefrontUrl(['preview' => 1]) }}" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors">
+                            <span>Preview Site</span>
+                        </a>
+                    @endif
+                @else
+                    <!-- Quick Action New Product -->
+                    <a href="{{ route('vendor.products.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-bold shadow-md shadow-stone-900/10 active:scale-95 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        <span class="hidden sm:inline">{{ $currentVInfo['add_btn'] ?? 'Add Product' }}</span>
+                        <span class="sm:hidden">Add</span>
+                    </a>
+
+                    <!-- View Live Store -->
+                    @if($curVendor?->storefront_url)
+                    <a href="{{ $curVendor->storefront_url }}" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.04] text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors">
+                        <svg class="w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                        <span>Store</span>
+                    </a>
+                    @endif
                 @endif
             </div>
         </header>

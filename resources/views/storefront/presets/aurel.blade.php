@@ -1,14 +1,17 @@
 {{-- PRESET 03: AUREL (Scandinavian Minimalist Atelier · Warm Linen & Bone · Curated Framed Gallery Showcase) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1000) : ($storeBanner ?: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1000) : ($storeBanner ?: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -20,6 +23,47 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <header class="sticky top-0 z-40 bg-[#faf8f5]/90 backdrop-blur-xl border-b border-stone-200/70 text-stone-900 transition-all">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-22 flex items-center justify-between gap-6">
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-stone-700 hover:text-stone-950 transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="w-10 h-10 rounded-full overflow-hidden border border-stone-200/80 bg-white p-1">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 rounded-full bg-stone-900 text-white flex items-center justify-center font-serif text-sm font-bold shadow-xs">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div>
+                            <span class="font-serif italic font-bold text-lg sm:text-2xl text-stone-900 tracking-tight block">{{ $storeName }}</span>
+                            <span class="text-[10px] uppercase font-bold tracking-[0.2em] text-stone-500 block -mt-0.5">{{ $id['provider_mode_label'] ?? 'Portfolio Atelier' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-8 text-xs font-medium tracking-wide text-stone-600">
+                    <a href="#overview" class="hover:text-stone-950 transition">{{ $nav['overview'] ?? 'Overview' }}</a>
+                    <a href="#portfolio" class="hover:text-stone-950 transition">{{ $nav['work'] ?? 'Work' }}</a>
+                    <a href="#services" class="hover:text-stone-950 transition">{{ $nav['services'] ?? 'Services' }}</a>
+                    <a href="#about" class="hover:text-stone-950 transition">{{ $nav['about'] ?? 'About' }}</a>
+                    <a href="#reviews" class="hover:text-stone-950 transition">{{ $nav['reviews'] ?? 'Reviews' }}</a>
+                </nav>
+
+                <a href="#contact" class="px-5 py-2.5 rounded-full bg-stone-900 text-white hover:bg-[#c28422] transition text-xs font-semibold">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </div>
+        </header>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Unhurried Serene Atelier Header --}}
     <header class="sticky top-0 z-40 bg-[#faf8f5]/90 backdrop-blur-xl border-b border-stone-200/70 text-stone-900 transition-all">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-22 flex items-center justify-between gap-6">
@@ -352,6 +396,7 @@
 
     {{-- Minimalist Atelier Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

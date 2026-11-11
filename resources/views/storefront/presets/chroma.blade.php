@@ -1,14 +1,17 @@
 {{-- PRESET 04: CHROMA (Avant-Garde Drop Culture · Bold Poster Campaign · High-Velocity Drop Matrix) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) : ($storeBanner ?: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) : ($storeBanner ?: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -20,6 +23,47 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b-2 border-black text-black">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-black hover:opacity-75 transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="p-1 rounded-xl border-2 border-black bg-yellow-300 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-8 sm:h-10 w-auto object-contain">
+                            </div>
+                        @else
+                            <div class="w-10 h-10 rounded-xl border-2 border-black bg-blue-600 text-white font-black text-base flex items-center justify-center shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div>
+                            <span class="font-black text-xl sm:text-2xl tracking-tighter uppercase block leading-none">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono font-bold uppercase text-blue-600 tracking-wider">{{ $id['provider_mode_label'] ?? 'CREATIVE STUDIO' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-2.5">
+                    <a href="#overview" class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase border-2 border-black bg-black text-white">{{ $nav['overview'] ?? 'Overview' }}</a>
+                    <a href="#portfolio" class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase border-2 border-black bg-white hover:bg-zinc-100">{{ $nav['work'] ?? 'Work' }}</a>
+                    <a href="#services" class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase border-2 border-black bg-white hover:bg-zinc-100">{{ $nav['services'] ?? 'Services' }}</a>
+                    <a href="#about" class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase border-2 border-black bg-white hover:bg-zinc-100">{{ $nav['about'] ?? 'About' }}</a>
+                    <a href="#reviews" class="px-3.5 py-1.5 rounded-full text-xs font-black uppercase border-2 border-black bg-white hover:bg-zinc-100">{{ $nav['reviews'] ?? 'Reviews' }}</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 rounded-xl bg-blue-600 text-white border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] text-xs font-black uppercase tracking-wider hover:bg-black transition">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </div>
+        </header>
+
+        @include('storefront.sections.service.main')
+    @else
     @php
         $rawChromaEnabled = $config['header']['chroma_strip_enabled'] ?? null;
         $chromaStripEnabled = !empty($rawChromaEnabled) && $rawChromaEnabled !== '0' && $rawChromaEnabled !== 0 && $rawChromaEnabled !== false && $rawChromaEnabled !== 'false';
@@ -376,6 +420,7 @@
 
     {{-- Minimal Bold Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

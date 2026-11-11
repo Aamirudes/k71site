@@ -185,8 +185,20 @@ class ServiceStudioController extends Controller
             }
         }
 
+        $vendor->bumpWebsiteCache();
+
         return redirect()->route('vendor.services.index')
             ->with('success', 'Your freelance service gig has been created and published successfully!');
+    }
+
+    protected function authorizeProduct(Request $request, Product $product): \App\Models\Vendor
+    {
+        $vendor = $this->getVendor($request);
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        return $vendor;
     }
 
     /**
@@ -194,10 +206,7 @@ class ServiceStudioController extends Controller
      */
     public function edit(Request $request, Product $product): View
     {
-        $vendor = $this->getVendor($request);
-        if (!$vendor || $product->vendor_id !== $vendor->id) {
-            abort(403, 'Unauthorized.');
-        }
+        $vendor = $this->authorizeProduct($request, $product);
 
         $categories = Category::where('vertical', 'services')
             ->where('is_active', true)
@@ -207,7 +216,7 @@ class ServiceStudioController extends Controller
         $updateRoute = route('vendor.services.update', $product);
         $backRoute = route('vendor.services.index');
 
-        return view('services.edit', compact('product', 'categories', 'packages', 'updateRoute', 'backRoute'));
+        return view('vendor.services.edit', compact('vendor', 'product', 'categories', 'packages', 'updateRoute', 'backRoute'));
     }
 
     /**
@@ -215,16 +224,16 @@ class ServiceStudioController extends Controller
      */
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $vendor = $this->getVendor($request);
-        if (!$vendor || $product->vendor_id !== $vendor->id) {
-            abort(403, 'Unauthorized.');
-        }
+        $vendor = $this->authorizeProduct($request, $product);
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
             'category_id' => 'required|exists:categories,id',
             'description' => 'required|string|max:5000',
             'base_price' => 'required|numeric|min:10',
+            'status' => 'nullable|in:active,paused,draft',
+            'show_on_website' => 'nullable|boolean',
+            'is_website_featured' => 'nullable|boolean',
             'packages' => 'nullable|array',
             'packages.*.name' => 'nullable|string|max:100',
             'packages.*.title' => 'nullable|string|max:100',
@@ -240,6 +249,9 @@ class ServiceStudioController extends Controller
             'description' => $validated['description'],
             'short_description' => Str::limit($validated['description'], 120),
             'base_price' => (int) round(((float) $validated['base_price']) * 100),
+            'status' => $validated['status'] ?? $product->status,
+            'show_on_website' => $request->has('show_on_website') ? $request->boolean('show_on_website') : ($product->show_on_website ?? true),
+            'is_website_featured' => $request->has('is_website_featured') ? $request->boolean('is_website_featured') : ($product->is_website_featured ?? false),
         ]);
 
         if (!empty($validated['packages'])) {
@@ -270,8 +282,52 @@ class ServiceStudioController extends Controller
             }
         }
 
+        $vendor->bumpWebsiteCache();
+
         return redirect()->route('vendor.services.index')
-            ->with('success', 'Service Gig updated successfully!');
+            ->with('success', 'Service updated and synced across marketplace & your website!');
+    }
+
+    public function toggleStatus(Request $request, Product $product): RedirectResponse
+    {
+        $vendor = $this->authorizeProduct($request, $product);
+        $nextStatus = $product->status === 'active' ? 'paused' : 'active';
+        $product->update(['status' => $nextStatus]);
+        $vendor->bumpWebsiteCache();
+
+        return back()->with('success', $nextStatus === 'active' ? 'Service resumed and live.' : 'Service paused.');
+    }
+
+    public function toggleWebsiteVisibility(Request $request, Product $product): RedirectResponse
+    {
+        $vendor = $this->authorizeProduct($request, $product);
+        $product->update([
+            'show_on_website' => !($product->show_on_website ?? true),
+        ]);
+        $vendor->bumpWebsiteCache();
+
+        return back()->with('success', $product->show_on_website ? 'Service shown on your personal website.' : 'Service hidden from personal website.');
+    }
+
+    public function duplicate(Request $request, Product $product): RedirectResponse
+    {
+        $vendor = $this->authorizeProduct($request, $product);
+
+        $copy = $product->replicate();
+        $copy->title = $product->title . ' (Copy)';
+        $copy->slug = Str::slug($copy->title) . '-' . Str::lower(Str::random(5));
+        $copy->status = 'paused';
+        $copy->save();
+
+        foreach ($product->gigPackages as $pkg) {
+            $pkgCopy = $pkg->replicate();
+            $pkgCopy->product_id = $copy->id;
+            $pkgCopy->save();
+        }
+
+        $vendor->bumpWebsiteCache();
+
+        return redirect()->route('vendor.services.edit', $copy)->with('success', 'Service duplicated as paused draft. Customize and publish when ready.');
     }
 
     /**
@@ -279,12 +335,10 @@ class ServiceStudioController extends Controller
      */
     public function destroy(Request $request, Product $product): RedirectResponse
     {
-        $vendor = $this->getVendor($request);
-        if (!$vendor || $product->vendor_id !== $vendor->id) {
-            abort(403, 'Unauthorized.');
-        }
+        $vendor = $this->authorizeProduct($request, $product);
 
         $product->delete();
+        $vendor->bumpWebsiteCache();
 
         return back()->with('success', 'Service deleted successfully.');
     }

@@ -151,9 +151,11 @@ class SitemapController extends Controller
     public function stores(): Response
     {
         $xml = Cache::remember('sitemap_stores_xml', 3600, function () {
-            $vendors = Vendor::where('status', 'approved')
+            $vendors = Vendor::with('storefrontConfig')
+                ->whereIn('status', ['approved', 'active'])
                 ->latest('updated_at')
-                ->get();
+                ->get()
+                ->filter(fn ($vendor) => !$vendor->isServices() || $vendor->isWebsitePublished());
 
             $out = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
             $out .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";

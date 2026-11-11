@@ -7,7 +7,9 @@
         $standardPkg = $service->gigPackages->firstWhere('tier', 'standard');
         $premiumPkg = $service->gigPackages->firstWhere('tier', 'premium');
         $vendor = $service->vendor;
-        $vendorAvatar = $vendor?->logo ? format_image_url($vendor->logo) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80';
+        $vendorAvatar = $vendor?->logo ? format_image_url($vendor->logo) : null;
+        $vendorInitial = strtoupper(substr($vendor?->shop_name ?? 'K', 0, 1));
+        $vendorRating = ($vendor?->average_rating && $vendor->average_rating > 0) ? number_format((float) $vendor->average_rating, 1) : null;
     @endphp
 
     <div x-data="{ 
@@ -58,7 +60,11 @@
                         @else
                             <div class="flex items-center gap-2.5">
                         @endif
-                            <img src="{{ $vendorAvatar }}" alt="{{ $vendor?->shop_name }}" class="w-9 h-9 rounded-full object-cover border border-[#ECD2F3]/50">
+                            @if($vendorAvatar)
+                                <img src="{{ $vendorAvatar }}" alt="{{ $vendor?->shop_name }}" class="w-9 h-9 rounded-full object-cover border border-[#ECD2F3]/50">
+                            @else
+                                <div class="w-9 h-9 rounded-full bg-[#ECD2F3] text-[#1A1018] font-bold text-xs flex items-center justify-center shrink-0">{{ $vendorInitial }}</div>
+                            @endif
                             <div>
                                 <div class="font-bold text-white group-hover:text-[#ECD2F3] transition flex items-center gap-1">
                                     <span>{{ $vendor?->shop_name ?? 'Verified Specialist' }}</span>
@@ -67,7 +73,7 @@
                                     @endif
                                 </div>
                                 <div class="text-[10px] text-[#C9A24A] font-semibold uppercase tracking-[0.12em]">
-                                    Level 2 Verified Freelancer
+                                    {{ $vendor?->provider_mode === 'agency' ? 'Creative & Service Studio' : ($vendor?->headline ? Str::limit($vendor->headline, 48) : 'Independent Specialist') }}
                                 </div>
                             </div>
                         @if($vendor && $vendor->slug)
@@ -80,7 +86,7 @@
 
                         <!-- Rating & Reviews -->
                         <div class="flex items-center gap-1.5 text-[#C9A24A] font-bold">
-                            <span>⭐ {{ number_format($vendor?->rating ?? 5.0, 1) }}</span>
+                            <span>⭐ {{ $vendorRating ?? 'New' }}</span>
                             <span class="text-[#EFE9F2]/60 font-medium">({{ $vendor?->completed_projects ?? 0 }} orders completed)</span>
                         </div>
 
@@ -290,8 +296,8 @@
                                     <p class="text-xs text-[#1A1018]/55">Verified completed project reviews</p>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-2xl font-bold text-[#1A1018]">⭐ {{ number_format($vendor?->rating ?? 5.0, 1) }}</span>
-                                    <span class="text-xs text-[#1A1018]/45 block">Out of 5.0</span>
+                                    <span class="text-2xl font-bold text-[#1A1018]">⭐ {{ $vendorRating ?? 'New' }}</span>
+                                    <span class="text-xs text-[#1A1018]/45 block">{{ $service->reviews->count() }} verified</span>
                                 </div>
                             </div>
 
@@ -309,7 +315,12 @@
                                                     @for($i = 0; $i < $rev->rating; $i++)★@endfor
                                                 </div>
                                             </div>
-                                            <p class="text-xs text-[#1A1018]/75 leading-relaxed">{{ $rev->comment }}</p>
+                                            <p class="text-xs text-[#1A1018]/75 leading-relaxed">{{ $rev->body ?? $rev->comment }}</p>
+                                            @if($rev->vendor_reply)
+                                                <div class="p-3 rounded-xl bg-white border border-[#ECD2F3] text-xs">
+                                                    <span class="font-bold text-[#623562]">Provider Response:</span> {{ $rev->vendor_reply }}
+                                                </div>
+                                            @endif
                                             <div class="text-[10px] text-[#1A1018]/45 font-medium">{{ $rev->created_at->diffForHumans() }}</div>
                                         </div>
                                     @endforeach
@@ -395,28 +406,33 @@
                         <!-- FREELANCER MINI PROFILE CARD -->
                         <div class="grail-card rounded-3xl bg-white border border-[#E6E2E8] p-6 shadow-xs space-y-4">
                             <div class="flex items-center gap-3">
-                                <img src="{{ $vendorAvatar }}" alt="{{ $vendor?->shop_name }}" class="w-14 h-14 rounded-2xl object-cover border border-[#ECD2F3]">
+                                @if($vendorAvatar)
+                                    <img src="{{ $vendorAvatar }}" alt="{{ $vendor?->shop_name }}" class="w-14 h-14 rounded-2xl object-cover border border-[#ECD2F3]">
+                                @else
+                                    <div class="w-14 h-14 rounded-2xl bg-[#1A1018] text-[#ECD2F3] font-bold text-lg flex items-center justify-center shrink-0">{{ $vendorInitial }}</div>
+                                @endif
                                 <div>
                                     <h3 class="font-bold text-sm text-[#1A1018]">{{ $vendor?->shop_name }}</h3>
-                                    <p class="text-xs text-[#623562] font-semibold">{{ $vendor?->city ?? 'All-India Verified Pro' }}</p>
-                                    <div class="text-[11px] text-[#1A1018]/60 mt-0.5">⭐ {{ number_format($vendor?->rating ?? 5.0, 1) }} ({{ $vendor?->completed_projects ?? 0 }} orders)</div>
+                                    <p class="text-xs text-[#623562] font-semibold">{{ $vendor?->city ?? 'India' }} · {{ ucfirst($vendor?->work_mode ?: 'remote') }}</p>
+                                    <div class="text-[11px] text-[#1A1018]/60 mt-0.5">⭐ {{ $vendorRating ?? 'New' }} ({{ $vendor?->completed_projects ?? 0 }} completed)</div>
                                 </div>
                             </div>
 
                             <p class="text-xs text-[#1A1018]/70 leading-relaxed">
-                                {{ $vendor?->tagline ?? $vendor?->description }}
+                                {{ $vendor?->headline ?? $vendor?->tagline ?? $vendor?->description }}
                             </p>
 
-                            <div class="pt-3 border-t border-[#E6E2E8] flex items-center justify-between gap-2">
+                            <div class="pt-3 border-t border-[#E6E2E8] flex flex-wrap items-center justify-between gap-2">
                                 <a href="{{ route('services.provider', $vendor?->slug ?? '') }}" 
                                    class="flex-1 py-2.5 rounded-full bg-[#EFE9F2] hover:bg-[#ECD2F3]/60 text-[#1A1018] text-xs font-bold text-center transition">
-                                    View Profile
+                                    K71 Profile
                                 </a>
-                                <a href="https://wa.me/91{{ preg_replace('/[^0-9]/', '', $vendor?->phone ?? '9876543210') }}?text={{ urlencode('Hi, I saw your service ' . $service->title . ' on K71 Services.') }}" 
-                                   target="_blank" rel="noopener noreferrer"
-                                   class="grail-btn-obsidian flex-1 py-2.5 text-xs font-bold text-center transition flex items-center justify-center gap-1.5">
-                                    <span>Contact</span>
-                                </a>
+                                @if($vendor?->isWebsitePublished())
+                                    <a href="{{ $vendor->storefront_url }}" target="_blank"
+                                       class="grail-btn-obsidian flex-1 py-2.5 text-xs font-bold text-center transition flex items-center justify-center gap-1.5">
+                                        <span>Personal Website ↗</span>
+                                    </a>
+                                @endif
                             </div>
                         </div>
 

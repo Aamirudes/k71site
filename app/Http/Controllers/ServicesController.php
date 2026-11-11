@@ -23,6 +23,7 @@ class ServicesController extends Controller
         $minPrice = $request->query('min_price');
         $maxPrice = $request->query('max_price');
         $deliveryDays = $request->query('delivery');
+        $workMode = $request->query('work_mode');
         $sort = $request->query('sort', 'newest');
 
         // Fetch active service categories with real service count
@@ -72,6 +73,10 @@ class ServicesController extends Controller
             $query->whereHas('gigPackages', function ($gq) use ($deliveryDays) {
                 $gq->where('delivery_days', '<=', (int) $deliveryDays);
             });
+        }
+
+        if ($workMode && in_array($workMode, ['remote', 'onsite', 'hybrid'], true)) {
+            $query->whereHas('vendor', fn ($vq) => $vq->where('work_mode', $workMode));
         }
 
         // Sorting
@@ -143,6 +148,7 @@ class ServicesController extends Controller
             'minPrice',
             'maxPrice',
             'deliveryDays',
+            'workMode',
             'sort',
             'servicesSettings'
         ));
@@ -199,7 +205,7 @@ class ServicesController extends Controller
     public function provider(string $slug): View
     {
         $vendor = Vendor::where('slug', $slug)
-            ->with(['settings'])
+            ->with(['settings', 'storefrontConfig'])
             ->firstOrFail();
 
         $services = Product::with(['images', 'category', 'gigPackages'])
@@ -209,30 +215,46 @@ class ServicesController extends Controller
             ->latest()
             ->get();
 
-        return view('services.provider', compact('vendor', 'services'));
-    }
-
-    /**
-     * Become a Seller guided onboarding page.
-     */
-    public function becomeSeller(): View
-    {
-        $categories = Category::where('vertical', 'services')
-            ->where('is_active', true)
+        $portfolioProjects = \App\Models\PortfolioProject::where('vendor_id', $vendor->id)
+            ->where('status', 'published')
+            ->orderByDesc('is_featured')
+            ->latest('id')
             ->get();
 
-        $existingVendor = auth()->user()?->vendor;
+        $reviews = \App\Models\Review::with(['user', 'product'])
+            ->where('is_approved', true)
+            ->where(function ($q) use ($vendor, $services) {
+                $q->where('vendor_id', $vendor->id);
+                if ($services->isNotEmpty()) {
+                    $q->orWhereIn('product_id', $services->pluck('id'));
+                }
+            })
+            ->latest('id')
+            ->take(12)
+            ->get();
 
-        return view('services.become-seller', compact('categories', 'existingVendor'));
+        return view('services.provider', compact('vendor', 'services', 'portfolioProjects', 'reviews'));
     }
 
     /**
-     * Store Become a Seller application.
+     * Become a Seller guided 5-step website onboarding page.
+     */
+    public function becomeSeller(Request $request): View
+    {
+        return app(\App\Http\Controllers\ServiceOnboardingController::class)->show($request);
+    }
+
+    /**
+     * Store Become a Seller application (supports both 5-step wizard and backward-compatible flat POST).
      */
     public function storeSeller(Request $request): RedirectResponse
     {
+        if ($request->filled('step')) {
+            return app(\App\Http\Controllers\ServiceOnboardingController::class)->saveStep($request);
+        }
+
         if (!auth()->check()) {
-            return redirect()->route('login')->with('error', 'Please log in or register before onboarding as a service provider.');
+            return redirect()->guest(route('login'))->with('error', 'Please log in or register before onboarding as a service provider.');
         }
 
         $user = auth()->user();
@@ -432,6 +454,8 @@ class ServicesController extends Controller
             }
         }
 
+        $product->vendor?->bumpWebsiteCache();
+
         return redirect()->route('services.show', $product->slug)->with('success', 'Service Gig updated successfully!');
     }
 
@@ -447,7 +471,9 @@ class ServicesController extends Controller
             abort(403, 'Unauthorized to delete this service.');
         }
 
+        $vendor = $product->vendor;
         $product->delete();
+        $vendor?->bumpWebsiteCache();
 
         return redirect()->route('account.listings', ['tab' => 'services'])->with('success', 'Service gig removed.');
     }

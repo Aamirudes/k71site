@@ -188,32 +188,34 @@ class ServiceWorkspaceController extends Controller
         ]);
 
         // Increment provider completed projects counter
-        $order->vendor?->increment('completed_projects');
+        $order->vendor?->recomputeServiceMetrics();
 
         // Optional Rating and Review
         if ($request->filled('rating')) {
-            $rating = (int) $request->rating;
+            $rating = max(1, min(5, (int) $request->rating));
+            $reviewBody = trim((string) ($request->review_text ?: 'Great service and smooth communication!'));
+
             $order->update([
                 'buyer_rating' => $rating,
-                'buyer_review' => $request->review_text,
+                'buyer_review' => $reviewBody,
             ]);
 
-            Review::create([
-                'user_id' => $userId,
-                'product_id' => $order->product_id,
-                'rating' => $rating,
-                'comment' => $request->review_text ?? 'Great service and communication!',
-                'status' => 'approved',
-                'is_verified_purchase' => true,
-            ]);
+            Review::updateOrCreate(
+                [
+                    'product_id' => $order->product_id,
+                    'user_id' => $userId,
+                ],
+                [
+                    'vendor_id' => $order->vendor_id,
+                    'service_order_id' => $order->id,
+                    'rating' => $rating,
+                    'body' => $reviewBody,
+                    'is_verified_purchase' => true,
+                    'is_approved' => true,
+                ]
+            );
 
-            // Recompute vendor rating
-            $avg = ServiceOrder::where('vendor_id', $order->vendor_id)
-                ->whereNotNull('buyer_rating')
-                ->avg('buyer_rating');
-            if ($avg) {
-                $order->vendor->update(['rating' => round($avg, 1)]);
-            }
+            $order->vendor?->recomputeServiceMetrics();
         }
 
         ServiceOrderMessage::create([

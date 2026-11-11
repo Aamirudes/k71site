@@ -2,8 +2,107 @@
     $curVendor = auth()->user()?->vendor;
     $vType = $curVendor?->vendor_type ?? 'clothing';
     $sec = $curVendor ? $curVendor->getSectorConfig() : null;
+    $isServiceProvider = $curVendor?->isServices() ?? false;
 @endphp
 
+@if($isServiceProvider)
+<div class="space-y-6">
+    <div>
+        <div class="px-3 mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Personal Website
+        </div>
+        <div class="space-y-1">
+            <a href="{{ route('vendor.dashboard') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.dashboard') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">📊</span><span>Overview &amp; Hub</span></span>
+            </a>
+
+            <a href="{{ route('vendor.website.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.website.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">🌐</span><span>My Website</span></span>
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded {{ $curVendor->isWebsitePublished() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                    {{ $curVendor->isWebsitePublished() ? 'Live' : 'Draft' }}
+                </span>
+            </a>
+
+            <a href="{{ route('vendor.design.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.design.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">🎨</span><span>Design &amp; Presets</span></span>
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700">10</span>
+            </a>
+
+            <a href="{{ route('vendor.portfolio.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.portfolio.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">🗂️</span><span>Portfolio Case Studies</span></span>
+            </a>
+        </div>
+    </div>
+
+    <div>
+        <div class="px-3 mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Services &amp; Contracts
+        </div>
+        <div class="space-y-1">
+            <a href="{{ route('vendor.services.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.services.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">🛠️</span><span>Services Studio</span></span>
+            </a>
+
+            <a href="{{ route('vendor.service_orders.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.service_orders.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">📦</span><span>Service Orders</span></span>
+            </a>
+
+            <a href="{{ route('vendor.projects.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.projects.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">💼</span><span>Open Projects &amp; Bids</span></span>
+            </a>
+
+            <a href="{{ route('vendor.contracts.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.contracts.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">📑</span><span>Active Contracts</span></span>
+            </a>
+
+            <a href="{{ route('vendor.bookings.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.bookings.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">📅</span><span>Appointments &amp; Slots</span></span>
+            </a>
+        </div>
+    </div>
+
+    <div>
+        <div class="px-3 mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            Clients &amp; Insights
+        </div>
+        <div class="space-y-1">
+            <a href="{{ route('vendor.enquiries.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.enquiries.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">✉️</span><span>Website Enquiries</span></span>
+            </a>
+
+            <a href="{{ route('messages.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('messages.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">💬</span><span>Direct Messages</span></span>
+            </a>
+
+            <a href="{{ route('vendor.reviews.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.reviews.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">★</span><span>Verified Reviews</span></span>
+            </a>
+
+            <a href="{{ route('vendor.analytics.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.analytics.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">📈</span><span>Website Analytics</span></span>
+            </a>
+
+            <a href="{{ route('vendor.settings') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.settings') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">⚙️</span><span>Availability &amp; Settings</span></span>
+            </a>
+        </div>
+    </div>
+</div>
+@else
 <div class="space-y-6">
     <!-- Core Management -->
     <div>
@@ -167,3 +266,4 @@
         </div>
     </div>
 </div>
+@endif

@@ -1,16 +1,19 @@
 {{-- PRESET 09: ELYSIUM (Royal Heritage Velvet · 24K Gilded Gilt Luxury · Opulent Midnight Pavilion) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path 
-        ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) 
-        : ($storeBanner ?: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path
+            ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
+            : ($storeBanner ?: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -22,6 +25,47 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="sticky top-0 z-40 px-3 sm:px-6 py-2.5 transition-all">
+            <header class="max-w-7xl mx-auto rounded-3xl bg-[#060913]/95 backdrop-blur-2xl border border-[#d4af37]/40 shadow-[0_15px_40px_rgba(0,0,0,0.8),0_0_20px_rgba(212,175,55,0.15)] px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4 text-white">
+                <div class="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-[#d4af37] hover:text-white transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-[#d4af37] bg-[#0d1326] p-1 overflow-hidden">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full border-2 border-[#d4af37] bg-gradient-to-tr from-[#997928] via-[#d4af37] to-[#f5d77f] text-black flex items-center justify-center font-heading font-black text-sm">
+                                {{ $id['initials'] ?? 'K7' }}
+                            </div>
+                        @endif
+                        <div class="flex flex-col">
+                            <span class="font-heading font-bold text-base sm:text-xl tracking-wide text-white group-hover:text-[#f5d77f] transition">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono tracking-widest text-[#d4af37] uppercase">{{ $id['provider_mode_label'] ?? 'STUDIO CHARTER' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-[#0d1326]/90 border border-[#d4af37]/30 text-xs font-mono">
+                    <a href="#overview" class="px-3.5 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition">{{ strtoupper($nav['overview'] ?? 'Overview') }}</a>
+                    <a href="#portfolio" class="px-3.5 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition">{{ strtoupper($nav['work'] ?? 'Work') }}</a>
+                    <a href="#services" class="px-3.5 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition">{{ strtoupper($nav['services'] ?? 'Services') }}</a>
+                    <a href="#about" class="px-3.5 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition">{{ strtoupper($nav['about'] ?? 'About') }}</a>
+                    <a href="#reviews" class="px-3.5 py-1.5 rounded-full text-slate-300 hover:text-white hover:bg-white/10 transition">{{ strtoupper($nav['reviews'] ?? 'Reviews') }}</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 rounded-full bg-gradient-to-r from-[#b38728] via-[#d4af37] to-[#f5d77f] text-black text-xs font-bold hover:brightness-110 transition">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </header>
+        </div>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Gilded Crown Marquee Bar --}}
     <div class="w-full bg-[#0a0f20] border-b border-[#d4af37]/30 text-[10px] font-mono tracking-[0.25em] uppercase py-2 px-4 overflow-hidden select-none">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -352,6 +396,7 @@
 
     {{-- Dark Opulent Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

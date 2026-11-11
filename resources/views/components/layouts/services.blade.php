@@ -118,24 +118,29 @@
 
             <!-- Header Quick Actions (Desktop) -->
             <div class="hidden lg:flex items-center gap-3">
-                <button type="button" @click="rfqModalOpen = true"
-                        class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition border border-white/15 flex items-center gap-1.5 cursor-pointer">
-                    <span class="text-[#ECD2F3]">+</span>
-                    <span>Post Custom Project</span>
-                </button>
+                <a href="{{ route('services.projects.index') }}"
+                   class="px-3.5 py-2 rounded-full text-[#EFE9F2]/85 hover:text-[#ECD2F3] text-xs font-semibold transition hover:bg-white/10">
+                    Open Projects
+                </a>
 
-                <a href="{{ route('services.become_seller') }}" 
+                <a href="{{ route('services.projects.create') }}"
+                   class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition border border-white/15 flex items-center gap-1.5">
+                    <span class="text-[#ECD2F3]">+</span>
+                    <span>Post Project Brief</span>
+                </a>
+
+                <a href="{{ auth()->user()?->vendor?->isServices() ? route('vendor.dashboard') : route('services.become_seller') }}" 
                    class="px-4 py-2 rounded-full text-[#EFE9F2]/80 hover:text-[#ECD2F3] text-xs font-semibold transition hover:bg-white/10">
-                    Become a Seller
+                    {{ auth()->user()?->vendor?->isServices() ? 'Provider Dashboard' : 'Launch Website' }}
                 </a>
 
                 @auth
-                    <a href="{{ route('orders.index') }}" 
+                    <a href="{{ route('services.orders.index') }}" 
                        class="px-4 py-2 rounded-full text-[#EFE9F2]/80 hover:text-[#ECD2F3] text-xs font-semibold transition hover:bg-white/10">
-                        My Bookings
+                        My Orders
                     </a>
                     <div class="relative flex items-center gap-2 pl-2 border-l border-white/15">
-                        <a href="{{ route('orders.index') }}" 
+                        <a href="{{ route('account') }}" 
                            class="w-8 h-8 rounded-full bg-[#ECD2F3] text-[#1A1018] font-bold text-xs flex items-center justify-center shadow-xs">
                             {{ substr(auth()->user()->first_name ?? 'U', 0, 1) }}
                         </a>
@@ -150,10 +155,10 @@
 
             <!-- Mobile Hamburger -->
             <div class="flex lg:hidden items-center gap-2">
-                <button type="button" @click="rfqModalOpen = true"
-                        class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-xs font-bold shadow-xs">
+                <a href="{{ route('services.projects.create') }}"
+                   class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-xs font-bold shadow-xs">
                     + Project
-                </button>
+                </a>
                 <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
                         class="p-2 rounded-xl text-white/80 hover:bg-white/10 transition" aria-label="Toggle Navigation">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -210,10 +215,10 @@
             </form>
 
             <div class="grid grid-cols-2 gap-2 text-xs font-semibold pt-2">
-                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-white/10 text-white text-center">Explore Gigs</a>
-                <button type="button" @click="mobileMenuOpen = false; rfqModalOpen = true" class="p-2.5 rounded-xl bg-[#ECD2F3] text-[#1A1018] font-bold text-center">+ Post Project</button>
-                <a href="{{ route('services.become_seller') }}" class="p-2.5 rounded-xl bg-white/5 text-[#EFE9F2]/80 text-center">Become a Seller</a>
-                <a href="{{ route('messages.index') }}" class="p-2.5 rounded-xl bg-white/5 text-[#EFE9F2]/80 text-center">Messages</a>
+                <a href="{{ route('services.index') }}" class="p-2.5 rounded-xl bg-white/10 text-white text-center">Explore Services</a>
+                <a href="{{ route('services.projects.index') }}" class="p-2.5 rounded-xl bg-white/10 text-white text-center">Open Projects</a>
+                <a href="{{ route('services.projects.create') }}" class="p-2.5 rounded-xl bg-[#ECD2F3] text-[#1A1018] font-bold text-center">+ Post Project Brief</a>
+                <a href="{{ auth()->user()?->vendor?->isServices() ? route('vendor.dashboard') : route('services.become_seller') }}" class="p-2.5 rounded-xl bg-white/5 text-[#EFE9F2]/80 text-center">{{ auth()->user()?->vendor?->isServices() ? 'Provider Dashboard' : 'Launch Website' }}</a>
             </div>
         </div>
     </header>

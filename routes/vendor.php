@@ -29,6 +29,15 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::post('/design/restore', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'restoreRevision'])->name('design.restore');
     Route::post('/design/upload', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'uploadMedia'])->name('design.upload');
 
+    // Provider Personal Website Hub (Identity, Privacy, Domain, Sections, Publish)
+    Route::get('/website', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'index'])->name('website.index');
+    Route::post('/website/identity', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'updateIdentity'])->name('website.identity');
+    Route::post('/website/sections', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'updateSections'])->name('website.sections');
+    Route::post('/website/privacy', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'updateContactPrivacy'])->name('website.privacy');
+    Route::post('/website/subdomain', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'updateSubdomain'])->name('website.subdomain');
+    Route::post('/website/publish', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'togglePublish'])->name('website.publish');
+    Route::post('/website/preset', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'switchPreset'])->name('website.preset');
+
     // Routes that require an approved store
     Route::middleware(['vendor.approved'])->group(function () {
         Route::get('/products/category-fields', [ProductController::class, 'getCategoryFields'])->name('products.category_fields');
@@ -82,8 +91,20 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'vendorShow'])->name('messages.show');
         Route::post('/messages/{conversation}/reply', [\App\Http\Controllers\MessageController::class, 'vendorReply'])->name('messages.reply');
 
-        // Vendor Review Replies (Phase 10)
+        // Vendor Review Replies & Reputation Hub
+        Route::get('/reviews', [\App\Http\Controllers\Vendor\ReviewHubController::class, 'index'])->name('reviews.index');
+        Route::post('/reviews/contract/{contract}/reply', [\App\Http\Controllers\Vendor\ReviewHubController::class, 'replyContractReview'])->name('reviews.contract_reply');
         Route::post('/reviews/{review}/reply', [\App\Http\Controllers\ReviewController::class, 'vendorReply'])->name('reviews.reply');
+
+        // Portfolio Case Studies CRUD
+        Route::resource('portfolio', \App\Http\Controllers\Vendor\PortfolioController::class)->except(['show']);
+        Route::patch('/portfolio/{portfolio}/toggle-status', [\App\Http\Controllers\Vendor\PortfolioController::class, 'toggleStatus'])->name('portfolio.toggle_status');
+        Route::patch('/portfolio/{portfolio}/toggle-featured', [\App\Http\Controllers\Vendor\PortfolioController::class, 'toggleFeatured'])->name('portfolio.toggle_featured');
+
+        // Client Projects, Proposals, Contracts & Website Analytics
+        Route::get('/projects', [\App\Http\Controllers\Vendor\ProjectHubController::class, 'projectsIndex'])->name('projects.index');
+        Route::get('/contracts', [\App\Http\Controllers\Vendor\ProjectHubController::class, 'contractsIndex'])->name('contracts.index');
+        Route::get('/analytics', [\App\Http\Controllers\Vendor\AnalyticsController::class, 'index'])->name('analytics.index');
 
         // Vendor Freelance Services & Project Studio
         Route::get('/services', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'index'])->name('services.index');
@@ -91,6 +112,9 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::post('/services', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'store'])->name('services.store');
         Route::get('/services/{product}/edit', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'edit'])->name('services.edit');
         Route::put('/services/{product}', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'update'])->name('services.update');
+        Route::patch('/services/{product}/toggle-status', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'toggleStatus'])->name('services.toggle_status');
+        Route::patch('/services/{product}/toggle-website', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'toggleWebsiteVisibility'])->name('services.toggle_website');
+        Route::post('/services/{product}/duplicate', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'duplicate'])->name('services.duplicate');
         Route::delete('/services/{product}', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'destroy'])->name('services.destroy');
         Route::get('/service-orders', [\App\Http\Controllers\Vendor\ServiceStudioController::class, 'orders'])->name('service_orders.index');
     });

@@ -60,6 +60,19 @@
                     <a href="{{ route('services.index', ['search' => 'App']) }}" class="px-3 py-1 rounded-full bg-white/10 hover:bg-[#ECD2F3]/20 text-[#EFE9F2]/85 hover:text-[#FFCDFF] font-medium transition border border-white/15">Mobile Apps</a>
                     <a href="{{ route('services.index', ['search' => 'Marble']) }}" class="px-3 py-1 rounded-full bg-white/10 hover:bg-[#ECD2F3]/20 text-[#EFE9F2]/85 hover:text-[#FFCDFF] font-medium transition border border-white/15">Marble Polishing</a>
                 </div>
+
+                <!-- Fiverr Packages vs Upwork Custom Projects Switcher -->
+                <div class="pt-3 flex flex-wrap items-center justify-center gap-2.5 text-xs">
+                    <a href="{{ route('services.index') }}" class="px-4 py-2 rounded-full bg-[#ECD2F3] text-[#1A1018] font-bold shadow-xs">
+                        Service Packages
+                    </a>
+                    <a href="{{ route('services.projects.index') }}" class="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold border border-white/15 transition">
+                        Open Project Briefs (Upwork Style) →
+                    </a>
+                    <a href="{{ route('services.projects.create') }}" class="px-4 py-2 rounded-full bg-white/10 hover:bg-[#ECD2F3]/20 text-[#ECD2F3] font-semibold border border-[#ECD2F3]/30 transition">
+                        + Post a Project Brief
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -196,10 +209,18 @@
                             </span>
                         </div>
 
-                        <!-- Clean Sort Dropdown -->
-                        <form action="{{ route('services.index') }}" method="GET" class="flex items-center gap-2 self-end sm:self-auto">
+                        <!-- Clean Work Mode + Sort Filters -->
+                        <form action="{{ route('services.index') }}" method="GET" class="flex flex-wrap items-center gap-2 self-end sm:self-auto">
                             @if($search)<input type="hidden" name="search" value="{{ $search }}">@endif
                             @if($selectedCategory)<input type="hidden" name="cat" value="{{ $selectedCategory }}">@endif
+                            @if($city)<input type="hidden" name="city" value="{{ $city }}">@endif
+
+                            <select name="work_mode" onchange="this.form.submit()" class="grail-input-light px-3 py-1.5 text-xs font-semibold cursor-pointer">
+                                <option value="">All Work Modes</option>
+                                <option value="remote" {{ ($workMode ?? '') === 'remote' ? 'selected' : '' }}>Remote</option>
+                                <option value="hybrid" {{ ($workMode ?? '') === 'hybrid' ? 'selected' : '' }}>Hybrid</option>
+                                <option value="onsite" {{ ($workMode ?? '') === 'onsite' ? 'selected' : '' }}>On-Site</option>
+                            </select>
                             
                             <label for="sort" class="text-xs font-bold text-[#1A1018]/55">Sort by:</label>
                             <select name="sort" id="sort" onchange="this.form.submit()" 
@@ -212,7 +233,22 @@
                         </form>
                     </div>
 
-                    <!-- SERVICES GRID -->
+                    <!-- SERVICES GRID WITH ALPINE COMPARISON DRAWER -->
+                    <div x-data="{
+                        compareList: [],
+                        compareOpen: false,
+                        toggleCompare(item) {
+                            const idx = this.compareList.findIndex(x => x.id === item.id);
+                            if (idx > -1) {
+                                this.compareList.splice(idx, 1);
+                            } else if (this.compareList.length < 3) {
+                                this.compareList.push(item);
+                            }
+                        },
+                        isSelected(id) {
+                            return this.compareList.some(x => x.id === id);
+                        }
+                    }">
                     @if($services->isEmpty())
                         <div class="grail-card p-10 text-center rounded-3xl bg-white border border-[#E6E2E8] text-[#1A1018]/70 space-y-3">
                             <div class="w-14 h-14 rounded-full bg-[#F8EFFA] text-[#623562] flex items-center justify-center text-2xl mx-auto">
@@ -232,8 +268,18 @@
                                 @php
                                     $imgUrl = $svc->primary_image_url;
                                     $basicPkg = $svc->gigPackages->firstWhere('tier', 'basic') ?? $svc->gigPackages->first();
-                                    $sellerAvatar = $svc->vendor?->logo ? format_image_url($svc->vendor->logo) : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                                     $price = $basicPkg ? $basicPkg->price : ($svc->base_price / 100);
+                                    $realRating = ($svc->vendor?->average_rating && $svc->vendor->average_rating > 0) ? number_format((float) $svc->vendor->average_rating, 1) : null;
+                                    $comparePayload = [
+                                        'id' => $svc->id,
+                                        'title' => $svc->title,
+                                        'provider' => $svc->vendor?->shop_name ?? 'Provider',
+                                        'price' => '₹' . number_format($price, 0),
+                                        'delivery' => ($basicPkg?->delivery_days ?? 3) . ' days',
+                                        'revisions' => ($basicPkg?->revisions ?? 2) . ' revisions',
+                                        'tiers' => $svc->gigPackages->count() ?: 1,
+                                        'url' => route('services.show', $svc->slug),
+                                    ];
                                 @endphp
                                 <div class="group grail-card rounded-2xl bg-white border border-[#E6E2E8] hover:border-[#623562]/45 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-row items-stretch p-3 gap-3.5">
                                     
@@ -248,14 +294,23 @@
                                     <div class="flex-1 min-w-0 flex flex-col justify-between">
                                         <div>
                                             <!-- Category & Verified Pro Badge -->
-                                            <div class="flex items-center gap-1.5 flex-wrap text-[10px] mb-1">
-                                                <span class="px-2 py-0.5 rounded-full bg-[#EFE9F2] text-[#1A1018] font-semibold">{{ $svc->category?->name ?? 'Service' }}</span>
-                                                @if($svc->vendor?->is_verified_pro || $svc->vendor?->is_verified)
-                                                    <span class="px-2 py-0.5 rounded-full bg-[#F8EFFA] text-[#623562] border border-[#ECD2F3] font-bold flex items-center gap-0.5">
-                                                        <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                                        <span>Verified</span>
-                                                    </span>
-                                                @endif
+                                            <div class="flex items-center justify-between gap-1.5 text-[10px] mb-1">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span class="px-2 py-0.5 rounded-full bg-[#EFE9F2] text-[#1A1018] font-semibold">{{ $svc->category?->name ?? 'Service' }}</span>
+                                                    @if($svc->vendor?->is_verified_pro || $svc->vendor?->is_verified)
+                                                        <span class="px-2 py-0.5 rounded-full bg-[#F8EFFA] text-[#623562] border border-[#ECD2F3] font-bold flex items-center gap-0.5">
+                                                            <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                                            <span>Verified</span>
+                                                        </span>
+                                                    @endif
+                                                </div>
+
+                                                <button type="button"
+                                                        @click="toggleCompare({{ Js::from($comparePayload) }})"
+                                                        :class="isSelected({{ $svc->id }}) ? 'bg-[#1A1018] text-[#ECD2F3] border-[#1A1018]' : 'bg-white text-[#1A1018]/60 border-[#E6E2E8] hover:border-[#623562]'"
+                                                        class="px-2 py-0.5 rounded-full border font-bold transition cursor-pointer shrink-0">
+                                                    <span x-text="isSelected({{ $svc->id }}) ? '✓ Comparing' : '+ Compare'"></span>
+                                                </button>
                                             </div>
 
                                             <!-- Title -->
@@ -265,26 +320,39 @@
                                                 </a>
                                             </h3>
 
-                                            <!-- Rating & Delivery -->
-                                            <div class="flex items-center gap-2 mt-1 text-[11px] text-[#1A1018]/65 font-medium">
-                                                <span class="text-[#C9A24A] font-bold flex items-center gap-0.5">★ 5.0</span>
-                                                <span>•</span>
+                                            <!-- Provider, Rating & Delivery -->
+                                            <div class="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-[#1A1018]/65 font-medium">
+                                                @if($svc->vendor)
+                                                    <a href="{{ route('services.provider', $svc->vendor->slug) }}" class="font-semibold text-[#1A1018] hover:text-[#623562]">{{ $svc->vendor->shop_name }}</a>
+                                                    <span>•</span>
+                                                @endif
+                                                @if($realRating)
+                                                    <span class="text-[#C9A24A] font-bold">★ {{ $realRating }}</span>
+                                                    <span>•</span>
+                                                @endif
                                                 <span>⏱️ {{ $basicPkg?->delivery_days ?? 3 }} Days</span>
                                             </div>
                                         </div>
 
                                         <!-- Price & CTA -->
-                                        <div class="mt-2 pt-2 border-t border-[#E6E2E8] flex items-center justify-between">
+                                        <div class="mt-2 pt-2 border-t border-[#E6E2E8] flex items-center justify-between gap-2">
                                             <div>
                                                 <span class="text-[10px] uppercase font-bold text-[#1A1018]/50 block leading-none">Starting at</span>
                                                 <span class="k71-price text-[#1A1018]">
                                                     ₹{{ number_format($price, 2) }}
                                                 </span>
                                             </div>
-                                            <a href="{{ route('services.show', $svc->slug) }}" 
-                                               class="grail-btn-obsidian px-4 py-1.5 text-xs font-bold transition shadow-2xs active:scale-95">
-                                                View Package
-                                            </a>
+                                            <div class="flex items-center gap-1.5">
+                                                @if($svc->vendor?->isWebsitePublished())
+                                                    <a href="{{ $svc->vendor->storefront_url }}" target="_blank" class="px-2.5 py-1.5 rounded-full border border-[#E6E2E8] hover:border-[#623562] text-[10px] font-bold text-[#1A1018]/75">
+                                                        Website ↗
+                                                    </a>
+                                                @endif
+                                                <a href="{{ route('services.show', $svc->slug) }}" 
+                                                   class="grail-btn-obsidian px-4 py-1.5 text-xs font-bold transition shadow-2xs active:scale-95">
+                                                    View Package
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -295,7 +363,54 @@
                         <div class="mt-8 flex justify-center">
                             {{ $services->links() }}
                         </div>
+
+                        <!-- Floating Service Comparison Bar + Drawer -->
+                        <div x-show="compareList.length > 0" x-cloak class="fixed bottom-16 md:bottom-6 inset-x-0 z-40 px-4 pointer-events-none">
+                            <div class="max-w-3xl mx-auto rounded-2xl bg-[#0D0D0D] text-white border border-[#ECD2F3]/35 p-3.5 shadow-2xl pointer-events-auto space-y-3">
+                                <div class="flex items-center justify-between gap-3 text-xs">
+                                    <div>
+                                        <strong class="text-[#ECD2F3]" x-text="compareList.length"></strong> service(s) selected for comparison (max 3)
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" @click="compareOpen = !compareOpen" class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] font-bold cursor-pointer">
+                                            <span x-text="compareOpen ? 'Hide Comparison' : 'Compare Side-by-Side'"></span>
+                                        </button>
+                                        <button type="button" @click="compareList = []; compareOpen = false" class="px-2.5 py-1.5 rounded-full bg-white/10 text-white/75 hover:text-white cursor-pointer">
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div x-show="compareOpen" class="overflow-x-auto border-t border-white/10 pt-3">
+                                    <table class="w-full text-left text-xs">
+                                        <thead class="text-[#C9A24A] uppercase text-[10px]">
+                                            <tr>
+                                                <th class="py-1.5 pr-3">Service</th>
+                                                <th class="py-1.5 px-3">Provider</th>
+                                                <th class="py-1.5 px-3">Starting</th>
+                                                <th class="py-1.5 px-3">Delivery</th>
+                                                <th class="py-1.5 px-3">Revisions</th>
+                                                <th class="py-1.5 pl-3 text-right">Open</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-white/10">
+                                            <template x-for="item in compareList" :key="item.id">
+                                                <tr>
+                                                    <td class="py-2 pr-3 font-semibold text-white" x-text="item.title"></td>
+                                                    <td class="py-2 px-3 text-white/75" x-text="item.provider"></td>
+                                                    <td class="py-2 px-3 font-bold text-[#ECD2F3]" x-text="item.price"></td>
+                                                    <td class="py-2 px-3 text-white/75" x-text="item.delivery"></td>
+                                                    <td class="py-2 px-3 text-white/75" x-text="item.revisions"></td>
+                                                    <td class="py-2 pl-3 text-right"><a :href="item.url" class="text-[#ECD2F3] underline font-bold">Select →</a></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     @endif
+                    </div>
                 </section>
 
                 <!-- 4. HOW IT WORKS: 3 EASY STEPS FOR CUSTOMERS -->
@@ -355,34 +470,50 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             @foreach($topProviders as $pro)
                                 @php
-                                    $pAvatar = $pro->logo ? format_image_url($pro->logo) : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80';
+                                    $pAvatar = $pro->logo ? format_image_url($pro->logo) : null;
+                                    $pInitial = strtoupper(substr($pro->shop_name ?: 'K', 0, 1));
+                                    $pRating = ($pro->average_rating && $pro->average_rating > 0) ? number_format((float) $pro->average_rating, 1) : null;
                                 @endphp
                                 <div class="grail-card p-4 rounded-2xl bg-white border border-[#E6E2E8] hover:border-[#623562]/45 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
                                     <div>
                                         <div class="flex items-center gap-3 mb-2.5">
-                                            <img src="{{ $pAvatar }}" alt="{{ $pro->shop_name }}" class="w-11 h-11 rounded-full object-cover border border-[#E6E2E8]">
-                                            <div>
-                                                <h4 class="font-bold text-xs sm:text-sm text-[#1A1018] leading-tight">{{ $pro->shop_name }}</h4>
+                                            @if($pAvatar)
+                                                <img src="{{ $pAvatar }}" alt="{{ $pro->shop_name }}" class="w-11 h-11 rounded-full object-cover border border-[#E6E2E8] shrink-0">
+                                            @else
+                                                <div class="w-11 h-11 rounded-full bg-[#1A1018] text-[#ECD2F3] font-bold text-sm flex items-center justify-center shrink-0">{{ $pInitial }}</div>
+                                            @endif
+                                            <div class="min-w-0">
+                                                <h4 class="font-bold text-xs sm:text-sm text-[#1A1018] leading-tight truncate">{{ $pro->shop_name }}</h4>
                                                 <div class="text-[11px] text-[#1A1018]/65 flex items-center gap-1 mt-0.5">
-                                                    <span class="text-[#C9A24A] font-bold">★ {{ number_format($pro->rating ?? 5.0, 1) }}</span>
-                                                    <span>({{ $pro->completed_projects ?? 0 }} orders)</span>
+                                                    @if($pRating)
+                                                        <span class="text-[#C9A24A] font-bold">★ {{ $pRating }}</span>
+                                                        <span>·</span>
+                                                    @endif
+                                                    <span>{{ $pro->completed_projects ?? 0 }} completed</span>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <p class="text-xs text-[#1A1018]/65 line-clamp-2 leading-relaxed">
-                                            {{ $pro->tagline ?? $pro->description }}
+                                            {{ $pro->headline ?? $pro->tagline ?? $pro->description }}
                                         </p>
                                     </div>
 
-                                    <div class="mt-4 pt-3 border-t border-[#E6E2E8] flex items-center justify-between">
+                                    <div class="mt-4 pt-3 border-t border-[#E6E2E8] flex items-center justify-between gap-2">
                                         <span class="text-xs font-bold text-[#1A1018]">
-                                            {{ $pro->hourly_rate ? '₹' . number_format($pro->hourly_rate) . '/hr' : 'Fixed Price' }}
+                                            {{ $pro->hourly_rate ? '₹' . number_format($pro->hourly_rate) . '/hr' : 'Fixed' }}
                                         </span>
-                                        <a href="{{ route('services.provider', $pro->slug) }}" 
-                                           class="px-3.5 py-1.5 rounded-full bg-[#EFE9F2] hover:bg-[#1A1018] hover:text-white text-[#1A1018] text-xs font-bold transition">
-                                            View Profile
-                                        </a>
+                                        <div class="flex items-center gap-1.5">
+                                            @if($pro->isWebsitePublished())
+                                                <a href="{{ $pro->storefront_url }}" target="_blank" class="px-2.5 py-1.5 rounded-full border border-[#ECD2F3] bg-[#F8EFFA] text-[#623562] text-[10px] font-bold hover:bg-[#ECD2F3]/50 transition">
+                                                    Website ↗
+                                                </a>
+                                            @endif
+                                            <a href="{{ route('services.provider', $pro->slug) }}" 
+                                               class="px-3 py-1.5 rounded-full bg-[#EFE9F2] hover:bg-[#1A1018] hover:text-white text-[#1A1018] text-[11px] font-bold transition">
+                                                Profile
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
@@ -408,12 +539,11 @@
 
         <!-- Sticky Mobile "Post a Project" Floating Button -->
         <div class="fixed bottom-0 inset-x-0 p-3 bg-[#0D0D0D]/95 backdrop-blur-md border-t border-white/15 z-30 flex justify-center shadow-lg md:hidden">
-            <button type="button" 
-                    @click="rfqModalOpen = true" 
-                    class="grail-cta-pill w-full max-w-md h-11 font-bold text-sm shadow-md flex items-center justify-center gap-2 transition cursor-pointer active:scale-95">
+            <a href="{{ route('services.projects.create') }}"
+               class="grail-cta-pill w-full max-w-md h-11 font-bold text-sm shadow-md flex items-center justify-center gap-2 transition active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                <span>Post a Project</span>
-            </button>
+                <span>Post a Project Brief</span>
+            </a>
         </div>
 
     </div>

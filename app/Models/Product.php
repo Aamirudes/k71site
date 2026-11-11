@@ -69,6 +69,10 @@ class Product extends Model
         'winning_bidder_id',
         'bids_count',
         'auction_status',
+        'pricing_mode',
+        'skills_json',
+        'is_website_featured',
+        'show_on_website',
     ];
 
     protected $casts = [
@@ -92,6 +96,9 @@ class Product extends Model
         'bid_increment' => 'integer',
         'current_bid' => 'integer',
         'bids_count' => 'integer',
+        'skills_json' => 'array',
+        'is_website_featured' => 'boolean',
+        'show_on_website' => 'boolean',
     ];
 
     /**
@@ -586,6 +593,11 @@ class Product extends Model
     public function serviceOrders(): HasMany
     {
         return $this->hasMany(ServiceOrder::class);
+    }
+
+    public function portfolioProjects(): HasMany
+    {
+        return $this->hasMany(PortfolioProject::class, 'service_product_id');
     }
 
     public function getBasicPackageAttribute(): ?ProductGigPackage

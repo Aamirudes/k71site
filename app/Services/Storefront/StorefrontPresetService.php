@@ -517,7 +517,98 @@ class StorefrontPresetService
                 'subtitle' => 'Real customer unboxings, doorstep deliveries, and verified reviews',
                 'items' => [],
             ],
+            'service_site' => [
+                'hero_headline' => $vendor->headline ?: $tagline,
+                'hero_subtitle' => $tagline,
+                'about_title' => $vendor->provider_mode === 'agency' ? 'About Our Studio' : 'About Me',
+                'cta_primary_text' => 'Start a Project',
+                'cta_secondary_text' => 'View Work',
+                'section_visibility' => [
+                    'hero' => true,
+                    'portfolio' => true,
+                    'services' => true,
+                    'about' => true,
+                    'reviews' => true,
+                    'contact' => true,
+                ],
+                'nav_labels' => [
+                    'overview' => 'Overview',
+                    'work' => 'Work',
+                    'services' => 'Services',
+                    'about' => 'About',
+                    'reviews' => 'Reviews',
+                    'contact' => 'Contact',
+                ],
+            ],
         ];
+    }
+
+    /**
+     * Non-destructively switch aesthetic preset while preserving brand identity, sections, hero copy, and service website customizations.
+     */
+    public function switchPresetPreservingContent(Vendor $vendor, string $requestedPreset, ?array $existingConfig = null): array
+    {
+        $requestedPreset = strtolower(trim($requestedPreset));
+        $normalizedPreset = $this->normalizePresetKey($requestedPreset);
+        $newDefaults = $this->getDefaultConfig($normalizedPreset, $vendor);
+
+        $current = $existingConfig;
+        if (empty($current)) {
+            $configRecord = $vendor->storefrontConfig()->first();
+            $current = $configRecord?->getEffectiveConfig(true) ?: [];
+        }
+
+        if (empty($current)) {
+            $newDefaults['preset'] = $requestedPreset;
+            return $newDefaults;
+        }
+
+        $merged = $newDefaults;
+        $merged['preset'] = $requestedPreset;
+
+        // Apply new preset's visual theme palette & typography cleanly
+        $merged['theme'] = $newDefaults['theme'];
+
+        // Preserve user brand identity & media
+        if (!empty($current['brand']) && is_array($current['brand'])) {
+            $merged['brand'] = array_merge($newDefaults['brand'], $current['brand']);
+        }
+
+        // Preserve hero copy & slides
+        if (!empty($current['hero']) && is_array($current['hero'])) {
+            $merged['hero'] = array_merge($newDefaults['hero'] ?? [], $current['hero']);
+        }
+
+        // Preserve header settings (announcement bar, nav elements, toggles) while adapting default dark/light announcement bg if unset
+        if (!empty($current['header']) && is_array($current['header'])) {
+            $merged['header'] = array_merge($newDefaults['header'], $current['header']);
+        }
+
+        // Preserve non-empty customized sections rather than wiping them
+        if (!empty($current['sections']) && is_array($current['sections'])) {
+            $merged['sections'] = $current['sections'];
+        }
+
+        // Preserve footer copy & toggles while adapting preset footer palette
+        if (!empty($current['footer']) && is_array($current['footer'])) {
+            $preservedFooter = $current['footer'];
+            $preservedFooter['bg_color'] = $newDefaults['footer']['bg_color'];
+            $preservedFooter['text_color'] = $newDefaults['footer']['text_color'];
+            $merged['footer'] = array_merge($newDefaults['footer'], $preservedFooter);
+        }
+
+        // Preserve happy customers, products layout, and service website configuration
+        if (!empty($current['happy_customers']) && is_array($current['happy_customers'])) {
+            $merged['happy_customers'] = $current['happy_customers'];
+        }
+        if (!empty($current['products']) && is_array($current['products'])) {
+            $merged['products'] = $current['products'];
+        }
+        if (!empty($current['service_site']) && is_array($current['service_site'])) {
+            $merged['service_site'] = array_merge($newDefaults['service_site'], $current['service_site']);
+        }
+
+        return $merged;
     }
 
     /**
@@ -1275,6 +1366,33 @@ class StorefrontPresetService
             'layout' => in_array($input['products']['layout'] ?? '', ['grid', 'slider']) ? $input['products']['layout'] : 'grid',
         ];
 
+        $rawServiceSite = is_array($input['service_site'] ?? null) ? $input['service_site'] : [];
+        $rawVis = is_array($rawServiceSite['section_visibility'] ?? null) ? $rawServiceSite['section_visibility'] : [];
+        $rawNav = is_array($rawServiceSite['nav_labels'] ?? null) ? $rawServiceSite['nav_labels'] : [];
+        $serviceSite = [
+            'hero_headline' => $safeText($rawServiceSite['hero_headline'] ?? $brand['tagline'] ?? $vendor->headline ?? '', 180),
+            'hero_subtitle' => $safeText($rawServiceSite['hero_subtitle'] ?? $vendor->tagline ?? '', 240),
+            'about_title' => $safeText($rawServiceSite['about_title'] ?? ($vendor->provider_mode === 'agency' ? 'About Our Studio' : 'About Me'), 100),
+            'cta_primary_text' => $safeText($rawServiceSite['cta_primary_text'] ?? 'Start a Project', 40),
+            'cta_secondary_text' => $safeText($rawServiceSite['cta_secondary_text'] ?? 'View Work', 40),
+            'section_visibility' => [
+                'hero' => array_key_exists('hero', $rawVis) ? (bool) $rawVis['hero'] : true,
+                'portfolio' => array_key_exists('portfolio', $rawVis) ? (bool) $rawVis['portfolio'] : true,
+                'services' => array_key_exists('services', $rawVis) ? (bool) $rawVis['services'] : true,
+                'about' => array_key_exists('about', $rawVis) ? (bool) $rawVis['about'] : true,
+                'reviews' => array_key_exists('reviews', $rawVis) ? (bool) $rawVis['reviews'] : true,
+                'contact' => array_key_exists('contact', $rawVis) ? (bool) $rawVis['contact'] : true,
+            ],
+            'nav_labels' => [
+                'overview' => $safeText($rawNav['overview'] ?? 'Overview', 30) ?: 'Overview',
+                'work' => $safeText($rawNav['work'] ?? 'Work', 30) ?: 'Work',
+                'services' => $safeText($rawNav['services'] ?? 'Services', 30) ?: 'Services',
+                'about' => $safeText($rawNav['about'] ?? 'About', 30) ?: 'About',
+                'reviews' => $safeText($rawNav['reviews'] ?? 'Reviews', 30) ?: 'Reviews',
+                'contact' => $safeText($rawNav['contact'] ?? 'Contact', 30) ?: 'Contact',
+            ],
+        ];
+
         return [
             'preset' => $presetKey,
             'schema_version' => 2,
@@ -1286,6 +1404,7 @@ class StorefrontPresetService
             'sections' => $sections,
             'footer' => $footer,
             'happy_customers' => $happyCustomers,
+            'service_site' => $serviceSite,
         ];
     }
 }

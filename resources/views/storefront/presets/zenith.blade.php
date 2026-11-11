@@ -1,16 +1,19 @@
 {{-- PRESET 06: ZENITH (Architectural High-Fashion Gallery · Swiss Editorial · Museum Slab Hierarchy) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path 
-        ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) 
-        : ($storeBanner ?: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path
+            ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
+            : ($storeBanner ?: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -22,6 +25,55 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="w-full bg-[#111813] text-stone-300 text-[10px] font-mono tracking-[0.25em] uppercase py-1.5 px-4 overflow-hidden border-b border-stone-800">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>{{ strtoupper($id['provider_mode_label'] ?? 'STUDIO') }} // {{ strtoupper($vendor->city ?: 'REMOTE') }}</span></span>
+                <span class="hidden md:inline-block">{{ strtoupper($id['availability_label'] ?? 'AVAILABLE') }}</span>
+                <span class="text-white font-bold">{{ strtoupper($vendor->slug) }}</span>
+            </div>
+        </div>
+
+        <header class="sticky top-0 z-40 bg-[#f5f5f0]/95 backdrop-blur-xl border-b border-stone-300/80 text-[#111813] transition-all">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-[#111813] hover:text-[#1b3b2b] transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-none border border-stone-400 bg-white p-1 flex items-center justify-center shadow-xs">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-none border border-[#111813] bg-[#111813] text-white flex items-center justify-center font-heading text-base font-bold">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="flex flex-col">
+                            <span class="font-heading italic font-bold text-base sm:text-xl tracking-tight text-[#111813] group-hover:text-[#1b3b2b] transition">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono uppercase tracking-[0.2em] text-stone-500">PORTFOLIO // ARCHIVE</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1 border border-stone-300 bg-white p-1 rounded-full text-xs font-mono">
+                    <a href="#overview" class="px-3.5 py-1.5 rounded-full text-stone-700 hover:text-black hover:bg-stone-100 transition">{{ strtoupper($nav['overview'] ?? 'Overview') }}</a>
+                    <a href="#portfolio" class="px-3.5 py-1.5 rounded-full text-stone-700 hover:text-black hover:bg-stone-100 transition">{{ strtoupper($nav['work'] ?? 'Work') }}</a>
+                    <a href="#services" class="px-3.5 py-1.5 rounded-full text-stone-700 hover:text-black hover:bg-stone-100 transition">{{ strtoupper($nav['services'] ?? 'Services') }}</a>
+                    <a href="#about" class="px-3.5 py-1.5 rounded-full text-stone-700 hover:text-black hover:bg-stone-100 transition">{{ strtoupper($nav['about'] ?? 'About') }}</a>
+                    <a href="#reviews" class="px-3.5 py-1.5 rounded-full text-stone-700 hover:text-black hover:bg-stone-100 transition">{{ strtoupper($nav['reviews'] ?? 'Reviews') }}</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 bg-[#111813] text-white hover:bg-[#1b3b2b] transition text-xs font-mono uppercase tracking-wider">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </div>
+        </header>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Fine Gallery Coordinate Marquee Bar --}}
     <div class="w-full bg-[#111813] text-stone-300 text-[10px] font-mono tracking-[0.25em] uppercase py-1.5 px-4 overflow-hidden border-b border-stone-800">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -348,6 +400,7 @@
 
     {{-- Minimal Architectural Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

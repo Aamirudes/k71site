@@ -1,16 +1,19 @@
 {{-- PRESET 08: NEXUS (Neo-Tokyo Cyber Techwear · Tactical HUD & Electric Lime · Carbon Obsidian) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path 
-        ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) 
-        : ($storeBanner ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path
+            ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
+            : ($storeBanner ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -22,6 +25,55 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="w-full bg-[#111318] border-b border-zinc-800 text-[10px] font-mono py-1.5 px-4 overflow-hidden select-none">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <span class="flex items-center gap-2"><span class="w-2 h-2 rounded-none bg-[#a3e635] animate-pulse"></span><span class="text-[#a3e635] font-bold">NEXUS//STUDIO</span><span class="text-zinc-400 hidden sm:inline">// {{ strtoupper($vendor->city ?: 'GLOBAL NODE') }}</span></span>
+                <span class="hidden md:inline-block text-zinc-400">{{ strtoupper($id['availability_label'] ?? 'ONLINE') }}</span>
+                <span class="text-white font-bold">[{{ strtoupper($id['work_mode_label'] ?? 'REMOTE') }}]</span>
+            </div>
+        </div>
+
+        <header class="sticky top-0 z-40 bg-[#0a0b0e]/95 backdrop-blur-xl border-b border-zinc-800 text-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-white hover:text-[#a3e635] transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-none border border-[#a3e635] bg-[#111318] p-1 shadow-[0_0_10px_rgba(163,230,53,0.3)]">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-none border-2 border-[#a3e635] bg-[#111318] text-[#a3e635] flex items-center justify-center font-heading font-black text-sm sm:text-base">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 2)) }}
+                            </div>
+                        @endif
+                        <div class="flex flex-col">
+                            <span class="font-heading font-black text-base sm:text-xl tracking-wider text-white group-hover:text-[#a3e635] transition uppercase">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono text-zinc-400 tracking-widest uppercase">SECTOR // {{ $vendor->slug }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1 border border-zinc-800 bg-[#111318] p-1 text-xs">
+                    <a href="#overview" class="px-3 py-1.5 text-zinc-300 hover:text-[#a3e635] transition">[ {{ strtoupper($nav['overview'] ?? 'Overview') }} ]</a>
+                    <a href="#portfolio" class="px-3 py-1.5 text-zinc-300 hover:text-[#a3e635] transition">[ {{ strtoupper($nav['work'] ?? 'Work') }} ]</a>
+                    <a href="#services" class="px-3 py-1.5 text-zinc-300 hover:text-[#a3e635] transition">[ {{ strtoupper($nav['services'] ?? 'Services') }} ]</a>
+                    <a href="#about" class="px-3 py-1.5 text-zinc-300 hover:text-[#a3e635] transition">[ {{ strtoupper($nav['about'] ?? 'About') }} ]</a>
+                    <a href="#reviews" class="px-3 py-1.5 text-zinc-300 hover:text-[#a3e635] transition">[ {{ strtoupper($nav['reviews'] ?? 'Reviews') }} ]</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 border border-[#a3e635] bg-[#a3e635] text-black hover:bg-lime-300 transition text-xs font-mono font-black uppercase tracking-wider">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </div>
+        </header>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Live Cyber Telemetry Ticker --}}
     <div class="w-full bg-[#111318] border-b border-zinc-800 text-[10px] font-mono py-1.5 px-4 overflow-hidden select-none">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -362,6 +414,7 @@
 
     {{-- Dark Tactical Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

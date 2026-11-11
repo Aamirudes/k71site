@@ -267,6 +267,7 @@ class StorefrontDesignController extends Controller
             'layout_preset' => $sanitizedConfig['preset'],
             'social_links' => $social,
         ]);
+        $vendor->bumpWebsiteCache();
 
         return response()->json([
             'status' => 'success',
@@ -277,7 +278,7 @@ class StorefrontDesignController extends Controller
     }
 
     /**
-     * Apply a new preset to draft.
+     * Apply a new preset to draft non-destructively (preserving user content & sections).
      */
     public function applyPreset(Request $request)
     {
@@ -292,8 +293,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
         }
 
-        $normalizedPreset = $this->presetService->normalizePresetKey($requestedPreset);
-        $newDraft = $this->presetService->getDefaultConfig($normalizedPreset, $vendor);
+        $newDraft = $this->presetService->switchPresetPreservingContent($vendor, $requestedPreset);
         $newDraft['preset'] = $requestedPreset;
 
         $configRecord = $vendor->storefrontConfig()->firstOrCreate(
@@ -320,7 +320,7 @@ class StorefrontDesignController extends Controller
     }
 
     /**
-     * Instantly activate and publish a preset to live storefront.
+     * Instantly activate and publish a preset to live storefront non-destructively.
      */
     public function activatePreset(Request $request)
     {
@@ -335,8 +335,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
         }
 
-        $normalizedPreset = $this->presetService->normalizePresetKey($requestedPreset);
-        $newConfig = $this->presetService->getDefaultConfig($normalizedPreset, $vendor);
+        $newConfig = $this->presetService->switchPresetPreservingContent($vendor, $requestedPreset);
         $newConfig['preset'] = $requestedPreset;
         $sanitizedConfig = $this->presetService->sanitizeConfig($newConfig, $vendor);
         $sanitizedConfig['preset'] = $requestedPreset;
@@ -361,6 +360,7 @@ class StorefrontDesignController extends Controller
 
         // Keep vendor table updated
         $vendor->update(['layout_preset' => $requestedPreset]);
+        $vendor->bumpWebsiteCache();
 
         // Create revision entry
         VendorStorefrontRevision::create([
@@ -655,6 +655,7 @@ class StorefrontDesignController extends Controller
         $vendor->description = $sanitizedConfig['brand']['description'] ?? $vendor->description;
         $vendor->social_links = $social;
         $vendor->save();
+        $vendor->bumpWebsiteCache();
 
             return response()->json([
                 'status' => 'success',
@@ -744,6 +745,7 @@ class StorefrontDesignController extends Controller
             'draft_config' => $revision->config_data,
             'last_saved_at' => now(),
         ]);
+        $vendor->bumpWebsiteCache();
 
         return response()->json([
             'status' => 'success',

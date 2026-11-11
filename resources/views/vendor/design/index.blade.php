@@ -241,7 +241,7 @@
                                     {{ $isActive ? '✓ Active' : '⚡ Activate' }}
                                 </button>
                                 
-                                <a href="{{ $vendor->storefrontUrl(['preview' => 1]) }}"
+                                <a href="{{ $vendor->storefrontUrl(['preview' => 1, 'preset' => $key]) }}"
                                    target="_blank"
                                    rel="noopener"
                                    class="p-1 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 dark:text-zinc-400 transition"

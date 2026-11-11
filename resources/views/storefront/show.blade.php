@@ -4,27 +4,41 @@
     }
     
     $storeCanonicalUrl = $vendor->storefront_url;
+    $isServiceWebsite = $isServiceWebsite ?? $vendor->isServices();
     $config = $config ?? $vendor->getStorefrontConfig($isPreview ?? false);
+    if ($isServiceWebsite && empty($providerSite)) {
+        $providerSite = app(\App\Services\Services\ServiceWebsitePresenter::class)->build($vendor, $isPreview ?? false, $config);
+    }
     $theme = $config['theme'] ?? [];
     $brand = $config['brand'] ?? [];
     
     $storeName = $brand['store_name'] ?? $vendor->shop_name;
     $storeLogo = $brand['logo_url'] ?? $vendor->logo_url;
     $storeBanner = $brand['banner_url'] ?? $vendor->banner_url;
-    $storeDescription = $brand['description'] ?? $vendor->description ?? 'Official verified flagship store on K71';
+    $storeDescription = $brand['description'] ?? $vendor->description ?? ($isServiceWebsite ? ($vendor->headline ?: 'Independent Professional Portfolio & Services') : 'Official verified flagship store on K71');
+
+    $schemaType = $isServiceWebsite
+        ? ((($vendor->provider_mode ?? 'individual') === 'agency') ? 'ProfessionalService' : 'Person')
+        : 'Store';
 
     $storeSchema = [
-        '@type' => 'Store',
+        '@type' => $schemaType,
         'name' => $storeName,
         'url' => $storeCanonicalUrl,
         'description' => Str::limit(strip_tags($storeDescription), 250),
-        'telephone' => $vendor->contact_phone,
-        'parentOrganization' => [
+    ];
+    if (!$isServiceWebsite || !empty($providerSite['contact']['show_phone'])) {
+        if ($vendor->contact_phone) {
+            $storeSchema['telephone'] = $vendor->contact_phone;
+        }
+    }
+    if (!$isServiceWebsite) {
+        $storeSchema['parentOrganization'] = [
             '@type' => 'Organization',
             'name' => config('marketplace.name', 'K71'),
             'url' => url('/'),
-        ],
-    ];
+        ];
+    }
     if ($storeLogo) {
         $storeSchema['image'] = $storeLogo;
         $storeSchema['logo'] = $storeLogo;
@@ -36,7 +50,7 @@
         '@type' => 'BreadcrumbList',
         'itemListElement' => [
             ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => url('/')],
-            ['@type' => 'ListItem', 'position' => 2, 'name' => 'Stores', 'item' => route('catalog.index')],
+            ['@type' => 'ListItem', 'position' => 2, 'name' => $isServiceWebsite ? 'K71 Services' : 'Stores', 'item' => $isServiceWebsite ? route('services.index') : route('catalog.index')],
             ['@type' => 'ListItem', 'position' => 3, 'name' => $storeName, 'item' => $storeCanonicalUrl],
         ],
     ];
@@ -144,12 +158,15 @@
     {{-- Render the active Signature Preset --}}
     @include($presetView)
 
-    {{-- Interactive Glassmorphic Cart Popup Drawer --}}
-    @include('storefront.sections.cart_popup')
+    @if(empty($isServiceWebsite))
+        {{-- Interactive Glassmorphic Cart Popup Drawer --}}
+        @include('storefront.sections.cart_popup')
+    @endif
 
     {{-- Dynamic Social Media Float Dock (WhatsApp & Instagram) --}}
     @include('storefront.sections.social_floating_bar')
 
+    @if(empty($isServiceWebsite))
     <!-- K71 Unified Cart Integration & Quick Add Bridge -->
     <div id="quick-cart-toast" 
          class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold">
@@ -240,6 +257,10 @@
                 window.location.href = '/cart';
             });
         };
+    </script>
+    @endif
+
+    <script>
 
         // Visual Editor Real-time Bridge (if loaded inside editor iframe)
         if (window.parent && window.parent !== window) {

@@ -1,15 +1,18 @@
 {{-- PRESET 02: NOIRÉ (Architectural Brutalist Dark Luxury · Asymmetric Campaign Split · Monospace Dispatch Terminal) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) : ($storeBanner ?: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
     $currentSort = request('sort', 'newest');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) : ($storeBanner ?: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -21,6 +24,56 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="w-full bg-[#121215] border-b border-zinc-800/80 py-1.5 px-4 overflow-hidden text-[10px] font-mono tracking-[0.2em] uppercase text-zinc-400 select-none">
+            <div class="flex items-center justify-between max-w-7xl mx-auto">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>// {{ strtoupper($id['provider_mode_label'] ?? 'STUDIO PRACTICE') }}: {{ strtoupper($vendor->city ?: 'GLOBAL REMOTE') }} //</span>
+                </span>
+                <span class="hidden sm:inline-block text-zinc-400">{{ strtoupper($id['availability_label'] ?? 'AVAILABLE FOR PROJECTS') }}</span>
+                <span class="text-white">{{ strtoupper($vendor->slug) }} [LIVE]</span>
+            </div>
+        </div>
+
+        <header class="sticky top-0 z-40 bg-[#09090b]/95 backdrop-blur-xl border-b border-zinc-800/90 text-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-white hover:text-zinc-300 transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="h-8 sm:h-10 w-auto object-contain">
+                        @else
+                            <div class="w-8 h-8 rounded-none border border-white flex items-center justify-center font-mono font-black text-xs text-white">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 2)) }}
+                            </div>
+                        @endif
+                        <div class="flex flex-col">
+                            <span class="font-mono font-black text-sm sm:text-lg tracking-[0.2em] uppercase text-white group-hover:text-zinc-300 transition">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono text-zinc-400 tracking-widest uppercase">{{ $id['work_mode_label'] ?? 'INDEPENDENT' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-6 text-xs font-mono tracking-wider uppercase text-zinc-400">
+                    <a href="#overview" class="hover:text-white transition">[ {{ strtoupper($nav['overview'] ?? 'Overview') }} ]</a>
+                    <a href="#portfolio" class="hover:text-white transition">[ {{ strtoupper($nav['work'] ?? 'Work') }} ]</a>
+                    <a href="#services" class="hover:text-white transition">[ {{ strtoupper($nav['services'] ?? 'Services') }} ]</a>
+                    <a href="#about" class="hover:text-white transition">[ {{ strtoupper($nav['about'] ?? 'About') }} ]</a>
+                    <a href="#reviews" class="hover:text-white transition">[ {{ strtoupper($nav['reviews'] ?? 'Reviews') }} ]</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 border border-white bg-white text-black hover:bg-zinc-200 transition text-xs font-mono font-bold uppercase tracking-wider">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </div>
+        </header>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Top Architectural Live Marquee Tape --}}
     <div class="w-full bg-[#121215] border-b border-zinc-800/80 py-1.5 px-4 overflow-hidden text-[10px] font-mono tracking-[0.2em] uppercase text-zinc-400 select-none">
         <div class="flex items-center justify-between max-w-7xl mx-auto">
@@ -371,6 +424,7 @@
 
     {{-- Minimal Dark Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

@@ -7,17 +7,18 @@
     $storeLogo = $brandCfg['logo_url'] ?? $vendor->logo_url;
     $logoHeight = $headerCfg['logo_height'] ?? 36;
     $isSticky = $headerCfg['sticky'] ?? true;
-    $transparentOnHero = $headerCfg['transparent_on_hero'] ?? true;
+    $transparentOnHero = empty($isServiceWebsite) ? ($headerCfg['transparent_on_hero'] ?? true) : false;
     
     $cartCount = 0;
-    if (auth()->check()) {
+    if (empty($isServiceWebsite) && auth()->check()) {
         $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
         $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
     
-    $waPhone = preg_replace('/[^0-9]/', '', (string) ($brandCfg['whatsapp'] ?? $vendor->contact_phone));
-    if (strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
-    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode("Namaste {$storeName}! I am viewing your boutique on K71.") : null;
+    $hidePublicPhone = !empty($isServiceWebsite) && empty($providerSite['contact']['show_phone']);
+    $waPhone = $hidePublicPhone ? null : preg_replace('/[^0-9]/', '', (string) ($brandCfg['whatsapp'] ?? $vendor->contact_phone));
+    if ($waPhone && strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
+    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode(!empty($isServiceWebsite) ? "Hi {$storeName}, I visited your portfolio site." : "Namaste {$storeName}! I am viewing your boutique on K71.") : null;
 
     $searchQuery = request('search', '');
     $isDarkPreset = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium']) || !empty($themeCfg['dark_mode']);
@@ -107,7 +108,15 @@
                                   }">
                                 {{ $storeName }}
                             </span>
-                            @if(!empty($brandCfg['city']))
+                            @if(!empty($isServiceWebsite))
+                                <span class="text-[8px] sm:text-[9.5px] uppercase tracking-wider font-semibold transition-colors truncate hidden sm:inline-block"
+                                      :class="{
+                                          'text-zinc-500 dark:text-zinc-400': isScrolled,
+                                          'text-white/80': !isScrolled
+                                      }">
+                                    {{ $providerSite['identity']['provider_mode_label'] ?? 'Portfolio & Services' }}
+                                </span>
+                            @elseif(!empty($brandCfg['city']))
                                 <span class="text-[8px] sm:text-[9.5px] uppercase tracking-wider font-semibold transition-colors truncate hidden sm:inline-block"
                                       :class="{
                                           'text-zinc-500 dark:text-zinc-400': isScrolled,
@@ -120,6 +129,23 @@
                     </a>
                 </div>
 
+                @if(!empty($isServiceWebsite))
+                    @php $navLabels = $providerSite['nav_labels'] ?? []; @endphp
+                    <nav class="hidden md:flex items-center gap-6 text-xs font-bold tracking-wide">
+                        <a href="#overview" class="hover:opacity-75 transition">{{ $navLabels['overview'] ?? 'Overview' }}</a>
+                        <a href="#portfolio" class="hover:opacity-75 transition">{{ $navLabels['work'] ?? 'Work' }}</a>
+                        <a href="#services" class="hover:opacity-75 transition">{{ $navLabels['services'] ?? 'Services' }}</a>
+                        <a href="#about" class="hover:opacity-75 transition">{{ $navLabels['about'] ?? 'About' }}</a>
+                        <a href="#reviews" class="hover:opacity-75 transition">{{ $navLabels['reviews'] ?? 'Reviews' }}</a>
+                    </nav>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <a href="#contact"
+                           class="px-4 py-2 rounded-full text-xs font-bold bg-stone-900 text-white hover:opacity-90 transition shadow-sm">
+                            {{ $providerSite['identity']['cta_primary_text'] ?? 'Start a Project' }}
+                        </a>
+                    </div>
+                @else
                 <!-- CENTER: Desktop Search Bar (Hidden on Mobile, Visible >= 768px) -->
                 <div class="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md mx-3 lg:mx-6 min-w-0">
                     <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="w-full relative">
@@ -192,8 +218,10 @@
                     </button>
 
                 </div>
+                @endif
             </div>
 
+            @if(empty($isServiceWebsite))
             <!-- MOBILE SEARCH SLIDE-DOWN DRAWER (Interactive quick-search on mobile) -->
             <div x-show="mobileSearchOpen" 
                  x-cloak
@@ -223,6 +251,7 @@
                     </button>
                 </form>
             </div>
+            @endif
 
         </header>
     </div>
@@ -276,7 +305,11 @@
                                     {{ $storeName }}
                                 </span>
                                 <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-                                    <span>✦</span> Verified Boutique Studio
+                                    @if(!empty($isServiceWebsite))
+                                        <span>✦</span> {{ $providerSite['identity']['provider_mode_label'] ?? 'Portfolio Website' }}
+                                    @else
+                                        <span>✦</span> Verified Boutique Studio
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -290,6 +323,29 @@
                         </button>
                     </div>
 
+                    @if(!empty($isServiceWebsite))
+                        @php $navLabels = $providerSite['nav_labels'] ?? []; @endphp
+                        <nav class="space-y-1.5">
+                            <a href="#overview" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                {{ $navLabels['overview'] ?? 'Overview' }}
+                            </a>
+                            <a href="#portfolio" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                {{ $navLabels['work'] ?? 'Work' }}
+                            </a>
+                            <a href="#services" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                {{ $navLabels['services'] ?? 'Services' }}
+                            </a>
+                            <a href="#about" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                {{ $navLabels['about'] ?? 'About' }}
+                            </a>
+                            <a href="#reviews" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
+                                {{ $navLabels['reviews'] ?? 'Reviews' }}
+                            </a>
+                            <a href="#contact" @click="mobileMenuOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold bg-zinc-950 text-white dark:bg-white dark:text-black text-center mt-3">
+                                {{ $providerSite['identity']['cta_primary_text'] ?? 'Start a Project' }}
+                            </a>
+                        </nav>
+                    @else
                     <!-- In-Drawer Quick Search Form -->
                     <div>
                         <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="relative">
@@ -372,21 +428,29 @@
                             <span>◈</span> Verified Workshop &amp; Dispatch Guarantees
                         </a>
                     </div>
+                    @endif
                 </div>
 
-                <!-- Drawer Footer: WhatsApp Stylist Concierge & Return Link -->
+                <!-- Drawer Footer -->
                 <div class="p-6 sm:p-8 border-t border-zinc-200 dark:border-zinc-800 space-y-3 bg-zinc-50/70 dark:bg-zinc-900/50">
                     @if($waUrl)
                         <a href="{{ $waUrl }}" target="_blank" 
                            class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition hover:scale-[1.01] cursor-pointer">
                             <span>💬</span>
-                            <span>Chat with Boutique Stylist on WhatsApp</span>
+                            <span>{{ !empty($isServiceWebsite) ? 'Message on WhatsApp' : 'Chat with Boutique Stylist on WhatsApp' }}</span>
                         </a>
                     @endif
-                    <a href="{{ route('stores.index') }}" 
-                       class="block text-center text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition py-1">
-                        &larr; Return to K71 Marketplace Stores Directory
-                    </a>
+                    @if(!empty($isServiceWebsite))
+                        <a href="{{ route('services.provider', $vendor->slug) }}" 
+                           class="block text-center text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition py-1">
+                            View on K71 Services Marketplace →
+                        </a>
+                    @else
+                        <a href="{{ route('stores.index') }}" 
+                           class="block text-center text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300 transition py-1">
+                            &larr; Return to K71 Marketplace Stores Directory
+                        </a>
+                    @endif
                 </div>
 
             </div>

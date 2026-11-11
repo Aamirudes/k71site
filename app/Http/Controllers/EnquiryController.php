@@ -248,7 +248,7 @@ class EnquiryController extends Controller
             abort(403, 'Unauthorized vendor account.');
         }
 
-        $tab = $request->query('tab', 'all');
+        $tab = $request->query('tab', $vendor->isServices() ? 'direct' : 'all');
 
         $counts = [
             'all' => Enquiry::where(function($q) use ($vendor) {

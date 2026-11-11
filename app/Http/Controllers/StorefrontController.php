@@ -128,11 +128,37 @@ class StorefrontController extends Controller
             return redirect()->route('vendor.register');
         }
         if ($cleanSlug === 'admin') {
-            return redirect()->route('filament.admin.auth.login');
+            return redirect()->route('admin.login');
         }
 
-        $vendor = Vendor::with('settings')->where('slug', $slug)->firstOrFail();
+        $subdomainManager = app(\App\Services\Services\SubdomainManagerService::class);
+        $vendor = Vendor::with(['settings', 'storefrontConfig'])->where('slug', $cleanSlug)->first();
+
+        if (!$vendor) {
+            $redirectVendor = $subdomainManager->resolveRedirectVendor($cleanSlug);
+            if ($redirectVendor) {
+                $targetUrl = $subdomainManager->buildRedirectTarget($request, $redirectVendor);
+                return redirect()->away($targetUrl, 301);
+            }
+            abort(404);
+        }
+
+        if (!in_array($vendor->status, ['approved', 'active'], true)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
+
         app()->instance('current_vendor', $vendor);
+
+        // Check if viewing draft preview (permitted if owner is logged in or admin)
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        $isServiceWebsite = $vendor->isServices();
+
+        if ($isServiceWebsite && !$vendor->isWebsitePublished() && !$isPreview) {
+            return response()
+                ->view('errors.website-unpublished', ['vendor' => $vendor], 404)
+                ->header('X-Robots-Tag', 'noindex, nofollow')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        }
 
         // Never 302-redirect /s/{slug}: Cloudflare Origin/Worker routes proxy https://{slug}.domain/
         // to https://domain/s/{slug} on Host=domain, so redirecting /s/{slug} causes an infinite loop.
@@ -251,15 +277,223 @@ class StorefrontController extends Controller
             ->take(24)
             ->get();
 
-        // Check if viewing draft preview (permitted if owner is logged in)
-        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
         $config = $vendor->getStorefrontConfig($isPreview);
+        $providerSite = null;
 
-        return response()
-            ->view('storefront.show', compact('vendor', 'products', 'vendorCategories', 'featuredProducts', 'vendorShorts', 'vendorReviews', 'config', 'isPreview'))
+        if ($isServiceWebsite) {
+            $providerSite = app(\App\Services\Services\ServiceWebsitePresenter::class)->build($vendor, $isPreview, $config);
+
+            if (!$isPreview) {
+                $this->recordWebsiteEvent($request, $vendor, 'website_view');
+            }
+        }
+
+        $response = response()
+            ->view('storefront.show', compact(
+                'vendor',
+                'products',
+                'vendorCategories',
+                'featuredProducts',
+                'vendorShorts',
+                'vendorReviews',
+                'config',
+                'isPreview',
+                'isServiceWebsite',
+                'providerSite'
+            ))
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
             ->header('Pragma', 'no-cache')
             ->header('X-LiteSpeed-Purge', '*')
             ->header('X-LiteSpeed-Cache-Control', 'no-cache');
+
+        if ($isPreview) {
+            $response->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        return $response;
+    }
+
+    public function subdomainPortfolioDetail(Request $request, string $projectSlug)
+    {
+        $vendor = $request->attributes->get('current_vendor');
+        if (!$vendor) {
+            abort(404);
+        }
+
+        return $this->portfolioDetail($request, $vendor->slug, $projectSlug);
+    }
+
+    public function portfolioDetail(Request $request, string $slug, string $projectSlug)
+    {
+        $cleanSlug = strtolower(trim($slug));
+        $subdomainManager = app(\App\Services\Services\SubdomainManagerService::class);
+        $vendor = Vendor::with(['settings', 'storefrontConfig'])->where('slug', $cleanSlug)->first();
+
+        if (!$vendor) {
+            $redirectVendor = $subdomainManager->resolveRedirectVendor($cleanSlug);
+            if ($redirectVendor) {
+                return redirect()->away($subdomainManager->buildRedirectTarget($request, $redirectVendor, 'portfolio/' . $projectSlug), 301);
+            }
+            abort(404);
+        }
+
+        if (!in_array($vendor->status, ['approved', 'active'], true)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
+
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+
+        if ($vendor->isServices() && !$vendor->isWebsitePublished() && !$isPreview) {
+            return response()
+                ->view('errors.website-unpublished', ['vendor' => $vendor], 404)
+                ->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        $project = \App\Models\PortfolioProject::with(['category', 'serviceProduct'])
+            ->where('vendor_id', $vendor->id)
+            ->where('slug', $projectSlug)
+            ->when(!$isPreview, fn ($q) => $q->where('status', 'published'))
+            ->firstOrFail();
+
+        $config = $vendor->getStorefrontConfig($isPreview);
+        $providerSite = app(\App\Services\Services\ServiceWebsitePresenter::class)->build($vendor, $isPreview, $config);
+
+        if (!$isPreview) {
+            $this->recordWebsiteEvent($request, $vendor, 'portfolio_view', 'portfolio_project', $project->id);
+        }
+
+        $moreProjects = \App\Models\PortfolioProject::where('vendor_id', $vendor->id)
+            ->where('id', '!=', $project->id)
+            ->where('status', 'published')
+            ->latest('id')
+            ->take(3)
+            ->get();
+
+        $response = response()->view('storefront.portfolio_detail', compact(
+            'vendor',
+            'project',
+            'moreProjects',
+            'config',
+            'providerSite',
+            'isPreview'
+        ));
+
+        if ($isPreview) {
+            $response->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        return $response;
+    }
+
+    public function subdomainEnquire(Request $request)
+    {
+        $vendor = $request->attributes->get('current_vendor');
+        if (!$vendor) {
+            abort(404);
+        }
+
+        return $this->submitEnquiry($request, $vendor->slug);
+    }
+
+    public function submitEnquiry(Request $request, string $slug)
+    {
+        $cleanSlug = strtolower(trim($slug));
+        $vendor = Vendor::where('slug', $cleanSlug)->firstOrFail();
+
+        $contactPrefs = is_array($vendor->public_contact_preferences) ? $vendor->public_contact_preferences : [];
+        if (array_key_exists('allow_direct_enquiry', $contactPrefs) && !$contactPrefs['allow_direct_enquiry']) {
+            return back()->with('error', 'Direct enquiries are currently paused by this provider.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:120',
+            'email' => 'required|email|max:150',
+            'phone' => 'nullable|string|max:20',
+            'subject' => 'required|string|max:200',
+            'message' => 'required|string|min:10|max:3000',
+            'budget' => 'nullable|numeric|min:0',
+            'service_product_id' => 'nullable|integer',
+        ]);
+
+        $serviceProductId = null;
+        if (!empty($validated['service_product_id'])) {
+            $serviceProductId = Product::withoutGlobalScopes()
+                ->where('vendor_id', $vendor->id)
+                ->where('id', $validated['service_product_id'])
+                ->value('id');
+        }
+
+        $enquiry = \App\Models\Enquiry::create([
+            'enquiry_number' => 'ENQ-' . strtoupper(\Illuminate\Support\Str::random(8)),
+            'user_id' => auth()->id(),
+            'vendor_id' => $vendor->id,
+            'product_id' => $serviceProductId,
+            'title' => $validated['subject'],
+            'description' => $validated['message'],
+            'quantity' => '1 Project',
+            'target_budget' => !empty($validated['budget']) ? (int) round(((float) $validated['budget']) * 100) : null,
+            'city' => $vendor->city ?: 'Remote',
+            'urgency' => 'within_1_week',
+            'buyer_name' => $validated['name'],
+            'buyer_phone' => trim((string) (($validated['phone'] ?? null) ?: (auth()->user()?->phone ?: 'Not provided'))),
+            'buyer_email' => $validated['email'],
+            'status' => 'open',
+        ]);
+
+        if (auth()->check() && auth()->id() !== $vendor->user_id) {
+            $conversation = \App\Models\Conversation::firstOrCreate(
+                [
+                    'vendor_id' => $vendor->id,
+                    'user_id' => auth()->id(),
+                    'product_id' => $serviceProductId,
+                ],
+                [
+                    'subject' => $validated['subject'],
+                    'last_message_at' => now(),
+                ]
+            );
+
+            \App\Models\Message::create([
+                'conversation_id' => $conversation->id,
+                'sender_type' => 'user',
+                'sender_id' => auth()->id(),
+                'body' => "New Website Enquiry ({$enquiry->enquiry_number}): {$validated['subject']}\n\n{$validated['message']}",
+                'is_read' => false,
+            ]);
+
+            $conversation->update(['last_message_at' => now()]);
+        }
+
+        $this->recordWebsiteEvent($request, $vendor, 'enquiry_submit', 'enquiry', $enquiry->id);
+
+        return back()->with('success', 'Your project enquiry (' . $enquiry->enquiry_number . ') was sent directly to ' . $vendor->shop_name . '!');
+    }
+
+    protected function recordWebsiteEvent(Request $request, Vendor $vendor, string $eventType, ?string $entityType = null, ?int $entityId = null): void
+    {
+        try {
+            $visitorHash = hash('sha256', ($request->ip() ?: 'anon') . '|' . substr((string) $request->userAgent(), 0, 120));
+            $dedupKey = "wf_evt_{$vendor->id}_{$eventType}_" . ($entityId ?: 0) . "_{$visitorHash}";
+
+            if ($eventType !== 'enquiry_submit' && \Illuminate\Support\Facades\Cache::has($dedupKey)) {
+                return;
+            }
+
+            \App\Models\StorefrontAnalyticsEvent::create([
+                'vendor_id' => $vendor->id,
+                'event_type' => $eventType,
+                'entity_type' => $entityType,
+                'entity_id' => $entityId,
+                'visitor_hash' => $visitorHash,
+                'referrer' => \Illuminate\Support\Str::limit((string) $request->headers->get('referer', ''), 255) ?: null,
+                'created_at' => now(),
+            ]);
+
+            if ($eventType !== 'enquiry_submit') {
+                \Illuminate\Support\Facades\Cache::put($dedupKey, true, now()->addMinutes(30));
+            }
+        } catch (\Throwable $e) {
+            // Never interrupt storefront rendering for telemetry writes
+        }
     }
 }

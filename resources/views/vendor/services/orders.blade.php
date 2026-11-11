@@ -1,9 +1,6 @@
-<x-layouts.public 
-    title="Client Project Orders — Freelance Studio | K71"
-    metaDescription="Manage active client project orders, deliveries, and milestone reviews on K71 Services."
->
-    <div class="min-h-screen bg-gradient-to-b from-[#faf5ff] via-white to-[#faf5ff] text-zinc-900 pb-20 pt-8">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+<x-layouts.vendor title="Service Orders">
+    <div class="pb-12 pt-2">
+        <div class="max-w-6xl mx-auto space-y-6">
 
             <!-- HEADER -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-purple-100">
@@ -104,4 +101,4 @@
 
         </div>
     </div>
-</x-layouts.public>
+</x-layouts.vendor>

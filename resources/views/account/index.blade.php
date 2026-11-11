@@ -106,9 +106,22 @@
                             @if($user->hasRole('vendor'))
                                 <a href="{{ route('vendor.dashboard') }}" 
                                    class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] hover:bg-white text-xs font-bold transition">
-                                    Seller Portal &rarr;
+                                    {{ $user->vendor?->isServices() ? 'Provider Studio' : 'Seller Portal' }} &rarr;
+                                </a>
+                            @else
+                                <a href="{{ route('services.become_seller') }}"
+                                   class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] hover:bg-white text-xs font-bold transition">
+                                    Launch Provider Website &rarr;
                                 </a>
                             @endif
+                            <a href="{{ route('services.projects.index') }}"
+                               class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
+                                My Project Briefs
+                            </a>
+                            <a href="{{ route('services.orders.index') }}"
+                               class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
+                                Service Orders
+                            </a>
                             @if($user->isFleet())
                                 <a href="{{ route('delivery.dashboard') }}" 
                                    class="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 hover:bg-emerald-500/30 text-xs font-semibold transition">

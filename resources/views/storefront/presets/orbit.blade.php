@@ -1,16 +1,19 @@
 {{-- PRESET 05: ORBIT (Kinetic Spatial Horizon · Layered Glass Depth · High-Contrast Telemetry) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path 
-        ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) 
-        : ($storeBanner ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path
+            ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
+            : ($storeBanner ?: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -27,6 +30,48 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="fixed top-3 sm:top-5 inset-x-3 sm:inset-x-6 lg:inset-x-8 z-50 pointer-events-none">
+            <header class="max-w-6xl mx-auto p-2 sm:p-2.5 rounded-full bg-slate-950/65 backdrop-blur-3xl border border-white/25 ring-1 ring-cyan-400/40 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.4)] text-white pointer-events-auto flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 pl-1 sm:pl-2 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-1.5 sm:p-2 text-cyan-300 hover:text-white transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-2.5 group">
+                        <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-600 p-[1.5px] shadow-[0_0_15px_rgba(34,211,238,0.7)] shrink-0">
+                            @if($storeLogo)
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full rounded-full object-cover">
+                            @else
+                                <div class="w-full h-full rounded-full bg-[#070a18] flex items-center justify-center text-[10px] font-black text-cyan-300">
+                                    {{ $id['initials'] ?? 'K7' }}
+                                </div>
+                            @endif
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-black text-sm sm:text-base tracking-tight text-white group-hover:text-cyan-300 transition truncate max-w-[140px] sm:max-w-xs">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono font-bold text-cyan-300">{{ strtoupper($id['provider_mode_label'] ?? 'STUDIO') }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-white/[0.06] backdrop-blur-2xl border border-white/15 text-xs font-mono">
+                    <a href="#overview" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition">{{ strtoupper($nav['overview'] ?? 'Overview') }}</a>
+                    <a href="#portfolio" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition">{{ strtoupper($nav['work'] ?? 'Work') }}</a>
+                    <a href="#services" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition">{{ strtoupper($nav['services'] ?? 'Services') }}</a>
+                    <a href="#about" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition">{{ strtoupper($nav['about'] ?? 'About') }}</a>
+                    <a href="#reviews" class="px-3 py-1.5 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition">{{ strtoupper($nav['reviews'] ?? 'Reviews') }}</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 text-slate-950 font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.5)] hover:brightness-110 transition">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </header>
+        </div>
+        <div class="h-20 sm:h-24"></div>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Aerodynamic Layered Glass Island Capsule (Ultra-Glassmorphic Floating Header) --}}
     <div class="fixed top-3 sm:top-5 inset-x-3 sm:inset-x-6 lg:inset-x-8 z-50 pointer-events-none">
         <header class="max-w-6xl mx-auto p-2 sm:p-2.5 rounded-full bg-slate-950/60 backdrop-blur-3xl border border-white/25 ring-1 ring-cyan-400/40 shadow-[0_20px_50px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.4)] text-white pointer-events-auto flex items-center justify-between gap-3">
@@ -413,6 +458,7 @@
 
     {{-- Dark High-Contrast Minimal Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

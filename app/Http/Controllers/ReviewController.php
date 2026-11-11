@@ -81,7 +81,11 @@ class ReviewController extends Controller
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         $product = $review->product ?: Product::withoutGlobalScopes()->find($review->product_id);
-        if (!$vendor || !$product || $product->vendor_id !== $vendor->id) {
+        $ownsReview = $vendor && (
+            ((int) $review->vendor_id === (int) $vendor->id)
+            || ($product && (int) $product->vendor_id === (int) $vendor->id)
+        );
+        if (!$ownsReview) {
             abort(403, 'Unauthorized to reply to this review.');
         }
 
@@ -93,6 +97,8 @@ class ReviewController extends Controller
             'vendor_reply' => $validated['vendor_reply'],
             'vendor_replied_at' => now(),
         ]);
+
+        $vendor->bumpWebsiteCache();
 
         return back()->with('success', 'Your official response has been added to the review.');
     }

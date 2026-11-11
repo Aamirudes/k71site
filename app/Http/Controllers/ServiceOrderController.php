@@ -36,7 +36,7 @@ class ServiceOrderController extends Controller
     public function placeOrder(Request $request, Product $product): RedirectResponse
     {
         if (!auth()->check()) {
-            return redirect()->route('login')->with('info', 'Please sign in or create an account to start this freelance project.');
+            return redirect()->guest(route('login'))->with('info', 'Please sign in or create an account to start this freelance project.');
         }
 
         $validated = $request->validate([

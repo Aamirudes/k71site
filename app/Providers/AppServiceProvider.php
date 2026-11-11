@@ -69,6 +69,12 @@ class AppServiceProvider extends ServiceProvider
         Coupon::addGlobalScope(new VendorScope);
         Order::addGlobalScope(new VendorScope);
 
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\PortfolioProject::class, \App\Policies\PortfolioProjectPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ServiceProject::class, \App\Policies\ServiceProjectPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ProjectProposal::class, \App\Policies\ProjectProposalPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ProjectContract::class, \App\Policies\ProjectContractPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ServiceOrder::class, \App\Policies\ServiceOrderPolicy::class);
+
         // Self-healing schema verification for products video columns
         try {
             if (\Illuminate\Support\Facades\Schema::hasTable('products') && !\Illuminate\Support\Facades\Schema::hasColumn('products', 'video_url')) {

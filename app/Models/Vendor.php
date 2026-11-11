@@ -58,6 +58,18 @@ class Vendor extends Model
         'completed_projects',
         'portfolio_items',
         'is_verified_pro',
+        'provider_mode',
+        'headline',
+        'website_status',
+        'website_published_at',
+        'onboarding_step',
+        'work_mode',
+        'availability_status',
+        'response_time_minutes',
+        'years_experience',
+        'public_contact_preferences',
+        'external_links',
+        'website_cache_version',
     ];
 
     protected $casts = [
@@ -75,6 +87,13 @@ class Vendor extends Model
         'slug_reserved_at' => 'datetime',
         'slug_released_at' => 'datetime',
         'vacation_mode' => 'boolean',
+        'website_published_at' => 'datetime',
+        'onboarding_step' => 'integer',
+        'response_time_minutes' => 'integer',
+        'years_experience' => 'integer',
+        'public_contact_preferences' => 'array',
+        'external_links' => 'array',
+        'website_cache_version' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -889,5 +908,103 @@ class Vendor extends Model
     public function promotions(): HasMany
     {
         return $this->hasMany(Promotion::class);
+    }
+
+    public function portfolioProjects(): HasMany
+    {
+        return $this->hasMany(PortfolioProject::class)->orderByDesc('is_featured')->orderBy('sort_order')->latest();
+    }
+
+    public function publishedPortfolioProjects(): HasMany
+    {
+        return $this->portfolioProjects()->where('status', 'published');
+    }
+
+    public function subdomainHistories(): HasMany
+    {
+        return $this->hasMany(VendorSubdomainHistory::class)->latest();
+    }
+
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(ProjectProposal::class)->latest();
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(ProjectContract::class)->latest();
+    }
+
+    public function serviceOrders(): HasMany
+    {
+        return $this->hasMany(ServiceOrder::class)->latest();
+    }
+
+    public function analyticsEvents(): HasMany
+    {
+        return $this->hasMany(StorefrontAnalyticsEvent::class);
+    }
+
+    public function isWebsitePublished(): bool
+    {
+        if (!in_array($this->status, ['approved', 'active'], true)) {
+            return false;
+        }
+        if (($this->website_status ?? 'published') !== 'published') {
+            return false;
+        }
+        $config = $this->relationLoaded('storefrontConfig') ? $this->storefrontConfig : $this->storefrontConfig()->first();
+        if ($config && !$config->is_published) {
+            return false;
+        }
+        return true;
+    }
+
+    public function bumpWebsiteCache(): void
+    {
+        $current = (int) ($this->website_cache_version ?? 1);
+        \Illuminate\Support\Facades\Cache::forget("service_website_v1_{$this->id}_{$current}");
+        $this->forceFill(['website_cache_version' => $current + 1])->saveQuietly();
+        $this->unsetRelation('storefrontConfig');
+    }
+
+    public function recomputeServiceMetrics(): void
+    {
+        $ordersCompleted = $this->serviceOrders()->where('status', 'completed')->count();
+        $contractsCompleted = $this->contracts()->where('status', 'completed')->count();
+        $completedTotal = $ordersCompleted + $contractsCompleted;
+
+        $productIds = $this->products()->withoutGlobalScopes()->where('vendor_id', $this->id)->pluck('id');
+        $productReviewStats = \App\Models\Review::query()
+            ->where('is_approved', true)
+            ->where(function ($q) use ($productIds) {
+                $q->where('vendor_id', $this->id);
+                if ($productIds->isNotEmpty()) {
+                    $q->orWhereIn('product_id', $productIds);
+                }
+            })
+            ->selectRaw('COUNT(*) as cnt, COALESCE(SUM(rating), 0) as total_rating')
+            ->first();
+
+        $contractReviewStats = $this->contracts()
+            ->whereNotNull('buyer_rating')
+            ->selectRaw('COUNT(*) as cnt, COALESCE(SUM(buyer_rating), 0) as total_rating')
+            ->first();
+
+        $totalReviews = (int) ($productReviewStats->cnt ?? 0) + (int) ($contractReviewStats->cnt ?? 0);
+        $sumRating = (int) ($productReviewStats->total_rating ?? 0) + (int) ($contractReviewStats->total_rating ?? 0);
+
+        $this->forceFill([
+            'completed_projects' => $completedTotal,
+            'rating' => $totalReviews > 0 ? round($sumRating / $totalReviews, 2) : 0.00,
+        ])->saveQuietly();
+
+        $this->bumpWebsiteCache();
+    }
+
+    public function getAverageRatingAttribute(): ?float
+    {
+        $rating = (float) ($this->rating ?? 0);
+        return $rating > 0 ? round($rating, 1) : null;
     }
 }

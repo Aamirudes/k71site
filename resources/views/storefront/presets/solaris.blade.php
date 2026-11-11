@@ -1,16 +1,19 @@
 {{-- PRESET 07: SOLARIS (Sun-Drenched Artisanal · Mediterranean Terracotta Arches · Roman Serif Luxury) --}}
 @php
-    $flagship = $featuredProducts->first() ?? $products->first();
-    $flagshipImg = $flagship?->images->first()?->path 
-        ? \App\Services\ImageService::url($flagship->images->first()->path, 1200) 
-        : ($storeBanner ?: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1600&q=80');
+    $flagshipImg = null;
+    $cartCount = 0;
     $currentCategory = request('category');
     $currentSearch = request('search');
-    
-    $cartCount = 0;
-    if (auth()->check()) {
-        $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
-        $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+
+    if (empty($isServiceWebsite)) {
+        $flagship = $featuredProducts->first() ?? $products->first();
+        $flagshipImg = $flagship?->images->first()?->path
+            ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
+            : ($storeBanner ?: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1600&q=80');
+        if (auth()->check()) {
+            $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
+            $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
+        }
     }
 @endphp
 
@@ -22,6 +25,47 @@
         @include('storefront.sections.announcement')
     @endif
 
+    @if(!empty($isServiceWebsite))
+        @php $nav = $providerSite['nav_labels'] ?? []; $id = $providerSite['identity'] ?? []; @endphp
+        <div class="sticky top-0 z-40 px-3 sm:px-6 py-2.5 transition-all">
+            <header class="max-w-7xl mx-auto rounded-3xl bg-[#fcfaf6]/95 backdrop-blur-2xl border border-[#e8dccb] shadow-[0_10px_30px_rgba(41,26,19,0.06)] px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+                    <button type="button" @click="drawerOpen = true" class="p-2 -ml-2 text-[#291a13] hover:text-[#c25e3e] transition cursor-pointer flex items-center justify-center shrink-0" aria-label="Open menu">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <a href="{{ $vendor->storefront_url }}" class="flex items-center gap-3 group">
+                        @if(!empty($storeLogo))
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-t-2xl rounded-b-lg border-2 border-[#c25e3e] bg-white p-1 overflow-hidden shadow-xs">
+                                <img src="{{ $storeLogo }}" alt="{{ $storeName }}" class="w-full h-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-t-2xl rounded-b-lg bg-[#c25e3e] text-white flex items-center justify-center font-heading text-sm sm:text-base font-bold shadow-xs">
+                                {{ $id['initials'] ?? strtoupper(substr($storeName, 0, 1)) }}
+                            </div>
+                        @endif
+                        <div class="flex flex-col">
+                            <span class="font-heading font-black text-sm sm:text-lg tracking-wider text-[#291a13] group-hover:text-[#c25e3e] transition uppercase">{{ $storeName }}</span>
+                            <span class="text-[9px] font-mono tracking-widest text-[#785b4f] uppercase">{{ $id['provider_mode_label'] ?? 'STUDIO ATELIER' }}</span>
+                        </div>
+                    </a>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-1.5 p-1 rounded-full bg-[#f3ede3] border border-[#e8dccb] text-xs font-mono">
+                    <a href="#overview" class="px-3.5 py-1.5 rounded-full text-[#785b4f] hover:text-[#291a13] hover:bg-white transition">{{ strtoupper($nav['overview'] ?? 'Overview') }}</a>
+                    <a href="#portfolio" class="px-3.5 py-1.5 rounded-full text-[#785b4f] hover:text-[#291a13] hover:bg-white transition">{{ strtoupper($nav['work'] ?? 'Work') }}</a>
+                    <a href="#services" class="px-3.5 py-1.5 rounded-full text-[#785b4f] hover:text-[#291a13] hover:bg-white transition">{{ strtoupper($nav['services'] ?? 'Services') }}</a>
+                    <a href="#about" class="px-3.5 py-1.5 rounded-full text-[#785b4f] hover:text-[#291a13] hover:bg-white transition">{{ strtoupper($nav['about'] ?? 'About') }}</a>
+                    <a href="#reviews" class="px-3.5 py-1.5 rounded-full text-[#785b4f] hover:text-[#291a13] hover:bg-white transition">{{ strtoupper($nav['reviews'] ?? 'Reviews') }}</a>
+                </nav>
+
+                <a href="#contact" class="px-4 py-2 rounded-full bg-[#c25e3e] text-white hover:bg-[#291a13] transition text-xs font-bold">
+                    {{ $id['cta_primary_text'] ?? 'Start a Project' }}
+                </a>
+            </header>
+        </div>
+
+        @include('storefront.sections.service.main')
+    @else
     {{-- Sun-Warmed Marquee Ticker --}}
     <div class="w-full bg-[#291a13] text-[#e8dccb] text-[10px] font-mono tracking-[0.2em] uppercase py-2 px-4 overflow-hidden border-b border-[#3d291e]">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -351,6 +395,7 @@
 
     {{-- Warm Artisanal Footer --}}
     @include('storefront.sections.footer')
+    @endif
 
     {{-- Slide-From-Left Menu Drawer --}}
     @include('storefront.sections.theme_drawer')

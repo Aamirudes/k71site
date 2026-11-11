@@ -5,14 +5,15 @@
     $storeLogo = $brandCfg['logo_url'] ?? $vendor->logo_url;
     
     $cartCount = 0;
-    if (auth()->check()) {
+    if (empty($isServiceWebsite) && auth()->check()) {
         $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
         $cartCount = $cart ? $cart->items()->sum('quantity') : 0;
     }
     
-    $waPhone = preg_replace('/[^0-9]/', '', (string) ($brandCfg['whatsapp'] ?? $vendor->contact_phone));
-    if (strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
-    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode("Namaste {$storeName}! I am viewing your boutique on K71.") : null;
+    $hidePublicPhone = !empty($isServiceWebsite) && empty($providerSite['contact']['show_phone']);
+    $waPhone = $hidePublicPhone ? null : preg_replace('/[^0-9]/', '', (string) ($brandCfg['whatsapp'] ?? $vendor->contact_phone));
+    if ($waPhone && strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
+    $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode(!empty($isServiceWebsite) ? "Hi {$storeName}, I viewed your portfolio site." : "Namaste {$storeName}! I am viewing your boutique on K71.") : null;
     $searchQuery = request('search', '');
     $isDark = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium']) || !empty($theme['dark_mode']);
 @endphp
@@ -68,7 +69,11 @@
                                 {{ $storeName }}
                             </span>
                             <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-500">
-                                <span>✦</span> Verified Boutique Studio
+                                @if(!empty($isServiceWebsite))
+                                    <span>✦</span> {{ $providerSite['identity']['provider_mode_label'] ?? 'Portfolio Website' }}
+                                @else
+                                    <span>✦</span> Verified Boutique Studio
+                                @endif
                             </span>
                         </div>
                     </div>
@@ -82,6 +87,29 @@
                     </button>
                 </div>
 
+                @if(!empty($isServiceWebsite))
+                    @php $navLabels = $providerSite['nav_labels'] ?? []; @endphp
+                    <nav class="space-y-1.5">
+                        <a href="#overview" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
+                            {{ $navLabels['overview'] ?? 'Overview' }}
+                        </a>
+                        <a href="#portfolio" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
+                            {{ $navLabels['work'] ?? 'Work' }}
+                        </a>
+                        <a href="#services" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
+                            {{ $navLabels['services'] ?? 'Services' }}
+                        </a>
+                        <a href="#about" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
+                            {{ $navLabels['about'] ?? 'About' }}
+                        </a>
+                        <a href="#reviews" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'hover:bg-zinc-900' : 'hover:bg-stone-100' }} transition">
+                            {{ $navLabels['reviews'] ?? 'Reviews' }}
+                        </a>
+                        <a href="#contact" @click="drawerOpen = false" class="block px-4 py-3 rounded-2xl text-sm font-bold {{ $isDark ? 'bg-white text-black' : 'bg-black text-white' }} text-center mt-3">
+                            {{ $providerSite['identity']['cta_primary_text'] ?? 'Start a Project' }}
+                        </a>
+                    </nav>
+                @else
                 <!-- Quick Search Form -->
                 <div>
                     <form action="{{ $vendor->storefrontUrl([], 'catalog') }}" method="GET" class="relative">
@@ -166,21 +194,29 @@
                         <span>◈</span> Verified Workshop &amp; Dispatch Guarantees
                     </a>
                 </div>
+                @endif
             </div>
 
-            <!-- Drawer Footer: WhatsApp Stylist & Return Link -->
+            <!-- Drawer Footer -->
             <div class="p-6 sm:p-8 border-t {{ $isDark ? 'border-zinc-800 bg-zinc-950/80' : 'border-stone-200 bg-stone-50' }} space-y-3">
                 @if($waUrl)
                     <a href="{{ $waUrl }}" target="_blank" 
                        class="w-full py-3.5 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition hover:scale-[1.01] cursor-pointer">
                         <span>💬</span>
-                        <span>Chat with Boutique Stylist on WhatsApp</span>
+                        <span>{{ !empty($isServiceWebsite) ? 'Message on WhatsApp' : 'Chat with Boutique Stylist on WhatsApp' }}</span>
                     </a>
                 @endif
-                <a href="{{ route('stores.index') }}" 
-                   class="block text-center text-xs font-semibold {{ $isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-stone-500 hover:text-stone-800' }} transition py-1">
-                    &larr; Return to K71 Marketplace Stores Directory
-                </a>
+                @if(!empty($isServiceWebsite))
+                    <a href="{{ route('services.provider', $vendor->slug) }}" 
+                       class="block text-center text-xs font-semibold {{ $isDark ? 'text-zinc-400 hover:text-white' : 'text-stone-500 hover:text-stone-800' }} transition py-1">
+                        View on K71 Services Marketplace →
+                    </a>
+                @else
+                    <a href="{{ route('stores.index') }}" 
+                       class="block text-center text-xs font-semibold {{ $isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-stone-500 hover:text-stone-800' }} transition py-1">
+                        &larr; Return to K71 Marketplace Stores Directory
+                    </a>
+                @endif
             </div>
 
         </div>

@@ -90,6 +90,204 @@
         rejectionReason: ''
     }">
         
+        @if($vendor->isServices() && !empty($serviceMetrics))
+            @php
+                $readiness = $serviceMetrics['readiness'] ?? ['score' => 0, 'items' => [], 'can_publish' => false];
+                $isLive = $vendor->isWebsitePublished();
+            @endphp
+
+            <!-- SERVICE PROVIDER LAYER C HEADER -->
+            <div class="bw-card p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div class="space-y-1.5">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="bw-badge text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5">
+                            {{ $vendor->provider_mode === 'agency' ? 'Agency Studio' : 'Independent Freelancer' }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border {{ $isLive ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $isLive ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
+                            {{ $isLive ? 'Website Published' : 'Website Draft' }}
+                        </span>
+                        <span class="bw-badge text-[10px] font-mono uppercase px-2.5 py-0.5">
+                            Preset: {{ strtoupper($vendor->layout_preset ?: 'velora') }}
+                        </span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-black tracking-tight">
+                        {{ $shopName }}
+                    </h1>
+                    <p class="text-xs text-zinc-500 font-medium max-w-2xl">
+                        {{ $vendor->headline ?: 'Private Provider Command Dashboard — Manage your personal portfolio website, 3-tier services, proposals, and client contracts.' }}
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <a href="{{ route('vendor.services.create') }}" class="bw-btn-black px-4 py-2.5 text-xs font-bold flex items-center gap-2 shadow-xs">
+                        <span>+ New Service</span>
+                    </a>
+                    <a href="{{ route('vendor.portfolio.create') }}" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                        <span>+ Add Case Study</span>
+                    </a>
+                    <a href="{{ route('vendor.website.index') }}" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                        <span>Personal Website Hub</span>
+                    </a>
+                    <a href="/messages" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                        <span>Messages</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- PERSONAL WEBSITE STATUS + URL + READINESS CARD -->
+            <div class="bw-card p-6 border-2 border-black space-y-4" x-data="{ copied: false }">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-zinc-200">
+                    <div>
+                        <p class="text-[10px] font-mono uppercase tracking-wider text-zinc-500 font-bold">Your Dedicated Personal Website</p>
+                        <div class="mt-1 flex flex-wrap items-center gap-2.5">
+                            <span class="font-mono text-sm sm:text-base font-black text-black break-all">{{ $vendor->storefront_url }}</span>
+                            <button type="button"
+                                    @click="navigator.clipboard?.writeText('{{ $vendor->storefront_url }}'); copied = true; setTimeout(() => copied = false, 2000);"
+                                    class="px-2.5 py-1 rounded-lg bg-zinc-100 hover:bg-black hover:text-white text-[11px] font-bold transition cursor-pointer">
+                                <span x-text="copied ? 'Copied!' : 'Copy URL'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if($isLive)
+                            <a href="{{ $vendor->storefront_url }}" target="_blank" class="bw-btn-black px-4 py-2 text-xs font-bold">
+                                Visit Live Website ↗
+                            </a>
+                        @else
+                            <a href="{{ $vendor->storefrontUrl(['preview' => 1]) }}" target="_blank" class="bw-btn-white px-4 py-2 text-xs font-bold">
+                                Preview Draft Site ↗
+                            </a>
+                            <form action="{{ route('vendor.website.publish') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="action" value="publish">
+                                <button type="submit" class="bw-btn-black px-4 py-2 text-xs font-bold cursor-pointer">
+                                    Publish Website Live
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Readiness Bar -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-bold">
+                        <span class="text-zinc-700">Website Launch Readiness</span>
+                        <span class="font-mono text-black">{{ (int) ($readiness['score'] ?? 0) }}%</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-zinc-100 overflow-hidden">
+                        <div class="h-full bg-black transition-all duration-500" style="width: {{ (int) ($readiness['score'] ?? 0) }}%;"></div>
+                    </div>
+                    @if(!empty($readiness['items']))
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
+                            @foreach($readiness['items'] as $item)
+                                <div class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border {{ $item['passed'] ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900' : 'bg-zinc-50 border-zinc-200 text-zinc-600' }}">
+                                    <span class="font-black">{{ $item['passed'] ? '✓' : '○' }}</span>
+                                    <span class="font-medium truncate">{{ $item['label'] }}</span>
+                                    @if(!empty($item['required']) && !$item['passed'])
+                                        <span class="ml-auto text-[9px] font-mono uppercase text-amber-700 font-bold">Required</span>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- 4 SERVICE PROVIDER METRIC CARDS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bw-card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">Active Services</span>
+                            <span class="bw-badge text-[9px] px-2 py-0.5">Fiverr Gigs</span>
+                        </div>
+                        <div class="text-3xl font-black text-black font-mono">{{ $serviceMetrics['active_services'] }}</div>
+                        <p class="text-xs text-zinc-500 mt-0.5">Synced to marketplace &amp; site</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <span class="text-zinc-500 text-[11px]">Completed Orders: {{ $serviceMetrics['completed_orders'] }}</span>
+                        <a href="{{ route('vendor.services.index') }}" class="font-bold text-black hover:underline">Manage →</a>
+                    </div>
+                </div>
+
+                <div class="bw-card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">Portfolio Case Studies</span>
+                            <span class="bw-badge text-[9px] px-2 py-0.5">Published</span>
+                        </div>
+                        <div class="text-3xl font-black text-black font-mono">{{ $serviceMetrics['published_portfolio'] }}</div>
+                        <p class="text-xs text-zinc-500 mt-0.5">Displayed on your personal website</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <span class="text-zinc-500 text-[11px]">Proof of work</span>
+                        <a href="{{ route('vendor.portfolio.index') }}" class="font-bold text-black hover:underline">Case Studies →</a>
+                    </div>
+                </div>
+
+                <div class="bw-card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">Active Workspaces</span>
+                            <span class="bw-badge text-[9px] px-2 py-0.5">Orders + Contracts</span>
+                        </div>
+                        <div class="text-3xl font-black text-black font-mono">{{ $serviceMetrics['active_orders'] + $serviceMetrics['active_contracts'] }}</div>
+                        <p class="text-xs text-zinc-500 mt-0.5">{{ $serviceMetrics['active_orders'] }} orders • {{ $serviceMetrics['active_contracts'] }} contracts</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <a href="{{ route('vendor.service_orders.index') }}" class="font-bold text-black hover:underline">Orders →</a>
+                        <a href="{{ route('vendor.contracts.index') }}" class="font-bold text-black hover:underline">Contracts →</a>
+                    </div>
+                </div>
+
+                <div class="bw-card p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 font-mono">Website Views (30d)</span>
+                            <span class="bw-badge text-[9px] px-2 py-0.5">Live Traffic</span>
+                        </div>
+                        <div class="text-3xl font-black text-black font-mono">{{ $serviceMetrics['website_views_30d'] }}</div>
+                        <p class="text-xs text-zinc-500 mt-0.5">{{ $serviceMetrics['direct_enquiries'] }} open website enquiries</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                        <a href="{{ route('vendor.enquiries.index', ['tab' => 'direct']) }}" class="font-bold text-black hover:underline">Enquiries →</a>
+                        <a href="{{ route('vendor.analytics.index') }}" class="font-bold text-black hover:underline">Analytics →</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECONDARY QUICK OPERATION STRIP -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{{ route('vendor.projects.index') }}" class="bw-card p-5 hover:border-black transition flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-bold">Upwork Project Briefs</div>
+                        <div class="text-lg font-black text-black mt-1">{{ $serviceMetrics['open_proposals'] }} Active Proposals</div>
+                        <div class="text-xs text-zinc-500 mt-0.5">Browse open briefs &amp; track bids</div>
+                    </div>
+                    <span class="text-lg font-black">→</span>
+                </a>
+
+                <a href="{{ route('vendor.reviews.index') }}" class="bw-card p-5 hover:border-black transition flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-bold">Verified Client Reviews</div>
+                        <div class="text-lg font-black text-black mt-1">{{ $vendor->average_rating ? number_format((float) $vendor->average_rating, 1) . ' ★ Rating' : 'Reviews Hub' }}</div>
+                        <div class="text-xs text-zinc-500 mt-0.5">Post official replies synced to your website</div>
+                    </div>
+                    <span class="text-lg font-black">→</span>
+                </a>
+
+                <a href="{{ route('vendor.website.index') }}" class="bw-card p-5 hover:border-black transition flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-mono uppercase tracking-wider text-zinc-500 font-bold">10+ Website Presets</div>
+                        <div class="text-lg font-black text-black mt-1">Customize Layout &amp; Domain</div>
+                        <div class="text-xs text-zinc-500 mt-0.5">Non-destructive switch + section visibility</div>
+                    </div>
+                    <span class="text-lg font-black">→</span>
+                </a>
+            </div>
+        @else
         <!-- 1. MINIMAL HEADER -->
         <div class="bw-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
             <div class="space-y-1">
@@ -725,6 +923,7 @@
                 </div>
             @endif
         </div>
+        @endif
 
     </div>
 

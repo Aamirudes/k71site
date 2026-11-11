@@ -1,14 +1,16 @@
-<x-layouts.vendor title="Buyer Enquiries & RFQ Leads">
+<x-layouts.vendor :title="$vendor->isServices() ? 'Website & Client Enquiries' : 'Buyer Enquiries & RFQ Leads'">
     <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-serif font-bold text-gray-900">Buyer Enquiries & RFQ Leads</h1>
-            <p class="text-sm text-gray-500 mt-1">Review custom buying requirements, bulk wholesale requests, and submit competitive quotations.</p>
+            <h1 class="text-2xl font-serif font-bold text-gray-900">{{ $vendor->isServices() ? 'Website & Direct Client Enquiries' : 'Buyer Enquiries & RFQ Leads' }}</h1>
+            <p class="text-sm text-gray-500 mt-1">{{ $vendor->isServices() ? 'Enquiries submitted through your personal website contact form and direct K71 client leads.' : 'Review custom buying requirements, bulk wholesale requests, and submit competitive quotations.' }}</p>
         </div>
+        @if(!$vendor->isServices())
         <div>
             <a href="{{ route('enquiry.index') }}" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shadow-sm">
                 <span>🔍 Browse Public Feed</span>
             </a>
         </div>
+        @endif
     </div>
 
     @if(session('success'))
@@ -49,10 +51,10 @@
             @foreach($enquiries as $enquiry)
                 @php
                     $myQuote = $enquiry->quotes->first();
-                    $cleanPhone = preg_replace('/[^0-9]/', '', $enquiry->buyer_phone);
+                    $cleanPhone = preg_replace('/[^0-9]/', '', (string) ($enquiry->buyer_phone ?? ''));
                     if (strlen($cleanPhone) === 10) { $cleanPhone = '91' . $cleanPhone; }
-                    $msg = "Hi {$enquiry->buyer_name}, this is {$vendor->shop_name} on K71. Regarding your requirement (#{$enquiry->enquiry_number}: {$enquiry->title}), we are ready to supply.";
-                    $waLink = "https://wa.me/{$cleanPhone}?text=" . urlencode($msg);
+                    $msg = "Hi {$enquiry->buyer_name}, this is {$vendor->shop_name} on K71. Regarding your requirement (#{$enquiry->enquiry_number}: {$enquiry->title}), let's discuss the details.";
+                    $waLink = $cleanPhone ? ("https://wa.me/{$cleanPhone}?text=" . urlencode($msg)) : null;
                 @endphp
                 <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs transition hover:border-gray-300"
                      x-data="{ quoteOpen: false }">
@@ -117,15 +119,28 @@
                         <div class="lg:w-72 shrink-0 space-y-3 pt-3 lg:pt-0 lg:border-l lg:border-gray-100 lg:pl-5">
                             <div class="text-xs space-y-1">
                                 <div class="font-bold text-gray-900">{{ $enquiry->buyer_name }}</div>
-                                <div class="text-gray-600">📞 {{ $enquiry->buyer_phone }}</div>
+                                @if(!empty($enquiry->buyer_email))
+                                    <div class="text-gray-600 break-all">✉️ {{ $enquiry->buyer_email }}</div>
+                                @endif
+                                @if(!empty($enquiry->buyer_phone))
+                                    <div class="text-gray-600">📞 {{ $enquiry->buyer_phone }}</div>
+                                @endif
                             </div>
 
                             <div class="flex flex-col gap-2">
+                                @if($waLink)
                                 <a href="{{ $waLink }}" target="_blank"
                                    class="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
                                     <span>💬</span>
                                     <span>WhatsApp Buyer</span>
                                 </a>
+                                @endif
+                                @if(!empty($enquiry->buyer_email))
+                                <a href="mailto:{{ $enquiry->buyer_email }}?subject={{ urlencode('Re: ' . $enquiry->title) }}"
+                                   class="w-full py-2 px-3 rounded-xl bg-zinc-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
+                                    <span>✉️ Reply via Email</span>
+                                </a>
+                                @endif
 
                                 @if(!$enquiry->isClosed())
                                     <button type="button" @click="quoteOpen = !quoteOpen"
