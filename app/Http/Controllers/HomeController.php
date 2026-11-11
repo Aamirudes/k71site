@@ -308,6 +308,9 @@ class HomeController extends Controller
             ->get();
 
         $homepageSettings = \App\Models\Setting::getGroup('homepage');
+        $scrollSequence = \App\Services\ScrollSequenceService::resolveSequence(
+            $homepageSettings['scroll_seq_folder'] ?? null
+        );
         $seoSettings = \App\Models\Setting::getGroup('seo');
 
         $latestShorts = \App\Models\Short::with(['vendor'])
@@ -330,6 +333,7 @@ class HomeController extends Controller
             'topVendors',
             'latestShorts',
             'homepageSettings',
+            'scrollSequence',
             'seoSettings'
         ));
     }

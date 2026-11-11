@@ -341,6 +341,9 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/orders/{order}/add-note', [\App\Http\Controllers\AdminController::class, 'addOrderNote'])->name('orders.add_note');
     Route::get('/homepage', [\App\Http\Controllers\Admin\HomepageController::class, 'edit'])->name('homepage');
     Route::put('/homepage', [\App\Http\Controllers\Admin\HomepageController::class, 'update'])->name('homepage.update');
+    Route::post('/homepage/scroll-frames/batch', [\App\Http\Controllers\Admin\HomepageController::class, 'uploadScrollFramesBatch'])->name('homepage.scroll_frames.batch');
+    Route::post('/homepage/scroll-frames/zip', [\App\Http\Controllers\Admin\HomepageController::class, 'uploadScrollFramesZip'])->name('homepage.scroll_frames.zip');
+    Route::delete('/homepage/scroll-frames', [\App\Http\Controllers\Admin\HomepageController::class, 'clearScrollFrames'])->name('homepage.scroll_frames.clear');
     Route::get('/settlements', [\App\Http\Controllers\Admin\SettlementController::class, 'index'])->name('settlements');
     Route::get('/shorts', [ShortsAdminController::class, 'index'])->name('shorts.index');
     Route::post('/shorts/{short}/approve', [ShortsAdminController::class, 'approve'])->name('shorts.approve');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use App\Models\Category;
+use App\Services\ScrollSequenceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -18,8 +19,9 @@ class HomepageController extends Controller
         $usedPage = Setting::getGroup('used_page');
         $seo = Setting::getGroup('seo');
         $categories = Category::whereNull('parent_id')->orderBy('sort_order')->get();
+        $scrollSequence = ScrollSequenceService::resolveSequence($homepage['scroll_seq_folder'] ?? null);
 
-        return view('admin.homepage.edit', compact('homepage', 'servicesPage', 'foodPage', 'usedPage', 'seo', 'categories'));
+        return view('admin.homepage.edit', compact('homepage', 'servicesPage', 'foodPage', 'usedPage', 'seo', 'categories', 'scrollSequence'));
     }
 
     public function update(Request $request)
@@ -149,6 +151,21 @@ class HomepageController extends Controller
             'used_seller_cta_btn_link' => ['nullable', 'string', 'max:255'],
             'used_hero_image_url' => ['nullable', 'string', 'max:500'],
             'used_hero_image' => ['nullable', 'image', 'max:5120'],
+
+            // Scroll Frame Sequence Studio
+            'scroll_seq_enabled' => ['nullable', 'boolean'],
+            'scroll_seq_folder' => ['nullable', 'string', 'max:64'],
+            'scroll_seq_smoothing' => ['nullable', 'numeric', 'min:0.04', 'max:0.35'],
+            'scroll_seq_height_vh' => ['nullable', 'integer', 'min:180', 'max:450'],
+            'scroll_seq_beat1_kicker' => ['nullable', 'string', 'max:80'],
+            'scroll_seq_beat1_title' => ['nullable', 'string', 'max:140'],
+            'scroll_seq_beat1_desc' => ['nullable', 'string', 'max:400'],
+            'scroll_seq_beat2_kicker' => ['nullable', 'string', 'max:80'],
+            'scroll_seq_beat2_title' => ['nullable', 'string', 'max:140'],
+            'scroll_seq_beat2_desc' => ['nullable', 'string', 'max:400'],
+            'scroll_seq_beat3_kicker' => ['nullable', 'string', 'max:80'],
+            'scroll_seq_beat3_title' => ['nullable', 'string', 'max:140'],
+            'scroll_seq_beat3_desc' => ['nullable', 'string', 'max:400'],
         ]);
 
         // File uploads
@@ -243,6 +260,10 @@ class HomepageController extends Controller
             'slide1_badge', 'slide1_title', 'slide1_subtitle', 'slide1_btn1_text', 'slide1_btn1_link', 'slide1_btn2_text', 'slide1_btn2_link', 'slide1_image_url',
             'slide2_badge', 'slide2_title', 'slide2_subtitle', 'slide2_btn1_text', 'slide2_btn1_link', 'slide2_btn2_text', 'slide2_btn2_link', 'slide2_image_url',
             'slide3_badge', 'slide3_title', 'slide3_subtitle', 'slide3_btn1_text', 'slide3_btn1_link', 'slide3_btn2_text', 'slide3_btn2_link', 'slide3_image_url',
+            'scroll_seq_folder', 'scroll_seq_smoothing', 'scroll_seq_height_vh',
+            'scroll_seq_beat1_kicker', 'scroll_seq_beat1_title', 'scroll_seq_beat1_desc',
+            'scroll_seq_beat2_kicker', 'scroll_seq_beat2_title', 'scroll_seq_beat2_desc',
+            'scroll_seq_beat3_kicker', 'scroll_seq_beat3_title', 'scroll_seq_beat3_desc',
         ];
         foreach ($stringHomepageFields as $field) {
             Setting::set($field, $request->input($field), 'homepage', 'string');
@@ -251,7 +272,8 @@ class HomepageController extends Controller
         // Save Homepage Booleans
         $boolHomepageFields = [
             'announcement_enabled', 'show_trending_products', 'show_services_showcase',
-            'show_food_showcase', 'show_categories', 'show_value_pillars', 'show_seller_banner'
+            'show_food_showcase', 'show_categories', 'show_value_pillars', 'show_seller_banner',
+            'scroll_seq_enabled',
         ];
         foreach ($boolHomepageFields as $field) {
             Setting::set($field, $request->has($field), 'homepage', 'boolean');
@@ -297,5 +319,84 @@ class HomepageController extends Controller
         }
 
         return back()->with('success', 'Page Studio settings successfully published live across all verticals!');
+    }
+
+    /**
+     * Upload a chunked batch of video/scroll-sequence frames (webp/jpg/png).
+     */
+    public function uploadScrollFramesBatch(Request $request)
+    {
+        $request->validate([
+            'frames' => ['required', 'array', 'min:1', 'max:30'],
+            'frames.*' => ['file', 'image', 'mimes:webp,jpg,jpeg,png', 'max:8192'],
+            'start_index' => ['nullable', 'integer', 'min:1', 'max:' . ScrollSequenceService::MAX_FRAMES],
+            'reset' => ['nullable', 'boolean'],
+        ]);
+
+        $files = $request->file('frames', []);
+        $startIndex = max(1, (int) $request->input('start_index', 1));
+        $resetBefore = $request->boolean('reset');
+
+        $result = ScrollSequenceService::storeFrameBatch($files, $startIndex, $resetBefore);
+
+        return response()->json([
+            'ok' => true,
+            'written' => $result['written'],
+            'sequence' => $result['sequence'],
+        ]);
+    }
+
+    /**
+     * Extract and replace uploaded scroll sequence from a ZIP archive of numbered frames.
+     */
+    public function uploadScrollFramesZip(Request $request)
+    {
+        $request->validate([
+            'archive' => ['required', 'file', 'max:102400'],
+        ]);
+
+        $file = $request->file('archive');
+        if (strtolower((string) $file->getClientOriginalExtension()) !== 'zip') {
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => false, 'message' => 'Please upload a valid .zip archive containing WebP, JPG, or PNG frames.'], 422);
+            }
+            return back()->withErrors(['archive' => 'Please upload a valid .zip archive.']);
+        }
+
+        try {
+            $sequence = ScrollSequenceService::storeZipArchive($file);
+        } catch (\Throwable $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
+            }
+            return back()->withErrors(['archive' => $e->getMessage()]);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'sequence' => $sequence,
+            ]);
+        }
+
+        return back()->with('success', "Uploaded {$sequence['count']} scroll frames from ZIP archive!");
+    }
+
+    /**
+     * Delete all admin-uploaded scroll sequence frames and revert to drop-in folder or 3D fallback.
+     */
+    public function clearScrollFrames(Request $request)
+    {
+        ScrollSequenceService::clearUploadedFrames();
+        $sequence = ScrollSequenceService::resolveSequence(Setting::get('scroll_seq_folder'));
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'ok' => true,
+                'sequence' => $sequence,
+            ]);
+        }
+
+        return back()->with('success', 'Uploaded scroll sequence frames cleared cleanly.');
     }
 }

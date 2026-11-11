@@ -89,7 +89,7 @@
         })();
     </script>
 </head>
-<body class="{{ $grailTheme ? 'bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018]' : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-600 selection:text-white' }} font-sans antialiased flex flex-col min-h-screen relative overflow-x-hidden" @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif>
+<body class="{{ $grailTheme ? 'bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018] overflow-x-clip' : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-600 selection:text-white overflow-x-hidden' }} font-sans antialiased flex flex-col min-h-screen relative" @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif>
     
     
     @php

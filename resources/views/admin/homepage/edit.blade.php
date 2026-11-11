@@ -5,10 +5,12 @@
         $fp = $foodPage ?? [];
         $up = $usedPage ?? [];
         $seoData = $seo ?? [];
+        $seq = $scrollSequence ?? \App\Services\ScrollSequenceService::resolveSequence($hp['scroll_seq_folder'] ?? null);
+        $seqEnabled = array_key_exists('scroll_seq_enabled', $hp) ? (bool) $hp['scroll_seq_enabled'] : true;
     @endphp
 
     <div x-data="{
-        activeTab: 'homepage', // 'homepage', 'services', 'food', 'used', 'seo'
+        activeTab: 'homepage', // 'homepage', 'scroll_sequence', 'services', 'food', 'used', 'seo'
         
         // Homepage Live State
         hp_hero_badge: '{{ addslashes($hp['hero_badge'] ?? 'K71 UNIFIED MARKETPLACE • Verified Stores & Secure Escrow') }}',
@@ -100,6 +102,14 @@
                     :class="activeTab === 'homepage' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
                     class="px-3.5 py-2 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer">
                 Homepage &amp; Retail
+            </button>
+            <button type="button" @click="activeTab = 'scroll_sequence'"
+                    :class="activeTab === 'scroll_sequence' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
+                    class="px-3.5 py-2 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5">
+                <span>Scroll Sequence</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono"
+                      :class="activeTab === 'scroll_sequence' ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-700'"
+                      id="seq-tab-badge-count">{{ (int) ($seq['count'] ?? 0) }}f</span>
             </button>
             <button type="button" @click="activeTab = 'services'"
                     :class="activeTab === 'services' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
@@ -1000,6 +1010,301 @@
                 </div>
             </div>
 
+            <!-- TAB 6: SCROLL FRAME SEQUENCE STUDIO -->
+            <div x-show="activeTab === 'scroll_sequence'" class="space-y-6" style="display: none;">
+
+                <!-- Active Sequence Status & Micro-Scrub Preview -->
+                <div class="bg-zinc-950 text-white rounded-2xl p-6 border border-zinc-800 shadow-xl space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase tracking-[0.2em] text-fuchsia-300 font-bold block">Sticky Pinned Scrollytelling Engine</span>
+                            <h3 class="text-base sm:text-lg font-bold text-white mt-0.5">Active Scroll Frame Sequence</h3>
+                            <p class="text-xs text-zinc-400 mt-0.5" id="seq-status-label">{{ $seq['label'] ?? 'Studio 3D Preview' }}</p>
+                        </div>
+                        <div class="flex items-center gap-2.5 shrink-0">
+                            <span class="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-mono text-amber-300 font-semibold" id="seq-status-count">
+                                {{ (int) ($seq['count'] ?? 0) }} Frames
+                            </span>
+                            <button type="button"
+                                    id="seq-clear-btn"
+                                    class="px-3.5 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-500/30 text-xs font-semibold transition cursor-pointer {{ ($seq['source'] ?? 'fallback') === 'uploaded' ? '' : 'hidden' }}">
+                                Clear Uploaded Frames
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Micro Scrub Previewer -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                        <div class="lg:col-span-5">
+                            <div class="aspect-video rounded-xl overflow-hidden bg-black border border-zinc-800 relative flex items-center justify-center">
+                                <img id="seq-preview-img"
+                                     src="{{ !empty($seq['frames'][0]) ? $seq['frames'][0] : '' }}"
+                                     alt="Frame Preview"
+                                     class="w-full h-full object-cover {{ empty($seq['frames']) ? 'hidden' : '' }}">
+                                <div id="seq-preview-empty"
+                                     class="p-6 text-center space-y-1.5 {{ empty($seq['frames']) ? '' : 'hidden' }}">
+                                    <span class="text-xs font-semibold text-fuchsia-300 block">3D Procedural Preview Active on Homepage</span>
+                                    <p class="text-[11px] text-zinc-400 leading-relaxed">Upload a video (.mp4/.webm/.mov), numbered frame images, or a .zip below to replace the 3D monolith with your custom camera frames.</p>
+                                </div>
+                                <span id="seq-preview-badge"
+                                      class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/75 text-white text-[10px] font-mono border border-white/15 {{ empty($seq['frames']) ? 'hidden' : '' }}">
+                                    Frame 1 / {{ (int) ($seq['count'] ?? 0) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-7 space-y-4">
+                            <div>
+                                <div class="flex items-center justify-between text-xs mb-1.5">
+                                    <span class="font-semibold text-zinc-200">Test Scrub Slider</span>
+                                    <span class="font-mono text-zinc-400" id="seq-scrub-readout">0%</span>
+                                </div>
+                                <input type="range"
+                                       id="seq-preview-slider"
+                                       min="0"
+                                       max="{{ max(0, count($seq['frames'] ?? []) - 1) }}"
+                                       value="0"
+                                       class="w-full accent-fuchsia-300 cursor-pointer"
+                                       {{ empty($seq['frames']) ? 'disabled' : '' }}>
+                            </div>
+
+                            <!-- Live Upload Progress Telemetry -->
+                            <div id="seq-progress-box" class="hidden p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-semibold text-fuchsia-200" id="seq-progress-msg">Preparing frames...</span>
+                                    <span class="font-mono text-amber-300" id="seq-progress-pct">0%</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div id="seq-progress-fill" class="h-full bg-gradient-to-r from-amber-300 to-fuchsia-300 transition-all duration-150" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <div id="seq-feedback-banner" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Options Grid (Pure JS/Fetch Actions - No Nested Forms) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+                    <!-- Option A: In-Browser Video to WebP Frames Converter -->
+                    <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs space-y-4">
+                        <div class="pb-3 border-b border-zinc-100">
+                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-950 text-white font-bold">Option A • Recommended</span>
+                            <h4 class="text-sm font-bold text-zinc-950 mt-2">Video to Frames (In-Browser)</h4>
+                            <p class="text-xs text-zinc-500 mt-0.5">Select an MP4, WebM, or MOV. Extracted directly to crisp WebP frames and uploaded in chunks.</p>
+                        </div>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Choose Video File</label>
+                                <input type="file" id="seq-video-input" accept="video/mp4,video/webm,video/quicktime"
+                                       class="w-full text-xs text-zinc-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-950 file:text-white hover:file:bg-zinc-800 cursor-pointer">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block font-semibold text-zinc-800 mb-1">Frames</label>
+                                    <select id="seq-video-count" class="w-full px-2.5 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                                        <option value="48">48 frames (Fast)</option>
+                                        <option value="72" selected>72 frames (Smooth)</option>
+                                        <option value="96">96 frames (Cinema)</option>
+                                        <option value="120">120 frames (Ultra)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-zinc-800 mb-1">Max Width</label>
+                                    <select id="seq-video-width" class="w-full px-2.5 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                                        <option value="960">960px</option>
+                                        <option value="1280" selected>1280px (HD)</option>
+                                        <option value="1440">1440px</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">WebP Quality (<span id="seq-q-val">0.82</span>)</label>
+                                <input type="range" id="seq-video-quality" min="0.65" max="0.92" step="0.01" value="0.82"
+                                       oninput="document.getElementById('seq-q-val').textContent = Number(this.value).toFixed(2)"
+                                       class="w-full accent-zinc-950">
+                            </div>
+
+                            <button type="button"
+                                    id="seq-video-upload-btn"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer active:scale-98">
+                                Extract Video &amp; Upload Frames
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Option B: Direct Pre-Converted Frame Images -->
+                    <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs space-y-4">
+                        <div class="pb-3 border-b border-zinc-100">
+                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-bold">Option B • Images</span>
+                            <h4 class="text-sm font-bold text-zinc-950 mt-2">Upload Converted Frame Images</h4>
+                            <p class="text-xs text-zinc-500 mt-0.5">Already converted your video into numbered JPG/WebP/PNG frames? Select all images at once.</p>
+                        </div>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Select All Sequence Frames</label>
+                                <input type="file" id="seq-images-input" multiple accept="image/webp,image/jpeg,image/png"
+                                       class="w-full text-xs text-zinc-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-900 hover:file:bg-zinc-200 cursor-pointer">
+                            </div>
+
+                            <p class="text-[11px] text-zinc-500 leading-relaxed">
+                                Files are automatically sorted naturally (<code class="font-mono bg-zinc-100 px-1 rounded">frame_1, frame_2, ..., frame_90</code>) and uploaded in 8-frame batches.
+                            </p>
+
+                            <button type="button"
+                                    id="seq-images-upload-btn"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer">
+                                Upload Selected Frames
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Option C: ZIP Archive or Drop-In Folder -->
+                    <div class="bg-white rounded-2xl p-5 border border-zinc-200/80 shadow-xs space-y-4">
+                        <div class="pb-3 border-b border-zinc-100">
+                            <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 font-bold">Option C • ZIP / CLI</span>
+                            <h4 class="text-sm font-bold text-zinc-950 mt-2">Upload .zip Archive or Drop Folder</h4>
+                            <p class="text-xs text-zinc-500 mt-0.5">Upload a compressed <code class="font-mono">.zip</code> containing numbered frames, or drop files directly in the repo folder.</p>
+                        </div>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Choose Frames .zip File</label>
+                                <input type="file" id="seq-zip-input" accept=".zip,application/zip"
+                                       class="w-full text-xs text-zinc-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-900 hover:file:bg-zinc-200 cursor-pointer">
+                            </div>
+
+                            <button type="button"
+                                    id="seq-zip-upload-btn"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs transition cursor-pointer">
+                                Upload &amp; Unpack .zip Frames
+                            </button>
+
+                            <div class="p-3 rounded-xl bg-zinc-50 border border-zinc-200/80 text-[11px] text-zinc-600 space-y-1">
+                                <span class="font-bold text-zinc-800 block">Repo Drop-In / CLI Helper:</span>
+                                <code class="block font-mono text-[10px] text-zinc-700 break-all">public/images/scroll-frames/frame_0001.webp</code>
+                                <code class="block font-mono text-[10px] text-zinc-700 break-all">node tools/convert-video-frames.mjs video.mp4</code>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Scroll Choreography & Story Beats Configuration (Saved with Master Form) -->
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100">
+                        <div>
+                            <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">Stage Timing &amp; Synchronized Story Beats</h3>
+                            <p class="text-xs text-zinc-500 mt-0.5">Configure sticky runway height, inertial smoothing, and the 3 headlines scrubbed over your animation.</p>
+                        </div>
+                        <label class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-900 cursor-pointer">
+                            <input type="checkbox" name="scroll_seq_enabled" value="1"
+                                   class="rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
+                                   {{ $seqEnabled ? 'checked' : '' }}>
+                            <span>Enable Scroll Sequence Stage on Homepage</span>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Scroll Track Height (vh)</label>
+                            <input type="number" name="scroll_seq_height_vh" min="180" max="450" step="10"
+                                   value="{{ (int) (($hp['scroll_seq_height_vh'] ?? 0) ?: 290) }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                            <span class="text-[10px] text-zinc-400 mt-1 block">Recommended: 260–340 vh</span>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Inertial Smoothing (0.04 – 0.35)</label>
+                            <input type="number" name="scroll_seq_smoothing" min="0.04" max="0.35" step="0.01"
+                                   value="{{ (float) (($hp['scroll_seq_smoothing'] ?? 0) ?: 0.12) }}"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                            <span class="text-[10px] text-zinc-400 mt-1 block">Lower = silkier cinema glide (0.12 default)</span>
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Optional Subfolder (<code class="font-mono">public/images/</code>)</label>
+                            <input type="text" name="scroll_seq_folder"
+                                   value="{{ $hp['scroll_seq_folder'] ?? '' }}"
+                                   placeholder="scroll-frames"
+                                   class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                            <span class="text-[10px] text-zinc-400 mt-1 block">Leave empty to auto-detect uploaded or default folder</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2 text-xs">
+                        <!-- Beat 1 -->
+                        <div class="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-3">
+                            <span class="font-bold text-zinc-900 block uppercase tracking-wider text-[11px]">Beat 1 (Start 0% – 33%)</span>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Kicker Badge</label>
+                                <input type="text" name="scroll_seq_beat1_kicker"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat1_kicker'] ?? '')) ?: 'Chapter I • Quarry & Craft' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Headline</label>
+                                <input type="text" name="scroll_seq_beat1_title"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat1_title'] ?? '')) ?: 'Sculpted in Stone. Revealed in Motion.' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Caption</label>
+                                <textarea name="scroll_seq_beat1_desc" rows="2"
+                                          class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900">{{ trim((string) ($hp['scroll_seq_beat1_desc'] ?? '')) ?: 'Every contour unfolds frame by frame as you scroll through K71 curated Indian craftsmanship and direct-factory finds.' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Beat 2 -->
+                        <div class="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-3">
+                            <span class="font-bold text-zinc-900 block uppercase tracking-wider text-[11px]">Beat 2 (Mid 33% – 66%)</span>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Kicker Badge</label>
+                                <input type="text" name="scroll_seq_beat2_kicker"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat2_kicker'] ?? '')) ?: 'Chapter II • Material Provenance' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Headline</label>
+                                <input type="text" name="scroll_seq_beat2_title"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat2_title'] ?? '')) ?: 'Pure Veins & Authentic Workshop Polish.' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Caption</label>
+                                <textarea name="scroll_seq_beat2_desc" rows="2"
+                                          class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900">{{ trim((string) ($hp['scroll_seq_beat2_desc'] ?? '')) ?: 'Inspect luminous surfaces, handloom weaves, and artisan detail directly from verified regional ateliers.' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Beat 3 -->
+                        <div class="p-4 rounded-xl bg-zinc-50 border border-zinc-200/80 space-y-3">
+                            <span class="font-bold text-zinc-900 block uppercase tracking-wider text-[11px]">Beat 3 (End 66% – 100%)</span>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Kicker Badge</label>
+                                <input type="text" name="scroll_seq_beat3_kicker"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat3_kicker'] ?? '')) ?: 'Chapter III • Direct Dispatch' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Headline</label>
+                                <input type="text" name="scroll_seq_beat3_title"
+                                       value="{{ trim((string) ($hp['scroll_seq_beat3_title'] ?? '')) ?: 'Own the Genuine Piece Direct.' }}"
+                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900 font-bold">
+                            </div>
+                            <div>
+                                <label class="block text-zinc-600 font-semibold mb-1">Caption</label>
+                                <textarea name="scroll_seq_beat3_desc" rows="2"
+                                          class="w-full px-3 py-2 rounded-lg border border-zinc-300 bg-white text-zinc-900">{{ trim((string) ($hp['scroll_seq_beat3_desc'] ?? '')) ?: 'Backed by PhonePe escrow settlements, GST-vetted merchants, and insured Pan-India delivery.' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Floating / Sticky Save Footer -->
             <div class="pt-4 flex items-center justify-end gap-3">
                 <a href="{{ route('admin.dashboard') }}" class="px-4 py-2.5 rounded-lg text-xs font-semibold text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 transition">
@@ -1014,4 +1319,329 @@
         </form>
 
     </div>
+
+    @php
+        $adminSeqConfigPayload = [
+            'batchUrl' => route('admin.homepage.scroll_frames.batch'),
+            'zipUrl' => route('admin.homepage.scroll_frames.zip'),
+            'clearUrl' => route('admin.homepage.scroll_frames.clear'),
+            'sequence' => $seq,
+        ];
+    @endphp
+    <script type="application/json" id="admin-seq-config">{!! json_encode($adminSeqConfigPayload, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) !!}</script>
+
+    <script>
+        (function () {
+            const cfgEl = document.getElementById('admin-seq-config');
+            if (!cfgEl) return;
+
+            let cfg = {};
+            try { cfg = JSON.parse(cfgEl.textContent || '{}'); } catch (e) { return; }
+
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            let currentFrames = (cfg.sequence && Array.isArray(cfg.sequence.frames)) ? cfg.sequence.frames : [];
+
+            const statusLabel = document.getElementById('seq-status-label');
+            const statusCount = document.getElementById('seq-status-count');
+            const tabBadge = document.getElementById('seq-tab-badge-count');
+            const clearBtn = document.getElementById('seq-clear-btn');
+            const previewImg = document.getElementById('seq-preview-img');
+            const previewEmpty = document.getElementById('seq-preview-empty');
+            const previewBadge = document.getElementById('seq-preview-badge');
+            const previewSlider = document.getElementById('seq-preview-slider');
+            const scrubReadout = document.getElementById('seq-scrub-readout');
+            const progressBox = document.getElementById('seq-progress-box');
+            const progressMsg = document.getElementById('seq-progress-msg');
+            const progressPct = document.getElementById('seq-progress-pct');
+            const progressFill = document.getElementById('seq-progress-fill');
+            const feedbackBanner = document.getElementById('seq-feedback-banner');
+
+            const setProgress = (visible, msg, pct) => {
+                if (!progressBox) return;
+                progressBox.classList.toggle('hidden', !visible);
+                if (msg !== undefined && progressMsg) progressMsg.textContent = msg;
+                if (pct !== undefined) {
+                    const p = Math.min(100, Math.max(0, Math.round(pct)));
+                    if (progressPct) progressPct.textContent = p + '%';
+                    if (progressFill) progressFill.style.width = p + '%';
+                }
+            };
+
+            const setFeedback = (ok, msg) => {
+                if (!feedbackBanner) return;
+                feedbackBanner.classList.remove('hidden', 'bg-emerald-950/60', 'border-emerald-700', 'text-emerald-200', 'bg-rose-950/60', 'border-rose-700', 'text-rose-200');
+                feedbackBanner.classList.add('border', ok ? 'bg-emerald-950/60' : 'bg-rose-950/60', ok ? 'border-emerald-700' : 'border-rose-700', ok ? 'text-emerald-200' : 'text-rose-200');
+                feedbackBanner.textContent = msg;
+            };
+
+            const applySequenceUI = (seq) => {
+                if (!seq) return;
+                currentFrames = Array.isArray(seq.frames) ? seq.frames : [];
+                const cnt = Number(seq.count || currentFrames.length || 0);
+                if (statusLabel) statusLabel.textContent = seq.label || 'Studio 3D Preview';
+                if (statusCount) statusCount.textContent = `${cnt} Frames`;
+                if (tabBadge) tabBadge.textContent = `${cnt}f`;
+                if (clearBtn) clearBtn.classList.toggle('hidden', seq.source !== 'uploaded');
+
+                if (cnt > 0 && currentFrames[0]) {
+                    previewImg?.classList.remove('hidden');
+                    previewEmpty?.classList.add('hidden');
+                    previewBadge?.classList.remove('hidden');
+                    if (previewSlider) {
+                        previewSlider.disabled = false;
+                        previewSlider.max = String(cnt - 1);
+                        previewSlider.value = '0';
+                    }
+                    updatePreviewAtIndex(0);
+                } else {
+                    previewImg?.classList.add('hidden');
+                    previewEmpty?.classList.remove('hidden');
+                    previewBadge?.classList.add('hidden');
+                    if (previewSlider) {
+                        previewSlider.disabled = true;
+                        previewSlider.max = '0';
+                        previewSlider.value = '0';
+                    }
+                    if (scrubReadout) scrubReadout.textContent = '0%';
+                }
+            };
+
+            const updatePreviewAtIndex = (idx) => {
+                if (!currentFrames.length) return;
+                const safeIdx = Math.min(currentFrames.length - 1, Math.max(0, Number(idx) || 0));
+                if (previewImg) previewImg.src = currentFrames[safeIdx];
+                if (previewBadge) previewBadge.textContent = `Frame ${safeIdx + 1} / ${currentFrames.length}`;
+                const pct = currentFrames.length > 1 ? Math.round((safeIdx / (currentFrames.length - 1)) * 100) : 100;
+                if (scrubReadout) scrubReadout.textContent = `${pct}%`;
+            };
+
+            previewSlider?.addEventListener('input', (e) => {
+                updatePreviewAtIndex(e.target.value);
+            });
+
+            const uploadChunk = async (blobsOrFiles, startIndex, resetFlag) => {
+                const fd = new FormData();
+                fd.append('start_index', String(startIndex));
+                fd.append('reset', resetFlag ? '1' : '0');
+                blobsOrFiles.forEach((item, i) => {
+                    fd.append('frames[]', item.blob || item, item.name || `frame_${startIndex + i}.webp`);
+                });
+                const res = await fetch(cfg.batchUrl, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                    credentials: 'same-origin',
+                    body: fd,
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.ok) {
+                    throw new Error(data.message || `Batch upload failed (HTTP ${res.status})`);
+                }
+                return data;
+            };
+
+            // Option A: Video -> WebP extraction & chunked upload
+            const videoBtn = document.getElementById('seq-video-upload-btn');
+            videoBtn?.addEventListener('click', async () => {
+                const fileInput = document.getElementById('seq-video-input');
+                const file = fileInput?.files?.[0];
+                if (!file) {
+                    setFeedback(false, 'Please choose an MP4, WebM, or MOV video file first.');
+                    return;
+                }
+
+                const targetCount = Number(document.getElementById('seq-video-count')?.value || 72);
+                const maxWidth = Number(document.getElementById('seq-video-width')?.value || 1280);
+                const quality = Number(document.getElementById('seq-video-quality')?.value || 0.82);
+
+                videoBtn.disabled = true;
+                setFeedback(true, 'Loading video metadata in browser...');
+                setProgress(true, 'Preparing video decoder...', 2);
+
+                const objUrl = URL.createObjectURL(file);
+                const video = document.createElement('video');
+                video.muted = true;
+                video.playsInline = true;
+                video.preload = 'auto';
+                video.src = objUrl;
+
+                try {
+                    await new Promise((resolve, reject) => {
+                        video.onloadedmetadata = () => resolve();
+                        video.onerror = () => reject(new Error('Your browser could not decode this video format. Try MP4 (H.264) or WebM.'));
+                    });
+
+                    const duration = video.duration;
+                    if (!Number.isFinite(duration) || duration <= 0.1) {
+                        throw new Error('Video duration is invalid or too short.');
+                    }
+
+                    const vw = video.videoWidth || 1280;
+                    const vh = video.videoHeight || 720;
+                    const outW = Math.min(maxWidth, vw);
+                    const outH = Math.max(2, Math.round(outW * (vh / vw)));
+
+                    const offCanvas = document.createElement('canvas');
+                    offCanvas.width = outW;
+                    offCanvas.height = outH;
+                    const offCtx = offCanvas.getContext('2d');
+
+                    const toFrameBlob = (c, q) => new Promise((resolve) => {
+                        c.toBlob((blob) => {
+                            if (blob) return resolve({ blob, ext: 'webp' });
+                            c.toBlob((jpg) => resolve({ blob: jpg, ext: 'jpg' }), 'image/jpeg', q);
+                        }, 'image/webp', q);
+                    });
+
+                    const chunkSize = 8;
+                    let batch = [];
+                    let nextStartIdx = 1;
+                    let isFirstBatch = true;
+                    let latestSeq = null;
+
+                    for (let i = 0; i < targetCount; i++) {
+                        const seekTime = Math.min(duration - 0.02, Math.max(0, (i / Math.max(1, targetCount - 1)) * (duration - 0.03)));
+                        await new Promise((resolve) => {
+                            let done = false;
+                            const finish = () => {
+                                if (!done) {
+                                    done = true;
+                                    resolve();
+                                }
+                            };
+                            video.addEventListener('seeked', finish, { once: true });
+                            setTimeout(finish, 1800);
+                            video.currentTime = seekTime;
+                        });
+
+                        offCtx.drawImage(video, 0, 0, outW, outH);
+                        const { blob, ext } = await toFrameBlob(offCanvas, quality);
+                        if (blob) {
+                            batch.push({
+                                blob,
+                                name: `frame_${String(i + 1).padStart(5, '0')}.${ext}`,
+                            });
+                        }
+
+                        const pct = ((i + 1) / targetCount) * 100;
+                        setProgress(true, `Extracting & uploading frame ${i + 1} / ${targetCount}...`, pct);
+
+                        if (batch.length >= chunkSize || i === targetCount - 1) {
+                            const res = await uploadChunk(batch, nextStartIdx, isFirstBatch);
+                            latestSeq = res.sequence;
+                            nextStartIdx += batch.length;
+                            batch = [];
+                            isFirstBatch = false;
+                        }
+                    }
+
+                    if (latestSeq) applySequenceUI(latestSeq);
+                    setProgress(false);
+                    setFeedback(true, `Successfully converted video into ${targetCount} WebP frames and published!`);
+                } catch (err) {
+                    setProgress(false);
+                    setFeedback(false, err.message || 'Video extraction failed.');
+                } finally {
+                    URL.revokeObjectURL(objUrl);
+                    videoBtn.disabled = false;
+                }
+            });
+
+            // Option B: Direct Multi-Image Upload
+            const imagesBtn = document.getElementById('seq-images-upload-btn');
+            imagesBtn?.addEventListener('click', async () => {
+                const input = document.getElementById('seq-images-input');
+                const files = Array.from(input?.files || []);
+                if (!files.length) {
+                    setFeedback(false, 'Please select one or more image frames first.');
+                    return;
+                }
+
+                files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+                const capped = files.slice(0, 360);
+                imagesBtn.disabled = true;
+                setProgress(true, `Uploading ${capped.length} sorted image frames...`, 5);
+
+                try {
+                    const chunkSize = 8;
+                    let latestSeq = null;
+                    for (let i = 0; i < capped.length; i += chunkSize) {
+                        const slice = capped.slice(i, i + chunkSize);
+                        const res = await uploadChunk(slice, i + 1, i === 0);
+                        latestSeq = res.sequence;
+                        setProgress(true, `Uploaded ${Math.min(i + chunkSize, capped.length)} / ${capped.length} frames...`, ((i + slice.length) / capped.length) * 100);
+                    }
+                    if (latestSeq) applySequenceUI(latestSeq);
+                    setProgress(false);
+                    setFeedback(true, `Uploaded ${capped.length} frames in natural sequence order!`);
+                } catch (err) {
+                    setProgress(false);
+                    setFeedback(false, err.message || 'Image batch upload failed.');
+                } finally {
+                    imagesBtn.disabled = false;
+                }
+            });
+
+            // Option C: ZIP Upload
+            const zipBtn = document.getElementById('seq-zip-upload-btn');
+            zipBtn?.addEventListener('click', async () => {
+                const input = document.getElementById('seq-zip-input');
+                const file = input?.files?.[0];
+                if (!file) {
+                    setFeedback(false, 'Please select a .zip archive containing image frames.');
+                    return;
+                }
+
+                zipBtn.disabled = true;
+                setProgress(true, 'Uploading and unpacking .zip archive on server...', 55);
+
+                try {
+                    const fd = new FormData();
+                    fd.append('archive', file);
+                    const res = await fetch(cfg.zipUrl, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                        credentials: 'same-origin',
+                        body: fd,
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.ok) {
+                        throw new Error(data.message || `ZIP upload failed (HTTP ${res.status})`);
+                    }
+                    applySequenceUI(data.sequence);
+                    setProgress(false);
+                    setFeedback(true, `Extracted ${data.sequence?.count || 0} frames cleanly from ZIP archive!`);
+                } catch (err) {
+                    setProgress(false);
+                    setFeedback(false, err.message || 'ZIP extraction failed.');
+                } finally {
+                    zipBtn.disabled = false;
+                }
+            });
+
+            // Clear Uploaded Frames
+            clearBtn?.addEventListener('click', async () => {
+                clearBtn.disabled = true;
+                setProgress(true, 'Clearing uploaded scroll frames...', 50);
+                try {
+                    const res = await fetch(cfg.clearUrl, {
+                        method: 'DELETE',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf },
+                        credentials: 'same-origin',
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || !data.ok) {
+                        throw new Error(data.message || 'Failed to clear frames.');
+                    }
+                    applySequenceUI(data.sequence);
+                    setProgress(false);
+                    setFeedback(true, 'Cleared uploaded frames. Homepage reverted cleanly to drop-in folder or 3D studio preview.');
+                } catch (err) {
+                    setProgress(false);
+                    setFeedback(false, err.message || 'Failed to clear frames.');
+                } finally {
+                    clearBtn.disabled = false;
+                }
+            });
+        })();
+    </script>
 </x-layouts.admin>

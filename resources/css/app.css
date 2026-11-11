@@ -684,6 +684,54 @@
         transition-delay: calc(var(--i, 0) * 22ms);
     }
 
+    /* Grail Sticky Scroll-Scrubbed Frame Sequence Stage (Act 1B) */
+    .grail-seq-stage {
+        position: relative;
+        width: 100%;
+        background-color: #000000;
+        color: var(--grail-ivory);
+    }
+
+    .grail-seq-sticky {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 3.5rem;
+        height: calc(100vh - 3.5rem);
+        height: calc(100dvh - 3.5rem);
+        width: 100%;
+        overflow: hidden;
+        background-color: #000000;
+    }
+
+    @media (min-width: 640px) {
+        .grail-seq-sticky {
+            top: 4rem;
+            height: calc(100vh - 4rem);
+            height: calc(100dvh - 4rem);
+        }
+    }
+
+    .grail-seq-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+
+    .grail-seq-beat {
+        opacity: var(--beat-o, 0);
+        transform: translate3d(0, var(--beat-y, 24px), 0);
+        pointer-events: var(--beat-pe, none);
+        will-change: opacity, transform;
+    }
+
+    .grail-seq-progress-fill {
+        transform-origin: 0 50%;
+        transform: scaleX(var(--seq-p, 0));
+        will-change: transform;
+    }
+
     /* Reduced Motion Safety (Grail Spec) */
     @media (prefers-reduced-motion: reduce) {
         .grail-word-rise,
@@ -705,6 +753,20 @@
         .grail-ink-flood {
             mask-image: none !important;
             -webkit-mask-image: none !important;
+        }
+        .grail-seq-stage {
+            height: auto !important;
+            min-height: 540px;
+        }
+        .grail-seq-sticky {
+            position: relative !important;
+            top: 0 !important;
+            height: 540px !important;
+        }
+        .grail-seq-beat[data-seq-beat="0"] {
+            opacity: 1 !important;
+            transform: none !important;
+            pointer-events: auto !important;
         }
     }
 }

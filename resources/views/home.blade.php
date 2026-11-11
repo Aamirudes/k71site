@@ -78,6 +78,30 @@
         || $featuredUsed->isNotEmpty()
         || $featuredEnquiries->isNotEmpty()
     );
+
+    $seq = $scrollSequence ?? \App\Services\ScrollSequenceService::resolveSequence($hp['scroll_seq_folder'] ?? null);
+    $seqEnabled = array_key_exists('scroll_seq_enabled', $hp) ? (bool) $hp['scroll_seq_enabled'] : true;
+    $seqFrames = $seq['frames'] ?? [];
+    $defaultHeightVh = count($seqFrames) >= 150 ? 360 : 290;
+    $seqHeightVh = max(180, min(450, (int) (($hp['scroll_seq_height_vh'] ?? 0) ?: $defaultHeightVh)));
+    $seqSmoothing = max(0.04, min(0.35, (float) (($hp['scroll_seq_smoothing'] ?? 0) ?: 0.12)));
+    $seqBeats = [
+        [
+            'kicker' => trim((string) ($hp['scroll_seq_beat1_kicker'] ?? '')) ?: 'Chapter I • Quarry & Craft',
+            'title' => trim((string) ($hp['scroll_seq_beat1_title'] ?? '')) ?: 'Sculpted in Stone. Revealed in Motion.',
+            'desc' => trim((string) ($hp['scroll_seq_beat1_desc'] ?? '')) ?: 'Every contour unfolds frame by frame as you scroll through K71 curated Indian craftsmanship and direct-factory finds.',
+        ],
+        [
+            'kicker' => trim((string) ($hp['scroll_seq_beat2_kicker'] ?? '')) ?: 'Chapter II • Material Provenance',
+            'title' => trim((string) ($hp['scroll_seq_beat2_title'] ?? '')) ?: 'Pure Veins & Authentic Workshop Polish.',
+            'desc' => trim((string) ($hp['scroll_seq_beat2_desc'] ?? '')) ?: 'Inspect luminous surfaces, handloom weaves, and artisan detail directly from verified regional ateliers.',
+        ],
+        [
+            'kicker' => trim((string) ($hp['scroll_seq_beat3_kicker'] ?? '')) ?: 'Chapter III • Direct Dispatch',
+            'title' => trim((string) ($hp['scroll_seq_beat3_title'] ?? '')) ?: 'Own the Genuine Piece Direct.',
+            'desc' => trim((string) ($hp['scroll_seq_beat3_desc'] ?? '')) ?: 'Backed by PhonePe escrow settlements, GST-vetted merchants, and insured Pan-India delivery.',
+        ],
+    ];
 @endphp
 
 <x-layouts.public
@@ -370,10 +394,128 @@
             </div>
         </section>
 
+        @if($seqEnabled)
+        @php
+            $seqConfigPayload = [
+                'frames' => $seqFrames,
+                'source' => $seq['source'] ?? 'fallback',
+                'smoothing' => $seqSmoothing,
+                'count' => count($seqFrames),
+            ];
+        @endphp
+        <!-- =========================================================
+             ACT 1B: STICKY PINNED VIDEO-FRAME SCROLL SEQUENCE (0 -> 1 SCRUB)
+             ========================================================= -->
+        <section id="k71-scroll-stage"
+                 class="grail-seq-stage border-t border-white/10"
+                 style="height: {{ $seqHeightVh }}vh;"
+                 data-pill-zone="dark"
+                 data-pill-hide="true"
+                 data-seq-stage>
+            <script type="application/json" id="k71-seq-config">{!! json_encode($seqConfigPayload, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES) !!}</script>
+
+            <div class="grail-seq-sticky">
+                <!-- Full-Viewport HiDPI Canvas -->
+                <canvas id="k71-seq-canvas"
+                        class="grail-seq-canvas"
+                        aria-label="K71 interactive product craft motion showcase"></canvas>
+
+                <!-- Atmospheric Vignettes & High-Contrast Scrims -->
+                <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/22 to-black/68"></div>
+                <div class="pointer-events-none hidden lg:block absolute inset-0 bg-gradient-to-r from-black/78 via-black/28 to-transparent"></div>
+                <div class="pointer-events-none absolute top-0 left-1/3 w-[48vw] h-[280px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(236,210,243,0.12)_0%,rgba(201,162,74,0.05)_50%,transparent_75%)] blur-3xl"></div>
+
+                <!-- Overlay UI Grid -->
+                <div class="relative z-10 h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-9 flex flex-col justify-between pointer-events-none">
+
+                    <!-- Top Sequence Telemetry Strip -->
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-1.5 rounded-full bg-black/55 border border-white/14 backdrop-blur-xl text-[10px] sm:text-xs font-medium tracking-[0.14em] uppercase text-[#EFE9F2]/85">
+                            <span class="w-2 h-2 rounded-full bg-[#ECD2F3] animate-pulse shrink-0"></span>
+                            <span class="whitespace-nowrap" data-seq-badge>{{ !empty($seqFrames) ? 'Cinematic Scrub' : '3D Studio Preview' }}</span>
+                            <span class="text-white/25">•</span>
+                            <span class="font-mono text-[#C9A24A] tabular-nums whitespace-nowrap" data-seq-counter>
+                                {{ !empty($seqFrames) ? sprintf('01 / %02d', count($seqFrames)) : '000°' }}
+                            </span>
+                        </div>
+
+                        <a href="#budget-stores"
+                           class="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/55 hover:bg-black/85 border border-white/15 text-[11px] font-medium text-[#EFE9F2]/75 hover:text-white backdrop-blur-xl transition cursor-pointer">
+                            <span>Skip</span>
+                            <span aria-hidden="true">&#8595;</span>
+                        </a>
+                    </div>
+
+                    <!-- Center / Lower-Left Synchronized Editorial Story Beats -->
+                    <div class="relative flex-1 flex items-end pb-6 sm:pb-10">
+                        <div class="relative w-full max-w-2xl min-h-[220px] sm:min-h-[250px]">
+                            @foreach($seqBeats as $bIdx => $beat)
+                                <div class="grail-seq-beat absolute inset-x-0 bottom-0 space-y-3 sm:space-y-4"
+                                     data-seq-beat="{{ $bIdx }}"
+                                     style="{{ $bIdx === 0 ? '--beat-o: 1; --beat-y: 0px; --beat-pe: auto;' : '--beat-o: 0; --beat-y: 26px; --beat-pe: none;' }}">
+                                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECD2F3]/14 border border-[#ECD2F3]/28 text-[#FFCDFF] text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] backdrop-blur-md">
+                                        <span>{{ $beat['kicker'] }}</span>
+                                    </div>
+
+                                    <h2 class="grail-display grail-heading-flex text-[clamp(1.95rem,4.4vw,3.9rem)] text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.88)]">
+                                        {{ $beat['title'] }}
+                                    </h2>
+
+                                    <p class="text-xs sm:text-base text-[#EFE9F2]/85 max-w-xl leading-relaxed font-normal drop-shadow-[0_1px_12px_rgba(0,0,0,0.9)]">
+                                        {{ $beat['desc'] }}
+                                    </p>
+
+                                    @if($bIdx === 2)
+                                        <div class="flex flex-wrap items-center gap-3 pt-1 pointer-events-auto">
+                                            <a href="#latest-products"
+                                               class="grail-cta-pill inline-flex items-center gap-2.5 px-6 py-3 text-xs sm:text-sm tracking-wide cursor-pointer">
+                                                <span>Explore Curated Drops</span>
+                                                <span aria-hidden="true">&rarr;</span>
+                                            </a>
+                                            <a href="{{ route('catalog.index') }}"
+                                               class="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 hover:bg-white/18 text-[#EFE9F2] font-semibold text-xs sm:text-sm border border-white/18 backdrop-blur-md transition cursor-pointer">
+                                                <span>Browse Catalog</span>
+                                                <span aria-hidden="true">&#8599;</span>
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Bottom Interactive Chapter Selector & Linear Progress Track -->
+                    <div class="pointer-events-auto space-y-3 pt-2 border-t border-white/10">
+                        <div class="grid grid-cols-3 gap-2 sm:gap-4 text-left">
+                            @foreach($seqBeats as $bIdx => $beat)
+                                <button type="button"
+                                        data-seq-jump="{{ $bIdx }}"
+                                        class="group flex items-center justify-between gap-2 py-1 text-left transition cursor-pointer">
+                                    <div class="min-w-0">
+                                        <span class="block text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.18em] text-[#C9A24A]">0{{ $bIdx + 1 }}</span>
+                                        <span class="block text-[11px] sm:text-xs font-medium text-[#EFE9F2]/70 group-hover:text-white truncate transition-colors"
+                                              data-seq-tab-label="{{ $bIdx }}">{{ $beat['kicker'] }}</span>
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <div class="w-full h-[2px] rounded-full bg-white/15 overflow-hidden">
+                            <div class="grail-seq-progress-fill w-full h-full bg-gradient-to-r from-[#C9A24A] via-[#ECD2F3] to-[#FFCDFF]"
+                                 data-seq-bar
+                                 style="--seq-p: 0;"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        @endif
+
         <!-- =========================================================
              ACT 2: OBSIDIAN BUDGET STATS (MASKED LINE RISE + FILL REVEAL)
              ========================================================= -->
-        <section class="relative bg-[#060606] text-[#EFE9F2] py-14 sm:py-20 border-t border-white/10" data-grail-reveal data-pill-zone="dark">
+        <section id="budget-stores" class="relative bg-[#060606] text-[#EFE9F2] py-14 sm:py-20 border-t border-white/10" data-grail-reveal data-pill-zone="dark">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
 
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -1047,16 +1189,21 @@
                 if (pillEl && pillZones.length) {
                     const sampleY = vh * 0.82;
                     let activeZone = 'dark';
+                    let hidePill = false;
                     for (let i = 0; i < pillZones.length; i++) {
                         const zr = pillZones[i].getBoundingClientRect();
                         if (zr.top <= sampleY && zr.bottom >= sampleY) {
                             activeZone = pillZones[i].getAttribute('data-pill-zone') || 'dark';
+                            hidePill = pillZones[i].getAttribute('data-pill-hide') === 'true';
                             break;
                         }
                     }
                     if (pillEl.getAttribute('data-pill-theme') !== activeZone) {
                         pillEl.setAttribute('data-pill-theme', activeZone);
                     }
+                    pillEl.style.opacity = hidePill ? '0' : '1';
+                    pillEl.style.pointerEvents = hidePill ? 'none' : 'auto';
+                    pillEl.style.transform = hidePill ? 'translateY(14px)' : '';
                 }
             };
 
@@ -1070,6 +1217,550 @@
             updateMotion();
             window.addEventListener('scroll', scheduleUpdate, { passive: true });
             window.addEventListener('resize', scheduleUpdate, { passive: true });
+        })();
+
+        /* =========================================================
+           K71 PINNED CANVAS FRAME-SCRUB ENGINE
+           - Supports custom admin/folder video frames + procedural 3D studio fallback
+           - Progressive keyframe-first preloader (nearest-frame fallback, 0 flicker)
+           - Delta-normalized exponential inertia + sub-frame optical dissolve
+           ========================================================= */
+        (function () {
+            const stageEl = document.querySelector('[data-seq-stage]');
+            const canvas = document.getElementById('k71-seq-canvas');
+            const configEl = document.getElementById('k71-seq-config');
+            if (!stageEl || !canvas || !configEl) return;
+
+            const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) || canvas.getContext('2d');
+            if (!ctx) return;
+
+            let cfg = { frames: [], source: 'fallback', smoothing: 0.12, count: 0 };
+            try {
+                cfg = Object.assign(cfg, JSON.parse(configEl.textContent || '{}'));
+            } catch (e) {}
+
+            const frameUrls = Array.isArray(cfg.frames) ? cfg.frames : [];
+            const totalFrames = frameUrls.length;
+            const hasRealFrames = totalFrames > 0;
+            const smoothingBase = Math.min(0.35, Math.max(0.04, Number(cfg.smoothing) || 0.12));
+            const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            const stickyEl = stageEl.querySelector('.grail-seq-sticky');
+            const counterEl = stageEl.querySelector('[data-seq-counter]');
+            const barEl = stageEl.querySelector('[data-seq-bar]');
+            const beatEls = Array.from(stageEl.querySelectorAll('[data-seq-beat]'));
+            const tabLabels = Array.from(stageEl.querySelectorAll('[data-seq-tab-label]'));
+            const jumpButtons = Array.from(stageEl.querySelectorAll('[data-seq-jump]'));
+
+            const loadedFrames = new Array(totalFrames).fill(null);
+            let loadedCount = 0;
+            let cw = 1280;
+            let ch = 720;
+            let dpr = 1;
+
+            let targetProgress = 0;
+            let currentProgress = 0;
+            let rafId = null;
+            let lastTs = 0;
+            let lastDrawKey = '';
+            let prioritizeWindow = () => {};
+
+            const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+
+            const resizeCanvas = () => {
+                const box = stickyEl ? stickyEl.getBoundingClientRect() : stageEl.getBoundingClientRect();
+                cw = Math.max(320, Math.round(box.width || window.innerWidth || 1280));
+                ch = Math.max(360, Math.round(box.height || window.innerHeight || 720));
+                dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const tw = Math.round(cw * dpr);
+                const th = Math.round(ch * dpr);
+                if (canvas.width !== tw || canvas.height !== th) {
+                    canvas.width = tw;
+                    canvas.height = th;
+                }
+                lastDrawKey = '';
+                drawFrameAt(currentProgress);
+            };
+
+            const drawCoverImage = (img, alpha) => {
+                if (!img || !img.naturalWidth || !img.naturalHeight) return;
+                const iw = img.naturalWidth;
+                const ih = img.naturalHeight;
+                const scale = Math.max(cw / iw, ch / ih);
+                const dw = iw * scale;
+                const dh = ih * scale;
+                const dx = (cw - dw) * 0.5;
+                const dy = (ch - dh) * 0.5;
+                if (alpha < 1) ctx.globalAlpha = alpha;
+                ctx.drawImage(img, dx, dy, dw, dh);
+                if (alpha < 1) ctx.globalAlpha = 1;
+            };
+
+            const findNearestLoaded = (idx) => {
+                if (loadedFrames[idx]) return { idx, img: loadedFrames[idx] };
+                for (let offset = 1; offset < totalFrames; offset++) {
+                    const fwd = idx + offset;
+                    if (fwd < totalFrames && loadedFrames[fwd]) {
+                        return { idx: fwd, img: loadedFrames[fwd] };
+                    }
+                    const bwd = idx - offset;
+                    if (bwd >= 0 && loadedFrames[bwd]) {
+                        return { idx: bwd, img: loadedFrames[bwd] };
+                    }
+                }
+                return null;
+            };
+
+            // Procedural 3D Architectural Monolith Studio Fallback (while no custom video frames exist)
+            const studioDust = Array.from({ length: 34 }, (_, i) => ({
+                x: ((i * 73) % 100) / 100,
+                y: ((i * 41) % 100) / 100,
+                z: 0.4 + ((i * 19) % 100) / 100,
+                r: 0.9 + (i % 3) * 0.65,
+                tint: i % 3 === 0 ? 'rgba(201,162,74,' : 'rgba(236,210,243,',
+            }));
+
+            const drawProceduralStudio = (p) => {
+                ctx.fillStyle = '#020203';
+                ctx.fillRect(0, 0, cw, ch);
+
+                const isDesktop = cw >= 960;
+                const focalX = isDesktop ? cw * 0.68 : cw * 0.54;
+                const focalY = isDesktop ? ch * 0.49 : ch * 0.42;
+                const radius = Math.min(cw, ch) * (isDesktop ? 0.30 : 0.28);
+
+                // Moving studio keylight & orchid fill glow
+                const keyX = focalX + Math.cos(p * Math.PI * 1.5 - 0.8) * radius * 0.95;
+                const keyY = focalY - Math.sin(p * Math.PI) * radius * 0.65;
+                const aura = ctx.createRadialGradient(keyX, keyY, radius * 0.08, focalX, focalY, radius * 2.35);
+                aura.addColorStop(0, 'rgba(236, 210, 243, 0.24)');
+                aura.addColorStop(0.38, 'rgba(201, 162, 74, 0.12)');
+                aura.addColorStop(0.75, 'rgba(34, 24, 38, 0.18)');
+                aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = aura;
+                ctx.fillRect(0, 0, cw, ch);
+
+                // Subtle architectural concentric perspective rings
+                ctx.save();
+                ctx.translate(focalX, focalY);
+                ctx.rotate(p * 0.22);
+                ctx.strokeStyle = 'rgba(239, 233, 242, 0.06)';
+                ctx.lineWidth = 1;
+                [1.18, 1.48, 1.82].forEach((m, idx) => {
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, radius * m, radius * m * (0.42 + Math.sin(p * Math.PI) * 0.14), 0.28 - idx * 0.08, 0, Math.PI * 2);
+                    ctx.stroke();
+                });
+                ctx.restore();
+
+                // Asymmetric Sculpted Diamond-Bevel Marble Slab / Atelier Monolith
+                const yaw = -1.05 + p * 2.25;
+                const pitch = 0.22 - Math.sin(p * Math.PI) * 0.14;
+                const scalePulse = 0.96 + Math.sin(p * Math.PI) * 0.16;
+                const fov = radius * 3.4;
+
+                const cosY = Math.cos(yaw), sinY = Math.sin(yaw);
+                const cosX = Math.cos(pitch), sinX = Math.sin(pitch);
+
+                const project = (vx, vy, vz) => {
+                    const x1 = vx * cosY - vz * sinY;
+                    const z1 = vx * sinY + vz * cosY;
+                    const y2 = vy * cosX - z1 * sinX;
+                    const z2 = vy * sinX + z1 * cosX;
+                    const persp = fov / (fov + z2 + radius * 1.15);
+                    return {
+                        x: focalX + x1 * persp * scalePulse,
+                        y: focalY + y2 * persp * scalePulse,
+                        z: z2,
+                    };
+                };
+
+                const h = radius * 0.96;
+                const wTop = radius * 0.56;
+                const wMid = radius * 0.78;
+                const wBot = radius * 0.48;
+                const dMid = radius * 0.24;
+                const dCap = radius * 0.16;
+
+                const slabRing = (rx, rz, y, cutX = 0.74, cutZ = 0.74) => [
+                    project(-rx * cutX, y, -rz),
+                    project(rx * cutX, y, -rz),
+                    project(rx, y, -rz * cutZ),
+                    project(rx, y, rz * cutZ),
+                    project(rx * cutX, y, rz),
+                    project(-rx * cutX, y, rz),
+                    project(-rx, y, rz * cutZ),
+                    project(-rx, y, -rz * cutZ),
+                ];
+
+                const rTop = slabRing(wTop, dCap, -h * 0.78);
+                const rMid = slabRing(wMid, dMid, -h * 0.04);
+                const rBot = slabRing(wBot, dCap * 1.1, h * 0.76);
+                const sides = 8;
+
+                const faces = [];
+                const pushBand = (upper, lower, shine) => {
+                    for (let i = 0; i < sides; i++) {
+                        const j = (i + 1) % sides;
+                        const pts = [upper[i], upper[j], lower[j], lower[i]];
+                        const cross = (pts[1].x - pts[0].x) * (pts[2].y - pts[0].y) - (pts[1].y - pts[0].y) * (pts[2].x - pts[0].x);
+                        const avgZ = (pts[0].z + pts[1].z + pts[2].z + pts[3].z) * 0.25;
+                        const dxCenter = (pts[0].x + pts[2].x) * 0.5 - keyX;
+                        const lightDot = clamp01(0.68 - Math.abs(dxCenter) / (radius * 2.2));
+                        faces.push({ pts, z: avgZ, front: cross > 0, isMain: (i === 0 || i === 4), light: lightDot * shine });
+                    }
+                };
+
+                pushBand(rTop, rMid, 1.0);
+                pushBand(rMid, rBot, 0.84);
+
+                const topCenterZ = rTop.reduce((acc, v) => acc + v.z, 0) / sides;
+                faces.push({ pts: rTop, z: topCenterZ, front: true, isCap: true, light: 0.94 });
+
+                faces.sort((a, b) => b.z - a.z);
+
+                faces.forEach((f) => {
+                    if (!f.front && !f.isCap) return;
+                    ctx.beginPath();
+                    ctx.moveTo(f.pts[0].x, f.pts[0].y);
+                    for (let k = 1; k < f.pts.length; k++) {
+                        ctx.lineTo(f.pts[k].x, f.pts[k].y);
+                    }
+                    ctx.closePath();
+
+                    if (f.isCap) {
+                        const capGrad = ctx.createLinearGradient(focalX - wTop, focalY - h, focalX + wTop, focalY);
+                        capGrad.addColorStop(0, 'rgba(236, 210, 243, 0.36)');
+                        capGrad.addColorStop(0.5, 'rgba(34, 24, 38, 0.90)');
+                        capGrad.addColorStop(1, 'rgba(201, 162, 74, 0.32)');
+                        ctx.fillStyle = capGrad;
+                    } else if (f.isMain) {
+                        const gx = f.pts[0].x, gy = f.pts[0].y;
+                        const gx2 = f.pts[2].x, gy2 = f.pts[2].y;
+                        const faceGrad = ctx.createLinearGradient(gx, gy, gx2, gy2);
+                        const l = f.light;
+                        faceGrad.addColorStop(0, `rgba(${Math.round(28 + l * 64)}, ${Math.round(22 + l * 46)}, ${Math.round(36 + l * 74)}, 0.94)`);
+                        faceGrad.addColorStop(0.48, `rgba(${Math.round(46 + l * 58)}, ${Math.round(36 + l * 42)}, ${Math.round(54 + l * 62)}, 0.94)`);
+                        faceGrad.addColorStop(1, `rgba(${Math.round(22 + l * 38)}, ${Math.round(18 + l * 28)}, ${Math.round(26 + l * 40)}, 0.94)`);
+                        ctx.fillStyle = faceGrad;
+                    } else {
+                        const l = f.light;
+                        const rCol = Math.round(20 + l * 42);
+                        const gCol = Math.round(16 + l * 28);
+                        const bCol = Math.round(24 + l * 44);
+                        ctx.fillStyle = `rgba(${rCol}, ${gCol}, ${bCol}, 0.92)`;
+                    }
+                    ctx.fill();
+
+                    ctx.strokeStyle = f.light > 0.56
+                        ? 'rgba(236, 210, 243, 0.42)'
+                        : 'rgba(201, 162, 74, 0.24)';
+                    ctx.lineWidth = 1.1;
+                    ctx.stroke();
+
+                    // Luminous marble vein accent on wide sculpted faces
+                    if (f.isMain && Math.abs(f.pts[1].x - f.pts[0].x) > 36) {
+                        ctx.beginPath();
+                        ctx.moveTo(
+                            f.pts[0].x * 0.8 + f.pts[3].x * 0.2,
+                            f.pts[0].y * 0.72 + f.pts[3].y * 0.28
+                        );
+                        ctx.quadraticCurveTo(
+                            (f.pts[0].x + f.pts[2].x) * 0.5,
+                            (f.pts[1].y + f.pts[3].y) * 0.52,
+                            f.pts[1].x * 0.25 + f.pts[2].x * 0.75,
+                            f.pts[1].y * 0.35 + f.pts[2].y * 0.65
+                        );
+                        ctx.strokeStyle = 'rgba(201, 162, 74, 0.26)';
+                        ctx.lineWidth = 1.2;
+                        ctx.stroke();
+                    }
+                });
+
+                // Orbiting subtle luminous studio motes
+                studioDust.forEach((d, idx) => {
+                    const drift = (p * (0.4 + d.z * 0.7) + d.x) % 1;
+                    const px = cw * drift;
+                    const py = ch * ((d.y + Math.sin(p * Math.PI * 2 + idx) * 0.04 + 1) % 1);
+                    const alpha = (0.14 + 0.28 * Math.abs(Math.sin(p * Math.PI + idx))).toFixed(3);
+                    ctx.fillStyle = d.tint + alpha + ')';
+                    ctx.beginPath();
+                    ctx.arc(px, py, d.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            };
+
+            const drawFrameAt = (p) => {
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                if (!hasRealFrames) {
+                    const key = `proc_${Math.round(p * 1000)}_${cw}x${ch}`;
+                    if (key === lastDrawKey) return;
+                    lastDrawKey = key;
+                    drawProceduralStudio(p);
+                    return;
+                }
+
+                const exact = p * Math.max(0, totalFrames - 1);
+                const lo = Math.floor(exact);
+                const hi = Math.min(totalFrames - 1, lo + 1);
+                const frac = exact - lo;
+                const nearestIdx = Math.min(totalFrames - 1, Math.max(0, Math.round(exact)));
+                const key = `real_${lo}_${hi}_${Math.round(frac * 20)}_${loadedCount}_${cw}x${ch}`;
+                if (key === lastDrawKey) return;
+                lastDrawKey = key;
+
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, cw, ch);
+
+                const imgLo = loadedFrames[lo];
+                const imgHi = loadedFrames[hi];
+
+                if (!loadedFrames[nearestIdx]) {
+                    prioritizeWindow(nearestIdx);
+                }
+
+                if (imgLo && imgHi && lo !== hi && frac > 0.03 && frac < 0.97) {
+                    drawCoverImage(imgLo, 1);
+                    drawCoverImage(imgHi, frac);
+                } else {
+                    const best = loadedFrames[nearestIdx]
+                        ? { idx: nearestIdx, img: loadedFrames[nearestIdx] }
+                        : findNearestLoaded(nearestIdx);
+                    if (best) {
+                        drawCoverImage(best.img, 1);
+                    } else {
+                        drawProceduralStudio(p);
+                    }
+                }
+            };
+
+            const updateOverlayUI = (p) => {
+                if (barEl) {
+                    barEl.style.setProperty('--seq-p', p.toFixed(4));
+                }
+
+                if (counterEl) {
+                    if (hasRealFrames) {
+                        const frameNum = Math.min(totalFrames, Math.max(1, Math.round(p * (totalFrames - 1)) + 1));
+                        counterEl.textContent = `${String(frameNum).padStart(2, '0')} / ${String(totalFrames).padStart(2, '0')}`;
+                    } else {
+                        const deg = Math.round(p * 360);
+                        counterEl.textContent = `${String(deg).padStart(3, '0')}°`;
+                    }
+                }
+
+                const computeBeatOpacity = (idx, val) => {
+                    if (idx === 0) {
+                        if (val <= 0.24) return 1;
+                        if (val >= 0.36) return 0;
+                        return 1 - (val - 0.24) / 0.12;
+                    }
+                    if (idx === 1) {
+                        if (val <= 0.28 || val >= 0.72) return 0;
+                        if (val < 0.38) return (val - 0.28) / 0.10;
+                        if (val > 0.62) return 1 - (val - 0.62) / 0.10;
+                        return 1;
+                    }
+                    if (val <= 0.64) return 0;
+                    if (val >= 0.74) return 1;
+                    return (val - 0.64) / 0.10;
+                };
+
+                let strongestIdx = 0;
+                let strongestVal = -1;
+                beatEls.forEach((el, idx) => {
+                    const op = clamp01(computeBeatOpacity(idx, p));
+                    if (op > strongestVal) {
+                        strongestVal = op;
+                        strongestIdx = idx;
+                    }
+                    const yOffset = (1 - op) * (idx === 0 ? -16 : 22);
+                    el.style.setProperty('--beat-o', op.toFixed(4));
+                    el.style.setProperty('--beat-y', `${yOffset.toFixed(2)}px`);
+                    el.style.setProperty('--beat-pe', op > 0.45 ? 'auto' : 'none');
+                });
+
+                tabLabels.forEach((lbl, idx) => {
+                    lbl.style.color = idx === strongestIdx ? '#FFFFFF' : 'rgba(239, 233, 242, 0.55)';
+                });
+            };
+
+            const computeTargetProgress = () => {
+                const rect = stageEl.getBoundingClientRect();
+                const stickyTop = window.innerWidth >= 640 ? 64 : 56;
+                const stickyH = (stickyEl ? stickyEl.offsetHeight : (window.innerHeight - stickyTop)) || 600;
+                const scrollSpan = Math.max(1, rect.height - stickyH);
+                const elapsed = stickyTop - rect.top;
+                return clamp01(elapsed / scrollSpan);
+            };
+
+            const tick = (ts) => {
+                const dt = lastTs ? Math.min(40, Math.max(4, ts - lastTs)) : 16.67;
+                lastTs = ts;
+
+                targetProgress = computeTargetProgress();
+                const alpha = reducedMotion ? 1 : (1 - Math.pow(1 - smoothingBase, dt / 16.67));
+                const diff = targetProgress - currentProgress;
+
+                if (Math.abs(diff) < 0.00035 || reducedMotion) {
+                    currentProgress = targetProgress;
+                    rafId = null;
+                } else {
+                    currentProgress += diff * alpha;
+                    rafId = window.requestAnimationFrame(tick);
+                }
+
+                drawFrameAt(currentProgress);
+                updateOverlayUI(currentProgress);
+            };
+
+            const kickLoop = () => {
+                targetProgress = computeTargetProgress();
+                if (!rafId) {
+                    lastTs = 0;
+                    rafId = window.requestAnimationFrame(tick);
+                }
+            };
+
+            // Keyframe-first progressive image queue with on-demand scroll-window prioritization
+            if (hasRealFrames) {
+                const queue = [];
+                const urgentQueue = [];
+                const queuedSet = new Set();
+                const startedSet = new Set();
+
+                const pushIdx = (i) => {
+                    if (i >= 0 && i < totalFrames && !queuedSet.has(i)) {
+                        queuedSet.add(i);
+                        queue.push(i);
+                    }
+                };
+                pushIdx(0);
+                pushIdx(totalFrames - 1);
+                for (let k = 1; k < 16; k++) pushIdx(Math.round((k * (totalFrames - 1)) / 16));
+                for (let stride = 8; stride >= 1; stride = Math.floor(stride / 2)) {
+                    for (let i = 0; i < totalFrames; i += stride) pushIdx(i);
+                    if (stride === 1) break;
+                }
+
+                prioritizeWindow = (centerIdx) => {
+                    for (let offset = 0; offset <= 3; offset++) {
+                        for (const candidate of offset === 0 ? [centerIdx] : [centerIdx + offset, centerIdx - offset]) {
+                            if (candidate >= 0 && candidate < totalFrames && !loadedFrames[candidate] && !startedSet.has(candidate)) {
+                                if (!urgentQueue.includes(candidate)) {
+                                    urgentQueue.push(candidate);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                let cursor = 0;
+                const nextFrameIndex = () => {
+                    while (urgentQueue.length > 0) {
+                        const ui = urgentQueue.shift();
+                        if (!startedSet.has(ui) && !loadedFrames[ui]) {
+                            startedSet.add(ui);
+                            return ui;
+                        }
+                    }
+                    while (cursor < queue.length) {
+                        const qi = queue[cursor++];
+                        if (!startedSet.has(qi) && !loadedFrames[qi]) {
+                            startedSet.add(qi);
+                            return qi;
+                        }
+                    }
+                    return -1;
+                };
+
+                const loadNext = () => {
+                    const idx = nextFrameIndex();
+                    if (idx === -1) return;
+                    const img = new Image();
+                    img.decoding = 'async';
+                    img.onload = () => {
+                        const markReady = () => {
+                            loadedFrames[idx] = img;
+                            loadedCount++;
+                            lastDrawKey = '';
+                            drawFrameAt(currentProgress);
+                            loadNext();
+                        };
+                        if (typeof img.decode === 'function') {
+                            img.decode().then(markReady).catch(markReady);
+                        } else {
+                            markReady();
+                        }
+                    };
+                    img.onerror = () => {
+                        loadNext();
+                    };
+                    img.src = frameUrls[idx];
+                };
+
+                let workersStarted = 0;
+                const totalConcurrency = Math.min(6, queue.length);
+                const startWorkers = (targetWorkers) => {
+                    while (workersStarted < targetWorkers) {
+                        workersStarted++;
+                        loadNext();
+                    }
+                };
+
+                // Immediately load Frame 0 + 16 spaced keyframes with 2 workers so above-the-fold Hero is never starved
+                startWorkers(Math.min(2, totalConcurrency));
+
+                const pumpAllWorkers = () => startWorkers(totalConcurrency);
+                if (document.readyState === 'complete') {
+                    pumpAllWorkers();
+                } else {
+                    window.addEventListener('load', pumpAllWorkers, { once: true });
+                    window.addEventListener('scroll', pumpAllWorkers, { once: true, passive: true });
+                    setTimeout(pumpAllWorkers, 700);
+                }
+            }
+
+            // Chapter quick-jump buttons
+            jumpButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const beatIdx = Number(btn.getAttribute('data-seq-jump') || 0);
+                    const targetStops = [0.08, 0.50, 0.90];
+                    const pStop = targetStops[beatIdx] ?? 0;
+                    const rect = stageEl.getBoundingClientRect();
+                    const stageTopDoc = rect.top + window.scrollY;
+                    const stickyTop = window.innerWidth >= 640 ? 64 : 56;
+                    const stickyH = (stickyEl ? stickyEl.offsetHeight : (window.innerHeight - stickyTop)) || 600;
+                    const scrollSpan = Math.max(1, rect.height - stickyH);
+                    const destY = Math.max(0, stageTopDoc - stickyTop + scrollSpan * pStop);
+                    window.scrollTo({ top: destY, behavior: reducedMotion ? 'auto' : 'smooth' });
+                });
+            });
+
+            if ('ResizeObserver' in window && stickyEl) {
+                new ResizeObserver(resizeCanvas).observe(stickyEl);
+            } else {
+                window.addEventListener('resize', resizeCanvas, { passive: true });
+            }
+
+            window.addEventListener('scroll', kickLoop, { passive: true });
+            resizeCanvas();
+            targetProgress = computeTargetProgress();
+            currentProgress = targetProgress;
+            drawFrameAt(currentProgress);
+            updateOverlayUI(currentProgress);
+
+            window.__k71ScrollSeq = {
+                getState: () => ({
+                    mode: hasRealFrames ? 'frames' : 'procedural',
+                    totalFrames,
+                    loadedCount,
+                    progress: Number(currentProgress.toFixed(4)),
+                    targetProgress: Number(targetProgress.toFixed(4)),
+                    frameIndex: hasRealFrames ? Math.round(currentProgress * Math.max(0, totalFrames - 1)) : 0,
+                }),
+            };
         })();
     </script>
     @endpush

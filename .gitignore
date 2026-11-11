@@ -58,6 +58,7 @@ Thumbs.db
 # Local scratch & references
 scratch/
 refzip/
+heroscroll/
 
 
 # Video gen tool dependencies
