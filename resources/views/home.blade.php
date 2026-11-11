@@ -447,8 +447,8 @@
                     </div>
 
                     <!-- Center / Lower-Left Synchronized Editorial Story Beats -->
-                    <div class="relative flex-1 flex items-end pb-6 sm:pb-10">
-                        <div class="relative w-full max-w-2xl min-h-[220px] sm:min-h-[250px]">
+                    <div class="relative flex-1 flex items-end pb-5 sm:pb-10">
+                        <div class="relative w-full max-w-2xl min-h-[260px] sm:min-h-[280px]">
                             @foreach($seqBeats as $bIdx => $beat)
                                 <div class="grail-seq-beat absolute inset-x-0 bottom-0 space-y-3 sm:space-y-4"
                                      data-seq-beat="{{ $bIdx }}"
@@ -1624,6 +1624,9 @@
             };
 
             // Keyframe-first progressive image queue with on-demand scroll-window prioritization
+            // IMPORTANT: Do not start multi-worker recursive streaming until window.load completes
+            // (or user scrolls near the stage), so initial Hero & window.load finish immediately.
+            let streamingBegun = false;
             if (hasRealFrames) {
                 const queue = [];
                 const urgentQueue = [];
@@ -1644,16 +1647,30 @@
                     if (stride === 1) break;
                 }
 
-                prioritizeWindow = (centerIdx) => {
-                    for (let offset = 0; offset <= 3; offset++) {
-                        for (const candidate of offset === 0 ? [centerIdx] : [centerIdx + offset, centerIdx - offset]) {
-                            if (candidate >= 0 && candidate < totalFrames && !loadedFrames[candidate] && !startedSet.has(candidate)) {
-                                if (!urgentQueue.includes(candidate)) {
-                                    urgentQueue.push(candidate);
-                                }
-                            }
-                        }
+                const fetchFrame = (idx, onDone) => {
+                    const img = new Image();
+                    img.decoding = 'async';
+                    if ('fetchPriority' in img) {
+                        img.fetchPriority = idx === 0 ? 'low' : 'auto';
                     }
+                    img.onload = () => {
+                        const markReady = () => {
+                            loadedFrames[idx] = img;
+                            loadedCount++;
+                            lastDrawKey = '';
+                            drawFrameAt(currentProgress);
+                            if (onDone) onDone();
+                        };
+                        if (typeof img.decode === 'function') {
+                            img.decode().then(markReady).catch(markReady);
+                        } else {
+                            markReady();
+                        }
+                    };
+                    img.onerror = () => {
+                        if (onDone) onDone();
+                    };
+                    img.src = frameUrls[idx];
                 };
 
                 let cursor = 0;
@@ -1678,26 +1695,7 @@
                 const loadNext = () => {
                     const idx = nextFrameIndex();
                     if (idx === -1) return;
-                    const img = new Image();
-                    img.decoding = 'async';
-                    img.onload = () => {
-                        const markReady = () => {
-                            loadedFrames[idx] = img;
-                            loadedCount++;
-                            lastDrawKey = '';
-                            drawFrameAt(currentProgress);
-                            loadNext();
-                        };
-                        if (typeof img.decode === 'function') {
-                            img.decode().then(markReady).catch(markReady);
-                        } else {
-                            markReady();
-                        }
-                    };
-                    img.onerror = () => {
-                        loadNext();
-                    };
-                    img.src = frameUrls[idx];
+                    fetchFrame(idx, loadNext);
                 };
 
                 let workersStarted = 0;
@@ -1709,16 +1707,48 @@
                     }
                 };
 
-                // Immediately load Frame 0 + 16 spaced keyframes with 2 workers so above-the-fold Hero is never starved
-                startWorkers(Math.min(2, totalConcurrency));
+                const onScrollBeforeLoad = () => {
+                    if (window.scrollY > 80) {
+                        beginStreaming();
+                    }
+                };
 
-                const pumpAllWorkers = () => startWorkers(totalConcurrency);
+                const beginStreaming = () => {
+                    if (streamingBegun) return;
+                    streamingBegun = true;
+                    window.removeEventListener('scroll', onScrollBeforeLoad);
+                    startWorkers(totalConcurrency);
+                };
+
+                prioritizeWindow = (centerIdx) => {
+                    const priority = [centerIdx];
+                    for (let offset = 1; offset <= 4; offset++) {
+                        priority.push(centerIdx + offset, centerIdx - offset);
+                    }
+                    urgentQueue.length = 0;
+                    for (const candidate of priority) {
+                        if (candidate >= 0 && candidate < totalFrames && !loadedFrames[candidate] && !startedSet.has(candidate)) {
+                            urgentQueue.push(candidate);
+                        }
+                    }
+                    if (!streamingBegun && window.scrollY > 80) {
+                        beginStreaming();
+                    }
+                };
+
+                // Single non-blocking first-frame warmup so canvas has real imagery right away
+                if (!startedSet.has(0)) {
+                    startedSet.add(0);
+                    fetchFrame(0, null);
+                }
+
                 if (document.readyState === 'complete') {
-                    pumpAllWorkers();
+                    setTimeout(beginStreaming, 0);
                 } else {
-                    window.addEventListener('load', pumpAllWorkers, { once: true });
-                    window.addEventListener('scroll', pumpAllWorkers, { once: true, passive: true });
-                    setTimeout(pumpAllWorkers, 700);
+                    window.addEventListener('load', () => {
+                        setTimeout(beginStreaming, 20);
+                    }, { once: true });
+                    window.addEventListener('scroll', onScrollBeforeLoad, { passive: true });
                 }
             }
 
