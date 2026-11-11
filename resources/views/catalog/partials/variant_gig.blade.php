@@ -7,16 +7,16 @@
 
 <div class="space-y-5" x-data="gigPackageSelector()">
     <!-- 1. Tier Navigation Tabs -->
-    <div class="grid grid-cols-3 rounded-2xl bg-stone-100 p-1 border border-stone-200">
+    <div class="grid grid-cols-3 rounded-2xl bg-[#FAF8F5] p-1 border border-black/10">
         @foreach($tiers as $key => $label)
             @if(isset($packages[$key]))
                 <button type="button" 
                         @click="activeTier = '{{ $key }}'"
-                        :class="activeTier === '{{ $key }}' ? 'bg-white text-stone-900 shadow-sm font-black' : 'text-stone-600 hover:text-stone-900 font-semibold'"
+                        :class="activeTier === '{{ $key }}' ? 'bg-[#1A1018] text-[#ECD2F3] shadow-sm font-black' : 'text-[#1A1018]/70 hover:text-[#1A1018] font-semibold'"
                         class="py-2.5 px-3 rounded-xl text-xs transition-all cursor-pointer text-center relative">
                     <span>{{ $label }}</span>
                     @if($key === 'standard')
-                        <span class="hidden sm:inline-block ml-1 text-[8px] bg-indigo-100 text-indigo-700 font-bold px-1.5 py-0.2 rounded-full uppercase">Popular</span>
+                        <span class="hidden sm:inline-block ml-1 text-[8px] bg-[#ECD2F3] text-[#1A1018] font-bold px-1.5 py-0.5 rounded-full uppercase">Popular</span>
                     @endif
                 </button>
             @endif
@@ -31,21 +31,21 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 translate-y-2"
                  x-transition:enter-end="opacity-100 translate-y-0"
-                 class="rounded-2xl border-2 {{ $key === 'standard' ? 'border-indigo-600 bg-indigo-50/10' : 'border-stone-200 bg-white' }} p-5 shadow-sm space-y-4">
+                 class="rounded-2xl border-2 {{ $key === 'standard' ? 'border-[#623562] bg-[#ECD2F3]/15' : 'border-black/10 bg-white' }} p-5 shadow-sm space-y-4">
                 
                 <!-- Title & Price Header -->
-                <div class="flex items-start justify-between gap-4 pb-3 border-b border-stone-100">
+                <div class="flex items-start justify-between gap-4 pb-3 border-b border-black/8">
                     <div>
                         <div class="flex items-center gap-2">
-                            <h4 class="text-sm font-black text-stone-900 uppercase tracking-wide">{{ $pkg->title ?: $label . ' Package' }}</h4>
+                            <h4 class="text-sm font-black text-[#1A1018] uppercase tracking-wide">{{ $pkg->title ?: $label . ' Package' }}</h4>
                             @if($key === 'standard')
-                                <span class="text-[9px] font-black uppercase tracking-wider bg-indigo-600 text-white px-2 py-0.5 rounded-full">Recommended</span>
+                                <span class="text-[9px] font-black uppercase tracking-wider bg-[#1A1018] text-[#ECD2F3] px-2 py-0.5 rounded-full">Recommended</span>
                             @endif
                         </div>
-                        <p class="text-xs text-stone-500 mt-1 leading-relaxed">{{ $pkg->description ?: 'Complete milestone package deliverable.' }}</p>
+                        <p class="text-xs text-[#1A1018]/65 mt-1 leading-relaxed">{{ $pkg->description ?: 'Complete milestone package deliverable.' }}</p>
                     </div>
                     <div class="text-right shrink-0">
-                        <span class="text-2xl font-black text-stone-900 font-serif">₹{{ number_format((float)$pkg->price, 2) }}</span>
+                        <span class="grail-display text-2xl font-bold text-[#1A1018] tabular-nums">₹{{ number_format((float)$pkg->price, 2) }}</span>
                     </div>
                 </div>
 
@@ -84,9 +84,9 @@
                 <!-- Package Order CTA -->
                 <button type="button" 
                         @click="orderGigPackage({{ $pkg->id }}, '{{ $label }}', {{ (float)$pkg->price }})"
-                        class="w-full py-3.5 px-6 rounded-full bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                        class="grail-btn-obsidian w-full py-3.5 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
                     <span>Continue (₹{{ number_format((float)$pkg->price, 2) }})</span>
-                    <span>→</span>
+                    <span class="text-[#ECD2F3]">→</span>
                 </button>
             </div>
         @endif

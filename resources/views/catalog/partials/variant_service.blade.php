@@ -70,15 +70,15 @@
     <div class="space-y-2.5">
         <button type="button" 
                 @click="showBookingModal = true"
-                class="w-full py-3.5 px-6 rounded-full bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                class="grail-btn-obsidian w-full py-3.5 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+            <svg class="w-4 h-4 text-[#ECD2F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             <span>Book Appointment (₹{{ number_format($product->base_price / 100, 2) }})</span>
         </button>
 
         @if(!empty($sellerPhone))
             <a href="https://wa.me/{{ $sellerPhone }}?text={{ rawurlencode('Namaste! I would like to book or discuss service: ' . $product->title . ' on K71') }}" 
                target="_blank"
-               class="w-full py-2.5 px-5 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold transition flex items-center justify-center gap-2">
+               class="w-full py-2.5 px-5 rounded-full bg-[#FAF8F5] hover:bg-[#ECD2F3]/30 text-[#1A1018] border border-black/10 text-xs font-bold transition flex items-center justify-center gap-2">
                 <span>💬 Quick WhatsApp Consultation</span>
             </a>
         @endif

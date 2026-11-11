@@ -80,10 +80,10 @@
             this.isWishlisted = !this.isWishlisted;
         });
     }
-}" class="group flex flex-col h-full relative bg-white dark:bg-zinc-900 rounded-3xl p-3 border {{ $theme['border_color'] }} {{ $theme['card_border_hover'] }} shadow-xs hover:shadow-xl transition-all duration-300">
+}" class="group flex flex-col h-full relative bg-white rounded-[20px] p-3 border border-black/8 hover:border-[#623562]/30 shadow-[0_6px_24px_-12px_rgba(24,24,27,0.08)] hover:shadow-[0_22px_44px_-14px_rgba(34,24,38,0.14)] hover:-translate-y-1 transition-all duration-300" style="font-family: var(--font-grail-sans);">
     
     <!-- Image Area with Bulletproof 3:4 Aspect Ratio -->
-    <div class="relative w-full aspect-[3/4] bg-stone-100 dark:bg-zinc-800 rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
+    <div class="relative w-full aspect-[3/4] bg-[#F4F1EC] rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
         <a href="{{ $cardUrl }}" class="block w-full h-full relative z-0" aria-label="{{ $product->title }}">
             @if($product->images->count() > 0)
                 <img src="{{ \App\Services\ImageService::url($product->images->first()->path, 400) }}" 
@@ -160,11 +160,11 @@
         
         <!-- Category & Verified Seller Row -->
         <div class="flex items-center justify-between gap-1 mb-1">
-            <span class="text-[9.5px] font-black uppercase tracking-wider {{ $theme['accent_text'] }} truncate">
+            <span class="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#623562] truncate">
                 {{ $product->category?->name ?? $theme['label'] }}
             </span>
             @if($product->vendor)
-                <span class="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
+                <span class="text-[9px] text-emerald-700 font-semibold flex items-center gap-0.5 shrink-0" title="Verified Seller: {{ $product->vendor->shop_name }}">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                     <span class="truncate max-w-[80px]">{{ $product->vendor->shop_name }}</span>
                 </span>
@@ -172,20 +172,20 @@
         </div>
 
         <!-- Title -->
-        <h3 class="text-xs text-zinc-900 dark:text-zinc-100 leading-[1.35] mb-1.5 font-bold line-clamp-2 min-h-[2.7em]">
-            <a href="{{ $cardUrl }}" class="hover:underline decoration-1 underline-offset-2">{{ ucfirst($product->title) }}</a>
+        <h3 class="text-[13px] text-[#1A1018] leading-[1.35] mb-1.5 font-semibold line-clamp-2 min-h-[2.7em]">
+            <a href="{{ $cardUrl }}" class="hover:text-[#623562] transition-colors">{{ ucfirst($product->title) }}</a>
         </h3>
         
         <!-- Price Row -->
         <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
-            <span class="text-sm font-black text-zinc-900 dark:text-white">
+            <span class="text-sm font-bold text-[#1A1018] tabular-nums">
                 @if($isService)
-                    <span class="text-[10px] text-zinc-400 font-semibold block w-full">Starting at</span>
+                    <span class="text-[10px] text-[#7C4F74] font-semibold block w-full">Starting at</span>
                 @endif
                 ₹{{ number_format($product->base_price / 100, 0) }}
             </span>
             @if($discount > 0 && !$isService)
-                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
+                <span class="text-[10px] text-zinc-400 line-through tabular-nums">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
             @endif
         </div>
 
@@ -204,7 +204,7 @@
         @endif
 
         <!-- Context-Aware Themed Action CTA Row with Instagram & WhatsApp -->
-        <div class="mt-auto pt-2 border-t border-stone-100 dark:border-zinc-800/80 flex items-center justify-between gap-2">
+        <div class="mt-auto pt-2.5 border-t border-black/5 flex items-center justify-between gap-2">
             <div class="flex-1 min-w-0">
                 @if($isOutOfStock)
                     <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">

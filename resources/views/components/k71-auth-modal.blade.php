@@ -1,8 +1,11 @@
-<!-- Global K71 Apple-Grade Glassmorphism Authentication Modal (Non-Negotiable B2B & Retail) -->
+@props(['grailTheme' => false])
+
+<!-- Global K71 Authentication Modal -->
 <div x-data="k71AuthModal()" 
      x-cloak
      @open-auth-modal.window="open($event.detail)"
      @keydown.escape.window="close()"
+     @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif
      class="relative z-[110]">
 
     <!-- Frosted Blur Backdrop -->
@@ -15,7 +18,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="close()"
-         class="fixed inset-0 bg-slate-950/50 backdrop-blur-md"></div>
+         class="fixed inset-0 {{ $grailTheme ? 'bg-black/75 backdrop-blur-md' : 'bg-slate-950/50 backdrop-blur-md' }}"></div>
 
     <!-- Modal Dialog Window -->
     <div x-show="isOpen"
@@ -29,24 +32,24 @@
          class="fixed inset-0 z-10 overflow-y-auto flex items-center justify-center p-4 sm:p-6">
 
         <div @click.outside="close()"
-             class="w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden relative">
+             class="w-full max-w-md {{ $grailTheme ? 'bg-[#FAFAF8] border border-white/15 shadow-[0_32px_90px_-15px_rgba(0,0,0,0.85)]' : 'bg-white/95 border border-white/60 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)]' }} backdrop-blur-2xl rounded-3xl overflow-hidden relative">
 
             <!-- Header & Close Button -->
-            <div class="px-6 sm:px-8 pt-6 pb-4 flex items-center justify-between relative z-10 border-b border-slate-100">
+            <div class="px-6 sm:px-8 pt-6 pb-4 flex items-center justify-between relative z-10 border-b {{ $grailTheme ? 'border-white/10 bg-[#060606] text-[#EFE9F2]' : 'border-slate-100' }}">
                 <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-tight text-sm shadow-xs">
+                    <div class="w-9 h-9 rounded-xl {{ $grailTheme ? 'bg-[#ECD2F3] text-[#1A1018]' : 'bg-slate-900 text-white' }} flex items-center justify-center font-black tracking-tight text-sm shadow-xs">
                         K71
                     </div>
                     <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none" 
+                        <h3 class="text-base sm:text-lg font-bold {{ $grailTheme ? 'text-white' : 'text-slate-900' }} tracking-tight leading-none" 
                             x-text="tab === 'login' ? 'Sign In to K71' : (tab === 'register' ? 'Create Your Account' : 'Reset Password')"></h3>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">Unified access for Mart, Services, Foods, Used & RFQs</p>
+                        <p class="text-[11px] {{ $grailTheme ? 'text-[#EFE9F2]/60' : 'text-slate-500' }} font-medium mt-1">Unified access for Mart, Services, Foods, Used &amp; RFQs</p>
                     </div>
                 </div>
 
                 <button type="button" 
                         @click="close()" 
-                        class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 flex items-center justify-center transition-colors cursor-pointer"
+                        class="w-8 h-8 rounded-full {{ $grailTheme ? 'bg-white/10 hover:bg-white/20 text-[#EFE9F2]' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900' }} flex items-center justify-center transition-colors cursor-pointer"
                         aria-label="Close dialog">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -54,16 +57,16 @@
 
             <!-- Tab Switcher (Login vs Register) -->
             <div x-show="tab !== 'forgot'" class="px-6 sm:px-8 pt-4 pb-1">
-                <div class="flex p-1 rounded-2xl bg-slate-100 border border-slate-200/80">
+                <div class="flex p-1 rounded-2xl {{ $grailTheme ? 'bg-[#EEEAE3] border border-black/10' : 'bg-slate-100 border border-slate-200/80' }}">
                     <button type="button" 
                             @click="tab = 'login'; errorMessage = '';" 
-                            :class="tab === 'login' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                            :class="tab === 'login' ? '{{ $grailTheme ? 'bg-[#1A1018] text-white shadow-sm font-bold' : 'bg-white text-slate-900 shadow-sm font-bold' }}' : '{{ $grailTheme ? 'text-[#1A1018]/70 hover:text-[#1A1018] font-semibold' : 'text-slate-600 hover:text-slate-900 font-semibold' }}'"
                             class="flex-1 py-2 rounded-xl text-xs transition-all cursor-pointer">
                         Sign In
                     </button>
                     <button type="button" 
                             @click="tab = 'register'; errorMessage = '';" 
-                            :class="tab === 'register' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900 font-semibold'"
+                            :class="tab === 'register' ? '{{ $grailTheme ? 'bg-[#1A1018] text-white shadow-sm font-bold' : 'bg-white text-slate-900 shadow-sm font-bold' }}' : '{{ $grailTheme ? 'text-[#1A1018]/70 hover:text-[#1A1018] font-semibold' : 'text-slate-600 hover:text-slate-900 font-semibold' }}'"
                             class="flex-1 py-2 rounded-xl text-xs transition-all cursor-pointer">
                         Create Account
                     </button>
@@ -90,15 +93,15 @@
             <form x-show="tab === 'login'" @submit.prevent="submitLogin()" class="p-6 sm:p-8 space-y-4 pt-3">
                 <!-- Role Selector (Customer / Buyer vs Vendor / Supplier) -->
                 <div class="space-y-1.5">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Signing In As</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Signing In As</label>
                     <div class="grid grid-cols-2 gap-2">
                         <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all"
-                               :class="loginRole === 'customer' ? 'border-slate-900 bg-slate-900 text-white shadow-xs' : 'border-slate-200 text-slate-700 bg-slate-50/70 hover:bg-slate-100'">
+                               :class="loginRole === 'customer' ? '{{ $grailTheme ? 'border-[#1A1018] bg-[#1A1018] text-white shadow-xs' : 'border-slate-900 bg-slate-900 text-white shadow-xs' }}' : 'border-slate-200 text-slate-700 bg-white/80 hover:bg-white'">
                             <input type="radio" name="modal_login_role" value="customer" x-model="loginRole" class="sr-only">
                             <span>🛍️ Buyer / Client</span>
                         </label>
                         <label class="flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all"
-                               :class="loginRole === 'vendor' ? 'border-slate-900 bg-slate-900 text-white shadow-xs' : 'border-slate-200 text-slate-700 bg-slate-50/70 hover:bg-slate-100'">
+                               :class="loginRole === 'vendor' ? '{{ $grailTheme ? 'border-[#1A1018] bg-[#1A1018] text-white shadow-xs' : 'border-slate-900 bg-slate-900 text-white shadow-xs' }}' : 'border-slate-200 text-slate-700 bg-white/80 hover:bg-white'">
                             <input type="radio" name="modal_login_role" value="vendor" x-model="loginRole" class="sr-only">
                             <span>🏭 Supplier / Seller</span>
                         </label>
@@ -107,31 +110,31 @@
 
                 <!-- Username / Email / Mobile Input -->
                 <div class="space-y-1.5">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Email, Mobile, or Username</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Email, Mobile, or Username</label>
                     <div class="relative">
                         <input type="text" 
                                x-model="loginInput" 
                                placeholder="e.g. buyer@company.com or 9876543210"
                                required
-                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
+                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all placeholder:text-slate-400">
                     </div>
                 </div>
 
                 <!-- Password Input with Toggle -->
                 <div class="space-y-1.5">
                     <div class="flex items-center justify-between">
-                        <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Password</label>
-                        <button type="button" @click="tab = 'forgot'; errorMessage = '';" class="text-[11px] font-bold text-slate-600 hover:text-slate-900 transition underline underline-offset-2">Forgot password?</button>
+                        <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Password</label>
+                        <button type="button" @click="tab = 'forgot'; errorMessage = '';" class="text-[11px] font-bold {{ $grailTheme ? 'text-[#623562] hover:text-[#1A1018]' : 'text-slate-600 hover:text-slate-900' }} transition underline underline-offset-2 cursor-pointer">Forgot password?</button>
                     </div>
                     <div class="relative">
                         <input :type="showPassword ? 'text' : 'password'" 
                                x-model="passwordInput" 
                                placeholder="Enter your password"
                                required
-                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all pr-12">
+                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all pr-12">
                         <button type="button" 
                                 @click="showPassword = !showPassword" 
-                                class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 focus:outline-none text-xs font-semibold">
+                                class="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-700 focus:outline-none text-xs font-semibold cursor-pointer">
                             <span x-text="showPassword ? 'Hide' : 'Show'"></span>
                         </button>
                     </div>
@@ -140,7 +143,7 @@
                 <!-- Submit Button -->
                 <button type="submit" 
                         :disabled="isLoading" 
-                        class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs sm:text-sm font-bold tracking-wide shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
+                        class="w-full py-3.5 {{ $grailTheme ? 'grail-btn-obsidian text-xs sm:text-sm' : 'rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-xs' }} active:scale-[0.99] tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
                     <template x-if="isLoading">
                         <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     </template>
@@ -151,43 +154,43 @@
             <!-- TAB 2: REGISTER -->
             <form x-show="tab === 'register'" @submit.prevent="submitRegister()" class="p-6 sm:p-8 space-y-3.5 pt-3">
                 <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Full Name or Company Name *</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Full Name or Company Name *</label>
                     <input type="text" 
                            x-model="regName" 
                            placeholder="e.g. Ramesh Sharma or Marble Impex Ltd"
                            required
-                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Work Email Address *</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Work Email Address *</label>
                     <input type="email" 
                            x-model="regEmail" 
                            placeholder="e.g. procurement@company.com"
                            required
-                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Mobile Number (For WhatsApp Updates)</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Mobile Number (For WhatsApp Updates)</label>
                     <div class="flex items-center">
                         <span class="px-3 py-2.5 bg-slate-100 border border-r-0 border-slate-200 rounded-l-2xl text-xs font-bold text-slate-600">+91</span>
                         <input type="tel" 
                                x-model="regPhone" 
                                placeholder="10-digit mobile number"
-                               class="w-full px-4 py-2.5 rounded-r-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all">
+                               class="w-full px-4 py-2.5 rounded-r-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all">
                     </div>
                 </div>
 
                 <div class="space-y-1">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Create Password (Min 8 Characters) *</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Create Password (Min 8 Characters) *</label>
                     <div class="relative">
                         <input :type="showPassword ? 'text' : 'password'" 
                                x-model="regPassword" 
                                placeholder="••••••••"
                                required
                                minlength="8"
-                               class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all pr-12">
+                               class="w-full px-4 py-2.5 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all pr-12">
                         <button type="button" 
                                 @click="showPassword = !showPassword" 
                                 class="absolute right-3.5 top-3 text-slate-400 hover:text-slate-700 focus:outline-none text-xs font-semibold">
@@ -199,7 +202,7 @@
                 <div class="pt-2">
                     <button type="submit" 
                             :disabled="isLoading" 
-                            class="w-full py-3.5 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.99] text-white text-xs sm:text-sm font-bold tracking-wide shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
+                            class="w-full py-3.5 {{ $grailTheme ? 'grail-btn-obsidian text-xs sm:text-sm' : 'rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-xs' }} active:scale-[0.99] tracking-wide transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer">
                         <template x-if="isLoading">
                             <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         </template>
@@ -211,35 +214,35 @@
             <!-- TAB 3: FORGOT PASSWORD -->
             <form x-show="tab === 'forgot'" @submit.prevent="submitForgot()" class="p-6 sm:p-8 space-y-4 pt-4">
                 <div class="space-y-1.5">
-                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Registered Email</label>
+                    <label class="block text-[11px] font-bold {{ $grailTheme ? 'text-[#1A1018]' : 'text-slate-700' }} uppercase tracking-wider">Registered Email</label>
                     <input type="email" 
                            x-model="forgotEmail" 
                            placeholder="name@company.com"
                            required
-                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/60 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-slate-900 focus:ring-4 focus:ring-slate-100 outline-none transition-all placeholder:text-slate-400">
+                           class="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white/80 focus:bg-white text-xs sm:text-sm font-medium text-slate-900 focus:border-[#623562] focus:ring-4 focus:ring-[#ECD2F3]/50 outline-none transition-all placeholder:text-slate-400">
                 </div>
 
                 <div class="flex items-center gap-2">
                     <button type="submit" 
                             :disabled="isLoading" 
-                            class="flex-1 py-3.5 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs sm:text-sm font-bold shadow-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                            class="flex-1 py-3.5 {{ $grailTheme ? 'grail-btn-obsidian' : 'rounded-2xl bg-slate-900 hover:bg-black text-white font-bold shadow-xs' }} text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer">
                         <span x-text="isLoading ? 'Sending...' : 'Send Recovery Link'"></span>
                     </button>
                     <button type="button" 
                             @click="tab = 'login'; errorMessage = '';" 
-                            class="px-4 py-3.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">
+                            class="px-4 py-3.5 rounded-full {{ $grailTheme ? 'bg-[#EEEAE3] hover:bg-[#ECD2F3] text-[#1A1018]' : 'rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700' }} text-xs font-bold transition cursor-pointer">
                         Back
                     </button>
                 </div>
             </form>
 
             <!-- Footer: Security & Terms -->
-            <div class="px-6 sm:px-8 py-3.5 bg-slate-50/80 border-t border-slate-100 text-[10px] text-slate-400 text-center flex items-center justify-center gap-2">
+            <div class="px-6 sm:px-8 py-3.5 {{ $grailTheme ? 'bg-[#060606] border-t border-white/10 text-[#EFE9F2]/60' : 'bg-slate-50/80 border-t border-slate-100 text-slate-400' }} text-[10px] text-center flex items-center justify-center gap-2">
                 <span>🔒 256-Bit SSL Encrypted</span>
                 <span>•</span>
-                <a href="{{ route('pages.privacy') }}" class="hover:underline text-slate-500">Privacy</a>
+                <a href="{{ route('pages.privacy') }}" class="hover:underline {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-500' }}">Privacy</a>
                 <span>•</span>
-                <a href="{{ route('pages.terms') }}" class="hover:underline text-slate-500">Terms</a>
+                <a href="{{ route('pages.terms') }}" class="hover:underline {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-500' }}">Terms</a>
             </div>
 
         </div>

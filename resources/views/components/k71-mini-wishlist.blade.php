@@ -1,8 +1,11 @@
+@props(['grailTheme' => false])
+
 <div x-data="k71MiniWishlist()" 
      x-cloak
      @open-mini-wishlist.window="openWishlist()"
      @wishlist-state-changed.window="fetchWishlist()"
      @keydown.escape.window="closeWishlist()"
+     @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif
      class="relative z-[100]">
 
     <!-- Backdrop -->
@@ -15,7 +18,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          @click="closeWishlist()"
-         class="fixed inset-0 bg-black/50 backdrop-blur-xs"></div>
+         class="fixed inset-0 {{ $grailTheme ? 'bg-black/70 backdrop-blur-md' : 'bg-black/50 backdrop-blur-xs' }}"></div>
 
     <!-- Drawer / Bottom Sheet Container -->
     <div x-show="isOpen"
@@ -26,22 +29,22 @@
          x-transition:leave="transition ease-in duration-200 transform"
          x-transition:leave-start="translate-y-0 md:translate-x-0"
          x-transition:leave-end="translate-y-full md:translate-y-0 md:translate-x-full"
-         class="fixed bottom-0 md:bottom-0 md:top-0 md:right-0 inset-x-0 md:inset-x-auto w-full md:w-[420px] max-h-[85vh] md:max-h-screen bg-white/95 backdrop-blur-2xl rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none shadow-2xl flex flex-col overflow-hidden border-t md:border-t-0 md:border-l border-zinc-200/60">
+         class="fixed bottom-0 md:bottom-0 md:top-0 md:right-0 inset-x-0 md:inset-x-auto w-full md:w-[420px] max-h-[85vh] md:max-h-screen {{ $grailTheme ? 'bg-[#FAFAF8] border-white/15' : 'bg-white/95 border-zinc-200/60' }} backdrop-blur-2xl rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none shadow-2xl flex flex-col overflow-hidden border-t md:border-t-0 md:border-l">
 
         <!-- Sheet Header -->
-        <div class="px-5 py-4 flex items-center justify-between border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+        <div class="px-5 py-4 flex items-center justify-between border-b {{ $grailTheme ? 'border-white/10 bg-[#060606] text-[#EFE9F2]' : 'border-zinc-100 bg-white/80 backdrop-blur-md' }}">
             <div class="flex items-center gap-2">
-                <span class="text-rose-500 text-base">❤️</span>
-                <h3 class="text-base font-semibold text-zinc-900 tracking-tight">Saved Wishlist</h3>
+                <span class="{{ $grailTheme ? 'text-[#FFCDFF]' : 'text-rose-500' }} text-base">♥</span>
+                <h3 class="text-base font-semibold {{ $grailTheme ? 'text-white' : 'text-zinc-900' }} tracking-tight">Saved Wishlist</h3>
                 <span x-show="wishlistData.count > 0" 
                       x-text="'(' + wishlistData.count + ')'" 
-                      class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200/60"></span>
+                      class="text-xs font-semibold {{ $grailTheme ? 'text-[#1A1018] bg-[#ECD2F3]' : 'text-rose-600 bg-rose-50 border border-rose-200/60' }} px-2 py-0.5 rounded-full"></span>
             </div>
             <button type="button"
                     @click="closeWishlist()" 
                     id="k71-close-wishlist-btn"
                     aria-label="Close wishlist"
-                    class="w-8 h-8 rounded-full hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900 flex items-center justify-center transition-colors cursor-pointer">
+                    class="w-8 h-8 rounded-full {{ $grailTheme ? 'hover:bg-white/10 text-[#EFE9F2]/70 hover:text-white' : 'hover:bg-zinc-100 text-zinc-500 hover:text-zinc-900' }} flex items-center justify-center transition-colors cursor-pointer">
                 <svg width="20" height="20" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -49,11 +52,11 @@
         </div>
 
         <!-- Wishlist Items List (Scrollable) -->
-        <div class="flex-1 overflow-y-auto p-5 divide-y divide-zinc-100 no-scrollbar">
+        <div class="flex-1 overflow-y-auto p-5 {{ $grailTheme ? 'divide-y divide-black/10' : 'divide-y divide-zinc-100' }} no-scrollbar">
             <!-- Loading state -->
             <template x-if="isLoading">
                 <div class="py-12 flex flex-col items-center justify-center text-zinc-400 gap-2">
-                    <svg class="animate-spin h-6 w-6 text-zinc-900" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin h-6 w-6 {{ $grailTheme ? 'text-[#1A1018]' : 'text-zinc-900' }}" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                     </svg>
@@ -64,14 +67,14 @@
             <!-- Empty state -->
             <template x-if="!isLoading && (!wishlistData.items || wishlistData.items.length === 0)">
                 <div class="py-16 text-center">
-                    <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-500 text-2xl border border-rose-100">
-                        🤍
+                    <div class="w-16 h-16 mx-auto mb-3 rounded-2xl {{ $grailTheme ? 'bg-[#ECD2F3]/50 text-[#1A1018] border border-black/10' : 'bg-rose-50 text-rose-500 border border-rose-100' }} flex items-center justify-center text-2xl">
+                        ♡
                     </div>
-                    <p class="text-sm font-semibold text-zinc-900">Your wishlist is empty</p>
-                    <p class="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">Tap the heart icon on any product to save it here for later</p>
+                    <p class="text-sm font-semibold {{ $grailTheme ? 'text-[#1A1018]' : 'text-zinc-900' }}">Your wishlist is empty</p>
+                    <p class="text-xs {{ $grailTheme ? 'text-[#623562]' : 'text-zinc-500' }} mt-1 max-w-xs mx-auto">Tap the heart icon on any product to save it here for later</p>
                     <a href="{{ route('catalog.index') }}" 
                        @click="closeWishlist()"
-                       class="inline-block mt-4 px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-semibold hover:bg-black transition-all shadow-md">
+                       class="inline-block mt-4 px-5 py-2.5 {{ $grailTheme ? 'grail-btn-obsidian' : 'rounded-xl bg-zinc-900 hover:bg-black font-semibold shadow-md' }} text-white text-xs transition-all">
                         Explore Catalog &rarr;
                     </a>
                 </div>
@@ -84,7 +87,7 @@
                         <div class="pt-3 first:pt-0 flex gap-3.5 items-center justify-between">
                             <!-- Left: Thumbnail & Info -->
                             <div class="flex gap-3 items-center min-w-0">
-                                <a :href="item.url" class="w-16 h-18 bg-zinc-100 rounded-xl overflow-hidden flex-shrink-0 border border-zinc-200/60 block">
+                                <a :href="item.url" class="w-16 h-18 {{ $grailTheme ? 'bg-white border-black/10' : 'bg-zinc-100 border-zinc-200/60' }} rounded-xl overflow-hidden flex-shrink-0 border block">
                                     <template x-if="item.image_url">
                                         <img :src="item.image_url" :alt="item.title" class="w-full h-full object-cover">
                                     </template>
@@ -96,11 +99,11 @@
                                 </a>
 
                                 <div class="min-w-0">
-                                    <span class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider truncate block" x-text="item.vendor_name"></span>
-                                    <a :href="item.url" class="text-xs font-bold text-zinc-900 hover:text-indigo-600 line-clamp-1 block transition-colors" x-text="item.title"></a>
+                                    <span class="text-[10px] {{ $grailTheme ? 'text-[#623562]' : 'text-zinc-500' }} uppercase font-bold tracking-wider truncate block" x-text="item.vendor_name"></span>
+                                    <a :href="item.url" class="text-xs font-bold {{ $grailTheme ? 'text-[#1A1018] hover:text-[#623562]' : 'text-zinc-900 hover:text-indigo-600' }} line-clamp-1 block transition-colors" x-text="item.title"></a>
                                     <div class="mt-1 flex items-baseline gap-2">
-                                        <span class="text-xs font-black text-zinc-950" x-text="item.price_formatted"></span>
-                                        <span x-show="item.in_stock" class="text-[9px] font-bold text-emerald-600">In Stock</span>
+                                        <span class="text-xs font-black {{ $grailTheme ? 'text-[#1A1018]' : 'text-zinc-950' }}" x-text="item.price_formatted"></span>
+                                        <span x-show="item.in_stock" class="text-[9px] font-bold text-emerald-700">In Stock</span>
                                     </div>
                                 </div>
                             </div>
@@ -110,7 +113,7 @@
                                 <button type="button" 
                                         @click="moveToCart(item)"
                                         title="Move to Shopping Bag"
-                                        class="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-black text-white text-[11px] font-bold transition flex items-center gap-1 shadow-sm active:scale-95 cursor-pointer">
+                                        class="px-3 py-1.5 {{ $grailTheme ? 'grail-btn-obsidian' : 'rounded-xl bg-zinc-900 hover:bg-black font-bold shadow-sm' }} text-white text-[11px] transition flex items-center gap-1 active:scale-95 cursor-pointer">
                                     <span>Bag</span>
                                     <span>&rarr;</span>
                                 </button>
@@ -128,11 +131,11 @@
         </div>
 
         <!-- Footer -->
-        <div class="p-4 border-t border-zinc-100 bg-white/80 backdrop-blur-md flex items-center justify-between">
-            <span class="text-xs text-zinc-500 font-medium" x-text="wishlistData.count + ' Saved ' + (wishlistData.count === 1 ? 'Item' : 'Items')"></span>
+        <div class="p-4 border-t {{ $grailTheme ? 'border-white/10 bg-[#060606] text-[#EFE9F2]/65' : 'border-zinc-100 bg-white/80 backdrop-blur-md text-zinc-500' }} flex items-center justify-between">
+            <span class="text-xs font-medium" x-text="wishlistData.count + ' Saved ' + (wishlistData.count === 1 ? 'Item' : 'Items')"></span>
             <button type="button" 
                     @click="closeWishlist()"
-                    class="px-4 py-2 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold transition cursor-pointer">
+                    class="px-4 py-2 {{ $grailTheme ? 'grail-btn-ghost-dark text-xs' : 'rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-bold' }} transition cursor-pointer">
                 Continue Browsing
             </button>
         </div>

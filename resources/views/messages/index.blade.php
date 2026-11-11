@@ -10,7 +10,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+    <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Instant Dark Mode Preload (Zero FOUC) -->
     <script>
@@ -32,39 +34,41 @@
 
     <style>
         /* ======================================================================
-           META / APPLE LIQUID GLASS DIRECT MESSAGING DESIGN SYSTEM
+           K71 GRAIL DIRECT MESSAGING DESIGN SYSTEM
            Scoped styles to guarantee 100% responsiveness without element merging
            ====================================================================== */
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.76);
-            --glass-surface: rgba(255, 255, 255, 0.65);
-            --glass-card: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-bg: #FAFAF8;
+            --glass-surface: #F6F6F6;
+            --glass-card: #FFFFFF;
+            --glass-border: #E6E2E8;
             --glass-specular: rgba(255, 255, 255, 0.9);
-            --glass-shadow: 0 20px 50px -12px rgba(15, 23, 42, 0.09);
-            --glass-glow: rgba(6, 0, 194, 0.15);
-            --color-text-main: #0F172A;
-            --color-text-muted: #64748B;
-            --color-bubble-received: rgba(241, 245, 249, 0.85);
-            --color-bubble-received-text: #0F172A;
-            --color-bubble-sent-grad: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%);
-            --color-active-item: rgba(6, 0, 194, 0.06);
+            --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.45);
+            --glass-glow: rgba(236, 210, 243, 0.45);
+            --color-text-main: #1A1018;
+            --color-text-muted: rgba(26, 16, 24, 0.58);
+            --color-bubble-received: #F6F6F6;
+            --color-bubble-received-text: #1A1018;
+            --color-bubble-sent-grad: linear-gradient(135deg, #1A1018 0%, #2E1D2B 100%);
+            --color-active-item: #F8EFFA;
+            --color-panel-bg: #FFFFFF;
         }
 
         .dark {
-            --glass-bg: #090d16;
-            --glass-surface: #0f172a;
-            --glass-card: #090d16;
+            --glass-bg: #0D0D0D;
+            --glass-surface: #141414;
+            --glass-card: #0D0D0D;
             --glass-border: rgba(255, 255, 255, 0.12);
-            --glass-specular: rgba(255, 255, 255, 0.18);
-            --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
-            --glass-glow: rgba(99, 102, 241, 0.25);
-            --color-text-main: #ffffff;
-            --color-text-muted: #94A3B8;
-            --color-bubble-received: #1e293b;
-            --color-bubble-received-text: #ffffff;
-            --color-bubble-sent-grad: linear-gradient(135deg, #18181b 0%, #27272a 100%);
-            --color-active-item: rgba(255, 255, 255, 0.08);
+            --glass-specular: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.85);
+            --glass-glow: rgba(236, 210, 243, 0.22);
+            --color-text-main: #EFE9F2;
+            --color-text-muted: rgba(239, 233, 242, 0.55);
+            --color-bubble-received: #1B1B1B;
+            --color-bubble-received-text: #EFE9F2;
+            --color-bubble-sent-grad: linear-gradient(135deg, #ECD2F3 0%, #FFCDFF 100%);
+            --color-active-item: rgba(236, 210, 243, 0.1);
+            --color-panel-bg: #161616;
         }
 
         /* Dark / Light Toggle Icon Visibility */
@@ -75,13 +79,13 @@
 
         /* Minimalist High Contrast Mode Guarantees */
         html.dark body {
-            background-color: #030712 !important;
-            color: #ffffff !important;
+            background-color: #000000 !important;
+            color: #EFE9F2 !important;
         }
 
         html.dark #k71-chat-wrapper,
         html.dark .glass-chat-frame {
-            background: #090d16 !important;
+            background: #0D0D0D !important;
             border-color: rgba(255, 255, 255, 0.12) !important;
         }
 
@@ -89,7 +93,7 @@
         html.dark .glass-sidebar-header,
         html.dark .glass-main-header,
         html.dark .glass-composer-area {
-            background: #0d121f !important;
+            background: #141414 !important;
             border-color: rgba(255, 255, 255, 0.1) !important;
         }
 
@@ -97,102 +101,102 @@
         html.dark .glass-main-user-name,
         html.dark .glass-conv-name,
         html.dark .glass-header-title {
-            color: #ffffff !important;
+            color: #FFFFFF !important;
             font-weight: 700 !important;
         }
 
         html.dark .glass-conv-preview,
         html.dark .glass-main-user-status {
-            color: #94a3b8 !important;
+            color: rgba(239, 233, 242, 0.58) !important;
         }
 
         html.dark .glass-search-box,
         html.dark .glass-search-input,
         html.dark .glass-composer-input {
-            background-color: #161e31 !important;
-            color: #ffffff !important;
+            background-color: #1B1B1B !important;
+            color: #FFFFFF !important;
             border-color: rgba(255, 255, 255, 0.14) !important;
         }
 
         html.dark .glass-search-input::placeholder,
         html.dark .glass-composer-input::placeholder {
-            color: #94a3b8 !important;
+            color: rgba(239, 233, 242, 0.45) !important;
         }
 
         html.dark .glass-msg-row.received .glass-msg-bubble,
         html.dark .glass-bubble.received {
-            background: #1e293b !important;
-            color: #ffffff !important;
+            background: #1B1B1B !important;
+            color: #EFE9F2 !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
         html.dark .glass-msg-row.received .glass-msg-bubble *,
         html.dark .glass-bubble.received * {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
+            color: #EFE9F2 !important;
+            -webkit-text-fill-color: #EFE9F2 !important;
         }
 
         html.dark .glass-msg-row.sent .glass-msg-bubble,
         html.dark .glass-bubble.sent {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, #ECD2F3 0%, #FFCDFF 100%) !important;
+            color: #1A1018 !important;
             border: none !important;
         }
         html.dark .glass-msg-row.sent .glass-msg-bubble *,
         html.dark .glass-bubble.sent * {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
+            color: #1A1018 !important;
+            -webkit-text-fill-color: #1A1018 !important;
         }
 
         html.dark .glass-icon-btn {
             background: rgba(255, 255, 255, 0.08) !important;
-            color: #ffffff !important;
+            color: #EFE9F2 !important;
             border-color: rgba(255, 255, 255, 0.12) !important;
         }
         html.dark .glass-icon-btn:hover {
             background: rgba(255, 255, 255, 0.16) !important;
-            color: #ffffff !important;
+            color: #FFFFFF !important;
         }
 
         html.dark .glass-tab-btn {
-            color: #94a3b8 !important;
+            color: rgba(239, 233, 242, 0.58) !important;
         }
         html.dark .glass-tab-btn.active {
-            color: #ffffff !important;
-            background: rgba(255, 255, 255, 0.1) !important;
+            color: #1A1018 !important;
+            background: #ECD2F3 !important;
         }
 
         /* Light mode crystal-clear visibility */
         html:not(.dark) .glass-user-name,
         html:not(.dark) .glass-main-user-name,
         html:not(.dark) .glass-conv-name {
-            color: #0f172a !important;
+            color: #1A1018 !important;
             font-weight: 700 !important;
         }
         html:not(.dark) .glass-msg-row.received .glass-msg-bubble,
         html:not(.dark) .glass-bubble.received {
-            background: #ffffff !important;
-            color: #0f172a !important;
-            border: 1px solid #e2e8f0 !important;
+            background: #F6F6F6 !important;
+            color: #1A1018 !important;
+            border: 1px solid #E6E2E8 !important;
         }
         html:not(.dark) .glass-msg-row.received .glass-msg-bubble *,
         html:not(.dark) .glass-bubble.received * {
-            color: #0f172a !important;
-            -webkit-text-fill-color: #0f172a !important;
+            color: #1A1018 !important;
+            -webkit-text-fill-color: #1A1018 !important;
         }
         html:not(.dark) .glass-msg-row.sent .glass-msg-bubble,
         html:not(.dark) .glass-bubble.sent {
-            background: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%) !important;
-            color: #ffffff !important;
+            background: linear-gradient(135deg, #1A1018 0%, #2E1D2B 100%) !important;
+            color: #FFFFFF !important;
             border: none !important;
         }
         html:not(.dark) .glass-msg-row.sent .glass-msg-bubble *,
         html:not(.dark) .glass-bubble.sent * {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
         }
 
         #k71-chat-wrapper {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: var(--font-grail-sans, 'Switzer', -apple-system, BlinkMacSystemFont, sans-serif);
             height: calc(100vh - 110px);
             min-height: 580px;
             max-height: 940px;
@@ -286,8 +290,8 @@
             width: 17px;
             height: 17px;
             border-radius: 50%;
-            background: #0600c2;
-            color: #ffffff;
+            background: #1A1018;
+            color: #ECD2F3;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -597,29 +601,30 @@
             width: 84px;
             height: 84px;
             border-radius: 50%;
-            background: linear-gradient(135deg, rgba(6, 0, 194, 0.12), rgba(99, 102, 241, 0.08));
+            background: linear-gradient(135deg, rgba(236, 210, 243, 0.22), rgba(201, 162, 74, 0.12));
             border: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
-            box-shadow: 0 12px 28px rgba(6, 0, 194, 0.08), inset 0 1px 2px var(--glass-specular);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08), inset 0 1px 2px var(--glass-specular);
         }
 
         .glass-empty-circle svg {
             width: 40px;
             height: 40px;
-            color: #0600c2;
+            color: #1A1018;
             transform: translate(2px, -1px);
         }
 
         .dark .glass-empty-circle svg {
-            color: #38BDF8;
+            color: #ECD2F3;
         }
 
         .glass-empty-title {
-            font-size: 20px;
-            font-weight: 800;
+            font-family: var(--font-grail-serif, 'Cormorant Garamond', Georgia, serif);
+            font-size: 28px;
+            font-weight: 600;
             color: var(--color-text-main);
             margin: 0 0 6px;
             letter-spacing: -0.02em;
@@ -634,19 +639,23 @@
         }
 
         .glass-btn-primary {
-            background: linear-gradient(135deg, #0600c2 0%, #4338ca 100%);
-            color: #FFFFFF;
+            background: #1A1018;
+            color: #ECD2F3;
             font-size: 13.5px;
-            font-weight: 700;
-            padding: 10px 24px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+            padding: 11px 26px;
+            border-radius: 9999px;
+            border: 1px solid rgba(236, 210, 243, 0.25);
             cursor: pointer;
-            box-shadow: 0 8px 24px var(--glass-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 24px var(--glass-glow);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             display: inline-flex;
             align-items: center;
             gap: 8px;
+        }
+        .dark .glass-btn-primary {
+            background: #ECD2F3;
+            color: #1A1018;
         }
 
         .glass-btn-primary:hover {
@@ -1109,8 +1118,8 @@
         }
 
         .glass-composer-pill:focus-within {
-            border-color: #0095f6;
-            box-shadow: 0 0 0 3px rgba(0, 149, 246, 0.15), inset 0 1px 1px var(--glass-specular);
+            border-color: #ECD2F3;
+            box-shadow: 0 0 0 3px rgba(236, 210, 243, 0.25), inset 0 1px 1px var(--glass-specular);
         }
 
         .glass-composer-emoji-btn {
@@ -1161,11 +1170,11 @@
         }
 
         .glass-composer-send-btn {
-            background: #0095f6;
-            color: #ffffff;
+            background: #1A1018;
+            color: #ECD2F3;
             border: none;
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 13.5px;
+            font-weight: 600;
             cursor: pointer;
             padding: 8px 18px;
             min-height: 38px;
@@ -1174,16 +1183,25 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 149, 246, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
             white-space: nowrap;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             flex-shrink: 0;
         }
 
+        .dark .glass-composer-send-btn {
+            background: #ECD2F3;
+            color: #1A1018;
+        }
+
         .glass-composer-send-btn:hover {
-            background: #0081d6;
+            background: #2E1D2B;
             transform: scale(1.04);
+        }
+
+        .dark .glass-composer-send-btn:hover {
+            background: #FFCDFF;
         }
 
         .glass-composer-send-btn:active {
@@ -1193,7 +1211,7 @@
         .glass-composer-send-btn.disabled {
             opacity: 0.45;
             background: transparent;
-            color: #0095f6;
+            color: var(--color-text-main);
             box-shadow: none;
         }
 
@@ -1350,21 +1368,21 @@
         }
 
         .glass-modal-msg-btn {
-            background: #0600c2;
-            color: #FFFFFF;
+            background: #1A1018;
+            color: #ECD2F3;
             border: none;
-            border-radius: 10px;
+            border-radius: 9999px;
             padding: 6px 14px;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.15s ease;
             box-shadow: 0 4px 12px var(--glass-glow);
         }
 
         .dark .glass-modal-msg-btn {
-            background: #38BDF8;
-            color: #060A17;
+            background: #ECD2F3;
+            color: #1A1018;
         }
 
         .glass-modal-msg-btn:hover {
@@ -2318,10 +2336,10 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-[#060a17] text-slate-900 dark:text-slate-100 min-h-screen antialiased selection:bg-indigo-500 selection:text-white">
+<body class="grail-marketplace-body bg-[#000000] text-[#EFE9F2] min-h-screen antialiased selection:bg-[#ECD2F3] selection:text-[#1A1018]" style="font-family: var(--font-grail-sans, 'Switzer', sans-serif);">
 
     <!-- Standard Header Navbar without Search Bar and Category Slider per user instruction -->
-    <x-k71-nav :hideSearch="true" :hideCategories="true" />
+    <x-k71-nav :hideSearch="true" :hideCategories="true" :grailTheme="true" />
 
     <div id="k71-chat-wrapper">
         <div class="glass-chat-frame" id="glassMainContainer">
@@ -2353,7 +2371,7 @@
                         </div>
                         <div style="display: flex; flex-direction: column; min-width: 0; cursor: pointer;" onclick="document.getElementById('sidebarAvatarInput').click()">
                             <span class="glass-user-name">&#64;{{ $uHandle }}</span>
-                            <span style="font-size: 10px; font-weight: 700; color: #4f46e5; letter-spacing: 0.02em;">Edit Photo</span>
+                            <span style="font-size: 10px; font-weight: 600; color: #C9A24A; letter-spacing: 0.04em;">Edit Photo</span>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -2707,7 +2725,7 @@
                 </div>
 
                 <!-- Profile Banner / Header Cover -->
-                <div style="position: relative; margin: 8px 16px 0; border-radius: 20px; overflow: hidden; height: 110px; background: linear-gradient(135deg, #0600c2 0%, #4f46e5 50%, #7c3aed 100%);">
+                <div style="position: relative; margin: 8px 16px 0; border-radius: 20px; overflow: hidden; height: 110px; background: linear-gradient(135deg, #0D0D0D 0%, #1A1018 55%, #3B1E47 100%);">
                     <img id="profileModalBanner" src="" alt="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
                     <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.45));"></div>
                 </div>
@@ -2723,7 +2741,7 @@
                         <h3 id="profileModalName" style="font-size: 18px; font-weight: 800; color: var(--color-text-main); margin: 0; letter-spacing: -0.02em;">User Name</h3>
                         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;">
                             <span id="profileModalUsername" style="font-size: 13.5px; font-weight: 600; color: var(--color-text-muted);">&#64;user</span>
-                            <span id="profileModalRoleBadge" style="font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 9999px; background: rgba(6, 0, 194, 0.1); color: #0600c2; border: 1px solid rgba(6, 0, 194, 0.2);">Verified</span>
+                            <span id="profileModalRoleBadge" style="font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 9999px; background: rgba(236, 210, 243, 0.25); color: var(--color-text-main); border: 1px solid rgba(201, 162, 74, 0.35);">Verified</span>
                         </div>
                     </div>
 
@@ -2738,9 +2756,9 @@
                     </div>
 
                     <!-- Vendor Specific Storefront Card -->
-                    <div id="profileModalVendorBox" style="margin-top: 14px; padding: 14px; background: linear-gradient(135deg, rgba(6,0,194,0.05) 0%, rgba(99,102,241,0.09) 100%); border: 1px solid rgba(99,102,241,0.25); border-radius: 16px; text-align: left; display: none;">
+                    <div id="profileModalVendorBox" style="margin-top: 14px; padding: 14px; background: linear-gradient(135deg, rgba(236,210,243,0.14) 0%, rgba(201,162,74,0.08) 100%); border: 1px solid rgba(236,210,243,0.35); border-radius: 16px; text-align: left; display: none;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                            <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #4f46e5;">Official Storefront</span>
+                            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #C9A24A;">Official Storefront</span>
                             <span id="profileModalRating" style="font-size: 12px; font-weight: 800; color: #f59e0b; display: flex; align-items: center; gap: 3px;">
                                 ★ 4.9
                             </span>
@@ -2750,15 +2768,15 @@
 
                         <div style="display: flex; align-items: center; justify-content: space-between; background: var(--glass-card); border: 1px solid var(--glass-border); padding: 8px 12px; border-radius: 12px; margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; gap: 6px; min-width: 0;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                                <span id="profileModalSubdomain" style="font-size: 12px; font-weight: 700; color: #4f46e5; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">store.marblemandi.org</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A24A" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                                <span id="profileModalSubdomain" style="font-size: 12px; font-weight: 700; color: var(--color-text-main); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">store.marblemandi.org</span>
                             </div>
                             <button type="button" id="profileModalCopySubdomainBtn" title="Copy URL" style="background: none; border: none; cursor: pointer; color: var(--color-text-muted); padding: 2px;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                         </div>
 
-                        <a id="profileModalStoreBtn" href="#" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; background: linear-gradient(135deg, #0600c2 0%, #4f46e5 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(6, 0, 194, 0.25); transition: transform 0.15s ease;">
+                        <a id="profileModalStoreBtn" href="#" target="_blank" rel="noopener" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 11px 16px; background: #1A1018; color: #ECD2F3; text-decoration: none; border-radius: 9999px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); transition: transform 0.15s ease;">
                             <span>Visit Official Store</span>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                         </a>
@@ -5229,5 +5247,10 @@
 
     })();
     </script>
+
+    <x-k71-hamburger />
+    <x-k71-mini-cart />
+    <x-k71-mini-wishlist />
+    <x-k71-auth-modal />
 </body>
 </html>

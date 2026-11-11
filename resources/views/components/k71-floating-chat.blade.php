@@ -38,7 +38,7 @@
      class="{{ $isDetailPage ? 'hidden md:block' : '' }} fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-40 select-none"
      @keydown.escape.window="chatOpen = false">
 
-    <!-- Expandable Liquid Glass Quick-Chat Flyout -->
+    <!-- Expandable Grail Obsidian Quick-Chat Flyout -->
     <div x-show="chatOpen" 
          x-cloak
          @click.outside="chatOpen = false"
@@ -48,22 +48,22 @@
          x-transition:leave="transition cubic-bezier(0.16, 1, 0.3, 1) duration-180 transform"
          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-         class="absolute bottom-16 right-0 w-[320px] sm:w-[360px] rounded-3xl p-5 liquid-glass-tile border border-white/60 dark:border-white/15 shadow-2xl backdrop-blur-2xl text-zinc-900 dark:text-zinc-100">
+         class="absolute bottom-16 right-0 w-[320px] sm:w-[360px] rounded-3xl p-5 bg-[#0D0D0D]/95 border border-white/15 shadow-[0_24px_60px_rgba(0,0,0,0.65)] backdrop-blur-2xl text-[#EFE9F2]">
         
         <!-- Header -->
-        <div class="flex items-center justify-between pb-3.5 border-b border-zinc-200/60 dark:border-zinc-800/80">
+        <div class="flex items-center justify-between pb-3.5 border-b border-white/10">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 text-white flex items-center justify-center text-sm shadow-md shadow-violet-500/20">
+                <div class="w-8 h-8 rounded-xl bg-[#ECD2F3]/15 border border-[#ECD2F3]/30 text-[#ECD2F3] flex items-center justify-center text-sm shadow-sm">
                     💬
                 </div>
                 <div>
-                    <h3 class="text-sm font-black tracking-tight leading-none text-zinc-950 dark:text-white">Direct Messages</h3>
-                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">Real-time buyer & seller chats</p>
+                    <h3 class="text-sm font-bold tracking-tight leading-none text-white">Direct Messages</h3>
+                    <p class="text-[11px] text-[#EFE9F2]/60 mt-0.5">Real-time buyer &amp; seller chats</p>
                 </div>
             </div>
             <button @click="chatOpen = false" 
                     type="button" 
-                    class="w-7 h-7 rounded-full bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-500 hover:text-zinc-950 dark:hover:text-white flex items-center justify-center transition-colors">
+                    class="w-7 h-7 rounded-full bg-white/10 text-[#EFE9F2]/70 hover:text-white hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -73,79 +73,79 @@
             @auth
                 <!-- Main Inbox Quick Link -->
                 <a href="{{ route('messages.index') }}" 
-                   class="flex items-center justify-between p-3 rounded-2xl bg-white/70 dark:bg-zinc-800/60 hover:bg-violet-50 dark:hover:bg-violet-950/40 border border-zinc-200/60 dark:border-zinc-700/60 transition-all group">
+                   class="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-[#ECD2F3]/10 border border-white/10 hover:border-[#ECD2F3]/35 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
+                        <div class="w-9 h-9 rounded-xl bg-[#ECD2F3]/15 text-[#ECD2F3] flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
                             📥
                         </div>
                         <div class="text-left">
-                            <div class="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            <div class="text-xs font-bold text-white group-hover:text-[#ECD2F3] transition-colors">
                                 Open Full Chat Inbox
                             </div>
-                            <div class="text-[10.5px] text-zinc-500 dark:text-zinc-400">View all conversations & requests</div>
+                            <div class="text-[10.5px] text-[#EFE9F2]/55">View all conversations &amp; requests</div>
                         </div>
                     </div>
                     @if($unreadChatCount > 0)
-                        <span class="px-2 py-0.5 rounded-full bg-violet-600 text-white text-[10px] font-black animate-pulse">
+                        <span class="px-2 py-0.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-[10px] font-bold animate-pulse">
                             {{ $unreadChatCount }} new
                         </span>
                     @else
-                        <svg class="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <svg class="w-4 h-4 text-[#EFE9F2]/50 group-hover:text-[#ECD2F3] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     @endif
                 </a>
 
                 @if($currentVendor)
                     <!-- Fast Vendor Contact Button -->
                     <a href="{{ route('messages.index') }}?chat_with={{ $currentVendor->user_id ?? $currentVendor->id }}" 
-                       class="flex items-center justify-between p-3 rounded-2xl bg-white/70 dark:bg-zinc-800/60 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-zinc-200/60 dark:border-zinc-700/60 transition-all group">
+                       class="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-400/35 transition-all group">
                         <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-300 flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
                                 🏪
                             </div>
                             <div class="text-left">
-                                <div class="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                                <div class="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">
                                     Message {{ $currentVendor->shop_name }}
                                 </div>
-                                <div class="text-[10.5px] text-zinc-500 dark:text-zinc-400">Ask seller about availability / delivery</div>
+                                <div class="text-[10.5px] text-[#EFE9F2]/55">Ask seller about availability / delivery</div>
                             </div>
                         </div>
-                        <svg class="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        <svg class="w-4 h-4 text-[#EFE9F2]/50 group-hover:text-emerald-300 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
                 @endif
 
                 <!-- Support Concierge -->
                 <a href="{{ route('messages.index') }}?support=1" 
-                   class="flex items-center justify-between p-3 rounded-2xl bg-white/70 dark:bg-zinc-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-zinc-200/60 dark:border-zinc-700/60 transition-all group">
+                   class="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-[#C9A24A]/10 border border-white/10 hover:border-[#C9A24A]/35 transition-all group">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
+                        <div class="w-9 h-9 rounded-xl bg-[#C9A24A]/15 text-[#C9A24A] flex items-center justify-center text-sm font-bold group-hover:scale-105 transition-transform">
                             🛡️
                         </div>
                         <div class="text-left">
-                            <div class="text-xs font-bold text-zinc-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                                Support & Escrow Help
+                            <div class="text-xs font-bold text-white group-hover:text-[#C9A24A] transition-colors">
+                                Support &amp; Escrow Help
                             </div>
-                            <div class="text-[10.5px] text-zinc-500 dark:text-zinc-400">Instant resolution for orders & disputes</div>
+                            <div class="text-[10.5px] text-[#EFE9F2]/55">Instant resolution for orders &amp; disputes</div>
                         </div>
                     </div>
-                    <svg class="w-4 h-4 text-zinc-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    <svg class="w-4 h-4 text-[#EFE9F2]/50 group-hover:text-[#C9A24A] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
             @else
                 <!-- Guest View -->
-                <div class="p-4 rounded-2xl bg-white/70 dark:bg-zinc-800/60 border border-zinc-200/60 dark:border-zinc-700/60 text-center">
+                <div class="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
                     <div class="text-3xl mb-2">💬</div>
-                    <h4 class="text-xs font-bold text-zinc-900 dark:text-white">Sign In to Chat</h4>
-                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 mb-3.5 leading-snug">
+                    <h4 class="text-xs font-bold text-white">Sign In to Chat</h4>
+                    <p class="text-[11px] text-[#EFE9F2]/60 mt-1 mb-3.5 leading-snug">
                         Contact verified vendors, bargain on pre-loved items, or get help with your orders.
                     </p>
                     <a href="{{ route('login') }}" 
-                       class="block w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-md shadow-violet-500/25 hover:brightness-110 active:scale-95 transition-all text-center">
+                       class="grail-cta-pill block w-full py-2.5 px-4 text-xs text-center">
                         Sign In Now
                     </a>
                 </div>
             @endauth
         </div>
 
-        <div class="pt-2 text-center text-[10px] text-zinc-400 dark:text-zinc-500 border-t border-zinc-200/50 dark:border-zinc-800/50">
+        <div class="pt-2 text-center text-[10px] text-[#EFE9F2]/45 border-t border-white/10">
             Encrypted direct messaging • K71 Platform
         </div>
     </div>
@@ -153,24 +153,24 @@
     <!-- Floating Trigger Capsule / Orb -->
     <button @click="chatOpen = !chatOpen" 
             type="button" 
-            class="liquid-glass-launcher flex items-center gap-2.5 px-4 py-3 rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-violet-500"
-            :class="chatOpen ? 'ring-2 ring-violet-500' : ''"
+            class="bg-[#0D0D0D]/92 backdrop-blur-xl border border-white/15 hover:border-[#ECD2F3]/50 shadow-[0_14px_34px_rgba(0,0,0,0.55)] flex items-center gap-2.5 px-4 py-3 rounded-full cursor-pointer group focus:outline-none transition-all duration-200 hover:-translate-y-0.5"
+            :class="chatOpen ? 'ring-2 ring-[#ECD2F3]' : ''"
             aria-label="Open Direct Messages">
         
         <div class="relative flex items-center justify-center">
-            <!-- Sleek Glass Message Icon -->
-            <svg class="w-5 h-5 text-violet-600 dark:text-violet-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Sleek Obsidian/Orchid Message Icon -->
+            <svg class="w-5 h-5 text-[#ECD2F3] group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.874-.91 4.54 4.54 0 00.91-2.122A7.95 7.95 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
 
         </div>
 
-        <span class="text-xs font-black tracking-tight text-zinc-900 dark:text-white hidden sm:inline">
+        <span class="text-xs font-bold tracking-tight text-[#EFE9F2] hidden sm:inline">
             Messages
         </span>
 
         @if($unreadChatCount > 0)
-            <span class="px-1.5 py-0.2 rounded-full bg-[#EF4444] text-white text-[10px] font-black shadow-xs">
+            <span class="px-1.5 py-0.2 rounded-full bg-[#ECD2F3] text-[#1A1018] text-[10px] font-bold shadow-xs">
                 {{ $unreadChatCount > 9 ? '9+' : $unreadChatCount }}
             </span>
         @endif

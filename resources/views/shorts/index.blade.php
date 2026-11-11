@@ -33,7 +33,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+    <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
 
     <!-- K71 Core Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -43,21 +45,21 @@
 
     <style>
         :root {
-            --fk-blue: #18181b;
-            --fk-blue-dark: #09090b;
-            --fk-yellow: #e4e4e7;
-            --fk-orange: #ffffff;
+            --fk-blue: #161616;
+            --fk-blue-dark: #000000;
+            --fk-yellow: #ECD2F3;
+            --fk-orange: #FFCDFF;
             --fk-green: #22c55e;
-            --fk-bg: #09090b;
-            --fk-border: #27272a;
-            --fk-text: #f4f4f5;
-            --fk-muted: #71717a;
+            --fk-bg: #000000;
+            --fk-border: rgba(255, 255, 255, 0.1);
+            --fk-text: #EFE9F2;
+            --fk-muted: rgba(239, 233, 242, 0.6);
         }
 
         html, body {
-            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--fk-bg);
-            color: var(--fk-text);
+            font-family: var(--font-grail-sans, 'Switzer', -apple-system, BlinkMacSystemFont, sans-serif);
+            background-color: #000000;
+            color: #EFE9F2;
             margin: 0;
             padding: 0;
             -webkit-tap-highlight-color: transparent;
@@ -100,7 +102,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased bg-[#09090b] text-white selection:bg-white selection:text-black"
+<body class="grail-marketplace-body min-h-screen flex flex-col antialiased bg-[#000000] text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018]"
       x-data="flipkartShortsViewer({
           initialShorts: {{ Js::from($clientShorts) }},
           openId: {{ (int) $openId }},
@@ -114,22 +116,22 @@
       @keydown.window="handleKeyboard($event)">
 
     <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
-    <div class="bg-black text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
+    <div class="bg-[#060606] text-[#EFE9F2] text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-zinc-300 hover:text-white transition font-medium truncate">
+            <a href="{{ url('/') }}" class="inline-flex items-center gap-1.5 text-[#EFE9F2]/75 hover:text-[#ECD2F3] transition font-medium truncate">
                 <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 <span class="hidden sm:inline">Back to K71 Universal Marketplace</span>
                 <span class="sm:hidden text-[11px]">Back to K71</span>
             </a>
-            <span class="text-zinc-600 hidden xs:inline">|</span>
-            <span class="text-rose-400 font-bold text-[11px] hidden sm:inline-flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+            <span class="text-white/20 hidden xs:inline">|</span>
+            <span class="text-[#ECD2F3] font-semibold text-[11px] hidden sm:inline-flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#FFCDFF] animate-pulse"></span>
                 K71 Shoppable Video Commerce
             </span>
         </div>
-        <div class="flex items-center gap-2 sm:gap-4 text-[11px] text-zinc-400 shrink-0">
+        <div class="flex items-center gap-2 sm:gap-4 text-[11px] text-[#EFE9F2]/55 shrink-0">
             <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
-            <a href="{{ route('vendor.shorts.index') }}" class="text-amber-300 hover:text-amber-200 font-bold transition flex items-center gap-1">
+            <a href="{{ route('vendor.shorts.index') }}" class="text-[#C9A24A] hover:text-[#ECD2F3] font-bold transition flex items-center gap-1">
                 <span class="hidden sm:inline">Upload Short Reel →</span>
                 <span class="sm:hidden text-[11px]">Upload →</span>
             </a>
@@ -140,21 +142,21 @@
     <x-floating-six-nav />
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MINIMAL WHITE & BLACK TOP NAVBAR -->
+    <!-- GRAIL OBSIDIAN NAVBAR -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <header class="sticky top-0 z-40 bg-black text-white border-b border-zinc-800 shadow-md">
+    <header class="sticky top-0 z-40 bg-black/90 backdrop-blur-2xl text-[#EFE9F2] border-b border-white/10 shadow-md">
         <!-- Top bar with brand & search -->
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-6 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-6 overflow-hidden">
             <!-- Brand Logo -->
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                <a href="{{ route('shorts.index') }}" class="flex items-center gap-1.5 group">
-                    <span class="text-lg sm:text-2xl font-black tracking-tight text-white group-hover:text-zinc-300 transition">K71</span>
-                    <span class="inline-flex items-center gap-1 bg-zinc-800 text-white border border-zinc-700 text-[9px] sm:text-xs font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-full shadow-sm">
+                <a href="{{ route('shorts.index') }}" class="flex items-center gap-2 group">
+                    <span class="text-xl sm:text-2xl font-black tracking-tight text-white group-hover:text-[#ECD2F3] transition">K71</span>
+                    <span class="inline-flex items-center gap-1 bg-[#ECD2F3] text-[#1A1018] text-[9px] sm:text-xs font-black uppercase px-2 py-0.5 rounded-full shadow-sm">
                         <svg class="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         SHORTS
                     </span>
                 </a>
-                <span class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-semibold text-zinc-300 bg-zinc-900 border border-zinc-800 px-2.5 py-0.5 rounded-full">
+                <span class="hidden md:inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#EFE9F2]/80 bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-full">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
                     Live Video Shopping
                 </span>
@@ -166,38 +168,38 @@
                     <input type="text"
                            x-model="searchQuery"
                            @input.debounce.250ms="filterShorts()"
-                           placeholder="Search..."
-                           class="w-full bg-zinc-900 text-white placeholder-zinc-500 text-xs sm:text-sm pl-8 sm:pl-9 pr-7 sm:pr-8 py-1.5 sm:py-2 rounded-lg border border-zinc-800 focus:border-white focus:outline-none transition">
-                    <svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-zinc-400 absolute left-2.5 top-2 sm:top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           placeholder="Search shoppable reels & tagged items..."
+                           class="w-full grail-input-dark text-xs sm:text-sm pl-8 sm:pl-10 pr-7 sm:pr-8 py-2 rounded-full">
+                    <svg class="w-3.5 sm:w-4 h-3.5 sm:h-4 text-[#EFE9F2]/45 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                     <button x-show="searchQuery.length > 0"
                             @click="searchQuery = ''; filterShorts()"
-                            class="absolute right-2 sm:right-2.5 top-2 sm:top-2.5 text-zinc-400 hover:text-white">
+                            class="absolute right-3 top-2.5 text-[#EFE9F2]/50 hover:text-white cursor-pointer">
                         <svg class="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Header Actions -->
-            <div class="flex items-center gap-1.5 sm:gap-4 shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
                 <!-- Switch to other K71 Verticals -->
-                <div class="hidden lg:flex items-center gap-2 text-xs font-semibold">
-                    <a href="{{ url('/') }}" class="text-zinc-400 hover:text-white px-2 py-1 rounded transition">Store</a>
-                    <a href="{{ k71_vertical_url('food') }}" class="text-zinc-400 hover:text-white px-2 py-1 rounded transition">Food</a>
-                    <a href="{{ k71_vertical_url('used') }}" class="text-zinc-400 hover:text-white px-2 py-1 rounded transition">Used</a>
+                <div class="hidden lg:flex items-center gap-1.5 text-xs font-semibold">
+                    <a href="{{ url('/') }}" class="text-[#EFE9F2]/65 hover:text-[#ECD2F3] px-2.5 py-1 rounded-full transition">Store</a>
+                    <a href="{{ k71_vertical_url('food') }}" class="text-[#EFE9F2]/65 hover:text-[#ECD2F3] px-2.5 py-1 rounded-full transition">Food</a>
+                    <a href="{{ k71_vertical_url('used') }}" class="text-[#EFE9F2]/65 hover:text-[#ECD2F3] px-2.5 py-1 rounded-full transition">Used</a>
                 </div>
 
                 <!-- Creator Studio Upload -->
                 @auth
                 <a href="{{ route('vendor.shorts.index') }}"
-                   class="hidden xs:inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-bold px-2.5 sm:px-3 py-1.5 rounded-md border border-zinc-700 transition">
+                   class="hidden xs:inline-flex items-center gap-1.5 grail-btn-ghost-dark text-xs font-bold px-3 py-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     <span class="hidden sm:inline">Upload Reel</span>
                 </a>
                 @else
                 <a href="{{ route('login') }}"
-                   class="hidden xs:inline-flex items-center gap-1 text-xs font-bold text-white bg-zinc-800 hover:bg-zinc-700 px-2.5 sm:px-3 py-1.5 rounded-md border border-zinc-700 transition">
+                   class="hidden xs:inline-flex items-center gap-1 grail-btn-ghost-dark text-xs font-bold px-3 py-1.5">
                     <span class="hidden sm:inline">Seller</span> Studio
                 </a>
                 @endauth
@@ -206,31 +208,31 @@
                 <button type="button" 
                    @click="$dispatch('open-mini-cart')"
                    aria-label="View Shopping Cart"
-                   class="relative inline-flex items-center gap-1 bg-white hover:bg-zinc-200 text-black font-extrabold text-xs sm:text-sm px-2.5 sm:px-3.5 py-1.5 rounded-md shadow-sm transition cursor-pointer">
+                   class="relative inline-flex items-center gap-1.5 grail-cta-pill text-xs sm:text-sm px-3.5 sm:px-4 py-1.5 cursor-pointer">
                     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                     <span class="hidden sm:inline">Cart</span>
                     <span x-show="cartCount > 0"
                           x-text="cartCount"
-                          class="bg-black text-white text-[10px] sm:text-[11px] font-black w-4 h-4 rounded-full flex items-center justify-center -ml-0.5"></span>
+                          class="bg-[#1A1018] text-[#ECD2F3] text-[10px] sm:text-[11px] font-black w-4 h-4 rounded-full flex items-center justify-center -ml-0.5"></span>
                 </button>
             </div>
         </div>
 
         <!-- Horizontal Category Navigation Strip -->
-        <div class="bg-zinc-950 border-b border-zinc-800 w-full overflow-hidden">
+        <div class="bg-[#060606] border-b border-white/10 w-full overflow-hidden">
             <div class="max-w-7xl mx-auto px-3 sm:px-4">
-                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-2 text-xs font-semibold w-full">
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-2.5 text-xs font-semibold w-full">
                     <button @click="setActiveCat('')"
-                            :class="activeCat === '' ? 'bg-white text-black font-black shadow-sm' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'"
-                            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap flex items-center gap-1">
+                            :class="activeCat === '' ? 'bg-[#ECD2F3] text-[#1A1018] font-bold shadow-sm' : 'bg-white/5 text-[#EFE9F2]/75 hover:bg-white/10 hover:text-white border border-white/10'"
+                            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap flex items-center gap-1 cursor-pointer">
                         <span>🔥</span> All Reels
                     </button>
                     @foreach($categories as $c)
                     <button @click="setActiveCat('{{ $c['slug'] }}')"
-                            :class="activeCat === '{{ $c['slug'] }}' ? 'bg-white text-black font-black shadow-sm' : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800'"
-                            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap">
+                            :class="activeCat === '{{ $c['slug'] }}' ? 'bg-[#ECD2F3] text-[#1A1018] font-bold shadow-sm' : 'bg-white/5 text-[#EFE9F2]/75 hover:bg-white/10 hover:text-white border border-white/10'"
+                            class="px-3.5 py-1.5 rounded-full transition whitespace-nowrap cursor-pointer">
                         {{ $c['name'] }}
                     </button>
                     @endforeach
@@ -240,41 +242,39 @@
     </header>
 
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <!-- MAIN DISCOVERY HOMEPAGE -->
+    <!-- MAIN DISCOVERY HOMEPAGE (Grail Cinema Grid) -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 space-y-6">
+    <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-8">
 
         <!-- TRENDING SHOPPABLE REELS RAIL -->
-        <section class="space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="text-lg">🔥</span>
-                    <div>
-                        <h2 class="text-base sm:text-lg font-black text-white">Trending Shoppable Reels</h2>
-                        <p class="text-xs text-zinc-400">Swipe to watch customer favorites &amp; creator showcases</p>
-                    </div>
+        <section class="space-y-4">
+            <div class="flex items-end justify-between gap-4">
+                <div>
+                    <span class="grail-eyebrow block mb-1">Cinema Feed</span>
+                    <h2 class="text-2xl sm:text-3xl font-light text-white leading-none" style="font-family: var(--font-grail-display);">Trending Shoppable Reels</h2>
+                    <p class="text-xs text-[#EFE9F2]/60 mt-1">Swipe to watch customer favorites &amp; creator showcases</p>
                 </div>
-                <span class="text-xs font-bold text-zinc-300">Scroll ➔</span>
+                <span class="text-xs font-semibold text-[#ECD2F3]">Scroll ➔</span>
             </div>
 
             <div class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-2">
                 @foreach($trendingShorts as $s)
-                <div class="flex-none w-[160px] sm:w-[190px] aspect-[9/16] rounded-xl overflow-hidden bg-black shadow-sm border border-slate-200 relative group cursor-pointer"
+                <div class="flex-none w-[160px] sm:w-[190px] aspect-[9/16] rounded-2xl overflow-hidden bg-[#0D0D0D] shadow-md border border-white/15 hover:border-[#ECD2F3]/50 relative group cursor-pointer transition"
                      @click="openPlayerById({{ $s->id }})">
                     <img src="{{ $s->thumb_url }}"
                          alt="{{ $s->title }}"
                          class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
 
                     <!-- Duration Badge -->
-                    <div class="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+                    <div class="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur text-[#EFE9F2] text-[10px] font-medium px-2 py-0.5 rounded-full border border-white/10">
                         {{ $s->duration ? gmdate('i:s', $s->duration) : '0:28' }}
                     </div>
 
                     <!-- Bottom Info -->
-                    <div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-black/90 via-black/60 to-transparent text-white">
+                    <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black via-black/70 to-transparent text-white">
                         <p class="text-xs font-bold line-clamp-1">{{ $s->title }}</p>
                         @if($s->products->isNotEmpty())
-                        <div class="mt-1 inline-flex items-center gap-1 bg-amber-500/90 text-slate-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded">
+                        <div class="mt-1.5 inline-flex items-center gap-1 bg-[#ECD2F3] text-[#1A1018] text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                             🛍️ ₹{{ number_format($s->products->first()->base_price / 100, 0) }}
                         </div>
                         @endif
@@ -286,15 +286,16 @@
 
         <!-- 3. "SHOP WHAT YOU WATCH" LIVE PRODUCT RAIL -->
         @if($shoppableProducts->isNotEmpty())
-        <section class="bg-zinc-900 rounded-2xl shadow-sm border border-zinc-800 p-4 sm:p-5 space-y-4 text-white">
-            <div class="flex items-center justify-between">
+        <section class="grail-dark-card p-5 sm:p-6 space-y-4 text-[#EFE9F2]">
+            <div class="flex items-end justify-between gap-4">
                 <div>
-                    <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                        <span>🛍️</span> Shop What You Watch
+                    <span class="grail-eyebrow block mb-1">Featured Merchandise</span>
+                    <h2 class="text-2xl sm:text-3xl font-light text-white flex items-center gap-2 leading-none" style="font-family: var(--font-grail-display);">
+                        Shop What You Watch
                     </h2>
-                    <p class="text-xs text-zinc-400">Genuine catalog products featured in popular reels</p>
+                    <p class="text-xs text-[#EFE9F2]/60 mt-1">Genuine catalog products featured in popular reels</p>
                 </div>
-                <a href="{{ url('/') }}" class="text-xs font-bold text-zinc-300 hover:text-white underline">View All Products ➔</a>
+                <a href="{{ url('/') }}" class="text-xs font-semibold text-[#ECD2F3] hover:text-[#FFCDFF] underline shrink-0">View All Products ➔</a>
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -305,32 +306,32 @@
                     $isOnSale = $compare && ($compare > $price);
                     $disc = $isOnSale ? round((1 - ($price / $compare)) * 100) : 0;
                 @endphp
-                <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex flex-col justify-between hover:border-zinc-600 transition group">
+                <div class="bg-[#080808] border border-white/10 rounded-2xl p-2.5 flex flex-col justify-between hover:border-[#ECD2F3]/40 transition group">
                     <a href="{{ route('product.show', $p->slug) }}" class="block">
-                        <div class="relative aspect-square rounded-lg overflow-hidden bg-zinc-900">
+                        <div class="relative aspect-square rounded-xl overflow-hidden bg-[#141414]">
                             <img src="{{ $p->primary_image_url }}"
                                  alt="{{ $p->title }}"
                                  class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                             @if($disc > 0)
-                            <span class="absolute top-1 left-1 bg-white text-black text-[10px] font-black px-1.5 py-0.5 rounded shadow">
+                            <span class="absolute top-1.5 left-1.5 bg-[#ECD2F3] text-[#1A1018] text-[10px] font-black px-2 py-0.5 rounded-full shadow">
                                 {{ $disc }}% OFF
                             </span>
                             @endif
                         </div>
-                        <h3 class="text-xs font-bold text-white mt-2 line-clamp-2 leading-tight group-hover:text-zinc-300 transition">
+                        <h3 class="text-xs font-bold text-white mt-2 line-clamp-2 leading-tight group-hover:text-[#ECD2F3] transition">
                             {{ $p->title }}
                         </h3>
                     </a>
 
-                    <div class="mt-2 pt-2 border-t border-zinc-800">
+                    <div class="mt-2 pt-2 border-t border-white/10">
                         <div class="flex items-baseline gap-1.5">
                             <span class="text-sm font-black text-white">₹{{ number_format($price, 0) }}</span>
                             @if($compare)
-                            <span class="text-[10px] text-zinc-400 line-through">₹{{ number_format($compare, 0) }}</span>
+                            <span class="text-[10px] text-[#EFE9F2]/40 line-through">₹{{ number_format($compare, 0) }}</span>
                             @endif
                         </div>
                         <button @click="addToCartDirect({{ $p->id }})"
-                                class="w-full mt-2 bg-white hover:bg-zinc-200 text-black font-extrabold text-[11px] py-1.5 rounded shadow-sm transition flex items-center justify-center gap-1 cursor-pointer">
+                                class="w-full mt-2 grail-cta-pill text-[11px] py-1.5 flex items-center justify-center gap-1 cursor-pointer">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Add to Cart
                         </button>
@@ -343,26 +344,27 @@
 
         <!-- 4. VERIFIED CREATOR & BOUTIQUE SHOWCASE -->
         @if($creators->isNotEmpty())
-        <section class="bg-zinc-900 rounded-2xl shadow-sm border border-zinc-800 p-4 sm:p-5 space-y-3 text-white">
+        <section class="grail-dark-card p-5 sm:p-6 space-y-4 text-[#EFE9F2]">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                        <span>✨</span> Verified Creators &amp; Boutiques
+                    <span class="grail-eyebrow block mb-1">Verified Studios</span>
+                    <h2 class="text-2xl sm:text-3xl font-light text-white leading-none" style="font-family: var(--font-grail-display);">
+                        Verified Creators &amp; Boutiques
                     </h2>
-                    <p class="text-xs text-zinc-400">Shop curated collections from trusted vendors &amp; master artisans</p>
+                    <p class="text-xs text-[#EFE9F2]/60 mt-1">Shop curated collections from trusted vendors &amp; master artisans</p>
                 </div>
             </div>
 
             <div class="flex gap-3 overflow-x-auto no-scrollbar pb-1">
                 @foreach($creators as $c)
-                <div class="flex-none w-[170px] bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-center flex flex-col items-center justify-between">
+                <div class="flex-none w-[170px] bg-[#080808] border border-white/10 hover:border-[#ECD2F3]/35 rounded-2xl p-3.5 text-center flex flex-col items-center justify-between transition">
                     <img src="{{ $c->logo ? asset('storage/' . $c->logo) : asset('images/default-avatar.png') }}"
                          alt="{{ $c->shop_name }}"
-                         class="w-14 h-14 rounded-full object-cover border border-zinc-700 shadow-sm">
+                         class="w-14 h-14 rounded-full object-cover border border-[#ECD2F3]/35 shadow-sm">
                     <h3 class="text-xs font-bold text-white mt-2 line-clamp-1">{{ $c->shop_name }}</h3>
-                    <span class="text-[10px] font-semibold text-zinc-400 mt-0.5">{{ $c->shorts_count }} Shoppable Reels</span>
+                    <span class="text-[10px] font-semibold text-[#C9A24A] mt-0.5">{{ $c->shorts_count }} Shoppable Reels</span>
                     <a href="{{ $c->storefront_url }}"
-                       class="mt-2.5 w-full bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 font-bold text-[11px] py-1 rounded transition">
+                       class="mt-2.5 w-full grail-btn-ghost-dark text-[11px] py-1.5 text-center">
                         Visit Store
                     </a>
                 </div>
@@ -373,17 +375,18 @@
 
         <!-- 5. ALL SHOPPABLE VIDEOS GRID -->
         <section class="space-y-4">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+            <div class="flex items-end justify-between border-b border-white/10 pb-3">
                 <div>
-                    <h2 class="text-base sm:text-lg font-black text-white">Explore All Shoppable Videos</h2>
-                    <p class="text-xs text-zinc-400" x-text="`Showing ${filteredShorts.length} verified videos`"></p>
+                    <span class="grail-eyebrow block mb-1">Full Catalog Reels</span>
+                    <h2 class="text-2xl sm:text-3xl font-light text-white leading-none" style="font-family: var(--font-grail-display);">Explore All Shoppable Videos</h2>
+                    <p class="text-xs text-[#EFE9F2]/60 mt-1" x-text="`Showing ${filteredShorts.length} verified videos`"></p>
                 </div>
             </div>
 
             <!-- Responsive Video Grid: 2 cols on mobile, 4 cols on desktop -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
                 <template x-for="(short, index) in filteredShorts" :key="short.id">
-                    <div class="bg-zinc-900 rounded-xl shadow-sm border border-zinc-800 overflow-hidden flex flex-col group cursor-pointer hover:border-zinc-600 transition"
+                    <div class="bg-[#0D0D0D] rounded-2xl shadow-sm border border-white/10 overflow-hidden flex flex-col group cursor-pointer hover:border-[#ECD2F3]/45 transition"
                          @click="openPlayerByIndex(index)">
                         
                         <!-- 9:16 Video Thumbnail Container -->
@@ -393,39 +396,39 @@
                                  class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                             
                             <!-- Duration & Views Badges -->
-                            <div class="absolute top-2 left-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <svg class="w-2.5 h-2.5 fill-current text-white" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            <div class="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-white/10">
+                                <svg class="w-2.5 h-2.5 fill-current text-[#ECD2F3]" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                 <span x-text="short.views"></span>
                             </div>
 
                             <!-- Play Icon Hover -->
                             <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                                <div class="w-12 h-12 rounded-full bg-white/95 text-black flex items-center justify-center shadow-lg">
+                                <div class="w-12 h-12 rounded-full bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center shadow-lg">
                                     <svg class="w-6 h-6 fill-current ml-0.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                 </div>
                             </div>
 
                             <!-- Floating Tagged Products Badge -->
                             <template x-if="short.products_detail && short.products_detail.length > 0">
-                                <div class="absolute bottom-2 left-2 right-2 bg-black/90 backdrop-blur-sm rounded-lg p-1.5 border border-zinc-700 shadow-md flex items-center gap-2">
+                                <div class="absolute bottom-2.5 left-2.5 right-2.5 bg-black/90 backdrop-blur-md rounded-xl p-2 border border-white/15 shadow-md flex items-center gap-2">
                                     <img :src="short.products_detail[0].image"
-                                         class="w-7 h-7 rounded object-cover border border-zinc-700 shrink-0">
+                                         class="w-8 h-8 rounded-lg object-cover border border-white/15 shrink-0">
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-[10px] font-bold text-zinc-100 truncate" x-text="short.products_detail[0].title"></div>
-                                        <div class="text-[11px] font-black text-white" x-text="short.products_detail[0].price"></div>
+                                        <div class="text-[10px] font-bold text-[#EFE9F2] truncate" x-text="short.products_detail[0].title"></div>
+                                        <div class="text-[11px] font-black text-[#ECD2F3]" x-text="short.products_detail[0].price"></div>
                                     </div>
-                                    <span class="text-[10px] font-bold text-black bg-white px-2 py-0.5 rounded shrink-0">Shop</span>
+                                    <span class="text-[10px] font-bold text-[#1A1018] bg-[#ECD2F3] px-2.5 py-1 rounded-full shrink-0">Shop</span>
                                 </div>
                             </template>
                         </div>
 
                         <!-- Card Footer -->
-                        <div class="p-2.5 flex-1 flex flex-col justify-between">
-                            <h3 class="text-xs font-bold text-white line-clamp-2 leading-tight group-hover:text-zinc-300 transition"
+                        <div class="p-3 flex-1 flex flex-col justify-between">
+                            <h3 class="text-xs font-bold text-white line-clamp-2 leading-tight group-hover:text-[#ECD2F3] transition"
                                 x-text="short.title"></h3>
-                            <div class="mt-2 flex items-center justify-between text-[11px] text-zinc-400 pt-1.5 border-t border-zinc-800">
+                            <div class="mt-2 flex items-center justify-between text-[11px] text-[#EFE9F2]/55 pt-2 border-t border-white/10">
                                 <span class="truncate font-medium" x-text="short.vendor_name || 'Verified Seller'"></span>
-                                <span class="flex items-center gap-0.5 text-white font-semibold">
+                                <span class="flex items-center gap-1 text-[#EFE9F2] font-semibold">
                                     ❤️ <span x-text="short.likes"></span>
                                 </span>
                             </div>
@@ -458,7 +461,7 @@
                 </button>
 
                 <!-- K71 Shorts Video Shopping Badge -->
-                <div class="flex items-center gap-1.5 bg-black/80 text-white text-[11px] font-black px-2.5 py-1 rounded-full border border-white/20 shadow">
+                <div class="flex items-center gap-1.5 bg-black/80 text-[#EFE9F2] text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border border-[#ECD2F3]/30 shadow">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 live-dot"></span>
                     K71 SHORTS
                 </div>
@@ -568,23 +571,23 @@
 
                 <!-- Floating Minimal Shoppable Mini-Card -->
                 <template x-if="currentShort?.products_detail && currentShort.products_detail.length > 0">
-                    <div class="pointer-events-auto bg-black/90 backdrop-blur-md text-white rounded-xl p-2.5 shadow-2xl border border-zinc-700 flex items-center gap-3 cursor-pointer hover:bg-black transition"
+                    <div class="pointer-events-auto bg-black/90 backdrop-blur-md text-white rounded-2xl p-2.5 shadow-2xl border border-[#ECD2F3]/25 flex items-center gap-3 cursor-pointer hover:border-[#ECD2F3]/50 transition"
                          @click="drawerOpen = true">
                         <img :src="currentShort.products_detail[0].image"
-                             class="w-12 h-12 rounded-lg object-cover border border-zinc-700 shrink-0">
+                             class="w-12 h-12 rounded-xl object-cover border border-white/15 shrink-0">
                         <div class="flex-1 min-w-0">
                             <h4 class="text-xs font-bold text-white truncate" x-text="currentShort.products_detail[0].title"></h4>
                             <div class="flex items-baseline gap-2 mt-0.5">
-                                <span class="text-sm font-black text-white" x-text="currentShort.products_detail[0].price"></span>
+                                <span class="text-sm font-black text-[#ECD2F3]" x-text="currentShort.products_detail[0].price"></span>
                                 <span x-show="currentShort.products_detail[0].original_price"
-                                      class="text-[10px] text-zinc-500 line-through"
+                                      class="text-[10px] text-[#EFE9F2]/45 line-through"
                                       x-text="currentShort.products_detail[0].original_price"></span>
                                 <span x-show="currentShort.products_detail[0].discount_pct > 0"
-                                      class="text-[10px] font-black text-white bg-zinc-800 px-1 rounded border border-zinc-700"
+                                      class="text-[10px] font-black text-[#1A1018] bg-[#ECD2F3] px-1.5 py-0.5 rounded-full"
                                       x-text="`${currentShort.products_detail[0].discount_pct}% OFF`"></span>
                             </div>
                         </div>
-                        <button class="bg-white text-black font-black text-xs px-3 py-1.5 rounded-lg shrink-0 shadow">
+                        <button class="grail-cta-pill text-xs px-3 py-1.5 shrink-0 shadow">
                             SHOP ➔
                         </button>
                     </div>
@@ -593,7 +596,7 @@
 
             <!-- Video Playback Progress Bar (Scrubber) -->
             <div class="absolute bottom-0 inset-x-0 h-1 bg-white/20 z-40">
-                <div class="h-full bg-white transition-all duration-100"
+                <div class="h-full bg-[#ECD2F3] transition-all duration-100"
                      :style="`width: ${progressPct}%`"></div>
             </div>
 
@@ -608,18 +611,18 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="translate-y-0"
                  x-transition:leave-end="translate-y-full"
-                 class="absolute inset-x-0 bottom-0 max-h-[75%] bg-zinc-900 rounded-t-2xl z-50 shadow-2xl flex flex-col text-white border-t border-zinc-800 overflow-hidden">
+                 class="absolute inset-x-0 bottom-0 max-h-[75%] bg-[#0D0D0D] rounded-t-[24px] z-50 shadow-2xl flex flex-col text-[#EFE9F2] border-t border-white/15 overflow-hidden">
                 
                 <!-- Drawer Header -->
-                <div class="p-3.5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950 shrink-0">
+                <div class="p-4 border-b border-white/10 flex items-center justify-between bg-[#060606] shrink-0">
                     <div class="flex items-center gap-2">
                         <span class="text-base">🛍️</span>
-                        <h3 class="text-sm font-black text-white">Products in this Video</h3>
-                        <span class="bg-white text-black text-[10px] font-black px-1.5 py-0.2 rounded-full"
+                        <h3 class="text-sm font-bold text-white">Products in this Video</h3>
+                        <span class="bg-[#ECD2F3] text-[#1A1018] text-[10px] font-black px-2 py-0.5 rounded-full"
                               x-text="currentShort?.products_detail?.length || 0"></span>
                     </div>
                     <button @click="drawerOpen = false"
-                            class="w-7 h-7 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition">
+                            class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer">
                         ✕
                     </button>
                 </div>
@@ -627,41 +630,41 @@
                 <!-- Product List in Drawer -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
                     <template x-for="item in currentShort?.products_detail || []" :key="item.id">
-                        <div class="p-3 bg-zinc-950 border border-zinc-800 rounded-xl shadow-sm flex flex-col gap-3">
+                        <div class="p-3 bg-[#161616] border border-white/10 rounded-2xl shadow-sm flex flex-col gap-3">
                             <div class="flex gap-3">
                                 <img :src="item.image"
                                      :alt="item.title"
-                                     class="w-20 h-20 rounded-lg object-cover border border-zinc-800 shrink-0">
+                                     class="w-20 h-20 rounded-xl object-cover border border-white/15 shrink-0">
                                 
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-1.5 mb-1">
-                                        <span class="bg-zinc-800 text-white text-[10px] font-black px-1.5 py-0.5 rounded border border-zinc-700"
+                                        <span class="bg-white/10 text-[#C9A24A] text-[10px] font-black px-1.5 py-0.5 rounded-full border border-white/10"
                                               x-text="`★ ${item.rating}`"></span>
-                                        <span class="text-[10px] text-zinc-400" x-text="`(${item.reviews_count} reviews)`"></span>
+                                        <span class="text-[10px] text-[#EFE9F2]/50" x-text="`(${item.reviews_count} reviews)`"></span>
                                     </div>
                                     <h4 class="text-xs font-bold text-white line-clamp-2 leading-tight" x-text="item.title"></h4>
                                     
                                     <div class="flex items-baseline gap-2 mt-1">
                                         <span class="text-base font-black text-white" x-text="item.price"></span>
                                         <span x-show="item.original_price"
-                                              class="text-xs text-zinc-400 line-through"
+                                              class="text-xs text-[#EFE9F2]/40 line-through"
                                               x-text="item.original_price"></span>
                                         <span x-show="item.discount_pct > 0"
-                                              class="text-xs font-bold text-emerald-400"
+                                              class="text-xs font-bold text-[#ECD2F3]"
                                               x-text="`${item.discount_pct}% OFF`"></span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Drawer CTAs: Add to Cart (AJAX) & Buy Now -->
-                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800">
+                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
                                 <button @click="addToCart(item.id)"
-                                        class="w-full bg-white hover:bg-zinc-200 text-black font-extrabold text-xs py-2 rounded-lg shadow-sm transition flex items-center justify-center gap-1 cursor-pointer">
+                                        class="w-full grail-cta-pill text-xs py-2 flex items-center justify-center gap-1 cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                     Add to Cart
                                 </button>
                                 <button @click="buyNow(item.id)"
-                                        class="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-extrabold text-xs py-2 rounded-lg border border-zinc-700 shadow-sm transition flex items-center justify-center gap-1 cursor-pointer">
+                                        class="w-full grail-btn-ghost-dark text-xs py-2 flex items-center justify-center gap-1 cursor-pointer">
                                     ⚡ Buy Now
                                 </button>
                             </div>
@@ -684,7 +687,7 @@
          x-transition:leave="transition ease-in duration-200"
          x-transition:leave-start="opacity-100 translate-y-0 scale-100"
          x-transition:leave-end="opacity-0 translate-y-4 scale-95"
-         class="fixed bottom-6 right-6 z-50 bg-black text-white text-xs sm:text-sm font-bold px-4 py-3 rounded-xl shadow-2xl border border-zinc-800 flex items-center gap-3">
+         class="fixed bottom-6 right-6 z-50 bg-[#161616] text-[#EFE9F2] text-xs sm:text-sm font-bold px-4 py-3 rounded-full shadow-2xl border border-[#ECD2F3]/35 flex items-center gap-3">
         <span x-text="toast.icon || '🛒'"></span>
         <span x-text="toast.message"></span>
     </div>
@@ -692,18 +695,18 @@
     <!-- ═══════════════════════════════════════════════════════════════════ -->
     <!-- FOOTER -->
     <!-- ═══════════════════════════════════════════════════════════════════ -->
-    <footer class="mt-12 bg-black border-t border-zinc-800 py-8 text-center text-xs text-zinc-400">
+    <footer class="mt-12 bg-[#060606] border-t border-white/10 py-8 text-center text-xs text-[#EFE9F2]/55">
         <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
-                <span class="font-black text-white">K71 SHORTS</span>
+                <span class="font-black text-white">K71 <span class="text-[#ECD2F3]">SHORTS</span></span>
                 <span>• India's Premier Shoppable Video Experience</span>
             </div>
-            <div class="flex items-center gap-4 font-semibold text-zinc-400">
-                <a href="{{ url('/') }}" class="hover:text-white">Main Store</a>
-                <a href="{{ k71_vertical_url('food') }}" class="hover:text-white">Food</a>
-                <a href="{{ k71_vertical_url('used') }}" class="hover:text-white">Used</a>
-                <a href="{{ route('pages.terms') }}" class="hover:text-white">Terms</a>
-                <a href="{{ route('pages.privacy') }}" class="hover:text-white">Privacy</a>
+            <div class="flex items-center gap-4 font-semibold text-[#EFE9F2]/65">
+                <a href="{{ url('/') }}" class="hover:text-[#ECD2F3]">Main Store</a>
+                <a href="{{ k71_vertical_url('food') }}" class="hover:text-[#ECD2F3]">Food</a>
+                <a href="{{ k71_vertical_url('used') }}" class="hover:text-[#ECD2F3]">Used</a>
+                <a href="{{ route('pages.terms') }}" class="hover:text-[#ECD2F3]">Terms</a>
+                <a href="{{ route('pages.privacy') }}" class="hover:text-[#ECD2F3]">Privacy</a>
             </div>
         </div>
     </footer>
@@ -1033,8 +1036,8 @@
     </script>
     <!-- Mobile Bottom Tab Navigation (Section F) -->
     <!-- Shared K71 Authentication Popup Modal -->
-    <x-k71-auth-modal />
+    <x-k71-auth-modal :grailTheme="true" />
     <!-- Shared K71 Mini-Cart Bottom Sheet / Drawer -->
-    <x-k71-mini-cart />
+    <x-k71-mini-cart :grailTheme="true" />
 </body>
 </html>

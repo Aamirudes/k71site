@@ -9,35 +9,35 @@
     <!-- 1. Mutually Exclusive Portion Sizes -->
     <div>
         <div class="flex items-center justify-between mb-3">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+            <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-[#1A1018] flex items-center gap-1.5">
                 <span>🍛 Select Serving Portion</span>
-                <span class="text-[10px] text-amber-700 bg-amber-50 font-bold px-2 py-0.5 rounded-full border border-amber-200">Required</span>
+                <span class="text-[10px] text-[#9A3412] bg-[#FFF4ED] font-semibold px-2 py-0.5 rounded-full border border-[#FED7AA]">Required</span>
             </h3>
-            <span class="text-[11px] text-stone-500 font-medium">Choose 1 option</span>
+            <span class="text-[11px] text-[#1A1018]/55 font-medium">Choose 1 option</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <template x-for="p in portions" :key="p.id">
-                <label class="relative flex items-center justify-between p-3.5 rounded-2xl border-2 transition-all cursor-pointer"
+                <label class="relative flex items-center justify-between p-3.5 rounded-[16px] border transition-all cursor-pointer"
                        :class="selectedPortion && selectedPortion.id === p.id 
-                            ? 'border-amber-600 bg-amber-50/40 shadow-xs ring-1 ring-amber-500/20' 
-                            : 'border-stone-200 bg-white hover:border-stone-300 hover:bg-stone-50/50'">
+                            ? 'border-[#1A1018] bg-[#F8EFFA] shadow-xs' 
+                            : 'border-[#E6E2E8] bg-[#FAFAF8] hover:border-[#1A1018]/35'">
                     
                     <div class="flex items-center gap-3">
                         <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all"
                              :class="selectedPortion && selectedPortion.id === p.id 
-                                ? 'border-amber-600 bg-amber-600' 
-                                : 'border-stone-300 bg-white'">
-                            <span x-show="selectedPortion && selectedPortion.id === p.id" class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                                ? 'border-[#1A1018] bg-[#1A1018]' 
+                                : 'border-[#1A1018]/30 bg-white'">
+                            <span x-show="selectedPortion && selectedPortion.id === p.id" class="w-1.5 h-1.5 rounded-full bg-[#ECD2F3]"></span>
                         </div>
                         <div>
-                            <span class="text-xs font-bold text-stone-900 block" x-text="p.size || p.sku"></span>
-                            <span class="text-[10px] text-stone-500" x-text="p.stock > 0 ? 'Freshly Prepared' : 'Sold Out'"></span>
+                            <span class="text-xs font-semibold text-[#1A1018] block" x-text="p.size || p.sku"></span>
+                            <span class="text-[10px] text-[#1A1018]/55" x-text="p.stock > 0 ? 'Freshly Prepared' : 'Sold Out'"></span>
                         </div>
                     </div>
 
                     <div class="text-right">
-                        <span class="text-sm font-black text-stone-900" x-text="`₹${p.price}`"></span>
+                        <span class="text-sm font-bold text-[#1A1018]" x-text="`₹${p.price}`"></span>
                     </div>
 
                     <input type="radio" name="food_portion_id" :value="p.id" class="sr-only" @change="selectPortion(p)">
@@ -48,33 +48,33 @@
 
     <!-- 2. Optional Add-ons & Modifiers -->
     @if($modifiers->isNotEmpty())
-        <div class="pt-4 border-t border-stone-200/60">
+        <div class="pt-4 border-t border-[#E6E2E8]">
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+                <h3 class="text-xs font-semibold uppercase tracking-[0.12em] text-[#1A1018] flex items-center gap-1.5">
                     <span>➕ Customize with Add-ons</span>
-                    <span class="text-[10px] text-stone-500 font-semibold">(Optional)</span>
+                    <span class="text-[10px] text-[#1A1018]/50 font-medium">(Optional)</span>
                 </h3>
-                <span class="text-[11px] text-amber-800 font-bold" x-text="selectedModifiers.length + ' added'"></span>
+                <span class="text-[11px] text-[#9A3412] font-semibold" x-text="selectedModifiers.length + ' added'"></span>
             </div>
 
             <div class="space-y-2">
                 @foreach($modifiers as $mod)
-                    <label class="flex items-center justify-between p-3 rounded-xl border border-stone-200/80 bg-white hover:bg-stone-50/60 transition cursor-pointer">
+                    <label class="flex items-center justify-between p-3 rounded-[14px] border border-[#E6E2E8] bg-[#FAFAF8] hover:border-[#1A1018]/35 transition cursor-pointer">
                         <div class="flex items-center gap-2.5">
                             <input type="checkbox" 
                                    value="{{ $mod->id }}"
                                    data-name="{{ $mod->modifier_name }}"
                                    data-price="{{ (float)$mod->price_delta }}"
                                    @change="toggleModifier($event, {{ $mod->id }}, '{{ addslashes($mod->modifier_name) }}', {{ (float)$mod->price_delta }})"
-                                   class="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-stone-300">
+                                   class="w-4 h-4 rounded text-[#1A1018] focus:ring-[#ECD2F3] border-[#E6E2E8]">
                             <div>
-                                <span class="text-xs font-bold text-stone-800 block leading-tight">{{ $mod->modifier_name }}</span>
+                                <span class="text-xs font-semibold text-[#1A1018] block leading-tight">{{ $mod->modifier_name }}</span>
                                 @if($mod->group_name)
-                                    <span class="text-[10px] text-stone-400">{{ $mod->group_name }}</span>
+                                    <span class="text-[10px] text-[#1A1018]/50">{{ $mod->group_name }}</span>
                                 @endif
                             </div>
                         </div>
-                        <span class="text-xs font-extrabold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/60">
+                        <span class="text-xs font-semibold text-[#1A1018] bg-[#ECD2F3]/60 px-2.5 py-0.5 rounded-full border border-[#ECD2F3]">
                             +₹{{ number_format((float)$mod->price_delta, 2) }}
                         </span>
                     </label>
@@ -84,13 +84,13 @@
     @endif
 
     <!-- 3. Real-Time Computed Total Box -->
-    <div class="p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50/60 border border-amber-200 shadow-xs flex items-center justify-between">
+    <div class="p-4 rounded-[18px] bg-[#161616] text-white border border-white/10 shadow-sm flex items-center justify-between">
         <div>
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-900 block">Computed Meal Total:</span>
-            <span class="text-[11px] text-amber-800" x-text="computedBreakdownText"></span>
+            <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#C9A24A] block">Computed Meal Total</span>
+            <span class="text-[11px] text-white/75" x-text="computedBreakdownText"></span>
         </div>
         <div class="text-right">
-            <span class="text-xl font-black text-amber-950 font-serif" x-text="`₹${computedTotal}`"></span>
+            <span class="text-xl font-semibold text-[#ECD2F3] tabular-nums" style="font-family: var(--font-grail-serif);" x-text="`₹${computedTotal}`"></span>
         </div>
     </div>
 </div>

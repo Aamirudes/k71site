@@ -7,25 +7,28 @@
         restaurantName: '{{ addslashes($restaurant->shop_name) }}',
         deliveryFee: {{ ($restaurant->settings?->food_delivery_fee ?? 4000) / 100 }},
         isOpen: {{ $restaurant->isOpen ? 'true' : 'false' }}
-    })" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    })" class="bg-black text-[#EFE9F2]">
+
+        <section class="grail-hero-band pt-6 pb-8 sm:pb-10 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
 
         <!-- 1. BREADCRUMBS -->
-        <nav class="flex items-center gap-2 text-xs text-stone-500 mb-6 font-medium">
-            <a href="{{ route('food.index') }}" class="hover:text-[#ea580c] transition">Home</a>
+        <nav class="flex items-center gap-2 text-xs text-[#EFE9F2]/55 mb-6 font-medium">
+            <a href="{{ route('food.index') }}" class="hover:text-[#ECD2F3] transition">Home</a>
             <span>/</span>
-            <a href="{{ route('food.index') }}#restaurants" class="hover:text-[#ea580c] transition">Restaurants</a>
+            <a href="{{ route('food.index') }}#restaurants" class="hover:text-[#ECD2F3] transition">Restaurants</a>
             <span>/</span>
-            <span class="text-stone-900 font-bold truncate">{{ $restaurant->shop_name }}</span>
+            <span class="text-[#ECD2F3] font-bold truncate">{{ $restaurant->shop_name }}</span>
         </nav>
 
         <!-- 2. HERO RESTAURANT HEADER CARD -->
-        <header class="relative rounded-3xl overflow-hidden bg-white border border-stone-200/80 shadow-sm mb-8">
+        <header class="relative rounded-[28px] overflow-hidden grail-dark-card">
             <!-- Cover / Backdrop -->
-            <div class="h-44 sm:h-56 w-full relative overflow-hidden bg-stone-900">
+            <div class="h-44 sm:h-56 w-full relative overflow-hidden bg-black">
                 <img src="{{ $restaurant->cover_image_url }}" 
                      alt="{{ $restaurant->shop_name }} cover" 
-                     class="w-full h-full object-cover opacity-60">
-                <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent"></div>
+                     class="w-full h-full object-cover opacity-65">
+                <div class="absolute inset-0 bg-gradient-to-t from-[#0D0D0D] via-[#0D0D0D]/40 to-transparent"></div>
                 
                 <!-- Pure Veg Ribbon or Verified Tag -->
                 <div class="absolute top-4 right-4 flex items-center gap-2">
@@ -35,7 +38,7 @@
                             <span>Pure Veg</span>
                         </span>
                     @endif
-                    <span class="px-3 py-1 rounded-full bg-stone-900/80 backdrop-blur-md text-white text-xs font-bold border border-white/20 flex items-center gap-1.5 shadow-lg">
+                    <span class="px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-xs font-bold border border-white/20 flex items-center gap-1.5 shadow-lg">
                         <span class="w-2 h-2 rounded-full {{ $restaurant->isOpen ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500' }}"></span>
                         <span>{{ $restaurant->isOpen ? 'Accepting Orders' : 'Currently Closed' }}</span>
                     </span>
@@ -47,110 +50,116 @@
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 -mt-16 sm:-mt-20">
                     <div class="flex items-start sm:items-end gap-5">
                         <!-- Restaurant Logo Avatar -->
-                        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-1.5 border-2 border-white shadow-xl overflow-hidden shrink-0 relative z-10">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-white p-1.5 border-2 border-[#ECD2F3]/50 shadow-xl overflow-hidden shrink-0 relative z-10">
                             <img src="{{ $restaurant->logo_url }}" 
                                  alt="{{ $restaurant->shop_name }}" 
                                  class="w-full h-full object-cover rounded-xl">
                         </div>
 
                         <div class="pt-2">
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <h1 class="text-2xl sm:text-3xl font-black text-stone-950 tracking-tight">
+                            <div class="flex flex-wrap items-center gap-2.5 mb-1">
+                                <h1 class="text-3xl sm:text-4xl font-light text-white tracking-tight" style="font-family: var(--font-grail-display);">
                                     {{ $restaurant->shop_name }}
                                 </h1>
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold flex items-center gap-1">
-                                    <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                                     <span>Verified Kitchen</span>
                                 </span>
                             </div>
 
                             <!-- Cuisines & Address -->
-                            <p class="text-xs sm:text-sm text-stone-600 font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <p class="text-xs sm:text-sm text-[#EFE9F2]/75 font-medium flex flex-wrap items-center gap-x-2 gap-y-1">
                                 <span>{{ is_array($restaurant->cuisine_list) ? implode(' • ', $restaurant->cuisine_list) : $restaurant->cuisine_list }}</span>
-                                <span class="text-stone-300">•</span>
-                                <span class="text-stone-500">{{ $restaurant->city ?? 'Jaipur Central' }}, {{ $restaurant->state ?? 'Rajasthan' }}</span>
+                                <span class="text-white/25">•</span>
+                                <span class="text-[#ECD2F3]">{{ $restaurant->city ?? 'Jaipur Central' }}, {{ $restaurant->state ?? 'Rajasthan' }}</span>
                             </p>
                         </div>
                     </div>
 
                     <!-- Genuine Rating Box -->
                     <div class="flex items-center gap-3 shrink-0 self-start md:self-auto">
-                        <div class="px-3.5 py-2 rounded-2xl bg-stone-900 text-white flex items-center gap-2 shadow-sm">
-                            <span class="text-amber-400 text-base">★</span>
+                        <div class="px-4 py-2.5 rounded-2xl bg-black border border-[#C9A24A]/35 text-white flex items-center gap-2.5 shadow-sm">
+                            <span class="text-[#C9A24A] text-base">★</span>
                             <div class="text-left">
                                 <div class="text-sm font-black leading-tight">{{ number_format($restaurant->rating ?? 4.6, 1) }}</div>
-                                <div class="text-[10px] text-stone-400 font-medium">{{ $restaurant->review_count ?? 120 }}+ ratings</div>
+                                <div class="text-[10px] text-[#EFE9F2]/55 font-medium">{{ $restaurant->review_count ?? 120 }}+ ratings</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Operational Metrics Strip (Includes exact strings for test assertions) -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-stone-100">
-                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-orange-50/60 border border-orange-100">
-                        <div class="w-8 h-8 rounded-xl bg-[#ea580c] text-white flex items-center justify-center text-sm font-bold shrink-0">⚡</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/10">
+                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                        <div class="w-8 h-8 rounded-xl bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-sm font-bold shrink-0">⚡</div>
                         <div>
-                            <div class="text-[11px] text-stone-500 font-medium">Estimated Time</div>
-                            <div class="text-xs font-black text-stone-900">Prep: ~{{ $restaurant->settings?->avg_prep_time_mins ?? 25 }} mins</div>
+                            <div class="text-[11px] text-[#EFE9F2]/55 font-medium">Estimated Time</div>
+                            <div class="text-xs font-bold text-white">Prep: ~{{ $restaurant->settings?->avg_prep_time_mins ?? 25 }} mins</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-200/80">
-                        <div class="w-8 h-8 rounded-xl bg-stone-900 text-white flex items-center justify-center text-sm font-bold shrink-0">🛵</div>
+                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                        <div class="w-8 h-8 rounded-xl bg-[#C9A24A]/20 text-[#C9A24A] border border-[#C9A24A]/35 flex items-center justify-center text-sm font-bold shrink-0">🛵</div>
                         <div>
-                            <div class="text-[11px] text-stone-500 font-medium">Delivery Fee</div>
-                            <div class="text-xs font-black text-stone-900">Delivery: ₹{{ number_format(($restaurant->settings?->food_delivery_fee ?? 4000) / 100) }}</div>
+                            <div class="text-[11px] text-[#EFE9F2]/55 font-medium">Delivery Fee</div>
+                            <div class="text-xs font-bold text-white">Delivery: ₹{{ number_format(($restaurant->settings?->food_delivery_fee ?? 4000) / 100) }}</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-200/80">
-                        <div class="w-8 h-8 rounded-xl bg-stone-200 text-stone-700 flex items-center justify-center text-sm font-bold shrink-0">🕒</div>
+                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.04] border border-white/10">
+                        <div class="w-8 h-8 rounded-xl bg-white/10 text-[#EFE9F2] flex items-center justify-center text-sm font-bold shrink-0">🕒</div>
                         <div>
-                            <div class="text-[11px] text-stone-500 font-medium">Kitchen Hours</div>
-                            <div class="text-xs font-black text-stone-900">Hours: {{ $restaurant->settings?->opening_time ?? '10:00' }} - {{ $restaurant->settings?->closing_time ?? '23:00' }}</div>
+                            <div class="text-[11px] text-[#EFE9F2]/55 font-medium">Kitchen Hours</div>
+                            <div class="text-xs font-bold text-white">Hours: {{ $restaurant->settings?->opening_time ?? '10:00' }} - {{ $restaurant->settings?->closing_time ?? '23:00' }}</div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+                    <div class="flex items-center gap-3 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-400/25">
                         <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0">🛡️</div>
                         <div>
-                            <div class="text-[11px] text-stone-500 font-medium">Food Safety</div>
-                            <div class="text-xs font-black text-emerald-900">FSSAI Certified</div>
+                            <div class="text-[11px] text-emerald-200/75 font-medium">Food Safety</div>
+                            <div class="text-xs font-bold text-emerald-300">FSSAI Certified</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Active Restaurant Offers / Coupon Carousel -->
                 @if(isset($restaurantCoupons) && $restaurantCoupons->isNotEmpty())
-                    <div class="mt-4 pt-4 border-t border-dashed border-stone-200 flex items-center gap-3 overflow-x-auto no-scrollbar">
-                        <span class="text-xs font-black text-stone-400 uppercase tracking-wider shrink-0">Deals</span>
+                    <div class="mt-4 pt-4 border-t border-dashed border-white/15 flex items-center gap-3 overflow-x-auto no-scrollbar">
+                        <span class="grail-eyebrow shrink-0">Deals</span>
                         @foreach($restaurantCoupons as $coupon)
-                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-200 text-xs font-bold text-stone-800 shrink-0">
-                                <span>🏷️ Use code <strong class="text-[#ea580c] font-black">{{ $coupon->code }}</strong></span>
-                                <span class="text-stone-400">|</span>
-                                <span class="text-stone-600 font-semibold">{{ $coupon->type === 'percent' ? $coupon->value . '% OFF' : '₹' . number_format($coupon->value / 100) . ' FLAT OFF' }}</span>
+                            <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ECD2F3]/10 border border-[#ECD2F3]/30 text-xs font-bold text-[#EFE9F2] shrink-0">
+                                <span>🏷️ Use code <strong class="text-[#ECD2F3] font-black">{{ $coupon->code }}</strong></span>
+                                <span class="text-white/25">|</span>
+                                <span class="text-[#C9A24A] font-semibold">{{ $coupon->type === 'percent' ? $coupon->value . '% OFF' : '₹' . number_format($coupon->value / 100) . ' FLAT OFF' }}</span>
                             </div>
                         @endforeach
                     </div>
                 @endif
             </div>
         </header>
+        </div>
+        </section>
+
+        <!-- CURVED LIGHT EDITORIAL SHEET FOR MENU -->
+        <div class="grail-sheet bg-[#F6F6F6] text-[#1A1018] rounded-t-[28px] sm:rounded-t-[36px] py-8 sm:py-10 px-4 sm:px-6 lg:px-8 border-0 shadow-[0_-18px_50px_rgba(0,0,0,0.45)]">
+        <div class="max-w-7xl mx-auto">
 
         <!-- 3. IN-MENU FILTER & SEARCH BAR (NON-STICKY) -->
-        <div class="relative bg-white/95 backdrop-blur-md rounded-2xl border border-stone-200 shadow-sm p-3 mb-8">
+        <div class="relative grail-card p-3 mb-8">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <!-- Category Navigation Pills -->
                 <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                     <button type="button" 
                             @click="selectedCategory = 'all'" 
-                            :class="selectedCategory === 'all' ? 'bg-stone-950 text-white shadow-xs' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
+                            :class="selectedCategory === 'all' ? 'bg-[#1A1018] text-[#ECD2F3] shadow-xs' : 'bg-[#FAFAF8] text-[#1A1018]/75 border border-black/8 hover:bg-[#ECD2F3]/30'"
                             class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 cursor-pointer">
                         Full Menu
                     </button>
                     @foreach($menuCategories as $cat)
                         <button type="button" 
                                 @click="selectedCategory = '{{ Str::slug($cat->name) }}'" 
-                                :class="selectedCategory === '{{ Str::slug($cat->name) }}' ? 'bg-[#ea580c] text-white shadow-xs' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'"
+                                :class="selectedCategory === '{{ Str::slug($cat->name) }}' ? 'bg-[#1A1018] text-[#ECD2F3] shadow-xs' : 'bg-[#FAFAF8] text-[#1A1018]/75 border border-black/8 hover:bg-[#ECD2F3]/30'"
                                 class="px-4 py-2 rounded-full text-xs font-bold transition shrink-0 flex items-center gap-1.5 cursor-pointer">
                             <span>{{ $cat->name }}</span>
                             <span class="text-[10px] opacity-75 font-semibold">({{ $cat->products_count }})</span>
@@ -163,8 +172,8 @@
                     <!-- Veg Only Pill Toggle -->
                     <button type="button" 
                             @click="vegOnly = !vegOnly" 
-                            :class="vegOnly ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30' : 'bg-stone-100 text-stone-700 border border-stone-200 hover:bg-stone-200'"
-                            class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-black transition cursor-pointer">
+                            :class="vegOnly ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30' : 'bg-[#FAFAF8] text-[#1A1018] border border-black/10 hover:bg-emerald-50'"
+                            class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold transition cursor-pointer">
                         <span class="w-3 h-3 rounded-xs border-2 border-current flex items-center justify-center p-0.5">
                             <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
                         </span>
@@ -172,12 +181,12 @@
                     </button>
 
                     <!-- In-Menu Instant Search -->
-                    <div class="relative w-full sm:w-48">
+                    <div class="relative w-full sm:w-52">
                         <input type="text" 
                                x-model="searchQuery" 
                                placeholder="Search in menu..." 
-                               class="w-full pl-8 pr-3 py-1.5 text-xs rounded-full bg-stone-100 border border-transparent focus:bg-white focus:border-[#ea580c] outline-hidden font-medium">
-                        <svg class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                               class="w-full pl-8 pr-3 py-1.5 text-xs rounded-full grail-input-light font-medium">
+                        <svg class="w-3.5 h-3.5 text-[#1A1018]/45 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
                     </div>
                 </div>
             </div>
@@ -185,25 +194,25 @@
 
         <!-- 4. MENU SECTIONS -->
         @if($groupedMenu->isEmpty())
-            <div class="p-16 text-center rounded-3xl bg-white border border-stone-200 max-w-md mx-auto shadow-sm">
-                <div class="w-16 h-16 rounded-3xl bg-orange-100 text-[#ea580c] flex items-center justify-center text-2xl mx-auto mb-4">🍳</div>
-                <h3 class="text-base font-black text-stone-900 mb-1">Menu items updating</h3>
-                <p class="text-xs text-stone-500 mb-5">The kitchen is preparing new dishes. Check back shortly!</p>
-                <a href="{{ route('food.index') }}" class="px-5 py-2.5 rounded-2xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800 transition">
+            <div class="p-16 text-center grail-card max-w-md mx-auto">
+                <div class="w-16 h-16 rounded-3xl bg-[#ECD2F3]/60 text-[#1A1018] flex items-center justify-center text-2xl mx-auto mb-4">🍳</div>
+                <h3 class="text-xl font-light text-[#1A1018] mb-1" style="font-family: var(--font-grail-display);">Menu items updating</h3>
+                <p class="text-xs text-[#1A1018]/60 mb-5">The kitchen is preparing new dishes. Check back shortly!</p>
+                <a href="{{ route('food.index') }}" class="px-5 py-2.5 grail-btn-obsidian text-xs font-bold inline-block">
                     Explore Other Restaurants
                 </a>
             </div>
         @else
-            <div class="space-y-12 pb-24">
+            <div class="space-y-12 pb-20">
                 @foreach($groupedMenu as $categoryName => $items)
                     <section id="cat-{{ Str::slug($categoryName) }}" 
                              x-show="shouldShowCategory('{{ Str::slug($categoryName) }}')"
                              class="scroll-mt-36">
                         
                         <!-- Category Header -->
-                        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-stone-200">
-                            <h2 class="text-xl font-black text-stone-900 tracking-tight">{{ $categoryName }}</h2>
-                            <span class="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 text-xs font-bold">
+                        <div class="flex items-center gap-3 mb-6 pb-2 border-b border-black/10">
+                            <h2 class="text-2xl font-light text-[#1A1018] tracking-tight" style="font-family: var(--font-grail-display);">{{ $categoryName }}</h2>
+                            <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/60 text-[#1A1018] text-xs font-bold">
                                 {{ $items->count() }} items
                             </span>
                         </div>
@@ -240,7 +249,7 @@
                                 @endphp
 
                                 <div x-show="shouldShowDish('{{ addslashes(strtolower($dish->title)) }}', {{ $isVeg ? 'true' : 'false' }})"
-                                     class="p-4 sm:p-5 rounded-3xl bg-white hover:bg-orange-50/20 border border-stone-200 hover:border-orange-200 transition-all duration-200 flex flex-col sm:flex-row justify-between gap-4 group shadow-xs hover:shadow-md">
+                                     class="p-4 sm:p-5 grail-card hover:border-[#623562]/35 transition-all duration-200 flex flex-col sm:flex-row justify-between gap-4 group">
                                     
                                     <!-- Dish Details (Left) -->
                                     <div class="flex-1 space-y-2">
@@ -257,33 +266,33 @@
                                             @endif
 
                                             @if($spiceLevel)
-                                                <span class="text-[10px] font-black uppercase text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md">
+                                                <span class="text-[10px] font-bold uppercase text-[#5F5138] bg-[#FAF5EB] border border-[#C9A24A]/35 px-2 py-0.5 rounded-full">
                                                     🌶️ {{ $spiceLevel }}
                                                 </span>
                                             @endif
 
                                             @if($servingSize)
-                                                <span class="text-[11px] text-stone-500 font-medium">
+                                                <span class="text-[11px] text-[#1A1018]/55 font-medium">
                                                     Serves {{ $servingSize }}
                                                 </span>
                                             @endif
                                         </div>
 
                                         <!-- Dish Name -->
-                                        <h3 class="text-base font-bold text-stone-900 group-hover:text-[#ea580c] transition leading-snug">
+                                        <h3 class="text-base font-bold text-[#1A1018] group-hover:text-[#623562] transition leading-snug">
                                             {{ $dish->title }}
                                         </h3>
 
                                         <!-- Price Tag -->
                                         <div class="flex items-baseline gap-2">
-                                            <span class="text-base font-black text-stone-950">
+                                            <span class="text-base font-black text-[#1A1018]">
                                                 ₹{{ number_format($dish->base_price / 100, 2) }}
                                             </span>
                                             @if($dish->compare_at_price && $dish->compare_at_price > $dish->base_price)
-                                                <span class="text-xs text-stone-400 line-through">
+                                                <span class="text-xs text-[#1A1018]/40 line-through">
                                                     ₹{{ number_format($dish->compare_at_price / 100, 2) }}
                                                 </span>
-                                                <span class="text-[11px] font-bold text-emerald-600">
+                                                <span class="text-[11px] font-bold text-emerald-700">
                                                     {{ round((($dish->compare_at_price - $dish->base_price) / $dish->compare_at_price) * 100) }}% OFF
                                                 </span>
                                             @endif
@@ -291,13 +300,13 @@
 
                                         <!-- Description -->
                                         @if($dish->description)
-                                            <p class="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                                            <p class="text-xs text-[#1A1018]/60 line-clamp-2 leading-relaxed">
                                                 {{ Str::limit(strip_tags($dish->description), 110) }}
                                             </p>
                                         @endif
 
                                         @if($needsCustomization)
-                                            <div class="text-[11px] font-bold text-[#ea580c] flex items-center gap-1">
+                                            <div class="text-[11px] font-bold text-[#623562] flex items-center gap-1">
                                                 <span>✨ Customizable</span>
                                             </div>
                                         @endif
@@ -305,7 +314,7 @@
 
                                     <!-- Dish Image & Action Button (Right) -->
                                     <div class="relative w-full sm:w-32 h-28 shrink-0 flex flex-col items-center justify-between">
-                                        <div class="w-full h-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200">
+                                        <div class="w-full h-full rounded-2xl overflow-hidden bg-[#FAFAF8] border border-black/8">
                                             @if($dish->images->isNotEmpty())
                                                 <img src="{{ $dish->primary_image_url }}" 
                                                      alt="{{ $dish->title }}" 
@@ -322,10 +331,10 @@
                                             @if($needsCustomization)
                                                 <button type="button" 
                                                         @click="openCustomizer({{ $dishJson }})"
-                                                        class="w-full py-1.5 rounded-xl bg-white border border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black text-center shadow-md transition active:scale-95 cursor-pointer">
+                                                        class="w-full py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-md transition active:scale-95 cursor-pointer">
                                                     ADD +
                                                 </button>
-                                                <div class="text-[9px] text-stone-500 text-center font-bold mt-0.5">customisable</div>
+                                                <div class="text-[9px] text-[#623562] text-center font-bold mt-0.5">customisable</div>
                                             @else
                                                 <form action="{{ route('cart.add') }}" method="POST" class="w-full" onsubmit="event.preventDefault(); window.k71AddToCart(this);">
                                                     @csrf
@@ -333,7 +342,7 @@
                                                     <input type="hidden" name="variant_id" value="{{ $dish->variants->first()?->id }}">
                                                     <input type="hidden" name="quantity" value="1">
                                                     <button type="submit" 
-                                                            class="w-full py-1.5 rounded-xl bg-white border-2 border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black text-center shadow-md transition active:scale-95 cursor-pointer">
+                                                            class="w-full py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-md transition active:scale-95 cursor-pointer">
                                                         + ADD
                                                     </button>
                                                 </form>
@@ -348,35 +357,38 @@
             </div>
         @endif
 
-        <!-- 5. DOMINO'S / SWIGGY STYLE CUSTOMIZATION MODAL -->
+        </div>
+        </div>
+
+        <!-- 5. CUSTOMIZATION MODAL (Grail Sheet Edition) -->
         <div x-show="customizerOpen" 
              x-cloak
-             class="fixed inset-0 z-50 overflow-y-auto" 
+             class="fixed inset-0 z-50 overflow-y-auto text-[#1A1018]" 
              aria-labelledby="modal-title" 
              role="dialog" 
              aria-modal="true">
             <div class="flex items-center justify-center min-h-screen p-4 text-center sm:p-0">
                 <!-- Overlay Backdrop -->
-                <div class="fixed inset-0 bg-stone-950/70 backdrop-blur-xs transition-opacity" 
+                <div class="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" 
                      @click="customizerOpen = false"></div>
 
                 <!-- Modal Panel -->
-                <div class="relative inline-block w-full max-w-lg bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all my-8 z-10 border border-stone-200">
+                <div class="relative inline-block w-full max-w-lg bg-[#FAFAF8] text-[#1A1018] rounded-[28px] text-left overflow-hidden shadow-2xl transform transition-all my-8 z-10 border border-black/10">
                     
                     <!-- Modal Header with Dish Image -->
-                    <div class="relative h-40 bg-stone-900 overflow-hidden">
+                    <div class="relative h-40 bg-[#0D0D0D] overflow-hidden">
                         <template x-if="activeDish">
-                            <img :src="activeDish.image" :alt="activeDish.title" class="w-full h-full object-cover opacity-80">
+                            <img :src="activeDish.image" :alt="activeDish.title" class="w-full h-full object-cover opacity-75">
                         </template>
-                        <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-transparent"></div>
                         <button type="button" 
                                 @click="customizerOpen = false"
-                                class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-stone-800 hover:bg-white flex items-center justify-center font-bold text-sm shadow-md transition cursor-pointer">
+                                class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 text-[#1A1018] hover:bg-white flex items-center justify-center font-bold text-sm shadow-md transition cursor-pointer">
                             ✕
                         </button>
-                        <div class="absolute bottom-3 left-4 right-4">
-                            <div class="text-xs font-bold text-amber-400">Customise your order</div>
-                            <h3 class="text-lg font-black text-white truncate" x-text="activeDish?.title"></h3>
+                        <div class="absolute bottom-3 left-5 right-5">
+                            <div class="grail-eyebrow mb-0.5">Customise your order</div>
+                            <h3 class="text-xl font-light text-white truncate" style="font-family: var(--font-grail-display);" x-text="activeDish?.title"></h3>
                         </div>
                     </div>
 
@@ -386,23 +398,23 @@
                         <!-- Portion Sizes / Variants -->
                         <template x-if="activeDish && activeDish.variants && activeDish.variants.length > 1">
                             <div>
-                                <h4 class="text-xs font-black uppercase tracking-wider text-stone-900 mb-2 flex items-center justify-between">
+                                <h4 class="grail-eyebrow !text-[#623562] mb-2 flex items-center justify-between">
                                     <span>Choose Portion Size</span>
-                                    <span class="text-[10px] text-stone-500 font-semibold">Required</span>
+                                    <span class="text-[10px] text-[#1A1018]/50 font-semibold">Required</span>
                                 </h4>
                                 <div class="space-y-2">
                                     <template x-for="v in activeDish.variants" :key="v.id">
-                                        <label class="flex items-center justify-between p-3 rounded-2xl border transition cursor-pointer"
-                                               :class="selectedVariantId === v.id ? 'border-[#ea580c] bg-orange-50/50' : 'border-stone-200 hover:bg-stone-50'">
+                                        <label class="flex items-center justify-between p-3.5 rounded-2xl border transition cursor-pointer"
+                                               :class="selectedVariantId === v.id ? 'border-[#1A1018] bg-[#ECD2F3]/35' : 'bg-white border-black/10 hover:bg-[#F6F6F6]'">
                                             <div class="flex items-center gap-3">
                                                 <input type="radio" 
                                                        name="variant_option" 
                                                        :value="v.id" 
                                                        x-model="selectedVariantId" 
-                                                       class="text-[#ea580c] focus:ring-[#ea580c]">
-                                                <span class="text-xs font-bold text-stone-900" x-text="v.title"></span>
+                                                       class="text-[#1A1018] focus:ring-[#623562]">
+                                                <span class="text-xs font-bold text-[#1A1018]" x-text="v.title"></span>
                                             </div>
-                                            <span class="text-xs font-black text-stone-950" x-text="'₹' + v.price.toFixed(2)"></span>
+                                            <span class="text-xs font-black text-[#1A1018]" x-text="'₹' + v.price.toFixed(2)"></span>
                                         </label>
                                     </template>
                                 </div>
@@ -412,22 +424,22 @@
                         <!-- Add-ons / Modifiers -->
                         <template x-if="activeDish && activeDish.modifiers && activeDish.modifiers.length > 0">
                             <div>
-                                <h4 class="text-xs font-black uppercase tracking-wider text-stone-900 mb-2 flex items-center justify-between">
-                                    <span>Add Extras & Sides</span>
-                                    <span class="text-[10px] text-stone-500 font-semibold">Optional</span>
+                                <h4 class="grail-eyebrow !text-[#623562] mb-2 flex items-center justify-between">
+                                    <span>Add Extras &amp; Sides</span>
+                                    <span class="text-[10px] text-[#1A1018]/50 font-semibold">Optional</span>
                                 </h4>
                                 <div class="space-y-2.5">
                                     <template x-for="m in activeDish.modifiers" :key="m.id">
                                         <label class="flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer"
-                                               :class="(selectedModifiers.includes(m.id) || selectedModifiers.includes(String(m.id))) ? 'border-[#ea580c] bg-orange-50/70 shadow-xs' : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50/60'">
+                                               :class="(selectedModifiers.includes(m.id) || selectedModifiers.includes(String(m.id))) ? 'border-[#1A1018] bg-[#ECD2F3]/35 shadow-xs' : 'bg-white border-black/10 hover:border-[#623562]/30'">
                                             <div class="flex items-center gap-3">
                                                 <input type="checkbox" 
                                                        :value="m.id" 
                                                        x-model="selectedModifiers" 
-                                                       class="w-4 h-4 text-[#ea580c] rounded-md focus:ring-[#ea580c] border-stone-300 cursor-pointer">
-                                                <span class="text-xs font-bold text-stone-800" x-text="m.title"></span>
+                                                       class="w-4 h-4 text-[#1A1018] rounded-md focus:ring-[#623562] border-black/25 cursor-pointer">
+                                                <span class="text-xs font-bold text-[#1A1018]" x-text="m.title"></span>
                                             </div>
-                                            <span class="text-xs font-black text-stone-900" x-text="'+₹' + Number(m.price).toFixed(2)"></span>
+                                            <span class="text-xs font-black text-[#1A1018]" x-text="'+₹' + Number(m.price).toFixed(2)"></span>
                                         </label>
                                     </template>
                                 </div>
@@ -436,31 +448,31 @@
 
                         <!-- Special Kitchen Instructions -->
                         <div>
-                            <h4 class="text-xs font-black uppercase tracking-wider text-stone-900 mb-1">
+                            <h4 class="grail-eyebrow !text-[#623562] mb-1">
                                 Kitchen Cooking Instructions
                             </h4>
-                            <p class="text-[11px] text-stone-500 mb-2">e.g. Less spicy, send extra green chutney, no plastic cutlery</p>
+                            <p class="text-[11px] text-[#1A1018]/55 mb-2">e.g. Less spicy, send extra green chutney, no plastic cutlery</p>
                             <input type="text" 
                                    x-model="kitchenNote" 
                                    placeholder="Add special cooking request..." 
-                                   class="w-full px-3.5 py-2 text-xs rounded-xl bg-stone-100 border border-stone-200 focus:bg-white focus:border-[#ea580c] outline-hidden font-medium">
+                                   class="w-full px-3.5 py-2.5 text-xs grail-input-light font-medium">
                         </div>
 
                     </div>
 
                     <!-- Modal Footer with Calculated Total -->
-                    <div class="p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-between gap-4">
+                    <div class="p-4 bg-white border-t border-black/10 flex items-center justify-between gap-4">
                         <!-- Quantity Counter -->
-                        <div class="flex items-center gap-2 p-1 rounded-xl bg-white border border-stone-200 shadow-xs">
+                        <div class="flex items-center gap-2 p-1 rounded-full bg-[#FAFAF8] border border-black/10 shadow-xs">
                             <button type="button" 
                                     @click="if (itemQuantity > 1) itemQuantity--" 
-                                    class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-black text-xs cursor-pointer">
+                                    class="w-8 h-8 rounded-full bg-white hover:bg-[#ECD2F3]/50 text-[#1A1018] flex items-center justify-center font-black text-xs cursor-pointer transition">
                                 −
                             </button>
-                            <span class="w-6 text-center text-xs font-black text-stone-900" x-text="itemQuantity"></span>
+                            <span class="w-6 text-center text-xs font-black text-[#1A1018]" x-text="itemQuantity"></span>
                             <button type="button" 
                                     @click="itemQuantity++" 
-                                    class="w-7 h-7 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#ea580c] flex items-center justify-center font-black text-xs cursor-pointer">
+                                    class="w-8 h-8 rounded-full bg-[#ECD2F3] hover:bg-[#FFCDFF] text-[#1A1018] flex items-center justify-center font-black text-xs cursor-pointer transition">
                                 +
                             </button>
                         </div>
@@ -469,9 +481,9 @@
                         <button type="button" 
                                 @click="submitCustomizedItem()" 
                                 :disabled="addingCustomized"
-                                class="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-[#ea580c] to-amber-600 hover:opacity-95 text-white text-xs font-black transition shadow-lg shadow-orange-500/25 flex items-center justify-between cursor-pointer">
+                                class="flex-1 py-3 px-5 grail-btn-obsidian text-xs font-bold flex items-center justify-between shadow-lg cursor-pointer">
                             <span x-text="addingCustomized ? 'Adding to bag...' : 'Add Item to Bag'"></span>
-                            <span class="text-white text-xs font-black" x-text="'₹' + calculatedCustomPrice.toFixed(2)"></span>
+                            <span class="text-[#ECD2F3] text-xs font-black" x-text="'₹' + calculatedCustomPrice.toFixed(2)"></span>
                         </button>
                     </div>
 
@@ -619,12 +631,12 @@
                     window.showToast('Item added to your bag! 🛍️');
                 }
                 if (submitBtn) {
-                    submitBtn.classList.remove('bg-white', 'text-[#ea580c]', 'border-[#ea580c]');
-                    submitBtn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                    submitBtn.classList.remove('bg-[#1A1018]', 'hover:bg-[#623562]', 'text-[#ECD2F3]');
+                    submitBtn.classList.add('bg-emerald-600', 'text-white');
                     submitBtn.innerHTML = '✓ ADDED';
                     setTimeout(() => {
-                        submitBtn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
-                        submitBtn.classList.add('bg-white', 'text-[#ea580c]', 'border-[#ea580c]');
+                        submitBtn.classList.remove('bg-emerald-600', 'text-white');
+                        submitBtn.classList.add('bg-[#1A1018]', 'hover:bg-[#623562]', 'text-[#ECD2F3]');
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = originalText;
                     }, 1800);

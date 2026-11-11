@@ -1,4 +1,4 @@
-<x-layouts.public title="Store Unavailable">
+<x-layouts.public title="Store Unavailable" :grailTheme="false">
     <div class="min-h-[60vh] flex items-center justify-center px-4">
         <div class="text-center">
             <div class="w-24 h-24 bg-brand-surface rounded-full flex items-center justify-center mx-auto mb-6">

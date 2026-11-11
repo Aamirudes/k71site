@@ -1,3 +1,5 @@
+@props(['grailTheme' => false])
+
 @php
     $verticalsList = [
         [
@@ -82,25 +84,26 @@
          x-transition:leave="transition ease-in duration-200 transform"
          x-transition:leave-start="translate-x-0"
          x-transition:leave-end="-translate-x-full"
-         class="fixed inset-y-0 left-0 w-[85%] max-w-sm bg-white/95 dark:bg-zinc-950/95 backdrop-blur-2xl shadow-2xl flex flex-col overflow-hidden border-r border-zinc-200/60 dark:border-zinc-800/80 text-zinc-900 dark:text-zinc-100">
+         @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif
+         class="fixed inset-y-0 left-0 w-[85%] max-w-sm {{ $grailTheme ? 'bg-[#060606]/96 backdrop-blur-2xl shadow-[24px_0_70px_rgba(0,0,0,0.85)] border-r border-white/10 text-[#EFE9F2]' : 'bg-white/95 dark:bg-zinc-950/95 backdrop-blur-2xl shadow-2xl border-r border-zinc-200/60 dark:border-zinc-800/80 text-zinc-900 dark:text-zinc-100' }} flex flex-col overflow-hidden">
 
         <!-- Drawer Header -->
-        <div class="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800/80 flex items-center justify-between bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md">
+        <div class="px-5 py-4 border-b {{ $grailTheme ? 'border-white/10 bg-black/70' : 'border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80' }} flex items-center justify-between backdrop-blur-md">
             <div class="flex items-center gap-2.5">
-                <div class="h-8 w-8 flex items-center justify-center shrink-0">
+                <div class="h-8 w-8 flex items-center justify-center shrink-0 {{ $grailTheme ? 'rounded-xl bg-[#ECD2F3] p-1 shadow-[0_0_16px_rgba(236,210,243,0.22)]' : '' }}">
                     <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
                 </div>
                 <div class="flex items-baseline gap-1.5 leading-none">
-                    <span class="font-sans text-xl font-black tracking-tight text-zinc-950 dark:text-white">
+                    <span class="font-sans text-xl font-black tracking-tight {{ $grailTheme ? 'text-white' : 'text-zinc-950 dark:text-white' }}">
                         K71
                     </span>
-                    <span class="text-[9px] uppercase tracking-wider font-mono font-bold text-zinc-500 dark:text-zinc-400">
+                    <span class="text-[9px] uppercase tracking-[0.16em] font-semibold {{ $grailTheme ? 'text-[#C9A24A]' : 'font-mono font-bold text-zinc-500 dark:text-zinc-400' }}">
                         MARKETPLACE
                     </span>
                 </div>
             </div>
             <button @click="menuOpen = false" 
-                    class="w-8 h-8 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center justify-center transition-colors">
+                    class="w-8 h-8 rounded-full {{ $grailTheme ? 'hover:bg-white/10 text-[#EFE9F2]/60 hover:text-white' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white' }} flex items-center justify-center transition-colors cursor-pointer">
                 <svg width="20" height="20" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -108,13 +111,13 @@
         </div>
 
         <!-- Scrollable Drawer Content -->
-        <div class="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+        <div class="flex-1 overflow-y-auto px-5 py-5 space-y-6 no-scrollbar">
 
             <!-- User Status Card -->
-            <div class="p-4 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80">
+            <div class="p-4 rounded-2xl {{ $grailTheme ? 'bg-[#161616] border border-white/10' : 'bg-zinc-50/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-800/80' }}">
                 @auth
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-zinc-900 text-white font-medium flex items-center justify-center text-sm shadow-xs overflow-hidden border border-zinc-700">
+                        <div class="w-10 h-10 rounded-full {{ $grailTheme ? 'bg-[#ECD2F3] text-[#1A1018] border border-white/20' : 'bg-zinc-900 text-white border border-zinc-700' }} font-semibold flex items-center justify-center text-sm shadow-xs overflow-hidden">
                             @if(auth()->user()->avatar)
                                 <img src="{{ format_user_avatar(auth()->user()->avatar, auth()->user()->first_name) }}" alt="{{ auth()->user()->username }}" class="w-full h-full object-cover my-user-avatar">
                             @else
@@ -122,33 +125,33 @@
                             @endif
                         </div>
                         <div class="flex-1 min-w-0">
-                            <h4 class="text-sm font-semibold text-zinc-900 dark:text-white truncate">
+                            <h4 class="text-sm font-semibold {{ $grailTheme ? 'text-white' : 'text-zinc-900 dark:text-white' }} truncate">
                                 {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}
                             </h4>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ auth()->user()->email }}</p>
+                            <p class="text-xs {{ $grailTheme ? 'text-[#EFE9F2]/55' : 'text-zinc-500 dark:text-zinc-400' }} truncate">{{ auth()->user()->email }}</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-zinc-200/50 dark:border-zinc-800/80">
-                        <a href="{{ route('account') }}" class="text-center py-2 rounded-xl bg-white dark:bg-zinc-800 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
+                    <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t {{ $grailTheme ? 'border-white/10' : 'border-zinc-200/50 dark:border-zinc-800/80' }}">
+                        <a href="{{ route('account') }}" class="text-center py-2 rounded-xl {{ $grailTheme ? 'bg-white/5 hover:bg-white/10 text-[#EFE9F2] border border-white/10' : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700' }} text-xs font-semibold transition-colors">
                             Account
                         </a>
-                        <a href="{{ route('orders.index') }}" class="text-center py-2 rounded-xl bg-white dark:bg-zinc-800 text-xs font-semibold text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
+                        <a href="{{ route('orders.index') }}" class="text-center py-2 rounded-xl {{ $grailTheme ? 'bg-white/5 hover:bg-white/10 text-[#EFE9F2] border border-white/10' : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200/80 dark:border-zinc-700 shadow-xs hover:bg-zinc-50 dark:hover:bg-zinc-700' }} text-xs font-semibold transition-colors">
                             Orders
                         </a>
                     </div>
                 @else
                     <div class="text-center py-2">
-                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">Welcome to K71</p>
-                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Sign in for fast checkout &amp; order tracking</p>
+                        <p class="text-sm font-semibold {{ $grailTheme ? 'text-white' : 'text-zinc-900 dark:text-white' }}">Welcome to K71</p>
+                        <p class="text-xs {{ $grailTheme ? 'text-[#EFE9F2]/60' : 'text-zinc-500 dark:text-zinc-400' }} mt-0.5">Sign in for fast checkout &amp; order tracking</p>
                         <div class="grid grid-cols-2 gap-2 mt-3">
                             <button type="button" 
-                                    @click="closeDrawer(); window.openAuthModal ? window.openAuthModal(null, 'login') : $dispatch('open-auth-modal', { tab: 'login' })" 
-                                    class="py-2.5 rounded-xl bg-zinc-950 hover:bg-black text-white text-xs font-semibold shadow-xs text-center transition-colors cursor-pointer">
+                                    @click="menuOpen = false; window.openAuthModal ? window.openAuthModal(null, 'login') : $dispatch('open-auth-modal', { tab: 'login' })" 
+                                    class="py-2.5 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs' : 'bg-zinc-950 hover:bg-black text-white text-xs font-semibold shadow-xs rounded-xl' }} text-center transition-all cursor-pointer">
                                 Sign In
                             </button>
                             <button type="button" 
-                                    @click="closeDrawer(); window.openAuthModal ? window.openAuthModal(null, 'register') : $dispatch('open-auth-modal', { tab: 'register' })" 
-                                    class="py-2.5 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-700 text-center transition-colors cursor-pointer">
+                                    @click="menuOpen = false; window.openAuthModal ? window.openAuthModal(null, 'register') : $dispatch('open-auth-modal', { tab: 'register' })" 
+                                    class="py-2.5 rounded-full {{ $grailTheme ? 'bg-white/5 hover:bg-white/10 text-[#EFE9F2] border border-white/15' : 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-xl' }} text-xs font-semibold text-center transition-colors cursor-pointer">
                                 Register
                             </button>
                         </div>
@@ -158,14 +161,14 @@
 
             <!-- Verticals Menu -->
             <div>
-                <h5 class="text-xs uppercase font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">Ecosystem Verticals</h5>
+                <h5 class="text-[11px] uppercase font-semibold tracking-[0.14em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-zinc-400 dark:text-zinc-500' }} mb-2.5">Ecosystem Verticals</h5>
                 <div class="space-y-1.5">
                     @foreach($verticalsList as $vert)
                         @php $isActive = $currentKey === $vert['key']; @endphp
                         <a href="{{ $vert['url'] }}" 
-                           class="flex items-center justify-between p-3 rounded-2xl transition-all duration-200 {{ $isActive ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-800 dark:text-zinc-200' }}">
+                           class="flex items-center justify-between p-3 rounded-2xl transition-all duration-200 {{ $grailTheme ? ($isActive ? 'bg-[#ECD2F3] text-[#1A1018] shadow-[0_8px_24px_rgba(236,210,243,0.2)]' : 'bg-white/[0.03] hover:bg-white/[0.08] text-[#EFE9F2] border border-white/5') : ($isActive ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md' : 'hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-800 dark:text-zinc-200') }}">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $isActive ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 shadow-xs' }}">
+                                <div class="w-8 h-8 rounded-lg flex items-center justify-center {{ $grailTheme ? ($isActive ? 'bg-[#1A1018]/10 text-[#1A1018]' : 'bg-white/10 text-[#ECD2F3] border border-white/10') : ($isActive ? 'bg-white/20 text-white dark:bg-zinc-900/10 dark:text-zinc-950' : 'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-700/60 shadow-xs') }}">
                                     <svg width="18" height="18" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="{{ $vert['icon_path'] }}"></path>
                                     </svg>
@@ -174,15 +177,15 @@
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-xs font-semibold">{{ $vert['name'] }}</span>
                                         @if(isset($vert['badge']))
-                                            <span class="text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-red-500 text-white">
+                                            <span class="text-[8px] font-bold px-1.5 py-0.2 rounded-full {{ $grailTheme ? 'bg-[#FFCDFF] text-[#1A1018]' : 'bg-red-500 text-white' }}">
                                                 {{ $vert['badge'] }}
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-[10px] {{ $isActive ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400' }}">{{ $vert['desc'] }}</p>
+                                    <p class="text-[10px] {{ $grailTheme ? ($isActive ? 'text-[#623562]' : 'text-[#EFE9F2]/55') : ($isActive ? 'text-zinc-300 dark:text-zinc-600' : 'text-zinc-500 dark:text-zinc-400') }}">{{ $vert['desc'] }}</p>
                                 </div>
                             </div>
-                            <svg class="w-4 h-4 {{ $isActive ? 'text-white dark:text-zinc-950' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 {{ $grailTheme ? ($isActive ? 'text-[#1A1018]' : 'text-[#EFE9F2]/40') : ($isActive ? 'text-white dark:text-zinc-950' : 'text-zinc-400') }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path>
                             </svg>
                         </a>
@@ -193,41 +196,40 @@
             @if($customDrawerItems->isNotEmpty())
                 <!-- Dynamic Admin Configured Panel Shortcuts -->
                 <div>
-                    <h5 class="text-xs uppercase font-bold tracking-wider text-indigo-600 mb-2">Featured Highlights</h5>
+                    <h5 class="text-[11px] uppercase font-semibold tracking-[0.14em] {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-indigo-600 font-bold' }} mb-2">Featured Highlights</h5>
                     <div class="space-y-2">
                         @foreach($customDrawerItems as $cItem)
                             <a href="{{ $cItem->url }}" target="{{ $cItem->target ?? '_self' }}"
-                               class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-indigo-500/50 hover:bg-slate-100/80 transition group shadow-2xs">
+                               class="flex items-center justify-between p-3 rounded-2xl {{ $grailTheme ? 'bg-[#161616] border border-white/10 hover:border-[#ECD2F3]/40 hover:bg-white/5' : 'bg-slate-50 border border-slate-200 hover:border-indigo-500/50 hover:bg-slate-100/80 shadow-2xs' }} transition group">
                                 <div class="flex items-center gap-3">
-                                    <!-- 4x Large HD Icon Box -->
-                                    <div class="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center p-1.5 shadow-xs shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+                                    <div class="w-14 h-14 rounded-2xl {{ $grailTheme ? 'bg-black border border-white/15' : 'bg-white border border-slate-200 shadow-xs' }} flex items-center justify-center p-1.5 shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
                                         @if($cItem->icon_type === 'image' && $cItem->image_url)
                                             <img src="{{ $cItem->image_url }}" alt="{{ $cItem->title }}" class="w-full h-full object-contain drop-shadow">
                                         @elseif($cItem->icon_type === 'emoji' && $cItem->icon)
                                             <span class="text-2xl">{{ $cItem->icon }}</span>
                                         @elseif($cItem->icon)
-                                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-indigo-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 {!! $cItem->icon !!}
                                             </svg>
                                         @else
-                                            <span class="text-slate-500 font-bold">★</span>
+                                            <span class="{{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-500' }} font-bold">★</span>
                                         @endif
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <span class="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{{ $cItem->title }}</span>
+                                            <span class="text-sm font-bold {{ $grailTheme ? 'text-white group-hover:text-[#FFCDFF]' : 'text-slate-900 group-hover:text-indigo-600' }} transition-colors">{{ $cItem->title }}</span>
                                             @if($cItem->badge)
-                                                <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full bg-{{ $cItem->badge_color ?? 'indigo' }}-600 text-white shadow-2xs">
+                                                <span class="text-[8px] font-black px-1.5 py-0.2 rounded-full {{ $grailTheme ? 'bg-[#ECD2F3] text-[#1A1018]' : 'bg-' . ($cItem->badge_color ?? 'indigo') . '-600 text-white' }} shadow-2xs">
                                                     {{ $cItem->badge }}
                                                 </span>
                                             @endif
                                         </div>
                                         @if($cItem->subtitle)
-                                            <p class="text-[11px] text-slate-500 mt-0.5">{{ $cItem->subtitle }}</p>
+                                            <p class="text-[11px] {{ $grailTheme ? 'text-[#EFE9F2]/55' : 'text-slate-500' }} mt-0.5">{{ $cItem->subtitle }}</p>
                                         @endif
                                     </div>
                                 </div>
-                                <svg class="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                                <svg class="w-4 h-4 {{ $grailTheme ? 'text-white/40 group-hover:text-[#ECD2F3]' : 'text-slate-400 group-hover:text-indigo-600' }} group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
                             </a>
                         @endforeach
                     </div>
@@ -236,19 +238,19 @@
 
             <!-- Navigation Links -->
             <div>
-                <h5 class="text-xs uppercase font-semibold tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">Explore</h5>
+                <h5 class="text-[11px] uppercase font-semibold tracking-[0.14em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-zinc-400 dark:text-zinc-500' }} mb-2">Explore</h5>
                 <div class="space-y-1">
-                    <a href="{{ route('catalog.index') }}" class="flex items-center justify-between py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium border-b border-zinc-100 dark:border-zinc-800">
+                    <a href="{{ route('catalog.index') }}" class="flex items-center justify-between py-2.5 text-sm {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:text-[#FFCDFF] border-b border-white/10' : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white border-b border-zinc-100 dark:border-zinc-800' }} font-medium transition-colors">
                         <span>All Categories &amp; Products</span>
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                        <svg class="w-3.5 h-3.5 {{ $grailTheme ? 'text-[#EFE9F2]/40' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
                     </a>
-                    <a href="{{ route('stores.index') }}" class="flex items-center justify-between py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium border-b border-zinc-100 dark:border-zinc-800">
+                    <a href="{{ route('stores.index') }}" class="flex items-center justify-between py-2.5 text-sm {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:text-[#FFCDFF] border-b border-white/10' : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white border-b border-zinc-100 dark:border-zinc-800' }} font-medium transition-colors">
                         <span>🏪 Verified Stores Directory</span>
-                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
+                        <svg class="w-3.5 h-3.5 {{ $grailTheme ? 'text-[#EFE9F2]/40' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8.25 4.5l7.5 7.5-7.5 7.5"></path></svg>
                     </a>
-                    <a href="{{ route('wishlist.index') }}" class="flex items-center justify-between py-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white font-medium">
+                    <a href="{{ route('wishlist.index') }}" class="flex items-center justify-between py-2.5 text-sm {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:text-[#FFCDFF]' : 'text-zinc-700 dark:text-zinc-300 hover:text-black dark:hover:text-white' }} font-medium transition-colors">
                         <span>Saved Wishlist</span>
-                        <svg width="16" height="16" class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg width="16" height="16" class="w-4 h-4 {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-zinc-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"></path>
                         </svg>
                     </a>
@@ -256,22 +258,22 @@
             </div>
 
             <!-- Seller Hub -->
-            <div class="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80">
-                <h5 class="text-xs uppercase font-semibold tracking-wider text-zinc-900 dark:text-white">Seller Hub</h5>
-                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Open your verified store across all 13 marketplace sectors.</p>
+            <div class="p-4 rounded-2xl {{ $grailTheme ? 'bg-[#161616] border border-white/10' : 'bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/60 dark:border-zinc-800/80' }}">
+                <h5 class="text-xs uppercase font-semibold tracking-wider {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-zinc-900 dark:text-white' }}">Seller Hub</h5>
+                <p class="text-xs {{ $grailTheme ? 'text-[#EFE9F2]/60' : 'text-zinc-500 dark:text-zinc-400' }} mt-1">Open your verified store across all 13 marketplace sectors.</p>
                 <div class="mt-3">
                     @auth
                         @if(auth()->user()->hasRole('vendor'))
-                            <a href="{{ route('vendor.dashboard') }}" class="block w-full text-center py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold transition-colors shadow-xs">
+                            <a href="{{ route('vendor.dashboard') }}" class="block w-full text-center py-2.5 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs' : 'rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold shadow-xs' }} transition-colors">
                                 Open Vendor Dashboard
                             </a>
                         @else
-                            <a href="{{ route('vendor.register') }}" class="block w-full text-center py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold hover:bg-black transition-colors shadow-xs">
+                            <a href="{{ route('vendor.register') }}" class="block w-full text-center py-2.5 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs' : 'rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold hover:bg-black shadow-xs' }} transition-colors">
                                 Become a Seller
                             </a>
                         @endif
                     @else
-                        <a href="{{ route('vendor.register') }}" class="block w-full text-center py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold hover:bg-black transition-colors shadow-xs">
+                        <a href="{{ route('vendor.register') }}" class="block w-full text-center py-2.5 rounded-full {{ $grailTheme ? 'grail-cta-pill text-xs' : 'rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-semibold hover:bg-black shadow-xs' }} transition-colors">
                             Start Selling
                         </a>
                     @endauth
@@ -279,9 +281,9 @@
             </div>
 
             <!-- Fleet Partner Hub -->
-            <div class="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/60">
-                <h5 class="text-xs uppercase font-semibold tracking-wider text-emerald-950 dark:text-emerald-200">Fleet Partner Hub</h5>
-                <p class="text-xs text-emerald-700 dark:text-emerald-300/80 mt-1">Earn instant delivery payouts or manage active local pickups.</p>
+            <div class="p-4 rounded-2xl {{ $grailTheme ? 'bg-emerald-950/35 border border-emerald-500/25' : 'bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-900/60' }}">
+                <h5 class="text-xs uppercase font-semibold tracking-wider {{ $grailTheme ? 'text-emerald-300' : 'text-emerald-950 dark:text-emerald-200' }}">Fleet Partner Hub</h5>
+                <p class="text-xs {{ $grailTheme ? 'text-emerald-200/70' : 'text-emerald-700 dark:text-emerald-300/80' }} mt-1">Earn instant delivery payouts or manage active local pickups.</p>
                 <div class="mt-3 flex flex-col gap-2">
                     @auth
                         @if(auth()->user()->isFleet())
@@ -297,7 +299,7 @@
                         <a href="{{ route('delivery.onboarding') }}" class="block w-full text-center py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors shadow-xs">
                             Become a Fleet Partner
                         </a>
-                        <a href="{{ route('login', ['role' => 'fleet']) }}" class="block w-full text-center py-2 rounded-xl border border-emerald-300 text-emerald-800 bg-white text-xs font-semibold hover:bg-emerald-50 transition-colors">
+                        <a href="{{ route('login', ['role' => 'fleet']) }}" class="block w-full text-center py-2 rounded-xl {{ $grailTheme ? 'border border-emerald-400/30 text-emerald-200 bg-white/5 hover:bg-white/10' : 'border border-emerald-300 text-emerald-800 bg-white hover:bg-emerald-50' }} text-xs font-semibold transition-colors">
                             Fleet Partner Login
                         </a>
                     @endauth
@@ -318,12 +320,12 @@
         </div>
 
         <!-- Drawer Footer -->
-        <div class="p-4 border-t border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 flex items-center justify-between text-xs text-zinc-500">
+        <div class="p-4 border-t {{ $grailTheme ? 'border-white/10 bg-black/80 text-[#EFE9F2]/55' : 'border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80 text-zinc-500' }} flex items-center justify-between text-xs">
             <span>&copy; {{ date('Y') }} K71 Creative Agency</span>
             @auth
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="text-red-600 dark:text-red-400 font-medium hover:underline">
+                    <button type="submit" class="{{ $grailTheme ? 'text-rose-300 hover:text-rose-200' : 'text-red-600 dark:text-red-400' }} font-medium hover:underline cursor-pointer">
                         Sign Out
                     </button>
                 </form>

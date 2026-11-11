@@ -227,31 +227,31 @@
                              x-transition:enter="transition ease-out duration-100"
                              x-transition:enter-start="transform opacity-0 scale-95"
                              x-transition:enter-end="transform opacity-100 scale-100"
-                             class="absolute right-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-100 py-2 z-50 divide-y divide-slate-100"
+                             class="absolute right-0 mt-2 w-56 rounded-2xl {{ $grailTheme ? 'bg-[#161616] text-[#EFE9F2] shadow-[0_24px_60px_rgba(0,0,0,0.85)] border border-white/15 divide-white/10' : 'bg-white shadow-xl border border-slate-100 divide-slate-100' }} py-2 z-50 divide-y"
                              style="display: none;">
-                            <div class="px-4 py-2">
-                                <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
-                                <p class="text-[11px] text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                            <div class="px-4 py-2.5">
+                                <p class="text-xs font-bold {{ $grailTheme ? 'text-white' : 'text-slate-900' }} truncate">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</p>
+                                <p class="text-[11px] {{ $grailTheme ? 'text-[#EFE9F2]/55' : 'text-slate-500' }} truncate">{{ auth()->user()->email }}</p>
                             </div>
                             <div class="py-1">
-                                <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Account</a>
-                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">My Orders</a>
-                                <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Wishlist</a>
-                                <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-950">Messages</a>
+                                <a href="{{ route('account') }}" class="block px-4 py-2 text-xs font-medium {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950' }} transition-colors">My Account</a>
+                                <a href="{{ route('orders.index') }}" class="block px-4 py-2 text-xs font-medium {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950' }} transition-colors">My Orders</a>
+                                <a href="{{ route('wishlist.index') }}" class="block px-4 py-2 text-xs font-medium {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950' }} transition-colors">Wishlist</a>
+                                <a href="{{ route('messages.index') }}" class="block px-4 py-2 text-xs font-medium {{ $grailTheme ? 'text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF]' : 'text-slate-700 hover:bg-slate-50 hover:text-slate-950' }} transition-colors">Messages</a>
                                 @if(auth()->user()->hasRole('vendor'))
-                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Vendor Dashboard</a>
+                                    <a href="{{ route('vendor.dashboard') }}" class="block px-4 py-2 text-xs font-bold {{ $grailTheme ? 'text-[#ECD2F3] hover:bg-white/5' : 'text-slate-900 hover:bg-slate-50' }} transition-colors">Vendor Dashboard</a>
                                 @endif
                                 @if(auth()->user()->isFleet())
-                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50">Fleet Dashboard</a>
+                                    <a href="{{ route('delivery.dashboard') }}" class="block px-4 py-2 text-xs font-bold {{ $grailTheme ? 'text-emerald-300 hover:bg-white/5' : 'text-emerald-700 hover:bg-emerald-50' }} transition-colors">Fleet Dashboard</a>
                                 @endif
                                 @if(auth()->user()->hasRole('admin'))
-                                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-xs font-bold text-slate-900 hover:bg-slate-50">Admin Console</a>
+                                    <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-xs font-bold {{ $grailTheme ? 'text-[#C9A24A] hover:bg-white/5' : 'text-slate-900 hover:bg-slate-50' }} transition-colors">Admin Console</a>
                                 @endif
                             </div>
                             <div class="py-1">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 cursor-pointer">
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-xs font-bold {{ $grailTheme ? 'text-rose-300 hover:bg-rose-500/10' : 'text-red-600 hover:bg-red-50' }} cursor-pointer transition-colors">
                                         Sign out
                                     </button>
                                 </form>

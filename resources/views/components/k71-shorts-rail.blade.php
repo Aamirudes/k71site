@@ -19,28 +19,28 @@
 @endphp
 
 @if($shorts->isNotEmpty())
-<section class="my-10 relative">
+<section class="my-10 relative" style="font-family: var(--font-grail-sans);">
     <div class="flex items-center justify-between mb-4">
         <div>
-            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold tracking-wider uppercase mb-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/15 border border-[#ECD2F3]/30 text-[#FFCDFF] text-[10px] font-semibold tracking-[0.14em] uppercase mb-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#FFCDFF] animate-ping"></span>
                 Video Commerce
             </div>
-            <h2 class="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+            <h2 class="grail-display text-2xl sm:text-3xl text-white flex items-center gap-2">
                 {{ $title }}
             </h2>
-            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">{{ $subtitle }}</p>
+            <p class="text-xs md:text-sm text-[#EFE9F2]/60 mt-1">{{ $subtitle }}</p>
         </div>
-        <a href="{{ route('shorts.index') }}" class="text-xs md:text-sm font-bold text-rose-600 dark:text-rose-400 hover:text-rose-700 flex items-center gap-1 group">
+        <a href="{{ route('shorts.index') }}" class="grail-btn-ghost-dark px-4 py-1.5 text-xs inline-flex items-center gap-1 group">
             Explore All
-            <svg class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            <svg class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
         </a>
     </div>
 
     <!-- Horizontal scroll rail -->
-    <div class="flex gap-3 md:gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 scrollbar-none snap-x snap-mandatory">
+    <div class="flex gap-3 md:gap-4 overflow-x-auto pb-4 pt-1 -mx-4 px-4 no-scrollbar snap-x snap-mandatory">
         @foreach($shorts as $short)
-        <a href="{{ route('shorts.show', $short->id) }}" class="flex-none w-36 sm:w-44 md:w-52 aspect-[9/16] rounded-2xl relative overflow-hidden group shadow-md snap-start border border-white/10 bg-slate-900 hover:scale-[1.02] transition-transform duration-300">
+        <a href="{{ route('shorts.show', $short->id) }}" class="flex-none w-36 sm:w-44 md:w-52 aspect-[9/16] rounded-2xl relative overflow-hidden group shadow-md snap-start border border-white/10 hover:border-[#ECD2F3]/45 bg-[#161616] hover:scale-[1.02] transition-all duration-300">
             <!-- Thumbnail -->
             <img src="{{ $short->thumb_url ?: \App\Models\Short::placeholderThumb($short->id, $short->title) }}" 
                  alt="{{ $short->title }}" 
@@ -67,7 +67,7 @@
 
             <!-- Play button pulse overlay -->
             <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div class="w-11 h-11 rounded-full bg-rose-600/90 text-white flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
+                <div class="w-11 h-11 rounded-full bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform">
                     <svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
             </div>

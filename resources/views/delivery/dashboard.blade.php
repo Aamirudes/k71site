@@ -1,4 +1,4 @@
-<x-layouts.public title="Fleet Partner Dashboard | K71 Hyperlocal">
+<x-layouts.public title="Fleet Partner Dashboard | K71 Hyperlocal" :grailTheme="false">
     <div class="py-6 sm:py-10 max-w-5xl mx-auto px-4 sm:px-6"
          x-data="{
             canTrack: {{ $partner ? 'true' : 'false' }},

@@ -12,8 +12,24 @@
     'fullWidth' => false,
     'hideMainHeader' => false,
     'hideFooter' => false,
-    'grailTheme' => false,
+    'grailTheme' => null,
 ])
+
+@php
+    $isExcludedContext = app()->bound('current_vendor')
+        || request()->routeIs(
+            'storefront.show',
+            'admin.*',
+            'delivery.dashboard',
+            'orders.invoice',
+            'vendor.dashboard', 'vendor.profile*', 'vendor.settings*', 'vendor.design*',
+            'vendor.products*', 'vendor.coupons*', 'vendor.orders*', 'vendor.shorts*',
+            'vendor.offers*', 'vendor.bookings*', 'vendor.enquiries*', 'vendor.messages*',
+            'vendor.reviews*', 'vendor.services*', 'vendor.service_orders*', 'vendor.delivery_partners*'
+        )
+        || request()->is('vendor/design/preview*');
+    $grailTheme = $grailTheme ?? !$isExcludedContext;
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
@@ -89,7 +105,7 @@
         })();
     </script>
 </head>
-<body class="{{ $grailTheme ? 'bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018] overflow-x-clip' : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-600 selection:text-white overflow-x-hidden' }} font-sans antialiased flex flex-col min-h-screen relative" @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif>
+<body class="{{ $grailTheme ? 'grail-marketplace-body bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018] overflow-x-clip' : 'bg-[#f8fafc] text-slate-900 selection:bg-indigo-600 selection:text-white overflow-x-hidden' }} font-sans antialiased flex flex-col min-h-screen relative" @if($grailTheme) style="font-family: var(--font-grail-sans);" @endif>
     
     
     @php
@@ -109,7 +125,7 @@
     @endif
 
     <!-- K71 Glass Hamburger Menu Drawer -->
-    <x-k71-hamburger />
+    <x-k71-hamburger :grailTheme="$grailTheme" />
 
     <!-- 6-in-1 Draggable Floating Radial Nav (Semi-Circle Arc + '*' Retract Button) -->
     <x-floating-six-nav />
@@ -119,7 +135,7 @@
             {{ $slot }}
         </main>
     @else
-        <main class="flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 {{ $hideFooter ? '' : 'pb-24 md:pb-12' }}">
+        <main class="flex-1 w-full max-w-7xl mx-auto py-6 sm:py-10 px-4 sm:px-6 lg:px-8 {{ $hideFooter ? '' : 'pb-24 md:pb-16' }}">
             {{ $slot }}
         </main>
     @endif
@@ -280,16 +296,16 @@
                 </p>
 
                 <!-- Verified Merchant Legal Compliance Block -->
-                <div class="mt-3 p-3.5 rounded-2xl bg-zinc-900/90 border border-zinc-800 text-xs space-y-2 max-w-sm">
+                <div class="mt-3 p-3.5 rounded-2xl {{ $grailTheme ? 'bg-[#161616] border border-white/10' : 'bg-zinc-900/90 border border-zinc-800' }} text-xs space-y-2 max-w-sm">
                     <div class="flex items-center justify-between text-[11px]">
                         <span class="text-zinc-500 uppercase tracking-wider text-[10px]">Director / Management:</span>
-                        <span class="font-medium text-zinc-200">Hashir</span>
+                        <span class="font-medium {{ $grailTheme ? 'text-[#EFE9F2]' : 'text-zinc-200' }}">Hashir</span>
                     </div>
                     <div class="flex items-center justify-between text-[11px]">
                         <span class="text-zinc-500 uppercase tracking-wider text-[10px]">MSME Registration:</span>
-                        <span class="font-mono text-zinc-300 font-semibold">UDYAM-RJ-01-0176167</span>
+                        <span class="font-mono {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-zinc-300' }} font-semibold">UDYAM-RJ-01-0176167</span>
                     </div>
-                    <div class="border-t border-zinc-800/80 my-1"></div>
+                    <div class="border-t {{ $grailTheme ? 'border-white/10' : 'border-zinc-800/80' }} my-1"></div>
                     <div class="flex items-center justify-between text-[11px] pt-0.5">
                         <a href="tel:+919549311580" class="text-zinc-400 hover:text-white font-mono flex items-center gap-1.5 transition-colors">
                             <span>+91 95493 11580</span>
@@ -303,46 +319,46 @@
 
             <!-- Column 2: Shop & Categories -->
             <div>
-                <h4 class="text-xs font-semibold tracking-wider uppercase text-zinc-200 mb-4 pb-1 border-b border-zinc-800/60 inline-block">
+                <h4 class="text-xs font-semibold tracking-wider uppercase {{ $grailTheme ? 'text-[#C9A24A] border-white/10' : 'text-zinc-200 border-zinc-800/60' }} mb-4 pb-1 border-b inline-block">
                     Shop
                 </h4>
                 <ul class="space-y-2 text-xs text-zinc-400">
-                    <li><a href="{{ route('catalog.index') }}" class="hover:text-white transition-colors">All Products</a></li>
-                    <li><a href="{{ route('catalog.index', ['gender' => 'women']) }}" class="hover:text-white transition-colors">Women's Collection</a></li>
-                    <li><a href="{{ route('catalog.index', ['gender' => 'men']) }}" class="hover:text-white transition-colors">Men's Collection</a></li>
-                    <li><a href="{{ route('catalog.index', ['sort' => 'newest']) }}" class="hover:text-white transition-colors">New Arrivals</a></li>
-                    <li><a href="{{ route('shorts.index') }}" class="hover:text-white transition-colors">Video Shorts</a></li>
+                    <li><a href="{{ route('catalog.index') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">All Products</a></li>
+                    <li><a href="{{ route('catalog.index', ['gender' => 'women']) }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Women's Collection</a></li>
+                    <li><a href="{{ route('catalog.index', ['gender' => 'men']) }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Men's Collection</a></li>
+                    <li><a href="{{ route('catalog.index', ['sort' => 'newest']) }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">New Arrivals</a></li>
+                    <li><a href="{{ route('shorts.index') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Video Shorts</a></li>
                 </ul>
             </div>
 
             <!-- Column 3: Customer Support -->
             <div>
-                <h4 class="text-xs font-semibold tracking-wider uppercase text-zinc-200 mb-4 pb-1 border-b border-zinc-800/60 inline-block">
+                <h4 class="text-xs font-semibold tracking-wider uppercase {{ $grailTheme ? 'text-[#C9A24A] border-white/10' : 'text-zinc-200 border-zinc-800/60' }} mb-4 pb-1 border-b inline-block">
                     Customer Care
                 </h4>
                 <ul class="space-y-2 text-xs text-zinc-400">
-                    <li><a href="{{ route('pages.contact') }}" class="hover:text-white transition-colors">Contact Support</a></li>
-                    <li><a href="{{ route('orders.index') }}" class="hover:text-white transition-colors">Track Order</a></li>
-                    <li><a href="{{ route('pages.shipping') }}" class="hover:text-white transition-colors">Shipping Policy</a></li>
-                    <li><a href="{{ route('pages.refund') }}" class="hover:text-white transition-colors">Refund &amp; Return</a></li>
-                    <li><a href="{{ route('pages.about') }}" class="hover:text-white transition-colors">About K71</a></li>
+                    <li><a href="{{ route('pages.contact') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Contact Support</a></li>
+                    <li><a href="{{ route('orders.index') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Track Order</a></li>
+                    <li><a href="{{ route('pages.shipping') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Shipping Policy</a></li>
+                    <li><a href="{{ route('pages.refund') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Refund &amp; Return</a></li>
+                    <li><a href="{{ route('pages.about') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">About K71</a></li>
                 </ul>
             </div>
 
             <!-- Column 4: Sell on K71 -->
             <div>
-                <h4 class="text-xs font-semibold tracking-wider uppercase text-zinc-200 mb-4 pb-1 border-b border-zinc-800/60 inline-block">
+                <h4 class="text-xs font-semibold tracking-wider uppercase {{ $grailTheme ? 'text-[#C9A24A] border-white/10' : 'text-zinc-200 border-zinc-800/60' }} mb-4 pb-1 border-b inline-block">
                     Sell on K71
                 </h4>
                 <ul class="space-y-2 text-xs text-zinc-400">
                     <li>
-                        <a href="{{ route('vendor.register') }}" class="text-zinc-200 hover:text-white font-medium transition-colors">
+                        <a href="{{ route('vendor.register') }}" class="{{ $grailTheme ? 'text-[#ECD2F3] hover:text-[#FFCDFF]' : 'text-zinc-200 hover:text-white' }} font-medium transition-colors">
                             Open Seller Store
                         </a>
                     </li>
-                    <li><a href="{{ route('login') }}" class="hover:text-white transition-colors">Merchant Sign In</a></li>
-                    <li><a href="{{ route('vendor.register') }}" class="hover:text-white transition-colors">Seller Policies</a></li>
-                    <li><a href="{{ route('pages.terms') }}" class="hover:text-white transition-colors">Terms of Service</a></li>
+                    <li><a href="{{ route('login') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Merchant Sign In</a></li>
+                    <li><a href="{{ route('vendor.register') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Seller Policies</a></li>
+                    <li><a href="{{ route('pages.terms') }}" class="{{ $grailTheme ? 'hover:text-[#FFCDFF]' : 'hover:text-white' }} transition-colors">Terms of Service</a></li>
                 </ul>
             </div>
 
@@ -431,13 +447,13 @@
 
     <!-- K71 Mobile Bottom Tab Navigation (Section F) -->
     <!-- K71 Mini-Cart Bottom Sheet / Drawer -->
-    <x-k71-mini-cart />
+    <x-k71-mini-cart :grailTheme="$grailTheme" />
 
     <!-- K71 Mini-Wishlist Drawer / Popup -->
-    <x-k71-mini-wishlist />
+    <x-k71-mini-wishlist :grailTheme="$grailTheme" />
     
     <!-- K71 Global Authentication Modal (Non-Negotiable) -->
-    <x-k71-auth-modal />
+    <x-k71-auth-modal :grailTheme="$grailTheme" />
     
     <!-- Global Floating Toast Container -->
     <div id="k71-toast-container" class="fixed bottom-20 sm:bottom-6 inset-x-0 flex justify-center items-center pointer-events-none z-50 px-4"></div>
@@ -447,7 +463,7 @@
             const container = document.getElementById('k71-toast-container');
             if (!container) return;
             const toast = document.createElement('div');
-            toast.className = 'pointer-events-auto bg-zinc-900/95 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-2xl border border-zinc-700/60 backdrop-blur-xl flex items-center gap-2 transform translate-y-3 opacity-0 transition-all duration-300';
+            toast.className = 'pointer-events-auto {{ $grailTheme ? "bg-[#161616]/95 text-[#EFE9F2] border border-[#ECD2F3]/35 shadow-[0_16px_40px_rgba(0,0,0,0.65)]" : "bg-zinc-900/95 text-white border border-zinc-700/60 shadow-2xl" }} text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full backdrop-blur-xl flex items-center gap-2 transform translate-y-3 opacity-0 transition-all duration-300';
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
             requestAnimationFrame(() => {
@@ -570,6 +586,58 @@
             }, true);
         })();
     </script>
+
+    @if($grailTheme)
+    <script>
+        (function() {
+            if (document.querySelector('[data-grail-page]')) return;
+            const selector = '.grail-card-reveal, [data-grail-reveal], .grail-line-rise';
+            let observer = null;
+
+            function observeGrailReveals() {
+                const nodes = document.querySelectorAll(selector);
+                if (!nodes.length) return;
+                if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    nodes.forEach(el => el.classList.add('is-in'));
+                    return;
+                }
+                if (!observer) {
+                    observer = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add('is-in');
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    }, { threshold: 0.05, rootMargin: '0px 0px -16px 0px' });
+                }
+                nodes.forEach(el => {
+                    if (el.classList.contains('is-in')) return;
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight * 0.96) {
+                        el.classList.add('is-in');
+                    } else {
+                        observer.observe(el);
+                    }
+                });
+            }
+
+            window.observeGrailReveals = observeGrailReveals;
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', observeGrailReveals);
+            } else {
+                observeGrailReveals();
+            }
+            window.addEventListener('catalog:updated', () => setTimeout(observeGrailReveals, 60));
+            setTimeout(() => {
+                document.querySelectorAll(selector).forEach(el => {
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top < window.innerHeight * 1.15) el.classList.add('is-in');
+                });
+            }, 700);
+        })();
+    </script>
+    @endif
 
     @stack('scripts')
 </body>

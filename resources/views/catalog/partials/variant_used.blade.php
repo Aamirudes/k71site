@@ -135,9 +135,9 @@
                     <textarea name="message" rows="2" placeholder="e.g. Ready for instant pickup or payment today..." class="w-full px-3 py-2 rounded-xl border border-stone-300 text-xs"></textarea>
                 </div>
 
-                <div class="pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <span class="text-xs text-stone-500">Direct notification sent to seller</span>
-                    <button type="submit" class="px-6 py-2.5 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold transition shadow-md active:scale-95 cursor-pointer">
+                <div class="pt-3 border-t border-black/8 flex items-center justify-between">
+                    <span class="text-xs text-[#1A1018]/60">Direct notification sent to seller</span>
+                    <button type="submit" class="grail-btn-obsidian px-6 py-2.5 text-xs font-bold shadow-md active:scale-95 cursor-pointer">
                         Send Offer
                     </button>
                 </div>

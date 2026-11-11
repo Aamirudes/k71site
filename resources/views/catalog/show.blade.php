@@ -5,6 +5,7 @@
     :canonicalUrl="$canonicalUrl"
     ogType="product"
     :schemaJson="$schemaJson"
+    :fullWidth="true"
 >
     @php
         $discount = 0;
@@ -104,6 +105,32 @@
             ]; 
         })) !!}
     </script>
+
+    <!-- Grail Obsidian Header Stage & Breadcrumbs -->
+    <div class="grail-hero-band text-[#EFE9F2] border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-5 sm:pb-10">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <nav class="flex items-center gap-1.5 text-xs text-white/60 overflow-x-auto no-scrollbar py-1">
+                    <a href="{{ route('home') }}" class="hover:text-[#ECD2F3] transition-colors whitespace-nowrap">Home</a>
+                    <svg class="w-3 h-3 text-white/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    @if($product->category)
+                        <a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-[#ECD2F3] transition-colors whitespace-nowrap">{{ $product->category->name }}</a>
+                        <svg class="w-3 h-3 text-white/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    @endif
+                    <span class="text-[#ECD2F3] font-medium truncate max-w-[200px] sm:max-w-sm">{{ $product->title }}</span>
+                </nav>
+                <div class="hidden sm:flex items-center gap-2 text-[11px] font-semibold tracking-widest uppercase">
+                    <span class="px-2.5 py-1 rounded-full bg-white/8 border border-white/15 text-[#FFCDFF]">K71 Curated Dossier</span>
+                    <span class="text-white/40">&bull;</span>
+                    <span class="text-[#C9A24A]">{{ $vendorShopName }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grail Stone Sheet Dossier Container -->
+    <div class="grail-sheet -mt-4 sm:-mt-5 rounded-t-[28px] sm:rounded-t-[36px] pt-6 sm:pt-8 pb-20 sm:pb-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     <div x-data="{ 
         quantity: 1, 
@@ -393,23 +420,12 @@
     @food-selection-updated.window="if($event.detail) { if($event.detail.portion) selectedVariant = $event.detail.portion.id; selectedFoodModifiers = $event.detail.modifiers || []; customPriceOverride = $event.detail.totalPrice; }"
     class="relative">
 
-        <!-- Breadcrumbs Navigation -->
-        <nav class="flex items-center gap-1.5 text-xs text-gray-500 mb-4 sm:mb-6 overflow-x-auto no-scrollbar py-1">
-            <a href="{{ route('home') }}" class="hover:text-brand-text transition-colors whitespace-nowrap">Home</a>
-            <svg class="w-3 h-3 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            @if($product->category)
-                <a href="{{ route('category.show', $product->category->slug) }}" class="hover:text-brand-text transition-colors whitespace-nowrap">{{ $product->category->name }}</a>
-                <svg class="w-3 h-3 text-gray-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-            @endif
-            <span class="text-brand-text font-medium truncate max-w-[200px] sm:max-w-xs">{{ $product->title }}</span>
-        </nav>
-
-        <!-- Main Product Card: Clean, Edge-Optimized Luxury Canvas -->
-        <div class="bg-white rounded-2xl sm:rounded-3xl border border-stone-200/80 shadow-xs overflow-hidden mb-16">
+        <!-- Main Product Card: Clean, Edge-Optimized Grail Dossier Canvas -->
+        <div class="bg-white rounded-[24px] sm:rounded-[28px] border border-black/8 shadow-[0_14px_40px_rgba(26,16,24,0.06)] overflow-hidden mb-14">
             <div class="lg:grid lg:grid-cols-12 lg:gap-8">
                 
                 <!-- LEFT COLUMN: Product Gallery (7 cols on Desktop) -->
-                <div class="lg:col-span-7 bg-[#FAF8F5]/60 p-3 sm:p-6 lg:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-stone-200/70">
+                <div class="lg:col-span-7 bg-[#FAF8F5] p-3 sm:p-6 lg:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-black/8">
                     <div>
                         <!-- Mobile & Desktop Gallery Container -->
                         <div class="flex flex-col-reverse lg:flex-row gap-3 sm:gap-4">
@@ -420,7 +436,7 @@
                                     @foreach($product->images as $index => $image)
                                         <button type="button" 
                                                 @click="selectImage({{ $index }})"
-                                                :class="activeImgIndex === {{ $index }} ? 'ring-2 ring-brand-text ring-offset-2 border-transparent shadow-sm' : 'border-stone-200/80 opacity-70 hover:opacity-100'"
+                                                :class="activeImgIndex === {{ $index }} ? 'ring-2 ring-[#1A1018] ring-offset-2 border-transparent shadow-sm' : 'border-black/10 opacity-70 hover:opacity-100'"
                                                 class="relative w-14 h-18 sm:w-16 sm:h-22 rounded-xl overflow-hidden bg-white border transition-all duration-200 shrink-0 group focus:outline-none">
                                             <img src="{{ $image->url }}" 
                                                  alt="{{ $product->title }} angle {{ $index + 1 }}" 
@@ -432,17 +448,17 @@
                                     @if($product->has_video)
                                         <button type="button" 
                                                 @click="activeImgIndex = 'video'"
-                                                :class="activeImgIndex === 'video' ? 'ring-2 ring-rose-500 ring-offset-2 border-transparent shadow-sm' : 'border-stone-200/80 opacity-70 hover:opacity-100'"
-                                                class="relative w-14 h-18 sm:w-16 sm:h-22 rounded-xl overflow-hidden bg-stone-900 text-white border transition-all duration-200 shrink-0 group focus:outline-none flex flex-col items-center justify-center cursor-pointer">
-                                            <svg class="w-6 h-6 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-                                            <span class="text-[9px] font-bold uppercase tracking-wider mt-1 text-rose-400">Video</span>
+                                                :class="activeImgIndex === 'video' ? 'ring-2 ring-[#623562] ring-offset-2 border-transparent shadow-sm' : 'border-black/10 opacity-70 hover:opacity-100'"
+                                                class="relative w-14 h-18 sm:w-16 sm:h-22 rounded-xl overflow-hidden bg-[#1A1018] text-[#EFE9F2] border transition-all duration-200 shrink-0 group focus:outline-none flex flex-col items-center justify-center cursor-pointer">
+                                            <svg class="w-6 h-6 text-[#ECD2F3]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                                            <span class="text-[9px] font-bold uppercase tracking-wider mt-1 text-[#ECD2F3]">Video</span>
                                         </button>
                                     @endif
                                 </div>
                             @endif
 
                             <!-- Main Spotlight Stage -->
-                            <div class="relative w-full aspect-[3/4] sm:aspect-[4/5] rounded-2xl overflow-hidden bg-[#FAF7F2] flex-1 border border-stone-200/60 shadow-inner group"
+                            <div class="relative w-full aspect-[3/4] sm:aspect-[4/5] rounded-2xl overflow-hidden bg-[#F4F1EC] flex-1 border border-black/8 shadow-inner group"
                                  @touchstart="handleTouchStart($event)"
                                  @touchend="handleTouchEnd($event)">
                                 
@@ -479,11 +495,11 @@
                                 <!-- Floating Badges (Top Left) -->
                                 <div class="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
                                     @if($discount > 0)
-                                        <span class="px-2.5 py-1 bg-brand-rose/90 backdrop-blur-md text-brand-text font-bold text-[10px] tracking-wider uppercase rounded-full shadow-2xs">
+                                        <span class="px-2.5 py-1 bg-[#1A1018] text-[#ECD2F3] font-bold text-[10px] tracking-wider uppercase rounded-full shadow-2xs">
                                             {{ $discount }}% OFF
                                         </span>
                                     @endif
-                                    <span class="px-2.5 py-1 bg-white/90 backdrop-blur-md text-brand-text font-semibold text-[10px] tracking-wider uppercase rounded-full shadow-2xs">
+                                    <span class="px-2.5 py-1 bg-white/95 backdrop-blur-md text-[#1A1018] border border-black/8 font-semibold text-[10px] tracking-wider uppercase rounded-full shadow-2xs">
                                         Handcrafted
                                     </span>
                                 </div>
@@ -493,8 +509,8 @@
                                     <!-- Wishlist Heart -->
                                     <button type="button" 
                                             @click="toggleWishlist()"
-                                            class="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
-                                            :class="wishlisted ? 'text-rose-500 bg-rose-50/90' : 'text-stone-700 hover:text-rose-500'">
+                                            class="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-black/8 flex items-center justify-center transition-all duration-200 shadow-sm hover:scale-105 active:scale-95 cursor-pointer"
+                                            :class="wishlisted ? 'text-[#623562] bg-[#ECD2F3]/50 border-[#623562]/30' : 'text-[#1A1018] hover:text-[#623562]'">
                                         <svg class="w-4.5 h-4.5 transition-transform" :fill="wishlisted ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                                         </svg>
@@ -503,7 +519,7 @@
                                     <!-- Share Icon -->
                                     <button type="button" 
                                             @click="shareProduct()"
-                                            class="w-9 h-9 rounded-full bg-white/90 backdrop-blur-md text-stone-700 hover:text-brand-text flex items-center justify-center transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
+                                            class="w-9 h-9 rounded-full bg-white/95 backdrop-blur-md border border-black/8 text-[#1A1018] hover:text-[#623562] flex items-center justify-center transition-all duration-200 shadow-sm hover:scale-105 active:scale-95 cursor-pointer"
                                             title="Share this product">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
                                     </button>
@@ -512,14 +528,14 @@
                                 <!-- Floating Zoom Pill (Bottom Right) -->
                                 <button type="button" 
                                         @click="lightboxOpen = true"
-                                        class="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-md text-stone-700 hover:text-black text-[11px] font-medium flex items-center gap-1.5 shadow-sm transition-all hover:scale-105">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
+                                        class="absolute bottom-3 right-3 px-3 py-1.5 rounded-full bg-[#1A1018]/90 backdrop-blur-md text-[#EFE9F2] hover:bg-black text-[11px] font-semibold flex items-center gap-1.5 shadow-sm transition-all hover:scale-105 cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-[#ECD2F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path></svg>
                                     <span>Zoom</span>
                                 </button>
 
                                 <!-- Mobile Gallery Swipe Pill (Bottom Center) -->
                                 @if($product->images->count() > 1)
-                                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold tracking-wider flex items-center gap-1 shadow-sm sm:hidden">
+                                    <div class="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/75 backdrop-blur-sm text-[#EFE9F2] text-[11px] font-semibold tracking-wider flex items-center gap-1 shadow-sm sm:hidden tabular-nums">
                                         <span x-text="activeImgIndex + 1">1</span>
                                         <span class="opacity-60">/</span>
                                         <span x-text="images.length">{{ $product->images->count() }}</span>
@@ -529,11 +545,11 @@
                                 <!-- Slide Navigation Arrows (Desktop & Tablet Hover) -->
                                 @if($product->images->count() > 1)
                                     <button type="button" @click.stop="prevImage()" 
-                                            class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                            class="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-[#1A1018] text-[#1A1018] hover:text-[#ECD2F3] items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
                                     </button>
                                     <button type="button" @click.stop="nextImage()" 
-                                            class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/80 hover:bg-white text-stone-700 items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100">
+                                            class="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 hover:bg-[#1A1018] text-[#1A1018] hover:text-[#ECD2F3] items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 cursor-pointer">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
                                     </button>
                                 @endif
@@ -551,17 +567,17 @@
                     </div>
 
                     <!-- Gallery Bottom Guarantee Micro-Strip -->
-                    <div class="hidden sm:grid grid-cols-3 gap-3 pt-6 mt-6 border-t border-stone-200/60 text-stone-600 text-[11px]">
+                    <div class="hidden sm:grid grid-cols-3 gap-3 pt-6 mt-6 border-t border-black/8 text-[#1A1018]/75 text-[11px]">
                         <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-brand-sage shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg class="w-4 h-4 text-[#C9A24A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <span class="font-medium">100% Genuine Handcraft</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-brand-sage shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg class="w-4 h-4 text-[#623562] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             <span class="font-medium">Dispatches in 24-48 hrs</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4 text-brand-sage shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            <svg class="w-4 h-4 text-[#C9A24A] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                             <span class="font-medium">7 Days Returnable</span>
                         </div>
                     </div>
@@ -571,14 +587,14 @@
                 <div class="lg:col-span-5 p-4 sm:p-6 lg:p-8 flex flex-col justify-start">
                     
                     <!-- Vendor Profile / Boutique Verification Badge -->
-                    <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+                    <div class="flex items-center justify-between pb-3 border-b border-black/8">
                         <a href="{{ $product->vendor?->storefront_url ?? route('catalog.index') }}" class="flex items-center gap-2.5 group">
-                            <div class="w-8 h-8 rounded-full bg-brand-surface border border-brand-sage/40 flex items-center justify-center text-xs font-serif font-bold text-brand-text group-hover:scale-105 transition-transform">
+                            <div class="w-8 h-8 rounded-full bg-[#1A1018] border border-[#ECD2F3]/30 flex items-center justify-center text-xs font-serif font-bold text-[#ECD2F3] group-hover:scale-105 transition-transform">
                                 {{ substr($vendorShopName, 0, 1) }}
                             </div>
                             <div>
-                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block leading-none">Boutique</span>
-                                <span class="text-xs font-bold text-brand-text group-hover:text-brand-sage transition-colors leading-tight">
+                                <span class="text-[10px] font-bold text-[#623562] uppercase tracking-[0.14em] block leading-none">Boutique</span>
+                                <span class="text-xs font-bold text-[#1A1018] group-hover:text-[#623562] transition-colors leading-tight">
                                     {{ $vendorShopName }}
                                 </span>
                             </div>
@@ -590,9 +606,9 @@
                     </div>
 
                     <!-- Title & Silhouette -->
-                    <div class="mt-3">
-                        <div class="flex items-center gap-2 text-[11px] font-semibold text-brand-sage uppercase tracking-wider mb-1 flex-wrap">
-                            <span class="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-bold border border-rose-200">
+                    <div class="mt-3.5">
+                        <div class="flex items-center gap-2 text-[11px] font-semibold text-[#623562] uppercase tracking-wider mb-1.5 flex-wrap">
+                            <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/40 text-[#1A1018] font-bold border border-[#623562]/20">
                                 {{ ucfirst($product->vertical ?? 'marketplace') }}
                             </span>
                             @if($product->vertical === 'used' || $product->getCustomField('condition'))
@@ -611,27 +627,27 @@
                                 <span>{{ ucfirst($product->gender) }}</span>
                             @endif
                         </div>
-                        <h1 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-text tracking-tight leading-snug">
+                        <h1 class="grail-display text-2xl sm:text-3xl font-semibold text-[#1A1018] tracking-tight leading-snug">
                             {{ $product->title }}
                         </h1>
                     </div>
 
                     <!-- Pricing & Savings Hub -->
-                    <div class="mt-4 p-3.5 rounded-2xl bg-[#FAF8F5] border border-stone-200/60">
-                        <div class="flex items-baseline gap-2.5 flex-wrap">
-                            <span class="text-3xl font-serif font-bold text-brand-text">
+                    <div class="mt-4 p-4 rounded-2xl bg-[#FAF8F5] border border-black/8">
+                        <div class="flex items-baseline gap-2.5 flex-wrap tabular-nums">
+                            <span class="grail-display text-3xl sm:text-4xl font-bold text-[#1A1018]">
                                 ₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span>
                             </span>
                             @if($product->compare_at_price > $product->base_price)
-                                <span class="text-base text-gray-400 line-through font-normal">
+                                <span class="text-base text-black/40 line-through font-normal">
                                     ₹{{ number_format($product->compare_at_price / 100, 2) }}
                                 </span>
-                                <span class="px-2 py-0.5 rounded-md bg-brand-rose/20 text-brand-text font-bold text-xs">
+                                <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3] text-[#1A1018] font-bold text-xs">
                                     Save ₹{{ number_format($savings, 0) }} ({{ $discount }}% OFF)
                                 </span>
                             @endif
                         </div>
-                        <div class="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+                        <div class="mt-1.5 flex items-center justify-between text-[11px] text-[#1A1018]/60">
                             <span>Inclusive of all taxes (GST {{ $product->gst_rate }}% included)</span>
                             @if($product->hsn_code)
                                 <span class="font-mono text-[10px] text-gray-400">HSN: {{ $product->hsn_code }}</span>
@@ -686,18 +702,18 @@
                         @if(!$isEnquiryBased && $product->isPurchase())
                             @if($verticalType === 'food_portion')
                                 <div class="flex items-center gap-3">
-                                    <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs">
+                                    <div class="flex items-center border border-black/15 rounded-full bg-white px-2 py-1 shadow-2xs">
                                         <button type="button" @click="if(quantity > 1) quantity--" 
-                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30" 
+                                                class="w-7 h-8 flex items-center justify-center text-[#1A1018]/70 hover:text-black font-bold text-sm disabled:opacity-30 cursor-pointer" 
                                                 :disabled="quantity <= 1">-</button>
-                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-stone-900">1</span>
+                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-[#1A1018] tabular-nums">1</span>
                                         <button type="button" @click="quantity++" 
-                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm">+</button>
+                                                class="w-7 h-8 flex items-center justify-center text-[#1A1018]/70 hover:text-black font-bold text-sm cursor-pointer">+</button>
                                     </div>
                                     <button type="submit" 
                                             x-ref="mainBuyBtn"
                                             :disabled="adding || !selectedVariant" 
-                                            class="flex-1 py-3.5 px-6 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                            class="flex-1 py-3.5 px-6 rounded-full bg-[#1A1018] hover:bg-black text-[#ECD2F3] text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                                         <span x-text="adding ? 'Adding to Order...' : `🍲 Add to Feast (₹${(parseFloat(currentPrice) * quantity).toFixed(2)})`"></span>
                                     </button>
                                 </div>
@@ -706,7 +722,7 @@
                                     <button type="submit" 
                                             x-ref="mainBuyBtn"
                                             :disabled="adding || isEntirelyOutOfStock" 
-                                            class="flex-1 py-3.5 px-6 rounded-full bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                            class="grail-btn-obsidian flex-1 py-3.5 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-md flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                                         <span>🔒 Buy Verified Asset Now (₹{{ number_format($product->base_price / 100, 2) }})</span>
                                     </button>
                                 </div>
@@ -714,13 +730,13 @@
                                 <!-- Quantity Stepper & Main Add To Cart Row -->
                                 <div class="flex items-center gap-3">
                                     <!-- Stepper -->
-                                    <div class="flex items-center border border-stone-300 rounded-full bg-white px-2 py-1 shadow-2xs {{ $isEntirelyOutOfStock ? 'opacity-40 pointer-events-none' : '' }}">
+                                    <div class="flex items-center border border-black/15 rounded-full bg-white px-2 py-1 shadow-2xs {{ $isEntirelyOutOfStock ? 'opacity-40 pointer-events-none' : '' }}">
                                         <button type="button" @click="if(quantity > 1) quantity--" 
-                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30" 
+                                                class="w-7 h-8 flex items-center justify-center text-[#1A1018]/70 hover:text-black font-bold text-sm disabled:opacity-30 cursor-pointer" 
                                                 :disabled="quantity <= 1">-</button>
-                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-brand-text">1</span>
+                                        <span x-text="quantity" class="w-8 text-center text-xs font-bold text-[#1A1018] tabular-nums">1</span>
                                         <button type="button" @click="if(quantity < selectedStock) quantity++" 
-                                                class="w-7 h-8 flex items-center justify-center text-stone-600 hover:text-black font-bold text-sm disabled:opacity-30"
+                                                class="w-7 h-8 flex items-center justify-center text-[#1A1018]/70 hover:text-black font-bold text-sm disabled:opacity-30 cursor-pointer"
                                                 :disabled="quantity >= selectedStock">+</button>
                                     </div>
 
@@ -728,12 +744,12 @@
                                     <button type="submit" 
                                             x-ref="mainBuyBtn"
                                             :disabled="adding || isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0" 
-                                            class="flex-1 py-3.5 px-6 rounded-full bg-brand-text hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all duration-200 shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]"
+                                            class="grail-btn-obsidian flex-1 py-3.5 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] cursor-pointer"
                                             :class="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? '!bg-stone-300 !text-stone-600' : ''">
-                                        <svg x-show="!adding && !isEntirelyOutOfStock && (!selectedVariant || !isCurrentVariantOutOfStock) && selectedStock > 0" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg x-show="!adding && !isEntirelyOutOfStock && (!selectedVariant || !isCurrentVariantOutOfStock) && selectedStock > 0" class="w-4 h-4 shrink-0 text-[#ECD2F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                                         </svg>
-                                        <svg x-show="adding" class="animate-spin h-4 w-4 text-white shrink-0" fill="none" viewBox="0 0 24 24">
+                                        <svg x-show="adding" class="animate-spin h-4 w-4 text-[#ECD2F3] shrink-0" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
@@ -743,33 +759,33 @@
                             @endif
                         @elseif($isEnquiryBased || $product->isEnquiry())
                             <!-- IndiaMART Style B2B / Marble / Machinery Enquiry Hub -->
-                            <div class="space-y-4 p-5 rounded-3xl bg-gradient-to-br from-stone-50 via-white to-amber-50/30 border border-stone-200 shadow-sm text-left">
+                            <div class="space-y-4 p-5 rounded-3xl bg-[#FAF8F5] border border-black/10 shadow-xs text-left">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <span class="text-base">🏢</span>
-                                        <span class="text-xs font-black text-stone-900 uppercase tracking-wider">
+                                        <span class="text-xs font-black text-[#1A1018] uppercase tracking-wider">
                                             {{ $isMarble ? 'Marble & Stone Slabs Enquiry' : ($isMachinery ? 'Industrial Machinery & Equipment RFQ' : 'B2B Commercial Quotation') }}
                                         </span>
                                     </div>
-                                    <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-900 border border-amber-500/30">
+                                    <span class="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#ECD2F3] text-[#1A1018]">
                                         Direct Enquiry Mode
                                     </span>
                                 </div>
 
-                                <p class="text-xs text-stone-600 leading-relaxed">
+                                <p class="text-xs text-[#1A1018]/70 leading-relaxed">
                                     {{ $isMarble ? 'Get live stock lot photos, exact slab dimensions, ex-factory rates, and freight estimation to your state/city.' : ($isMachinery ? 'Direct manufacturer quotation with technical specifications, power consumption, machine demonstration video, and warranty terms.' : 'Submit your requirement to receive official wholesale quotation directly from this verified supplier.') }}
                                 </p>
 
-                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 py-1 text-[11px] text-stone-700 font-semibold">
-                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 py-1 text-[11px] text-[#1A1018] font-semibold">
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-black/8">
                                         <span class="text-emerald-600">✓</span>
                                         <span>Verified Supplier</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80">
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-black/8">
                                         <span class="text-emerald-600">✓</span>
                                         <span>Ex-Factory Pricing</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-stone-200/80 col-span-2 sm:col-span-1">
+                                    <div class="flex items-center gap-1.5 p-2 rounded-xl bg-white border border-black/8 col-span-2 sm:col-span-1">
                                         <span class="text-emerald-600">✓</span>
                                         <span>Pan-India Delivery</span>
                                     </div>
@@ -779,7 +795,7 @@
                                     <!-- IndiaMART Primary CTA -->
                                     <button type="button" 
                                             @click="showEnquiryModal = true"
-                                            class="w-full py-4 px-6 rounded-2xl bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-lg shadow-stone-900/15 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
+                                            class="grail-btn-obsidian w-full py-4 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-lg flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer">
                                         <span>📋</span>
                                         <span>Request Custom Quotation / Bulk Enquiry</span>
                                     </button>
@@ -787,7 +803,7 @@
                                     @if(!empty($sellerPhone))
                                         <a href="https://wa.me/{{ $sellerPhone }}?text={{ rawurlencode('Hello! I am interested in ' . $product->title . ' (Ref: #' . $product->id . ') on K71. Could you please share the quotation, current availability, and delivery terms?') }}" 
                                            target="_blank"
-                                           class="w-full py-3 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-sm flex items-center justify-center gap-2">
+                                           class="w-full py-3 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-bold transition shadow-sm flex items-center justify-center gap-2">
                                             <svg class="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                                             <span>Chat Directly on WhatsApp</span>
                                         </a>
@@ -1017,22 +1033,22 @@
                         @elseif($product->isBooking())
                             <div class="space-y-3" x-data="{ showBookingModal: false, selectedSlot: '10:00 AM - 12:00 PM' }">
                                 <button type="button" @click="showBookingModal = true"
-                                        class="w-full py-3.5 px-6 rounded-full bg-zinc-900 hover:bg-black text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                        class="grail-btn-obsidian w-full py-3.5 px-6 text-xs sm:text-sm font-bold tracking-wide shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+                                    <svg class="w-4 h-4 text-[#ECD2F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
                                     <span>Book Service Slot / Appointment</span>
                                 </button>
 
                                 <a href="https://wa.me/{{ $sellerPhone ?? '' }}?text={{ rawurlencode('Hello! I would like to book a slot for service: ' . $product->title . ' on K71') }}" target="_blank"
-                                   class="w-full py-2.5 px-5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                   class="w-full py-2.5 px-5 rounded-full bg-[#FAF8F5] hover:bg-[#ECD2F3]/30 text-[#1A1018] border border-black/10 text-xs font-semibold flex items-center justify-center gap-2 transition">
+                                    <svg class="w-4 h-4 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                                     </svg>
                                     <span>Chat with Professional on WhatsApp</span>
                                 </a>
 
-                                <p class="text-[11px] text-center text-stone-500">Doorstep service coordinated directly with verified provider.</p>
+                                <p class="text-[11px] text-center text-[#1A1018]/60">Doorstep service coordinated directly with verified provider.</p>
 
                                 <!-- Booking Modal -->
                                 <div x-show="showBookingModal" 
@@ -1042,23 +1058,23 @@
                                      x-transition:leave="transition ease-in duration-150"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                                     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
                                      style="display: none;"
                                      @keydown.escape.window="showBookingModal = false">
                                     
                                     <div @click.away="showBookingModal = false"
-                                         class="w-full max-w-lg bg-slate-900 border border-white/15 rounded-3xl p-6 shadow-2xl text-left text-slate-100 relative max-h-[90vh] overflow-y-auto">
+                                         class="w-full max-w-lg bg-[#161616] border border-white/15 rounded-[28px] p-6 shadow-2xl text-left text-[#EFE9F2] relative max-h-[90vh] overflow-y-auto">
                                         
                                         <button type="button" @click="showBookingModal = false" 
-                                                class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+                                                class="absolute top-4 right-4 text-white/50 hover:text-white p-2 rounded-full hover:bg-white/10 transition cursor-pointer">
                                             ✕
                                         </button>
 
                                         <div class="flex items-center gap-3 mb-4">
-                                            <div class="text-2xl p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">📅</div>
+                                            <div class="text-2xl p-2.5 rounded-2xl bg-[#ECD2F3]/10 text-[#ECD2F3] border border-[#ECD2F3]/25">📅</div>
                                             <div>
-                                                <h3 class="text-lg font-black text-white">Book Service Appointment</h3>
-                                                <p class="text-xs text-slate-400">{{ $product->title }}</p>
+                                                <h3 class="grail-display text-lg font-bold text-white">Book Service Appointment</h3>
+                                                <p class="text-xs text-white/60">{{ $product->title }}</p>
                                             </div>
                                         </div>
 
@@ -1068,15 +1084,15 @@
                                             <!-- Date and Slot -->
                                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label class="block text-xs font-bold text-slate-300 mb-1">Appointment Date *</label>
+                                                    <label class="block text-xs font-bold text-white/75 mb-1">Appointment Date *</label>
                                                     <input type="date" name="booking_date" required min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}"
-                                                           class="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                           class="grail-input-dark w-full px-3 py-2.5 rounded-xl text-xs">
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-xs font-bold text-slate-300 mb-1">Time Slot *</label>
+                                                    <label class="block text-xs font-bold text-white/75 mb-1">Time Slot *</label>
                                                     <select name="booking_slot" required x-model="selectedSlot"
-                                                            class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                            class="grail-input-dark w-full px-3 py-2.5 rounded-xl text-xs bg-[#060606]">
                                                         <option value="09:00 AM - 11:00 AM">09:00 AM - 11:00 AM (Morning)</option>
                                                         <option value="11:00 AM - 01:00 PM">11:00 AM - 01:00 PM (Noon)</option>
                                                         <option value="02:00 PM - 04:00 PM">02:00 PM - 04:00 PM (Afternoon)</option>
@@ -1089,44 +1105,44 @@
                                             <!-- Customer Contact Details -->
                                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label class="block text-xs font-bold text-slate-300 mb-1">Full Name *</label>
+                                                    <label class="block text-xs font-bold text-white/75 mb-1">Full Name *</label>
                                                     <input type="text" name="customer_name" required value="{{ auth()->user()?->name ?? '' }}" placeholder="Your name"
-                                                           class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                           class="grail-input-dark w-full px-3 py-2 rounded-xl text-xs">
                                                 </div>
 
                                                 <div>
-                                                    <label class="block text-xs font-bold text-slate-300 mb-1">Phone Number *</label>
+                                                    <label class="block text-xs font-bold text-white/75 mb-1">Phone Number *</label>
                                                     <input type="tel" name="customer_phone" required value="{{ auth()->user()?->phone ?? '' }}" placeholder="10-digit mobile"
-                                                           class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                           class="grail-input-dark w-full px-3 py-2 rounded-xl text-xs">
                                                 </div>
                                             </div>
 
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-300 mb-1">Email (Optional)</label>
+                                                <label class="block text-xs font-bold text-white/75 mb-1">Email (Optional)</label>
                                                 <input type="email" name="customer_email" value="{{ auth()->user()?->email ?? '' }}" placeholder="For appointment updates"
-                                                       class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                                                       class="grail-input-dark w-full px-3 py-2 rounded-xl text-xs">
                                             </div>
 
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-300 mb-1">Doorstep Service Address *</label>
+                                                <label class="block text-xs font-bold text-white/75 mb-1">Doorstep Service Address *</label>
                                                 <textarea name="service_address" rows="2" required placeholder="House/Flat No., Landmark, Area, City, Pincode"
-                                                          class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                                                          class="grail-input-dark w-full px-3 py-2 rounded-xl text-xs"></textarea>
                                             </div>
 
                                             <div>
-                                                <label class="block text-xs font-bold text-slate-300 mb-1">Special Instructions / Issue Details (Optional)</label>
+                                                <label class="block text-xs font-bold text-white/75 mb-1">Special Instructions / Issue Details (Optional)</label>
                                                 <textarea name="notes" rows="2" placeholder="Describe specific issue or preference..."
-                                                          class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                                                          class="grail-input-dark w-full px-3 py-2 rounded-xl text-xs"></textarea>
                                             </div>
 
                                             <div class="pt-3 border-t border-white/10 flex items-center justify-between">
                                                 <div>
-                                                    <div class="text-[10px] text-slate-400 uppercase">Total Service Charge</div>
-                                                    <div class="text-base font-black text-indigo-400">₹{{ number_format($product->base_price / 100, 2) }}</div>
+                                                    <div class="text-[10px] text-white/50 uppercase">Total Service Charge</div>
+                                                    <div class="text-base font-black text-[#ECD2F3] tabular-nums">₹{{ number_format($product->base_price / 100, 2) }}</div>
                                                 </div>
 
                                                 <button type="submit" 
-                                                        class="px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg active:scale-95">
+                                                        class="grail-cta-pill px-6 py-2.5 text-xs font-bold transition shadow-lg active:scale-95 cursor-pointer">
                                                     Confirm Booking
                                                 </button>
                                             </div>
@@ -1137,8 +1153,8 @@
                         @elseif($product->isAuction())
                             <div class="space-y-4" x-data="{ showMessageModal: false }">
                                 <!-- Live Auction Card -->
-                                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950">
-                                    <div class="flex items-center justify-between pb-3 border-b border-amber-500/20">
+                                <div class="p-4 rounded-2xl bg-[#FAF8F5] border border-[#C9A24A]/40 text-[#1A1018]">
+                                    <div class="flex items-center justify-between pb-3 border-b border-[#C9A24A]/25">
                                         <div class="flex items-center gap-2">
                                             <span class="flex h-2.5 w-2.5 rounded-full {{ $product->isAuctionLive() ? 'bg-emerald-500 animate-ping' : 'bg-stone-400' }}"></span>
                                             <span class="text-xs font-bold uppercase tracking-wider {{ $product->isAuctionLive() ? 'text-emerald-700' : 'text-stone-600' }}">
@@ -1146,22 +1162,22 @@
                                             </span>
                                         </div>
                                         @if($product->auction_ends_at)
-                                            <div class="text-[11px] font-semibold text-amber-900">
+                                            <div class="text-[11px] font-semibold text-[#623562]">
                                                 {{ $product->isAuctionEnded() ? 'Ended' : 'Ends in: ' . $product->auction_ends_at->diffForHumans() }}
                                             </div>
                                         @endif
                                     </div>
 
                                     <div class="mt-3 grid grid-cols-2 gap-3">
-                                        <div class="bg-white/80 p-3 rounded-xl border border-amber-200">
-                                            <span class="text-[10px] uppercase font-bold text-stone-500 block">Current High Bid</span>
-                                            <span class="text-lg font-black text-amber-950 font-mono">{{ $product->formattedCurrentBid() }}</span>
-                                            <span class="text-[10px] text-stone-400 block">{{ $product->bids_count }} bid(s) placed</span>
+                                        <div class="bg-white p-3 rounded-xl border border-black/8">
+                                            <span class="text-[10px] uppercase font-bold text-[#1A1018]/55 block">Current High Bid</span>
+                                            <span class="text-lg font-black text-[#1A1018] font-mono tabular-nums">{{ $product->formattedCurrentBid() }}</span>
+                                            <span class="text-[10px] text-[#1A1018]/45 block">{{ $product->bids_count }} bid(s) placed</span>
                                         </div>
-                                        <div class="bg-white/80 p-3 rounded-xl border border-amber-200">
-                                            <span class="text-[10px] uppercase font-bold text-stone-500 block">Min Next Bid</span>
-                                            <span class="text-lg font-black text-emerald-700 font-mono">{{ $product->formattedMinNextBid() }}</span>
-                                            <span class="text-[10px] text-stone-400 block">+₹{{ number_format(($product->bid_increment ?? 10000)/100) }} increment</span>
+                                        <div class="bg-white p-3 rounded-xl border border-black/8">
+                                            <span class="text-[10px] uppercase font-bold text-[#1A1018]/55 block">Min Next Bid</span>
+                                            <span class="text-lg font-black text-emerald-700 font-mono tabular-nums">{{ $product->formattedMinNextBid() }}</span>
+                                            <span class="text-[10px] text-[#1A1018]/45 block">+₹{{ number_format(($product->bid_increment ?? 10000)/100) }} increment</span>
                                         </div>
                                     </div>
 
@@ -1170,14 +1186,14 @@
                                             <form action="{{ route('auctions.bid', $product) }}" method="POST" class="flex items-center gap-2">
                                                 @csrf
                                                 <div class="relative flex-1">
-                                                    <span class="absolute left-3 top-2.5 text-stone-400 font-bold text-sm">₹</span>
+                                                    <span class="absolute left-3 top-2.5 text-[#1A1018]/45 font-bold text-sm">₹</span>
                                                     <input type="number" step="1" min="{{ $product->minNextBid() / 100 }}" name="bid_amount" required
                                                            value="{{ $product->minNextBid() / 100 }}"
                                                            placeholder="Enter bid amount"
-                                                           class="w-full pl-7 pr-3 py-2.5 rounded-full bg-white border border-amber-300 text-stone-900 font-mono font-bold text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                                                           class="w-full pl-7 pr-3 py-2.5 rounded-full bg-white border border-black/15 text-[#1A1018] font-mono font-bold text-sm focus:ring-2 focus:ring-[#623562] focus:outline-none">
                                                 </div>
                                                 <button type="submit" 
-                                                        class="px-6 py-2.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold tracking-wide transition-all shadow-md active:scale-95 shrink-0 cursor-pointer">
+                                                        class="grail-btn-obsidian px-6 py-2.5 text-xs sm:text-sm font-bold tracking-wide shadow-md active:scale-95 shrink-0 cursor-pointer">
                                                     Place Bid
                                                 </button>
                                             </form>
@@ -1320,10 +1336,10 @@
                                 this.checked = true;
                             }, 300);
                         }
-                    }" class="mt-6 p-3.5 rounded-2xl bg-stone-50/80 border border-stone-200/70">
+                    }" class="mt-6 p-4 rounded-2xl bg-[#FAF8F5] border border-black/8">
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-[11px] font-bold text-brand-text uppercase tracking-wider flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-brand-sage" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span class="text-[11px] font-bold text-[#1A1018] uppercase tracking-wider flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                 Delivery & COD Checker
                             </span>
                         </div>
@@ -1333,18 +1349,18 @@
                                    x-model="pincode" 
                                    placeholder="Enter 6-digit Pincode" 
                                    @keydown.enter.prevent="checkDelivery()"
-                                   class="flex-1 bg-white border border-stone-300 rounded-xl px-3 py-2 text-xs focus:ring-1 focus:ring-brand-sage focus:border-brand-sage outline-none font-medium">
+                                   class="grail-input-light flex-1 rounded-xl px-3 py-2 text-xs font-medium">
                             <button type="button" 
                                     @click="checkDelivery()" 
                                     :disabled="pincode.length !== 6 || checking" 
-                                    class="px-4 py-2 rounded-xl bg-brand-text text-white text-xs font-semibold hover:bg-black transition-colors disabled:opacity-40">
+                                    class="px-4 py-2 rounded-xl bg-[#1A1018] text-[#EFE9F2] text-xs font-semibold hover:bg-black transition-colors disabled:opacity-40 cursor-pointer">
                                 <span x-show="!checking">Check</span>
                                 <span x-show="checking">...</span>
                             </button>
                         </div>
 
                         <!-- Dynamic Feedback based on Vendor's Dashboard Settings -->
-                        <div x-show="checked" x-transition class="mt-2.5 pt-2.5 border-t border-stone-200/60 space-y-1 text-xs text-stone-600">
+                        <div x-show="checked" x-transition class="mt-2.5 pt-2.5 border-t border-black/8 space-y-1 text-xs text-[#1A1018]/75">
                             <template x-if="status === 'invalid'">
                                 <div class="flex items-center gap-1.5 text-rose-700 font-semibold text-[11px]">
                                     <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -1379,7 +1395,7 @@
                                             </span>
                                         </template>
                                     </div>
-                                    <div class="flex items-center gap-1.5 text-[11px] text-stone-600">
+                                    <div class="flex items-center gap-1.5 text-[11px] text-[#1A1018]/70">
                                         <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                                         <span>{{ $isReturnable && $returnDays > 0 ? $returnDays . ' Days Easy Doorstep Return Guarantee' : 'Final Sale — Non-Returnable Item' }}</span>
                                     </div>
@@ -1390,60 +1406,60 @@
                     @endif
 
                     <!-- Structured Product Accordions -->
-                    <div class="mt-6 border-t border-stone-200/80 divide-y divide-stone-200/70" x-data="{ activeTab: 'fabric' }">
+                    <div class="mt-6 border-t border-black/10 divide-y divide-black/8" x-data="{ activeTab: 'fabric' }">
                         
                         <!-- Accordion 1: Fabric & Craft Story -->
                         <div class="py-3.5">
                             <button type="button" 
                                     @click="activeTab = (activeTab === 'fabric' ? '' : 'fabric')"
-                                    class="w-full flex items-center justify-between text-left group">
-                                <span class="text-xs font-bold uppercase tracking-wider text-brand-text flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                    class="w-full flex items-center justify-between text-left group cursor-pointer">
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#1A1018] flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
                                     </svg>
                                     <span>{{ $product->isClothing() ? 'Fabric & Specifications' : ($verticalType === 'food_portion' ? 'Ingredients & Details' : 'Product Specifications') }}</span>
                                 </span>
-                                <svg class="w-4 h-4 text-stone-400 transform transition-transform duration-200" :class="activeTab === 'fabric' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 text-[#1A1018]/45 transform transition-transform duration-200" :class="activeTab === 'fabric' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="activeTab === 'fabric'" x-collapse>
-                                <div class="pt-3 text-xs leading-relaxed text-stone-600 space-y-3">
-                                    <div class="prose prose-sm text-stone-600">
+                                <div class="pt-3 text-xs leading-relaxed text-[#1A1018]/75 space-y-3">
+                                    <div class="prose prose-sm text-[#1A1018]/75">
                                         {!! nl2br(e($product->description)) !!}
                                     </div>
                                     
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-stone-100 text-[11px]">
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2 border-t border-black/8 text-[11px]">
                                         @if($product->isClothing() && !empty($product->material))
-                                            <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                <span class="text-stone-400 block uppercase text-[9px] font-bold">Material</span>
-                                                <span class="font-semibold text-brand-text">{{ $product->material }}</span>
+                                            <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">Material</span>
+                                                <span class="font-semibold text-[#1A1018]">{{ $product->material }}</span>
                                             </div>
                                         @endif
                                         @if($product->isClothing() && !empty($product->care_instructions))
-                                            <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                <span class="text-stone-400 block uppercase text-[9px] font-bold">Care Instructions</span>
-                                                <span class="font-semibold text-brand-text">{{ $product->care_instructions }}</span>
+                                            <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">Care Instructions</span>
+                                                <span class="font-semibold text-[#1A1018]">{{ $product->care_instructions }}</span>
                                             </div>
                                         @endif
                                         @if($product->weight_grams)
-                                            <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                <span class="text-stone-400 block uppercase text-[9px] font-bold">Package Weight</span>
-                                                <span class="font-semibold text-brand-text">{{ $product->weight_grams }}g (approx. / pc)</span>
+                                            <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">Package Weight</span>
+                                                <span class="font-semibold text-[#1A1018]">{{ $product->weight_grams }}g (approx. / pc)</span>
                                             </div>
                                         @endif
-                                        <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                <span class="text-stone-400 block uppercase text-[9px] font-bold">Country of Origin</span>
-                                                <span class="font-semibold text-brand-text">{{ $product->country_of_origin ?? 'India' }}</span>
+                                        <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">Country of Origin</span>
+                                                <span class="font-semibold text-[#1A1018]">{{ $product->country_of_origin ?? 'India' }}</span>
                                         </div>
-                                        <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                <span class="text-stone-400 block uppercase text-[9px] font-bold">SKU Code</span>
-                                                <span class="font-semibold text-brand-text font-mono">{{ $product->sku ?? 'K71-ITEM' }}</span>
+                                        <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">SKU Code</span>
+                                                <span class="font-semibold text-[#1A1018] font-mono">{{ $product->sku ?? 'K71-ITEM' }}</span>
                                         </div>
                                         @if($product->custom_fields && is_array($product->custom_fields))
                                             @foreach($product->custom_fields as $cfKey => $cfVal)
                                                 @if(!empty($cfVal))
-                                                    <div class="bg-stone-50 p-2 rounded-xl border border-stone-100">
-                                                        <span class="text-stone-400 block uppercase text-[9px] font-bold">{{ ucwords(str_replace('_', ' ', $cfKey)) }}</span>
-                                                        <span class="font-semibold text-brand-text">{{ is_array($cfVal) ? implode(', ', $cfVal) : $cfVal }}</span>
+                                                    <div class="bg-[#FAF8F5] p-2.5 rounded-xl border border-black/6">
+                                                        <span class="text-[#1A1018]/45 block uppercase text-[9px] font-bold">{{ ucwords(str_replace('_', ' ', $cfKey)) }}</span>
+                                                        <span class="font-semibold text-[#1A1018]">{{ is_array($cfVal) ? implode(', ', $cfVal) : $cfVal }}</span>
                                                     </div>
                                                 @endif
                                             @endforeach
@@ -1458,21 +1474,21 @@
                         <div class="py-3.5">
                             <button type="button" 
                                      @click="activeTab = (activeTab === 'size' ? '' : 'size')"
-                                     class="w-full flex items-center justify-between text-left group">
-                                <span class="text-xs font-bold uppercase tracking-wider text-brand-text flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                     class="w-full flex items-center justify-between text-left group cursor-pointer">
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#1A1018] flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2zM7 7v4M11 7v2M15 7v4M19 7v2"/>
                                     </svg>
                                     <span>Fit &amp; Measurements</span>
                                 </span>
-                                <svg class="w-4 h-4 text-stone-400 transform transition-transform duration-200" :class="activeTab === 'size' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 text-[#1A1018]/45 transform transition-transform duration-200" :class="activeTab === 'size' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="activeTab === 'size'" x-collapse>
-                                <div class="pt-3 text-xs text-stone-600 space-y-2.5">
+                                <div class="pt-3 text-xs text-[#1A1018]/75 space-y-2.5">
                                     <p class="leading-relaxed">
                                         Tailored to provide a comfortable fit and silhouette. View our detailed size chart for exact measurements.
                                     </p>
-                                    <button type="button" @click="showSizeGuide = true" class="w-full py-2 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-brand-text font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                                    <button type="button" @click="showSizeGuide = true" class="w-full py-2.5 px-3 rounded-xl bg-[#FAF8F5] hover:bg-[#ECD2F3]/35 text-[#1A1018] border border-black/10 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
                                         <span>Open Size Guide</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                     </button>
@@ -1485,29 +1501,29 @@
                         <div class="py-3.5">
                             <button type="button" 
                                      @click="activeTab = (activeTab === 'shipping' ? '' : 'shipping')"
-                                     class="w-full flex items-center justify-between text-left group">
-                                <span class="text-xs font-bold uppercase tracking-wider text-brand-text flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                     class="w-full flex items-center justify-between text-left group cursor-pointer">
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#1A1018] flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h2m-8 0a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
                                     </svg>
                                     <span>Shipping, COD &amp; Returns Policy</span>
                                 </span>
-                                <svg class="w-4 h-4 text-stone-400 transform transition-transform duration-200" :class="activeTab === 'shipping' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 text-[#1A1018]/45 transform transition-transform duration-200" :class="activeTab === 'shipping' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="activeTab === 'shipping'" x-collapse>
-                                <div class="pt-3 text-xs leading-relaxed text-stone-600 space-y-2.5">
+                                <div class="pt-3 text-xs leading-relaxed text-[#1A1018]/75 space-y-2.5">
                                     <div class="flex items-start gap-2">
-                                        <span class="font-bold text-brand-text shrink-0">Dispatch:</span>
+                                        <span class="font-bold text-[#1A1018] shrink-0">Dispatch:</span>
                                         <span>Ships within <strong>{{ $processingDays }} business day(s)</strong> directly from {{ $product->vendor?->pickup_address['city'] ?? $vendorShopName }} store.</span>
                                     </div>
                                     @if($product->weight_grams)
                                         <div class="flex items-start gap-2">
-                                            <span class="font-bold text-brand-text shrink-0">Weight:</span>
+                                            <span class="font-bold text-[#1A1018] shrink-0">Weight:</span>
                                             <span>Approx. <strong>{{ $product->weight_grams >= 1000 ? number_format($product->weight_grams / 1000, 2) . ' kg' : $product->weight_grams . ' grams' }}</strong> per piece.</span>
                                         </div>
                                     @endif
                                     <div class="flex items-start gap-2">
-                                        <span class="font-bold text-brand-text shrink-0">Returns:</span>
+                                        <span class="font-bold text-[#1A1018] shrink-0">Returns:</span>
                                         @if($isReturnable && $returnDays > 0)
                                             <span><strong>{{ $returnDays }} Days Easy Return &amp; Exchange</strong> from delivery date.</span>
                                         @else
@@ -1515,7 +1531,7 @@
                                         @endif
                                     </div>
                                     <div class="flex items-start gap-2">
-                                        <span class="font-bold text-brand-text shrink-0">Payment:</span>
+                                        <span class="font-bold text-[#1A1018] shrink-0">Payment:</span>
                                         @if($isCodAvailable)
                                             <span><strong>Cash on Delivery (COD) Available</strong> at checkout, along with UPI, Cards, and Net Banking.</span>
                                         @else
@@ -1523,7 +1539,7 @@
                                         @endif
                                     </div>
                                     <div class="flex items-start gap-2">
-                                        <span class="font-bold text-brand-text shrink-0">Authenticity:</span>
+                                        <span class="font-bold text-[#1A1018] shrink-0">Authenticity:</span>
                                         <span>100% Genuine product with verified merchant guarantee.</span>
                                     </div>
                                 </div>
@@ -1534,19 +1550,19 @@
                         <div class="py-3.5">
                             <button type="button" 
                                      @click="activeTab = (activeTab === 'boutique' ? '' : 'boutique')"
-                                     class="w-full flex items-center justify-between text-left group">
-                                <span class="text-xs font-bold uppercase tracking-wider text-brand-text flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-stone-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+                                     class="w-full flex items-center justify-between text-left group cursor-pointer">
+                                <span class="text-xs font-bold uppercase tracking-wider text-[#1A1018] flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-[#623562]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
                                     <span>About {{ $vendorShopName }}</span>
                                 </span>
-                                <svg class="w-4 h-4 text-stone-400 transform transition-transform duration-200" :class="activeTab === 'boutique' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <svg class="w-4 h-4 text-[#1A1018]/45 transform transition-transform duration-200" :class="activeTab === 'boutique' ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="activeTab === 'boutique'" x-collapse>
-                                <div class="pt-3 text-xs leading-relaxed text-stone-600 space-y-2.5">
+                                <div class="pt-3 text-xs leading-relaxed text-[#1A1018]/75 space-y-2.5">
                                     <p>{{ $product->vendor?->description ?? "Welcome to {$vendorShopName}, verified merchant on K71 Marketplace." }}</p>
-                                    <a href="{{ route('catalog.index', $product->vendor?->slug ? ['store' => $product->vendor->slug] : []) }}" class="inline-flex items-center gap-1.5 font-bold text-indigo-600 hover:underline">
+                                    <a href="{{ route('catalog.index', $product->vendor?->slug ? ['store' => $product->vendor->slug] : []) }}" class="inline-flex items-center gap-1.5 font-bold text-[#623562] hover:underline">
                                         <span>View all products from {{ $vendorShopName }}</span>
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                     </a>
@@ -1569,20 +1585,20 @@
              x-transition:leave="transition ease-in duration-200"
              x-transition:leave-start="transform translate-y-0 opacity-100"
              x-transition:leave-end="transform translate-y-full opacity-0"
-             class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-stone-200/90 px-4 py-2.5 shadow-[0_-8px_25px_rgba(0,0,0,0.12)]">
+             class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#060606]/95 text-[#EFE9F2] backdrop-blur-xl border-t border-white/15 px-4 py-2.5 shadow-[0_-12px_30px_rgba(0,0,0,0.4)]">
             <div class="flex items-center justify-between gap-3 max-w-lg mx-auto">
                 <div class="flex items-center gap-2.5 min-w-0">
                     @if($product->images->count() > 0)
                         <img src="{{ $product->images->first()->url }}" 
                              alt="{{ $product->title }}" 
-                             class="w-10 h-10 rounded-lg object-cover bg-stone-100 shrink-0 border border-stone-200">
+                             class="w-10 h-10 rounded-lg object-cover bg-[#161616] shrink-0 border border-white/15">
                     @endif
                     <div class="min-w-0">
-                        <p class="text-xs font-semibold text-brand-text truncate">{{ $product->title }}</p>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs font-bold text-brand-text">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></span>
+                        <p class="text-xs font-semibold text-white truncate">{{ $product->title }}</p>
+                        <div class="flex items-center gap-1.5 tabular-nums">
+                            <span class="text-xs font-bold text-[#ECD2F3]">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></span>
                             @if($product->compare_at_price > $product->base_price)
-                                <span class="text-[10px] text-gray-400 line-through">₹{{ number_format($product->compare_at_price / 100, 2) }}</span>
+                                <span class="text-[10px] text-white/40 line-through">₹{{ number_format($product->compare_at_price / 100, 2) }}</span>
                             @endif
                         </div>
                     </div>
@@ -1590,7 +1606,7 @@
                 <button type="button" 
                         @click="submitAddToCart()" 
                         :disabled="adding || selectedStock === 0"
-                        class="px-5 py-2.5 rounded-full bg-brand-text text-white text-xs font-bold tracking-wide hover:bg-black transition-all shrink-0 flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-75">
+                        class="grail-cta-pill px-5 py-2.5 text-xs font-bold tracking-wide shrink-0 flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-75 cursor-pointer">
                     <svg x-show="!adding" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span x-text="adding ? 'Adding...' : (selectedStock === 0 ? 'Sold Out' : 'Add to Bag')"></span>
                 </button>
@@ -1753,7 +1769,7 @@
                 @endif
 
                 <button type="button" @click="showSizeGuide = false" 
-                        class="w-full py-2.5 rounded-full bg-brand-text text-white font-bold text-xs hover:bg-black transition-colors cursor-pointer">
+                        class="grail-btn-obsidian w-full py-2.5 font-bold text-xs cursor-pointer">
                     Close Guide
                 </button>
             </div>
@@ -1761,14 +1777,14 @@
         @endif
 
         <!-- Universal Mobile Sticky Action Bar (100% Mobile Responsive) -->
-        <div class="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-white/95 backdrop-blur-xl border-t border-stone-200/90 shadow-2xl flex items-center justify-between gap-3"
+        <div class="md:hidden fixed bottom-0 inset-x-0 z-50 p-3 bg-[#060606]/95 text-[#EFE9F2] backdrop-blur-xl border-t border-white/15 shadow-[0_-12px_32px_rgba(0,0,0,0.45)] flex items-center justify-between gap-3"
              style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
             <div class="min-w-0">
-                <div class="flex items-baseline gap-1">
-                    <span class="text-xs text-stone-500 font-bold">Total:</span>
-                    <span class="text-lg font-black text-slate-950">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></span>
+                <div class="flex items-baseline gap-1 tabular-nums">
+                    <span class="text-xs text-white/55 font-bold">Total:</span>
+                    <span class="text-lg font-black text-[#ECD2F3]">₹<span x-text="currentPrice">{{ number_format($product->base_price / 100, 2) }}</span></span>
                 </div>
-                <div class="text-[10px] text-stone-500 truncate" 
+                <div class="text-[10px] text-white/60 truncate" 
                      x-text="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Out of stock' : (selectedStock <= 5 ? 'Only ' + selectedStock + ' left!' : 'In stock • Fast Dispatch')">
                 </div>
             </div>
@@ -1777,24 +1793,24 @@
                 <button type="button" 
                         @click="submitAddToCart()"
                         :disabled="adding || isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0"
-                        class="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="grail-cta-pill px-6 py-3 active:scale-95 text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
                     <span x-show="!adding">
                         <span x-text="isEntirelyOutOfStock || (selectedVariant && isCurrentVariantOutOfStock) || selectedStock === 0 ? 'Sold Out' : 'Add to Bag 🛍️'"></span>
                     </span>
                     <span x-show="adding" class="flex items-center gap-1.5">
-                        <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg class="animate-spin h-3.5 w-3.5 text-[#1A1018]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <span>Adding...</span>
                     </span>
                 </button>
             @elseif($product->isEnquiry())
                 <a href="https://wa.me/{{ $sellerPhone ?? '' }}?text={{ rawurlencode('Hello! I would like to request a quotation for: ' . $product->title . ' on K71') }}" target="_blank"
-                   class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-md flex items-center gap-1.5">
+                   class="grail-cta-pill px-5 py-3 text-xs font-bold shadow-md flex items-center gap-1.5">
                     <span>Enquire Now</span>
                     <span>&rarr;</span>
                 </a>
             @elseif($product->isBooking())
                 <button type="button" @click="showBookingModal = true"
-                        class="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-md flex items-center gap-1.5">
+                        class="grail-cta-pill px-5 py-3 text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer">
                     <span>Book Service</span>
                     <span>&rarr;</span>
                 </button>
@@ -1804,29 +1820,29 @@
     </div>
 
     <!-- Reviews, Ratings & Customer Photo Gallery Section -->
-    <section class="mt-12 bg-white rounded-3xl p-6 sm:p-8 border border-stone-200/80 shadow-xs" 
+    <section class="mt-10 bg-white rounded-[24px] p-6 sm:p-8 border border-black/8 shadow-[0_14px_40px_rgba(26,16,24,0.05)]" 
              x-data="{ showReportModal: false, showReviewForm: false, showReviewLightbox: false, reviewLightboxImg: '' }">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-stone-100 gap-4">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-black/8 gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-[#C9A24A]" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                     </svg>
-                    <h2 class="text-xl sm:text-2xl font-sans font-bold text-brand-text">Customer Reviews &amp; Ratings</h2>
+                    <h2 class="grail-display text-xl sm:text-2xl font-bold text-[#1A1018]">Customer Reviews &amp; Ratings</h2>
                 </div>
-                <p class="text-xs text-stone-500 mt-1">Verified buyer feedback, real customer photos, and official store responses.</p>
+                <p class="text-xs text-[#1A1018]/60 mt-1">Verified buyer feedback, real customer photos, and official store responses.</p>
             </div>
             <div class="flex items-center gap-2">
                 @auth
-                    <button type="button" @click="showReviewForm = !showReviewForm" class="px-4 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                    <button type="button" @click="showReviewForm = !showReviewForm" class="grail-btn-obsidian px-4 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
                         <span>📸 Write Photo Review</span>
                     </button>
                 @else
-                    <a href="{{ route('login') }}" class="px-4 py-2 rounded-full bg-brand-text hover:bg-black text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
+                    <a href="{{ route('login') }}" class="grail-btn-obsidian px-4 py-2 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
                         <span>Sign In to Review</span>
                     </a>
                 @endauth
-                <button type="button" @click="showReportModal = true" class="px-3 py-2 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                <button type="button" @click="showReportModal = true" class="px-3 py-2 rounded-full bg-[#FAF8F5] hover:bg-stone-200 text-[#1A1018]/70 border border-black/8 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
                     </svg>
@@ -2034,22 +2050,26 @@
 
     <!-- More from this Boutique Showcase -->
     @if($vendorProducts->count() > 0)
-    <section class="mt-12 mb-16">
-        <div class="flex items-center justify-between mb-6 pb-3 border-b border-stone-200/80">
+    <section class="mt-14 mb-4">
+        <div class="flex items-center justify-between mb-6 pb-3.5 border-b border-black/10">
             <div>
-                <span class="text-[10px] uppercase font-bold tracking-widest text-brand-sage block leading-none">Curated Collection</span>
-                <h2 class="text-xl sm:text-2xl font-serif font-bold text-brand-text mt-1">More from {{ $vendorShopName }}</h2>
+                <span class="grail-eyebrow block leading-none text-[#623562]">Curated Collection</span>
+                <h2 class="grail-display text-xl sm:text-2xl font-bold text-[#1A1018] mt-1.5">More from {{ $vendorShopName }}</h2>
             </div>
-            <a href="{{ $product->vendor?->storefront_url ?? route('catalog.index') }}" class="text-xs font-bold text-brand-text hover:text-brand-sage flex items-center gap-1 transition-colors">
+            <a href="{{ $product->vendor?->storefront_url ?? route('catalog.index') }}" class="grail-btn-ghost-light px-4 py-2 text-xs font-bold flex items-center gap-1 transition-colors">
                 <span>View All Designs</span>
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </a>
         </div>
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             @foreach($vendorProducts as $vp)
-                <x-product-card :product="$vp" />
+                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 4) * 65 }}ms;">
+                    <x-product-card :product="$vp" />
+                </div>
             @endforeach
         </div>
     </section>
     @endif
+        </div>
+    </div>
 </x-layouts.public>

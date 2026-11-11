@@ -1,23 +1,30 @@
-<x-layouts.public title="Login">
-    <div class="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8 glass-panel p-8">
-            <div>
-                <h2 class="mt-2 text-center text-3xl font-extrabold text-brand-text font-serif">
+<x-layouts.public title="Login" :fullWidth="true">
+    <div class="grail-hero-band min-h-[calc(100vh-5rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Subtle Obsidian Ambient Orchid Glow -->
+        <div class="absolute inset-0 pointer-events-none">
+            <div class="absolute -top-24 -left-24 w-96 h-96 bg-[#ECD2F3]/12 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-[#C9A24A]/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div class="max-w-md w-full space-y-6 bg-[#FAFAF8] text-[#1A1018] p-7 sm:p-9 rounded-[28px] border border-white/15 shadow-[0_32px_90px_rgba(0,0,0,0.65)] relative z-10">
+            <div class="text-center">
+                <span class="grail-eyebrow block mb-2">K71 Marketplace</span>
+                <h2 class="grail-display text-3xl sm:text-4xl font-bold text-[#1A1018] tracking-tight">
                     Welcome back
                 </h2>
-                <p class="mt-2 text-center text-sm text-brand-muted">
+                <p class="mt-2 text-sm text-[#7A6B78]">
                     Or
-                    <a href="{{ route('register') }}" class="font-medium text-brand-sage hover:text-brand-sage/80 transition-colors">
+                    <a href="{{ route('register') }}" class="font-semibold text-[#623562] hover:text-[#1A1018] transition-colors underline decoration-[#ECD2F3] underline-offset-4">
                         create a new account
                     </a>
                 </p>
             </div>
             
             @if(session('info'))
-                <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div class="bg-[#F8EFFA] border-l-4 border-[#623562] p-4 rounded-xl">
                     <div class="flex">
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
+                        <div class="ml-1">
+                            <p class="text-sm text-[#1A1018] font-medium">
                                 {{ session('info') }}
                             </p>
                         </div>
@@ -25,26 +32,26 @@
                 </div>
             @endif
 
-            <form class="mt-8 space-y-6" action="{{ route('login') }}" method="POST">
+            <form class="mt-6 space-y-5" action="{{ route('login') }}" method="POST">
                 @csrf
                 <div class="space-y-4">
                     <div>
-                        <label for="login" class="block text-sm font-medium text-brand-text">Email address, Mobile or Username</label>
-                        <input id="login" name="login" type="text" autocomplete="username" required class="mt-1 appearance-none relative block w-full px-3 py-2 border border-brand-surface placeholder-gray-400 text-brand-text rounded-md focus:outline-none focus:ring-brand-sage focus:border-brand-sage focus:z-10 sm:text-sm bg-white/50" placeholder="Enter email, 10-digit mobile or username" value="{{ old('login') }}">
+                        <label for="login" class="block text-xs font-bold uppercase tracking-wider text-[#1A1018] mb-1.5">Email address, Mobile or Username</label>
+                        <input id="login" name="login" type="text" autocomplete="username" required class="grail-input-light appearance-none relative block w-full px-3.5 py-2.5 rounded-xl sm:text-sm" placeholder="Enter email, 10-digit mobile or username" value="{{ old('login') }}">
                         @error('login')
-                            <p class="mt-1 text-sm text-brand-error">{{ $message }}</p>
+                            <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
                         @enderror
                     </div>
                     <div x-data="{ showPass: false }">
-                        <div class="flex items-center justify-between">
-                            <label for="password" class="block text-sm font-medium text-brand-text">Password</label>
-                            <button type="button" @click="showPass = !showPass" class="text-xs text-brand-sage hover:text-brand-sage/80 font-medium focus:outline-none">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="password" class="block text-xs font-bold uppercase tracking-wider text-[#1A1018]">Password</label>
+                            <button type="button" @click="showPass = !showPass" class="text-xs text-[#623562] hover:text-[#1A1018] font-semibold focus:outline-none cursor-pointer">
                                 <span x-text="showPass ? 'Hide' : 'Show'"></span>
                             </button>
                         </div>
-                        <div class="relative mt-1">
-                            <input id="password" name="password" :type="showPass ? 'text' : 'password'" autocomplete="current-password" required class="appearance-none block w-full px-3 py-2 pr-10 border border-brand-surface placeholder-gray-400 text-brand-text rounded-md focus:outline-none focus:ring-brand-sage focus:border-brand-sage sm:text-sm bg-white/50" placeholder="Password">
-                            <button type="button" @click="showPass = !showPass" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none" tabindex="-1">
+                        <div class="relative">
+                            <input id="password" name="password" :type="showPass ? 'text' : 'password'" autocomplete="current-password" required class="grail-input-light appearance-none block w-full px-3.5 py-2.5 pr-10 rounded-xl sm:text-sm" placeholder="Password">
+                            <button type="button" @click="showPass = !showPass" aria-label="Toggle password visibility" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#7A6B78] hover:text-[#1A1018] focus:outline-none cursor-pointer" tabindex="-1">
                                 <!-- Eye (Show) -->
                                 <svg x-show="!showPass" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 <!-- Eye Slash (Hide) -->
@@ -59,24 +66,24 @@
                             $selectedRole = 'customer';
                         }
                     @endphp
-                    <div>
-                        <label class="block text-sm font-medium text-brand-text mb-2">Login as</label>
-                        <div class="flex flex-wrap gap-4">
-                            <label class="flex items-center">
-                                <input type="radio" name="role" value="customer" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'customer' ? 'checked' : '' }}>
-                                <span class="ml-2 text-sm text-brand-text">Customer</span>
+                    <div class="pt-1">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-[#1A1018] mb-2">Login as</label>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="flex items-center px-3 py-1.5 rounded-full bg-white border border-black/10 cursor-pointer hover:border-[#623562]/40 transition">
+                                <input type="radio" name="role" value="customer" class="form-radio h-3.5 w-3.5 text-[#1A1018] border-black/25 focus:ring-[#623562]" {{ $selectedRole === 'customer' ? 'checked' : '' }}>
+                                <span class="ml-2 text-xs font-semibold text-[#1A1018]">Customer</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="role" value="vendor" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'vendor' ? 'checked' : '' }}>
-                                <span class="ml-2 text-sm text-brand-text">Vendor</span>
+                            <label class="flex items-center px-3 py-1.5 rounded-full bg-white border border-black/10 cursor-pointer hover:border-[#623562]/40 transition">
+                                <input type="radio" name="role" value="vendor" class="form-radio h-3.5 w-3.5 text-[#1A1018] border-black/25 focus:ring-[#623562]" {{ $selectedRole === 'vendor' ? 'checked' : '' }}>
+                                <span class="ml-2 text-xs font-semibold text-[#1A1018]">Vendor</span>
                             </label>
-                            <label class="flex items-center">
-                                <input type="radio" name="role" value="fleet" class="form-radio h-4 w-4 text-brand-sage border-gray-300 focus:ring-brand-sage" {{ $selectedRole === 'fleet' ? 'checked' : '' }}>
-                                <span class="ml-2 text-sm text-brand-text">Fleet Partner</span>
+                            <label class="flex items-center px-3 py-1.5 rounded-full bg-white border border-black/10 cursor-pointer hover:border-[#623562]/40 transition">
+                                <input type="radio" name="role" value="fleet" class="form-radio h-3.5 w-3.5 text-[#1A1018] border-black/25 focus:ring-[#623562]" {{ $selectedRole === 'fleet' ? 'checked' : '' }}>
+                                <span class="ml-2 text-xs font-semibold text-[#1A1018]">Fleet Partner</span>
                             </label>
                         </div>
-                        <div class="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-brand-muted">
-                            <a href="{{ route('vendor.register') }}" class="font-semibold text-brand-sage hover:underline">Register as Vendor &rarr;</a>
+                        <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#7A6B78]">
+                            <a href="{{ route('vendor.register') }}" class="font-semibold text-[#623562] hover:underline">Register as Vendor &rarr;</a>
                             <a href="{{ route('delivery.onboarding') }}" class="font-semibold text-emerald-700 hover:underline">Register as Fleet Partner &rarr;</a>
                         </div>
                     </div>
@@ -84,21 +91,21 @@
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <input id="remember" name="remember" type="checkbox" checked class="h-4 w-4 text-brand-sage focus:ring-brand-sage border-gray-300 rounded">
-                        <label for="remember" class="ml-2 block text-sm text-brand-muted">
+                        <input id="remember" name="remember" type="checkbox" checked class="h-4 w-4 text-[#1A1018] focus:ring-[#623562] border-black/25 rounded">
+                        <label for="remember" class="ml-2 block text-sm text-[#7A6B78]">
                             Remember me
                         </label>
                     </div>
 
                     <div class="text-sm">
-                        <a href="{{ route('password.request') }}" class="font-medium text-brand-sage hover:text-brand-sage/80 transition-colors">
+                        <a href="{{ route('password.request') }}" class="font-medium text-[#623562] hover:text-[#1A1018] transition-colors">
                             Forgot password?
                         </a>
                     </div>
                 </div>
 
                 <div>
-                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-brand-sage hover:bg-brand-sage/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-sage transition-all">
+                    <button type="submit" class="grail-btn-obsidian w-full py-3.5 px-4 text-sm cursor-pointer">
                         Sign in
                     </button>
                 </div>
@@ -107,15 +114,15 @@
             <div class="mt-6">
                 <div class="relative">
                     <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
+                        <div class="w-full border-t border-black/10"></div>
                     </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-2 bg-transparent text-brand-muted">Or continue with</span>
+                    <div class="relative flex justify-center text-xs uppercase tracking-wider font-semibold">
+                        <span class="px-3 bg-[#FAFAF8] text-[#7A6B78]">Or continue with</span>
                     </div>
                 </div>
 
-                <div class="mt-6">
-                    <a href="{{ route('auth.google') }}" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                <div class="mt-5">
+                    <a href="{{ route('auth.google') }}" class="w-full inline-flex items-center justify-center py-2.5 px-4 border border-black/15 rounded-full shadow-2xs bg-white text-sm font-semibold text-[#1A1018] hover:bg-[#F4F1EC] transition-colors">
                         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>

@@ -30,10 +30,10 @@
         <div>
             <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-stone-800">Color:</span>
-                    <span class="text-xs font-extrabold text-stone-900" x-text="selectedColor"></span>
+                    <span class="grail-eyebrow !text-[#623562]">Color:</span>
+                    <span class="text-xs font-extrabold text-[#1A1018]" x-text="selectedColor"></span>
                 </div>
-                <span class="text-[11px] text-stone-500 font-medium" x-text="selectedColorVariantCount + ' sizes available'"></span>
+                <span class="text-[11px] text-[#1A1018]/55 font-medium" x-text="selectedColorVariantCount + ' sizes available'"></span>
             </div>
 
             <div class="flex flex-wrap gap-2.5">
@@ -42,12 +42,12 @@
                             @click="selectColor(c)"
                             :title="c.name"
                             :class="selectedColor === c.name 
-                                ? 'ring-2 ring-black ring-offset-2 scale-105 shadow-sm' 
-                                : 'hover:scale-105 border-stone-200 opacity-90 hover:opacity-100'"
+                                ? 'ring-2 ring-[#1A1018] ring-offset-2 scale-105 shadow-sm' 
+                                : 'hover:scale-105 border-black/15 opacity-90 hover:opacity-100'"
                             class="relative w-8 h-8 rounded-full border border-black/15 transition-all cursor-pointer flex items-center justify-center">
                         <span class="w-full h-full rounded-full shadow-inner" :style="`background-color: ${c.hex}`"></span>
                         <span x-show="selectedColor === c.name" class="absolute inset-0 flex items-center justify-center text-[10px] font-black"
-                              :class="isColorDark(c.hex) ? 'text-white' : 'text-stone-900'">✓</span>
+                              :class="isColorDark(c.hex) ? 'text-white' : 'text-[#1A1018]'">✓</span>
                     </button>
                 </template>
             </div>
@@ -58,11 +58,11 @@
     <div x-ref="sizeSelector">
         <div class="flex items-center justify-between mb-2.5">
             <div class="flex items-center gap-1.5">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-stone-800">{{ $product->isClothing() ? 'Select Size' : 'Select Option' }}</h3>
-                <span class="text-[11px] text-stone-400 font-normal">(Required)</span>
+                <h3 class="grail-eyebrow !text-[#623562]">{{ $product->isClothing() ? 'Select Size' : 'Select Option' }}</h3>
+                <span class="text-[11px] text-[#1A1018]/45 font-normal">(Required)</span>
             </div>
             @if($product->isClothing() && !($product->size_chart && isset($product->size_chart['type']) && $product->size_chart['type'] === 'none'))
-                <button type="button" @click="$dispatch('open-size-guide')" class="text-xs text-stone-800 hover:text-brand-sage flex items-center gap-1 font-bold transition-colors">
+                <button type="button" @click="$dispatch('open-size-guide')" class="text-xs text-[#1A1018] hover:text-[#623562] flex items-center gap-1 font-bold transition-colors cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2zM7 7v4M11 7v2M15 7v4M19 7v2"/>
                     </svg>
@@ -77,14 +77,14 @@
                         @click="selectVariant(v)"
                         :disabled="v.stock <= 0"
                         :class="activeVariant && activeVariant.id === v.id
-                            ? 'border-stone-900 bg-stone-900 text-white shadow-sm ring-1 ring-stone-900'
+                            ? 'border-[#1A1018] bg-[#1A1018] text-[#ECD2F3] shadow-sm ring-1 ring-[#1A1018]'
                             : (v.stock <= 0 
-                                ? 'opacity-40 cursor-not-allowed border-dashed border-stone-200 bg-stone-100 text-stone-400 line-through' 
-                                : 'border-stone-200 bg-white hover:border-stone-900 text-stone-800')"
+                                ? 'opacity-40 cursor-not-allowed border-dashed border-black/15 bg-[#F6F6F6] text-[#1A1018]/40 line-through' 
+                                : 'border-black/15 bg-white hover:border-[#623562] text-[#1A1018]')"
                         class="min-w-[54px] px-3.5 py-2 rounded-xl text-xs font-bold text-center border transition-all cursor-pointer relative">
                     <span x-text="formatSizeLabel(v.size || v.sku)"></span>
                     <template x-if="v.stock > 0 && v.stock <= 3">
-                        <span class="block text-[8px] font-black uppercase text-amber-500 leading-none mt-0.5" x-text="`${v.stock} left`"></span>
+                        <span class="block text-[8px] font-black uppercase text-[#C9A24A] leading-none mt-0.5" x-text="`${v.stock} left`"></span>
                     </template>
                     <template x-if="v.stock <= 0">
                         <span class="block text-[8px] font-bold text-rose-500 leading-none mt-0.5 no-underline">Sold</span>
@@ -96,10 +96,10 @@
 
     <!-- 3. Dynamic Price & Size Feedback Strip -->
     <template x-if="activeVariant">
-        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-stone-50 border border-stone-200/60 text-xs">
-            <div class="flex items-center gap-2 text-[11px] text-stone-500">
-                <span class="font-medium">Selected Size:</span>
-                <span class="font-extrabold text-stone-900 px-2 py-0.5 rounded-md bg-white border border-stone-200 shadow-2xs" x-text="formatSizeLabel(activeVariant.size || activeVariant.sku)"></span>
+        <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#FAFAF8] border border-black/8 text-xs">
+            <div class="flex items-center gap-2 text-[11px] text-[#1A1018]/60">
+                <span class="font-medium">Selected Option:</span>
+                <span class="font-extrabold text-[#1A1018] px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/50 border border-[#623562]/20" x-text="formatSizeLabel(activeVariant.size || activeVariant.sku)"></span>
             </div>
             <div class="flex items-center gap-1.5 font-semibold text-emerald-700">
                 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
