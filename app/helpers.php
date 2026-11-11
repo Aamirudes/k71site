@@ -259,3 +259,66 @@ if (!function_exists('format_image_url')) {
     }
 }
 
+if (!function_exists('k71_sync_public_storage')) {
+    /**
+     * Mirror a stored file from storage/app/public to public/storage only when
+     * public/storage is a real directory (not a symlink to the same inode).
+     */
+    function k71_sync_public_storage(?string $relativePath): void
+    {
+        $relativePath = ltrim((string) $relativePath, '/');
+        if ($relativePath === '') {
+            return;
+        }
+
+        $publicRoot = public_path('storage');
+        if (is_link($publicRoot)) {
+            return;
+        }
+
+        $source = storage_path('app/public/' . $relativePath);
+        if (!is_file($source)) {
+            return;
+        }
+
+        $target = public_path('storage/' . $relativePath);
+        $realSource = @realpath($source);
+        $realTarget = @realpath($target);
+        if ($realSource && $realTarget && $realSource === $realTarget) {
+            return;
+        }
+
+        $targetDir = dirname($target);
+        if (!is_dir($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        @copy($source, $target);
+    }
+}
+
+if (!function_exists('k71_delete_public_storage')) {
+    /**
+     * Delete a file from public disk and its mirrored public/storage copy if any.
+     */
+    function k71_delete_public_storage(?string $relativePath): void
+    {
+        $relativePath = ltrim((string) $relativePath, '/');
+        if ($relativePath === '') {
+            return;
+        }
+
+        $source = storage_path('app/public/' . $relativePath);
+        if (is_file($source)) {
+            @unlink($source);
+        }
+
+        if (!is_link(public_path('storage'))) {
+            $target = public_path('storage/' . $relativePath);
+            if (is_file($target)) {
+                @unlink($target);
+            }
+        }
+    }
+}
+

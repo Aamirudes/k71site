@@ -299,12 +299,14 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $vendor = auth()->user()->vendor;
-        $targetVertical = $vendor ? $vendor->getVerticalKey() : 'marketplace';
+        if (!$vendor) {
+            abort(403, 'Vendor store required.');
+        }
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
-            'vertical' => ['nullable', 'string'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,food,feasto,services,used,enquiry'],
             'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
             'custom_fields' => ['nullable', 'array'],
             'base_price' => ['required', 'numeric', 'min:0'],
@@ -323,14 +325,14 @@ class ProductController extends Controller
             'gender' => ['nullable', 'string', 'max:20'],
             'age_group' => ['nullable', 'string', 'max:20'],
             'description' => ['required', 'string'],
-            'sku' => ['nullable', 'string', 'max:50'],
+            'sku' => ['nullable', 'string', 'max:191'],
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
-            'variants.*.name' => ['required_with:variants', 'string', 'max:255'],
+            'variants.*.name' => ['nullable', 'string', 'max:255'],
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
-            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.sku' => ['nullable', 'string', 'max:191'],
             'variants.*.color' => ['nullable', 'string', 'max:100'],
             'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
             'variants.*.size' => ['nullable', 'string', 'max:50'],
@@ -342,20 +344,22 @@ class ProductController extends Controller
             'service_config' => ['nullable', 'array'],
             'specifications' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:15360'],
             'cover_image_index' => ['nullable', 'integer', 'min:0'],
             'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg,m4v,qt,avi', 'max:51200'],
             'video_url' => ['nullable', 'string', 'max:500'],
         ]);
 
         // Enforce strict vertical isolation from vendor profile with request input
-        $targetVertical = $request->input('vertical') ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
+        $targetVertical = $request->input('vertical') ?: ($vendor->getVerticalKey() ?: 'marketplace');
         $validated['vertical'] = $targetVertical;
 
         if ($targetVertical === 'services') {
             $validated['listing_type'] = $validated['listing_type'] ?? 'booking';
         } elseif ($targetVertical === 'used') {
             $validated['listing_type'] = $validated['listing_type'] ?? 'contact_seller';
+        } elseif ($targetVertical === 'enquiry') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'enquiry';
         } else {
             $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
         }
@@ -373,7 +377,16 @@ class ProductController extends Controller
         }
 
         if ($request->has('specifications') && is_array($request->specifications)) {
-            $validated['specifications_json'] = $request->specifications;
+            $specsInput = $request->specifications;
+            if (array_is_list($specsInput)) {
+                $specsInput = array_values(array_filter($specsInput, function ($row) {
+                    if (!is_array($row)) return false;
+                    $k = trim((string) ($row['name'] ?? $row['key'] ?? ''));
+                    $v = trim((string) ($row['value'] ?? ''));
+                    return $k !== '' || $v !== '';
+                }));
+            }
+            $validated['specifications_json'] = $specsInput;
         }
 
         if ($request->has('b2b_tiers') && is_array($request->b2b_tiers)) {
@@ -392,17 +405,18 @@ class ProductController extends Controller
         }
 
         $validated['slug'] = $slug;
-        $validated['base_price'] = (int) ($validated['base_price'] * 100); // convert to paise
+        $validated['base_price'] = (int) round(((float) $validated['base_price']) * 100); // convert to paise
         if (isset($validated['compare_at_price'])) {
-            $validated['compare_at_price'] = (int) ($validated['compare_at_price'] * 100);
-        }
-        
-        if (isset($validated['tags']) && !empty($validated['tags'])) {
-            $tagsArray = array_map('trim', explode(',', $validated['tags']));
-            $validated['tags'] = json_encode($tagsArray);
+            $validated['compare_at_price'] = (int) round(((float) $validated['compare_at_price']) * 100);
         }
 
-        $validated['is_returnable'] = $request->has('is_returnable');
+        if (isset($validated['tags']) && trim((string) $validated['tags']) !== '') {
+            $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags'])), fn ($t) => $t !== ''));
+        } else {
+            $validated['tags'] = null;
+        }
+
+        $validated['is_returnable'] = $request->boolean('is_returnable');
 
         if ($request->filled('size_chart')) {
             $sc = $request->input('size_chart');
@@ -415,16 +429,44 @@ class ProductController extends Controller
             $validated['published_at'] = now();
         }
 
-        // Accurately calculate total_stock from variants sum if variants provided
-        if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
-            $sumStock = 0;
+        // Normalize valid variant & food portion rows before stock aggregation
+        $cleanVariants = [];
+        if ($request->has('variants') && is_array($request->variants)) {
             foreach ($request->variants as $v) {
+                if (!is_array($v)) continue;
+                $vName = trim((string) ($v['name'] ?? ''));
+                $vSku = trim((string) ($v['sku'] ?? ''));
+                $vSize = trim((string) ($v['size'] ?? ''));
+                $vColor = trim((string) ($v['color'] ?? ''));
+                if ($vName === '' && $vSku === '' && $vSize === '' && $vColor === '') {
+                    continue;
+                }
+                if ($vName === '') {
+                    $v['name'] = trim(($vColor ? $vColor . ' / ' : '') . ($vSize ?: $vSku)) ?: 'Standard';
+                }
+                $cleanVariants[] = $v;
+            }
+        }
+
+        $cleanFoodPortions = [];
+        if ($request->has('food_portions') && is_array($request->food_portions)) {
+            foreach ($request->food_portions as $fp) {
+                if (!is_array($fp)) continue;
+                if (trim((string) ($fp['name'] ?? '')) === '') continue;
+                $cleanFoodPortions[] = $fp;
+            }
+        }
+
+        // Accurately calculate total_stock from variants sum if variants provided
+        if (count($cleanVariants) > 0) {
+            $sumStock = 0;
+            foreach ($cleanVariants as $v) {
                 $sumStock += (int) ($v['stock'] ?? 0);
             }
             $validated['total_stock'] = $sumStock;
-        } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+        } elseif (count($cleanFoodPortions) > 0) {
             $sumStock = 0;
-            foreach ($request->food_portions as $fp) {
+            foreach ($cleanFoodPortions as $fp) {
                 $sumStock += (int) ($fp['stock'] ?? 50);
             }
             $validated['total_stock'] = $sumStock;
@@ -449,17 +491,18 @@ class ProductController extends Controller
         $productAttributes['vendor_id'] = $vendor->id;
 
         try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $vendor) {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $vendor, $cleanVariants, $cleanFoodPortions) {
                 $product = Product::create($productAttributes);
 
             // 1. Process standard / fashion matrix variants
-            if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
-                foreach ($request->variants as $index => $variantData) {
-                    $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
-                    
+            if (count($cleanVariants) > 0) {
+                foreach ($cleanVariants as $index => $variantData) {
+                    $rawSku = !empty($variantData['sku']) ? trim((string) $variantData['sku']) : trim((string) $variantData['name']);
+                    $sku = Str::limit($rawSku ?: 'VARIANT-' . ($index + 1), 191, '');
+
                     $baseRupees = round($validated['base_price'] / 100, 2);
-                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : $baseRupees;
-                    if ($priceDecimal <= 0) {
+                    $priceDecimal = isset($variantData['price']) && $variantData['price'] !== '' ? (float) $variantData['price'] : $baseRupees;
+                    if ($priceDecimal <= 0 && $baseRupees > 0) {
                         $priceDecimal = $baseRupees;
                     }
                     $priceOverride = (int) round($priceDecimal * 100);
@@ -483,18 +526,18 @@ class ProductController extends Controller
                         'sort_order' => $index + 1,
                     ]);
                 }
-            } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+            } elseif (count($cleanFoodPortions) > 0) {
                 // 2. Food Portions as variants
-                foreach ($request->food_portions as $index => $portion) {
-                    if (empty($portion['name'])) continue;
-                    $priceDecimal = !empty($portion['price']) ? (float)$portion['price'] : ($validated['base_price'] / 100);
+                foreach ($cleanFoodPortions as $index => $portion) {
+                    $portionName = trim((string) $portion['name']);
+                    $priceDecimal = isset($portion['price']) && $portion['price'] !== '' ? (float) $portion['price'] : round($validated['base_price'] / 100, 2);
                     $product->variants()->create([
-                        'sku' => $portion['name'],
-                        'price_override' => (int) ($priceDecimal * 100),
+                        'sku' => Str::limit($portionName, 191, ''),
+                        'price_override' => (int) round($priceDecimal * 100),
                         'price' => $priceDecimal,
                         'stock' => (int) ($portion['stock'] ?? 50),
                         'stock_quantity' => (int) ($portion['stock'] ?? 50),
-                        'attributes_hash' => ['portion' => $portion['name']],
+                        'attributes_hash' => ['portion' => $portionName],
                         'is_active' => true,
                         'status' => 'active',
                         'sort_order' => $index + 1,
@@ -555,11 +598,9 @@ class ProductController extends Controller
             $product->update(['has_variants' => $hasMultiple]);
 
             // Process optional product video
-            if ($request->hasFile('video')) {
+            if ($request->hasFile('video') && $request->file('video')->isValid()) {
                 $videoPath = $request->file('video')->store('products/videos', 'public');
-                $targetVideo = public_path('storage/' . $videoPath);
-                @mkdir(dirname($targetVideo), 0755, true);
-                @copy(storage_path('app/public/' . $videoPath), $targetVideo);
+                k71_sync_public_storage($videoPath);
                 if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'video_path')) {
                     $product->update(['video_path' => $videoPath]);
                 }
@@ -570,7 +611,7 @@ class ProductController extends Controller
             }
 
             if ($request->hasFile('images')) {
-                $uploadedFiles = $request->file('images');
+                $uploadedFiles = array_values(array_filter($request->file('images') ?? [], fn ($f) => $f && $f->isValid()));
                 $coverIdx = (int) $request->input('cover_image_index', 0);
 
                 // Prioritize chosen cover image at sort_order 0
@@ -588,9 +629,7 @@ class ProductController extends Controller
 
                 foreach ($orderedFiles as $sortOrder => $image) {
                     $path = $image->store('products', 'public');
-                    $target = public_path('storage/' . $path);
-                    @mkdir(dirname($target), 0755, true);
-                    @copy(storage_path('app/public/' . $path), $target);
+                    k71_sync_public_storage($path);
                     $product->images()->create([
                         'path' => $path,
                         'alt_text' => $product->title,
@@ -616,9 +655,9 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
-        $vendorType = $vendor?->vendor_type ?? 'clothing';
-        $sectorConfig = $vendor ? $vendor->getSectorConfig() : [];
-        $targetVertical = $product->vertical ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
+        $vendorType = $vendor->vendor_type ?? 'clothing';
+        $sectorConfig = $vendor->getSectorConfig();
+        $targetVertical = $product->vertical ?: ($vendor->getVerticalKey() ?: 'marketplace');
 
         $categories = $this->resolveVendorCategories($vendorType, $targetVertical);
 
@@ -673,7 +712,7 @@ class ProductController extends Controller
         $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
 
         return view('vendor.products.edit', compact(
-            'vendor', 'targetVertical', 'product', 'categories', 'existingVariants',
+            'vendor', 'vendorType', 'targetVertical', 'product', 'categories', 'existingVariants',
             'existingModifiers', 'existingGigPackages', 'existingB2bTiers',
             'existingServiceConfig', 'existingSpecs', 'verticals', 'listingTypes', 'categoryFields', 'sectorConfig'
         ));
@@ -689,7 +728,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
-            'vertical' => ['nullable', 'string', 'in:marketplace,food,services,used,enquiry'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,food,feasto,services,used,enquiry'],
             'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
             'custom_fields' => ['nullable', 'array'],
             'base_price' => ['required', 'numeric', 'min:0'],
@@ -708,14 +747,14 @@ class ProductController extends Controller
             'gender' => ['nullable', 'string', 'max:20'],
             'age_group' => ['nullable', 'string', 'max:20'],
             'description' => ['required', 'string'],
-            'sku' => ['nullable', 'string', 'max:50'],
+            'sku' => ['nullable', 'string', 'max:191'],
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
-            'variants.*.name' => ['required_with:variants', 'string', 'max:255'],
+            'variants.*.name' => ['nullable', 'string', 'max:255'],
             'variants.*.price' => ['nullable', 'numeric', 'min:0'],
             'variants.*.stock' => ['nullable', 'integer', 'min:0'],
-            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.sku' => ['nullable', 'string', 'max:191'],
             'variants.*.color' => ['nullable', 'string', 'max:100'],
             'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
             'variants.*.size' => ['nullable', 'string', 'max:50'],
@@ -727,7 +766,7 @@ class ProductController extends Controller
             'service_config' => ['nullable', 'array'],
             'specifications' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
-            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'images.*' => ['image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:15360'],
             'cover_image_index' => ['nullable', 'integer', 'min:0'],
             'video' => ['nullable', 'file', 'mimes:mp4,webm,mov,ogg,m4v,qt,avi', 'max:51200'],
             'video_url' => ['nullable', 'string', 'max:500'],
@@ -735,13 +774,15 @@ class ProductController extends Controller
         ]);
 
         // Enforce strict vertical isolation from vendor profile with request input
-        $targetVertical = $request->input('vertical') ?: ($vendor ? $vendor->getVerticalKey() : 'marketplace');
+        $targetVertical = $request->input('vertical') ?: ($vendor->getVerticalKey() ?: 'marketplace');
         $validated['vertical'] = $targetVertical;
 
         if ($targetVertical === 'services') {
             $validated['listing_type'] = $validated['listing_type'] ?? 'booking';
         } elseif ($targetVertical === 'used') {
             $validated['listing_type'] = $validated['listing_type'] ?? 'contact_seller';
+        } elseif ($targetVertical === 'enquiry') {
+            $validated['listing_type'] = $validated['listing_type'] ?? 'enquiry';
         } else {
             $validated['listing_type'] = $validated['listing_type'] ?? 'purchase';
         }
@@ -759,7 +800,16 @@ class ProductController extends Controller
         }
 
         if ($request->has('specifications') && is_array($request->specifications)) {
-            $validated['specifications_json'] = $request->specifications;
+            $specsInput = $request->specifications;
+            if (array_is_list($specsInput)) {
+                $specsInput = array_values(array_filter($specsInput, function ($row) {
+                    if (!is_array($row)) return false;
+                    $k = trim((string) ($row['name'] ?? $row['key'] ?? ''));
+                    $v = trim((string) ($row['value'] ?? ''));
+                    return $k !== '' || $v !== '';
+                }));
+            }
+            $validated['specifications_json'] = $specsInput;
         }
 
         if ($request->has('b2b_tiers') && is_array($request->b2b_tiers)) {
@@ -770,17 +820,18 @@ class ProductController extends Controller
             $validated['service_config_json'] = $request->service_config;
         }
 
-        $validated['base_price'] = (int) ($validated['base_price'] * 100);
+        $validated['base_price'] = (int) round(((float) $validated['base_price']) * 100);
         if (isset($validated['compare_at_price'])) {
-            $validated['compare_at_price'] = (int) ($validated['compare_at_price'] * 100);
+            $validated['compare_at_price'] = (int) round(((float) $validated['compare_at_price']) * 100);
         }
 
-        if (isset($validated['tags']) && !empty($validated['tags'])) {
-            $tagsArray = array_map('trim', explode(',', $validated['tags']));
-            $validated['tags'] = json_encode($tagsArray);
+        if (isset($validated['tags']) && trim((string) $validated['tags']) !== '') {
+            $validated['tags'] = array_values(array_filter(array_map('trim', explode(',', $validated['tags'])), fn ($t) => $t !== ''));
+        } else {
+            $validated['tags'] = null;
         }
 
-        $validated['is_returnable'] = $request->has('is_returnable');
+        $validated['is_returnable'] = $request->boolean('is_returnable');
 
         if ($request->has('size_chart')) {
             $sc = $request->input('size_chart');
@@ -791,16 +842,44 @@ class ProductController extends Controller
             $validated['published_at'] = now();
         }
 
-        // Accurately calculate total_stock from variants sum if variants provided
-        if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
-            $sumStock = 0;
+        // Normalize valid variant & food portion rows before stock aggregation
+        $cleanVariants = [];
+        if ($request->has('variants') && is_array($request->variants)) {
             foreach ($request->variants as $v) {
+                if (!is_array($v)) continue;
+                $vName = trim((string) ($v['name'] ?? ''));
+                $vSku = trim((string) ($v['sku'] ?? ''));
+                $vSize = trim((string) ($v['size'] ?? ''));
+                $vColor = trim((string) ($v['color'] ?? ''));
+                if ($vName === '' && $vSku === '' && $vSize === '' && $vColor === '') {
+                    continue;
+                }
+                if ($vName === '') {
+                    $v['name'] = trim(($vColor ? $vColor . ' / ' : '') . ($vSize ?: $vSku)) ?: 'Standard';
+                }
+                $cleanVariants[] = $v;
+            }
+        }
+
+        $cleanFoodPortions = [];
+        if ($request->has('food_portions') && is_array($request->food_portions)) {
+            foreach ($request->food_portions as $fp) {
+                if (!is_array($fp)) continue;
+                if (trim((string) ($fp['name'] ?? '')) === '') continue;
+                $cleanFoodPortions[] = $fp;
+            }
+        }
+
+        // Accurately calculate total_stock from variants sum if variants provided
+        if (count($cleanVariants) > 0) {
+            $sumStock = 0;
+            foreach ($cleanVariants as $v) {
                 $sumStock += (int) ($v['stock'] ?? 0);
             }
             $validated['total_stock'] = $sumStock;
-        } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+        } elseif (count($cleanFoodPortions) > 0) {
             $sumStock = 0;
-            foreach ($request->food_portions as $fp) {
+            foreach ($cleanFoodPortions as $fp) {
                 $sumStock += (int) ($fp['stock'] ?? 50);
             }
             $validated['total_stock'] = $sumStock;
@@ -824,21 +903,21 @@ class ProductController extends Controller
         ])->toArray();
 
         try {
-            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $product) {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $product, $cleanVariants, $cleanFoodPortions) {
                 $product->update($productAttributes);
 
             // 1. Process standard / fashion matrix variants
-            if ($request->has('variants') && is_array($request->variants) && count($request->variants) > 0) {
+            if (count($cleanVariants) > 0) {
                 $existingVariants = $product->variants()->withTrashed()->get()->keyBy('sku');
-                $activeSkus = [];
+                $keptVariantIds = [];
 
-                foreach ($request->variants as $index => $variantData) {
-                    $sku = !empty($variantData['sku']) ? $variantData['sku'] : $variantData['name'];
-                    $activeSkus[] = $sku;
-                    
+                foreach ($cleanVariants as $index => $variantData) {
+                    $rawSku = !empty($variantData['sku']) ? trim((string) $variantData['sku']) : trim((string) $variantData['name']);
+                    $sku = Str::limit($rawSku ?: 'VARIANT-' . ($index + 1), 191, '');
+
                     $baseRupees = round($validated['base_price'] / 100, 2);
-                    $priceDecimal = !empty($variantData['price']) ? (float)$variantData['price'] : $baseRupees;
-                    if ($priceDecimal <= 0) {
+                    $priceDecimal = isset($variantData['price']) && $variantData['price'] !== '' ? (float) $variantData['price'] : $baseRupees;
+                    if ($priceDecimal <= 0 && $baseRupees > 0) {
                         $priceDecimal = $baseRupees;
                     }
                     $priceOverride = (int) round($priceDecimal * 100);
@@ -849,7 +928,7 @@ class ProductController extends Controller
                     if (!empty($variantData['size'])) $attributesHash['size'] = $variantData['size'];
                     if (empty($attributesHash)) $attributesHash['name'] = $variantData['name'];
 
-                    if (isset($existingVariants[$sku])) {
+                    if (isset($existingVariants[$sku]) && !in_array($existingVariants[$sku]->id, $keptVariantIds, true)) {
                         $variant = $existingVariants[$sku];
                         if ($variant->trashed()) {
                             $variant->restore();
@@ -865,8 +944,9 @@ class ProductController extends Controller
                             'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
+                        $keptVariantIds[] = $variant->id;
                     } else {
-                        $product->variants()->create([
+                        $createdVariant = $product->variants()->create([
                             'sku' => $sku,
                             'price' => $priceDecimal,
                             'price_override' => $priceOverride,
@@ -878,50 +958,52 @@ class ProductController extends Controller
                             'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
+                        $keptVariantIds[] = $createdVariant->id;
                     }
                 }
 
-                $product->variants()->whereNotIn('sku', $activeSkus)->delete();
-            } elseif ($request->has('food_portions') && is_array($request->food_portions) && count($request->food_portions) > 0) {
+                $product->variants()->whereNotIn('id', $keptVariantIds)->delete();
+            } elseif (count($cleanFoodPortions) > 0) {
                 // 2. Food Portions
                 $existingVariants = $product->variants()->withTrashed()->get()->keyBy('sku');
-                $activeSkus = [];
+                $keptVariantIds = [];
 
-                foreach ($request->food_portions as $index => $portion) {
-                    if (empty($portion['name'])) continue;
-                    $sku = $portion['name'];
-                    $activeSkus[] = $sku;
-                    $priceDecimal = !empty($portion['price']) ? (float)$portion['price'] : ($validated['base_price'] / 100);
+                foreach ($cleanFoodPortions as $index => $portion) {
+                    $portionName = trim((string) $portion['name']);
+                    $sku = Str::limit($portionName, 191, '');
+                    $priceDecimal = isset($portion['price']) && $portion['price'] !== '' ? (float) $portion['price'] : round($validated['base_price'] / 100, 2);
 
-                    if (isset($existingVariants[$sku])) {
+                    if (isset($existingVariants[$sku]) && !in_array($existingVariants[$sku]->id, $keptVariantIds, true)) {
                         $variant = $existingVariants[$sku];
                         if ($variant->trashed()) $variant->restore();
                         $variant->update([
                             'price' => $priceDecimal,
-                            'price_override' => (int) ($priceDecimal * 100),
+                            'price_override' => (int) round($priceDecimal * 100),
                             'stock' => (int) ($portion['stock'] ?? 50),
                             'stock_quantity' => (int) ($portion['stock'] ?? 50),
-                            'attributes_hash' => ['portion' => $portion['name']],
+                            'attributes_hash' => ['portion' => $portionName],
                             'is_active' => true,
                             'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
+                        $keptVariantIds[] = $variant->id;
                     } else {
-                        $product->variants()->create([
+                        $createdVariant = $product->variants()->create([
                             'sku' => $sku,
                             'price' => $priceDecimal,
-                            'price_override' => (int) ($priceDecimal * 100),
+                            'price_override' => (int) round($priceDecimal * 100),
                             'stock' => (int) ($portion['stock'] ?? 50),
                             'stock_quantity' => (int) ($portion['stock'] ?? 50),
-                            'attributes_hash' => ['portion' => $portion['name']],
+                            'attributes_hash' => ['portion' => $portionName],
                             'is_active' => true,
                             'status' => 'active',
                             'sort_order' => $index + 1,
                         ]);
+                        $keptVariantIds[] = $createdVariant->id;
                     }
                 }
 
-                $product->variants()->whereNotIn('sku', $activeSkus)->delete();
+                $product->variants()->whereNotIn('id', $keptVariantIds)->delete();
             } else {
                 // Default single variant
                 $existingDefault = $product->variants()->withTrashed()->where('sku', 'Default')->first();
@@ -933,7 +1015,7 @@ class ProductController extends Controller
                         'stock' => $validated['total_stock'],
                         'stock_quantity' => $validated['total_stock'],
                         'price' => round($validated['base_price'] / 100, 2),
-                        'price_override' => null,
+                        'price_override' => $validated['base_price'],
                         'attributes_hash' => ['type' => 'Standard'],
                         'is_active' => true,
                         'status' => 'active',
@@ -957,10 +1039,10 @@ class ProductController extends Controller
             }
 
             // 3. Process Modifiers
-            if ($request->has('modifiers') && is_array($request->modifiers)) {
+            if ($request->boolean('modifiers_submitted') || ($request->has('modifiers') && is_array($request->modifiers))) {
                 $product->modifiers()->delete();
-                foreach ($request->modifiers as $mod) {
-                    if (!empty($mod['modifier_name'])) {
+                foreach ((array) $request->input('modifiers', []) as $mod) {
+                    if (is_array($mod) && !empty($mod['modifier_name'])) {
                         $product->modifiers()->create([
                             'group_name' => $mod['group_name'] ?? 'Add-ons',
                             'modifier_name' => $mod['modifier_name'],
@@ -1002,8 +1084,7 @@ class ProductController extends Controller
             if ($request->filled('deleted_image_ids') && is_array($request->deleted_image_ids)) {
                 $toDelete = $product->images()->whereIn('id', $request->deleted_image_ids)->get();
                 foreach ($toDelete as $img) {
-                    @unlink(storage_path('app/public/' . $img->path));
-                    @unlink(public_path('storage/' . $img->path));
+                    k71_delete_public_storage($img->path);
                     $img->delete();
                 }
             }
@@ -1011,11 +1092,10 @@ class ProductController extends Controller
             // 2. Upload new images
             $newImagesMap = [];
             if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $image) {
+                $uploadedFiles = array_values(array_filter($request->file('images') ?? [], fn ($f) => $f && $f->isValid()));
+                foreach ($uploadedFiles as $index => $image) {
                     $path = $image->store('products', 'public');
-                    $target = public_path('storage/' . $path);
-                    @mkdir(dirname($target), 0755, true);
-                    @copy(storage_path('app/public/' . $path), $target);
+                    k71_sync_public_storage($path);
                     $createdImg = $product->images()->create([
                         'path' => $path,
                         'alt_text' => $product->title,
@@ -1045,8 +1125,7 @@ class ProductController extends Controller
             $hasVideoPath = \Illuminate\Support\Facades\Schema::hasColumn('products', 'video_path');
             if ($request->has('remove_video') && $request->boolean('remove_video')) {
                 if ($hasVideoPath && $product->video_path) {
-                    @unlink(storage_path('app/public/' . $product->video_path));
-                    @unlink(public_path('storage/' . $product->video_path));
+                    k71_delete_public_storage($product->video_path);
                 }
                 $updates = [];
                 if ($hasVideoPath) $updates['video_path'] = null;
@@ -1055,15 +1134,12 @@ class ProductController extends Controller
                     $product->update($updates);
                 }
             } else {
-                if ($request->hasFile('video')) {
+                if ($request->hasFile('video') && $request->file('video')->isValid()) {
                     if ($hasVideoPath && $product->video_path) {
-                        @unlink(storage_path('app/public/' . $product->video_path));
-                        @unlink(public_path('storage/' . $product->video_path));
+                        k71_delete_public_storage($product->video_path);
                     }
                     $videoPath = $request->file('video')->store('products/videos', 'public');
-                    $targetVideo = public_path('storage/' . $videoPath);
-                    @mkdir(dirname($targetVideo), 0755, true);
-                    @copy(storage_path('app/public/' . $videoPath), $targetVideo);
+                    k71_sync_public_storage($videoPath);
                     if ($hasVideoPath) {
                         $product->update(['video_path' => $videoPath]);
                     }
@@ -1098,15 +1174,13 @@ class ProductController extends Controller
             if (method_exists($product, 'images')) {
                 foreach ($product->images as $img) {
                     if ($img->path) {
-                        @unlink(storage_path('app/public/' . $img->path));
-                        @unlink(public_path('storage/' . $img->path));
+                        k71_delete_public_storage($img->path);
                     }
                 }
                 $product->images()->delete();
             }
             if ($product->video_path) {
-                @unlink(storage_path('app/public/' . $product->video_path));
-                @unlink(public_path('storage/' . $product->video_path));
+                k71_delete_public_storage($product->video_path);
             }
             $product->forceDelete();
             return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has been completely removed from site.");
@@ -1168,7 +1242,7 @@ class ProductController extends Controller
             ]);
             $variantClone->product_id = $clone->id;
             if ($variantClone->sku) {
-                $variantClone->sku = Str::limit($variantClone->sku, 90, '') . '-COPY';
+                $variantClone->sku = Str::limit($variantClone->sku, 185, '') . '-COPY';
             }
             $variantClone->save();
         }

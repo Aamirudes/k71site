@@ -59,7 +59,7 @@ class CategoryAttributeController extends Controller
 
         // Preset defaults for specific vertical types
         $defaultPackages = [
-            [
+            'basic' => [
                 'tier' => 'basic',
                 'title' => 'Basic Essential',
                 'description' => 'Core deliverable, single concept with 1 revision.',
@@ -72,7 +72,7 @@ class CategoryAttributeController extends Controller
                     'commercial_rights' => false,
                 ]
             ],
-            [
+            'standard' => [
                 'tier' => 'standard',
                 'title' => 'Standard Professional',
                 'description' => 'Complete package with editable source files and commercial license.',
@@ -85,7 +85,7 @@ class CategoryAttributeController extends Controller
                     'commercial_rights' => true,
                 ]
             ],
-            [
+            'premium' => [
                 'tier' => 'premium',
                 'title' => 'Premium Enterprise',
                 'description' => 'VIP priority delivery, unlimited revisions, full source and copyright buyout.',

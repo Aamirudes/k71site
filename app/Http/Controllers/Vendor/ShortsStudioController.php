@@ -158,14 +158,9 @@ class ShortsStudioController extends Controller
         $filename = 'short_' . time() . '_' . Str::random(8) . '.' . $ext;
         $path = $file->storeAs('shorts/videos', $filename, 'public');
 
-        // Ensure public copy exists for instant direct access on Hostinger
-        $publicDir = public_path('storage/shorts/videos');
-        if (!file_exists($publicDir)) {
-            @mkdir($publicDir, 0755, true);
-        }
+        // Ensure public copy exists when not symlinked
         try {
-            $destFile = $publicDir . '/' . $filename;
-            @copy(storage_path('app/public/' . $path), $destFile);
+            k71_sync_public_storage($path);
         } catch (\Throwable $e) {}
 
         return response()->json([
@@ -530,14 +525,7 @@ class ShortsStudioController extends Controller
         $path = 'shorts/thumbnails/' . $filename;
 
         Storage::disk('public')->put($path, $decoded);
-
-        $publicDir = public_path('storage/shorts/thumbnails');
-        if (!file_exists($publicDir)) {
-            @mkdir($publicDir, 0755, true);
-        }
-        try {
-            @file_put_contents($publicDir . '/' . $filename, $decoded);
-        } catch (\Throwable $e) {}
+        k71_sync_public_storage($path);
 
         return asset('storage/' . $path);
     }
@@ -559,13 +547,11 @@ class ShortsStudioController extends Controller
         // Clean up video and thumb files if stored locally
         if ($short->video_url && str_contains($short->video_url, 'storage/shorts/')) {
             $rel = str_replace(asset('storage/'), '', $short->video_url);
-            @unlink(storage_path('app/public/' . $rel));
-            @unlink(public_path('storage/' . $rel));
+            k71_delete_public_storage($rel);
         }
         if ($short->thumb_url && str_contains($short->thumb_url, 'storage/shorts/')) {
             $rel = str_replace(asset('storage/'), '', $short->thumb_url);
-            @unlink(storage_path('app/public/' . $rel));
-            @unlink(public_path('storage/' . $rel));
+            k71_delete_public_storage($rel);
         }
 
         $short->forceDelete();

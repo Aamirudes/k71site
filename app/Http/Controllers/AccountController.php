@@ -241,21 +241,14 @@ class AccountController extends Controller
 
         $path = $file->storeAs('avatars', $filename, 'public');
 
-        // Copy to public/storage/avatars directly to ensure accessibility without symlink latency
+        // Copy to public/storage/avatars directly when not symlinked
         try {
-            $destFile = $publicDir . '/' . $filename;
-            @copy(storage_path('app/public/' . $path), $destFile);
+            k71_sync_public_storage($path);
         } catch (\Throwable $e) {}
         
         // Remove old local avatar if exists
-        if ($user->avatar && str_starts_with($user->avatar, 'avatars/')) {
-            $oldFilename = basename($user->avatar);
-            if (\Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-            }
-            if (file_exists($publicDir . '/' . $oldFilename)) {
-                @unlink($publicDir . '/' . $oldFilename);
-            }
+        if ($user->avatar && str_starts_with($user->avatar, 'avatars/') && $user->avatar !== $path) {
+            k71_delete_public_storage($user->avatar);
         }
 
         $user->avatar = $path;

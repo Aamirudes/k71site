@@ -62,24 +62,18 @@ class ProfileController extends Controller
 
         if ($request->hasFile('logo')) {
             if ($vendor->logo) {
-                Storage::disk('public')->delete($vendor->logo);
-                @unlink(public_path('storage/' . $vendor->logo));
+                k71_delete_public_storage($vendor->logo);
             }
             $validated['logo'] = $request->file('logo')->store('vendors/' . $vendor->id, 'public');
-            $target = public_path('storage/' . $validated['logo']);
-            @mkdir(dirname($target), 0755, true);
-            @copy(storage_path('app/public/' . $validated['logo']), $target);
+            k71_sync_public_storage($validated['logo']);
         }
 
         if ($request->hasFile('banner')) {
             if ($vendor->banner) {
-                Storage::disk('public')->delete($vendor->banner);
-                @unlink(public_path('storage/' . $vendor->banner));
+                k71_delete_public_storage($vendor->banner);
             }
             $validated['banner'] = $request->file('banner')->store('vendors/' . $vendor->id, 'public');
-            $target = public_path('storage/' . $validated['banner']);
-            @mkdir(dirname($target), 0755, true);
-            @copy(storage_path('app/public/' . $validated['banner']), $target);
+            k71_sync_public_storage($validated['banner']);
         }
 
         // Merge social links & storefront customizations into social_links json

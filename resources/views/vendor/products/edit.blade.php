@@ -1,5 +1,6 @@
 <x-layouts.vendor title="Edit Product">
     @php
+        $vendorType = $vendorType ?? ($vendor?->vendor_type ?? 'clothing');
         $sec = $sectorConfig ?? ($vendor ? $vendor->getSectorConfig() : []);
         $resolvedVerticalType = old('vertical_type', $product->category?->vertical_type ?? match ($targetVertical) {
             'marketplace' => 'fashion_matrix',
@@ -8,8 +9,72 @@
             'used' => 'classified_asset',
             default => 'standard_retail',
         });
+
+        $rawTags = old('tags', $product->tags);
+        if (is_array($rawTags)) {
+            $formattedTags = implode(', ', array_filter($rawTags, fn ($t) => is_string($t) || is_numeric($t)));
+        } else {
+            $decodedTags = is_string($rawTags) ? json_decode($rawTags, true) : null;
+            $formattedTags = is_array($decodedTags)
+                ? implode(', ', array_filter($decodedTags, fn ($t) => is_string($t) || is_numeric($t)))
+                : (string) ($rawTags ?? '');
+        }
+
+        $existingList = collect($existingVariants ?? [])->values();
+        $isSingleDefaultVariant = $existingList->count() === 1
+            && (($existingList->first()['sku'] ?? null) === 'Default')
+            && (($existingList->first()['attributes_hash']['type'] ?? null) === 'Standard')
+            && empty($existingList->first()['color'])
+            && empty($existingList->first()['size']);
+        $matrixSourceVariants = $isSingleDefaultVariant ? collect([]) : $existingList;
+
+        $initialFashionRows = is_array(old('variants'))
+            ? collect(old('variants'))->values()->map(fn ($v) => [
+                'color' => $v['color'] ?? 'Default',
+                'color_hex' => $v['color_hex'] ?? '#000000',
+                'size' => $v['size'] ?? 'Standard',
+                'sku' => $v['sku'] ?? '',
+                'price' => $v['price'] ?? '',
+                'stock' => $v['stock'] ?? 10,
+                'image_url' => $v['image_url'] ?? '',
+            ])->all()
+            : $matrixSourceVariants->map(fn ($v) => [
+                'color' => $v['color'] ?? ($v['attributes_hash']['color'] ?? 'Default'),
+                'color_hex' => $v['color_hex'] ?? ($v['attributes_hash']['color_hex'] ?? '#000000'),
+                'size' => $v['size'] ?? ($v['attributes_hash']['size'] ?? 'Standard'),
+                'sku' => $v['sku'] ?? '',
+                'price' => $v['price'] ?? '',
+                'stock' => $v['stock'] ?? 10,
+                'image_url' => $v['image_url'] ?? '',
+            ])->all();
+
+        $initialFoodPortions = is_array(old('food_portions'))
+            ? array_values(old('food_portions'))
+            : ($matrixSourceVariants->count() > 0
+                ? $matrixSourceVariants->map(fn ($v) => [
+                    'name' => $v['size'] ?? $v['name'] ?? 'Portion',
+                    'price' => $v['price'] ?? '',
+                    'stock' => $v['stock'] ?? 50,
+                ])->all()
+                : [
+                    ['name' => '1 Plate (Standard)', 'price' => '', 'stock' => 50],
+                    ['name' => '2 Plates (Family Pack)', 'price' => '', 'stock' => 30],
+                ]);
+
+        $initialFoodModifiers = is_array(old('modifiers'))
+            ? array_values(old('modifiers'))
+            : array_values((array) ($existingModifiers ?? []));
+
+        $initRemoveVideo = (bool) old('remove_video', false);
+        $initVertical = old('vertical', $product->vertical ?: 'marketplace');
+        $initListingType = old('listing_type', $product->listing_type ?: 'purchase');
+        $initCustomFields = old('custom_fields', $product->custom_fields ?: (object)[]);
+        $initEnableRfq = $resolvedVerticalType === 'b2b_machinery'
+            ? (in_array($initListingType, ['enquiry', 'quote_only']) || (bool) old('enable_rfq'))
+            : false;
+        $initIsNegotiable = (bool) old('is_negotiable', $product->is_negotiable);
     @endphp
-    <form action="{{ route('vendor.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="relative" x-data="variantEngine()">
+    <form id="editProductForm" action="{{ route('vendor.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="relative" x-data="variantEngine()" @submit.prevent="submitEditForm($event)" @edit-images-state.window="isImageProcessing = $event.detail.processing">
         @csrf
         @method('PUT')
 
@@ -30,10 +95,35 @@
                     <span class="hidden sm:inline">Delete</span>
                 </button>
                 <a href="{{ route('vendor.products.index') }}" class="text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 px-2 sm:px-4 py-2">Discard</a>
-                <button type="submit" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-brand-text text-white text-xs sm:text-sm font-bold rounded-xl shadow hover:bg-black transition-colors flex items-center gap-1.5 sm:gap-2 active:scale-95 cursor-pointer">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <span>Update Product</span>
+                <button type="submit" :disabled="isSubmitting || isImageProcessing" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-brand-text text-white text-xs sm:text-sm font-bold rounded-xl shadow hover:bg-black disabled:opacity-60 transition-colors flex items-center gap-1.5 sm:gap-2 active:scale-95 cursor-pointer">
+                    <svg x-show="!isSubmitting && !isImageProcessing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg x-show="isSubmitting || isImageProcessing" x-cloak class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    <span x-text="isImageProcessing ? 'Optimizing Photos...' : (isSubmitting ? 'Updating...' : 'Update Product')"></span>
                 </button>
+            </div>
+        </div>
+
+        <div id="editErrorBanner" class="max-w-6xl mx-auto">
+            @if ($errors->any())
+                <div class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm">
+                    <div class="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-rose-700 mb-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Please fix the following errors:</span>
+                    </div>
+                    <ul class="list-disc list-inside text-xs space-y-1 font-medium">
+                        @foreach ($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div x-show="clientError" x-cloak class="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm flex items-start justify-between gap-3">
+                <div class="flex items-center gap-2 text-xs font-bold">
+                    <svg class="w-4 h-4 shrink-0 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span x-text="clientError"></span>
+                </div>
+                <button type="button" @click="clientError = ''" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">✕</button>
             </div>
         </div>
 
@@ -70,9 +160,12 @@
                         @php
                             $vBadges = [
                                 'food' => ['icon' => '🍽️', 'name' => 'Cloud Kitchen & Digital Menu', 'badge' => 'Food & Dining', 'desc' => 'Dish menus, kitchen orders, tamper-proof packaging, pure veg/non-veg, and fast local dispatch.'],
+                                'feasto' => ['icon' => '⚡', 'name' => 'Feasto Instant Grocery & Daily Needs', 'badge' => 'Express Mart', 'desc' => 'Rapid 15-minute neighborhood grocery, dairy, snacks, and household essentials.'],
                                 'services' => ['icon' => '🛠️', 'name' => 'Doorstep Services & Repairs', 'badge' => 'Home & Commercial', 'desc' => 'Doorstep appointments, hourly & BHK service tiers, verified technicians, and satisfaction guarantees.'],
                                 'used' => ['icon' => '♻️', 'name' => 'Pre-Owned & Certified Refurbished', 'badge' => 'Second-Hand / P2P', 'desc' => 'Condition grading, inspection checklist, original accessories, and buyer testing warranty.'],
-                                'marketplace' => ['icon' => '🛍️', 'name' => 'Clothing, Apparel & Lifestyle Retail', 'badge' => 'Fashion & Goods', 'desc' => 'Apparel size matrices, fabric compositions, wash care guides, and courier logistics.'],
+                                'b2b' => ['icon' => '🧱', 'name' => 'Marble, Machinery & B2B Trade', 'badge' => 'B2B / RFQ', 'desc' => 'Bulk tiered quotes, factory specifications, MOQ pricing, and direct enquiry workflows.'],
+                                'enquiry' => ['icon' => '📋', 'name' => 'Custom Enquiry & Quote Showcase', 'badge' => 'Enquiry / Quote', 'desc' => 'Custom project specifications and direct buyer quote requests.'],
+                                'marketplace' => ['icon' => '🛍️', 'name' => 'Retail, Apparel & Multi-Category Store', 'badge' => 'Curated Retail', 'desc' => 'Variant matrices, structured specifications, media galleries, and nationwide delivery.'],
                             ];
                             $currV = $vBadges[$targetVertical] ?? $vBadges['marketplace'];
                         @endphp
@@ -197,7 +290,7 @@
                     <div class="space-y-5">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">{{ $sec['title_label'] ?? 'Product Title' }} *</label>
-                            <input type="text" name="title" value="{{ old('title', $product->title) }}" placeholder="{{ $sec['title_placeholder'] ?? 'e.g. Premium Item Title' }}" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm py-2.5 px-3">
+                            <input type="text" name="title" x-model="productTitle" value="{{ old('title', $product->title) }}" placeholder="{{ $sec['title_placeholder'] ?? 'e.g. Premium Item Title' }}" required class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm py-2.5 px-3">
                             @error('title') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
 
@@ -383,7 +476,7 @@
                     </div>
 
                     <!-- Hidden Real File Input for New Uploads -->
-                    <input id="images-input" name="images[]" type="file" multiple class="sr-only" accept="image/png, image/jpeg, image/webp"
+                    <input id="images-input" name="images[]" type="file" multiple class="sr-only" accept="image/*,.avif,.webp,.png,.jpg,.jpeg,.gif"
                            @change="handleFiles($event.target.files)">
 
                     <!-- Tracking Deleted Existing Images -->
@@ -412,7 +505,11 @@
                                     <span>Browse Photos</span>
                                 </label>
                             </div>
-                            <p class="text-xs text-gray-500 font-medium">Drag & drop product photos or click Browse (PNG, JPG, WEBP up to 5MB)</p>
+                            <p class="text-xs text-gray-500 font-medium">Drag &amp; drop product photos or click Browse (JPG, PNG, WEBP, AVIF &amp; GIF — large photos are auto-optimized)</p>
+                            <div x-show="isProcessingImages" x-cloak class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold">
+                                <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                                <span>Optimizing selected photos...</span>
+                            </div>
                         </div>
                     </div>
 
@@ -497,13 +594,20 @@
                             <p class="text-[11px] text-gray-500">
                                 💡 <strong>Tip:</strong> Use the arrows or <strong>Set Cover</strong> to control the photo order. The cover image appears first on your storefront and searches.
                             </p>
+                        </div>
+
+                        <div x-show="isProcessingImages" x-cloak class="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-bold">
+                            <svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            <span>Optimizing new photos before upload...</span>
+                        </div>
                     </div>
 
+                    @error('images') <p class="text-xs text-red-600 mt-2">{{ $message }}</p> @enderror
                     @error('images.*') <p class="text-xs text-red-600 mt-2">{{ $message }}</p> @enderror
                 </div>
 
                 <!-- 2b. Product Video (Optional) -->
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4" x-data="{ videoUrl: '{{ addslashes($product->video_url ?? '') }}', videoPreviewUrl: '{{ $product->video_player_url ?? '' }}', removeVideo: false }">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 space-y-4" x-data="{ videoUrl: @js(old('video_url', $product->video_url ?? '')), videoPreviewUrl: @js($product->video_player_url ?? ''), removeVideo: {{ $initRemoveVideo ? 'true' : 'false' }} }">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-2">
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center text-rose-600">
@@ -547,8 +651,10 @@
                                 class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-gray-900 text-xs focus:ring-2 focus:ring-rose-500 shadow-inner"
                             >
                             <p class="text-[11px] text-gray-400 mt-1">Direct video link or YouTube embed link.</p>
+                            @error('video_url') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
+                    @error('video') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
 
                     <div x-show="videoPreviewUrl && !removeVideo" class="mt-3 rounded-2xl overflow-hidden border border-rose-200/50 bg-black max-w-md">
                         <video :src="videoPreviewUrl" controls class="w-full max-h-56 object-contain"></video>
@@ -714,10 +820,13 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                            @php $curStatus = old('status', $product->status ?? 'active'); @endphp
                             <select name="status" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm font-medium">
-                                <option value="active">Active (Visible)</option>
-                                <option value="draft">Draft (Hidden)</option>
+                                <option value="active" {{ $curStatus === 'active' ? 'selected' : '' }}>Active (Visible)</option>
+                                <option value="draft" {{ $curStatus === 'draft' ? 'selected' : '' }}>Draft (Hidden)</option>
+                                <option value="archived" {{ $curStatus === 'archived' ? 'selected' : '' }}>Archived</option>
                             </select>
+                            @error('status') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         
                         <div>
@@ -730,11 +839,13 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @error('category_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
 
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Search Tags</label>
-                            <input type="text" name="tags" placeholder="summer, casual, party (comma separated)" value="{{ old('tags', $product->tags) }}" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                            <input type="text" name="tags" placeholder="summer, casual, party (comma separated)" value="{{ $formattedTags }}" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                            @error('tags') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
                 </div>
@@ -748,31 +859,38 @@
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">{{ $sec['price_label'] ?? 'Base Selling Price' }} (₹) *</label>
                                 <input type="number" step="0.01" min="0" name="base_price" x-model="basePrice" required class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm font-bold text-green-600">
+                                @error('base_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">MRP (₹)</label>
                                 <input type="number" step="0.01" min="0" name="compare_at_price" value="{{ old('compare_at_price', $product->compare_at_price ? $product->compare_at_price / 100 : '') }}" placeholder="Crossed out" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm text-gray-500 line-through">
+                                @error('compare_at_price') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">{{ $sec['stock_label'] ?? 'Base Available Quantity' }} *</label>
-                            <input type="number" min="0" name="total_stock" value="{{ old('total_stock', 10) }}" required class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                            <input type="number" min="0" name="total_stock" value="{{ old('total_stock', $product->total_stock ?? 0) }}" required class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                            @error('total_stock') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                         </div>
                         
                         <div class="grid grid-cols-2 gap-4 pt-2">
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">GST Rate *</label>
+                                @php $curGst = (string) old('gst_rate', (int) ($product->gst_rate ?? 5)); @endphp
                                 <select name="gst_rate" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
-                                    <option value="5" selected>5% (Apparel < 1000)</option>
-                                    <option value="12">12% (Apparel > 1000)</option>
-                                    <option value="18">18%</option>
-                                    <option value="0">0%</option>
+                                    <option value="0" {{ $curGst === '0' ? 'selected' : '' }}>0%</option>
+                                    <option value="5" {{ $curGst === '5' ? 'selected' : '' }}>5% (Apparel / Essentials)</option>
+                                    <option value="12" {{ $curGst === '12' ? 'selected' : '' }}>12%</option>
+                                    <option value="18" {{ $curGst === '18' ? 'selected' : '' }}>18%</option>
+                                    <option value="28" {{ $curGst === '28' ? 'selected' : '' }}>28%</option>
                                 </select>
+                                @error('gst_rate') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">HSN Code</label>
-                                <input type="text" name="hsn_code" placeholder="e.g. 6109" value="{{ old('hsn_code', $product->hsn_code) }}" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                                <input type="text" name="hsn_code" maxlength="8" placeholder="e.g. 6109" value="{{ old('hsn_code', $product->hsn_code) }}" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm">
+                                @error('hsn_code') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
                             </div>
                         </div>
                     </div>
@@ -819,7 +937,7 @@
                                 </span>
                             </div>
                             <div class="relative">
-                                <input type="number" name="weight_grams" placeholder="e.g. 250" value="{{ old('weight_grams', $product->weight_grams) }}" min="0" max="50000" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm pr-14">
+                                <input type="number" name="weight_grams" placeholder="e.g. 250" value="{{ old('weight_grams', $product->weight_grams) }}" min="0" class="block w-full rounded-lg border-gray-200 shadow-sm focus:border-brand-sage text-sm pr-14">
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                     <span class="text-gray-400 text-xs font-bold">grams</span>
                                 </div>
@@ -893,9 +1011,10 @@
             <a href="{{ route('vendor.products.index') }}" class="text-xs sm:text-sm font-semibold text-gray-500 hover:text-gray-900 px-3 py-2">
                 Discard
             </a>
-            <button type="submit" class="px-6 py-3 bg-brand-text text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:bg-black transition-colors flex items-center gap-2 active:scale-95 cursor-pointer">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                <span>Update Product</span>
+            <button type="submit" :disabled="isSubmitting || isImageProcessing" class="px-6 py-3 bg-brand-text text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:bg-black disabled:opacity-60 transition-colors flex items-center gap-2 active:scale-95 cursor-pointer">
+                <svg x-show="!isSubmitting && !isImageProcessing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                <svg x-show="isSubmitting || isImageProcessing" x-cloak class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                <span x-text="isImageProcessing ? 'Optimizing Photos...' : (isSubmitting ? 'Updating...' : 'Update Product')"></span>
             </button>
         </div>
     </form>
@@ -910,9 +1029,9 @@
             const initialSizeGuide = @json($product->size_chart ?? null);
 
             return {
-                vertical: @json(old('vertical', $product->vertical ?: 'marketplace')),
-                listingType: @json(old('listing_type', $product->listing_type ?: 'purchase')),
-                customFields: @json(old('custom_fields', $product->custom_fields ?: (object)[])),
+                vertical: @json($initVertical),
+                listingType: @json($initListingType),
+                customFields: @json($initCustomFields),
                 verticalsList: @json($verticals ?? []),
                 listingTypesList: @json($listingTypes ?? []),
                 allCategoryFields: @json($categoryFields ?? []),
@@ -928,12 +1047,16 @@
                     }
                 },
 
-                categoryId: '{{ old("category_id", $product->category_id) }}',
-                basePrice: '{{ old("base_price", $product->base_price ? $product->base_price / 100 : "") }}',
+                productTitle: @js(old('title', $product->title ?? '')),
+                categoryId: @js((string) old('category_id', $product->category_id)),
+                basePrice: @js((string) old('base_price', $product->base_price !== null ? $product->base_price / 100 : '')),
                 options: [],
-                variants: @json($existingVariants ?? []),
+                variants: @json($matrixSourceVariants->values()->all()),
                 bulkPrice: '',
                 bulkStock: '',
+                isSubmitting: false,
+                isImageProcessing: false,
+                clientError: '',
 
                 verticalType: @json($resolvedVerticalType),
                 isLoadingSchema: false,
@@ -951,6 +1074,7 @@
                 ],
                 selectedColors: [],
                 customColorName: '',
+                customColorHex: '#111827',
                 availableSizesList: <?php 
                     $vType = $vendorType ?? ($vendor?->vendor_type ?? 'clothing');
                     $sizesList = match($vType) {
@@ -963,36 +1087,15 @@
                 ?>,
                 selectedSizes: [],
                 customSizeName: '',
-                fashionMatrixRows: (@json($existingVariants ?? [])).map(v => ({
-                    color: v.color || (v.attributes_hash && v.attributes_hash.color) || 'Default',
-                    color_hex: v.color_hex || (v.attributes_hash && v.attributes_hash.color_hex) || '#000000',
-                    size: v.size || (v.attributes_hash && v.attributes_hash.size) || 'Standard',
-                    sku: v.sku || '',
-                    price: v.price || '',
-                    stock: v.stock !== undefined ? v.stock : 10,
-                    image_url: v.image_url || ''
-                })),
-                foodPortions: (@json($existingVariants ?? [])).length > 0
-                    ? (@json($existingVariants ?? [])).map(v => ({
-                        name: v.size || v.name || 'Portion',
-                        price: v.price || '',
-                        stock: v.stock !== undefined ? v.stock : 50
-                    }))
-                    : [
-                        { name: '1 Plate (Standard)', price: '', stock: 50 },
-                        { name: '2 Plates (Family Pack)', price: '', stock: 30 }
-                    ],
-                foodModifiers: (@json($existingModifiers ?? [])).length > 0
-                    ? @json($existingModifiers ?? [])
-                    : [
-                        { group_name: 'Add-ons', modifier_name: 'Extra Portion', price_delta: '40.00', is_required: false }
-                    ],
+                fashionMatrixRows: @json($initialFashionRows),
+                foodPortions: @json($initialFoodPortions),
+                foodModifiers: @json($initialFoodModifiers),
                 gigPackages: Object.assign({
                     basic: { tier: 'basic', title: 'Starter Concept', description: 'Core starter deliverable with basic asset package and essential setup.', delivery_days: 3, revisions: 1, features: { source_file: false, commercial_rights: false, high_resolution: true }, price: '' },
                     standard: { tier: 'standard', title: 'Standard Commercial', description: 'Recommended comprehensive deliverable with source files and standard revisions.', delivery_days: 5, revisions: 3, features: { source_file: true, commercial_rights: true, high_resolution: true }, price: '' },
                     premium: { tier: 'premium', title: 'Complete VIP Enterprise', description: 'Turnkey enterprise package with unlimited revisions, priority support, and full source assets.', delivery_days: 7, revisions: 99, features: { source_file: true, commercial_rights: true, high_resolution: true }, price: '' }
                 }, @json($existingGigPackages ?? [])),
-                enableRfq: true,
+                enableRfq: @json($initEnableRfq),
                 specs: Object.assign({
                     motor_hp: '',
                     cutting_thickness: '',
@@ -1017,7 +1120,7 @@
                     inclusions: ['Complete on-site inspection & diagnostic check', 'Standard service execution & clean handover'],
                     exclusions: ['Replacement hardware or consumable spares billed at actuals']
                 }, @json($existingServiceConfig ?? [])),
-                isNegotiable: true,
+                isNegotiable: @json($initIsNegotiable),
 
                 get verticalTypeLabel() {
                     const labels = {
@@ -1319,10 +1422,10 @@
                             if (data.vertical_type) {
                                 this.verticalType = data.vertical_type;
                             }
-                            if (data.default_packages && (!this.gigPackages.basic.price || this.gigPackages.basic.price === '')) {
+                            if (data.vertical_type === 'digital_gig' && data.default_packages && (!this.gigPackages.basic.price || this.gigPackages.basic.price === '')) {
                                 this.gigPackages = data.default_packages;
                             }
-                            if (data.default_modifiers && this.foodModifiers.length <= 1) {
+                            if (data.vertical_type === 'food_portion' && data.default_modifiers && this.foodModifiers.length === 0) {
                                 this.foodModifiers = data.default_modifiers;
                             }
                         }
@@ -1471,6 +1574,88 @@
 
                 removeExclusion(idx) {
                     this.serviceConfig.exclusions.splice(idx, 1);
+                },
+
+                showClientError(msg) {
+                    this.clientError = msg;
+                    const banner = document.getElementById('editErrorBanner');
+                    if (banner) {
+                        banner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                },
+
+                async submitEditForm(e) {
+                    if (this.isSubmitting) return;
+                    const formEl = e?.target || document.getElementById('editProductForm');
+                    this.clientError = '';
+
+                    if (window.__k71EditMedia && typeof window.__k71EditMedia.waitAndSync === 'function') {
+                        const mediaErr = await window.__k71EditMedia.waitAndSync();
+                        if (mediaErr) {
+                            this.showClientError(mediaErr);
+                            return;
+                        }
+                    }
+
+                    const titleVal = (this.productTitle || formEl?.querySelector('[name="title"]')?.value || '').trim();
+                    if (!titleVal) {
+                        this.showClientError('Please enter a Product Title.');
+                        return;
+                    }
+                    if (!this.categoryId) {
+                        this.showClientError('Please select a Category.');
+                        return;
+                    }
+
+                    const descVal = (formEl?.querySelector('[name="description"]')?.value || '').trim();
+                    if (!descVal) {
+                        this.showClientError('Please enter a Product Description.');
+                        return;
+                    }
+
+                    const priceNum = parseFloat(this.basePrice);
+                    const allowZeroPrice = ['enquiry', 'quote_only', 'contact_seller'].includes(this.listingType) || this.verticalType === 'b2b_machinery';
+                    if (this.basePrice === '' || isNaN(priceNum) || (!allowZeroPrice && priceNum <= 0) || (allowZeroPrice && priceNum < 0)) {
+                        this.showClientError(allowZeroPrice ? 'Please enter a valid price (0 or greater).' : 'Please enter a valid Selling Price greater than ₹0.');
+                        return;
+                    }
+
+                    const stockRaw = formEl?.querySelector('[name="total_stock"]')?.value ?? '';
+                    const stockNum = parseInt(stockRaw, 10);
+                    if (stockRaw === '' || isNaN(stockNum) || stockNum < 0) {
+                        this.showClientError('Please enter a valid stock quantity (0 or greater).');
+                        return;
+                    }
+
+                    const hsnVal = (formEl?.querySelector('[name="hsn_code"]')?.value || '').trim();
+                    if (hsnVal.length > 8) {
+                        this.showClientError('HSN / SAC code must be at most 8 characters.');
+                        return;
+                    }
+
+                    const baseP = priceNum || 0;
+                    if (Array.isArray(this.fashionMatrixRows) && this.fashionMatrixRows.length) {
+                        this.fashionMatrixRows.forEach(r => {
+                            if (r.price === '' || r.price === null || parseFloat(r.price) < 0 || (parseFloat(r.price) <= 10 && baseP > 50)) {
+                                r.price = this.basePrice;
+                            }
+                        });
+                    }
+                    if (Array.isArray(this.foodPortions) && this.foodPortions.length) {
+                        this.foodPortions.forEach(p => {
+                            if (p.price === '' || p.price === null || parseFloat(p.price) < 0 || (parseFloat(p.price) <= 10 && baseP > 50)) {
+                                p.price = this.basePrice;
+                            }
+                        });
+                    }
+
+                    this.isSubmitting = true;
+                    this.$nextTick(() => {
+                        if (window.__k71EditMedia && typeof window.__k71EditMedia.syncFiles === 'function') {
+                            window.__k71EditMedia.syncFiles();
+                        }
+                        formEl.submit();
+                    });
                 }
             }
         }
@@ -1485,30 +1670,175 @@
                 })),
                 deletedIds: [],
                 isDragging: false,
+                isProcessingImages: false,
+                pendingTasks: 0,
+                _imagePromises: [],
+                _lastError: '',
 
                 init() {
                     this.syncFiles();
+                    window.__k71EditMedia = {
+                        syncFiles: () => this.syncFiles(),
+                        waitAndSync: async () => {
+                            if (this._imagePromises.length > 0) {
+                                this.updateProcessingState();
+                                await Promise.allSettled(this._imagePromises);
+                                this._imagePromises = [];
+                                this.updateProcessingState();
+                            }
+                            this.syncFiles();
+                            const err = this._lastError;
+                            this._lastError = '';
+                            return err;
+                        }
+                    };
+                },
+
+                updateProcessingState() {
+                    this.isProcessingImages = this.pendingTasks > 0;
+                    window.dispatchEvent(new CustomEvent('edit-images-state', {
+                        detail: { processing: this.isProcessingImages }
+                    }));
+                },
+
+                isLikelyImage(file) {
+                    if (!file) return false;
+                    if (file.type && file.type.startsWith('image/')) return true;
+                    const ext = (file.name.split('.').pop() || '').toLowerCase();
+                    return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'heic', 'heif', 'bmp'].includes(ext);
+                },
+
+                async optimizeImageFile(file) {
+                    const typeLower = (file.type || '').toLowerCase();
+                    if (typeLower === 'image/gif' && file.size <= 14 * 1024 * 1024) {
+                        return file;
+                    }
+                    const standardWebTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    const needsCompression = file.size > 1.2 * 1024 * 1024 || !standardWebTypes.includes(typeLower);
+                    if (!needsCompression) {
+                        return file;
+                    }
+
+                    try {
+                        let source = null;
+                        let width = 0;
+                        let height = 0;
+                        let objectUrl = null;
+
+                        if (typeof createImageBitmap === 'function') {
+                            try {
+                                source = await createImageBitmap(file);
+                                width = source.width;
+                                height = source.height;
+                            } catch (err) {
+                                source = null;
+                            }
+                        }
+
+                        if (!source) {
+                            objectUrl = URL.createObjectURL(file);
+                            source = await new Promise((resolve, reject) => {
+                                const img = new Image();
+                                img.onload = () => resolve(img);
+                                img.onerror = () => reject(new Error('Image decode failed'));
+                                img.src = objectUrl;
+                            });
+                            width = source.naturalWidth || source.width;
+                            height = source.naturalHeight || source.height;
+                        }
+
+                        const maxDim = 1800;
+                        let targetW = width || 1200;
+                        let targetH = height || 1200;
+                        if (targetW > maxDim || targetH > maxDim) {
+                            const ratio = Math.min(maxDim / targetW, maxDim / targetH);
+                            targetW = Math.max(1, Math.round(targetW * ratio));
+                            targetH = Math.max(1, Math.round(targetH * ratio));
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = targetW;
+                        canvas.height = targetH;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, targetW, targetH);
+                        ctx.drawImage(source, 0, 0, targetW, targetH);
+
+                        if (source && typeof source.close === 'function') {
+                            source.close();
+                        }
+                        if (objectUrl) {
+                            URL.revokeObjectURL(objectUrl);
+                        }
+
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+                        if (blob) {
+                            const baseName = (file.name || 'photo').replace(/\.[^.]+$/, '');
+                            return new File([blob], baseName + '.jpg', {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            });
+                        }
+                    } catch (e) {
+                        // Fallback to original file if browser canvas cannot decode format
+                    }
+
+                    return file;
                 },
 
                 handleFiles(fileList) {
-                    if (!fileList || fileList.length === 0) return;
-                    for (let i = 0; i < fileList.length; i++) {
-                        const file = fileList[i];
-                        if (!file.type.match('image.*')) continue;
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert(`"${file.name}" is larger than 5MB. Please choose an image under 5MB.`);
-                            continue;
+                    const list = Array.from(fileList || []);
+                    if (list.length === 0) return;
+                    this._lastError = '';
+
+                    list.forEach((file) => {
+                        if (!this.isLikelyImage(file)) {
+                            this._lastError = `"${file.name}" is not a supported image file.`;
+                            return;
                         }
-                        const url = URL.createObjectURL(file);
-                        this.items.push({
-                            id: 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                            isExisting: false,
-                            file: file,
-                            url: url,
-                            name: file.name
+                        if (file.size > 50 * 1024 * 1024) {
+                            this._lastError = `"${file.name}" exceeds the 50MB raw image limit.`;
+                            return;
+                        }
+
+                        const typeLower = (file.type || '').toLowerCase();
+                        const standardWebTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                        const needsAsyncOptimize = (file.size > 1.2 * 1024 * 1024 || !standardWebTypes.includes(typeLower)) && !(typeLower === 'image/gif' && file.size <= 14 * 1024 * 1024);
+
+                        if (!needsAsyncOptimize) {
+                            this.items.push({
+                                id: 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                                isExisting: false,
+                                file: file,
+                                url: URL.createObjectURL(file),
+                                name: file.name
+                            });
+                            this.syncFiles();
+                            return;
+                        }
+
+                        this.pendingTasks++;
+                        this.updateProcessingState();
+                        const p = this.optimizeImageFile(file).then((finalFile) => {
+                            if (finalFile.size > 14.5 * 1024 * 1024) {
+                                this._lastError = `"${file.name}" is still too large after optimization. Please select a smaller image.`;
+                                return;
+                            }
+                            this.items.push({
+                                id: 'new_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                                isExisting: false,
+                                file: finalFile,
+                                url: URL.createObjectURL(finalFile),
+                                name: finalFile.name
+                            });
+                            this.syncFiles();
+                        }).finally(() => {
+                            this.pendingTasks = Math.max(0, this.pendingTasks - 1);
+                            this.updateProcessingState();
                         });
-                    }
-                    this.syncFiles();
+
+                        this._imagePromises.push(p);
+                    });
                 },
 
                 remove(index) {
@@ -1542,17 +1872,21 @@
                 },
 
                 syncFiles() {
-                    const dt = new DataTransfer();
-                    let newCounter = 0;
-                    this.items.forEach(item => {
-                        if (!item.isExisting && item.file) {
-                            item.newIndex = newCounter++;
-                            dt.items.add(item.file);
+                    try {
+                        const dt = new DataTransfer();
+                        let newCounter = 0;
+                        this.items.forEach(item => {
+                            if (!item.isExisting && item.file) {
+                                item.newIndex = newCounter++;
+                                dt.items.add(item.file);
+                            }
+                        });
+                        const input = document.getElementById('images-input');
+                        if (input) {
+                            input.files = dt.files;
                         }
-                    });
-                    const input = document.getElementById('images-input');
-                    if (input) {
-                        input.files = dt.files;
+                    } catch (e) {
+                        console.error('DataTransfer sync error', e);
                     }
                 }
             }

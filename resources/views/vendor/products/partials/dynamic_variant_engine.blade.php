@@ -43,7 +43,8 @@
     <!-- ========================================================================= -->
     <!-- 1. FASHION & RETAIL MATRIX BUILDER (fashion_matrix)                        -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'fashion_matrix'" class="space-y-6">
+    <template x-if="verticalType === 'fashion_matrix'">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -204,11 +205,14 @@
             </div>
         </div>
     </div>
+    </template>
 
     <!-- ========================================================================= -->
     <!-- 2. FOOD & CLOUD KITCHEN (food_portion)                                     -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'food_portion'" class="space-y-6">
+    <template x-if="verticalType === 'food_portion'">
+    <div class="space-y-6">
+        <input type="hidden" name="modifiers_submitted" value="1">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -290,11 +294,13 @@
             </div>
         </div>
     </div>
+    </template>
 
     <!-- ========================================================================= -->
     <!-- 3. DIGITAL GIGS & FREELANCE PACKAGES (digital_gig)                        -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'digital_gig'" class="space-y-6">
+    <template x-if="verticalType === 'digital_gig'">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -378,11 +384,13 @@
             </div>
         </div>
     </div>
+    </template>
 
     <!-- ========================================================================= -->
     <!-- 4. MACHINERY & B2B RFQ BUILDER (b2b_machinery)                             -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'b2b_machinery'" class="space-y-6">
+    <template x-if="verticalType === 'b2b_machinery'">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -480,11 +488,13 @@
             </div>
         </div>
     </div>
+    </template>
 
     <!-- ========================================================================= -->
     <!-- 5. ON-DEMAND SERVICES (service_booking)                                    -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'service_booking'" class="space-y-6">
+    <template x-if="verticalType === 'service_booking'">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -511,7 +521,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">Daily Booking Slot Capacity</label>
-                    <input type="number" min="1" max="50" name="service_config[daily_slot_capacity]" x-model="serviceConfig.daily_slot_capacity" placeholder="e.g. 5 appointments/day" class="w-full text-xs font-bold rounded-xl border-stone-200 py-2 px-3">
+                    <input type="number" min="1" max="1000" name="service_config[daily_slot_capacity]" x-model="serviceConfig.daily_slot_capacity" placeholder="e.g. 5 appointments/day" class="w-full text-xs font-bold rounded-xl border-stone-200 py-2 px-3">
                 </div>
             </div>
 
@@ -555,11 +565,13 @@
             </div>
         </div>
     </div>
+    </template>
 
     <!-- ========================================================================= -->
     <!-- 6. PRE-OWNED & CLASSIFIEDS (classified_asset)                             -->
     <!-- ========================================================================= -->
-    <div x-show="verticalType === 'classified_asset'" class="space-y-6">
+    <template x-if="verticalType === 'classified_asset'">
+    <div class="space-y-6">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
@@ -617,4 +629,5 @@
             </div>
         </div>
     </div>
+    </template>
 </div>

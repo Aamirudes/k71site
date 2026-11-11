@@ -99,7 +99,7 @@ class ServiceStudioController extends Controller
             'premium_revisions' => 'nullable|integer|min:0|max:20',
             'premium_features' => 'nullable|string',
 
-            'images.*' => 'nullable|image|max:5120',
+            'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif|max:15360',
         ]);
 
         $baseSlug = Str::slug($validated['title']) ?: 'service-gig';
@@ -171,7 +171,11 @@ class ServiceStudioController extends Controller
         if ($request->hasFile('images')) {
             $sortOrder = 0;
             foreach ($request->file('images') as $img) {
+                if (!$img || !$img->isValid()) {
+                    continue;
+                }
                 $path = $img->store('products', 'public');
+                k71_sync_public_storage($path);
                 ProductImage::create([
                     'product_id' => $product->id,
                     'path' => $path,

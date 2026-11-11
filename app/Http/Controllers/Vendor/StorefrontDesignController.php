@@ -391,12 +391,7 @@ class StorefrontDesignController extends Controller
 
         try {
             $mirrorToPublic = function (string $relativePath): void {
-                $source = storage_path('app/public/' . $relativePath);
-                $target = public_path('storage/' . $relativePath);
-                if (file_exists($source) && is_file($source)) {
-                    @mkdir(dirname($target), 0755, true);
-                    @copy($source, $target);
-                }
+                k71_sync_public_storage($relativePath);
             };
 
             $configRecord = $vendor->storefrontConfig;
@@ -768,16 +763,14 @@ class StorefrontDesignController extends Controller
         }
 
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp,gif', 'max:5120'],
+            'image' => ['required', 'image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:15360'],
         ]);
 
         $file = $request->file('image');
         $path = $file->store('vendors/' . $vendor->id . '/storefront', 'public');
 
-        // Ensure public accessibility
-        $target = public_path('storage/' . $path);
-        @mkdir(dirname($target), 0755, true);
-        @copy(storage_path('app/public/' . $path), $target);
+        // Ensure public accessibility when not symlinked
+        k71_sync_public_storage($path);
 
         $url = asset('storage/' . $path);
 

@@ -23,7 +23,7 @@ class EnsureVendorOwnership
         $user = auth()->user();
 
         // 2. Must be a vendor
-        if (!$user->hasRole('vendor') || !$user->vendor) {
+        if (!$user->isVendor() || !$user->vendor) {
             return redirect()->route('vendor.register');
         }
 
