@@ -12,7 +12,10 @@
                 </div>
                 
                 <div class="flex items-center gap-2.5 flex-wrap">
-                    <a href="{{ route('used.index') }}#post-ad" class="px-4 py-2.5 rounded-full bg-[#ECD2F3] hover:bg-white text-[#1A1018] font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer">
+                    <a href="{{ route('used.dashboard') }}" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                        <span>📊 Used Dashboard</span>
+                    </a>
+                    <a href="{{ route('used.sell') }}" class="px-4 py-2.5 rounded-full bg-[#ECD2F3] hover:bg-white text-[#1A1018] font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer">
                         <span>♻️ Sell Used Item</span>
                     </a>
                     <a href="{{ route('services.become_seller') }}" class="px-4 py-2.5 rounded-full bg-[#161616] hover:bg-white/15 text-white border border-white/20 font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer">
@@ -57,21 +60,32 @@
         <!-- TAB 1: USED CLASSIFIED ADS (OLX STYLE) -->
         <div x-show="activeTab === 'used'" class="space-y-4">
             @forelse($usedAds as $ad)
+                @php
+                    $effStatus = $ad->effectiveUsedStatus();
+                    $statusClasses = match($effStatus) {
+                        'sold' => 'bg-rose-100 text-rose-800',
+                        'reserved' => 'bg-amber-100 text-amber-800',
+                        'paused' => 'bg-slate-200 text-slate-700',
+                        'draft' => 'bg-purple-100 text-purple-800',
+                        default => 'bg-emerald-100 text-emerald-800',
+                    };
+                @endphp
                 <div class="p-4 sm:p-5 rounded-[24px] bg-white border border-black/8 shadow-[0_8px_24px_rgba(26,16,24,0.04)] hover:border-black/20 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div class="flex items-start gap-4">
                         <div class="w-20 h-20 rounded-2xl bg-[#F4F1EC] overflow-hidden shrink-0 border border-black/8">
-                            @if($ad->primary_image_url)
+                            @if($ad->hasUploadedImages())
                                 <img src="{{ $ad->primary_image_url }}" alt="{{ $ad->title }}" class="w-full h-full object-cover">
                             @else
-                                <div class="w-full h-full flex items-center justify-center text-2xl">📦</div>
+                                <div class="w-full h-full flex items-center justify-center text-2xl text-black/30">📷</div>
                             @endif
                         </div>
                         <div>
-                            <div class="flex items-center gap-2">
-                                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider {{ $ad->is_sold ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800' }}">
-                                    {{ $ad->is_sold ? 'SOLD' : 'ACTIVE' }}
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider {{ $statusClasses }}">
+                                    {{ strtoupper($effStatus) }}
                                 </span>
                                 <span class="text-[10px] text-[#7A6B78] font-mono">{{ $ad->category?->name ?? 'Classified' }}</span>
+                                <span class="text-[10px] text-[#7A6B78]">• {{ $ad->views_count ?? 0 }} views • {{ $ad->saves_count ?? 0 }} saves • {{ $ad->pending_offers_count ?? 0 }} open offers</span>
                             </div>
                             <h3 class="text-sm font-bold text-[#1A1018] mt-1">
                                 <a href="{{ route('used.show', $ad->slug) }}" class="hover:text-[#623562]">{{ $ad->title }}</a>
@@ -79,9 +93,9 @@
                             <div class="flex items-center gap-3 text-xs text-[#7A6B78] mt-1 font-medium">
                                 <span class="font-mono font-black text-[#1A1018] text-sm tabular-nums">₹{{ number_format($ad->base_price / 100, 0) }}</span>
                                 <span>•</span>
-                                <span>📍 {{ $ad->custom_fields['location'] ?? 'Rajasthan' }}</span>
+                                <span>📍 {{ $ad->city_label }}</span>
                                 <span>•</span>
-                                <span>Condition: {{ $ad->custom_fields['condition'] ?? 'Good' }}</span>
+                                <span>Condition: {{ $ad->condition_label }}</span>
                             </div>
                         </div>
                     </div>
@@ -115,7 +129,7 @@
                     <p class="text-xs text-[#7A6B78] mt-1 max-w-sm mx-auto mb-5">
                         Sell pre-owned phones, bikes, furniture, cars, and gadgets directly to local verified buyers without any middleman fees.
                     </p>
-                    <a href="{{ route('used.index') }}#post-ad" class="grail-btn-obsidian inline-flex items-center gap-1.5 text-xs">
+                    <a href="{{ route('used.sell') }}" class="grail-btn-obsidian inline-flex items-center gap-1.5 text-xs">
                         Post Your First Classified Ad →
                     </a>
                 </div>

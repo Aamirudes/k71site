@@ -43,7 +43,17 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::get('/products/category-fields', [ProductController::class, 'getCategoryFields'])->name('products.category_fields');
         Route::resource('products', ProductController::class)->except(['show']);
         Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle_status');
+        Route::patch('/products/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])->name('products.toggle_availability');
         Route::post('/products/{product}/duplicate', [ProductController::class, 'duplicate'])->name('products.duplicate');
+
+        // K71 Food Kitchen & Menu Builder
+        Route::get('/food/menu', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'index'])->name('food.menu');
+        Route::post('/food/categories', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'storeCategory'])->name('food.categories.store');
+        Route::put('/food/categories/{category}', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'updateCategory'])->name('food.categories.update');
+        Route::delete('/food/categories/{category}', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'destroyCategory'])->name('food.categories.destroy');
+        Route::post('/food/categories/reorder', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'reorderCategories'])->name('food.categories.reorder');
+        Route::post('/food/toggle-orders', [\App\Http\Controllers\Vendor\FoodMenuController::class, 'toggleAcceptingOrders'])->name('food.toggle_orders');
+
         Route::resource('coupons', CouponController::class)->except(['show']);
         
         Route::get('/orders/check-new', [\App\Http\Controllers\Vendor\OrderController::class, 'checkNewOrders'])->name('orders.check_new');

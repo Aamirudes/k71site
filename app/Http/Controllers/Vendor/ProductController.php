@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Vendor;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\CategoryField;
+use App\Models\FoodMenuCategory;
 use App\Models\Product;
+use App\Models\ProductOptionGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -84,7 +86,7 @@ class ProductController extends Controller
         if (!$vendor) abort(403);
 
         $targetVertical = $vendor->getVerticalKey();
-        $products = Product::where('vendor_id', $vendor->id)->with('category')->latest()->paginate(15);
+        $products = Product::where('vendor_id', $vendor->id)->with(['category', 'foodMenuCategory'])->latest()->paginate(15);
         return view('vendor.products.index', compact('products', 'vendor', 'targetVertical'));
     }
 
@@ -101,8 +103,11 @@ class ProductController extends Controller
         $verticals = $this->getVerticalsData();
         $listingTypes = $this->getListingTypesData();
         $categoryFields = CategoryField::orderBy('sort_order')->get()->groupBy('vertical');
+        $foodMenuCategories = $vendor
+            ? FoodMenuCategory::where('vendor_id', $vendor->id)->orderBy('sort_order')->get()
+            : collect();
 
-        return view('vendor.products.create', compact('vendor', 'vendorType', 'sectorConfig', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields'));
+        return view('vendor.products.create', compact('vendor', 'vendorType', 'sectorConfig', 'targetVertical', 'categories', 'verticals', 'listingTypes', 'categoryFields', 'foodMenuCategories'));
     }
 
     protected function resolveVendorCategories(string $vendorType, string $targetVertical)
@@ -337,7 +342,15 @@ class ProductController extends Controller
             'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
             'variants.*.size' => ['nullable', 'string', 'max:50'],
             'variants.*.image_url' => ['nullable', 'string', 'max:500'],
+            'food_menu_category_id' => ['nullable', 'integer', 'exists:food_menu_categories,id'],
+            'dietary_label' => ['nullable', 'string', 'in:veg,non_veg,egg,vegan,jain,pure_veg'],
+            'prep_time_mins' => ['nullable', 'integer', 'min:1', 'max:240'],
+            'menu_sort_order' => ['nullable', 'integer', 'min:0', 'max:99999'],
+            'is_dish_available' => ['nullable', 'boolean'],
+            'available_from' => ['nullable', 'string', 'max:10'],
+            'available_until' => ['nullable', 'string', 'max:10'],
             'food_portions' => ['nullable', 'array'],
+            'option_groups' => ['nullable', 'array'],
             'modifiers' => ['nullable', 'array'],
             'gig_packages' => ['nullable', 'array'],
             'b2b_tiers' => ['nullable', 'array'],
@@ -374,6 +387,28 @@ class ProductController extends Controller
 
         if ($request->has('custom_fields') && is_array($request->custom_fields)) {
             $validated['custom_fields'] = $request->custom_fields;
+        }
+
+        // Verify food_menu_category_id ownership + normalize food availability defaults
+        if (!empty($validated['food_menu_category_id'])) {
+            $ownedCat = FoodMenuCategory::where('vendor_id', $vendor->id)->find($validated['food_menu_category_id']);
+            if (!$ownedCat) {
+                return back()->withInput()->withErrors(['food_menu_category_id' => 'Invalid menu section selected.']);
+            }
+        }
+        $validated['is_dish_available'] = $request->has('is_dish_available') ? $request->boolean('is_dish_available') : true;
+        $validated['menu_sort_order'] = (int) ($validated['menu_sort_order'] ?? 0);
+        if (empty($validated['dietary_label']) && !empty($validated['custom_fields']['dietary_type'])) {
+            $dtLower = strtolower(trim((string) $validated['custom_fields']['dietary_type']));
+            $validated['dietary_label'] = match (true) {
+                str_contains($dtLower, 'non') => 'non_veg',
+                str_contains($dtLower, 'egg') => 'egg',
+                str_contains($dtLower, 'vegan') => 'vegan',
+                str_contains($dtLower, 'jain') => 'jain',
+                str_contains($dtLower, 'pure') => 'pure_veg',
+                str_contains($dtLower, 'veg') => 'veg',
+                default => null,
+            };
         }
 
         if ($request->has('specifications') && is_array($request->specifications)) {
@@ -480,6 +515,7 @@ class ProductController extends Controller
             'video_path',
             'variants',
             'food_portions',
+            'option_groups',
             'modifiers',
             'gig_packages',
             'b2b_tiers',
@@ -558,19 +594,8 @@ class ProductController extends Controller
                 ]);
             }
 
-            // 3. Process Food Add-ons / Modifiers
-            if ($request->has('modifiers') && is_array($request->modifiers)) {
-                foreach ($request->modifiers as $mod) {
-                    if (!empty($mod['modifier_name'])) {
-                        $product->modifiers()->create([
-                            'group_name' => $mod['group_name'] ?? 'Add-ons',
-                            'modifier_name' => $mod['modifier_name'],
-                            'price_delta' => (float)($mod['price_delta'] ?? 0),
-                            'is_required' => !empty($mod['is_required']),
-                        ]);
-                    }
-                }
-            }
+            // 3. Process Food Option Groups & Modifiers
+            $this->syncOptionGroupsAndModifiers($product, $request);
 
             // 4. Process Digital Gig 3-tier Packages (Fiverr Model)
             if ($request->has('gig_packages') && is_array($request->gig_packages)) {
@@ -592,6 +617,7 @@ class ProductController extends Controller
 
             // Update has_variants flag
             $hasMultiple = ($product->variants()->count() > 1 && $product->variants()->first()?->sku !== 'Default')
+                || $product->optionGroups()->exists()
                 || $product->modifiers()->exists()
                 || $product->gigPackages()->exists();
 
@@ -661,7 +687,7 @@ class ProductController extends Controller
 
         $categories = $this->resolveVendorCategories($vendorType, $targetVertical);
 
-        $product->load(['variants', 'images', 'modifiers', 'gigPackages', 'category']);
+        $product->load(['variants', 'images', 'optionGroups.modifiers', 'modifiers', 'gigPackages', 'category', 'foodMenuCategory']);
 
         $existingVariants = $product->variants->map(function ($v) use ($product) {
             $attr = is_array($v->attributes_hash) ? $v->attributes_hash : (json_decode($v->attributes_hash ?? '[]', true) ?: []);
@@ -688,7 +714,28 @@ class ProductController extends Controller
             'modifier_name' => $m->modifier_name,
             'price_delta' => (float)$m->price_delta,
             'is_required' => (bool)$m->is_required,
+            'is_available' => $m->is_available !== false,
+            'is_default' => (bool) ($m->is_default ?? false),
         ])->toArray();
+
+        $existingOptionGroups = $product->optionGroups->map(fn ($g) => [
+            'id' => $g->id,
+            'name' => $g->name,
+            'selection_type' => $g->selection_type,
+            'is_required' => (bool) $g->is_required,
+            'min_selections' => (int) $g->min_selections,
+            'max_selections' => $g->max_selections,
+            'sort_order' => (int) $g->sort_order,
+            'options' => $g->modifiers->map(fn ($m) => [
+                'id' => $m->id,
+                'modifier_name' => $m->modifier_name,
+                'price_delta' => (float) $m->price_delta,
+                'is_available' => $m->is_available !== false,
+                'is_default' => (bool) ($m->is_default ?? false),
+            ])->values()->toArray(),
+        ])->values()->toArray();
+
+        $foodMenuCategories = FoodMenuCategory::where('vendor_id', $vendor->id)->orderBy('sort_order')->get();
 
         $existingGigPackages = [];
         foreach ($product->gigPackages as $pkg) {
@@ -713,7 +760,8 @@ class ProductController extends Controller
 
         return view('vendor.products.edit', compact(
             'vendor', 'vendorType', 'targetVertical', 'product', 'categories', 'existingVariants',
-            'existingModifiers', 'existingGigPackages', 'existingB2bTiers',
+            'existingModifiers', 'existingOptionGroups', 'foodMenuCategories',
+            'existingGigPackages', 'existingB2bTiers',
             'existingServiceConfig', 'existingSpecs', 'verticals', 'listingTypes', 'categoryFields', 'sectorConfig'
         ));
     }
@@ -759,7 +807,15 @@ class ProductController extends Controller
             'variants.*.color_hex' => ['nullable', 'string', 'max:20'],
             'variants.*.size' => ['nullable', 'string', 'max:50'],
             'variants.*.image_url' => ['nullable', 'string', 'max:500'],
+            'food_menu_category_id' => ['nullable', 'integer', 'exists:food_menu_categories,id'],
+            'dietary_label' => ['nullable', 'string', 'in:veg,non_veg,egg,vegan,jain,pure_veg'],
+            'prep_time_mins' => ['nullable', 'integer', 'min:1', 'max:240'],
+            'menu_sort_order' => ['nullable', 'integer', 'min:0', 'max:99999'],
+            'is_dish_available' => ['nullable', 'boolean'],
+            'available_from' => ['nullable', 'string', 'max:10'],
+            'available_until' => ['nullable', 'string', 'max:10'],
             'food_portions' => ['nullable', 'array'],
+            'option_groups' => ['nullable', 'array'],
             'modifiers' => ['nullable', 'array'],
             'gig_packages' => ['nullable', 'array'],
             'b2b_tiers' => ['nullable', 'array'],
@@ -797,6 +853,31 @@ class ProductController extends Controller
 
         if ($request->has('custom_fields')) {
             $validated['custom_fields'] = is_array($request->custom_fields) ? $request->custom_fields : [];
+        }
+
+        if (!empty($validated['food_menu_category_id'])) {
+            $ownedCat = FoodMenuCategory::where('vendor_id', $vendor->id)->find($validated['food_menu_category_id']);
+            if (!$ownedCat) {
+                return back()->withInput()->withErrors(['food_menu_category_id' => 'Invalid menu section selected.']);
+            }
+        }
+        if ($request->has('food_settings_present') || $request->has('is_dish_available')) {
+            $validated['is_dish_available'] = $request->boolean('is_dish_available');
+        }
+        if (array_key_exists('menu_sort_order', $validated) && $validated['menu_sort_order'] === null) {
+            $validated['menu_sort_order'] = $product->menu_sort_order ?? 0;
+        }
+        if (empty($validated['dietary_label']) && !empty($validated['custom_fields']['dietary_type'])) {
+            $dtLower = strtolower(trim((string) $validated['custom_fields']['dietary_type']));
+            $validated['dietary_label'] = match (true) {
+                str_contains($dtLower, 'non') => 'non_veg',
+                str_contains($dtLower, 'egg') => 'egg',
+                str_contains($dtLower, 'vegan') => 'vegan',
+                str_contains($dtLower, 'jain') => 'jain',
+                str_contains($dtLower, 'pure') => 'pure_veg',
+                str_contains($dtLower, 'veg') => 'veg',
+                default => $product->dietary_label,
+            };
         }
 
         if ($request->has('specifications') && is_array($request->specifications)) {
@@ -894,6 +975,7 @@ class ProductController extends Controller
             'video_path',
             'variants',
             'food_portions',
+            'option_groups',
             'modifiers',
             'gig_packages',
             'b2b_tiers',
@@ -1038,20 +1120,8 @@ class ProductController extends Controller
                 }
             }
 
-            // 3. Process Modifiers
-            if ($request->boolean('modifiers_submitted') || ($request->has('modifiers') && is_array($request->modifiers))) {
-                $product->modifiers()->delete();
-                foreach ((array) $request->input('modifiers', []) as $mod) {
-                    if (is_array($mod) && !empty($mod['modifier_name'])) {
-                        $product->modifiers()->create([
-                            'group_name' => $mod['group_name'] ?? 'Add-ons',
-                            'modifier_name' => $mod['modifier_name'],
-                            'price_delta' => (float)($mod['price_delta'] ?? 0),
-                            'is_required' => !empty($mod['is_required']),
-                        ]);
-                    }
-                }
-            }
+            // 3. Process Food Option Groups & Modifiers
+            $this->syncOptionGroupsAndModifiers($product, $request);
 
             // 4. Process Digital Gig 3-tier Packages
             if ($request->has('gig_packages') && is_array($request->gig_packages)) {
@@ -1075,6 +1145,7 @@ class ProductController extends Controller
 
             // Update has_variants flag
             $hasMultiple = ($product->variants()->count() > 1 && $product->variants()->first()?->sku !== 'Default')
+                || $product->optionGroups()->exists()
                 || $product->modifiers()->exists()
                 || $product->gigPackages()->exists();
 
@@ -1258,8 +1329,139 @@ class ProductController extends Controller
             $imgClone->save();
         }
 
+        // Replicate option groups and remapped modifiers
+        $groupIdMap = [];
+        foreach ($product->optionGroups()->with('modifiers')->get() as $group) {
+            $groupClone = $group->replicate([
+                'product_id',
+                'created_at',
+                'updated_at',
+            ]);
+            $groupClone->product_id = $clone->id;
+            $groupClone->save();
+            $groupIdMap[$group->id] = $groupClone->id;
+        }
+
+        foreach ($product->modifiers as $modifier) {
+            $modClone = $modifier->replicate([
+                'product_id',
+                'option_group_id',
+                'created_at',
+                'updated_at',
+            ]);
+            $modClone->product_id = $clone->id;
+            $modClone->option_group_id = $modifier->option_group_id
+                ? ($groupIdMap[$modifier->option_group_id] ?? null)
+                : null;
+            $modClone->save();
+        }
+
+        foreach ($product->gigPackages as $pkg) {
+            $pkgClone = $pkg->replicate([
+                'product_id',
+                'created_at',
+                'updated_at',
+            ]);
+            $pkgClone->product_id = $clone->id;
+            $pkgClone->save();
+        }
+
         return redirect()->route('vendor.products.edit', $clone)
             ->with('success', "Product '{$product->title}' duplicated successfully as Draft! You can now update images or details and publish.");
+    }
+
+    public function toggleAvailability(Request $request, Product $product)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor || $product->vendor_id !== $vendor->id) {
+            abort(403, 'Unauthorized access to product.');
+        }
+
+        $newState = !$product->is_dish_available;
+        $product->update(['is_dish_available' => $newState]);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'is_dish_available' => $newState,
+            ]);
+        }
+
+        return back()->with('success', $newState
+            ? "'{$product->title}' is now marked Available for ordering."
+            : "'{$product->title}' has been marked Sold Out / Unavailable.");
+    }
+
+    protected function syncOptionGroupsAndModifiers(Product $product, Request $request): void
+    {
+        $hasGroupsPayload = $request->boolean('option_groups_submitted')
+            || ($request->has('option_groups') && is_array($request->option_groups));
+
+        if ($hasGroupsPayload) {
+            $product->modifiers()->delete();
+            $product->optionGroups()->delete();
+
+            foreach ((array) $request->input('option_groups', []) as $gIdx => $groupData) {
+                if (!is_array($groupData) || empty(trim((string) ($groupData['name'] ?? '')))) {
+                    continue;
+                }
+
+                $selectionType = ($groupData['selection_type'] ?? 'multi') === 'single' ? 'single' : 'multi';
+                $isRequired = !empty($groupData['is_required']);
+                $minSel = isset($groupData['min_selections']) && $groupData['min_selections'] !== ''
+                    ? (int) $groupData['min_selections']
+                    : ($isRequired ? 1 : 0);
+                $maxSel = isset($groupData['max_selections']) && $groupData['max_selections'] !== ''
+                    ? (int) $groupData['max_selections']
+                    : ($selectionType === 'single' ? 1 : null);
+
+                $group = ProductOptionGroup::create([
+                    'product_id' => $product->id,
+                    'name' => trim((string) $groupData['name']),
+                    'selection_type' => $selectionType,
+                    'is_required' => $isRequired,
+                    'min_selections' => $minSel,
+                    'max_selections' => $maxSel,
+                    'sort_order' => (int) ($groupData['sort_order'] ?? ($gIdx + 1)),
+                    'is_active' => true,
+                ]);
+
+                $options = $groupData['options'] ?? $groupData['modifiers'] ?? [];
+                foreach ((array) $options as $oIdx => $optData) {
+                    if (!is_array($optData) || empty(trim((string) ($optData['modifier_name'] ?? $optData['name'] ?? '')))) {
+                        continue;
+                    }
+                    $product->modifiers()->create([
+                        'option_group_id' => $group->id,
+                        'group_name' => $group->name,
+                        'modifier_name' => trim((string) ($optData['modifier_name'] ?? $optData['name'])),
+                        'price_delta' => (float) ($optData['price_delta'] ?? 0),
+                        'is_required' => $isRequired,
+                        'is_available' => array_key_exists('is_available', $optData) ? (bool) $optData['is_available'] : true,
+                        'is_default' => !empty($optData['is_default']),
+                        'sort_order' => (int) ($optData['sort_order'] ?? ($oIdx + 1)),
+                    ]);
+                }
+            }
+            return;
+        }
+
+        if ($request->boolean('modifiers_submitted') || ($request->has('modifiers') && is_array($request->modifiers))) {
+            $product->modifiers()->delete();
+            foreach ((array) $request->input('modifiers', []) as $oIdx => $mod) {
+                if (is_array($mod) && !empty($mod['modifier_name'])) {
+                    $product->modifiers()->create([
+                        'group_name' => $mod['group_name'] ?? 'Add-ons',
+                        'modifier_name' => $mod['modifier_name'],
+                        'price_delta' => (float) ($mod['price_delta'] ?? 0),
+                        'is_required' => !empty($mod['is_required']),
+                        'is_available' => array_key_exists('is_available', $mod) ? (bool) $mod['is_available'] : true,
+                        'is_default' => !empty($mod['is_default']),
+                        'sort_order' => $oIdx + 1,
+                    ]);
+                }
+            }
+        }
     }
 
     /**

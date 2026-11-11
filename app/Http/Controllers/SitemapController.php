@@ -69,6 +69,25 @@ class SitemapController extends Controller
         $xml = Cache::remember('sitemap_products_xml', 3600, function () use ($baseUrl) {
             $products = Product::with(['images' => fn($q) => $q->orderBy('sort_order')])
                 ->where('status', 'active')
+                ->where(function ($q) {
+                    $q->where(function ($nonUsed) {
+                        $nonUsed->whereNull('vertical')
+                                ->orWhere('vertical', '!=', 'used');
+                    })->where(function ($nonClassified) {
+                        $nonClassified->whereNull('listing_type')
+                                      ->orWhere('listing_type', '!=', 'classified');
+                    })->orWhere(function ($usedActive) {
+                        $usedActive->where(function ($u) {
+                            $u->where('vertical', 'used')
+                              ->orWhere('listing_type', 'classified');
+                        })
+                        ->where('is_sold', false)
+                        ->where(function ($us) {
+                            $us->whereNull('used_status')
+                               ->orWhereIn('used_status', ['active', 'reserved']);
+                        });
+                    });
+                })
                 ->latest('updated_at')
                 ->take(10000)
                 ->get();
@@ -77,7 +96,8 @@ class SitemapController extends Controller
             $out .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' . "\n";
 
             foreach ($products as $product) {
-                $loc = $baseUrl . '/product/' . $product->slug;
+                $isUsed = $product->isUsedListing();
+                $loc = $baseUrl . ($isUsed ? '/used/' : '/product/') . $product->slug;
                 $lastmod = ($product->updated_at ?? now())->toAtomString();
 
                 $out .= "    <url>\n";
@@ -86,7 +106,7 @@ class SitemapController extends Controller
                 $out .= "        <changefreq>daily</changefreq>\n";
                 $out .= "        <priority>0.8</priority>\n";
 
-                // Add up to 3 product images for Google Image Search indexing
+                // Add up to 3 genuine product images for Google Image Search indexing
                 foreach ($product->images->take(3) as $img) {
                     $imgUrl = str_starts_with($img->path, 'http') ? $img->path : $baseUrl . '/storage/' . $img->path;
                     $out .= "        <image:image>\n";
@@ -246,6 +266,7 @@ class SitemapController extends Controller
             $products = Product::with(['images' => fn($q) => $q->orderBy('sort_order'), 'vendor', 'category'])
                 ->where('status', 'active')
                 ->where('total_stock', '>', 0)
+                ->excludeUsed()
                 ->latest('updated_at')
                 ->take(5000)
                 ->get();

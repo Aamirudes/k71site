@@ -1,20 +1,28 @@
+@props([
+    'title' => null,
+    'metaDescription' => null,
+    'canonicalUrl' => null,
+    'robotsContent' => null,
+    'schemaJson' => null,
+])
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="robots" content="{{ $robotsContent ?? 'index,follow' }}">
     
-    <title>{{ $title ?? 'K71 Used — Premium Second-Hand Marketplace | Buy & Sell Verified Pre-Owned' }}</title>
-    <meta name="description" content="{{ $metaDescription ?? 'Discover verified pre-owned cars, mobile phones, electronics, second-hand furniture and appliances with direct buyer-seller offers on K71 Used.' }}">
-    <link rel="canonical" href="{{ url()->current() }}">
+    <title>{{ $title ?? 'K71 Used — Pre-Owned Marketplace | Buy & Sell Second-Hand Locally' }}</title>
+    <meta name="description" content="{{ $metaDescription ?? 'Discover pre-owned mobile phones, laptops, electronics, furniture, appliances and vehicles with direct buyer-seller negotiation on K71 Used.' }}">
+    <link rel="canonical" href="{{ $canonicalUrl ?? url()->current() }}">
     
     <!-- Open Graph / Meta -->
-    <meta property="og:title" content="{{ $title ?? 'K71 Used — Verified Pre-Owned Marketplace' }}">
-    <meta property="og:description" content="{{ $metaDescription ?? 'Buy & sell verified second-hand items with direct negotiation.' }}">
+    <meta property="og:title" content="{{ $title ?? 'K71 Used — Pre-Owned Marketplace' }}">
+    <meta property="og:description" content="{{ $metaDescription ?? 'Buy & sell pre-owned items with direct negotiation.' }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ url()->current() }}">
-    <meta name="theme-color" content="#1d4ed8">
+    <meta property="og:url" content="{{ $canonicalUrl ?? url()->current() }}">
+    <meta name="theme-color" content="#0D0D0D">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -37,12 +45,17 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <!-- Schema.org Structured Data for Classifieds Marketplace -->
+    @if(!empty($schemaJson))
+    <script type="application/ld+json">
+    {!! json_encode($schemaJson, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+    </script>
+    @else
     <script type="application/ld+json">
     {
       "@@context": "https://schema.org",
       "@@type": "WebSite",
       "name": "K71 Used Marketplace",
-      "url": "{{ url('/') }}",
+      "url": "{{ url('/used') }}",
       "potentialAction": {
         "@@type": "SearchAction",
         "target": "{{ route('used.index') }}?search={search_term_string}",
@@ -50,14 +63,15 @@
       }
     }
     </script>
+    @endif
 </head>
 
 <body class="grail-marketplace-body bg-black text-[#EFE9F2] font-sans antialiased flex flex-col min-h-screen overflow-x-clip selection:bg-[#ECD2F3] selection:text-[#1A1018]"
       style="font-family: var(--font-grail-sans);"
       x-data="k71UsedGlobalState()"
       @open-offer-modal.window="openOfferModal($event.detail)"
-      @open-post-ad.window="postAdModalOpen = true"
-      @keydown.escape.window="locationModalOpen = false; offerModalOpen = false; postAdModalOpen = false;">
+      @open-post-ad.window="window.location.href = '{{ route('used.sell') }}'"
+      @keydown.escape.window="locationModalOpen = false; offerModalOpen = false;">
 
     <!-- Thin Sleek Top Strip: Back to K71 Universal Marketplace -->
     <div class="bg-[#060606] text-white text-xs border-b border-white/10 px-3 sm:px-6 py-2 flex items-center justify-between z-50 relative overflow-hidden">
@@ -69,13 +83,15 @@
             </a>
             <span class="text-white/20 hidden xs:inline">|</span>
             <span class="text-[#C9A24A] font-semibold uppercase tracking-[0.14em] text-[10px] hidden sm:inline">
-                K71 Verified Pre-Owned &amp; Re-Commerce
+                K71 Pre-Owned &amp; Local Classifieds
             </span>
         </div>
         <div class="flex items-center gap-4 text-[11px] text-[#EFE9F2]/60">
-            <span class="hidden md:inline font-mono">IST UTC+5:30 (Rajasthan)</span>
-            <a href="{{ route('account.listings') }}" class="text-[#ECD2F3] hover:text-[#FFCDFF] font-semibold transition flex items-center gap-1">
-                <span>Manage My Ads →</span>
+            <a href="{{ route('used.sell') }}" class="hidden sm:inline text-white/80 hover:text-[#ECD2F3] font-semibold transition">
+                + Sell Item
+            </a>
+            <a href="{{ auth()->check() ? route('used.dashboard') : route('login') }}" class="text-[#ECD2F3] hover:text-[#FFCDFF] font-semibold transition flex items-center gap-1">
+                <span>Used Dashboard →</span>
             </a>
         </div>
     </div>
@@ -115,10 +131,10 @@
                     <!-- Location Selector Capsule -->
                     <button type="button" 
                             @click="locationModalOpen = true"
-                            class="flex items-center gap-1 px-2 py-1 sm:px-3.5 sm:py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-[11px] sm:text-xs font-semibold text-white transition cursor-pointer max-w-[85px] xs:max-w-[115px] sm:max-w-[190px] truncate shrink min-w-0"
+                            class="flex items-center gap-1 px-2 py-1 sm:px-3.5 sm:py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/15 text-[11px] sm:text-xs font-semibold text-white transition cursor-pointer max-w-[115px] sm:max-w-[190px] truncate shrink min-w-0"
                             title="Change City">
                         <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 shrink-0"></span>
-                        <span class="truncate" x-text="currentLocation.split(',')[0]">Kishangarh</span>
+                        <span class="truncate" x-text="currentLocation ? currentLocation.split(',')[0] : 'All India'">All India</span>
                         <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#ECD2F3] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                 </div>
@@ -143,18 +159,18 @@
                 <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
                     
                     <!-- Saved Favorites Icon -->
-                    <a href="{{ route('used.index') }}#favorites" 
+                    <a href="{{ auth()->check() ? route('used.dashboard', ['tab' => 'buyer']) : route('wishlist.index') }}" 
                        class="hidden sm:inline-flex relative p-2 rounded-xl text-[#EFE9F2]/80 hover:text-[#ECD2F3] hover:bg-white/10 transition" 
-                       title="Saved Favorites">
+                       title="Saved Listings & Searches">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                         <span x-show="wishlist.length > 0" x-text="wishlist.length" class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FFCDFF] text-[#1A1018] text-[9px] font-bold flex items-center justify-center"></span>
                     </a>
 
-                    <!-- Chats Link -->
-                    <a href="{{ route('messages.index') }}" 
+                    <!-- Enquiries & Chats Link -->
+                    <a href="{{ auth()->check() ? route('used.dashboard', ['tab' => 'messages']) : route('login') }}" 
                        class="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#EFE9F2]/80 hover:text-white hover:bg-white/10 transition">
                         <span>💬</span>
-                        <span>Chats</span>
+                        <span>Enquiries</span>
                     </a>
 
                     <!-- User Account / Login -->
@@ -174,19 +190,37 @@
                             <div x-show="userMenu" 
                                  x-cloak
                                  @click.outside="userMenu = false"
-                                 class="absolute right-0 mt-2 w-48 bg-[#161616] text-[#EFE9F2] rounded-2xl shadow-2xl border border-white/15 py-1.5 z-50">
+                                 class="absolute right-0 mt-2 w-56 bg-[#161616] text-[#EFE9F2] rounded-2xl shadow-2xl border border-white/15 py-1.5 z-50">
                                 <div class="px-4 py-2 border-b border-white/10 text-left">
                                     <div class="text-xs font-bold text-white truncate">{{ auth()->user()->name }}</div>
                                     <div class="text-[10px] text-white/50 truncate">{{ auth()->user()->email }}</div>
                                 </div>
-                                <a href="{{ route('used.index') }}#my-ads" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                <a href="{{ route('used.dashboard') }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                    <span>📊</span>
+                                    <span>Used Dashboard</span>
+                                </a>
+                                <a href="{{ route('used.dashboard', ['tab' => 'listings']) }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
                                     <span>📦</span>
-                                    <span>My Ads &amp; Listings</span>
+                                    <span>My Used Listings</span>
                                 </a>
-                                <a href="{{ route('vendor.offers.index') }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                <a href="{{ route('used.dashboard', ['tab' => 'offers']) }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
                                     <span>💰</span>
-                                    <span>Received Offers</span>
+                                    <span>Offers &amp; Negotiations</span>
                                 </a>
+                                <a href="{{ route('used.dashboard', ['tab' => 'messages']) }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                    <span>💬</span>
+                                    <span>Enquiry Threads</span>
+                                </a>
+                                <a href="{{ route('used.dashboard', ['tab' => 'buyer']) }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                    <span>🔖</span>
+                                    <span>Saved Items &amp; Searches</span>
+                                </a>
+                                @if(auth()->user()->usedSellerProfile)
+                                <a href="{{ route('used.seller.profile', auth()->user()->usedSellerProfile->handle) }}" class="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[#EFE9F2]/85 hover:bg-white/5 hover:text-[#FFCDFF] transition">
+                                    <span>👤</span>
+                                    <span>My Seller Profile</span>
+                                </a>
+                                @endif
                                 <div class="border-t border-white/10 my-1"></div>
                                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                                     @csrf
@@ -203,13 +237,12 @@
                     @endauth
 
                     <!-- Prominent "+ SELL" Button -->
-                    <button type="button" 
-                            @click="postAdModalOpen = true"
-                            class="px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#ECD2F3] hover:bg-[#FFCDFF] text-[#1A1018] text-xs sm:text-sm font-bold tracking-wider transition shadow-md flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0"
-                            aria-label="Sell Item">
+                    <a href="{{ route('used.sell') }}"
+                       class="px-3.5 sm:px-6 py-1.5 sm:py-2 rounded-full bg-[#ECD2F3] hover:bg-[#FFCDFF] text-[#1A1018] text-xs sm:text-sm font-bold tracking-wider transition shadow-md flex items-center gap-1 sm:gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                       aria-label="Sell Item">
                         <span class="text-sm sm:text-base font-black leading-none">+</span>
                         <span>SELL</span>
-                    </button>
+                    </a>
 
                 </div>
             </div>
@@ -252,41 +285,41 @@
                         <span class="font-bold text-white text-sm sm:text-base">K71<span class="text-[#ECD2F3]">USED</span></span>
                     </div>
                     <p class="text-[11px] text-[#EFE9F2]/55 leading-relaxed mb-3">
-                        India's trusted second-hand classifieds marketplace connecting verified buyers and sellers in Kishangarh &amp; Rajasthan.
+                        Second-hand &amp; pre-owned marketplace connecting local buyers and sellers with direct negotiation and transparent condition disclosure.
                     </p>
                     <div class="text-[11px] font-semibold text-[#C9A24A]">
-                        Zero Commission Direct Deals
+                        Direct Peer-to-Peer Handover
                     </div>
                 </div>
 
                 <div>
                     <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[#C9A24A] mb-2.5">Popular Categories</h4>
                     <ul class="space-y-1.5 text-xs text-[#EFE9F2]/65 font-medium">
-                        <li><a href="{{ route('used.index', ['cat' => 'mobiles']) }}" class="hover:text-[#FFCDFF] transition">📱 Used Mobile Phones</a></li>
-                        <li><a href="{{ route('used.index', ['cat' => 'electronics']) }}" class="hover:text-[#FFCDFF] transition">💻 Laptops &amp; Computers</a></li>
-                        <li><a href="{{ route('used.index', ['cat' => 'vehicles']) }}" class="hover:text-[#FFCDFF] transition">🚗 Pre-Owned Cars &amp; Bikes</a></li>
-                        <li><a href="{{ route('used.index', ['cat' => 'furniture']) }}" class="hover:text-[#FFCDFF] transition">🛋️ Home &amp; Office Furniture</a></li>
+                        <li><a href="{{ route('used.index', ['cat' => 'used-mobiles']) }}" class="hover:text-[#FFCDFF] transition">📱 Used Mobile Phones</a></li>
+                        <li><a href="{{ route('used.index', ['cat' => 'used-laptops-computers']) }}" class="hover:text-[#FFCDFF] transition">💻 Laptops &amp; Computers</a></li>
+                        <li><a href="{{ route('used.index', ['cat' => 'used-vehicles']) }}" class="hover:text-[#FFCDFF] transition">🚗 Pre-Owned Vehicles</a></li>
+                        <li><a href="{{ route('used.index', ['cat' => 'used-furniture']) }}" class="hover:text-[#FFCDFF] transition">🛋️ Home &amp; Office Furniture</a></li>
                     </ul>
                 </div>
 
                 <div>
                     <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[#C9A24A] mb-2.5">Trust &amp; Safety</h4>
                     <ul class="space-y-1.5 text-xs text-[#EFE9F2]/65 font-medium">
-                        <li><span class="text-white font-semibold">🛡️ Safety Tips</span></li>
-                        <li><span>• Meet in safe public areas</span></li>
-                        <li><span>• Test item before payment</span></li>
-                        <li><span>• Never pay advance deposits</span></li>
+                        <li><span class="text-white font-semibold">🛡️ Handover Safety</span></li>
+                        <li><span>• Inspect item thoroughly in person</span></li>
+                        <li><span>• Meet in public, well-lit locations</span></li>
+                        <li><span>• K71 Used does not provide escrow or courier handling</span></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[#C9A24A] mb-2.5">Post an Ad</h4>
+                    <h4 class="text-xs font-semibold uppercase tracking-[0.14em] text-[#C9A24A] mb-2.5">Sell Pre-Owned Items</h4>
                     <p class="text-[11px] text-[#EFE9F2]/55 leading-relaxed mb-3">
-                        Post your ad in under a minute with real photos and reach buyers across India.
+                        List with genuine photos, honest condition grading, and receive structured buyer offers &amp; enquiries.
                     </p>
-                    <button type="button" @click="postAdModalOpen = true" class="w-full py-2.5 rounded-full bg-[#ECD2F3] hover:bg-[#FFCDFF] text-[#1A1018] text-xs font-bold transition cursor-pointer">
-                        + Post Free Ad Now
-                    </button>
+                    <a href="{{ route('used.sell') }}" class="block text-center w-full py-2.5 rounded-full bg-[#ECD2F3] hover:bg-[#FFCDFF] text-[#1A1018] text-xs font-bold transition cursor-pointer">
+                        + Sell an Item
+                    </a>
                 </div>
             </div>
 
@@ -320,20 +353,28 @@
                 </button>
             </div>
 
-            <!-- Auto-Detect GPS Button -->
-            <button type="button" 
-                    @click="detectGPS()"
-                    class="w-full py-3 px-4 rounded-2xl bg-[#F8EFFA] hover:bg-[#ECD2F3]/60 border border-[#ECD2F3] text-[#1A1018] text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
-                <span class="text-base">🎯</span>
-                <span x-text="detectingGps ? 'Detecting your GPS location...' : 'Use Current GPS Location'"></span>
-            </button>
+            <!-- Auto-Detect GPS Button & Clear Filter -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button type="button" 
+                        @click="detectGPS()"
+                        class="py-3 px-4 rounded-2xl bg-[#F8EFFA] hover:bg-[#ECD2F3]/60 border border-[#ECD2F3] text-[#1A1018] text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+                    <span class="text-base">🎯</span>
+                    <span x-text="detectingGps ? 'Detecting GPS...' : 'Use GPS Location'"></span>
+                </button>
+                <button type="button"
+                        @click="setLocation(''); locationModalOpen = false;"
+                        class="py-3 px-4 rounded-2xl bg-white hover:bg-[#EFE9F2] border border-[#E6E2E8] text-[#1A1018] text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer">
+                    <span>🌏</span>
+                    <span>All India (Clear)</span>
+                </button>
+            </div>
 
             <!-- Manual Search Input -->
             <div class="flex items-center gap-2">
                 <input type="text" 
                        x-model="locationSearch"
                        @keydown.enter.prevent="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
-                       placeholder="Type city or area (e.g. Kishangarh, Ajmer)..."
+                       placeholder="Type city or area (e.g. Kishangarh, Jaipur)..."
                        class="grail-input-light flex-1 px-4 py-2.5 text-xs">
                 <button type="button"
                         @click="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
@@ -345,12 +386,12 @@
 
             <!-- Popular Cities -->
             <div>
-                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1018]/45 block mb-2">Major Classified Hubs</span>
+                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1018]/45 block mb-2">Browse by City</span>
                 <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto no-scrollbar">
                     <template x-for="city in popularCities" :key="city">
                         <button type="button" 
                                 @click="setLocation(city); locationModalOpen = false;"
-                                class="p-2.5 rounded-xl border border-[#E6E2E8] hover:border-[#1A1018] hover:bg-[#F8EFFA] text-left text-xs font-semibold text-[#1A1018] transition flex items-center gap-2">
+                                class="p-2.5 rounded-xl border border-[#E6E2E8] hover:border-[#1A1018] hover:bg-[#F8EFFA] text-left text-xs font-semibold text-[#1A1018] transition flex items-center gap-2 cursor-pointer">
                             <span>📍</span>
                             <span x-text="city" class="truncate"></span>
                         </button>
@@ -379,16 +420,27 @@
                 </button>
             </div>
 
-            <!-- Product Overview -->
+            <!-- Product Overview (No fabricated photo fallback) -->
             <div class="p-3.5 rounded-2xl bg-[#F8EFFA] border border-[#ECD2F3] flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-white p-1 border border-[#E6E2E8] overflow-hidden shrink-0">
-                    <img :src="activeOfferProduct?.image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=200&q=80'" class="w-full h-full object-cover rounded-lg">
+                <div class="w-12 h-12 rounded-xl bg-white border border-[#E6E2E8] overflow-hidden shrink-0 flex items-center justify-center">
+                    <img x-show="activeOfferProduct?.image" :src="activeOfferProduct?.image" class="w-full h-full object-cover" alt="">
+                    <span x-show="!activeOfferProduct?.image" class="text-lg opacity-45">📷</span>
                 </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-xs font-semibold text-[#1A1018] truncate" x-text="activeOfferProduct?.title"></div>
                     <div class="text-xs text-[#1A1018]/75 font-bold mt-0.5" x-text="'Asking Price: ₹' + (activeOfferProduct?.price ? Number(activeOfferProduct.price).toLocaleString('en-IN') : '0')"></div>
+                    <div x-show="activeOfferProduct?.minOffer" class="text-[10px] text-[#623562] font-semibold mt-0.5" x-text="'Seller minimum offer: ₹' + Number(activeOfferProduct?.minOffer || 0).toLocaleString('en-IN')"></div>
                 </div>
             </div>
+
+            <!-- Error / Auth / Success Notice -->
+            <div x-show="offerError" x-cloak class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+                <span x-text="offerError"></span>
+                <template x-if="offerNeedsAuth">
+                    <a href="{{ route('login') }}" class="inline-block ml-1 underline font-bold text-[#1A1018]">Sign in now →</a>
+                </template>
+            </div>
+            <div x-show="offerSuccess" x-cloak class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold" x-text="offerSuccess"></div>
 
             <!-- Offer Form -->
             <form @submit.prevent="submitOfferForm()" class="space-y-3">
@@ -408,20 +460,20 @@
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Your Name *</label>
-                        <input type="text" x-model="offerForm.name" required placeholder="Full Name"
+                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Your Name</label>
+                        <input type="text" x-model="offerForm.name" placeholder="Full Name"
                                class="grail-input-light w-full px-3 py-2 text-xs">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Mobile Number *</label>
-                        <input type="tel" x-model="offerForm.phone" required placeholder="10-digit mobile"
+                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Phone (Optional)</label>
+                        <input type="tel" x-model="offerForm.phone" placeholder="10-digit mobile"
                                class="grail-input-light w-full px-3 py-2 text-xs">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Message to Seller (Optional)</label>
-                    <textarea x-model="offerForm.message" rows="2" placeholder="e.g. Can inspect today in Kishangarh."
+                    <textarea x-model="offerForm.message" rows="2" placeholder="e.g. Can inspect in person this week."
                               class="grail-input-light w-full px-3 py-2 text-xs resize-none"></textarea>
                 </div>
 
@@ -434,192 +486,60 @@
         </div>
     </div>
 
-    <!-- ===================================================================
-         6. POST FREE AD MODAL — GENUINE MULTI-PHOTO FILE UPLOAD (NO URLS)
-         =================================================================== -->
-    <div x-show="postAdModalOpen" 
-         x-cloak
-         class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs overflow-y-auto"
-         x-transition>
-        <div class="bg-[#FAFAF8] text-[#1A1018] rounded-[28px] max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-[#E6E2E8] space-y-4 my-8"
-             @click.outside="postAdModalOpen = false"
-             x-data="{
-                 uploadedPreviews: [],
-                 handleFiles(event) {
-                     this.uploadedPreviews = [];
-                     const files = event.target.files;
-                     if (!files) return;
-                     for (let i = 0; i < Math.min(files.length, 6); i++) {
-                         const reader = new FileReader();
-                         reader.onload = (e) => {
-                             this.uploadedPreviews.push(e.target.result);
-                         };
-                         reader.readAsDataURL(files[i]);
-                     }
-                 }
-             }">
-            
-            <div class="flex items-center justify-between pb-3 border-b border-[#E6E2E8]">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">📢</span>
-                    <h3 class="text-lg font-semibold text-[#1A1018]" style="font-family: var(--font-grail-serif);">Post Free Classified Ad</h3>
-                </div>
-                <button @click="postAdModalOpen = false" class="w-8 h-8 rounded-full bg-[#EFE9F2] hover:bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-sm font-bold transition">
-                    ✕
-                </button>
-            </div>
-
-            <!-- Real Multipart Form -->
-            <form action="{{ route('used.post-ad') }}" method="POST" enctype="multipart/form-data" class="space-y-3.5">
-                @csrf
-
-                <!-- Title -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Ad Title *</label>
-                    <input type="text" name="title" required placeholder="e.g. iPhone 14 Pro 128GB Deep Purple with bill & box"
-                           class="grail-input-light w-full px-3.5 py-2.5 text-xs font-semibold">
-                </div>
-
-                <!-- Category & Condition -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Category *</label>
-                        <select name="category" required class="grail-input-light w-full px-3 py-2.5 text-xs font-semibold">
-                            <option value="Mobiles">📱 Mobiles &amp; Tablets</option>
-                            <option value="Vehicles">🚗 Cars &amp; Vehicles</option>
-                            <option value="Bikes">🏍️ Bikes &amp; Scooters</option>
-                            <option value="Electronics">💻 Laptops &amp; Electronics</option>
-                            <option value="Furniture">🛋️ Furniture &amp; Decor</option>
-                            <option value="Appliances">📺 Appliances &amp; TV</option>
-                            <option value="Commercial">🚜 Commercial &amp; Industrial</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Condition *</label>
-                        <select name="condition" required class="grail-input-light w-full px-3 py-2.5 text-xs font-semibold">
-                            <option value="Brand New">💎 Brand New (Unused)</option>
-                            <option value="Like New" selected>✨ Like New (Flawless)</option>
-                            <option value="Good Condition">👌 Good Condition</option>
-                            <option value="Fair / Working">⚡ Fair / Working</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Asking Price & Brand -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Asking Price (₹) *</label>
-                        <input type="number" name="price" required min="1" placeholder="e.g. 25000"
-                               class="grail-input-light w-full px-3.5 py-2.5 text-xs font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Brand / Model</label>
-                        <input type="text" name="brand" placeholder="e.g. Apple, Maruti, Royal Enfield"
-                               class="grail-input-light w-full px-3.5 py-2.5 text-xs">
-                    </div>
-                </div>
-
-                <!-- City Location & Phone -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">City / Area *</label>
-                        <input type="text" name="city" required value="Kishangarh, Rajasthan"
-                               class="grail-input-light w-full px-3.5 py-2.5 text-xs font-semibold">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Contact Phone *</label>
-                        <input type="tel" name="phone" required placeholder="10-digit mobile"
-                               class="grail-input-light w-full px-3.5 py-2.5 text-xs font-semibold">
-                    </div>
-                </div>
-
-                <!-- GENUINE PHOTO UPLOAD ZONE (NO URLS) -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1 flex items-center justify-between">
-                        <span>📸 Upload Product Photos (Camera / Gallery)</span>
-                        <span class="text-[#1A1018] text-[10px] font-bold">Up to 6 photos</span>
-                    </label>
-
-                    <label class="relative flex flex-col items-center justify-center p-4 border-2 border-dashed border-[#1A1018]/25 hover:border-[#1A1018] rounded-2xl bg-[#F8EFFA]/60 hover:bg-[#F8EFFA] transition cursor-pointer text-center group">
-                        <div class="w-10 h-10 rounded-full bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-xl mb-1 group-hover:scale-110 transition-transform">
-                            📷
-                        </div>
-                        <span class="text-xs font-bold text-[#1A1018]">Tap to upload photos from phone / computer</span>
-                        <span class="text-[10px] text-[#1A1018]/55 mt-0.5">Select real photos of front, back, accessories</span>
-                        <input type="file" name="photos[]" multiple accept="image/*" @change="handleFiles($event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
-                    </label>
-
-                    <!-- Live Image Preview Thumbnails -->
-                    <template x-if="uploadedPreviews.length > 0">
-                        <div class="grid grid-cols-4 gap-2 mt-2.5">
-                            <template x-for="(preview, idx) in uploadedPreviews" :key="idx">
-                                <div class="relative aspect-square rounded-xl overflow-hidden border border-[#E6E2E8] bg-white shadow-xs">
-                                    <img :src="preview" class="w-full h-full object-cover">
-                                    <span class="absolute bottom-1 right-1 px-1.5 py-0.2 rounded bg-black/60 text-white text-[9px] font-bold" x-text="'#' + (idx + 1)"></span>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Description -->
-                <div>
-                    <label class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#1A1018]/70 mb-1">Item Description *</label>
-                    <textarea name="description" required rows="3" placeholder="Condition, reason for selling, original bill/box availability, battery health, km driven..."
-                              class="grail-input-light w-full px-3 py-2 text-xs resize-none"></textarea>
-                </div>
-
-                <div class="pt-2">
-                    <button type="submit" class="grail-btn-obsidian w-full py-3 text-xs justify-center">
-                        Publish Ad Across Kishangarh &amp; India →
-                    </button>
-                </div>
-            </form>
-
-        </div>
-    </div>
-
-
-
     <script>
+    @php
+        $initialUsedWishlist = auth()->check()
+            ? \App\Models\Wishlist::where('user_id', auth()->id())
+                ->whereHas('product', fn ($q) => $q->where('vertical', 'used'))
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->values()
+                ->all()
+            : array_values(array_map('intval', (array) session('guest_wishlist', [])));
+        $configuredUsedCities = config('used_marketplace.default_cities', [
+            'Kishangarh', 'Ajmer', 'Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Delhi NCR', 'Mumbai', 'Bengaluru', 'Ahmedabad'
+        ]);
+    @endphp
     function k71UsedGlobalState() {
+        const urlCity = new URLSearchParams(window.location.search).get('city') || '';
         return {
             locationModalOpen: false,
             offerModalOpen: false,
-            postAdModalOpen: false,
             detectingGps: false,
             locationSearch: '',
-            currentLocation: localStorage.getItem('k71_used_location') || 'Kishangarh, Rajasthan',
-            popularCities: [
-                'Kishangarh, Rajasthan',
-                'Ajmer, Rajasthan',
-                'Jaipur, Rajasthan',
-                'Jodhpur, Rajasthan',
-                'Delhi NCR Hub',
-                'Mumbai, Maharashtra',
-                'Ahmedabad, Gujarat',
-                'Bengaluru, Karnataka',
-                'Kota, Rajasthan',
-                'Udaipur, Rajasthan'
-            ],
-            wishlist: JSON.parse(localStorage.getItem('k71_used_wishlist') || '[]'),
+            currentLocation: urlCity,
+            popularCities: @json($configuredUsedCities),
+            wishlist: @json($initialUsedWishlist),
             
             // Offer State
             activeOfferProduct: null,
             submittingOffer: false,
+            offerError: '',
+            offerSuccess: '',
+            offerNeedsAuth: false,
             offerForm: {
                 amount: '',
-                name: '{{ auth()->user()->name ?? "" }}',
-                phone: '{{ auth()->user()->phone ?? "" }}',
+                name: @json(auth()->user()->name ?? ''),
+                phone: @json(auth()->user()->phone ?? ''),
                 message: ''
             },
 
             setLocation(city) {
-                this.currentLocation = city;
-                localStorage.setItem('k71_used_location', city);
-                let url = new URL(window.location.href);
-                url.searchParams.set('city', city);
-                window.location.href = url.toString();
+                this.currentLocation = city || '';
+                let targetUrl = new URL('{{ route('used.index') }}', window.location.origin);
+                const currentParams = new URLSearchParams(window.location.search);
+                currentParams.forEach((v, k) => {
+                    if (k !== 'city' && k !== 'page') {
+                        targetUrl.searchParams.set(k, v);
+                    }
+                });
+                if (city && city.trim()) {
+                    localStorage.setItem('k71_used_location', city.trim());
+                    targetUrl.searchParams.set('city', city.trim());
+                } else {
+                    localStorage.removeItem('k71_used_location');
+                }
+                window.location.href = targetUrl.toString();
             },
 
             detectGPS() {
@@ -635,19 +555,16 @@
                         try {
                             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
                             const data = await res.json();
-                            const detectedCity = data.address.city || data.address.town || data.address.county || data.address.state_district || 'Kishangarh';
-                            const state = data.address.state || 'Rajasthan';
-                            const formatted = `${detectedCity}, ${state}`;
+                            const detectedCity = data.address.city || data.address.town || data.address.county || data.address.state_district || 'Jaipur';
                             this.detectingGps = false;
                             this.locationModalOpen = false;
-                            this.setLocation(formatted);
+                            this.setLocation(detectedCity);
                         } catch (e) {
                             this.detectingGps = false;
-                            this.locationModalOpen = false;
-                            this.setLocation('Kishangarh, Rajasthan');
+                            alert('Could not resolve city name from coordinates. Please pick a city manually.');
                         }
                     },
-                    (err) => {
+                    () => {
                         this.detectingGps = false;
                         alert('Could not retrieve GPS location. Please select your city manually.');
                     },
@@ -659,19 +576,41 @@
                 return this.wishlist.includes(Number(id));
             },
 
-            toggleWishlist(id) {
+            async toggleWishlist(id) {
                 id = Number(id);
-                if (this.wishlist.includes(id)) {
-                    this.wishlist = this.wishlist.filter(x => x !== id);
-                } else {
-                    this.wishlist.push(id);
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                try {
+                    const res = await fetch('{{ route('wishlist.toggle') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ product_id: id })
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    if (data.action === 'added') {
+                        if (!this.wishlist.includes(id)) this.wishlist.push(id);
+                    } else {
+                        this.wishlist = this.wishlist.filter(x => x !== id);
+                    }
+                    window.dispatchEvent(new CustomEvent('used-wishlist-updated', {
+                        detail: { productId: id, saved: data.action === 'added', savesCount: data.saves_count }
+                    }));
+                } catch (e) {
+                    console.error('Failed to toggle save', e);
                 }
-                localStorage.setItem('k71_used_wishlist', JSON.stringify(this.wishlist));
             },
 
             openOfferModal(item) {
                 this.activeOfferProduct = item;
+                this.offerError = '';
+                this.offerSuccess = '';
+                this.offerNeedsAuth = false;
                 this.offerForm.amount = item.price ? Math.round(Number(item.price) * 0.9) : '';
+                this.offerForm.message = '';
                 this.offerModalOpen = true;
             },
 
@@ -683,6 +622,9 @@
             async submitOfferForm() {
                 if (!this.activeOfferProduct) return;
                 this.submittingOffer = true;
+                this.offerError = '';
+                this.offerSuccess = '';
+                this.offerNeedsAuth = false;
                 try {
                     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                     const res = await fetch(`/offers/product/${this.activeOfferProduct.id}`, {
@@ -700,20 +642,34 @@
                         })
                     });
 
-                    const data = await res.json();
+                    const data = await res.json().catch(() => ({}));
                     this.submittingOffer = false;
-                    this.offerModalOpen = false;
-                    alert('🎉 Your offer of ₹' + Number(this.offerForm.amount).toLocaleString('en-IN') + ' has been sent to the seller!');
+
+                    if (res.status === 401) {
+                        this.offerNeedsAuth = true;
+                        this.offerError = data.message || 'Please sign in to submit an offer.';
+                        return;
+                    }
+                    if (!res.ok || data.success === false) {
+                        this.offerError = data.message || 'Unable to submit offer. Please verify your offer amount.';
+                        return;
+                    }
+
+                    this.offerSuccess = data.message || ('Offer of ₹' + Number(this.offerForm.amount).toLocaleString('en-IN') + ' sent to seller!');
+                    setTimeout(() => {
+                        this.offerModalOpen = false;
+                        if (window.location.pathname.includes('/used/')) {
+                            window.location.reload();
+                        }
+                    }, 900);
                 } catch (e) {
                     this.submittingOffer = false;
-                    this.offerModalOpen = false;
-                    alert('🎉 Your offer has been submitted to the seller.');
+                    this.offerError = 'Network error while submitting offer. Please try again.';
                 }
             }
         };
     }
     </script>
-    <!-- Mobile Bottom Tab Navigation (Section F) -->
     <!-- K71 Global Authentication Modal -->
     <x-k71-auth-modal />
     <script>

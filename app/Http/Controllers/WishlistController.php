@@ -71,6 +71,12 @@ class WishlistController extends Controller
             }
 
             $count = Wishlist::where('user_id', Auth::id())->count();
+
+            $savesCount = null;
+            $product = \App\Models\Product::withoutGlobalScopes()->find($productId);
+            if ($product && $product->isUsedListing()) {
+                $savesCount = app(\App\Services\Used\UsedMarketplaceService::class)->syncSavesCount($productId);
+            }
         } else {
             // Guest session support
             $guestWishlist = session()->get('guest_wishlist', []);
@@ -83,6 +89,7 @@ class WishlistController extends Controller
             }
             session()->put('guest_wishlist', $guestWishlist);
             $count = count($guestWishlist);
+            $savesCount = null;
         }
 
         $isWishlisted = ($action === 'added');
@@ -92,6 +99,7 @@ class WishlistController extends Controller
             'action' => $action,
             'is_wishlisted' => $isWishlisted,
             'count' => $count,
+            'saves_count' => $savesCount,
             'message' => $isWishlisted ? 'Added to your Wishlist ❤️' : 'Removed from Wishlist'
         ]);
     }
@@ -118,11 +126,11 @@ class WishlistController extends Controller
                 'id' => $product->id,
                 'title' => $product->title,
                 'slug' => $product->slug,
-                'vendor_name' => $product->vendor?->shop_name ?? 'K71 Verified Store',
+                'vendor_name' => $product->vendor?->shop_name ?? ($product->ownerUser()?->name ?? 'K71 Verified Store'),
                 'price' => $product->base_price,
                 'price_formatted' => '₹' . number_format($product->base_price / 100, 2),
                 'image_url' => $imageUrl,
-                'url' => route('product.show', $product->slug),
+                'url' => $product->isUsedListing() ? route('used.show', $product->slug) : route('product.show', $product->slug),
                 'in_stock' => $product->stock_quantity > 0,
             ];
         })->values();

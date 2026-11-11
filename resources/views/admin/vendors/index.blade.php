@@ -41,7 +41,7 @@
             
             <!-- Filter Tabs -->
             <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
-                <a href="{{ route('admin.vendors') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ !request('status') ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                <a href="{{ route('admin.vendors', request('search') ? ['search' => request('search')] : []) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ !request('status') && !request('type') ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
                     All Boutiques ({{ $counts['all'] }})
                 </a>
                 <a href="{{ route('admin.vendors', array_merge(request()->query(), ['status' => 'active'])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('status') === 'active' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
@@ -53,12 +53,18 @@
                 <a href="{{ route('admin.vendors', array_merge(request()->query(), ['status' => 'suspended'])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('status') === 'suspended' ? 'bg-rose-600 text-white shadow-xs' : 'bg-rose-50 text-rose-700 hover:bg-rose-100' }}">
                     Suspended ({{ $counts['suspended'] }})
                 </a>
+                <a href="{{ route('admin.vendors', array_merge(request()->query(), ['type' => request('type') === 'food' ? null : 'food'])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('type') === 'food' ? 'bg-orange-600 text-white shadow-xs' : 'bg-orange-50 text-orange-700 hover:bg-orange-100' }}">
+                    🍽️ Food Kitchens ({{ $counts['food'] ?? 0 }})
+                </a>
             </div>
 
             <!-- Search Form -->
             <form action="{{ route('admin.vendors') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
                 @if(request('status'))
                     <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
+                @if(request('type'))
+                    <input type="hidden" name="type" value="{{ request('type') }}">
                 @endif
                 <div class="relative flex-1">
                     <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -69,7 +75,7 @@
                     <button type="submit" class="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-slate-950 shadow-xs transition-all cursor-pointer">
                         Filter Boutiques
                     </button>
-                    @if(request()->hasAny(['search', 'status']))
+                    @if(request()->hasAny(['search', 'status', 'type']))
                         <a href="{{ route('admin.vendors') }}" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 transition-colors">
                             Clear
                         </a>
@@ -104,11 +110,34 @@
                                             {{ substr($vendor->shop_name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <span class="font-bold text-slate-900 block text-sm">{{ $vendor->shop_name }}</span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="font-bold text-slate-900 text-sm">{{ $vendor->shop_name }}</span>
+                                                @if($vendor->isFood())
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">🍽️ Food</span>
+                                                @endif
+                                            </div>
                                             <a href="{{ $vendor->storefront_url }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
                                                 {{ $vendor->slug }}.{{ config('marketplace.domain', 'marblemandi.org') }} ↗
                                             </a>
                                             <span class="text-[10px] text-slate-400 block font-mono">Joined {{ $vendor->created_at->format('d M, Y') }}</span>
+                                            @if($vendor->isFood() || !empty($vendor->settings?->fssai_license_number))
+                                                <div class="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                                    @if(!empty($vendor->settings?->fssai_license_number))
+                                                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded border {{ $vendor->isFssaiVerified() ? 'bg-emerald-50 text-emerald-800 border-emerald-200 font-bold' : 'bg-amber-50 text-amber-800 border-amber-200 font-semibold' }}">
+                                                            {{ $vendor->isFssaiVerified() ? '✓ FSSAI Verified' : '⏳ FSSAI Pending' }} · {{ $vendor->settings->fssai_license_number }}
+                                                        </span>
+                                                        <form action="{{ route('admin.vendors.verify_fssai', $vendor) }}" method="POST" class="inline">
+                                                            @csrf
+                                                            <input type="hidden" name="verified" value="{{ $vendor->isFssaiVerified() ? '0' : '1' }}">
+                                                            <button type="submit" class="text-[10px] font-bold px-2 py-0.5 rounded border cursor-pointer transition-colors {{ $vendor->isFssaiVerified() ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200' : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600' }}">
+                                                                {{ $vendor->isFssaiVerified() ? 'Revoke FSSAI' : 'Verify FSSAI' }}
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="text-[10px] text-slate-400 italic">No FSSAI License submitted</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>

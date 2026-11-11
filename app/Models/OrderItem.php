@@ -14,8 +14,10 @@ class OrderItem extends Model
         'gig_package_id',
         'selected_modifiers_json',
         'booking_date_time',
+        'special_instructions',
         'quantity',
         'unit_price',
+        'addon_amount',
         'total_price',
         'tax_amount',
         'gst_rate',
@@ -29,6 +31,7 @@ class OrderItem extends Model
         'meta_json' => 'json',
         'selected_modifiers_json' => 'array',
         'booking_date_time' => 'datetime',
+        'addon_amount' => 'integer',
     ];
 
     public function order(): BelongsTo
@@ -38,7 +41,7 @@ class OrderItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        return $this->belongsTo(Product::class)->withoutGlobalScopes()->withTrashed();
     }
 
     public function variant(): BelongsTo

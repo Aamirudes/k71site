@@ -17,9 +17,21 @@ class Product extends Model
 {
     use HasFactory, SoftDeletes, Auditable, BelongsToVendor, HasSeo;
 
+    protected $attributes = [
+        'gst_rate' => 0,
+    ];
+
     protected $fillable = [
         'vendor_id',
+        'user_id',
         'category_id',
+        'food_menu_category_id',
+        'dietary_label',
+        'prep_time_mins',
+        'menu_sort_order',
+        'is_dish_available',
+        'available_from',
+        'available_until',
         'vertical',
         'listing_type',
         'custom_fields',
@@ -28,20 +40,33 @@ class Product extends Model
         'description',
         'short_description',
         'brand',
+        'model_name',
+        'age_months',
+        'purchase_year',
         'gender',
         'age_group',
         'material',
         'care_instructions',
+        'defect_notes',
+        'included_accessories',
+        'original_packaging',
+        'reason_for_selling',
         'size_chart',
         'tags',
         'base_price',
         'compare_at_price',
+        'original_retail_price',
+        'min_offer_amount',
         'gst_rate',
         'hsn_code',
         'sku',
         'status',
+        'used_status',
+        'condition_grade',
+        'is_refurbished',
         'is_featured',
         'total_stock',
+        'quantity_available',
         'seo_title',
         'seo_description',
         'og_image',
@@ -54,6 +79,17 @@ class Product extends Model
         'country_of_origin',
         'is_negotiable',
         'is_sold',
+        'city',
+        'locality',
+        'private_pickup_area',
+        'fulfillment_options',
+        'reserved_for_user_id',
+        'reserved_at',
+        'sold_at',
+        'views_count',
+        'saves_count',
+        'duplicate_fingerprint',
+        'refreshed_at',
         'has_variants',
         'specifications_json',
         'b2b_tiers_json',
@@ -85,11 +121,23 @@ class Product extends Model
         'tags' => 'json',
         'size_chart' => 'array',
         'custom_fields' => 'array',
+        'fulfillment_options' => 'array',
         'is_featured' => 'boolean',
         'is_returnable' => 'boolean',
         'is_negotiable' => 'boolean',
         'is_sold' => 'boolean',
+        'is_refurbished' => 'boolean',
+        'age_months' => 'integer',
+        'purchase_year' => 'integer',
+        'quantity_available' => 'integer',
+        'original_retail_price' => 'integer',
+        'min_offer_amount' => 'integer',
+        'views_count' => 'integer',
+        'saves_count' => 'integer',
         'published_at' => 'datetime',
+        'reserved_at' => 'datetime',
+        'sold_at' => 'datetime',
+        'refreshed_at' => 'datetime',
         'auction_starts_at' => 'datetime',
         'auction_ends_at' => 'datetime',
         'reserve_price' => 'integer',
@@ -99,6 +147,10 @@ class Product extends Model
         'skills_json' => 'array',
         'is_website_featured' => 'boolean',
         'show_on_website' => 'boolean',
+        'food_menu_category_id' => 'integer',
+        'prep_time_mins' => 'integer',
+        'menu_sort_order' => 'integer',
+        'is_dish_available' => 'boolean',
     ];
 
     /**
@@ -323,9 +375,19 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function foodMenuCategory(): BelongsTo
+    {
+        return $this->belongsTo(FoodMenuCategory::class, 'food_menu_category_id');
+    }
+
     public function variants(): HasMany
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function optionGroups(): HasMany
+    {
+        return $this->hasMany(ProductOptionGroup::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function modifiers(): HasMany
@@ -627,6 +689,164 @@ class Product extends Model
         return $this->hasMany(Offer::class);
     }
 
+    public function sellerUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function reservedForUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reserved_for_user_id');
+    }
+
+    public function usedTransactions(): HasMany
+    {
+        return $this->hasMany(UsedTransaction::class);
+    }
+
+    public function usedThreads(): HasMany
+    {
+        return $this->hasMany(UsedThread::class);
+    }
+
+    public function isUsedListing(): bool
+    {
+        return $this->vertical === 'used' || $this->listing_type === 'classified';
+    }
+
+    public function ownerUserId(): ?int
+    {
+        if (!empty($this->user_id)) {
+            return (int) $this->user_id;
+        }
+        if (!empty($this->custom_fields['user_id'])) {
+            return (int) $this->custom_fields['user_id'];
+        }
+        if ($this->vendor && !empty($this->vendor->user_id)) {
+            return (int) $this->vendor->user_id;
+        }
+        return null;
+    }
+
+    public function ownerUser(): ?User
+    {
+        if ($this->relationLoaded('sellerUser') && $this->sellerUser) {
+            return $this->sellerUser;
+        }
+        if (!empty($this->user_id)) {
+            return $this->sellerUser()->first();
+        }
+        if ($this->vendor && $this->vendor->user) {
+            return $this->vendor->user;
+        }
+        if (!empty($this->custom_fields['user_id'])) {
+            return User::find((int) $this->custom_fields['user_id']);
+        }
+        return null;
+    }
+
+    public function isOwnedBy(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        if ($user->isAdmin()) {
+            return true;
+        }
+        if (!empty($this->user_id) && (int) $this->user_id === (int) $user->id) {
+            return true;
+        }
+        if (!empty($this->custom_fields['user_id']) && (int) $this->custom_fields['user_id'] === (int) $user->id) {
+            return true;
+        }
+        if ($this->vendor && (int) $this->vendor->user_id === (int) $user->id) {
+            return true;
+        }
+        return false;
+    }
+
+    public function effectiveUsedStatus(): string
+    {
+        if ($this->isSold()) {
+            return 'sold';
+        }
+        if (!empty($this->used_status)) {
+            return $this->used_status;
+        }
+        return $this->status === 'active' ? 'active' : ($this->status ?: 'draft');
+    }
+
+    public function isReserved(): bool
+    {
+        return $this->effectiveUsedStatus() === 'reserved';
+    }
+
+    public function isPaused(): bool
+    {
+        return $this->effectiveUsedStatus() === 'paused' || ($this->isUsedListing() && $this->status === 'inactive');
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->effectiveUsedStatus() === 'draft' || ($this->isUsedListing() && $this->status === 'draft');
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        if (!$this->isUsedListing()) {
+            return $this->status === 'active';
+        }
+        return in_array($this->effectiveUsedStatus(), ['active', 'reserved', 'sold'], true)
+            && !in_array($this->status, ['draft', 'inactive', 'removed'], true);
+    }
+
+    public function conditionMeta(): array
+    {
+        $conditions = config('used_marketplace.conditions', []);
+        $grade = $this->condition_grade;
+
+        if (!$grade || !isset($conditions[$grade])) {
+            $raw = strtolower((string) ($this->custom_fields['condition'] ?? ''));
+            foreach ($conditions as $key => $meta) {
+                if ($raw === $key || str_contains($raw, str_replace('_', ' ', $key))) {
+                    $grade = $key;
+                    break;
+                }
+                foreach ($meta['aliases'] ?? [] as $alias) {
+                    if ($raw === $alias || str_contains($raw, $alias)) {
+                        $grade = $key;
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        $grade = $grade && isset($conditions[$grade]) ? $grade : 'good';
+        return array_merge(['key' => $grade], $conditions[$grade]);
+    }
+
+    public function getConditionLabelAttribute(): string
+    {
+        if (!empty($this->custom_fields['condition']) && empty($this->condition_grade)) {
+            return (string) $this->custom_fields['condition'];
+        }
+        return $this->conditionMeta()['short'] ?? 'Good';
+    }
+
+    public function getCityLabelAttribute(): string
+    {
+        $parts = array_filter([
+            $this->locality,
+            $this->city ?: ($this->custom_fields['location'] ?? ($this->vendor?->city ?? null)),
+        ]);
+        return !empty($parts) ? implode(', ', array_unique($parts)) : 'India';
+    }
+
+    public function hasUploadedImages(): bool
+    {
+        return $this->images->isNotEmpty();
+    }
+
     public function isNegotiable(): bool
     {
         return (bool) ($this->is_negotiable ?? true);
@@ -634,7 +854,31 @@ class Product extends Model
 
     public function isSold(): bool
     {
-        return (bool) ($this->is_sold ?? false);
+        return (bool) ($this->is_sold ?? false) || $this->used_status === 'sold';
+    }
+
+    public function markReserved(?int $buyerUserId = null): void
+    {
+        $this->update([
+            'status' => 'active',
+            'used_status' => 'reserved',
+            'is_sold' => false,
+            'reserved_for_user_id' => $buyerUserId,
+            'reserved_at' => now(),
+        ]);
+    }
+
+    public function markAvailable(): void
+    {
+        $this->update([
+            'status' => 'active',
+            'used_status' => 'active',
+            'is_sold' => false,
+            'total_stock' => max(1, (int) ($this->quantity_available ?: 1)),
+            'reserved_for_user_id' => null,
+            'reserved_at' => null,
+            'sold_at' => null,
+        ]);
     }
 
     public function markAsSold(): void
@@ -642,12 +886,24 @@ class Product extends Model
         $this->update([
             'is_sold' => true,
             'total_stock' => 0,
+            'used_status' => $this->isUsedListing() ? 'sold' : $this->used_status,
+            'sold_at' => now(),
         ]);
     }
 
     public function scopeUsed($query)
     {
         return $query->where('vertical', 'used');
+    }
+
+    public function scopeUsedPublic($query)
+    {
+        return $query->where('vertical', 'used')
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('used_status')
+                  ->orWhereIn('used_status', ['active', 'reserved', 'sold']);
+            });
     }
 
     public function bookings(): HasMany
@@ -765,13 +1021,43 @@ class Product extends Model
 
     public function isVeg(): bool
     {
+        if (!empty($this->dietary_label)) {
+            $label = strtolower(trim((string) $this->dietary_label));
+            if (in_array($label, ['veg', 'pure_veg', 'pure veg', 'vegan', 'jain'], true)) {
+                return true;
+            }
+            if (in_array($label, ['non_veg', 'non-veg', 'non veg', 'egg', 'eggitarian'], true)) {
+                return false;
+            }
+        }
+
         $cf = json_encode($this->custom_fields ?? []);
-        return str_contains(strtolower($cf), 'veg') && !str_contains(strtolower($cf), 'non-veg');
+        return str_contains(strtolower($cf), 'veg') && !str_contains(strtolower($cf), 'non-veg') && !str_contains(strtolower($cf), 'non_veg');
+    }
+
+    public function getDietaryLabelResolvedAttribute(): string
+    {
+        $label = strtolower(trim((string) ($this->dietary_label ?: ($this->custom_fields['dietary_type'] ?? ''))));
+
+        return match ($label) {
+            'pure_veg', 'pure veg' => 'Pure Veg',
+            'vegan' => 'Vegan',
+            'jain' => 'Jain',
+            'egg', 'eggitarian' => 'Egg',
+            'non_veg', 'non-veg', 'non veg' => 'Non-Veg',
+            'veg' => 'Veg',
+            default => $this->isVeg() ? 'Veg' : 'Non-Veg',
+        };
+    }
+
+    public function isDishCurrentlyAvailable(): bool
+    {
+        return app(\App\Services\Food\FoodMarketplaceService::class)->isDishAvailableForOrder($this);
     }
 
     public function getDietaryTypeAttribute(): string
     {
-        return $this->custom_fields['dietary_type'] ?? ($this->isVeg() ? 'Veg' : 'Non-Veg');
+        return $this->dietary_label_resolved;
     }
 
     public function getSpiceLevelAttribute(): ?string

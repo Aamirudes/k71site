@@ -12,20 +12,33 @@ class ProductModifier extends Model
 
     protected $fillable = [
         'product_id',
+        'option_group_id',
         'group_name',
         'modifier_name',
         'price_delta',
         'is_required',
+        'is_available',
+        'is_default',
+        'sort_order',
     ];
 
     protected $casts = [
+        'option_group_id' => 'integer',
         'price_delta' => 'decimal:2',
         'is_required' => 'boolean',
+        'is_available' => 'boolean',
+        'is_default' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class)->withoutGlobalScopes();
+    }
+
+    public function optionGroup(): BelongsTo
+    {
+        return $this->belongsTo(ProductOptionGroup::class, 'option_group_id');
     }
 
     /**

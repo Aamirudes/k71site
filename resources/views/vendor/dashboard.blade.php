@@ -309,6 +309,12 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2.5">
+                @if($vendor->isFood())
+                <a href="{{ route('vendor.food.menu') }}" class="bw-btn-white px-3.5 py-2.5 text-xs font-bold flex items-center gap-1.5">
+                    <span>🍽️ Menu Builder</span>
+                </a>
+                @endif
+
                 <a href="{{ route('vendor.products.create') }}" class="bw-btn-black px-4 py-2.5 text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     <span>{{ $currV['action'] }}</span>
@@ -338,6 +344,77 @@
             <div class="p-4 bg-zinc-900 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-xs">
                 <span>✕ {{ session('error') }}</span>
             </div>
+        @endif
+
+        @if(!empty($foodKitchenMetrics))
+        @php
+            $kitchenOp = $foodKitchenMetrics['operational_status'] ?? [];
+            $isAcceptingFood = (bool) ($kitchenOp['accepting_orders'] ?? false);
+        @endphp
+        <div class="bw-card p-6 border-2 border-black space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-200">
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xl">🍳</span>
+                        <h2 class="text-sm sm:text-base font-black text-black uppercase tracking-wider">Live Kitchen Operations</h2>
+                        <span class="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full border {{ $isAcceptingFood ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200' }}">
+                            <span class="w-1.5 h-1.5 rounded-full {{ $isAcceptingFood ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
+                            {{ $kitchenOp['label'] ?? ($isAcceptingFood ? 'Accepting Orders' : 'Paused') }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-0.5">
+                        Hours: {{ $kitchenOp['hours_text'] ?? 'Not configured' }}
+                        @if(!empty($kitchenOp['reason']))
+                            • {{ $kitchenOp['reason'] }}
+                        @endif
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <form action="{{ route('vendor.food.toggle_orders') }}" method="POST" class="inline">
+                        @csrf
+                        <input type="hidden" name="is_accepting_food_orders" value="{{ ($vendor->settings?->is_accepting_food_orders ?? true) ? '0' : '1' }}">
+                        <button type="submit" class="bw-btn-white px-3.5 py-2 text-xs font-bold cursor-pointer">
+                            {{ ($vendor->settings?->is_accepting_food_orders ?? true) ? '⏸ Pause Intake' : '▶ Resume Intake' }}
+                        </button>
+                    </form>
+                    <a href="{{ route('vendor.food.menu') }}" class="bw-btn-black px-3.5 py-2 text-xs font-bold">
+                        Open Menu Builder →
+                    </a>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                <a href="{{ route('vendor.orders.index', ['status' => 'to_pack']) }}" class="p-3 rounded-xl bg-amber-50/70 border border-amber-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-amber-800 font-bold block">New Orders</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['new_orders'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('vendor.orders.index', ['status' => 'to_pack']) }}" class="p-3 rounded-xl bg-rose-50/70 border border-rose-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-rose-800 font-bold block">Cooking</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['preparing_orders'] ?? 0 }}</span>
+                </a>
+                <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-200">
+                    <span class="text-[10px] font-mono uppercase text-sky-800 font-bold block">Ready Pickup</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['ready_orders'] ?? 0 }}</span>
+                </div>
+                <a href="{{ route('vendor.orders.index', ['status' => 'shipped']) }}" class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-indigo-800 font-bold block">On Delivery</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['out_for_delivery'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('vendor.food.menu') }}" class="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-emerald-800 font-bold block">Active Dishes</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['active_dishes'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('vendor.food.menu') }}" class="p-3 rounded-xl bg-zinc-50 border border-zinc-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-zinc-600 font-bold block">Sold Out</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['paused_dishes'] ?? 0 }}</span>
+                </a>
+                <a href="{{ route('vendor.food.menu') }}" class="p-3 rounded-xl bg-zinc-50 border border-zinc-200 hover:border-black transition">
+                    <span class="text-[10px] font-mono uppercase text-zinc-600 font-bold block">Sections</span>
+                    <span class="text-2xl font-black font-mono text-black">{{ $foodKitchenMetrics['menu_categories_count'] ?? 0 }}</span>
+                </a>
+            </div>
+        </div>
         @endif
 
         <!-- ====================================================================

@@ -938,16 +938,34 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         }
 
-        .glass-msg-row.sent .glass-msg-bubble {
+        html:not(.dark) .glass-msg-row.sent .glass-msg-bubble {
             background: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%) !important;
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
             border-bottom-right-radius: 4px;
             border: none !important;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
-        .glass-msg-row.sent .glass-msg-bubble * {
+        html:not(.dark) .glass-msg-row.sent .glass-msg-bubble * {
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
+        }
+        html.dark .glass-msg-row.sent .glass-msg-bubble,
+        .dark .glass-msg-row.sent .glass-msg-bubble,
+        html.dark .glass-bubble.sent,
+        .dark .glass-bubble.sent {
+            background: linear-gradient(135deg, #ECD2F3 0%, #FFCDFF 100%) !important;
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            border-bottom-right-radius: 4px;
+            border: none !important;
+        }
+        html.dark .glass-msg-row.sent .glass-msg-bubble *,
+        .dark .glass-msg-row.sent .glass-msg-bubble *,
+        html.dark .glass-bubble.sent *,
+        .dark .glass-bubble.sent * {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
         }
 
         .glass-msg-row.received .glass-msg-bubble {

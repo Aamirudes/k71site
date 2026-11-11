@@ -288,6 +288,20 @@ class DashboardController extends Controller
             ];
         }
 
+        $foodKitchenMetrics = null;
+        if ($isFoodOrFeasto && ($vendor->isFood() || ($vendor->settings?->is_restaurant ?? false))) {
+            $foodKitchenMetrics = [
+                'operational_status' => app(\App\Services\Food\FoodMarketplaceService::class)->getRestaurantOperationalStatus($vendor),
+                'new_orders' => Order::where('vendor_id', $vendor->id)->whereIn('order_type', ['food_delivery', 'food_takeaway'])->where('status', 'pending')->count(),
+                'preparing_orders' => Order::where('vendor_id', $vendor->id)->whereIn('order_type', ['food_delivery', 'food_takeaway'])->where('status', 'processing')->count(),
+                'ready_orders' => Order::where('vendor_id', $vendor->id)->whereIn('order_type', ['food_delivery', 'food_takeaway'])->where('status', 'ready_for_pickup')->count(),
+                'out_for_delivery' => Order::where('vendor_id', $vendor->id)->whereIn('order_type', ['food_delivery', 'food_takeaway'])->where('status', 'shipped')->count(),
+                'active_dishes' => Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->where('vertical', 'food')->where('status', 'active')->where('is_dish_available', true)->count(),
+                'paused_dishes' => Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->where('vertical', 'food')->where('status', 'active')->where('is_dish_available', false)->count(),
+                'menu_categories_count' => \App\Models\FoodMenuCategory::where('vendor_id', $vendor->id)->count(),
+            ];
+        }
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -312,7 +326,8 @@ class DashboardController extends Controller
             'deliveryPartners',
             'isFoodOrFeasto',
             'pendingDispatchOrders',
-            'serviceMetrics'
+            'serviceMetrics',
+            'foodKitchenMetrics'
         ));
     }
 }

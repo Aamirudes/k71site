@@ -368,7 +368,8 @@ class UniversalDynamicVariantEngineTest extends TestCase
             'is_sold' => false,
         ]);
 
-        $this->actingAs($this->user);
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer);
         $response = $this->postJson(route('classifieds.offer', $product->id), [
             'buyer_name' => 'Rahul Sharma',
             'buyer_phone' => '9988776655',

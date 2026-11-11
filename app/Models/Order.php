@@ -17,13 +17,16 @@ class Order extends Model
         'vendor_id',
         'order_number',
         'order_type',
+        'pickup_code',
         'item_count',
         'subtotal',
         'shipping_amount',
+        'packaging_amount',
         'tax_amount',
         'discount_amount',
         'total_amount',
         'status',
+        'food_fulfillment_stage',
         'payment_method',
         'payment_status',
         'address_snapshot',
@@ -48,12 +51,17 @@ class Order extends Model
         'vendor_payout_utr',
         'vendor_payout_at',
         'vendor_accepted_at',
+        'accepted_at',
+        'preparing_at',
+        'ready_at',
+        'out_for_delivery_at',
         'vendor_rejected_at',
         'vendor_rejection_reason',
     ];
 
     protected $casts = [
         'address_snapshot' => 'json',
+        'packaging_amount' => 'integer',
         'cancelled_at' => 'datetime',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
@@ -63,6 +71,10 @@ class Order extends Model
         'settled_at' => 'datetime',
         'vendor_payout_at' => 'datetime',
         'vendor_accepted_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'preparing_at' => 'datetime',
+        'ready_at' => 'datetime',
+        'out_for_delivery_at' => 'datetime',
         'vendor_rejected_at' => 'datetime',
     ];
 
@@ -96,6 +108,32 @@ class Order extends Model
     public function isFoodTakeaway(): bool
     {
         return $this->order_type === 'food_takeaway';
+    }
+
+    public function canCustomerCancel(): bool
+    {
+        if (in_array($this->status, ['cancelled', 'shipped', 'out_for_delivery', 'delivered', 'returned', 'refunded', 'ready_for_pickup'], true)) {
+            return false;
+        }
+        return true;
+    }
+
+    public function getFoodStageLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'pending' => 'Order Placed',
+            'processing' => 'Preparing in Kitchen',
+            'ready_for_pickup' => $this->isFoodTakeaway() ? 'Ready for Pickup' : 'Ready for Dispatch',
+            'shipped', 'out_for_delivery' => 'Out for Delivery',
+            'delivered' => 'Delivered',
+            'cancelled' => 'Cancelled',
+            default => ucfirst(str_replace('_', ' ', $this->status ?? 'Pending')),
+        };
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
     }
 
     public function items(): HasMany

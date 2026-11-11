@@ -16,8 +16,11 @@ class Review extends Model
         'user_id',
         'order_id',
         'vendor_id',
+        'review_type',
         'service_order_id',
         'project_contract_id',
+        'used_transaction_id',
+        'reviewed_user_id',
         'rating',
         'title',
         'body',
@@ -64,6 +67,16 @@ class Review extends Model
     public function projectContract(): BelongsTo
     {
         return $this->belongsTo(ProjectContract::class, 'project_contract_id');
+    }
+
+    public function usedTransaction(): BelongsTo
+    {
+        return $this->belongsTo(UsedTransaction::class, 'used_transaction_id');
+    }
+
+    public function reviewedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_user_id');
     }
 
     public function getCommentAttribute(): ?string

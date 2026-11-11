@@ -19,7 +19,7 @@
                         </a>
 
                         @php
-                            $canCancel = in_array($order->status, ['pending', 'processing']) && ($order->vendor?->settings?->allow_customer_cancellation ?? true);
+                            $canCancel = $order->canCustomerCancel() && ($order->vendor?->settings?->allow_customer_cancellation ?? true);
                         @endphp
                         @if($canCancel)
                             <button type="button" @click="showCancelModal = true" class="px-4 py-2.5 rounded-full text-xs font-bold text-rose-300 hover:bg-rose-500/20 border border-rose-400/30 transition-colors cursor-pointer">
@@ -56,7 +56,7 @@
             $statusStep = match($order->status) {
                 'pending' => 1,
                 'processing' => 2,
-                'shipped', 'out_for_delivery' => 3,
+                'ready_for_pickup', 'shipped', 'out_for_delivery' => 3,
                 'delivered' => 4,
                 default => 0,
             };
@@ -92,6 +92,10 @@
                             </span>
                             🛵 Out for Delivery
                         </span>
+                    @elseif($order->status === 'ready_for_pickup')
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            {{ $order->isFoodTakeaway() ? '🥡 Ready for Pickup' : '🍳 Packed & Ready' }}
+                        </span>
                     @elseif($order->status === 'shipped')
                         <span class="px-3 py-1 rounded-full text-xs font-bold bg-[#F8EFFA] text-[#623562] border border-[#ECD2F3]">
                             Shipped · In Transit
@@ -121,26 +125,39 @@
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 p-4 rounded-2xl bg-white border border-orange-200/80 shadow-xs">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-2xl bg-[#ea580c] text-white flex items-center justify-center text-lg font-bold shadow-md shadow-orange-500/20">
-                                    {{ $isDelivered ? '🍽️' : ($isOutForDelivery ? '🛵' : '🍳') }}
+                                    {{ $isDelivered ? '🍽️' : ($isOutForDelivery ? '🛵' : ($order->status === 'ready_for_pickup' ? '🥡' : '🍳')) }}
                                 </div>
                                 <div>
                                     <h3 class="text-sm font-black text-stone-900">
-                                        {{ $isDelivered ? 'Order Delivered!' : ($isOutForDelivery ? ($order->isFoodTakeaway() ? 'Ready for Self Pickup' : 'Out for Doorstep Delivery') : ($order->status === 'processing' ? 'Kitchen is Cooking your Meal' : 'Order Placed & Confirmed')) }}
+                                        {{ $isDelivered ? ($order->isFoodTakeaway() ? 'Order Picked Up & Completed!' : 'Order Delivered!') : ($isOutForDelivery ? 'Out for Doorstep Delivery' : ($order->status === 'ready_for_pickup' ? ($order->isFoodTakeaway() ? 'Ready for Self Pickup!' : 'Packed & Ready for Dispatch') : ($order->status === 'processing' ? 'Kitchen is Cooking your Meal' : 'Order Placed & Confirmed'))) }}
                                     </h3>
                                     <p class="text-xs text-stone-500">
                                         @if($isDelivered)
-                                            Delivered at {{ $order->delivered_at ? $order->delivered_at->format('h:i A') : 'Doorstep' }}. Enjoy your meal!
+                                            {{ $order->isFoodTakeaway() ? 'Picked up' : 'Delivered' }} {{ $order->delivered_at ? 'at ' . $order->delivered_at->format('h:i A') : '' }}. Enjoy your meal!
+                                        @elseif($order->estimated_delivery_time)
+                                            Estimated {{ $order->isFoodTakeaway() ? 'Pickup' : 'Delivery' }}: {{ $order->estimated_delivery_time->format('h:i A') }}
+                                        @elseif($order->vendor?->settings?->avg_prep_time_mins)
+                                            Kitchen preparation time: ~{{ (int) $order->vendor->settings->avg_prep_time_mins }} mins
                                         @else
-                                            Estimated Delivery: ~{{ $order->estimated_delivery_time ? $order->estimated_delivery_time->format('h:i A') : $order->created_at->addMinutes(30)->format('h:i A') }} (approx 25-35 mins)
+                                            Freshly prepared to order at {{ $order->vendor?->shop_name ?? 'the kitchen' }}
                                         @endif
                                     </p>
+                                    @if($order->isFoodTakeaway() && $order->pickup_code)
+                                        <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900">
+                                            <span>Counter Pickup Code:</span>
+                                            <span class="font-mono font-black tracking-widest text-sm select-all">{{ $order->pickup_code }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('food.reorder', $order->id) }}" class="px-4 py-2 rounded-xl bg-orange-50 border border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black transition active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer">
-                                    <span>🔄</span>
-                                    <span>1-Click Reorder</span>
-                                </a>
+                                <form action="{{ route('food.reorder', $order->id) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="px-4 py-2 rounded-xl bg-orange-50 border border-[#ea580c] text-[#ea580c] hover:bg-[#ea580c] hover:text-white text-xs font-black transition active:scale-95 shadow-xs flex items-center gap-1.5 cursor-pointer">
+                                        <span>🔄</span>
+                                        <span>1-Click Reorder</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
 
@@ -148,7 +165,7 @@
                         <div class="grid grid-cols-4 gap-2 relative">
                             <div class="absolute top-3.5 left-6 right-6 h-1 bg-stone-100 -z-0"></div>
                             <div class="absolute top-3.5 left-6 h-1 bg-[#ea580c] -z-0 transition-all duration-500" 
-                                 style="width: {{ $isDelivered ? '92%' : ($isOutForDelivery ? '70%' : ($statusStep >= 2 ? '38%' : '5%')) }};"></div>
+                                 style="width: {{ $isDelivered ? '92%' : (($isOutForDelivery || $order->status === 'ready_for_pickup' || $statusStep >= 3) ? '70%' : ($statusStep >= 2 ? '38%' : '5%')) }};"></div>
 
                             <div class="flex flex-col items-center text-center relative z-10">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xs {{ $statusStep >= 1 ? 'bg-[#ea580c] text-white ring-4 ring-orange-100' : 'bg-stone-100 text-stone-400' }}">✓</div>
@@ -242,6 +259,11 @@
                                     @endforeach
                                 </div>
                             @endif
+                            @if(!empty($item->special_instructions))
+                                <p class="mt-1.5 text-[11px] text-orange-900 bg-orange-50/80 border border-orange-200/70 rounded-lg px-2.5 py-1 inline-block">
+                                    <strong>Note:</strong> {{ $item->special_instructions }}
+                                </p>
+                            @endif
                         </div>
                         <div class="text-right shrink-0">
                             <p class="text-sm sm:text-base font-bold text-[#1A1018] tabular-nums">₹{{ number_format($item->total_price / 100, 2) }}</p>
@@ -288,8 +310,24 @@
             <div class="px-6 sm:px-8 py-5 border-t border-black/6 grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#FAF8F5]">
                 <!-- Address -->
                 <div class="bg-white rounded-2xl border border-black/8 p-4">
-                    <p class="text-xs uppercase tracking-wider font-bold text-[#7A6B78] mb-2">Delivery Address</p>
-                    @if($order->address_snapshot)
+                    <p class="text-xs uppercase tracking-wider font-bold text-[#7A6B78] mb-2">
+                        {{ $order->isFoodTakeaway() ? 'Self Pickup Counter & Details' : 'Delivery Address' }}
+                    </p>
+                    @if($order->isFoodTakeaway())
+                        <div class="text-xs text-[#7A6B78] space-y-1 leading-relaxed">
+                            <p class="font-bold text-[#1A1018]">{{ $order->vendor?->shop_name ?? 'Restaurant Counter' }}</p>
+                            @if($order->pickup_code)
+                                <p>Pickup Code: <span class="font-mono font-bold text-[#1A1018] bg-[#FAF8F5] px-2 py-0.5 rounded border border-black/10">{{ $order->pickup_code }}</span></p>
+                            @endif
+                            @php $vPickup = is_array($order->vendor?->pickup_address) ? $order->vendor->pickup_address : []; @endphp
+                            @if(!empty($vPickup['line_1']) || $order->vendor?->city)
+                                <p>{{ $vPickup['line_1'] ?? '' }}{{ !empty($vPickup['city']) || $order->vendor?->city ? ', ' . ($vPickup['city'] ?? $order->vendor?->city) : '' }}</p>
+                            @endif
+                            @if(!empty($order->address_snapshot['phone']))
+                                <p class="font-mono">Contact: {{ $order->address_snapshot['phone'] }}</p>
+                            @endif
+                        </div>
+                    @elseif($order->address_snapshot)
                         <div class="text-xs text-[#7A6B78] space-y-0.5 leading-relaxed">
                             <p class="font-bold text-[#1A1018]">{{ $order->address_snapshot['line_1'] ?? '' }}</p>
                             <p>{{ $order->address_snapshot['city'] ?? '' }}, {{ $order->address_snapshot['state'] ?? '' }} - {{ $order->address_snapshot['pincode'] ?? '' }}</p>
@@ -311,9 +349,15 @@
                             <dd class="font-medium text-[#1A1018] tabular-nums">₹{{ number_format($order->subtotal / 100, 2) }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt>Shipping</dt>
+                            <dt>{{ $order->isFoodOrder() ? 'Delivery Fee' : 'Shipping' }}</dt>
                             <dd class="font-medium text-[#1A1018] tabular-nums">₹{{ number_format($order->shipping_amount / 100, 2) }}</dd>
                         </div>
+                        @if(($order->packaging_amount ?? 0) > 0)
+                            <div class="flex justify-between">
+                                <dt>Kitchen Packaging Fee</dt>
+                                <dd class="font-medium text-[#1A1018] tabular-nums">₹{{ number_format($order->packaging_amount / 100, 2) }}</dd>
+                            </div>
+                        @endif
                         @if($order->discount_amount > 0)
                             <div class="flex justify-between text-emerald-700 font-semibold">
                                 <dt>Discount</dt>
@@ -344,6 +388,108 @@
                 </div>
             </div>
         </div>
+
+        @if($order->isFoodOrder() && $isDelivered && auth()->check() && (int) auth()->id() === (int) $order->user_id)
+            @php
+                $existingFoodReview = $order->reviews->where('review_type', 'food_order')->first();
+            @endphp
+            <div class="bg-white rounded-[28px] border border-black/8 shadow-[0_12px_36px_rgba(26,16,24,0.06)] overflow-hidden mb-6">
+                <div class="bg-orange-50/70 px-6 py-4 border-b border-orange-100 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-stone-900">Rate Your Meal from {{ $order->vendor?->shop_name ?? 'Kitchen' }}</h3>
+                        <p class="text-xs text-stone-500 mt-0.5">Verified order review helps other diners discover great dishes.</p>
+                    </div>
+                    @if($existingFoodReview)
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            ✓ Reviewed
+                        </span>
+                    @endif
+                </div>
+
+                <div class="p-6 sm:p-8">
+                    @if($existingFoodReview)
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-xs font-black">
+                                    ★ {{ number_format((float) $existingFoodReview->rating, 1) }}
+                                </span>
+                                @if($existingFoodReview->title)
+                                    <h4 class="text-sm font-bold text-stone-900">{{ $existingFoodReview->title }}</h4>
+                                @endif
+                                <span class="text-xs text-stone-400 ml-auto">{{ $existingFoodReview->created_at?->diffForHumans() }}</span>
+                            </div>
+                            <p class="text-sm text-stone-700 leading-relaxed">{{ $existingFoodReview->body }}</p>
+
+                            @if(!empty($existingFoodReview->images) && is_array($existingFoodReview->images))
+                                <div class="flex flex-wrap gap-2.5 pt-1">
+                                    @foreach($existingFoodReview->images as $img)
+                                        <a href="{{ asset('storage/' . $img) }}" target="_blank" class="w-16 h-16 rounded-xl overflow-hidden border border-black/10 block">
+                                            <img src="{{ asset('storage/' . $img) }}" alt="Meal photo" class="w-full h-full object-cover">
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if($existingFoodReview->vendor_reply)
+                                <div class="mt-3 p-3.5 rounded-2xl bg-[#FAF8F5] border border-black/8">
+                                    <p class="text-[11px] font-bold uppercase tracking-wider text-[#623562] mb-1">Kitchen Response</p>
+                                    <p class="text-xs text-stone-700">{{ $existingFoodReview->vendor_reply }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    @elseif(!($hasFoodOrderReview ?? false))
+                        <form action="{{ route('food.orders.review', $order->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                            @csrf
+                            <div x-data="{ rating: {{ (int) old('rating', 5) }} }">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">Overall Rating</label>
+                                <input type="hidden" name="rating" :value="rating">
+                                <div class="flex items-center gap-2">
+                                    @for($star = 1; $star <= 5; $star++)
+                                        <button type="button"
+                                                @click="rating = {{ $star }}"
+                                                :class="rating >= {{ $star }} ? 'bg-[#ea580c] text-white border-[#ea580c]' : 'bg-stone-50 text-stone-400 border-stone-200 hover:border-stone-300'"
+                                                class="px-3.5 py-2 rounded-xl border text-xs font-black transition cursor-pointer">
+                                            ★ {{ $star }}
+                                        </button>
+                                    @endfor
+                                </div>
+                                @error('rating') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="food_review_title" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">Headline (Optional)</label>
+                                <input type="text" name="title" id="food_review_title" value="{{ old('title') }}" maxlength="200"
+                                       placeholder="e.g. Piping hot biryani and generous portions"
+                                       class="grail-input-light w-full rounded-xl px-3.5 py-2.5 text-sm">
+                                @error('title') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="food_review_body" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">Your Review <span class="text-rose-500">*</span></label>
+                                <textarea name="body" id="food_review_body" rows="3" required maxlength="2000"
+                                          placeholder="Tell others about taste, packaging, freshness, and portion sizes..."
+                                          class="grail-input-light w-full rounded-xl px-3.5 py-2.5 text-sm">{{ old('body') }}</textarea>
+                                @error('body') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label for="food_review_images" class="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-1.5">Meal Photos (Optional, up to 4)</label>
+                                <input type="file" name="images[]" id="food_review_images" accept="image/jpeg,image/png,image/webp,image/jpg" multiple
+                                       class="block w-full text-xs text-stone-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-[#ea580c] hover:file:bg-orange-100 cursor-pointer">
+                                @error('images') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                                @error('images.*') <p class="text-xs text-rose-600 mt-1">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="pt-2">
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-black shadow-sm transition cursor-pointer">
+                                    Submit Verified Review
+                                </button>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         <!-- Cancellation Modal -->
         @if($canCancel)

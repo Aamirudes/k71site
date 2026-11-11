@@ -31,12 +31,26 @@
             <div class="flex justify-between items-start border-b border-gray-100 pb-8 mb-8">
                 <div>
                     <h1 class="text-4xl font-serif font-bold text-gray-900 tracking-tight">{{ $order->vendor?->shop_name ?? 'K71 Direct Store' }}</h1>
-                    <p class="text-gray-500 mt-2 text-sm max-w-xs">The premier multi-vendor fashion marketplace. Discover unique brands, designers, and boutiques all in one place.</p>
+                    <p class="text-gray-500 mt-2 text-sm max-w-xs">
+                        @if($order->isFoodOrder())
+                            Fresh culinary order receipt powered by K71 Food.
+                        @else
+                            The premier multi-vendor fashion marketplace. Discover unique brands, designers, and boutiques all in one place.
+                        @endif
+                    </p>
                 </div>
                 <div class="text-right">
                     <h2 class="text-3xl font-light text-gray-400 uppercase tracking-widest mb-2">Invoice</h2>
                     <p class="text-gray-900 font-bold text-lg">#{{ $order->order_number }}</p>
                     <p class="text-gray-500 text-sm mt-1">Date: {{ $order->created_at->format('M d, Y') }}</p>
+                    @if($order->isFoodOrder())
+                        <p class="text-xs font-semibold text-orange-700 mt-1">
+                            {{ $order->isFoodTakeaway() ? 'Takeaway / Self Pickup' : 'Doorstep Food Delivery' }}
+                            @if($order->isFoodTakeaway() && $order->pickup_code)
+                                · Pickup Code: <span class="font-mono font-bold">{{ $order->pickup_code }}</span>
+                            @endif
+                        </p>
+                    @endif
                 </div>
             </div>
 
@@ -82,6 +96,14 @@
                             <td class="p-4">
                                 <p class="font-medium text-gray-900">{{ $item->product?->title ?? $item->snapshot['title'] ?? 'Product' }}</p>
                                 <p class="text-xs text-gray-500 mt-0.5">SKU: {{ $item->variant?->sku ?? $item->snapshot['variant_sku'] ?? 'N/A' }}</p>
+                                @if(!empty($item->selected_modifiers_json))
+                                    <p class="text-[11px] text-amber-800 mt-1">
+                                        Add-ons: {{ collect($item->selected_modifiers_json)->pluck('name')->implode(', ') }}
+                                    </p>
+                                @endif
+                                @if(!empty($item->special_instructions))
+                                    <p class="text-[11px] text-orange-800 mt-0.5">Note: {{ $item->special_instructions }}</p>
+                                @endif
                             </td>
                             <td class="p-4 text-center text-gray-500">{{ $item->hsn_code ?? 'N/A' }}</td>
                             <td class="p-4 text-center font-medium">{{ $item->quantity }}</td>
@@ -102,9 +124,21 @@
                         <span class="font-medium text-gray-900">₹{{ number_format($order->subtotal / 100, 2) }}</span>
                     </div>
                     <div class="flex justify-between text-gray-600">
-                        <span>Shipping</span>
+                        <span>{{ $order->isFoodOrder() ? 'Delivery Fee' : 'Shipping' }}</span>
                         <span class="font-medium text-gray-900">₹{{ number_format($order->shipping_amount / 100, 2) }}</span>
                     </div>
+                    @if(($order->packaging_amount ?? 0) > 0)
+                        <div class="flex justify-between text-gray-600">
+                            <span>Kitchen Packaging</span>
+                            <span class="font-medium text-gray-900">₹{{ number_format($order->packaging_amount / 100, 2) }}</span>
+                        </div>
+                    @endif
+                    @if(($order->discount_amount ?? 0) > 0)
+                        <div class="flex justify-between text-emerald-700 font-medium">
+                            <span>Discount</span>
+                            <span>-₹{{ number_format($order->discount_amount / 100, 2) }}</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between text-xs text-gray-400">
                         <span>Tax Included</span>
                         <span>₹{{ number_format($order->tax_amount / 100, 2) }}</span>

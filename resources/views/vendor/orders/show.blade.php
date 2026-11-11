@@ -202,6 +202,13 @@
                                             @endforeach
                                         </div>
                                     @endif
+                                    @if(!empty($item->special_instructions))
+                                        <div class="mt-1.5">
+                                            <span class="inline-flex items-center gap-1 text-[11px] text-rose-800 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 font-semibold">
+                                                📝 Note: {{ $item->special_instructions }}
+                                            </span>
+                                        </div>
+                                    @endif
                                     @if($item->gigPackage)
                                         <div class="mt-1.5">
                                             <span class="text-xs text-indigo-700 bg-indigo-50 border border-indigo-200 font-bold px-2 py-0.5 rounded">
@@ -280,12 +287,30 @@
                             <span class="font-medium">₹{{ number_format($order->subtotal / 100, 2) }}</span>
                         </div>
 
+                        @if(($order->discount_amount ?? 0) > 0)
+                            <div class="flex justify-between text-emerald-700">
+                                <span>Coupon Discount</span>
+                                <span class="font-medium">-₹{{ number_format($order->discount_amount / 100, 2) }}</span>
+                            </div>
+                        @endif
+
+                        @if(($order->packaging_amount ?? 0) > 0)
+                            <div class="flex justify-between text-stone-700">
+                                <span>Restaurant Packaging Charge</span>
+                                <span class="font-medium">₹{{ number_format($order->packaging_amount / 100, 2) }}</span>
+                            </div>
+                        @endif
+
                         <div class="flex justify-between text-stone-700">
                             <span class="flex items-center gap-1">
-                                <span>Doorstep Shipping Fee</span>
-                                <span class="text-[10px] text-stone-500 font-mono">({{ $totalConsignmentWeight >= 1000 ? number_format($totalConsignmentWeight / 1000, 2) . ' kg' : $totalConsignmentWeight . 'g' }} parcel)</span>
+                                @if($order->isFoodOrder())
+                                    <span>{{ $order->isFoodTakeaway() ? 'Self Pickup / Takeaway Fee' : 'Local Food Delivery Fee' }}</span>
+                                @else
+                                    <span>Doorstep Shipping Fee</span>
+                                    <span class="text-[10px] text-stone-500 font-mono">({{ $totalConsignmentWeight >= 1000 ? number_format($totalConsignmentWeight / 1000, 2) . ' kg' : $totalConsignmentWeight . 'g' }} parcel)</span>
+                                @endif
                             </span>
-                            <span class="font-medium">₹{{ number_format($order->shipping_amount / 100, 2) }}</span>
+                            <span class="font-medium">{{ $order->shipping_amount > 0 ? '₹' . number_format($order->shipping_amount / 100, 2) : 'FREE' }}</span>
                         </div>
 
                         <div class="flex justify-between text-sm font-bold text-stone-900 border-t border-stone-200 pt-2">
@@ -296,7 +321,12 @@
                         <div class="mt-2.5 p-2.5 bg-amber-50/80 border border-amber-200/80 rounded-lg text-[11px] text-amber-900 leading-relaxed flex items-start gap-2">
                             <span class="text-amber-600 text-sm leading-none shrink-0">💡</span>
                             <span>
-                                The 5% platform commission is taken <strong>strictly from your product cost (₹{{ number_format($order->subtotal / 100, 2) }})</strong>. The ₹{{ number_format($order->shipping_amount / 100, 2) }} delivery fee is paid by the customer directly for courier shipping and is not part of your product deduction.
+                                The 5% platform commission is taken <strong>strictly from your product cost (₹{{ number_format($order->subtotal / 100, 2) }})</strong>.
+                                @if($order->isFoodOrder())
+                                    Delivery (₹{{ number_format($order->shipping_amount / 100, 2) }}) and packaging (₹{{ number_format(($order->packaging_amount ?? 0) / 100, 2) }}) charges are separate from product commission deductions.
+                                @else
+                                    The ₹{{ number_format($order->shipping_amount / 100, 2) }} delivery fee is paid by the customer directly for courier shipping and is not part of your product deduction.
+                                @endif
                             </span>
                         </div>
                     </div>
@@ -312,11 +342,16 @@
                             🍳
                         </div>
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <h3 class="text-base font-bold text-gray-900">Food Order &amp; Kitchen Dispatch</h3>
                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold {{ $order->isFoodTakeaway() ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800' }}">
                                     {{ $order->isFoodTakeaway() ? '🥡 Takeaway / Pickup' : '🛵 Doorstep Delivery' }}
                                 </span>
+                                @if(!empty($order->pickup_code))
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-mono font-black bg-gray-900 text-white">
+                                        Pickup OTP: {{ $order->pickup_code }}
+                                    </span>
+                                @endif
                             </div>
                             <p class="text-xs text-gray-500 mt-0.5">Manage live kitchen cooking lifecycle and direct local dispatch.</p>
                         </div>
@@ -325,7 +360,13 @@
                     <div class="flex items-center gap-2 text-xs">
                         <span class="text-gray-500">Target Delivery / Pickup:</span>
                         <span class="font-bold font-mono text-gray-900 bg-white px-2.5 py-1 rounded-lg border border-gray-200">
-                            {{ $order->estimated_delivery_time ? $order->estimated_delivery_time->format('h:i A') : 'Within 30 mins' }}
+                            @if($order->estimated_delivery_time)
+                                {{ $order->estimated_delivery_time->format('h:i A') }}
+                            @elseif($order->vendor?->settings?->avg_prep_time_mins)
+                                ~{{ $order->vendor->settings->avg_prep_time_mins }} mins prep
+                            @else
+                                Pending confirmation
+                            @endif
                         </span>
                     </div>
                 </div>
@@ -1232,7 +1273,8 @@
                             }
                             $customerGreeting = $order->user?->first_name ?? $order->user?->name ?? ($custAddr['name'] ?? 'Customer');
                             $shopName = $order->vendor?->shop_name ?? 'Store';
-                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$shopName} regarding your Order #{$order->order_number}. We are preparing your garment for dispatch.");
+                            $waItemLabel = $order->isFoodOrder() ? 'fresh food order' : 'order';
+                            $waMsg = rawurlencode("Namaste {$customerGreeting}! This is {$shopName} regarding your Order #{$order->order_number}. We are preparing your {$waItemLabel}.");
                         @endphp
 
                         <div class="mb-4">
@@ -1241,8 +1283,20 @@
                                 <p class="text-gray-500"><a href="mailto:{{ $customerEmail }}" class="hover:underline">{{ $customerEmail }}</a></p>
                             @endif
                         </div>
+
+                        @if($order->isFoodTakeaway())
+                            <div class="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-bold text-amber-900">🥡 Counter Takeaway / Self Pickup</span>
+                                    @if(!empty($order->pickup_code))
+                                        <span class="font-mono font-black text-xs px-2 py-0.5 rounded bg-gray-900 text-white">OTP: {{ $order->pickup_code }}</span>
+                                    @endif
+                                </div>
+                                <p class="text-[11px] text-amber-800 mt-1">Customer will collect directly at your kitchen counter.</p>
+                            </div>
+                        @endif
                         
-                        <h4 class="font-medium text-gray-900 mb-1 mt-6">Shipping Address</h4>
+                        <h4 class="font-medium text-gray-900 mb-1 mt-6">{{ $order->isFoodTakeaway() ? 'Customer Contact Address' : 'Shipping Address' }}</h4>
                         <address class="text-gray-600 not-italic">
                             {{ $custAddr['line_1'] ?? ($custAddr['address_line_1'] ?? ($custAddr['address'] ?? '')) }}<br>
                             {{ $custAddr['city'] ?? '' }}{{ !empty($custAddr['city']) && !empty($custAddr['state']) ? ', ' : '' }}{{ $custAddr['state'] ?? '' }}{{ !empty($custAddr['pincode']) ? ' - ' . $custAddr['pincode'] : '' }}<br>

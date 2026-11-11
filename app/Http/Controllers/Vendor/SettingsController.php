@@ -53,13 +53,23 @@ class SettingsController extends Controller
             'payout_method' => ['nullable', 'in:upi,bank'],
             // Food specific settings
             'is_pure_veg' => ['nullable', 'boolean'],
+            'is_accepting_food_orders' => ['nullable', 'boolean'],
+            'paused_reason' => ['nullable', 'string', 'max:255'],
+            'enforce_operating_hours' => ['nullable', 'boolean'],
+            'weekly_hours_json' => ['nullable', 'array'],
+            'service_cities' => ['nullable', 'string', 'max:500'],
             'opening_time' => ['nullable', 'string', 'max:10'],
             'closing_time' => ['nullable', 'string', 'max:10'],
             'avg_prep_time_mins' => ['nullable', 'integer', 'min:5', 'max:180'],
             'food_delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'food_packaging_fee' => ['nullable', 'numeric', 'min:0'],
+            'food_free_delivery_above' => ['nullable', 'numeric', 'min:0'],
             'min_food_order_amount' => ['nullable', 'numeric', 'min:0'],
-            'food_delivery_mode' => ['nullable', 'string', 'max:50'],
+            'food_delivery_mode' => ['nullable', 'in:both,delivery,takeaway'],
             'cuisine_types' => ['nullable', 'string'],
+            'fssai_license_number' => ['nullable', 'string', 'max:30'],
+            'food_tax_percent' => ['nullable', 'numeric', 'min:0', 'max:28'],
+            'food_settings_submitted' => ['nullable', 'boolean'],
             // Services specific settings
             'service_radius_km' => ['nullable', 'integer', 'min:1', 'max:200'],
             'service_experience_years' => ['nullable', 'integer', 'min:0', 'max:60'],
@@ -68,20 +78,61 @@ class SettingsController extends Controller
 
         if ($vendor->isFood()) {
             $validated['is_restaurant'] = 1;
-            $validated['is_pure_veg'] = $request->boolean('is_pure_veg');
+            $validated['is_pure_veg'] = $request->has('food_settings_submitted')
+                ? $request->boolean('is_pure_veg')
+                : ($request->has('is_pure_veg') ? $request->boolean('is_pure_veg') : (bool) ($settings->is_pure_veg ?? false));
+
+            if ($request->has('food_settings_submitted') || $request->has('is_accepting_food_orders')) {
+                $accepting = $request->boolean('is_accepting_food_orders');
+                $validated['is_accepting_food_orders'] = $accepting;
+                if ($accepting) {
+                    $validated['paused_reason'] = null;
+                }
+            }
+
+            if ($request->has('food_settings_submitted') || $request->has('enforce_operating_hours')) {
+                $validated['enforce_operating_hours'] = $request->boolean('enforce_operating_hours');
+            }
+
             if ($request->filled('food_delivery_fee')) {
-                $validated['food_delivery_fee'] = (int) ($request->input('food_delivery_fee') * 100);
+                $validated['food_delivery_fee'] = (int) round(((float) $request->input('food_delivery_fee')) * 100);
+            }
+            if ($request->has('food_packaging_fee')) {
+                $rawPack = $request->input('food_packaging_fee');
+                $validated['food_packaging_fee'] = ($rawPack !== null && $rawPack !== '') ? (int) round(((float) $rawPack) * 100) : 0;
+            }
+            if ($request->has('food_free_delivery_above')) {
+                $rawFree = $request->input('food_free_delivery_above');
+                $validated['food_free_delivery_above'] = ($rawFree !== null && $rawFree !== '' && (float) $rawFree > 0)
+                    ? (int) round(((float) $rawFree) * 100)
+                    : null;
             }
             if ($request->filled('min_food_order_amount')) {
-                $validated['min_food_order_amount'] = (int) ($request->input('min_food_order_amount') * 100);
+                $validated['min_food_order_amount'] = (int) round(((float) $request->input('min_food_order_amount')) * 100);
             }
             if ($request->filled('cuisine_types')) {
-                $validated['cuisine_types'] = array_map('trim', explode(',', $request->input('cuisine_types')));
+                $validated['cuisine_types'] = array_values(array_filter(array_map('trim', explode(',', $request->input('cuisine_types')))));
+            }
+            if ($request->has('service_cities')) {
+                $citiesRaw = trim((string) $request->input('service_cities', ''));
+                $validated['service_cities_json'] = $citiesRaw !== ''
+                    ? array_values(array_filter(array_map('trim', explode(',', $citiesRaw))))
+                    : null;
+            }
+            if ($request->has('fssai_license_number')) {
+                $newFssai = trim((string) $request->input('fssai_license_number', '')) ?: null;
+                $validated['fssai_license_number'] = $newFssai;
+                if ($newFssai !== $settings->fssai_license_number) {
+                    // Require fresh admin review whenever FSSAI number changes
+                    $validated['fssai_verified'] = false;
+                    $validated['fssai_verified_at'] = null;
+                }
             }
             $validated['shipping_type'] = 'flat';
             $validated['processing_days'] = 1;
             $validated['return_window_days'] = 0;
         }
+        unset($validated['service_cities'], $validated['food_settings_submitted']);
 
         // Resolve vendor payment choice (UPI, COD, or Both)
         if ($request->filled('payment_mode')) {

@@ -13,6 +13,8 @@ use App\Models\AuditLog;
 use App\Models\Review;
 use App\Models\Short;
 use App\Models\Category;
+use App\Models\UsedSellerProfile;
+use App\Models\UsedThreadMessage;
 use App\Services\SettlementService;
 use App\Services\PayoutService;
 use Carbon\Carbon;
@@ -327,7 +329,18 @@ class AdminController extends Controller
         }
 
         if ($status = $request->input('status')) {
-            $query->where('status', $status);
+            if ($status === 'active') {
+                $query->whereIn('status', ['active', 'approved']);
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        if ($request->input('type') === 'food') {
+            $query->where(function ($fq) {
+                $fq->where('vendor_type', 'food')
+                   ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
+            });
         }
 
         $vendors = $query->latest()->paginate(20)->withQueryString();
@@ -340,9 +353,13 @@ class AdminController extends Controller
 
         $counts = [
             'all' => Vendor::count(),
-            'active' => Vendor::where('status', 'active')->count(),
+            'active' => Vendor::whereIn('status', ['active', 'approved'])->count(),
             'pending' => Vendor::where('status', 'pending')->count(),
             'suspended' => Vendor::where('status', 'suspended')->count(),
+            'food' => Vendor::where(function ($fq) {
+                $fq->where('vendor_type', 'food')
+                   ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
+            })->count(),
         ];
 
         return view('admin.vendors.index', compact('vendors', 'counts'));
@@ -353,10 +370,46 @@ class AdminController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:active,pending,suspended',
         ]);
-        
+
         $vendor->update(['status' => $validated['status']]);
-        
+
         return back()->with('success', "Boutique {$vendor->shop_name} status updated to " . strtoupper($validated['status']) . ".");
+    }
+
+    public function verifyFssai(Request $request, Vendor $vendor)
+    {
+        $validated = $request->validate([
+            'verified' => 'required|boolean',
+        ]);
+
+        $settings = \App\Models\VendorSetting::firstOrCreate(['vendor_id' => $vendor->id]);
+        $verify = (bool) $validated['verified'];
+
+        if ($verify && empty(trim((string) ($settings->fssai_license_number ?? '')))) {
+            return back()->with('error', 'Cannot verify FSSAI: this kitchen has not entered an FSSAI license number yet.');
+        }
+
+        $settings->update([
+            'fssai_verified' => $verify,
+            'fssai_verified_at' => $verify ? now() : null,
+        ]);
+
+        try {
+            AuditLog::record(
+                $verify ? 'vendor.fssai_verified' : 'vendor.fssai_revoked',
+                $vendor,
+                null,
+                [
+                    'vendor_id' => $vendor->id,
+                    'fssai_license_number' => $settings->fssai_license_number,
+                    'verified' => $verify,
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        return back()->with('success', $verify
+            ? "FSSAI license verified for {$vendor->shop_name}."
+            : "FSSAI verification revoked for {$vendor->shop_name}.");
     }
 
     /**
@@ -364,7 +417,7 @@ class AdminController extends Controller
      */
     public function products(Request $request)
     {
-        $query = Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->with(['vendor', 'category', 'images']);
+        $query = Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->with(['vendor', 'sellerUser.usedSellerProfile', 'category', 'images']);
 
         if ($search = trim($request->input('search', ''))) {
             $query->where(function ($q) use ($search) {
@@ -372,8 +425,21 @@ class AdminController extends Controller
                   ->orWhere('sku', 'like', "%{$search}%")
                   ->orWhereHas('vendor', function ($vq) use ($search) {
                       $vq->where('shop_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('sellerUser', function ($uq) use ($search) {
+                      $uq->where('first_name', 'like', "%{$search}%")
+                         ->orWhere('last_name', 'like', "%{$search}%")
+                         ->orWhere('email', 'like', "%{$search}%");
                   });
             });
+        }
+
+        if ($vertical = $request->input('vertical')) {
+            if ($vertical === 'used') {
+                $query->where(function ($q) {
+                    $q->where('vertical', 'used')->orWhere('listing_type', 'classified');
+                });
+            }
         }
 
         if ($status = $request->input('status')) {
@@ -393,6 +459,7 @@ class AdminController extends Controller
         $counts = [
             'all' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->count(),
             'active' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('status', 'active')->count(),
+            'used' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where(fn($q) => $q->where('vertical', 'used')->orWhere('listing_type', 'classified'))->count(),
             'low_stock' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('total_stock', '<=', 3)->where('total_stock', '>', 0)->count(),
             'out_of_stock' => Product::withoutGlobalScope(\App\Scopes\VendorScope::class)->where('total_stock', '<=', 0)->count(),
         ];
@@ -459,12 +526,34 @@ class AdminController extends Controller
         $notes = $validated['admin_notes'] ?? null;
 
         // Execute real enforcement action based on target
-        if ($action === 'block_product' && $report->reportable instanceof Product) {
-            $report->reportable->update(['status' => 'inactive']);
-        } elseif ($action === 'warn_vendor' && $report->reportable instanceof Vendor) {
-            $report->reportable->update(['status' => 'suspended']);
-        } elseif ($action === 'delete_review' && $report->reportable instanceof Review) {
-            $report->reportable->update(['is_approved' => false]);
+        $reportable = $report->reportable;
+        if ($action === 'block_product' && $reportable instanceof Product) {
+            $updates = ['status' => 'inactive'];
+            if ($reportable->isUsedListing()) {
+                $updates['used_status'] = 'paused';
+            }
+            $reportable->update($updates);
+            \Illuminate\Support\Facades\Cache::forget('sitemap_products_xml');
+        } elseif ($action === 'warn_vendor') {
+            if ($reportable instanceof Vendor) {
+                $reportable->update(['status' => 'suspended']);
+            } elseif ($reportable instanceof UsedSellerProfile) {
+                $reportable->user?->update([
+                    'is_blocked' => true,
+                    'blocked_reason' => $notes ?: 'Used marketplace account suspended by moderation.',
+                ]);
+            } elseif ($reportable instanceof User) {
+                $reportable->update([
+                    'is_blocked' => true,
+                    'blocked_reason' => $notes ?: 'Account suspended by moderation.',
+                ]);
+            }
+        } elseif ($action === 'delete_review') {
+            if ($reportable instanceof Review) {
+                $reportable->update(['is_approved' => false]);
+            } elseif ($reportable instanceof UsedThreadMessage) {
+                $reportable->update(['body' => '[Message removed by moderation]']);
+            }
         }
 
         $report->update([
@@ -473,6 +562,15 @@ class AdminController extends Controller
             'admin_notes' => $notes,
             'resolved_by' => auth()->id(),
             'resolved_at' => now(),
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'auditable_type' => $report->reportable_type,
+            'auditable_id' => $report->reportable_id,
+            'action' => 'moderation_' . $action,
+            'new_values' => ['report_id' => $report->id, 'status' => $report->status, 'notes' => $notes],
+            'ip_address' => $request->ip(),
         ]);
 
         return back()->with('success', 'Report has been processed and status updated.');

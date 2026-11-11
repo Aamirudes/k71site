@@ -8,6 +8,7 @@ use App\Models\OrderStatusLog;
 use App\Models\PaymentClaim;
 use App\Models\Shipment;
 use App\Notifications\OrderStatusUpdated;
+use App\Services\Food\FoodMarketplaceService;
 use App\Services\PayoutService;
 use App\Services\SettlementService;
 use App\Services\Shipping\ShiprocketService;
@@ -157,6 +158,13 @@ class OrderController extends Controller
         $oldStatus = $order->status;
         $newStatus = $validated['status'];
 
+        if ($order->isFoodOrder()) {
+            $foodService = app(FoodMarketplaceService::class);
+            if (!$foodService->canTransitionFoodOrderStatus($oldStatus, $newStatus)) {
+                return back()->with('error', "Invalid status transition from '{$oldStatus}' to '{$newStatus}' for a food order.");
+            }
+        }
+
         // Guard: Cannot ship or deliver non-COD order if payment is not verified as 'paid'
         if (in_array($newStatus, ['shipped', 'delivered', 'ready_for_pickup'])) {
             $effectivePaymentStatus = $request->input('payment_status', $order->payment_status);
@@ -205,18 +213,42 @@ class OrderController extends Controller
             }
 
             // Timestamps based on status
-            if ($newStatus === 'processing' && !$order->packed_at) {
-                $updateData['packed_at'] = now();
-            } elseif ($newStatus === 'ready_for_pickup' && !$order->packed_at) {
-                $updateData['packed_at'] = now();
-            } elseif ($newStatus === 'shipped' && !$order->shipped_at) {
-                $updateData['shipped_at'] = now();
-            } elseif ($newStatus === 'delivered' && !$order->delivered_at) {
-                $updateData['delivered_at'] = now();
+            if ($newStatus === 'processing') {
+                if (!$order->packed_at) $updateData['packed_at'] = now();
+                if ($order->isFoodOrder()) {
+                    $updateData['accepted_at'] = $order->accepted_at ?: now();
+                    $updateData['preparing_at'] = $order->preparing_at ?: now();
+                    $updateData['food_fulfillment_stage'] = 'preparing';
+                }
+            } elseif ($newStatus === 'ready_for_pickup') {
+                if (!$order->packed_at) $updateData['packed_at'] = now();
+                if ($order->isFoodOrder()) {
+                    $updateData['accepted_at'] = $order->accepted_at ?: now();
+                    $updateData['preparing_at'] = $order->preparing_at ?: now();
+                    $updateData['ready_at'] = $order->ready_at ?: now();
+                    $updateData['food_fulfillment_stage'] = 'ready';
+                }
+            } elseif ($newStatus === 'shipped') {
+                if (!$order->shipped_at) $updateData['shipped_at'] = now();
+                if ($order->isFoodOrder()) {
+                    $updateData['out_for_delivery_at'] = $order->out_for_delivery_at ?: now();
+                    $updateData['food_fulfillment_stage'] = 'out_for_delivery';
+                }
+            } elseif ($newStatus === 'delivered') {
+                if (!$order->delivered_at) $updateData['delivered_at'] = now();
+                if ($order->isFoodOrder()) {
+                    $updateData['food_fulfillment_stage'] = 'delivered';
+                }
             } elseif ($newStatus === 'cancelled' && $oldStatus !== 'cancelled') {
                 $updateData['cancelled_at'] = now();
                 $updateData['cancelled_by'] = 'vendor';
                 $updateData['cancel_reason'] = $request->input('cancel_reason', 'Cancelled by vendor');
+                if ($order->isFoodOrder()) {
+                    $updateData['food_fulfillment_stage'] = 'cancelled';
+                    if ($order->payment_status === 'paid') {
+                        $updateData['payment_status'] = 'refund_pending';
+                    }
+                }
 
                 // Restore stock to inventory (both variants and total_stock)
                 \App\Services\StockManagerService::restoreOrderStock($order);
@@ -376,11 +408,17 @@ class OrderController extends Controller
             DB::beginTransaction();
             try {
                 $oldStatus = $order->status;
-                $order->update([
+                $acceptPayload = [
                     'status' => 'processing',
                     'packed_at' => $order->packed_at ?: now(),
                     'vendor_accepted_at' => now(),
-                ]);
+                ];
+                if ($order->isFoodOrder()) {
+                    $acceptPayload['accepted_at'] = $order->accepted_at ?: now();
+                    $acceptPayload['preparing_at'] = $order->preparing_at ?: now();
+                    $acceptPayload['food_fulfillment_stage'] = 'preparing';
+                }
+                $order->update($acceptPayload);
 
                 OrderStatusLog::create([
                     'order_id' => $order->id,
@@ -429,11 +467,17 @@ class OrderController extends Controller
             $payoutResult = $payoutService->disburseVendorPayout($order);
 
             $oldStatus = $order->status;
-            $order->update([
+            $acceptOnlinePayload = [
                 'status' => 'processing',
                 'packed_at' => $order->packed_at ?: now(),
                 'vendor_accepted_at' => now(),
-            ]);
+            ];
+            if ($order->isFoodOrder()) {
+                $acceptOnlinePayload['accepted_at'] = $order->accepted_at ?: now();
+                $acceptOnlinePayload['preparing_at'] = $order->preparing_at ?: now();
+                $acceptOnlinePayload['food_fulfillment_stage'] = 'preparing';
+            }
+            $order->update($acceptOnlinePayload);
 
             OrderStatusLog::create([
                 'order_id' => $order->id,

@@ -65,6 +65,47 @@
             ? array_values(old('modifiers'))
             : array_values((array) ($existingModifiers ?? []));
 
+        if (is_array(old('option_groups'))) {
+            $initialFoodOptionGroups = collect(old('option_groups'))->values()->map(function ($g) {
+                return [
+                    'name' => $g['name'] ?? '',
+                    'selection_type' => ($g['selection_type'] ?? 'multi') === 'single' ? 'single' : 'multi',
+                    'is_required' => !empty($g['is_required']),
+                    'min_selections' => (int) ($g['min_selections'] ?? (!empty($g['is_required']) ? 1 : 0)),
+                    'max_selections' => ($g['max_selections'] ?? '') !== '' ? (int) $g['max_selections'] : null,
+                    'options' => collect($g['options'] ?? [])->values()->map(fn ($o) => [
+                        'modifier_name' => $o['modifier_name'] ?? '',
+                        'price_delta' => (float) ($o['price_delta'] ?? 0),
+                        'is_available' => array_key_exists('is_available', $o) ? (bool) $o['is_available'] : true,
+                        'is_default' => !empty($o['is_default']),
+                    ])->all(),
+                ];
+            })->all();
+        } elseif (!empty($existingOptionGroups)) {
+            $initialFoodOptionGroups = array_values($existingOptionGroups);
+        } elseif (!empty($existingModifiers)) {
+            $initialFoodOptionGroups = collect($existingModifiers)
+                ->groupBy(fn ($m) => !empty($m['group_name']) ? $m['group_name'] : 'Add-ons')
+                ->map(function ($items, $groupName) {
+                    $anyReq = $items->contains(fn ($m) => !empty($m['is_required']));
+                    return [
+                        'name' => (string) $groupName,
+                        'selection_type' => 'multi',
+                        'is_required' => $anyReq,
+                        'min_selections' => $anyReq ? 1 : 0,
+                        'max_selections' => null,
+                        'options' => $items->values()->map(fn ($m) => [
+                            'modifier_name' => $m['modifier_name'] ?? '',
+                            'price_delta' => (float) ($m['price_delta'] ?? 0),
+                            'is_available' => array_key_exists('is_available', $m) ? (bool) $m['is_available'] : true,
+                            'is_default' => !empty($m['is_default']),
+                        ])->all(),
+                    ];
+                })->values()->all();
+        } else {
+            $initialFoodOptionGroups = [];
+        }
+
         $initRemoveVideo = (bool) old('remove_video', false);
         $initVertical = old('vertical', $product->vertical ?: 'marketplace');
         $initListingType = old('listing_type', $product->listing_type ?: 'purchase');
@@ -304,6 +345,81 @@
                         </div>
                     </div>
                 </div>
+
+                @if($targetVertical === 'food')
+                <!-- 1.5 Food Dish Menu Settings & Kitchen Availability -->
+                <div class="bg-white rounded-2xl shadow-sm border border-orange-200/80 p-6 sm:p-8 space-y-5">
+                    <input type="hidden" name="food_settings_present" value="1">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-orange-100">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 text-base">
+                                🍽️
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Dish Menu Settings &amp; Availability</h2>
+                                <p class="text-xs text-gray-500">Menu category placement, dietary tag, prep time, and serving schedule.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('vendor.food.menu') }}" class="text-xs font-bold text-orange-600 hover:text-orange-700">Manage Menu Sections →</a>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Menu Section</label>
+                            @php $curMenuCat = old('food_menu_category_id', $product->food_menu_category_id); @endphp
+                            <select name="food_menu_category_id" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm py-2.5 px-3">
+                                <option value="">-- Uncategorized Dish --</option>
+                                @foreach(($foodMenuCategories ?? collect()) as $fmc)
+                                    <option value="{{ $fmc->id }}" {{ (string) $curMenuCat === (string) $fmc->id ? 'selected' : '' }}>{{ $fmc->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('food_menu_category_id') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Dietary Classification</label>
+                            @php $curDietary = old('dietary_label', $product->dietary_label ?: 'veg'); @endphp
+                            <select name="dietary_label" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm py-2.5 px-3">
+                                <option value="veg" {{ $curDietary === 'veg' ? 'selected' : '' }}>🟩 Vegetarian</option>
+                                <option value="non_veg" {{ $curDietary === 'non_veg' ? 'selected' : '' }}>🔺 Non-Vegetarian</option>
+                                <option value="egg" {{ $curDietary === 'egg' ? 'selected' : '' }}>🥚 Contains Egg</option>
+                                <option value="vegan" {{ $curDietary === 'vegan' ? 'selected' : '' }}>🌱 Vegan</option>
+                                <option value="jain" {{ $curDietary === 'jain' ? 'selected' : '' }}>🪷 Jain (No Onion/Garlic)</option>
+                                <option value="pure_veg" {{ $curDietary === 'pure_veg' ? 'selected' : '' }}>🟩 Pure Veg</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Prep Time (Minutes)</label>
+                            <input type="number" name="prep_time_mins" min="1" max="240" value="{{ old('prep_time_mins', $product->prep_time_mins ?? 20) }}" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm py-2.5 px-3">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Menu Display Order</label>
+                            <input type="number" name="menu_sort_order" min="0" max="99999" value="{{ old('menu_sort_order', $product->menu_sort_order ?? 0) }}" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm py-2.5 px-3">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Available From (Optional)</label>
+                            <input type="time" name="available_from" value="{{ old('available_from', $product->available_from) }}" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm font-mono py-2.5 px-3">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Available Until (Optional)</label>
+                            <input type="time" name="available_until" value="{{ old('available_until', $product->available_until) }}" class="block w-full rounded-xl border-gray-200 shadow-sm focus:border-orange-500 focus:ring-orange-500 text-sm font-mono py-2.5 px-3">
+                        </div>
+                    </div>
+
+                    <div class="pt-3 border-t border-gray-100">
+                        <input type="hidden" name="is_dish_available" value="0">
+                        @php $isDishAvail = old('_token') ? (bool) old('is_dish_available') : ($product->is_dish_available !== false); @endphp
+                        <label class="inline-flex items-center gap-2.5 cursor-pointer">
+                            <input type="checkbox" name="is_dish_available" value="1" {{ $isDishAvail ? 'checked' : '' }} class="w-4 h-4 rounded text-orange-600 focus:ring-orange-500">
+                            <span class="text-xs font-bold text-gray-800">Dish is currently Available for customers to order (uncheck to mark Sold Out)</span>
+                        </label>
+                    </div>
+                </div>
+                @endif
 
                 <!-- 2. Vertical-Tailored Attributes & Specifications -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
@@ -1089,6 +1205,7 @@
                 customSizeName: '',
                 fashionMatrixRows: @json($initialFashionRows),
                 foodPortions: @json($initialFoodPortions),
+                foodOptionGroups: @json($initialFoodOptionGroups),
                 foodModifiers: @json($initialFoodModifiers),
                 gigPackages: Object.assign({
                     basic: { tier: 'basic', title: 'Starter Concept', description: 'Core starter deliverable with basic asset package and essential setup.', delivery_days: 3, revisions: 1, features: { source_file: false, commercial_rights: false, high_resolution: true }, price: '' },
@@ -1425,8 +1542,20 @@
                             if (data.vertical_type === 'digital_gig' && data.default_packages && (!this.gigPackages.basic.price || this.gigPackages.basic.price === '')) {
                                 this.gigPackages = data.default_packages;
                             }
-                            if (data.vertical_type === 'food_portion' && data.default_modifiers && this.foodModifiers.length === 0) {
-                                this.foodModifiers = data.default_modifiers;
+                            if (data.vertical_type === 'food_portion' && data.default_modifiers && this.foodOptionGroups.length === 0) {
+                                this.foodOptionGroups = [{
+                                    name: 'Add-ons',
+                                    selection_type: 'multi',
+                                    is_required: false,
+                                    min_selections: 0,
+                                    max_selections: null,
+                                    options: (data.default_modifiers || []).map(m => ({
+                                        modifier_name: m.modifier_name || m.name || '',
+                                        price_delta: parseFloat(m.price_delta || 0),
+                                        is_available: m.is_available !== false,
+                                        is_default: !!m.is_default
+                                    }))
+                                }];
                             }
                         }
                     } catch (e) {
@@ -1540,11 +1669,63 @@
                 },
 
                 addFoodModifier() {
-                    this.foodModifiers.push({ group_name: 'Add-ons', modifier_name: '', price_delta: '', is_required: false });
+                    this.addQuickAddonOption('', '');
                 },
 
                 removeFoodModifier(idx) {
                     this.foodModifiers.splice(idx, 1);
+                },
+
+                addFoodOptionGroup(selectionType = 'multi') {
+                    const isSingle = selectionType === 'single';
+                    this.foodOptionGroups.push({
+                        name: isSingle ? 'Choice of Preparation' : 'Add-ons',
+                        selection_type: selectionType,
+                        is_required: isSingle,
+                        min_selections: isSingle ? 1 : 0,
+                        max_selections: isSingle ? 1 : null,
+                        options: [{ modifier_name: '', price_delta: 0, is_available: true, is_default: isSingle }]
+                    });
+                },
+
+                removeFoodOptionGroup(gIdx) {
+                    this.foodOptionGroups.splice(gIdx, 1);
+                },
+
+                addFoodOptionToGroup(gIdx, name = '', delta = 0) {
+                    if (!this.foodOptionGroups[gIdx]) return;
+                    this.foodOptionGroups[gIdx].options.push({
+                        modifier_name: name,
+                        price_delta: delta,
+                        is_available: true,
+                        is_default: false
+                    });
+                },
+
+                removeFoodOptionFromGroup(gIdx, oIdx) {
+                    if (!this.foodOptionGroups[gIdx]) return;
+                    this.foodOptionGroups[gIdx].options.splice(oIdx, 1);
+                },
+
+                addQuickAddonOption(name, delta = 20) {
+                    let group = this.foodOptionGroups.find(g => (g.name || '').toLowerCase() === 'add-ons');
+                    if (!group) {
+                        group = {
+                            name: 'Add-ons',
+                            selection_type: 'multi',
+                            is_required: false,
+                            min_selections: 0,
+                            max_selections: null,
+                            options: []
+                        };
+                        this.foodOptionGroups.push(group);
+                    }
+                    group.options.push({
+                        modifier_name: name || '',
+                        price_delta: delta,
+                        is_available: true,
+                        is_default: false
+                    });
                 },
 
                 addB2bTier() {

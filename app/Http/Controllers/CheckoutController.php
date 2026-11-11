@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Address;
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Vendor;
 use App\Models\VendorSetting;
+use App\Services\Food\FoodMarketplaceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Coupon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
@@ -102,15 +106,33 @@ class CheckoutController extends Controller
             $totalGst += $taxAmount;
         }
 
-        $isFoodOrder = $vendor->isRestaurant() 
+        $isFoodOrder = $vendor->isFood()
+            || (bool) ($settings?->is_restaurant)
+            || $items->contains(fn ($it) => (($it->product?->vertical ?? $it->variant?->product?->vertical ?? '') === 'food'));
+
+        $isFeeFoodOrExpress = $isFoodOrder
+            || $vendor->isRestaurant()
             || in_array($vendor->vendor_type, ['food', 'feasto', 'groceries', 'kirana'])
-            || $items->contains(fn($it) => in_array($it->product?->vertical ?? '', ['food', 'groceries']));
+            || $items->contains(fn ($it) => in_array($it->product?->vertical ?? '', ['food', 'groceries']));
+
+        $foodService = app(FoodMarketplaceService::class);
+        $operationalStatus = $isFoodOrder ? $foodService->getRestaurantOperationalStatus($vendor) : null;
+        $selectedLocation = $isFoodOrder ? $foodService->getUserSelectedLocation(request()) : null;
+        $foodDeliveryMode = $settings?->food_delivery_mode ?? 'both';
+        $minFoodOrderAmount = $isFoodOrder ? (int) ($settings?->min_food_order_amount ?? 0) : 0;
+        $packagingFee = 0;
+        $freeDeliveryAbove = null;
 
         $shipping = 0;
         $cachedShipping = session("checkout_shipping_{$vendor->id}");
         if ($isFoodOrder) {
-            // Feasto / Quick-commerce local food orders default to free delivery or explicitly set fee
-            $shipping = ($settings && isset($settings->food_delivery_fee)) ? (int)$settings->food_delivery_fee : 0;
+            $fees = $foodService->calculateFoodFees($vendor, $subtotal, 'food_delivery');
+            $shipping = $fees['delivery_fee'];
+            $packagingFee = $fees['packaging_fee'];
+            $freeDeliveryAbove = $fees['free_delivery_above'];
+        } elseif ($isFeeFoodOrExpress) {
+            // Feasto / Quick-commerce local orders use explicit food_delivery_fee
+            $shipping = ($settings && isset($settings->food_delivery_fee)) ? (int) $settings->food_delivery_fee : 0;
         } elseif ($subtotal <= 100) {
             $shipping = 0; // ₹1 Test Order: 100% Free Shipping for Gateway Verification
         } elseif ($settings && $settings->shipping_type === 'free_above' && !empty($settings->shipping_free_above) && $subtotal >= $settings->shipping_free_above) {
@@ -155,7 +177,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $total = max(0, $subtotal - $discount) + $shipping;
+        $total = max(0, $subtotal - $discount) + $shipping + $packagingFee;
 
         // COD and Payment Settings
         $codMarketplaceEnabled = (bool) (DB::table('settings')->where('key', 'cod_marketplace_enabled')->value('value') ?? config('k71.cod_marketplace_enabled', true));
@@ -179,11 +201,15 @@ class CheckoutController extends Controller
 
         $defaultPaymentMethod = $upiAllowed ? 'phonepe' : ($isCodEligible ? 'cod' : 'phonepe');
 
-        // Fetch addresses... for simplicity in MVP we collect address in the checkout form
+        $savedAddresses = (Auth::check() && Schema::hasTable('addresses'))
+            ? Address::where('user_id', Auth::id())->orderByDesc('is_default')->latest()->get()
+            : collect();
+
         return view('checkout.index', compact(
-            'vendor', 'items', 'subtotal', 'totalGst', 'shipping', 'discount', 'total', 
-            'settings', 'appliedCoupon', 'cachedShipping', 'isFoodOrder',
-            'codMarketplaceEnabled', 'codMaxAmount', 'codFee', 'upiAllowed', 'vendorCodAllowed', 
+            'vendor', 'items', 'subtotal', 'totalGst', 'shipping', 'packagingFee', 'freeDeliveryAbove',
+            'minFoodOrderAmount', 'foodDeliveryMode', 'operationalStatus', 'selectedLocation',
+            'discount', 'total', 'settings', 'appliedCoupon', 'cachedShipping', 'isFoodOrder',
+            'savedAddresses', 'codMarketplaceEnabled', 'codMaxAmount', 'codFee', 'upiAllowed', 'vendorCodAllowed',
             'isCodEligible', 'codDisabledReason', 'defaultPaymentMethod'
         ));
     }
@@ -211,9 +237,25 @@ class CheckoutController extends Controller
             return back()->with('error', 'No active payment method available for this vendor.');
         }
 
+        if ($request->filled('selected_address_id') && Auth::check() && Schema::hasTable('addresses')) {
+            $savedAddr = Address::where('user_id', Auth::id())->find($request->input('selected_address_id'));
+            if ($savedAddr) {
+                $request->merge([
+                    'address_line_1' => $request->input('address_line_1') ?: $savedAddr->line_1,
+                    'city' => $request->input('city') ?: $savedAddr->city,
+                    'state' => $request->input('state') ?: $savedAddr->state,
+                    'pincode' => $request->input('pincode') ?: $savedAddr->pincode,
+                    'phone' => $request->input('phone') ?: $savedAddr->phone,
+                    'name' => $request->input('name') ?: $savedAddr->full_name,
+                ]);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:150',
+            'selected_address_id' => 'nullable|integer',
+            'save_address' => 'nullable|boolean',
             'address_line_1' => 'required|string',
             'city' => 'required|string',
             'state' => 'required|string',
@@ -222,7 +264,17 @@ class CheckoutController extends Controller
             'payment_method' => ['required', 'string', \Illuminate\Validation\Rule::in($allowedMethods)],
             'order_type' => 'nullable|string|in:standard,food_delivery,food_takeaway',
             'kitchen_notes' => 'nullable|string|max:500',
+            'idempotency_key' => 'nullable|string|max:80',
         ]);
+
+        if (!empty($validated['idempotency_key'])) {
+            $idemScope = Auth::id() ?: session()->getId();
+            $cacheKey = 'k71_checkout_idemp_' . md5($idemScope . '_' . $vendor->id . '_' . $validated['idempotency_key']);
+            $existingOrderId = Cache::get($cacheKey);
+            if ($existingOrderId && ($existingOrder = Order::find($existingOrderId))) {
+                return redirect()->route('orders.success', $existingOrder->id);
+            }
+        }
 
         // 1. Capture pre-login session and cart references BEFORE Auth::login() regenerates session
         $preLoginSessionId = session()->getId();
@@ -388,14 +440,45 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'No items from this vendor in your cart.');
         }
 
-        $isFoodOrder = $vendor->isRestaurant() || $items->contains(fn($it) => (($it->product?->vertical ?? '') === 'food' || ($it->variant?->product?->vertical ?? '') === 'food'));
+        $isFoodOrder = $vendor->isFood()
+            || (bool) ($settings?->is_restaurant)
+            || str_starts_with((string) ($validated['order_type'] ?? ''), 'food_')
+            || $items->contains(fn ($it) => (($it->product?->vertical ?? $it->variant?->product?->vertical ?? '') === 'food'));
+
         $orderType = $isFoodOrder ? ($validated['order_type'] ?? 'food_delivery') : 'standard';
 
-        // Server-side listing_type check
+        $foodService = app(FoodMarketplaceService::class);
+        if ($isFoodOrder) {
+            $opStatus = $foodService->getRestaurantOperationalStatus($vendor);
+            if (!$opStatus['accepting_orders']) {
+                return back()->withInput()->with('error', $opStatus['reason'] ?: 'This kitchen is currently paused and not accepting orders.');
+            }
+
+            $allowedMode = $settings?->food_delivery_mode ?? 'both';
+            if ($allowedMode === 'delivery' && $orderType === 'food_takeaway') {
+                return back()->withInput()->with('error', 'This restaurant only supports doorstep delivery.');
+            }
+            if ($allowedMode === 'takeaway' && $orderType === 'food_delivery') {
+                return back()->withInput()->with('error', 'This restaurant only supports self-pickup / takeaway.');
+            }
+
+            // Verify explicit delivery-zone restriction (pincodes/cities) if configured by the kitchen
+            if ($orderType === 'food_delivery' && (!empty($vendor->service_pincodes_list) || !empty($vendor->service_cities_list))) {
+                $servesLocation = $foodService->isServiceableForLocation($vendor, $validated['city'], $validated['pincode']);
+                if (!$servesLocation) {
+                    return back()->withInput()->with('error', "{$vendor->shop_name} does not deliver to {$validated['city']} ({$validated['pincode']}). Switch to Self-Pickup or update your address.");
+                }
+            }
+        }
+
+        // Server-side listing_type & food dish availability checks
         foreach ($items as $item) {
             $product = $item->product ?? $item->variant?->product;
             if ($product && !$item->gig_package_id && !$product->isPurchase()) {
                 return redirect()->route('cart.index')->with('error', "{$product->title} is an enquiry/booking listing and cannot be checked out.");
+            }
+            if ($isFoodOrder && $product && !$foodService->isDishAvailableForOrder($product)) {
+                return redirect()->route('food.restaurant', $vendor->slug)->with('error', "'{$product->title}' is currently sold out or outside its serving window.");
             }
         }
 
@@ -496,10 +579,14 @@ class CheckoutController extends Controller
                     ? (ucfirst($item->gigPackage->tier) . ' Package') 
                     : ($lockedVariant?->sku ?? 'Standard');
 
+                $addonAmount = 0;
                 if (!empty($item->selected_modifiers_json) && is_array($item->selected_modifiers_json)) {
                     $modNames = array_column($item->selected_modifiers_json, 'name');
                     if (!empty($modNames)) {
                         $variantLabel .= ' + ' . implode(', ', $modNames);
+                    }
+                    foreach ($item->selected_modifiers_json as $mRow) {
+                        $addonAmount += (int) round(((float) ($mRow['price_delta'] ?? 0)) * 100);
                     }
                 }
 
@@ -508,9 +595,11 @@ class CheckoutController extends Controller
                     'variant_id' => $lockedVariant?->id ?? $item->variant_id,
                     'gig_package_id' => $item->gig_package_id,
                     'selected_modifiers_json' => $item->selected_modifiers_json,
+                    'special_instructions' => $item->special_instructions ?? null,
                     'booking_date_time' => $item->booking_date_time,
                     'quantity' => $item->quantity,
                     'unit_price' => $price,
+                    'addon_amount' => $addonAmount,
                     'total_price' => $itemTotal,
                     'tax_amount' => $taxAmount,
                     'gst_rate' => $gstRate,
@@ -524,10 +613,18 @@ class CheckoutController extends Controller
                 ];
             }
 
+            if ($isFoodOrder && !empty($settings?->min_food_order_amount) && $subtotal < (int) $settings->min_food_order_amount) {
+                $minFormatted = '₹' . number_format(((int) $settings->min_food_order_amount) / 100, 0);
+                throw new \Exception("Minimum order amount for {$vendor->shop_name} is {$minFormatted}. Please add more dishes.");
+            }
+
             $shipping = 0;
-            // 1. Food orders use restaurant direct delivery fee or free takeaway
+            $packagingAmount = 0;
+            // 1. Food orders use authoritative delivery + free threshold + packaging fee calculation
             if ($isFoodOrder) {
-                $shipping = ($orderType === 'food_takeaway') ? 0 : (($settings && isset($settings->food_delivery_fee)) ? (int)$settings->food_delivery_fee : 0);
+                $foodFees = $foodService->calculateFoodFees($vendor, $subtotal, $orderType);
+                $shipping = $foodFees['delivery_fee'];
+                $packagingAmount = $foodFees['packaging_fee'];
             } elseif ($settings && $settings->shipping_type === 'free_above' && !empty($settings->shipping_free_above) && $subtotal >= $settings->shipping_free_above) {
                 $shipping = 0; // Free delivery (only if vendor explicitly configured a free shipping threshold)
             } elseif ($subtotal <= 100) {
@@ -616,7 +713,7 @@ class CheckoutController extends Controller
                 }
             }
 
-            $total = max(0, $subtotal - $discount) + $shipping;
+            $total = max(0, $subtotal - $discount) + $shipping + ($packagingAmount ?? 0);
 
             if ($validated['payment_method'] === 'cod') {
                 if ($total > $codMaxAmount) {
@@ -627,17 +724,23 @@ class CheckoutController extends Controller
 
             // Generate order number
             $orderNumber = 'ORD-' . strtoupper(Str::random(10));
+            $pickupCode = ($isFoodOrder && $orderType === 'food_takeaway')
+                ? str_pad((string) random_int(1000, 9999), 4, '0', STR_PAD_LEFT)
+                : null;
 
             $order = Order::create([
                 'user_id' => Auth::id(),
                 'vendor_id' => $vendor->id,
                 'order_number' => $orderNumber,
                 'order_type' => $orderType,
+                'pickup_code' => $pickupCode,
+                'food_fulfillment_stage' => $isFoodOrder ? 'placed' : null,
                 'kitchen_notes' => $validated['kitchen_notes'] ?? null,
                 'estimated_delivery_time' => $isFoodOrder ? now()->addMinutes(($settings?->avg_prep_time_mins ?? 25) + 15) : null,
                 'item_count' => $itemCount,
                 'subtotal' => $subtotal,
                 'shipping_amount' => $shipping,
+                'packaging_amount' => $packagingAmount ?? 0,
                 'tax_amount' => $totalGst,
                 'discount_amount' => $discount,
                 'total_amount' => $total,
@@ -645,6 +748,7 @@ class CheckoutController extends Controller
                 'payment_method' => $validated['payment_method'],
                 'payment_status' => 'pending',
                 'address_snapshot' => [
+                    'name' => $validated['name'] ?? Auth::user()?->name,
                     'line_1' => $validated['address_line_1'],
                     'city' => $validated['city'],
                     'state' => $validated['state'],
@@ -654,6 +758,34 @@ class CheckoutController extends Controller
             ]);
 
             $order->items()->createMany($orderItems);
+
+            // Optionally persist delivery address to user address book
+            if ($request->boolean('save_address') && Auth::check() && Schema::hasTable('addresses')) {
+                $existingSame = Address::where('user_id', Auth::id())
+                    ->where('pincode', $validated['pincode'])
+                    ->where('line_1', $validated['address_line_1'])
+                    ->exists();
+                if (!$existingSame) {
+                    $hasAny = Address::where('user_id', Auth::id())->exists();
+                    Address::create([
+                        'user_id' => Auth::id(),
+                        'label' => $request->input('address_label', 'Home'),
+                        'full_name' => $validated['name'] ?: (Auth::user()->name ?? 'Customer'),
+                        'phone' => $validated['phone'],
+                        'line_1' => $validated['address_line_1'],
+                        'city' => $validated['city'],
+                        'state' => $validated['state'],
+                        'pincode' => $validated['pincode'],
+                        'is_default' => !$hasAny,
+                    ]);
+                }
+            }
+
+            if (!empty($validated['idempotency_key'])) {
+                $idemScope = Auth::id() ?: ($preLoginSessionId ?: session()->getId());
+                $cacheKey = 'k71_checkout_idemp_' . md5($idemScope . '_' . $vendor->id . '_' . $validated['idempotency_key']);
+                Cache::put($cacheKey, $order->id, now()->addMinutes(10));
+            }
 
             // Record coupon usage
             if ($appliedCoupon) {

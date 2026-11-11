@@ -86,18 +86,49 @@ Route::post('/shorts/spin/result', [ShortsSpinController::class, 'result'])->nam
 
 // Food & Restaurants Vertical Routes
 Route::get('/food', [FoodController::class, 'index'])->name('food.index');
+Route::post('/food/location', [FoodController::class, 'setLocation'])->name('food.location.set');
 Route::get('/food/suggest', [FoodController::class, 'suggest'])->name('food.suggest');
 Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('food.restaurant');
 Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middleware('auth')->name('food.reorder');
+Route::post('/food/orders/{order}/review', [\App\Http\Controllers\ReviewController::class, 'storeFoodReview'])->middleware('auth')->name('food.orders.review');
 
 // Used Items Marketplace & Offers Routes
 Route::get('/used', [\App\Http\Controllers\UsedController::class, 'index'])->name('used.index');
-Route::post('/used/post-ad', [\App\Http\Controllers\UsedController::class, 'storeAd'])->name('used.post-ad');
-Route::get('/used/ad/{product}/edit', [\App\Http\Controllers\UsedController::class, 'editAd'])->middleware('auth')->name('used.edit');
-Route::get('/used/{product}/edit', [\App\Http\Controllers\UsedController::class, 'editAd'])->middleware('auth')->name('used.item.edit');
-Route::put('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'updateAd'])->middleware('auth')->name('used.update');
-Route::post('/used/ad/{product}/toggle-sold', [\App\Http\Controllers\UsedController::class, 'toggleSold'])->middleware('auth')->name('used.toggle-sold');
-Route::delete('/used/ad/{product}', [\App\Http\Controllers\UsedController::class, 'deleteAd'])->middleware('auth')->name('used.delete');
+Route::get('/used/seller/{handle}', [\App\Http\Controllers\UsedSellerController::class, 'profile'])->name('used.seller.profile');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/used/sell', [\App\Http\Controllers\UsedListingController::class, 'create'])->name('used.sell');
+    Route::post('/used/sell', [\App\Http\Controllers\UsedListingController::class, 'store'])->name('used.sell.store');
+    Route::post('/used/post-ad', [\App\Http\Controllers\UsedListingController::class, 'store'])->name('used.post-ad');
+    Route::get('/used/api/category-fields/{category}', [\App\Http\Controllers\UsedListingController::class, 'categoryFields'])->name('used.category_fields');
+
+    Route::get('/used/dashboard', [\App\Http\Controllers\UsedSellerController::class, 'dashboard'])->name('used.dashboard');
+    Route::post('/used/seller/profile', [\App\Http\Controllers\UsedSellerController::class, 'updateProfile'])->name('used.seller.update');
+
+    Route::post('/used/saved-searches', [\App\Http\Controllers\UsedController::class, 'saveSearch'])->name('used.saved_searches.store');
+    Route::delete('/used/saved-searches/{savedSearch}', [\App\Http\Controllers\UsedController::class, 'deleteSearch'])->name('used.saved_searches.destroy');
+
+    Route::get('/used/ad/{product}/edit', [\App\Http\Controllers\UsedListingController::class, 'edit'])->name('used.edit');
+    Route::get('/used/{product}/edit', [\App\Http\Controllers\UsedListingController::class, 'edit'])->name('used.item.edit');
+    Route::put('/used/ad/{product}', [\App\Http\Controllers\UsedListingController::class, 'update'])->name('used.update');
+    Route::post('/used/ad/{product}/status', [\App\Http\Controllers\UsedListingController::class, 'updateStatus'])->name('used.status');
+    Route::post('/used/ad/{product}/toggle-sold', [\App\Http\Controllers\UsedListingController::class, 'toggleSold'])->name('used.toggle-sold');
+    Route::delete('/used/ad/{product}', [\App\Http\Controllers\UsedListingController::class, 'destroy'])->name('used.delete');
+
+    Route::post('/used/enquire/{product}', [\App\Http\Controllers\UsedThreadController::class, 'enquire'])->name('used.enquire');
+    Route::get('/used/threads/{thread}', [\App\Http\Controllers\UsedThreadController::class, 'show'])->name('used.threads.show');
+    Route::post('/used/threads/{thread}/reply', [\App\Http\Controllers\UsedThreadController::class, 'reply'])->name('used.threads.reply');
+    Route::post('/used/threads/{thread}/share-pickup', [\App\Http\Controllers\UsedThreadController::class, 'sharePickupLocation'])->name('used.threads.share_pickup');
+
+    Route::post('/used/transactions/{transaction}/complete', [\App\Http\Controllers\UsedTransactionController::class, 'complete'])->name('used.transactions.complete');
+    Route::post('/used/transactions/{transaction}/cancel', [\App\Http\Controllers\UsedTransactionController::class, 'cancel'])->name('used.transactions.cancel');
+    Route::post('/used/transactions/{transaction}/review', [\App\Http\Controllers\UsedTransactionController::class, 'storeReview'])->name('used.transactions.review');
+
+    Route::post('/used/offers/{offer}/withdraw', [\App\Http\Controllers\OfferController::class, 'withdraw'])->name('used.offers.withdraw');
+    Route::post('/used/offers/{offer}/respond', [\App\Http\Controllers\OfferController::class, 'buyerRespondCounter'])->name('used.offers.respond_counter');
+    Route::match(['post', 'put'], '/used/offers/{offer}/seller-respond', [\App\Http\Controllers\OfferController::class, 'vendorRespond'])->name('used.offers.seller_respond');
+});
+
 Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('used.show');
 Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
 Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');
@@ -190,7 +221,7 @@ Route::middleware('auth')->group(function () {
 
     // Customer Reviews & Community Trust Reports (Phase 10)
     Route::post('/products/{product}/reviews', [\App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
-    Route::post('/reports', [\App\Http\Controllers\ReportController::class, 'store'])->name('reports.store');
+    Route::post('/reports', [\App\Http\Controllers\ReportController::class, 'store'])->middleware('throttle:15,1')->name('reports.store');
 });
 
 // Instagram Direct Chat Real-time API Endpoints (Auth checked internally, returns clean JSON)
@@ -256,6 +287,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
     Route::get('/account', [\App\Http\Controllers\AccountController::class, 'index'])->name('account');
+    Route::get('/account/addresses', [\App\Http\Controllers\AddressController::class, 'index'])->name('addresses.index');
+    Route::post('/account/addresses', [\App\Http\Controllers\AddressController::class, 'store'])->name('addresses.store');
+    Route::put('/account/addresses/{address}', [\App\Http\Controllers\AddressController::class, 'update'])->name('addresses.update');
+    Route::post('/account/addresses/{address}/default', [\App\Http\Controllers\AddressController::class, 'setDefault'])->name('addresses.default');
+    Route::delete('/account/addresses/{address}', [\App\Http\Controllers\AddressController::class, 'destroy'])->name('addresses.destroy');
     Route::post('/account/avatar', [\App\Http\Controllers\AccountController::class, 'updateAvatar'])->name('account.avatar');
     Route::post('/api/user/avatar', [\App\Http\Controllers\AccountController::class, 'updateAvatar'])->name('api.user.avatar');
     Route::get('/account/export', [\App\Http\Controllers\AccountController::class, 'export'])->name('account.export');
@@ -351,6 +387,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     // Vendors Control
     Route::get('/vendors', [\App\Http\Controllers\AdminController::class, 'vendors'])->name('vendors');
     Route::put('/vendors/{vendor}/status', [\App\Http\Controllers\AdminController::class, 'updateVendorStatus'])->name('vendors.status');
+    Route::post('/vendors/{vendor}/verify-fssai', [\App\Http\Controllers\AdminController::class, 'verifyFssai'])->name('vendors.verify_fssai');
     Route::delete('/vendors/{vendor}', [\App\Http\Controllers\AdminController::class, 'deleteVendor'])->name('vendors.destroy');
 
     // Products Control

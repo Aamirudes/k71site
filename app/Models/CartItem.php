@@ -13,7 +13,9 @@ class CartItem extends Model
         'variant_id',
         'gig_package_id',
         'selected_modifiers_json',
+        'option_selections_json',
         'booking_date_time',
+        'special_instructions',
         'vendor_id',
         'quantity',
         'price_at_add',
@@ -21,6 +23,7 @@ class CartItem extends Model
 
     protected $casts = [
         'selected_modifiers_json' => 'array',
+        'option_selections_json' => 'array',
         'booking_date_time' => 'datetime',
     ];
 
@@ -31,7 +34,7 @@ class CartItem extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class)->withTrashed();
+        return $this->belongsTo(Product::class)->withoutGlobalScopes()->withTrashed();
     }
 
     public function variant(): BelongsTo

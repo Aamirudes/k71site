@@ -202,10 +202,125 @@ class Vendor extends Model
 
     public function getIsOpenAttribute(): bool
     {
-        $opening = $this->settings?->opening_time ?? '10:00';
-        $closing = $this->settings?->closing_time ?? '23:00';
+        if ($this->vacation_mode) {
+            return false;
+        }
+        $settings = $this->settings;
+        if ($settings && isset($settings->is_accepting_food_orders) && !$settings->is_accepting_food_orders) {
+            return false;
+        }
+
+        $weekly = $settings?->weekly_hours_json;
+        if (is_array($weekly) && !empty($weekly)) {
+            $dayKey = strtolower(now()->format('D')); // mon, tue, wed...
+            if (isset($weekly[$dayKey])) {
+                $dayCfg = $weekly[$dayKey];
+                if (isset($dayCfg['closed']) && filter_var($dayCfg['closed'], FILTER_VALIDATE_BOOLEAN)) {
+                    return false;
+                }
+                $opening = $dayCfg['open'] ?? ($settings?->opening_time ?? '10:00');
+                $closing = $dayCfg['close'] ?? ($settings?->closing_time ?? '23:00');
+                $nowTime = now()->format('H:i');
+                if ($closing < $opening) {
+                    return $nowTime >= $opening || $nowTime <= $closing;
+                }
+                return $nowTime >= $opening && $nowTime <= $closing;
+            }
+        }
+
+        $opening = $settings?->opening_time ?? '10:00';
+        $closing = $settings?->closing_time ?? '23:00';
         $now = now()->format('H:i');
+        if ($closing < $opening) {
+            return $now >= $opening || $now <= $closing;
+        }
         return $now >= $opening && $now <= $closing;
+    }
+
+    public function isWithinOperatingHours(): bool
+    {
+        $settings = $this->settings;
+        $weekly = $settings?->weekly_hours_json;
+        if (is_array($weekly) && !empty($weekly)) {
+            $dayKey = strtolower(now()->format('D'));
+            if (isset($weekly[$dayKey])) {
+                $dayCfg = $weekly[$dayKey];
+                if (!empty($dayCfg['closed'])) {
+                    return false;
+                }
+                $opening = $dayCfg['open'] ?? ($settings?->opening_time ?? '10:00');
+                $closing = $dayCfg['close'] ?? ($settings?->closing_time ?? '23:00');
+                $now = now()->format('H:i');
+                return $closing < $opening ? ($now >= $opening || $now <= $closing) : ($now >= $opening && $now <= $closing);
+            }
+        }
+        $opening = $settings?->opening_time ?? '10:00';
+        $closing = $settings?->closing_time ?? '23:00';
+        $now = now()->format('H:i');
+        return $closing < $opening ? ($now >= $opening || $now <= $closing) : ($now >= $opening && $now <= $closing);
+    }
+
+    public function isApprovedOrActive(): bool
+    {
+        return in_array($this->status, ['approved', 'active'], true);
+    }
+
+    public function isFssaiVerified(): bool
+    {
+        $settings = $this->settings;
+        return (bool) ($settings?->fssai_verified) && !empty($settings?->fssai_license_number);
+    }
+
+    public function getServiceCitiesListAttribute(): array
+    {
+        $raw = $this->settings?->service_cities_json;
+        if (is_array($raw)) {
+            return array_values(array_filter(array_map('trim', $raw)));
+        }
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map('trim', $decoded)));
+            }
+        }
+        return [];
+    }
+
+    public function getServicePincodesListAttribute(): array
+    {
+        $raw = $this->settings?->serviceable_pincodes;
+        if (is_array($raw)) {
+            return array_values(array_filter(array_map('trim', $raw)));
+        }
+        if (is_string($raw) && $raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map('trim', $decoded)));
+            }
+            return array_values(array_filter(array_map('trim', explode(',', $raw))));
+        }
+        return [];
+    }
+
+    public function foodMenuCategories(): HasMany
+    {
+        return $this->hasMany(FoodMenuCategory::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class)->where('is_approved', true)->latest();
+    }
+
+    public function getFoodRatingAttribute(): ?float
+    {
+        $val = $this->settings?->food_avg_rating ?? $this->rating;
+        return $val && (float) $val > 0 ? round((float) $val, 1) : null;
+    }
+
+    public function getFoodReviewCountValueAttribute(): int
+    {
+        return (int) ($this->settings?->food_review_count ?? 0);
     }
 
     public function getCuisineListAttribute(): array

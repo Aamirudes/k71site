@@ -28,16 +28,43 @@
 
             @if($vendor->isFood())
             <!-- Food & Cloud Kitchen Settings -->
+            <input type="hidden" name="food_settings_submitted" value="1">
             <div class="space-y-6">
-                <div class="border-b border-gray-200 pb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-2xl">🍔</span>
-                        <h3 class="text-lg font-bold text-gray-900">Cloud Kitchen & Restaurant Operations</h3>
+                <div class="border-b border-gray-200 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">🍔</span>
+                            <h3 class="text-lg font-bold text-gray-900">Cloud Kitchen &amp; Restaurant Operations</h3>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-0.5">Configure kitchen timings, order intake, packaging fees, serviceable cities, and FSSAI verification.</p>
                     </div>
-                    <p class="text-xs text-gray-500 mt-0.5">Configure kitchen timings, pure veg compliance, and doorstep food delivery rates.</p>
+                    <a href="{{ route('vendor.food.menu') }}" class="text-xs font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-xl border border-gray-200 self-start">
+                        🍽️ Open Menu Builder →
+                    </a>
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <!-- Kitchen Order Intake Switch -->
+                    <div class="sm:col-span-2 p-4 rounded-xl border {{ old('is_accepting_food_orders', $settings->is_accepting_food_orders ?? true) ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-300 bg-amber-50/70' }} space-y-3">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <span class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                    Accept Incoming Food Orders
+                                </span>
+                                <p class="text-xs text-gray-600 mt-0.5">Pause your kitchen anytime during heavy rush or ingredient restocks without deleting dishes.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="hidden" name="is_accepting_food_orders" value="0">
+                                <input type="checkbox" name="is_accepting_food_orders" value="1" {{ old('is_accepting_food_orders', $settings->is_accepting_food_orders ?? true) ? 'checked' : '' }} class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                            </label>
+                        </div>
+                        <div>
+                            <label for="paused_reason" class="block text-xs font-semibold text-gray-700">Customer Notice When Paused (Optional)</label>
+                            <input type="text" name="paused_reason" id="paused_reason" value="{{ old('paused_reason', $settings->paused_reason) }}" placeholder="e.g. Heavy kitchen rush — reopening in 30 minutes" class="mt-1 block w-full rounded-lg border-gray-300 bg-white shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-xs">
+                        </div>
+                    </div>
+
                     <!-- Dietary / Pure Veg compliance -->
                     <div class="sm:col-span-2 p-4 rounded-xl border border-emerald-200 bg-emerald-50/60 flex items-center justify-between">
                         <div>
@@ -47,8 +74,22 @@
                             <p class="text-xs text-emerald-800 mt-1">Enable this if your kitchen never prepares non-vegetarian food. Adds verified Pure Veg badge across all your dishes.</p>
                         </div>
                         <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="hidden" name="is_pure_veg" value="0">
                             <input type="checkbox" name="is_pure_veg" value="1" {{ old('is_pure_veg', $settings->is_pure_veg) ? 'checked' : '' }} class="sr-only peer">
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Enforce Opening/Closing Hours -->
+                    <div class="sm:col-span-2 p-4 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-between">
+                        <div>
+                            <span class="text-sm font-bold text-gray-900">Automatically Close Ordering Outside Kitchen Hours</span>
+                            <p class="text-xs text-gray-600 mt-0.5">When enabled, customers can browse the menu outside opening/closing hours but cannot place checkout orders.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="hidden" name="enforce_operating_hours" value="0">
+                            <input type="checkbox" name="enforce_operating_hours" value="1" {{ old('enforce_operating_hours', $settings->enforce_operating_hours ?? true) ? 'checked' : '' }} class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gray-900"></div>
                         </label>
                     </div>
 
@@ -64,24 +105,70 @@
                         <p class="text-xs text-gray-500 mt-1">Last order acceptance time.</p>
                     </div>
 
-                    <!-- Prep Time & Delivery Fee -->
+                    <!-- Fulfillment Mode & Prep Time -->
+                    <div>
+                        <label for="food_delivery_mode" class="block text-sm font-semibold text-gray-700">Fulfillment Mode</label>
+                        @php $curFoodMode = old('food_delivery_mode', $settings->food_delivery_mode ?? 'both'); @endphp
+                        <select name="food_delivery_mode" id="food_delivery_mode" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                            <option value="both" {{ $curFoodMode === 'both' ? 'selected' : '' }}>Delivery + Self Pickup (Both)</option>
+                            <option value="delivery" {{ $curFoodMode === 'delivery' ? 'selected' : '' }}>Delivery Only</option>
+                            <option value="takeaway" {{ $curFoodMode === 'takeaway' ? 'selected' : '' }}>Takeaway / Self Pickup Only</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Customers only see supported options at checkout.</p>
+                    </div>
                     <div>
                         <label for="avg_prep_time_mins" class="block text-sm font-semibold text-gray-700">Average Preparation Time (Minutes)</label>
                         <input type="number" min="5" max="180" name="avg_prep_time_mins" id="avg_prep_time_mins" value="{{ old('avg_prep_time_mins', $settings->avg_prep_time_mins ?? 25) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
-                        <p class="text-xs text-gray-500 mt-1">Displayed to customer as "Delivered hot in X mins".</p>
-                    </div>
-                    <div>
-                        <label for="food_delivery_fee" class="block text-sm font-semibold text-gray-700">Local Food Delivery Fee (₹)</label>
-                        <input type="number" step="1" name="food_delivery_fee" id="food_delivery_fee" value="{{ old('food_delivery_fee', $settings->food_delivery_fee ? $settings->food_delivery_fee / 100 : 40) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
-                        <p class="text-xs text-gray-500 mt-1">Delivery fee charged per food order (e.g. ₹40).</p>
+                        <p class="text-xs text-gray-500 mt-1">Used to calculate honest kitchen preparation and delivery window.</p>
                     </div>
 
-                    <!-- Minimum Order & Cuisines -->
+                    <!-- Fees -->
+                    <div>
+                        <label for="food_delivery_fee" class="block text-sm font-semibold text-gray-700">Local Food Delivery Fee (₹)</label>
+                        <input type="number" step="1" min="0" name="food_delivery_fee" id="food_delivery_fee" value="{{ old('food_delivery_fee', $settings->food_delivery_fee !== null ? $settings->food_delivery_fee / 100 : 40) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Delivery charge applied on doorstep delivery orders.</p>
+                    </div>
+                    <div>
+                        <label for="food_free_delivery_above" class="block text-sm font-semibold text-gray-700">Free Delivery Above Order Value (₹)</label>
+                        <input type="number" step="1" min="0" name="food_free_delivery_above" id="food_free_delivery_above" value="{{ old('food_free_delivery_above', $settings->food_free_delivery_above ? $settings->food_free_delivery_above / 100 : '') }}" placeholder="Leave empty if never free" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Delivery fee becomes ₹0 when dish subtotal meets this threshold.</p>
+                    </div>
+
+                    <div>
+                        <label for="food_packaging_fee" class="block text-sm font-semibold text-gray-700">Restaurant Packaging Charge (₹)</label>
+                        <input type="number" step="1" min="0" name="food_packaging_fee" id="food_packaging_fee" value="{{ old('food_packaging_fee', $settings->food_packaging_fee !== null ? $settings->food_packaging_fee / 100 : 0) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Applied to food orders for containers &amp; tamper-proof sealing.</p>
+                    </div>
                     <div>
                         <label for="min_food_order_amount" class="block text-sm font-semibold text-gray-700">Minimum Order Value for Delivery (₹)</label>
-                        <input type="number" step="1" name="min_food_order_amount" id="min_food_order_amount" value="{{ old('min_food_order_amount', $settings->min_food_order_amount ? $settings->min_food_order_amount / 100 : 149) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
-                        <p class="text-xs text-gray-500 mt-1">Minimum food subtotal required to checkout.</p>
+                        <input type="number" step="1" min="0" name="min_food_order_amount" id="min_food_order_amount" value="{{ old('min_food_order_amount', $settings->min_food_order_amount !== null ? $settings->min_food_order_amount / 100 : 149) }}" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Minimum dish subtotal required for delivery orders.</p>
                     </div>
+
+                    <!-- Service Area Cities & Pincodes -->
+                    <div>
+                        <label for="service_cities" class="block text-sm font-semibold text-gray-700">Serviceable Cities (Comma-separated)</label>
+                        @php
+                            $citiesArr = is_array($settings->service_cities_json) ? $settings->service_cities_json : [];
+                            $citiesStr = implode(', ', $citiesArr);
+                        @endphp
+                        <input type="text" name="service_cities" id="service_cities" value="{{ old('service_cities', $citiesStr) }}" placeholder="e.g. Jaipur, Ajmer, Kishangarh" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Leave blank to use your store's primary city ({{ $vendor->city ?? 'Store City' }}).</p>
+                    </div>
+                    <div>
+                        <label for="food_serviceable_pincodes" class="block text-sm font-semibold text-gray-700">Serviceable Pincodes (Comma-separated)</label>
+                        @php
+                            $foodPinStr = '';
+                            if ($settings->serviceable_pincodes) {
+                                $fpArr = is_array($settings->serviceable_pincodes) ? $settings->serviceable_pincodes : json_decode($settings->serviceable_pincodes, true);
+                                $foodPinStr = is_array($fpArr) ? implode(', ', $fpArr) : '';
+                            }
+                        @endphp
+                        <input type="text" name="serviceable_pincodes" id="food_serviceable_pincodes" value="{{ old('serviceable_pincodes', $foodPinStr) }}" placeholder="e.g. 302001, 302017" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
+                        <p class="text-xs text-gray-500 mt-1">Optional pincode restriction for local food delivery.</p>
+                    </div>
+
+                    <!-- Cuisines & FSSAI -->
                     <div>
                         <label for="cuisine_types" class="block text-sm font-semibold text-gray-700">Cuisine Tags (Comma-separated)</label>
                         @php
@@ -90,6 +177,18 @@
                         @endphp
                         <input type="text" name="cuisine_types" id="cuisine_types" value="{{ old('cuisine_types', $cStr) }}" placeholder="e.g. Biryani, North Indian, Desserts" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm">
                         <p class="text-xs text-gray-500 mt-1">Help customers find you in food search.</p>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <label for="fssai_license_number" class="block text-sm font-semibold text-gray-700">FSSAI License Number</label>
+                            @if($vendor->isFssaiVerified())
+                                <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">✓ Admin Verified</span>
+                            @elseif(!empty($settings->fssai_license_number))
+                                <span class="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">⏳ Pending Review</span>
+                            @endif
+                        </div>
+                        <input type="text" name="fssai_license_number" id="fssai_license_number" maxlength="30" value="{{ old('fssai_license_number', $settings->fssai_license_number) }}" placeholder="14-digit FSSAI Registration / License No." class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-brand-sage focus:ring-brand-sage sm:text-sm font-mono">
+                        <p class="text-xs text-gray-500 mt-1">Updating the license number resets verification until re-approved by Master Admin.</p>
                     </div>
                 </div>
             </div>

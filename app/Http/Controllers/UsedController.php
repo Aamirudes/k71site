@@ -3,193 +3,471 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Offer;
 use App\Models\Product;
-use App\Models\ProductImage;
+use App\Models\Review;
+use App\Models\UsedSavedSearch;
+use App\Models\UsedThread;
 use App\Models\Vendor;
+use App\Models\Wishlist;
+use App\Services\Used\UsedMarketplaceService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class UsedController extends Controller
 {
+    public function __construct(private UsedMarketplaceService $usedService)
+    {
+    }
+
     /**
-     * Display the Used Items marketplace hub (used.k71.in / used.marblemandi.org).
+     * Discovery-first Used Marketplace Homepage (/used, /s/used, used.{domain}).
      */
     public function index(Request $request): View
     {
-        $search = $request->query('search');
-        $selectedCategory = $request->query('cat');
-        $condition = $request->query('condition');
-        $city = $request->query('city');
+        $search = trim((string) $request->query('search', ''));
+        $selectedCategory = trim((string) $request->query('cat', ''));
+        $condition = trim((string) $request->query('condition', ''));
+        $city = trim((string) $request->query('city', ''));
         $minPrice = $request->query('min_price');
         $maxPrice = $request->query('max_price');
         $negotiableOnly = $request->boolean('negotiable');
+        $pricingMode = trim((string) $request->query('pricing', ''));
+        $fulfillment = trim((string) $request->query('fulfillment', ''));
+        $posted = trim((string) $request->query('posted', ''));
+        $refurbished = $request->query('refurbished');
         $showSold = $request->boolean('include_sold');
         $openAdSlug = $request->query('ad');
-        $sort = $request->query('sort', 'newest');
+        $sort = trim((string) $request->query('sort', 'newest'));
+        $specFilters = array_filter((array) $request->query('spec', []), fn($v) => $v !== null && $v !== '');
 
-        // Fetch active used categories
-        $usedCategories = Category::where('vertical', 'used')
+        // Configurable parent categories with genuine active listing counts (rolled up from children)
+        $parentCategories = Category::where('vertical', 'used')
             ->where('is_active', true)
-            ->withCount(['products' => function ($q) {
-                $q->where('vertical', 'used')->where('status', 'active');
-            }])
+            ->whereNull('parent_id')
+            ->with(['children' => fn($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->orderBy('sort_order')
             ->get();
 
-        // Standard Indian classified cities
-        $defaultCities = collect([
-            'Kishangarh, Rajasthan',
-            'Ajmer, Rajasthan',
-            'Jaipur, Rajasthan',
-            'Jodhpur, Rajasthan',
-            'Kota, Rajasthan',
-            'Udaipur, Rajasthan',
-            'Delhi NCR',
-            'Mumbai, Maharashtra',
-            'Ahmedabad, Gujarat',
-            'Bengaluru, Karnataka',
-        ]);
+        $allUsedCategories = Category::where('vertical', 'used')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
 
-        $dbCities = Vendor::whereHas('products', fn($q) => $q->where('vertical', 'used')->where('status', 'active'))
+        $activeCountsByCat = Product::withoutGlobalScopes()
+            ->select('category_id', DB::raw('COUNT(*) as aggregate'))
+            ->where('vertical', 'used')
+            ->where('status', 'active')
+            ->where('is_sold', false)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
+            ->groupBy('category_id')
+            ->pluck('aggregate', 'category_id');
+
+        foreach ($parentCategories as $cat) {
+            $childSum = $cat->children->sum(fn($child) => (int) ($activeCountsByCat[$child->id] ?? 0));
+            $directCount = (int) ($activeCountsByCat[$cat->id] ?? 0);
+            $cat->active_items_count = $directCount + $childSum;
+            $cat->products_count = $cat->active_items_count;
+            foreach ($cat->children as $child) {
+                $child->active_items_count = (int) ($activeCountsByCat[$child->id] ?? 0);
+            }
+        }
+
+        // Preserve $usedCategories alias for view/tests while including active counts
+        $usedCategories = $parentCategories;
+
+        // Genuine popular categories ordered strictly by live active listing activity (>0)
+        $popularCategories = $parentCategories
+            ->filter(fn($c) => ($c->active_items_count ?? 0) > 0)
+            ->sortByDesc('active_items_count')
+            ->take(6)
+            ->values();
+
+        // Real city list from active listings + standard regional centers
+        $defaultCities = collect(config('used_marketplace.default_cities', []));
+        $productCities = Product::withoutGlobalScopes()
+            ->where('vertical', 'used')
+            ->where('status', 'active')
             ->whereNotNull('city')
             ->pluck('city')
-            ->map(fn($c) => str_contains($c, ',') ? $c : "{$c}, Rajasthan")
+            ->unique();
+        $vendorCities = Vendor::whereHas('products', fn($q) => $q->where('vertical', 'used')->where('status', 'active'))
+            ->whereNotNull('city')
+            ->pluck('city')
             ->unique();
 
-        $availableCities = $defaultCities->merge($dbCities)->unique()->values();
+        $availableCities = $defaultCities
+            ->merge($productCities)
+            ->merge($vendorCities)
+            ->map(fn($c) => trim((string) $c))
+            ->filter()
+            ->unique()
+            ->values();
 
-        // Main Query
-        $query = Product::with(['images', 'category', 'vendor'])
+        // Main discovery query
+        $query = Product::withoutGlobalScopes()
+            ->with(['images', 'category.parent', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active');
 
-        if (!$showSold) {
-            $query->where('is_sold', false);
+        if ($showSold) {
+            $query->where(function ($q) {
+                $q->whereNull('used_status')
+                  ->orWhereIn('used_status', ['active', 'reserved', 'sold']);
+            });
+        } else {
+            $query->where('is_sold', false)
+                ->where(function ($q) {
+                    $q->whereNull('used_status')
+                      ->orWhereIn('used_status', ['active', 'reserved']);
+                });
         }
 
-        if ($search) {
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhere('brand', 'like', "%{$search}%")
-                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', "%{$search}%")->orWhere('city', 'like', "%{$search}%"));
+                  ->orWhere('model_name', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%")
+                  ->orWhere('locality', 'like', "%{$search}%")
+                  ->orWhere('tags', 'like', "%{$search}%")
+                  ->orWhereHas('category', fn($cq) => $cq->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%"))
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', "%{$search}%")->orWhere('city', 'like', "%{$search}%"))
+                  ->orWhereHas('sellerUser.usedSellerProfile', fn($sq) => $sq->where('display_name', 'like', "%{$search}%")->orWhere('handle', 'like', "%{$search}%"));
             });
         }
 
-        if ($selectedCategory && $selectedCategory !== 'all') {
-            $query->where(function ($q) use ($selectedCategory) {
-                $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', "%{$selectedCategory}%")->orWhere('name', 'like', "%{$selectedCategory}%"))
-                  ->orWhere('title', 'like', "%{$selectedCategory}%")
-                  ->orWhere('brand', 'like', "%{$selectedCategory}%");
+        $activeCategoryObj = null;
+        if ($selectedCategory !== '' && $selectedCategory !== 'all') {
+            $activeCategoryObj = Category::where('vertical', 'used')
+                ->where(function ($q) use ($selectedCategory) {
+                    $q->where('slug', $selectedCategory);
+                    if (is_numeric($selectedCategory)) {
+                        $q->orWhere('id', (int) $selectedCategory);
+                    }
+                    $q->orWhere('name', 'like', "%{$selectedCategory}%");
+                })
+                ->with('children')
+                ->first();
+
+            if ($activeCategoryObj) {
+                $catIds = $activeCategoryObj->children->pluck('id')->push($activeCategoryObj->id)->all();
+                $query->whereIn('category_id', $catIds);
+            } else {
+                $query->where(function ($q) use ($selectedCategory) {
+                    $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', "%{$selectedCategory}%")->orWhere('name', 'like', "%{$selectedCategory}%"))
+                      ->orWhere('title', 'like', "%{$selectedCategory}%")
+                      ->orWhere('brand', 'like', "%{$selectedCategory}%");
+                });
+            }
+        }
+
+        if ($condition !== '') {
+            $normalizedGrade = $this->usedService->normalizeConditionGrade($condition);
+            $aliases = config("used_marketplace.conditions.{$normalizedGrade}.aliases", [$condition]);
+            $query->where(function ($q) use ($normalizedGrade, $condition, $aliases) {
+                $q->where('condition_grade', $normalizedGrade)
+                  ->orWhere('custom_fields->condition', 'like', "%{$condition}%")
+                  ->orWhere('custom_fields->specs->Condition', 'like', "%{$condition}%");
+                foreach ($aliases as $alias) {
+                    $q->orWhere('custom_fields->condition', 'like', "%{$alias}%");
+                }
             });
         }
 
-        if ($condition) {
-            $query->where(function ($q) use ($condition) {
-                $q->where('custom_fields->specs->Condition', 'like', "%{$condition}%")
-                  ->orWhere('custom_fields->condition', 'like', "%{$condition}%");
-            });
-        }
-
-        if ($city && $city !== 'All India') {
-            $cityClean = explode(',', $city)[0];
+        if ($city !== '' && $city !== 'All India') {
+            $cityClean = trim(explode(',', $city)[0]);
             $query->where(function ($q) use ($cityClean) {
-                $q->whereHas('vendor', fn($vq) => $vq->where('city', 'like', "%{$cityClean}%"))
-                  ->orWhere('custom_fields->location', 'like', "%{$cityClean}%");
+                $q->where('city', 'like', "%{$cityClean}%")
+                  ->orWhere('locality', 'like', "%{$cityClean}%")
+                  ->orWhere('custom_fields->location', 'like', "%{$cityClean}%")
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('city', 'like', "%{$cityClean}%"));
             });
         }
 
-        if ($minPrice !== null && is_numeric($minPrice)) {
-            $query->where('base_price', '>=', (int) ($minPrice * 100));
+        if ($minPrice !== null && $minPrice !== '' && is_numeric($minPrice)) {
+            $query->where('base_price', '>=', (int) round(((float) $minPrice) * 100));
         }
 
-        if ($maxPrice !== null && is_numeric($maxPrice)) {
-            $query->where('base_price', '<=', (int) ($maxPrice * 100));
+        if ($maxPrice !== null && $maxPrice !== '' && is_numeric($maxPrice)) {
+            $query->where('base_price', '<=', (int) round(((float) $maxPrice) * 100));
         }
 
-        if ($negotiableOnly) {
+        if ($negotiableOnly || $pricingMode === 'negotiable') {
             $query->where('is_negotiable', true);
+        } elseif ($pricingMode === 'fixed') {
+            $query->where('is_negotiable', false);
+        }
+
+        if ($fulfillment !== '' && in_array($fulfillment, ['local_pickup', 'public_meetup', 'seller_shipping'], true)) {
+            $query->where("fulfillment_options->{$fulfillment}", true);
+        }
+
+        if ($posted === '24h') {
+            $query->where('created_at', '>=', now()->subDay());
+        } elseif ($posted === '7d') {
+            $query->where('created_at', '>=', now()->subDays(7));
+        } elseif ($posted === '30d') {
+            $query->where('created_at', '>=', now()->subDays(30));
+        }
+
+        if ($refurbished === '1') {
+            $query->where('is_refurbished', true);
+        }
+
+        foreach ($specFilters as $sKey => $sVal) {
+            $safeKey = preg_replace('/[^a-zA-Z0-9_\- ]/', '', (string) $sKey);
+            if ($safeKey !== '') {
+                $query->where("custom_fields->specs->{$safeKey}", 'like', "%{$sVal}%");
+            }
         }
 
         // Sorting
         if ($sort === 'price_low') {
-            $query->orderBy('base_price', 'asc');
+            $query->orderBy('base_price', 'asc')->orderByDesc('created_at');
         } elseif ($sort === 'price_high') {
-            $query->orderBy('base_price', 'desc');
+            $query->orderBy('base_price', 'desc')->orderByDesc('created_at');
+        } elseif ($sort === 'relevance' && $search !== '') {
+            $query->orderByRaw('CASE WHEN LOWER(title) LIKE ? THEN 0 ELSE 1 END', ['%' . strtolower($search) . '%'])
+                  ->orderByDesc('refreshed_at')
+                  ->orderByDesc('created_at');
         } else {
-            $query->latest();
+            $query->orderByDesc('refreshed_at')->latest();
         }
 
         $items = $query->paginate(24)->withQueryString();
 
-        // Recommended / Featured AI Picks (Top 6)
-        $recommendedItems = Product::with(['images', 'vendor'])
+        // Only genuinely featured & active listings receive featured prominence
+        $featuredItems = Product::withoutGlobalScopes()
+            ->with(['images', 'category', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active')
+            ->where('is_sold', false)
             ->where('is_featured', true)
-            ->latest()
-            ->take(6)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
+            ->latest('refreshed_at')
+            ->take(4)
             ->get();
 
-        if ($recommendedItems->isEmpty()) {
-            $recommendedItems = $items->take(6);
-        }
-
-        // User's own posted ads
-        $myAds = collect();
-        if (auth()->check()) {
-            $user = auth()->user();
-            $vendorId = $user->vendor?->id;
-            $myAds = Product::with(['images', 'category'])
+        // Nearby / selected-city listings strip when a city is selected
+        $nearLocationItems = collect();
+        if ($city !== '' && $city !== 'All India') {
+            $cityClean = trim(explode(',', $city)[0]);
+            $nearLocationItems = Product::withoutGlobalScopes()
+                ->with(['images', 'category', 'sellerUser.usedSellerProfile'])
                 ->where('vertical', 'used')
-                ->where(function ($q) use ($user, $vendorId) {
-                    if ($vendorId) {
-                        $q->where('vendor_id', $vendorId);
-                    }
-                    $q->orWhere('custom_fields->user_id', $user->id);
+                ->where('status', 'active')
+                ->where('is_sold', false)
+                ->where(function ($q) {
+                    $q->whereNull('used_status')->orWhere('used_status', 'active');
+                })
+                ->where(function ($q) use ($cityClean) {
+                    $q->where('city', 'like', "%{$cityClean}%")
+                      ->orWhere('locality', 'like', "%{$cityClean}%");
                 })
                 ->latest()
+                ->take(4)
                 ->get();
         }
 
+        // Recently viewed real items from session
+        $recentIds = array_map('intval', (array) $request->session()->get('used_recently_viewed', []));
+        $recentlyViewed = collect();
+        if (!empty($recentIds)) {
+            $recentlyViewedMap = Product::withoutGlobalScopes()
+                ->with(['images', 'category'])
+                ->where('vertical', 'used')
+                ->where('status', 'active')
+                ->whereIn('id', $recentIds)
+                ->get()
+                ->keyBy('id');
+            $recentlyViewed = collect($recentIds)->map(fn($id) => $recentlyViewedMap->get($id))->filter()->values();
+        }
+
+        // Relevant recommendations based ONLY on genuine signals (wishlist / recent category)
+        $relevantRecommendations = collect();
+        $signalCatIds = $recentlyViewed->pluck('category_id')->unique()->filter()->values()->all();
+        if (auth()->check() && empty($signalCatIds)) {
+            $signalCatIds = Wishlist::where('user_id', auth()->id())
+                ->whereHas('product', fn($q) => $q->where('vertical', 'used'))
+                ->with('product:id,category_id')
+                ->get()
+                ->pluck('product.category_id')
+                ->unique()
+                ->filter()
+                ->values()
+                ->all();
+        }
+        if (!empty($signalCatIds)) {
+            $relevantRecommendations = Product::withoutGlobalScopes()
+                ->with(['images', 'category', 'sellerUser.usedSellerProfile'])
+                ->where('vertical', 'used')
+                ->where('status', 'active')
+                ->where('is_sold', false)
+                ->where(function ($q) {
+                    $q->whereNull('used_status')->orWhere('used_status', 'active');
+                })
+                ->whereIn('category_id', $signalCatIds)
+                ->when(!empty($recentIds), fn($q) => $q->whereNotIn('id', $recentIds))
+                ->latest()
+                ->take(4)
+                ->get();
+        }
+
+        // DB-backed saved IDs + Saved Searches + My Ads summary
+        $savedProductIds = [];
+        $savedSearches = collect();
+        $myAds = collect();
+
+        if (auth()->check()) {
+            $user = auth()->user();
+            $vendorId = $user->vendor?->id;
+
+            $savedProductIds = Wishlist::where('user_id', $user->id)
+                ->pluck('product_id')
+                ->map(fn($id) => (int) $id)
+                ->all();
+
+            $savedSearches = UsedSavedSearch::where('user_id', $user->id)
+                ->latest()
+                ->take(6)
+                ->get();
+
+            $myAds = Product::withoutGlobalScopes()
+                ->with(['images', 'category'])
+                ->where('vertical', 'used')
+                ->where(function ($q) use ($user, $vendorId) {
+                    $q->where('user_id', $user->id)
+                      ->orWhere('custom_fields->user_id', $user->id);
+                    if ($vendorId) {
+                        $q->orWhere('vendor_id', $vendorId);
+                    }
+                })
+                ->latest()
+                ->take(12)
+                ->get();
+        } else {
+            $savedProductIds = array_map('intval', (array) $request->session()->get('guest_wishlist', []));
+        }
+
+        // Keep legacy view var name $recommendedItems mapped cleanly without synthetic entries
+        $recommendedItems = $featuredItems;
+        $activeFilterCategoryFields = $activeCategoryObj ? $activeCategoryObj->fields : collect();
+
         return view('used.index', compact(
             'usedCategories',
+            'parentCategories',
+            'allUsedCategories',
+            'popularCategories',
             'availableCities',
             'items',
+            'featuredItems',
             'recommendedItems',
+            'nearLocationItems',
+            'recentlyViewed',
+            'relevantRecommendations',
+            'savedProductIds',
+            'savedSearches',
             'myAds',
             'search',
             'selectedCategory',
+            'activeCategoryObj',
+            'activeFilterCategoryFields',
             'condition',
             'city',
             'minPrice',
             'maxPrice',
             'negotiableOnly',
+            'pricingMode',
+            'fulfillment',
+            'posted',
+            'refurbished',
             'showSold',
             'openAdSlug',
-            'sort'
+            'sort',
+            'specFilters'
         ));
     }
 
     /**
-     * Show single used product ad directly.
+     * Show single Used listing detail page (/used/{slug}).
      */
-    public function show(string $slug): View
+    public function show(Request $request, string $slug): View
     {
-        $product = Product::with(['images', 'category', 'vendor'])
+        $product = Product::withoutGlobalScopes()
+            ->with([
+                'images',
+                'category.parent',
+                'category.fields',
+                'vendor',
+                'sellerUser.usedSellerProfile',
+            ])
             ->where(function ($q) {
                 $q->where('vertical', 'used')
-                  ->orWhereHas('category', function ($cq) {
-                      $cq->where('vertical', 'used');
-                  });
+                  ->orWhere('listing_type', 'classified')
+                  ->orWhereHas('category', fn($cq) => $cq->where('vertical', 'used'));
             })
             ->where('slug', $slug)
             ->firstOrFail();
 
-        $similarItems = Product::with(['images', 'vendor'])
+        $viewer = auth()->user();
+        $isOwner = $product->isOwnedBy($viewer);
+
+        if (!$product->isPubliclyVisible() && !$isOwner) {
+            abort(404);
+        }
+
+        // Genuine view & recently viewed tracking (never inflated)
+        $this->usedService->recordListingView($product, $request);
+        $product->refresh();
+
+        $ownerUser = $product->ownerUser();
+        $sellerProfile = $ownerUser ? $this->usedService->getOrCreateSellerProfile($ownerUser) : null;
+
+        $sellerOtherAds = collect();
+        if ($ownerUser) {
+            $ownerVendorId = $ownerUser->vendor?->id;
+            $sellerOtherAds = Product::withoutGlobalScopes()
+                ->with(['images', 'category'])
+                ->where('vertical', 'used')
+                ->where('id', '!=', $product->id)
+                ->where('status', 'active')
+                ->where('is_sold', false)
+                ->where(function ($q) use ($ownerUser, $ownerVendorId) {
+                    $q->where('user_id', $ownerUser->id);
+                    if ($ownerVendorId) {
+                        $q->orWhere('vendor_id', $ownerVendorId);
+                    }
+                })
+                ->latest()
+                ->take(4)
+                ->get();
+        }
+
+        $sellerReviews = $ownerUser
+            ? Review::with(['user', 'product'])
+                ->where('reviewed_user_id', $ownerUser->id)
+                ->where('is_approved', true)
+                ->latest()
+                ->take(5)
+                ->get()
+            : collect();
+
+        $similarItems = Product::withoutGlobalScopes()
+            ->with(['images', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active')
+            ->where('is_sold', false)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
             ->where('id', '!=', $product->id)
             ->where('category_id', $product->category_id)
             ->latest()
@@ -197,275 +475,161 @@ class UsedController extends Controller
             ->get();
 
         if ($similarItems->isEmpty()) {
-            $similarItems = Product::with(['images', 'vendor'])
+            $similarItems = Product::withoutGlobalScopes()
+                ->with(['images', 'vendor', 'sellerUser.usedSellerProfile'])
                 ->where('vertical', 'used')
                 ->where('status', 'active')
+                ->where('is_sold', false)
+                ->where(function ($q) {
+                    $q->whereNull('used_status')->orWhere('used_status', 'active');
+                })
                 ->where('id', '!=', $product->id)
                 ->latest()
                 ->take(4)
                 ->get();
         }
 
-        return view('used.show', compact('product', 'similarItems'));
+        $isSaved = false;
+        $myOffers = collect();
+        $existingThread = null;
+
+        if ($viewer) {
+            $isSaved = Wishlist::where('user_id', $viewer->id)
+                ->where('product_id', $product->id)
+                ->exists();
+
+            $myOffers = Offer::where('product_id', $product->id)
+                ->where('user_id', $viewer->id)
+                ->latest()
+                ->get();
+
+            $existingThread = UsedThread::where('product_id', $product->id)
+                ->where('buyer_id', $viewer->id)
+                ->first();
+        } else {
+            $guestSaved = (array) $request->session()->get('guest_wishlist', []);
+            $isSaved = in_array((int) $product->id, array_map('intval', $guestSaved), true);
+        }
+
+        // SEO Meta & Accurate Schema.org Structured Data
+        $conditionMeta = $product->conditionMeta();
+        $availabilityUrl = match ($product->effectiveUsedStatus()) {
+            'sold', 'paused', 'draft', 'removed' => 'https://schema.org/OutOfStock',
+            'reserved' => 'https://schema.org/LimitedAvailability',
+            default => 'https://schema.org/InStock',
+        };
+        $canonicalUrl = route('used.show', $product->slug);
+        $robotsContent = ($product->isDraft() || $product->isPaused() || $request->boolean('preview'))
+            ? 'noindex,nofollow'
+            : 'index,follow';
+
+        return view('used.show', compact(
+            'product',
+            'isOwner',
+            'ownerUser',
+            'sellerProfile',
+            'sellerOtherAds',
+            'sellerReviews',
+            'similarItems',
+            'isSaved',
+            'myOffers',
+            'existingThread',
+            'conditionMeta',
+            'availabilityUrl',
+            'canonicalUrl',
+            'robotsContent'
+        ));
     }
 
     /**
-     * Store new Classified Ad from the frontend Sell Flow.
+     * Save a discovery filter preset for quick alerts/shortcuts.
      */
+    public function saveSearch(Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $validated = $request->validate([
+            'name' => 'nullable|string|max:120',
+            'query' => 'nullable|string|max:200',
+            'city' => 'nullable|string|max:100',
+            'cat' => 'nullable|string|max:100',
+            'condition' => 'nullable|string|max:50',
+            'min_price' => 'nullable|numeric|min:0',
+            'max_price' => 'nullable|numeric|min:0',
+            'negotiable' => 'nullable|boolean',
+        ]);
+
+        $filters = array_filter([
+            'cat' => $validated['cat'] ?? null,
+            'condition' => $validated['condition'] ?? null,
+            'min_price' => $validated['min_price'] ?? null,
+            'max_price' => $validated['max_price'] ?? null,
+            'negotiable' => !empty($validated['negotiable']) ? 1 : null,
+        ], fn($v) => $v !== null && $v !== '');
+
+        $queryVal = !empty($validated['query']) ? trim((string) $validated['query']) : null;
+        $cityVal = !empty($validated['city']) ? trim((string) $validated['city']) : null;
+        $nameVal = !empty($validated['name']) ? trim((string) $validated['name']) : null;
+
+        if (!$queryVal && !$cityVal && empty($filters)) {
+            return back()->with('error', 'Select at least a search keyword, city, or filter before saving.');
+        }
+
+        $labelParts = array_filter([
+            $queryVal,
+            !empty($filters['cat']) ? ucfirst(str_replace(['used-', '-'], ['', ' '], $filters['cat'])) : null,
+            ($cityVal && $cityVal !== 'All India') ? $cityVal : null,
+        ]);
+
+        UsedSavedSearch::create([
+            'user_id' => $user->id,
+            'name' => $nameVal ?: (implode(' • ', $labelParts) ?: 'Used Search Alert'),
+            'query' => $queryVal,
+            'city' => $cityVal,
+            'filters_json' => $filters,
+        ]);
+
+        return back()->with('success', 'Search saved! You can jump back to it anytime from K71 Used or your Dashboard.');
+    }
+
+    public function deleteSearch(UsedSavedSearch $savedSearch): RedirectResponse
+    {
+        $user = auth()->user();
+        if (!$user || (int) $savedSearch->user_id !== (int) $user->id) {
+            abort(403, 'Unauthorized to remove this saved search.');
+        }
+
+        $savedSearch->delete();
+
+        return back()->with('success', 'Saved search removed.');
+    }
+
+    // Backwards-compatible delegate methods mapped to UsedListingController
     public function storeAd(Request $request)
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:150',
-            'category' => 'required|string',
-            'price' => 'required|numeric|min:1',
-            'brand' => 'nullable|string|max:80',
-            'city' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
-            'description' => 'required|string|max:3000',
-            'condition' => 'nullable|string|max:50',
-            'photos' => 'nullable|array|max:10',
-            'photos.*' => 'nullable|image|max:12288',
-            'image' => 'nullable|image|max:12288',
-            'image_url' => 'nullable|string',
-        ]);
-
-        // Find or create category
-        $category = Category::where('vertical', 'used')
-            ->where(function($q) use ($validated) {
-                $q->where('name', 'like', "%{$validated['category']}%")
-                  ->orWhere('slug', 'like', "%" . Str::slug($validated['category']) . "%");
-            })
-            ->first()
-            ?: Category::where('vertical', 'used')->first()
-            ?: Category::firstOrCreate(
-                ['slug' => 'general-classifieds'],
-                ['name' => 'General Classifieds', 'vertical' => 'used', 'is_active' => true]
-            );
-
-        // Default or active vendor
-        $vendor = auth()->user()?->vendor ?: (Vendor::where('vendor_type', 'used')->first() ?: Vendor::first());
-        if (!$vendor) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'Classifieds marketplace is not initialized yet.'], 422);
-            }
-            return back()->withInput()->with('error', 'Classifieds marketplace is currently unavailable. Please register a store first.');
-        }
-
-        $userId = auth()->id();
-
-        $baseSlug = Str::slug($validated['title']) ?: 'classified';
-        $slug = $baseSlug . '-' . random_int(1000, 9999);
-        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . random_int(10000, 99999);
-        }
-        $adId = (string) random_int(1857000000, 1857999999);
-        $cond = $validated['condition'] ?? 'Good Condition';
-
-        $product = Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $category->id,
-            'vertical' => 'used',
-            'listing_type' => 'classified',
-            'title' => $validated['title'],
-            'slug' => $slug,
-            'description' => $validated['description'],
-            'short_description' => Str::limit($validated['description'], 120),
-            'brand' => $validated['brand'] ?? 'Standard',
-            'base_price' => (int) ($validated['price'] * 100),
-            'compare_at_price' => (int) ($validated['price'] * 1.25 * 100),
-            'gst_rate' => 0,
-            'sku' => 'AD-' . strtoupper(Str::random(6)),
-            'status' => 'active',
-            'is_featured' => true,
-            'is_negotiable' => true,
-            'is_sold' => false,
-            'total_stock' => 1,
-            'published_at' => now(),
-            'custom_fields' => [
-                'ad_id' => $adId,
-                'user_id' => $userId,
-                'badge' => 'VERIFIED',
-                'deal_label' => 'Fair Deal',
-                'location' => $validated['city'],
-                'contact_phone' => $validated['phone'],
-                'condition' => $cond,
-                'views_past_hour' => 1,
-                'specs' => [
-                    'Type' => $validated['category'],
-                    'Brand' => $validated['brand'] ?? 'Standard',
-                    'Condition' => $cond,
-                    'Posted Location' => $validated['city'],
-                ],
-            ],
-        ]);
-
-        // Multi-photo file upload handling
-        $savedImages = [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $idx => $photoFile) {
-                if ($photoFile && $photoFile->isValid()) {
-                    $storedPath = $photoFile->store('products/used', 'public');
-                    $savedImages[] = asset('storage/' . $storedPath);
-                }
-            }
-        } elseif ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $storedPath = $request->file('image')->store('products/used', 'public');
-            $savedImages[] = asset('storage/' . $storedPath);
-        } elseif (!empty($validated['image_url'])) {
-            $savedImages[] = $validated['image_url'];
-        }
-
-        // Fallback default image per category if no photo was uploaded
-        if (empty($savedImages)) {
-            $catLower = strtolower($validated['category'] . ' ' . $validated['title']);
-            if (str_contains($catLower, 'phone') || str_contains($catLower, 'mobile')) {
-                $savedImages[] = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80';
-            } elseif (str_contains($catLower, 'car') || str_contains($catLower, 'vehicle')) {
-                $savedImages[] = 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80';
-            } elseif (str_contains($catLower, 'bike') || str_contains($catLower, 'scooter') || str_contains($catLower, 'bullet')) {
-                $savedImages[] = 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80';
-            } elseif (str_contains($catLower, 'laptop') || str_contains($catLower, 'electronic')) {
-                $savedImages[] = 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80';
-            } else {
-                $savedImages[] = 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80';
-            }
-        }
-
-        foreach ($savedImages as $sortOrder => $imgUrl) {
-            ProductImage::create([
-                'product_id' => $product->id,
-                'path' => $imgUrl,
-                'alt_text' => $product->title,
-                'sort_order' => $sortOrder,
-            ]);
-        }
-
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Your Ad has been published successfully and is now LIVE!',
-                'slug' => $product->slug,
-                'product' => $product,
-            ]);
-        }
-
-        return redirect()->route('used.show', $product->slug)
-            ->with('success', 'Your Ad is LIVE across Kishangarh & India!');
+        return app(UsedListingController::class)->store($request);
     }
 
-    /**
-     * Toggle Sold / Available status on an ad.
-     */
-    public function toggleSold(Request $request, Product $product)
-    {
-        $user = auth()->user();
-        if (!$user) abort(401);
-
-        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
-            abort(403, 'Unauthorized to modify this listing.');
-        }
-
-        $product->is_sold = !$product->is_sold;
-        $product->save();
-
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true, 'is_sold' => $product->is_sold]);
-        }
-
-        return back()->with('success', $product->is_sold ? 'Ad marked as SOLD.' : 'Ad re-activated as ACTIVE.');
-    }
-
-    /**
-     * Edit Classified Ad Form
-     */
     public function editAd(Product $product)
     {
-        $user = auth()->user();
-        if (!$user) abort(401);
-
-        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
-            abort(403, 'Unauthorized to edit this listing.');
-        }
-
-        $usedCategories = Category::where('vertical', 'used')->where('is_active', true)->get();
-
-        return view('used.edit', compact('product', 'usedCategories'));
+        return app(UsedListingController::class)->edit($product);
     }
 
-    /**
-     * Update Classified Ad
-     */
     public function updateAd(Request $request, Product $product)
     {
-        $user = auth()->user();
-        if (!$user) abort(401);
-
-        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
-            abort(403, 'Unauthorized to update this listing.');
-        }
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:150',
-            'category_id' => 'required|exists:categories,id',
-            'price' => 'required|numeric|min:1',
-            'brand' => 'nullable|string|max:80',
-            'city' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
-            'description' => 'required|string|max:3000',
-            'condition' => 'nullable|string|max:50',
-            'photos' => 'nullable|array|max:10',
-            'photos.*' => 'nullable|image|max:12288',
-        ]);
-
-        $customFields = $product->custom_fields ?: [];
-        $customFields['location'] = $validated['city'];
-        $customFields['contact_phone'] = $validated['phone'];
-        $customFields['condition'] = $validated['condition'] ?? 'Good Condition';
-
-        $product->update([
-            'title' => $validated['title'],
-            'category_id' => $validated['category_id'],
-            'description' => $validated['description'],
-            'short_description' => Str::limit($validated['description'], 120),
-            'brand' => $validated['brand'] ?? 'Standard',
-            'base_price' => (int) ($validated['price'] * 100),
-            'custom_fields' => $customFields,
-        ]);
-
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $idx => $photo) {
-                if ($photo && $photo->isValid()) {
-                    $path = $photo->store('products', 'public');
-                    ProductImage::create([
-                        'product_id' => $product->id,
-                        'image_url' => asset('storage/' . $path),
-                        'sort_order' => $product->images()->count() + $idx,
-                    ]);
-                }
-            }
-        }
-
-        return redirect()->route('used.show', $product->slug)->with('success', 'Ad updated successfully!');
+        return app(UsedListingController::class)->update($request, $product);
     }
 
-    /**
-     * Delete an ad owned by the user.
-     */
+    public function toggleSold(Request $request, Product $product)
+    {
+        return app(UsedListingController::class)->toggleSold($request, $product);
+    }
+
     public function deleteAd(Request $request, Product $product)
     {
-        $user = auth()->user();
-        if (!$user) abort(401);
-
-        if ($product->vendor?->user_id !== $user->id && ($product->custom_fields['user_id'] ?? null) !== $user->id && !$user->hasRole('admin')) {
-            abort(403, 'Unauthorized to delete this listing.');
-        }
-
-        $product->delete();
-
-        if ($request->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return redirect()->route('used.index')->with('success', 'Your ad has been removed.');
+        return app(UsedListingController::class)->destroy($request, $product);
     }
 }

@@ -69,16 +69,43 @@
                         
                         <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                             <div>
-                                <h3 class="font-bold text-gray-900 text-sm sm:text-base truncate">{{ $product->title }}</h3>
-                                <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $product->category->name ?? 'Uncategorized' }} • SKU: {{ $product->sku ?? 'N/A' }}</p>
+                                <div class="flex items-center gap-1.5">
+                                    @if($product->vertical === 'food')
+                                        <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded border {{ $product->isVeg() ? 'border-emerald-600' : 'border-rose-600' }} shrink-0" title="{{ ucfirst(str_replace('_', ' ', $product->dietary_label_resolved ?? ($product->isVeg() ? 'veg' : 'non_veg'))) }}">
+                                            <span class="w-1.5 h-1.5 rounded-full {{ $product->isVeg() ? 'bg-emerald-600' : 'bg-rose-600' }}"></span>
+                                        </span>
+                                    @endif
+                                    <h3 class="font-bold text-gray-900 text-sm sm:text-base truncate">{{ $product->title }}</h3>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-0.5 truncate">
+                                    {{ $product->foodMenuCategory?->name ?? $product->category->name ?? 'Uncategorized' }} • SKU: {{ $product->sku ?? 'N/A' }}
+                                </p>
                             </div>
                             
-                            <div class="flex items-baseline gap-3 mt-2">
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
                                 <span class="text-base font-black text-brand-text">₹{{ number_format($product->base_price / 100, 2) }}</span>
                                 <span class="text-xs font-semibold {{ $product->total_stock < 5 ? 'text-red-500' : 'text-gray-500' }}">Stock: {{ $product->total_stock }}</span>
+                                @if($product->vertical === 'food')
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $product->is_dish_available ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
+                                        {{ $product->is_dish_available ? 'In Kitchen Stock' : 'Sold Out' }}
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>
+
+                    @if($product->vertical === 'food')
+                        <div class="mt-2.5 flex justify-end">
+                            <form action="{{ route('vendor.products.toggle_availability', $product) }}" method="POST" class="w-full m-0">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit"
+                                        class="w-full py-1.5 px-2 text-[11px] font-bold rounded-xl border transition-all cursor-pointer {{ $product->is_dish_available ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border-rose-200' }}">
+                                    {{ $product->is_dish_available ? '✓ Kitchen Available — Tap to Mark Sold Out' : '⏸ Sold Out — Tap to Mark Available' }}
+                                </button>
+                            </form>
+                        </div>
+                    @endif
 
                     <!-- Dedicated Responsive Mobile Action Toolbar (All 4 buttons visible) -->
                     <div class="grid grid-cols-4 gap-1.5 mt-3 pt-3 border-t border-gray-100/80">
@@ -153,13 +180,25 @@
                                          onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                 </div>
                                 <div class="ml-4">
-                                    <div class="font-bold text-gray-900 max-w-[200px] truncate" title="{{ $product->title }}">{{ $product->title }}</div>
+                                    <div class="flex items-center gap-1.5">
+                                        @if($product->vertical === 'food')
+                                            <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded border {{ $product->isVeg() ? 'border-emerald-600' : 'border-rose-600' }} shrink-0" title="{{ ucfirst(str_replace('_', ' ', $product->dietary_label_resolved ?? ($product->isVeg() ? 'veg' : 'non_veg'))) }}">
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $product->isVeg() ? 'bg-emerald-600' : 'bg-rose-600' }}"></span>
+                                            </span>
+                                        @endif
+                                        <div class="font-bold text-gray-900 max-w-[200px] truncate" title="{{ $product->title }}">{{ $product->title }}</div>
+                                    </div>
                                     <div class="text-xs text-gray-500 mt-0.5">SKU: {{ $product->sku ?? 'N/A' }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="whitespace-nowrap px-3 py-5">
                             <div class="text-sm font-medium text-gray-600">{{ $product->category->name ?? 'Uncategorized' }}</div>
+                            @if($product->vertical === 'food' && $product->foodMenuCategory)
+                                <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
+                                    🍽️ {{ $product->foodMenuCategory->name }}
+                                </span>
+                            @endif
                         </td>
                         <td class="whitespace-nowrap px-3 py-5">
                             <div class="text-sm font-black text-brand-text">₹{{ number_format($product->base_price / 100, 2) }}</div>
@@ -171,17 +210,30 @@
                             @endif
                         </td>
                         <td class="whitespace-nowrap px-3 py-5">
-                            <form action="{{ route('vendor.products.toggle_status', $product) }}" method="POST" class="inline">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" 
-                                        title="Click to toggle between Live and Draft"
-                                        class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer shadow-2xs hover:scale-102
-                                    {{ $product->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' }}">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $product->status === 'active' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
-                                    <span>{{ $product->status === 'active' ? 'Live on Store' : 'Draft (Hidden)' }}</span>
-                                </button>
-                            </form>
+                            <div class="flex flex-col items-start gap-1.5">
+                                <form action="{{ route('vendor.products.toggle_status', $product) }}" method="POST" class="inline">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" 
+                                            title="Click to toggle between Live and Draft"
+                                            class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border transition-all cursor-pointer shadow-2xs hover:scale-102
+                                        {{ $product->status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' }}">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $product->status === 'active' ? 'bg-emerald-500' : 'bg-amber-500' }}"></span>
+                                        <span>{{ $product->status === 'active' ? 'Live on Store' : 'Draft (Hidden)' }}</span>
+                                    </button>
+                                </form>
+                                @if($product->vertical === 'food')
+                                    <form action="{{ route('vendor.products.toggle_availability', $product) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit"
+                                                title="Toggle Kitchen Availability (Available / Sold Out)"
+                                                class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border transition-all cursor-pointer {{ $product->is_dish_available ? 'bg-teal-50 text-teal-800 border-teal-200 hover:bg-teal-100' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100' }}">
+                                            <span>{{ $product->is_dish_available ? '✓ Kitchen Open' : '⏸ Sold Out' }}</span>
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
                         </td>
                         <td class="relative whitespace-nowrap py-5 pl-3 pr-6 text-right">
                             <div class="inline-flex items-center gap-2">

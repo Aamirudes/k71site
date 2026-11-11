@@ -74,11 +74,19 @@
                                             {{ class_basename($report->reportable_type) }} #{{ $report->reportable_id }}
                                         </div>
                                         @if($report->reportable instanceof \App\Models\Product)
-                                            <a href="{{ route('product.show', $report->reportable->slug) }}" target="_blank" class="text-violet-600 hover:underline text-[11px]">
+                                            <a href="{{ $report->reportable->isUsedListing() ? route('used.show', $report->reportable->slug) : route('product.show', $report->reportable->slug) }}" target="_blank" class="text-violet-600 hover:underline text-[11px]">
                                                 {{ \Illuminate\Support\Str::limit($report->reportable->title, 35) }} ↗
                                             </a>
                                         @elseif($report->reportable instanceof \App\Models\Vendor)
                                             <span class="text-slate-600 text-[11px]">{{ $report->reportable->shop_name }}</span>
+                                        @elseif($report->reportable instanceof \App\Models\UsedSellerProfile)
+                                            <a href="{{ route('used.seller.profile', $report->reportable->handle) }}" target="_blank" class="text-violet-600 hover:underline text-[11px]">
+                                                {{ $report->reportable->display_name }} ({{ '@' . $report->reportable->handle }}) ↗
+                                            </a>
+                                        @elseif($report->reportable instanceof \App\Models\User)
+                                            <span class="text-slate-600 text-[11px]">{{ $report->reportable->name }} ({{ $report->reportable->email }})</span>
+                                        @elseif($report->reportable instanceof \App\Models\UsedThreadMessage)
+                                            <span class="text-slate-600 text-[11px] block max-w-xs truncate">"{{ $report->reportable->body }}"</span>
                                         @endif
                                     </td>
                                     <td class="py-4 px-4">
@@ -127,9 +135,9 @@
                                                                 <label class="block text-xs font-bold text-slate-700 mb-1">Action</label>
                                                                 <select name="action" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs text-slate-900 focus:ring-2 focus:ring-slate-900">
                                                                     <option value="dismiss">Dismiss Report (No Violation)</option>
-                                                                    <option value="block_product">Deactivate Product Listing</option>
-                                                                    <option value="warn_vendor">Suspend Vendor Account</option>
-                                                                    <option value="delete_review">Unpublish Review</option>
+                                                                    <option value="block_product">Deactivate / Pause Product Listing</option>
+                                                                    <option value="warn_vendor">Suspend Vendor / Seller Account</option>
+                                                                    <option value="delete_review">Unpublish Review / Redact Message</option>
                                                                 </select>
                                                             </div>
                                                             <div>

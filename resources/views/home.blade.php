@@ -950,7 +950,7 @@
                                 <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">♻️</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-black/65">Certified pre-owned smartphones, laptops, studio gear &amp; machinery.</p>
+                                <p class="text-xs sm:text-sm text-black/65">Pre-owned smartphones, laptops, studio gear &amp; local marketplace finds.</p>
                                 <a href="{{ k71_vertical_url('used') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>All Used Deals</span>
                                     <span>&rarr;</span>
@@ -964,15 +964,22 @@
                                    class="grail-card-reveal group bg-white rounded-2xl border border-black/8 hover:border-[#623562]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
                                    style="--delay: {{ $uIdx * 65 }}ms;">
                                     <div class="relative aspect-square overflow-hidden bg-[#F4F1EC]">
-                                        <img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        @if($item->hasUploadedImages())
+                                            <img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                                        @else
+                                            <div class="w-full h-full flex flex-col items-center justify-center text-black/35 bg-[#EFECE6]">
+                                                <span class="text-3xl">📷</span>
+                                                <span class="text-[10px] font-semibold mt-1">No photo uploaded</span>
+                                            </div>
+                                        @endif
                                         <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] text-[9px] font-bold uppercase tracking-wider">
-                                            {{ $item->getCustomField('condition', 'Inspected') }}
+                                            {{ $item->condition_label }}
                                         </span>
                                     </div>
                                     <div class="p-3.5">
                                         <h4 class="text-xs sm:text-sm font-semibold text-black truncate group-hover:text-[#623562] transition">{{ $item->title }}</h4>
                                         <div class="text-sm font-bold text-black mt-1 tabular-nums">{{ $item->formatted_base_price }}</div>
-                                        <span class="text-[10px] text-black/50 block mt-0.5">📍 {{ $item->getCustomField('city', 'India') }}</span>
+                                        <span class="text-[10px] text-black/50 block mt-0.5">📍 {{ $item->city_label }}</span>
                                     </div>
                                 </a>
                             @endforeach

@@ -1,8 +1,15 @@
 @props([
     'title' => 'K71 Food — Order Online from Top Restaurants & Cloud Kitchens',
-    'metaDescription' => 'Order fresh artisan biryani, wood-fired pizza, burgers, pure veg thalis, and desserts on K71 Food. 25-minute superfast doorstep delivery, live kitchen tracking, and verified hygiene.',
+    'metaDescription' => 'Order fresh dishes from local kitchens and restaurants on K71 Food. Delivery & self-pickup, transparent menu pricing, and live order tracking.',
     'canonicalUrl' => null,
 ])
+
+@php
+    $layoutFoodSvc = app(\App\Services\Food\FoodMarketplaceService::class);
+    $layoutSelectedLocation = $layoutFoodSvc->getUserSelectedLocation(request());
+    $layoutSavedAddresses = auth()->check() ? auth()->user()->addresses()->orderByDesc('is_default')->get() : collect();
+    $layoutAvailableCities = $layoutFoodSvc->getAvailableServiceCities()->values()->all();
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="light">
@@ -272,29 +279,29 @@
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-[#ECD2F3] flex items-center justify-center text-xl shrink-0">⚡</div>
                     <div>
-                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Fast Dispatch</h4>
-                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Average delivery under 25-30 mins from local verified kitchens.</p>
+                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Delivery &amp; Pickup</h4>
+                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Choose doorstep delivery or zero-fee kitchen pickup based on each restaurant's mode.</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-emerald-400 flex items-center justify-center text-xl shrink-0">🛡️</div>
                     <div>
-                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Tamper-Proof Safe</h4>
-                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">100% sanitized, hygienically packed, seal-locked food boxes.</p>
+                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Verified FSSAI Badges</h4>
+                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">FSSAI badges are displayed only for kitchens whose license numbers are audited.</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-[#C9A24A] flex items-center justify-center text-xl shrink-0">🍲</div>
                     <div>
-                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Fresh Quality</h4>
-                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Cooked fresh to order by certified culinary masters.</p>
+                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Freshly Prepared</h4>
+                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Real-time dish availability, portion pricing, and kitchen instructions per item.</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
                     <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-[#ECD2F3] flex items-center justify-center text-xl shrink-0">💳</div>
                     <div>
-                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Zero Surge Pricing</h4>
-                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Transparent prices, direct restaurant rates &amp; verified COD/UPI.</p>
+                        <h4 class="text-xs font-semibold text-white uppercase tracking-[0.14em]">Direct Kitchen Rates</h4>
+                        <p class="text-[11px] text-[#EFE9F2]/55 mt-0.5">Clear item, packaging, delivery fee thresholds, and verified UPI / COD checkout.</p>
                     </div>
                 </div>
             </div>
@@ -308,7 +315,7 @@
                         <span class="text-xl font-bold text-white tracking-tight">K71<span class="text-[#ECD2F3]">FOOD</span></span>
                     </div>
                     <p class="text-xs text-[#EFE9F2]/60 leading-relaxed max-w-sm">
-                        K71 Food is an independent, fresh food ordering destination empowering cloud kitchens, legacy restaurants, and artisan bakers to serve hungry foodies with supreme hygiene and speed.
+                        K71 Food is an independent fresh food ordering marketplace connecting diners with local restaurants and cloud kitchens with transparent pricing and live order tracking.
                     </p>
                     <div class="pt-2">
                         <a href="{{ k71_vertical_url('main') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-[#ECD2F3] text-xs font-semibold transition border border-white/15">
@@ -319,25 +326,25 @@
 
                 <!-- Col 2: Popular Cuisines -->
                 <div>
-                    <h5 class="text-xs font-semibold text-[#C9A24A] uppercase tracking-[0.14em] mb-3">Popular Cuisines</h5>
+                    <h5 class="text-xs font-semibold text-[#C9A24A] uppercase tracking-[0.14em] mb-3">Quick Filters</h5>
                     <ul class="space-y-2 text-xs text-[#EFE9F2]/65">
-                        <li><a href="{{ route('food.index', ['search' => 'Biryani']) }}" class="hover:text-[#FFCDFF] transition">Dum Biryani</a></li>
-                        <li><a href="{{ route('food.index', ['search' => 'Pizza']) }}" class="hover:text-[#FFCDFF] transition">Wood-Fired Pizza</a></li>
-                        <li><a href="{{ route('food.index', ['search' => 'Burger']) }}" class="hover:text-[#FFCDFF] transition">Smash Burgers</a></li>
-                        <li><a href="{{ route('food.index', ['search' => 'North Indian']) }}" class="hover:text-[#FFCDFF] transition">North Indian Thalis</a></li>
-                        <li><a href="{{ route('food.index', ['search' => 'Dessert']) }}" class="hover:text-[#FFCDFF] transition">Cakes &amp; Desserts</a></li>
+                        <li><a href="{{ route('food.index', ['pure_veg' => 1]) }}" class="hover:text-[#FFCDFF] transition">Pure Veg Kitchens</a></li>
+                        <li><a href="{{ route('food.index', ['open_now' => 1]) }}" class="hover:text-[#FFCDFF] transition">Open Now</a></li>
+                        <li><a href="{{ route('food.index', ['takeaway' => 1]) }}" class="hover:text-[#FFCDFF] transition">Self-Pickup Available</a></li>
+                        <li><a href="{{ route('food.index', ['budget' => 'under_200']) }}" class="hover:text-[#FFCDFF] transition">Dishes Under ₹200</a></li>
+                        <li><a href="{{ route('food.index', ['delivery_time' => 'under_30']) }}" class="hover:text-[#FFCDFF] transition">Fast Prep Kitchens</a></li>
                     </ul>
                 </div>
 
-                <!-- Col 3: Delivery Zones -->
+                <!-- Col 3: Delivery Zones (DB-backed) -->
                 <div>
-                    <h5 class="text-xs font-semibold text-[#C9A24A] uppercase tracking-[0.14em] mb-3">Delivery Hubs</h5>
+                    <h5 class="text-xs font-semibold text-[#C9A24A] uppercase tracking-[0.14em] mb-3">Service Cities</h5>
                     <ul class="space-y-2 text-xs text-[#EFE9F2]/65">
-                        <li><button type="button" @click="setLocation('Jaipur, Rajasthan');" class="hover:text-[#FFCDFF] transition text-left">Jaipur Central &amp; Malviya</button></li>
-                        <li><button type="button" @click="setLocation('Delhi NCR');" class="hover:text-[#FFCDFF] transition text-left">Delhi NCR Hub</button></li>
-                        <li><button type="button" @click="setLocation('Mumbai, Maharashtra');" class="hover:text-[#FFCDFF] transition text-left">Mumbai Metro</button></li>
-                        <li><button type="button" @click="setLocation('Bengaluru, Karnataka');" class="hover:text-[#FFCDFF] transition text-left">Bengaluru Tech Hub</button></li>
-                        <li><button type="button" @click="setLocation('Lucknow, Uttar Pradesh');" class="hover:text-[#FFCDFF] transition text-left">Lucknow Awadh Hub</button></li>
+                        @forelse(array_slice($layoutAvailableCities, 0, 5) as $svcCity)
+                            <li><button type="button" @click="setLocation({ label: '{{ addslashes($svcCity) }}', city: '{{ addslashes($svcCity) }}' });" class="hover:text-[#FFCDFF] transition text-left">{{ $svcCity }}</button></li>
+                        @empty
+                            <li><button type="button" @click="locationModalOpen = true" class="hover:text-[#FFCDFF] transition text-left">All Locations</button></li>
+                        @endforelse
                     </ul>
                 </div>
 
@@ -357,14 +364,14 @@
             <!-- Bottom Copyright & Compliance -->
             <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#EFE9F2]/45">
                 <div>
-                    &copy; {{ date('Y') }} K71 Food • All rights reserved • Certified FSSAI Compliant Food Delivery
+                    &copy; {{ date('Y') }} K71 Food • All rights reserved • Fresh Food &amp; Local Kitchens
                 </div>
                 <div class="flex items-center gap-4">
                     <span>Cash on Delivery</span>
                     <span>•</span>
                     <span>UPI / PhonePe</span>
                     <span>•</span>
-                    <span>Fast Doorstep Delivery</span>
+                    <span>Delivery &amp; Self-Pickup</span>
                 </div>
             </div>
 
@@ -382,7 +389,7 @@
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0">
         
-        <div class="bg-[#FAFAF8] text-[#1A1018] rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-[#E6E2E8] space-y-4"
+        <div class="bg-[#FAFAF8] text-[#1A1018] rounded-[28px] max-w-md w-full p-6 shadow-2xl border border-[#E6E2E8] space-y-4 max-h-[85vh] overflow-y-auto"
              @click.outside="locationModalOpen = false">
             
             <div class="flex items-center justify-between pb-3 border-b border-[#E6E2E8]">
@@ -390,7 +397,7 @@
                     <span class="text-xl">📍</span>
                     <h3 class="text-lg font-semibold text-[#1A1018]" style="font-family: var(--font-grail-serif);">Select Delivery Location</h3>
                 </div>
-                <button @click="locationModalOpen = false" class="w-8 h-8 rounded-full bg-[#EFE9F2] hover:bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-sm font-bold transition">
+                <button @click="locationModalOpen = false" class="w-8 h-8 rounded-full bg-[#EFE9F2] hover:bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-sm font-bold transition cursor-pointer">
                     ✕
                 </button>
             </div>
@@ -403,32 +410,75 @@
                 <span x-text="detectingGps ? 'Detecting your location...' : 'Use Current GPS Location'"></span>
             </button>
 
-            <!-- Manual Search Input with instant Set button -->
+            <template x-if="locationError">
+                <div class="px-3.5 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold" x-text="locationError"></div>
+            </template>
+
+            <!-- Manual City / Pincode Input -->
             <div class="flex items-center gap-2">
                 <input type="text" 
                        x-model="locationSearch"
-                       @keydown.enter.prevent="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
-                       placeholder="Type your area, city, or delivery pincode..."
+                       @keydown.enter.prevent="if(locationSearch.trim()){ applyManualLocation(); }"
+                       placeholder="Enter city name or 6-digit pincode..."
                        class="grail-input-light flex-1 px-4 py-2.5 text-xs">
                 <button type="button"
-                        @click="if(locationSearch.trim()){ setLocation(locationSearch.trim()); locationModalOpen = false; locationSearch = ''; }"
+                        @click="if(locationSearch.trim()){ applyManualLocation(); }"
                         :disabled="!locationSearch.trim()"
-                        class="grail-btn-obsidian px-4 py-2.5 disabled:opacity-40 text-xs shrink-0">
+                        class="grail-btn-obsidian px-4 py-2.5 disabled:opacity-40 text-xs shrink-0 cursor-pointer">
                     Apply
                 </button>
             </div>
 
-            <!-- Popular Indian Delivery Cities -->
+            <!-- Show All Locations Clear Option -->
+            <div x-show="currentLocation && currentLocation !== 'All Locations'" class="flex justify-between items-center bg-white rounded-xl px-3.5 py-2 border border-[#E6E2E8]">
+                <span class="text-xs text-[#1A1018]/70 truncate">Active: <strong x-text="currentLocation"></strong></span>
+                <button type="button"
+                        @click="setLocation({ label: 'All Locations', city: '', pincode: '' }); locationModalOpen = false;"
+                        class="text-xs font-bold text-rose-600 hover:underline shrink-0 ml-2 cursor-pointer">
+                    Clear Filter
+                </button>
+            </div>
+
+            <!-- Saved Account Delivery Addresses -->
+            @if($layoutSavedAddresses->isNotEmpty())
+                <div>
+                    <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1018]/45 block mb-2">Saved Addresses</span>
+                    <div class="space-y-2 max-h-40 overflow-y-auto no-scrollbar">
+                        @foreach($layoutSavedAddresses as $addr)
+                            <button type="button"
+                                    @click="setLocation({ address_id: {{ $addr->id }}, city: '{{ addslashes($addr->city) }}', pincode: '{{ addslashes($addr->pincode) }}', label: '{{ addslashes(($addr->label ? $addr->label . ': ' : '') . $addr->city . ($addr->pincode ? ' ' . $addr->pincode : '')) }}' }); locationModalOpen = false;"
+                                    class="w-full p-2.5 rounded-xl border border-[#E6E2E8] hover:border-[#1A1018] hover:bg-[#F8EFFA] text-left transition flex items-start justify-between gap-2 cursor-pointer">
+                                <div class="min-w-0">
+                                    <div class="text-xs font-bold text-[#1A1018] flex items-center gap-1.5">
+                                        <span>🏠</span>
+                                        <span>{{ $addr->label ?: 'Address' }}</span>
+                                        @if($addr->is_default)
+                                            <span class="text-[9px] uppercase bg-[#ECD2F3] text-[#1A1018] px-1.5 py-0.2 rounded-full">Default</span>
+                                        @endif
+                                    </div>
+                                    <div class="text-[11px] text-[#1A1018]/65 truncate">{{ $addr->address_line_1 }}, {{ $addr->city }} - {{ $addr->pincode }}</div>
+                                </div>
+                                <span class="text-xs font-bold text-[#623562] shrink-0">Select</span>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <!-- Real Available Service Cities from Partner Kitchens -->
             <div>
-                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1018]/45 block mb-2">Popular Cities</span>
+                <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#1A1018]/45 block mb-2">Available Cities</span>
                 <div class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto no-scrollbar">
                     <template x-for="city in filteredCities" :key="city">
                         <button type="button" 
-                                @click="setLocation(city); locationModalOpen = false;"
-                                class="p-2.5 rounded-xl border border-[#E6E2E8] hover:border-[#1A1018] hover:bg-[#F8EFFA] text-left text-xs font-semibold text-[#1A1018] transition flex items-center gap-2">
+                                @click="setLocation({ label: city, city: city }); locationModalOpen = false;"
+                                class="p-2.5 rounded-xl border border-[#E6E2E8] hover:border-[#1A1018] hover:bg-[#F8EFFA] text-left text-xs font-semibold text-[#1A1018] transition flex items-center gap-2 cursor-pointer">
                             <span>📍</span>
                             <span x-text="city" class="truncate"></span>
                         </button>
+                    </template>
+                    <template x-if="filteredCities.length === 0">
+                        <div class="col-span-2 text-xs text-[#1A1018]/55 py-2">Type any city or 6-digit pincode above and click Apply.</div>
                     </template>
                 </div>
             </div>
@@ -467,7 +517,7 @@
                         </div>
                         <div class="min-w-0">
                             <h3 class="text-base font-semibold text-[#1A1018] tracking-tight truncate" style="font-family: var(--font-grail-serif);">Your Food Bag</h3>
-                            <p class="text-[11px] text-[#1A1018]/55 truncate" x-text="cartTotalCount + ' item(s) selected'"></p>
+                            <p class="text-[11px] text-[#1A1018]/55 truncate" x-text="cartTotalCount + ' item(s)' + (cartVendorName ? ' from ' + cartVendorName : '')"></p>
                         </div>
                     </div>
                     <button @click="cartDrawerOpen = false" class="w-8 h-8 rounded-full bg-[#EFE9F2] hover:bg-[#ECD2F3] text-[#1A1018] flex items-center justify-center text-sm font-bold transition cursor-pointer shrink-0">
@@ -481,8 +531,8 @@
                         <div class="py-16 text-center space-y-3">
                             <span class="text-5xl block">🍲</span>
                             <h4 class="text-xl font-semibold text-[#1A1018]" style="font-family: var(--font-grail-serif);">Your bag is hungry!</h4>
-                            <p class="text-xs text-[#1A1018]/60 max-w-xs mx-auto">Explore delicious menus from verified local restaurants and add your cravings.</p>
-                            <button @click="cartDrawerOpen = false" class="grail-btn-obsidian px-5 py-2.5 text-xs">
+                            <p class="text-xs text-[#1A1018]/60 max-w-xs mx-auto">Explore menus from partner restaurants and add dishes to order.</p>
+                            <button @click="cartDrawerOpen = false" class="grail-btn-obsidian px-5 py-2.5 text-xs cursor-pointer">
                                 Browse Cravings →
                             </button>
                         </div>
@@ -492,14 +542,17 @@
                         <div class="flex items-start justify-between gap-3 p-3.5 rounded-[18px] bg-white border border-[#E6E2E8]">
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="w-3.5 h-3.5 rounded-xs border-2 flex items-center justify-center p-0.5" 
+                                    <span class="w-3.5 h-3.5 rounded-xs border-2 flex items-center justify-center p-0.5 shrink-0" 
                                           :class="item.is_veg ? 'border-emerald-600' : 'border-rose-600'">
                                         <span class="w-1.5 h-1.5 rounded-full" :class="item.is_veg ? 'bg-emerald-600' : 'bg-rose-600'"></span>
                                     </span>
                                     <h5 class="text-xs font-semibold text-[#1A1018] truncate" x-text="item.title"></h5>
                                 </div>
-                                <div class="text-[11px] text-[#1A1018]/55 font-medium mt-0.5" x-text="item.restaurant_name"></div>
-                                <div class="text-xs font-bold text-[#1A1018] mt-1" x-text="'₹' + item.price"></div>
+                                <div class="text-[11px] text-[#1A1018]/55 font-medium mt-0.5 truncate" x-text="item.restaurant_name + (item.variant_label ? ' • ' + item.variant_label : '')"></div>
+                                <template x-if="item.special_instructions">
+                                    <div class="text-[10px] text-[#623562] bg-[#F8EFFA] px-2 py-0.5 rounded-md mt-1 truncate" x-text="'📝 ' + item.special_instructions"></div>
+                                </template>
+                                <div class="text-xs font-bold text-[#1A1018] mt-1" x-text="'₹' + Number(item.price).toFixed(2)"></div>
                             </div>
 
                             <!-- Qty Controls -->
@@ -510,6 +563,18 @@
                             </div>
                         </div>
                     </template>
+
+                    <template x-if="cartItems.length > 0 && cartFreeDeliveryAbove && cartDeliveryFee > 0 && cartSubtotal < cartFreeDeliveryAbove">
+                        <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold">
+                            Add ₹<span x-text="(cartFreeDeliveryAbove - cartSubtotal).toFixed(0)"></span> more for Free Delivery from this kitchen.
+                        </div>
+                    </template>
+
+                    <template x-if="cartItems.length > 0 && cartMinOrder > 0 && cartSubtotal < cartMinOrder">
+                        <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
+                            Minimum order is ₹<span x-text="cartMinOrder.toFixed(0)"></span> (add ₹<span x-text="(cartMinOrder - cartSubtotal).toFixed(0)"></span> more to proceed with delivery).
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Drawer Footer Summary -->
@@ -517,19 +582,27 @@
                     <div class="space-y-1.5 text-xs">
                         <div class="flex justify-between text-[#1A1018]/65">
                             <span>Item Subtotal</span>
-                            <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartSubtotal"></span>
+                            <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartSubtotal.toFixed(2)"></span>
                         </div>
                         <div class="flex justify-between text-[#1A1018]/65">
-                            <span>Restaurant Delivery Fee</span>
-                            <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartDeliveryFee"></span>
+                            <span>Delivery Fee</span>
+                            <span class="font-semibold text-[#1A1018]" x-text="cartDeliveryFee === 0 ? 'FREE' : ('₹' + cartDeliveryFee.toFixed(2))"></span>
                         </div>
-                        <div class="flex justify-between text-[#1A1018]/65">
-                            <span>Taxes &amp; Packaging</span>
-                            <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartTaxes"></span>
-                        </div>
+                        <template x-if="cartPackagingFee > 0">
+                            <div class="flex justify-between text-[#1A1018]/65">
+                                <span>Packaging Fee</span>
+                                <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartPackagingFee.toFixed(2)"></span>
+                            </div>
+                        </template>
+                        <template x-if="cartTaxes > 0">
+                            <div class="flex justify-between text-[#1A1018]/65">
+                                <span>Estimated Taxes</span>
+                                <span class="font-semibold text-[#1A1018]" x-text="'₹' + cartTaxes.toFixed(2)"></span>
+                            </div>
+                        </template>
                         <div class="border-t border-[#E6E2E8] pt-2 flex justify-between text-sm font-bold text-[#1A1018]">
-                            <span>To Pay</span>
-                            <span x-text="'₹' + cartGrandTotal"></span>
+                            <span>Total Payable</span>
+                            <span x-text="'₹' + cartGrandTotal.toFixed(2)"></span>
                         </div>
                     </div>
 
@@ -553,24 +626,18 @@
             locationModalOpen: false,
             detectingGps: false,
             locationSearch: '',
-            currentLocation: localStorage.getItem('k71_food_location') || 'Jaipur Central (Express Hub)',
-            popularCities: [
-                'Jaipur, Rajasthan',
-                'Delhi NCR Hub',
-                'Mumbai, Maharashtra',
-                'Bengaluru, Karnataka',
-                'Hyderabad, Telangana',
-                'Lucknow, Uttar Pradesh',
-                'Pune, Maharashtra',
-                'Kolkata, West Bengal',
-                'Chennai, Tamil Nadu',
-                'Ahmedabad, Gujarat'
-            ],
+            locationError: '',
+            currentLocation: @js($layoutSelectedLocation['label'] ?? 'All Locations'),
+            popularCities: @js($layoutAvailableCities),
             cartItems: [],
+            cartVendorName: '',
             cartTotalCount: 0,
             cartSubtotal: 0,
-            cartDeliveryFee: 40,
-            cartTaxes: 15,
+            cartDeliveryFee: 0,
+            cartPackagingFee: 0,
+            cartFreeDeliveryAbove: null,
+            cartMinOrder: 0,
+            cartTaxes: 0,
             cartGrandTotal: 0,
             checkoutUrl: '{{ route('cart.index') }}',
 
@@ -581,18 +648,63 @@
                 if (!this.locationSearch) return this.popularCities;
                 return this.popularCities.filter(c => c.toLowerCase().includes(this.locationSearch.toLowerCase()));
             },
-            setLocation(name) {
-                this.currentLocation = name;
-                localStorage.setItem('k71_food_location', name);
-                window.dispatchEvent(new CustomEvent('food-location-changed', { detail: name }));
-                if (window.showToast) {
-                    window.showToast('Delivery zone updated to ' + name + ' 📍');
+            applyManualLocation() {
+                const raw = this.locationSearch.trim();
+                if (!raw) return;
+                const isPin = /^\d{6}$/.test(raw);
+                this.setLocation({
+                    label: raw,
+                    city: isPin ? '' : raw,
+                    pincode: isPin ? raw : ''
+                });
+                this.locationModalOpen = false;
+                this.locationSearch = '';
+            },
+            async setLocation(input) {
+                this.locationError = '';
+                const payload = typeof input === 'string'
+                    ? { label: input, city: input, pincode: '' }
+                    : {
+                        label: input?.label || 'All Locations',
+                        city: input?.city || '',
+                        pincode: input?.pincode || '',
+                        address_id: input?.address_id || null
+                    };
+
+                try {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch('{{ route('food.location.set') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': token
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(payload)
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.currentLocation = data.location?.label || payload.label || 'All Locations';
+                    } else {
+                        this.currentLocation = payload.label || 'All Locations';
+                    }
+                } catch (e) {
+                    this.currentLocation = payload.label || 'All Locations';
+                }
+
+                window.dispatchEvent(new CustomEvent('food-location-changed', { detail: this.currentLocation }));
+                if (window.location.pathname.startsWith('/food')) {
+                    window.location.reload();
+                } else if (window.showToast) {
+                    window.showToast('Delivery location updated to ' + this.currentLocation + ' 📍');
                 }
             },
             detectGPS() {
                 this.detectingGps = true;
+                this.locationError = '';
                 if (!navigator.geolocation) {
-                    alert('Geolocation is not supported by your browser.');
+                    this.locationError = 'Geolocation is not supported by your browser. Please enter your city or pincode below.';
                     this.detectingGps = false;
                     return;
                 }
@@ -604,24 +716,23 @@
                             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
                             if (res.ok) {
                                 const data = await res.json();
-                                const place = data.address?.suburb || data.address?.city_district || data.address?.city || data.address?.town || data.address?.state_district || 'Detected Area';
-                                const state = data.address?.state ? ', ' + data.address?.state : '';
-                                this.setLocation(`${place}${state}`);
+                                const city = data.address?.city || data.address?.town || data.address?.state_district || data.address?.suburb || '';
+                                const postcode = (data.address?.postcode || '').replace(/\D/g, '').slice(0, 6);
+                                const label = [city, postcode].filter(Boolean).join(' ') || 'Detected Location';
+                                await this.setLocation({ label, city, pincode: postcode });
                                 this.detectingGps = false;
                                 this.locationModalOpen = false;
                                 return;
                             }
                         } catch (e) {
-                            // Fallback to coordinates
+                            // Reverse geocode failed
                         }
-                        this.setLocation('GPS Location (' + lat.toFixed(2) + ', ' + lon.toFixed(2) + ')');
+                        this.locationError = 'Could not resolve city/pincode from GPS. Please enter it manually.';
                         this.detectingGps = false;
-                        this.locationModalOpen = false;
                     },
-                    (err) => {
-                        this.setLocation('Jaipur Central (Express Hub)');
+                    () => {
+                        this.locationError = 'Location permission denied. Please choose a city or enter your pincode.';
                         this.detectingGps = false;
-                        this.locationModalOpen = false;
                     },
                     { timeout: 7000 }
                 );
@@ -636,21 +747,25 @@
                         if (data && data.items) {
                             this.cartItems = data.items.map(i => ({
                                 id: i.id,
-                                title: i.product_title || i.title || i.product?.title || 'Dish',
-                                restaurant_name: i.vendor_name || i.restaurant_name || i.vendor?.shop_name || 'Kitchen Hub',
-                                price: (i.unit_price ? i.unit_price / 100 : (i.price_at_add ? i.price_at_add / 100 : (i.price ? i.price : 199))),
+                                title: i.product_title || i.title || 'Dish',
+                                restaurant_name: i.vendor_name || 'Kitchen',
+                                variant_label: i.variant_label || null,
+                                special_instructions: i.special_instructions || null,
+                                price: Number(i.unit_price || 0) / 100,
                                 quantity: i.quantity,
                                 is_veg: i.is_veg !== undefined ? i.is_veg : true,
                                 vendor_id: i.vendor_id
                             }));
+                            this.cartVendorName = data.vendor_name || '';
                             this.cartTotalCount = data.count !== undefined ? data.count : this.cartItems.reduce((acc, it) => acc + it.quantity, 0);
-                            this.cartSubtotal = data.subtotal ? (data.subtotal / 100) : this.cartItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
-                            this.cartGrandTotal = this.cartSubtotal + this.cartDeliveryFee + this.cartTaxes;
-                            if (this.cartItems.length > 0 && this.cartItems[0].vendor_id) {
-                                this.checkoutUrl = '/checkout/' + this.cartItems[0].vendor_id;
-                            } else {
-                                this.checkoutUrl = '{{ route('cart.index') }}';
-                            }
+                            this.cartSubtotal = data.subtotal !== undefined ? (Number(data.subtotal) / 100) : this.cartItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
+                            this.cartDeliveryFee = data.delivery_fee_paise !== undefined ? (Number(data.delivery_fee_paise) / 100) : 0;
+                            this.cartPackagingFee = data.packaging_fee_paise !== undefined ? (Number(data.packaging_fee_paise) / 100) : 0;
+                            this.cartFreeDeliveryAbove = data.free_delivery_above_paise ? (Number(data.free_delivery_above_paise) / 100) : null;
+                            this.cartMinOrder = data.min_order_amount_paise ? (Number(data.min_order_amount_paise) / 100) : 0;
+                            this.cartTaxes = data.taxes_paise !== undefined ? (Number(data.taxes_paise) / 100) : 0;
+                            this.cartGrandTotal = this.cartSubtotal + this.cartDeliveryFee + this.cartPackagingFee + this.cartTaxes;
+                            this.checkoutUrl = data.checkout_url || (this.cartItems.length > 0 && this.cartItems[0].vendor_id ? ('/checkout/' + this.cartItems[0].vendor_id) : '{{ route('cart.index') }}');
                         }
                     })
                     .catch(() => {});

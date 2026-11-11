@@ -116,6 +116,7 @@
                     <div class="absolute top-0 left-0 w-1.5 h-full 
                         {{ $order->status === 'pending' ? 'bg-orange-400' : '' }}
                         {{ $order->status === 'processing' ? 'bg-blue-400' : '' }}
+                        {{ $order->status === 'ready_for_pickup' ? 'bg-amber-500' : '' }}
                         {{ $order->status === 'shipped' ? 'bg-indigo-400' : '' }}
                         {{ $order->status === 'delivered' ? 'bg-green-400' : '' }}
                         {{ $order->status === 'cancelled' ? 'bg-red-400' : '' }}
@@ -123,16 +124,29 @@
                     
                     <div class="flex justify-between items-start mb-3">
                         <div>
-                            <span class="font-mono font-bold text-gray-900 text-sm bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{{ $order->order_number }}</span>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="font-mono font-bold text-gray-900 text-sm bg-gray-100 px-2 py-0.5 rounded border border-gray-200">{{ $order->order_number }}</span>
+                                @if($order->isFoodOrder())
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {{ $order->isFoodTakeaway() ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800' }}">
+                                        {{ $order->isFoodTakeaway() ? '🥡 Takeaway' : '🛵 Delivery' }}
+                                    </span>
+                                @endif
+                                @if($order->pickup_code)
+                                    <span class="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-gray-900 text-white">
+                                        OTP: {{ $order->pickup_code }}
+                                    </span>
+                                @endif
+                            </div>
                             <p class="text-xs text-gray-400 mt-1">{{ $order->created_at?->format('d M, Y · g:i A') ?? '—' }}</p>
                         </div>
                         <span class="inline-flex items-center rounded-xl px-2.5 py-1 text-xs font-bold ring-1 ring-inset 
                             {{ $order->status === 'pending' ? 'bg-orange-50 text-orange-700 ring-orange-600/20' : '' }}
                             {{ $order->status === 'processing' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' : '' }}
+                            {{ $order->status === 'ready_for_pickup' ? 'bg-amber-50 text-amber-800 ring-amber-600/20' : '' }}
                             {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 ring-indigo-600/20' : '' }}
                             {{ $order->status === 'delivered' ? 'bg-green-50 text-green-700 ring-green-600/20' : '' }}
                             {{ $order->status === 'cancelled' ? 'bg-red-50 text-red-700 ring-red-600/20' : '' }}">
-                            {{ ucfirst($order->status) }}
+                            {{ $order->status === 'shipped' && $order->isFoodOrder() ? 'Out for Delivery' : ucfirst(str_replace('_', ' ', $order->status)) }}
                         </span>
                     </div>
 
@@ -202,12 +216,25 @@
                                     <div class="w-1.5 h-8 rounded-full mr-3
                                         {{ $order->status === 'pending' ? 'bg-orange-400' : '' }}
                                         {{ $order->status === 'processing' ? 'bg-blue-400' : '' }}
+                                        {{ $order->status === 'ready_for_pickup' ? 'bg-amber-500' : '' }}
                                         {{ $order->status === 'shipped' ? 'bg-indigo-400' : '' }}
                                         {{ $order->status === 'delivered' ? 'bg-green-400' : '' }}
                                         {{ $order->status === 'cancelled' ? 'bg-red-400' : '' }}
                                     "></div>
                                     <div>
-                                        <div class="font-mono font-bold text-gray-900 text-xs">{{ $order->order_number }}</div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="font-mono font-bold text-gray-900 text-xs">{{ $order->order_number }}</span>
+                                            @if($order->isFoodOrder())
+                                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full {{ $order->isFoodTakeaway() ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800' }}">
+                                                    {{ $order->isFoodTakeaway() ? '🥡 Takeaway' : '🛵 Food' }}
+                                                </span>
+                                            @endif
+                                            @if($order->pickup_code)
+                                                <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-gray-900 text-white" title="Takeaway Pickup OTP">
+                                                    OTP {{ $order->pickup_code }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="text-[11px] text-gray-400 mt-0.5">{{ $order->created_at?->format('d M, Y · h:i A') ?? '—' }}</div>
                                     </div>
                                 </div>
@@ -243,7 +270,15 @@
 
                             <!-- Courier & Tracking -->
                             <td class="whitespace-nowrap px-3 py-4">
-                                @if($order->tracking_number && !\Illuminate\Support\Str::startsWith($order->tracking_number, 'TXN_'))
+                                @if($order->isFoodTakeaway())
+                                    <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                        🥡 Takeaway Pickup
+                                    </span>
+                                @elseif($order->isFoodOrder())
+                                    <span class="text-[11px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                                        🛵 Local Food Dispatch
+                                    </span>
+                                @elseif($order->tracking_number && !\Illuminate\Support\Str::startsWith($order->tracking_number, 'TXN_'))
                                     <div class="text-xs font-mono font-bold text-gray-800">{{ $order->tracking_number }}</div>
                                     <div class="text-[10px] text-gray-500">{{ $order->courier_name ?? 'Courier' }}</div>
                                 @else
@@ -269,16 +304,17 @@
                                     </span>
                                 @elseif($order->vendor_payout_status === 'paid')
                                     <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                                        ✓ Paid ({{ ucfirst($order->status) }})
+                                        ✓ Paid ({{ $order->status === 'shipped' && $order->isFoodOrder() ? 'Out for Delivery' : ucfirst(str_replace('_', ' ', $order->status)) }})
                                     </span>
                                 @else
                                     <div class="flex flex-col items-start gap-1">
                                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border shadow-2xs
                                             {{ $order->status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : '' }}
                                             {{ $order->status === 'processing' ? 'bg-sky-50 text-sky-700 border-sky-200' : '' }}
+                                            {{ $order->status === 'ready_for_pickup' ? 'bg-amber-50 text-amber-800 border-amber-200' : '' }}
                                             {{ $order->status === 'shipped' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : '' }}
                                             {{ $order->status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : '' }}">
-                                            {{ ucfirst($order->status) }}
+                                            {{ $order->status === 'shipped' && $order->isFoodOrder() ? 'Out for Delivery' : ucfirst(str_replace('_', ' ', $order->status)) }}
                                         </span>
                                         @if($order->deliveryAssignment && in_array($order->deliveryAssignment->status, ['assigned', 'accepted', 'picked_up']))
                                             <span class="inline-flex items-center gap-1 text-[10px] font-black text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">

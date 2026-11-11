@@ -157,13 +157,17 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        // Dedicated Used / Re-Commerce Listings
-        $featuredUsed = Product::with(['images', 'vendor', 'category'])
+        // Dedicated Used / Re-Commerce Listings (active public only)
+        $featuredUsed = Product::with(['images', 'vendor', 'sellerUser.usedSellerProfile', 'category'])
             ->where(function($q) {
                 $q->where('vertical', 'used')
                   ->orWhere('listing_type', 'classified');
             })
             ->where('status', 'active')
+            ->where('is_sold', false)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
             ->latest()
             ->take(4)
             ->get();

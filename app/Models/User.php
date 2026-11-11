@@ -61,6 +61,46 @@ class User extends Authenticatable
         return $this->hasOne(Vendor::class);
     }
 
+    public function usedSellerProfile(): HasOne
+    {
+        return $this->hasOne(UsedSellerProfile::class);
+    }
+
+    public function usedListings(): HasMany
+    {
+        return $this->hasMany(Product::class, 'user_id')->withoutGlobalScopes()->where('vertical', 'used');
+    }
+
+    public function savedSearches(): HasMany
+    {
+        return $this->hasMany(UsedSavedSearch::class);
+    }
+
+    public function sentOffers(): HasMany
+    {
+        return $this->hasMany(Offer::class, 'user_id');
+    }
+
+    public function receivedOffers(): HasMany
+    {
+        return $this->hasMany(Offer::class, 'seller_id');
+    }
+
+    public function usedTransactionsAsBuyer(): HasMany
+    {
+        return $this->hasMany(UsedTransaction::class, 'buyer_id');
+    }
+
+    public function usedTransactionsAsSeller(): HasMany
+    {
+        return $this->hasMany(UsedTransaction::class, 'seller_id');
+    }
+
+    public function usedReviewsReceived(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewed_user_id')->where('is_approved', true);
+    }
+
     public function deliveryPartner(): HasOne
     {
         return $this->hasOne(DeliveryPartner::class);
@@ -127,6 +167,11 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class)->orderByDesc('is_default')->latest();
     }
 
     public function serviceOrders(): HasMany

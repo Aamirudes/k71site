@@ -35,4 +35,9 @@ class ProductImage extends Model
     {
         return format_image_url($this->path);
     }
+
+    public function getImageUrlAttribute(): string
+    {
+        return $this->url;
+    }
 }

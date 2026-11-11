@@ -40,57 +40,153 @@
     @endif
 
     @if($isFoodOrder ?? false)
-        <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl">🍲</span>
-                <div>
-                    <h3 class="text-sm font-black text-stone-900">Food Order Dispatch</h3>
-                    <p class="text-xs text-stone-600">Freshly prepared & hot packed by <strong class="text-[#ea580c]">{{ $vendor->shop_name }}</strong></p>
+        @php
+            $prepMins = (int) ($settings?->avg_prep_time_mins ?? 25);
+        @endphp
+        <div class="mb-6 space-y-3">
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/10 to-orange-500/5 border border-orange-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🍲</span>
+                    <div>
+                        <h3 class="text-sm font-black text-stone-900">Kitchen Order Checkout</h3>
+                        <p class="text-xs text-stone-600">
+                            Freshly prepared &amp; packed by <strong class="text-[#ea580c]">{{ $vendor->shop_name }}</strong>
+                            @if($settings?->is_pure_veg)
+                                &bull; <span class="font-bold text-emerald-700">100% Pure Veg</span>
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="px-2.5 py-1 rounded-full bg-orange-100 text-[#ea580c] text-[11px] font-bold">
+                        ⏱ ~{{ $prepMins }} mins prep
+                    </span>
+                    @if($vendor->isFssaiVerified())
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                            ✓ FSSAI Verified &bull; Lic {{ $settings?->fssai_license_number }}
+                        </span>
+                    @endif
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">⚡ Express Dispatch</span>
-                <span class="px-2.5 py-1 rounded-full bg-orange-100 text-[#ea580c] text-[11px] font-bold">🛡️ Verified Kitchen</span>
-            </div>
+
+            @if(!empty($operationalStatus) && !($operationalStatus['accepting_orders'] ?? true))
+                <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-center gap-2.5">
+                    <span class="text-lg">⏸️</span>
+                    <span>{{ $operationalStatus['reason'] ?: 'This kitchen is currently not accepting new orders.' }}</span>
+                </div>
+            @endif
+
+            @if(($minFoodOrderAmount ?? 0) > 0 && $subtotal < $minFoodOrderAmount)
+                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm font-semibold flex items-center justify-between gap-3">
+                    <span>Minimum order value for {{ $vendor->shop_name }} is ₹{{ number_format($minFoodOrderAmount / 100, 0) }}. Add ₹{{ number_format(($minFoodOrderAmount - $subtotal) / 100, 2) }} more to place an order.</span>
+                    <a href="{{ route('food.restaurant', $vendor->slug) }}" class="shrink-0 px-3 py-1.5 rounded-xl bg-amber-900 text-white text-xs font-bold">Add Items</a>
+                </div>
+            @endif
         </div>
     @endif
 
+    @php
+        $defaultSavedAddr = ($savedAddresses ?? collect())->firstWhere('is_default', true) ?? ($savedAddresses ?? collect())->first();
+        $defaultOrderType = old('order_type', ($isFoodOrder ?? false) ? (($foodDeliveryMode ?? 'both') === 'takeaway' ? 'food_takeaway' : 'food_delivery') : 'standard');
+        $initDeliveryFeePaise = ($isFoodOrder ?? false) && $defaultOrderType === 'food_takeaway' ? 0 : (int) $shipping;
+        $initDisplayTotalPaise = max(0, (int) $subtotal - (int) $discount) + $initDeliveryFeePaise + (int) ($packagingFee ?? 0);
+        $savedAddressesPayload = ($savedAddresses ?? collect())->map(fn ($addr) => [
+            'id' => $addr->id,
+            'label' => $addr->label,
+            'full_name' => $addr->full_name,
+            'phone' => $addr->phone,
+            'line_1' => $addr->line_1,
+            'line_2' => $addr->line_2,
+            'city' => $addr->city,
+            'state' => $addr->state,
+            'pincode' => $addr->pincode,
+            'is_default' => (bool) $addr->is_default,
+        ])->values();
+    @endphp
+
     <form action="{{ route('checkout.process', $vendor->id) }}" method="POST" id="checkout-form">
         @csrf
+        <input type="hidden" name="idempotency_key" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
         <div class="lg:grid lg:grid-cols-12 lg:gap-x-12 xl:gap-x-16" 
              x-data="{ 
-                 orderType: '{{ old('order_type', 'food_delivery') }}',
+                 orderType: '{{ $defaultOrderType }}',
                  paymentMethod: '{{ old('payment_method', $defaultPaymentMethod) }}',
+                 selectedAddressId: '{{ old('selected_address_id', $defaultSavedAddr?->id ?? '') }}',
+                 applySavedAddress(addr) {
+                     this.selectedAddressId = String(addr.id);
+                     const fillField = (id, val) => {
+                         const el = document.getElementById(id);
+                         if (el) el.value = val || '';
+                     };
+                     fillField('name', addr.full_name);
+                     fillField('phone', addr.phone);
+                     fillField('address_line_1', addr.line_1);
+                     fillField('city', addr.city);
+                     fillField('state', addr.state);
+                     fillField('pincode', addr.pincode);
+                     @if(!($isFoodOrder ?? false))
+                     if (addr.pincode && String(addr.pincode).trim().length === 6 && window.handlePincodeChange) {
+                         window.handlePincodeChange(String(addr.pincode));
+                     }
+                     @endif
+                 },
                  get checkoutBtnText() {
                      if (this.paymentMethod === 'phonepe') return 'Pay Securely via PhonePe / UPI →';
                      if (this.paymentMethod === 'upi') return 'Continue to Store UPI / QR →';
                      if (this.paymentMethod === 'cod') return 'Place Order (Cash on Delivery) →';
                      return 'Place Order →';
                  }
-             }">
+             }"
+             x-init="
+                 $watch('orderType', (val) => window.setCheckoutOrderType && window.setCheckoutOrderType(val));
+                 window.setCheckoutOrderType && window.setCheckoutOrderType(orderType);
+             ">
+            <input type="hidden" name="selected_address_id" :value="selectedAddressId">
             
             <!-- Left Column: Shipping & Payment -->
             <div class="lg:col-span-7 space-y-10">
                 
                 @if($isFoodOrder ?? false)
+                    @php
+                        $modeSetting = $foodDeliveryMode ?? 'both';
+                    @endphp
                     <!-- Delivery vs Takeaway Option -->
                     <section class="bg-white p-5 rounded-[24px] border border-black/8 shadow-xs">
                         <h2 class="text-xs font-black text-[#1A1018] uppercase tracking-wider mb-3">Order Fulfillment Mode</h2>
-                        <div class="grid grid-cols-2 gap-3">
-                            <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
-                                   :class="orderType === 'food_delivery' ? 'border-[#ea580c] bg-orange-50/40 text-stone-950 font-black' : 'border-black/10 bg-white text-stone-600 hover:border-black/20'">
-                                <input type="radio" name="order_type" value="food_delivery" x-model="orderType" class="sr-only">
-                                <span class="text-xl">🛵</span>
-                                <span class="text-xs font-black">Doorstep Delivery</span>
-                                <span class="text-[10px] text-stone-500 font-medium">Delivered hot to your address</span>
-                            </label>
-                            <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
-                                   :class="orderType === 'food_takeaway' ? 'border-[#1A1018] bg-[#FAF8F5] text-[#1A1018] font-black' : 'border-black/10 bg-white text-stone-600 hover:border-black/20'">
-                                <input type="radio" name="order_type" value="food_takeaway" x-model="orderType" class="sr-only">
-                                <span class="text-xl">🥡</span>
-                                <span class="text-xs font-black">Direct Takeaway</span>
-                                <span class="text-[10px] text-emerald-600 font-bold">₹0 Delivery Fee • Self Pickup</span>
-                            </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @if($modeSetting !== 'takeaway')
+                                <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
+                                       :class="orderType === 'food_delivery' ? 'border-[#ea580c] bg-orange-50/40 text-stone-950 font-black' : 'border-black/10 bg-white text-stone-600 hover:border-black/20'">
+                                    <input type="radio" name="order_type" value="food_delivery" x-model="orderType" class="sr-only">
+                                    <span class="text-xl">🛵</span>
+                                    <span class="text-xs font-black">Doorstep Delivery</span>
+                                    <span class="text-[10px] text-stone-500 font-medium">
+                                        {{ $shipping > 0 ? ('Delivery fee ₹' . number_format($shipping / 100, 0)) : 'Free delivery unlocked' }}
+                                    </span>
+                                </label>
+                            @else
+                                <div class="p-3.5 rounded-2xl border border-dashed border-stone-200 bg-stone-50 text-stone-400 flex flex-col items-center text-center gap-1 opacity-75">
+                                    <span class="text-xl">🛵</span>
+                                    <span class="text-xs font-bold">Doorstep Delivery Unavailable</span>
+                                    <span class="text-[10px]">Kitchen accepts pickup only</span>
+                                </div>
+                            @endif
+
+                            @if($modeSetting !== 'delivery')
+                                <label class="p-3.5 rounded-2xl border-2 transition cursor-pointer flex flex-col items-center text-center gap-1.5"
+                                       :class="orderType === 'food_takeaway' ? 'border-[#1A1018] bg-[#FAF8F5] text-[#1A1018] font-black' : 'border-black/10 bg-white text-stone-600 hover:border-black/20'">
+                                    <input type="radio" name="order_type" value="food_takeaway" x-model="orderType" class="sr-only">
+                                    <span class="text-xl">🥡</span>
+                                    <span class="text-xs font-black">Direct Takeaway</span>
+                                    <span class="text-[10px] text-emerald-600 font-bold">₹0 Delivery Fee &bull; Self Pickup</span>
+                                </label>
+                            @else
+                                <div class="p-3.5 rounded-2xl border border-dashed border-stone-200 bg-stone-50 text-stone-400 flex flex-col items-center text-center gap-1 opacity-75">
+                                    <span class="text-xl">🥡</span>
+                                    <span class="text-xs font-bold">Self-Pickup Unavailable</span>
+                                    <span class="text-[10px]">Delivery only from this kitchen</span>
+                                </div>
+                            @endif
                         </div>
                     </section>
                 @endif
@@ -107,12 +203,40 @@
                         </div>
                     @endguest
 
-                    <h2 class="grail-display text-xl font-bold text-[#1A1018] mb-4" x-text="orderType === 'food_takeaway' ? 'Customer Contact Details' : 'Delivery Address'">Delivery Address</h2>
+                    @auth
+                        @if(($savedAddresses ?? collect())->isNotEmpty())
+                            <div class="mb-5 bg-white p-5 rounded-[24px] border border-black/8 shadow-xs">
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <h3 class="text-xs font-black uppercase tracking-wider text-[#1A1018]">Saved Addresses</h3>
+                                    <a href="{{ route('addresses.index') }}" class="text-xs font-bold text-[#623562] hover:underline">Manage Addresses &rarr;</a>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    @foreach($savedAddressesPayload as $addrItem)
+                                        <button type="button"
+                                                @click='applySavedAddress(@json($addrItem))'
+                                                :class="selectedAddressId === '{{ $addrItem['id'] }}' ? 'border-[#1A1018] bg-[#FAF8F5] ring-1 ring-[#1A1018]' : 'border-black/10 bg-white hover:border-black/25'"
+                                                class="text-left p-3.5 rounded-2xl border transition cursor-pointer">
+                                            <div class="flex items-center justify-between gap-2 mb-1">
+                                                <span class="text-xs font-black text-[#1A1018] uppercase">{{ $addrItem['label'] ?: 'Saved' }}</span>
+                                                @if($addrItem['is_default'])
+                                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Default</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-xs font-semibold text-[#1A1018] truncate">{{ $addrItem['full_name'] }} &bull; {{ $addrItem['phone'] }}</p>
+                                            <p class="text-[11px] text-[#7A6B78] line-clamp-2 mt-0.5">{{ $addrItem['line_1'] }}, {{ $addrItem['city'] }}, {{ $addrItem['state'] }} - {{ $addrItem['pincode'] }}</p>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endauth
+
+                    <h2 class="grail-display text-xl font-bold text-[#1A1018] mb-4" x-text="orderType === 'food_takeaway' ? 'Customer Contact &amp; Pickup Details' : 'Delivery Address'">Delivery Address</h2>
                     <div class="bg-white p-6 rounded-[24px] border border-black/8 shadow-[0_12px_36px_rgba(26,16,24,0.05)] space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label for="name" class="block text-sm font-medium text-[#1A1018] mb-1">Full Name <span class="text-rose-500">*</span></label>
-                                <input type="text" id="name" name="name" value="{{ old('name', auth()->user()?->name ?? '') }}" required placeholder="e.g. Rahul Sharma" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="text" id="name" name="name" value="{{ old('name', $defaultSavedAddr?->full_name ?? auth()->user()?->name ?? '') }}" required placeholder="e.g. Rahul Sharma" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
 
                             <div class="sm:col-span-2" 
@@ -251,23 +375,23 @@
                                 <label for="address_line_1" class="block text-sm font-medium text-[#1A1018] mb-1">
                                     {{ ($isFoodOrder ?? false) ? 'Flat / House No. / Building / Landmark' : 'Address' }}
                                 </label>
-                                <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm" placeholder="House/Flat No., Street, Landmark">
+                                <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1', $defaultSavedAddr?->line_1 ?? '') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm" placeholder="House/Flat No., Street, Landmark">
                             </div>
                             
                             <div>
                                 <label for="city" class="block text-sm font-medium text-[#1A1018] mb-1">City</label>
-                                <input type="text" id="city" name="city" value="{{ old('city') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="text" id="city" name="city" value="{{ old('city', $defaultSavedAddr?->city ?? (($isFoodOrder ?? false) ? ($selectedLocation['city'] ?? '') : '')) }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
                             
                             <div>
                                 <label for="state" class="block text-sm font-medium text-[#1A1018] mb-1">State</label>
-                                <input type="text" id="state" name="state" value="{{ old('state') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="text" id="state" name="state" value="{{ old('state', $defaultSavedAddr?->state ?? '') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
                             
                             <div>
                                 <label for="pincode" class="block text-sm font-medium text-[#1A1018] mb-1">Pincode</label>
                                 <div class="relative">
-                                    <input type="text" id="pincode" name="pincode" value="{{ old('pincode', $cachedShipping['pincode'] ?? '') }}" required pattern="[0-9]{6}" maxlength="6" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm pr-9" placeholder="6-digit pincode" oninput="window.handlePincodeChange(this.value)">
+                                    <input type="text" id="pincode" name="pincode" value="{{ old('pincode', $defaultSavedAddr?->pincode ?? (($isFoodOrder ?? false) ? ($selectedLocation['pincode'] ?? '') : ($cachedShipping['pincode'] ?? ''))) }}" required pattern="[0-9]{6}" maxlength="6" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm pr-9" placeholder="6-digit pincode" @if(!($isFoodOrder ?? false)) oninput="window.handlePincodeChange(this.value)" @endif>
                                     <div id="pincode-spinner" class="hidden absolute right-3 top-3">
                                         <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -275,7 +399,7 @@
                                         </svg>
                                     </div>
                                 </div>
-                                <p id="pincode-msg" class="text-xs text-emerald-600 mt-1 font-medium {{ !empty($cachedShipping['courier_name']) ? '' : 'hidden' }}">
+                                <p id="pincode-msg" class="text-xs text-emerald-600 mt-1 font-medium {{ (!($isFoodOrder ?? false) && !empty($cachedShipping['courier_name'])) ? '' : 'hidden' }}">
                                     <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1"></span>
                                     <span>{{ $cachedShipping['courier_name'] ?? '' }} (Est. {{ $cachedShipping['est_days'] ?? 3 }} Days)</span>
                                 </p>
@@ -283,8 +407,25 @@
                             
                             <div>
                                 <label for="phone" class="block text-sm font-medium text-[#1A1018] mb-1">Mobile Number <span class="text-rose-500">*</span></label>
-                                <input type="tel" id="phone" name="phone" value="{{ old('phone', auth()->user()?->phone ?? '') }}" required placeholder="10-digit mobile number" minlength="10" maxlength="15" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="tel" id="phone" name="phone" value="{{ old('phone', $defaultSavedAddr?->phone ?? auth()->user()?->phone ?? '') }}" required placeholder="10-digit mobile number" minlength="10" maxlength="15" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
+
+                            @auth
+                                <div class="md:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-black/6">
+                                    <label class="inline-flex items-center gap-2 text-xs font-medium text-[#1A1018] cursor-pointer">
+                                        <input type="checkbox" name="save_address" value="1" {{ old('save_address') ? 'checked' : '' }} class="rounded border-black/25 text-[#1A1018] focus:ring-[#1A1018]">
+                                        <span>Save this address to my address book</span>
+                                    </label>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[11px] text-[#7A6B78]">Label:</span>
+                                        <select name="address_label" class="rounded-lg border border-black/15 px-2.5 py-1 text-xs font-medium text-[#1A1018] bg-[#FAF8F5]">
+                                            <option value="Home" {{ old('address_label') === 'Home' ? 'selected' : '' }}>Home</option>
+                                            <option value="Work" {{ old('address_label') === 'Work' ? 'selected' : '' }}>Work</option>
+                                            <option value="Other" {{ old('address_label') === 'Other' ? 'selected' : '' }}>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            @endauth
 
                             @if($isFoodOrder ?? false)
                                 <div class="md:col-span-2 pt-2 border-t border-black/6">
@@ -439,6 +580,9 @@
                                     @if(!empty($item->selected_modifiers_json))
                                         <p class="text-[11px] text-amber-700 mt-0.5 font-medium">+ {{ implode(', ', array_column($item->selected_modifiers_json, 'name')) }}</p>
                                     @endif
+                                    @if(!empty($item->special_instructions))
+                                        <p class="text-[11px] text-stone-500 mt-0.5 italic">Note: {{ $item->special_instructions }}</p>
+                                    @endif
                                     <p class="font-semibold mt-1 text-[#1A1018] tabular-nums">₹{{ number_format(($price * $item->quantity) / 100, 2) }}</p>
                                 </div>
                             </li>
@@ -470,7 +614,12 @@
                         @endif
                     </div>
                     
-                    <dl class="space-y-3 text-sm text-[#7A6B78] border-t border-black/6 pt-4 mb-6">
+                    <dl id="order-summary-totals"
+                        data-subtotal="{{ (int) $subtotal }}"
+                        data-discount="{{ (int) $discount }}"
+                        data-shipping="{{ (int) $shipping }}"
+                        data-packaging="{{ (int) ($packagingFee ?? 0) }}"
+                        class="space-y-3 text-sm text-[#7A6B78] border-t border-black/6 pt-4 mb-6">
                         <div class="flex justify-between">
                             <dt>Subtotal</dt>
                             <dd class="font-medium text-[#1A1018] tabular-nums">₹{{ number_format($subtotal / 100, 2) }}</dd>
@@ -482,19 +631,32 @@
                                 <dd class="tabular-nums">-₹{{ number_format($discount / 100, 2) }}</dd>
                             </div>
                         @endif
+
+                        @if(($packagingFee ?? 0) > 0)
+                            <div class="flex justify-between">
+                                <dt>Kitchen Packaging Fee</dt>
+                                <dd class="font-medium text-[#1A1018] tabular-nums">₹{{ number_format($packagingFee / 100, 2) }}</dd>
+                            </div>
+                        @endif
                         
                         <div class="flex justify-between items-center">
                             <dt class="flex items-center gap-1.5">
-                                <span>Shipping</span>
-                                <span id="shipping-badge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 {{ $shipping == 0 ? '' : 'hidden' }}">Free Delivery</span>
+                                <span>{{ ($isFoodOrder ?? false) ? 'Delivery Fee' : 'Shipping' }}</span>
+                                <span id="shipping-badge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 {{ $initDeliveryFeePaise == 0 ? '' : 'hidden' }}">{{ $defaultOrderType === 'food_takeaway' ? 'Self Pickup' : 'Free Delivery' }}</span>
                             </dt>
-                            <dd id="shipping-display" class="font-medium text-[#1A1018] tabular-nums">{{ $shipping == 0 ? 'Free' : '₹' . number_format($shipping / 100, 2) }}</dd>
+                            <dd id="shipping-display" class="font-medium text-[#1A1018] tabular-nums">{{ $initDeliveryFeePaise == 0 ? ($defaultOrderType === 'food_takeaway' ? 'Free (Self Pickup)' : 'Free') : '₹' . number_format($initDeliveryFeePaise / 100, 2) }}</dd>
                         </div>
+
+                        @if(($isFoodOrder ?? false) && !empty($freeDeliveryAbove) && $subtotal < $freeDeliveryAbove)
+                            <p class="text-[11px] text-amber-700 font-medium pt-1">
+                                Tip: Free doorstep delivery is available on orders above ₹{{ number_format($freeDeliveryAbove / 100, 0) }}.
+                            </p>
+                        @endif
                     </dl>
                     
                     <div class="flex justify-between items-end border-t border-black/6 pt-4 mb-8">
                         <dt class="text-base font-bold text-[#1A1018]">Total</dt>
-                        <dd id="total-display" class="grail-display text-3xl font-bold text-[#1A1018] tabular-nums">₹{{ number_format($total / 100, 2) }}</dd>
+                        <dd id="total-display" class="grail-display text-3xl font-bold text-[#1A1018] tabular-nums">₹{{ number_format($initDisplayTotalPaise / 100, 2) }}</dd>
                     </div>
                     
                     <button type="submit" form="checkout-form" class="w-full py-4 text-base shadow-[0_14px_34px_rgba(26,16,24,0.24)] font-bold bg-[#1A1018] hover:bg-black text-[#ECD2F3] rounded-2xl active:scale-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer min-h-[56px]">
@@ -524,12 +686,47 @@
     </div>
 
     <script>
-        let subtotalPaise = {{ $subtotal }};
-        let discountPaise = {{ $discount }};
-        let currentShippingPaise = {{ $shipping }};
+        let subtotalPaise = {{ (int) $subtotal }};
+        let discountPaise = {{ (int) $discount }};
+        let currentShippingPaise = {{ (int) $shipping }};
+        let packagingFeePaise = {{ (int) ($packagingFee ?? 0) }};
+        window.isFoodOrderCheckout = {{ ($isFoodOrder ?? false) ? 'true' : 'false' }};
+        window.checkoutOrderType = '{{ $defaultOrderType }}';
         let pincodeDebounceTimer = null;
 
+        window.setCheckoutOrderType = function(orderType) {
+            window.checkoutOrderType = orderType || 'standard';
+            const shippingDisplay = document.getElementById('shipping-display');
+            const totalDisplay = document.getElementById('total-display');
+            const shippingBadge = document.getElementById('shipping-badge');
+
+            const isTakeaway = window.isFoodOrderCheckout && window.checkoutOrderType === 'food_takeaway';
+            const effectiveShipping = isTakeaway ? 0 : currentShippingPaise;
+
+            if (shippingDisplay) {
+                shippingDisplay.textContent = effectiveShipping === 0
+                    ? (isTakeaway ? 'Free (Self Pickup)' : 'Free')
+                    : '₹' + (effectiveShipping / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+            if (shippingBadge) {
+                shippingBadge.textContent = isTakeaway ? 'Self Pickup' : 'Free Delivery';
+                if (effectiveShipping === 0) {
+                    shippingBadge.classList.remove('hidden');
+                } else {
+                    shippingBadge.classList.add('hidden');
+                }
+            }
+            if (totalDisplay) {
+                const netProduct = Math.max(0, subtotalPaise - discountPaise);
+                const newTotalPaise = netProduct + effectiveShipping + packagingFeePaise;
+                totalDisplay.textContent = '₹' + (newTotalPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        };
+
         window.handlePincodeChange = function(pincode) {
+            if (window.isFoodOrderCheckout) {
+                return;
+            }
             pincode = (pincode || '').trim();
             if (pincode.length !== 6 || !/^\d{6}$/.test(pincode)) {
                 return;
@@ -542,6 +739,9 @@
         };
 
         function fetchShippingRate(pincode) {
+            if (window.isFoodOrderCheckout) {
+                return;
+            }
             const spinner = document.getElementById('pincode-spinner');
             const msg = document.getElementById('pincode-msg');
             const shippingDisplay = document.getElementById('shipping-display');
@@ -569,6 +769,7 @@
                         shippingDisplay.textContent = data.shipping_formatted;
                     }
                     if (shippingBadge) {
+                        shippingBadge.textContent = 'Free Delivery';
                         if (data.is_free) {
                             shippingBadge.classList.remove('hidden');
                         } else {
@@ -584,7 +785,7 @@
 
                     // Recalculate total
                     const netProduct = Math.max(0, subtotalPaise - discountPaise);
-                    const newTotalPaise = netProduct + currentShippingPaise;
+                    const newTotalPaise = netProduct + currentShippingPaise + packagingFeePaise;
                     if (totalDisplay) {
                         totalDisplay.textContent = '₹' + (newTotalPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     }
@@ -615,10 +816,12 @@
                 });
             }
 
-            // Trigger rate lookup if pincode is already filled
-            const pincodeInput = document.getElementById('pincode');
-            if (pincodeInput && pincodeInput.value && pincodeInput.value.trim().length === 6) {
-                window.handlePincodeChange(pincodeInput.value);
+            // Trigger Shiprocket rate lookup only for non-Food physical retail orders
+            if (!window.isFoodOrderCheckout) {
+                const pincodeInput = document.getElementById('pincode');
+                if (pincodeInput && pincodeInput.value && pincodeInput.value.trim().length === 6) {
+                    window.handlePincodeChange(pincodeInput.value);
+                }
             }
         });
 
@@ -629,8 +832,19 @@
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 
                 // Update Order Summary
-                const newSummary = doc.getElementById('order-summary-section').innerHTML;
-                document.getElementById('order-summary-section').innerHTML = newSummary;
+                const fetchedSummary = doc.getElementById('order-summary-section');
+                const currentSummary = document.getElementById('order-summary-section');
+                if (fetchedSummary && currentSummary) {
+                    currentSummary.innerHTML = fetchedSummary.innerHTML;
+                    const totalsEl = document.getElementById('order-summary-totals');
+                    if (totalsEl) {
+                        subtotalPaise = parseInt(totalsEl.dataset.subtotal || '0', 10);
+                        discountPaise = parseInt(totalsEl.dataset.discount || '0', 10);
+                        currentShippingPaise = parseInt(totalsEl.dataset.shipping || '0', 10);
+                        packagingFeePaise = parseInt(totalsEl.dataset.packaging || '0', 10);
+                    }
+                    window.setCheckoutOrderType(window.checkoutOrderType);
+                }
 
             } catch (error) {
                 console.error('Error refreshing summary:', error);

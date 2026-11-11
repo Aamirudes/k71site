@@ -657,13 +657,22 @@ class NewUserAndVendorRegistrationTest extends TestCase
         $this->assertLessThanOrEqual(15, strlen((string) $guestUser->phone));
     }
 
-    public function test_used_classified_on_empty_vendor_database_returns_clean_error_instead_of_500(): void
+    public function test_used_classified_on_empty_vendor_database_succeeds_without_vendor_record_and_validates_cleanly(): void
     {
         $this->assertSame(0, Vendor::count());
 
         $user = User::factory()->create(['email_verified_at' => now()]);
         $this->actingAs($user);
 
+        // Invalid payload returns clean 422 JSON validation error instead of 500
+        $invalidRes = $this->postJson(route('used.post-ad'), [
+            'title' => 'Bad',
+            'price' => 0,
+            'city' => '',
+        ]);
+        $invalidRes->assertStatus(422);
+
+        // Valid individual classified succeeds cleanly even with 0 vendor records
         $res = $this->postJson(route('used.post-ad'), [
             'title' => 'Used Wooden Sofa',
             'category' => 'Furniture',
@@ -673,7 +682,13 @@ class NewUserAndVendorRegistrationTest extends TestCase
             'description' => 'Solid wood sofa set.',
         ]);
 
-        $res->assertStatus(422);
-        $res->assertJson(['success' => false]);
+        $res->assertOk();
+        $res->assertJson(['success' => true]);
+        $this->assertDatabaseHas('products', [
+            'user_id' => $user->id,
+            'vendor_id' => null,
+            'vertical' => 'used',
+            'title' => 'Used Wooden Sofa',
+        ]);
     }
 }

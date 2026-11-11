@@ -38,15 +38,16 @@ class OrderController extends Controller
         if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
             abort(403);
         }
-        
-        $order->load(['vendor.settings', 'items.product.images', 'items.variant', 'paymentClaim', 'shipment']);
-        
-        return view('orders.show', compact('order'));
+
+        $order->load(['vendor.settings', 'items.product.images', 'items.variant', 'paymentClaim', 'shipment', 'reviews']);
+        $hasFoodOrderReview = $order->reviews->where('review_type', 'food_order')->isNotEmpty();
+
+        return view('orders.show', compact('order', 'hasFoodOrderReview'));
     }
 
     public function cancel(Request $request, Order $order)
     {
-        if ($order->user_id !== Auth::id()) {
+        if ((int) $order->user_id !== (int) Auth::id()) {
             abort(403);
         }
 
@@ -54,9 +55,9 @@ class OrderController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        // Check if order is already cancelled or final
-        if (in_array($order->status, ['cancelled', 'shipped', 'out_for_delivery', 'delivered', 'returned', 'refunded'])) {
-            return back()->with('error', 'This order cannot be cancelled because it is already ' . ucfirst($order->status) . '.');
+        // Check if order can be cancelled based on current stage
+        if (!$order->canCustomerCancel()) {
+            return back()->with('error', 'This order cannot be cancelled because it is already ' . ucfirst(str_replace('_', ' ', $order->status)) . '.');
         }
 
         // Check vendor cancellation policy
@@ -85,6 +86,10 @@ class OrderController extends Controller
                 'cancel_reason' => $reason,
             ];
 
+            if ($order->isFoodOrder()) {
+                $updatePayload['food_fulfillment_stage'] = 'cancelled';
+            }
+
             // If customer paid online, flag for refund
             if ($order->payment_status === 'paid') {
                 $updatePayload['payment_status'] = 'refund_pending';
@@ -110,7 +115,7 @@ class OrderController extends Controller
             \App\Services\StockManagerService::restoreOrderStock($order);
 
             // Log status history
-            $refundNote = ($order->payment_status === 'paid' || $updatePayload['payment_status'] ?? '' === 'refund_pending')
+            $refundNote = ($order->payment_status === 'paid' || (($updatePayload['payment_status'] ?? '') === 'refund_pending'))
                 ? " (Online payment of ₹" . number_format($order->total_amount / 100, 2) . " flagged for refund)"
                 : "";
 

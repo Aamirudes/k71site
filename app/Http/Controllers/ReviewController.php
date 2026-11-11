@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Review;
+use App\Services\Food\FoodMarketplaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -28,7 +29,7 @@ class ReviewController extends Controller
         // Check verified purchase
         $isVerifiedPurchase = Order::where('user_id', $user->id)
             ->where('status', 'delivered')
-            ->whereHas('items', fn($q) => $q->where('product_id', $product->id))
+            ->whereHas('items', fn ($q) => $q->where('product_id', $product->id))
             ->exists();
 
         // Handle uploaded customer photos
@@ -53,6 +54,8 @@ class ReviewController extends Controller
                 'user_id' => $user->id,
             ],
             [
+                'vendor_id' => $product->vendor_id,
+                'review_type' => $product->vertical === 'food' ? 'food_dish' : 'product',
                 'rating' => $validated['rating'],
                 'title' => $validated['title'] ?? null,
                 'body' => $validated['body'],
@@ -71,7 +74,85 @@ class ReviewController extends Controller
             'avg_rating' => $avgRating,
         ]);
 
+        if ($product->vertical === 'food' && $product->vendor) {
+            app(FoodMarketplaceService::class)->refreshRestaurantRatingCache($product->vendor);
+        }
+
         return back()->with('success', 'Thank you! Your photo review has been published.');
+    }
+
+    /**
+     * Customer reviews a delivered Food / Restaurant order (verified delivery review).
+     */
+    public function storeFoodReview(Request $request, Order $order, FoodMarketplaceService $foodService): RedirectResponse
+    {
+        $user = auth()->user();
+
+        if ((int) $order->user_id !== (int) $user->id) {
+            abort(403, 'You can only review your own orders.');
+        }
+
+        if ($order->vendor && (int) $order->vendor->user_id === (int) $user->id) {
+            abort(403, 'Restaurant owners cannot review their own kitchen.');
+        }
+
+        if (!$order->isFoodOrder()) {
+            return back()->with('error', 'Only food delivery or takeaway orders can be reviewed here.');
+        }
+
+        if ($order->status !== 'delivered') {
+            return back()->with('error', 'You can submit a restaurant review once your order has been delivered.');
+        }
+
+        $alreadyReviewed = Review::where('order_id', $order->id)
+            ->where('user_id', $user->id)
+            ->whereNull('product_id')
+            ->exists();
+
+        if ($alreadyReviewed) {
+            return back()->with('error', 'You have already submitted a review for this order.');
+        }
+
+        if ($request->filled('comment') && !$request->filled('body')) {
+            $request->merge(['body' => $request->input('comment')]);
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'title' => 'nullable|string|max:200',
+            'body' => 'required|string|max:2000',
+            'images' => 'nullable|array|max:4',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+        ]);
+
+        $storedImages = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $storedImages[] = $imgFile->store('reviews', 'public');
+                }
+            }
+        }
+
+        Review::create([
+            'user_id' => $user->id,
+            'vendor_id' => $order->vendor_id,
+            'order_id' => $order->id,
+            'product_id' => null,
+            'review_type' => 'food_order',
+            'rating' => (int) $validated['rating'],
+            'title' => $validated['title'] ?? null,
+            'body' => trim($validated['body']),
+            'images' => !empty($storedImages) ? $storedImages : null,
+            'is_verified_purchase' => true,
+            'is_approved' => true,
+        ]);
+
+        if ($order->vendor) {
+            $foodService->refreshRestaurantRatingCache($order->vendor);
+        }
+
+        return back()->with('success', 'Thank you! Your verified food order review has been published.');
     }
 
     /**

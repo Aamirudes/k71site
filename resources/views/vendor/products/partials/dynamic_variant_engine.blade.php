@@ -212,15 +212,15 @@
     <!-- ========================================================================= -->
     <template x-if="verticalType === 'food_portion'">
     <div class="space-y-6">
-        <input type="hidden" name="modifiers_submitted" value="1">
+        <input type="hidden" name="option_groups_submitted" value="1">
         <div class="bg-white rounded-2xl shadow-sm border border-stone-200/80 p-5 sm:p-7">
             <div class="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
                 <div>
                     <h3 class="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                        <span>Portion Pricing &amp; Add-on Modifiers</span>
+                        <span>Portion Pricing &amp; Structured Option Groups</span>
                         <span class="text-[10px] bg-amber-50 text-amber-800 font-bold px-2 py-0.5 rounded-md border border-amber-200">Swiggy / Zomato Pattern</span>
                     </h3>
-                    <p class="text-xs text-stone-500 mt-0.5">Configure portion pricing tiers and nested customize add-ons with real-time price increments.</p>
+                    <p class="text-xs text-stone-500 mt-0.5">Configure portion pricing tiers and required/optional customization groups with live price deltas.</p>
                 </div>
             </div>
 
@@ -265,29 +265,90 @@
                 </div>
             </div>
 
-            <!-- Add-on Modifiers Repeater -->
-            <div class="pt-4 border-t border-stone-100">
-                <div class="flex items-center justify-between mb-3">
-                    <label class="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
-                        <span>➕ 2. Optional Add-ons &amp; Customization Modifiers</span>
-                    </label>
-                    <button type="button" @click="addFoodModifier()" class="text-xs font-bold text-amber-700 hover:text-amber-900 cursor-pointer">+ Add Add-on Item</button>
+            <!-- Structured Option Groups Builder -->
+            <div class="pt-4 border-t border-stone-100 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-stone-800 flex items-center gap-1.5">
+                            <span>➕ 2. Option Groups &amp; Dish Customizations</span>
+                        </label>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Enforce required single-choice bases or optional multi-choice add-ons at checkout.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" @click="addFoodOptionGroup('single')" class="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer">
+                            + Required Choice Group
+                        </button>
+                        <button type="button" @click="addFoodOptionGroup('multi')" class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-300 text-xs font-bold cursor-pointer">
+                            + Optional Add-ons Group
+                        </button>
+                    </div>
                 </div>
 
-                <div class="space-y-2.5">
-                    <template x-for="(m, mIdx) in foodModifiers" :key="mIdx">
-                        <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 p-3 rounded-xl bg-stone-50 border border-stone-200/70">
-                            <input type="text" :name="`modifiers[${mIdx}][group_name]`" x-model="m.group_name" placeholder="Group (e.g. Add-ons / Upgrades)" class="w-full sm:w-44 text-xs font-medium rounded-lg border-stone-200 py-1.5 px-2.5 bg-white">
-                            <input type="text" :name="`modifiers[${mIdx}][modifier_name]`" x-model="m.modifier_name" placeholder="Add-on Name (e.g. Extra Bhatura)" class="flex-1 text-xs font-semibold rounded-lg border-stone-200 py-1.5 px-2.5 bg-white">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs font-bold text-stone-500">+₹</span>
-                                <input type="number" step="0.01" min="0" :name="`modifiers[${mIdx}][price_delta]`" x-model="m.price_delta" placeholder="35.00" class="w-24 text-xs font-bold rounded-lg border-stone-200 py-1.5 px-2 bg-white">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] font-bold text-stone-500">Quick Add-ons:</span>
+                    <button type="button" @click="addQuickAddonOption('Extra Cheese Slice', 30)" class="px-2.5 py-1 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-xs font-semibold cursor-pointer">+ Extra Cheese (+₹30)</button>
+                    <button type="button" @click="addQuickAddonOption('Extra Butter', 15)" class="px-2.5 py-1 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-xs font-semibold cursor-pointer">+ Extra Butter (+₹15)</button>
+                    <button type="button" @click="addQuickAddonOption('Extra Raita', 25)" class="px-2.5 py-1 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-xs font-semibold cursor-pointer">+ Extra Raita (+₹25)</button>
+                    <button type="button" @click="addQuickAddonOption('Extra Gravy / Dip', 25)" class="px-2.5 py-1 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200 text-xs font-semibold cursor-pointer">+ Extra Gravy (+₹25)</button>
+                </div>
+
+                <div class="space-y-4">
+                    <template x-for="(grp, gIdx) in foodOptionGroups" :key="gIdx">
+                        <div class="p-4 rounded-xl bg-stone-50 border border-stone-200/80 space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center pb-3 border-b border-stone-200/70">
+                                <div class="sm:col-span-4">
+                                    <label class="text-[10px] font-bold uppercase text-stone-500 block mb-1">Group Name *</label>
+                                    <input type="text" :name="`option_groups[${gIdx}][name]`" x-model="grp.name" placeholder="e.g. Choice of Crust / Add-ons" class="w-full text-xs font-bold rounded-lg border-stone-200 py-1.5 px-2.5 bg-white">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label class="text-[10px] font-bold uppercase text-stone-500 block mb-1">Selection Type</label>
+                                    <select :name="`option_groups[${gIdx}][selection_type]`" x-model="grp.selection_type" class="w-full text-xs font-semibold rounded-lg border-stone-200 py-1.5 px-2 bg-white">
+                                        <option value="single">Single Choice (Radio)</option>
+                                        <option value="multi">Multi Choice (Checkbox)</option>
+                                    </select>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="text-[10px] font-bold uppercase text-stone-500 block mb-1">Min / Max</label>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" min="0" :name="`option_groups[${gIdx}][min_selections]`" x-model="grp.min_selections" placeholder="0" class="w-1/2 text-xs font-bold rounded-lg border-stone-200 py-1.5 px-2 bg-white">
+                                        <input type="number" min="1" :name="`option_groups[${gIdx}][max_selections]`" x-model="grp.max_selections" placeholder="Max" class="w-1/2 text-xs font-bold rounded-lg border-stone-200 py-1.5 px-2 bg-white">
+                                    </div>
+                                </div>
+                                <div class="sm:col-span-3 flex items-center justify-between gap-2 pt-3 sm:pt-4">
+                                    <input type="hidden" :name="`option_groups[${gIdx}][is_required]`" value="0">
+                                    <label class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 cursor-pointer shrink-0">
+                                        <input type="checkbox" :name="`option_groups[${gIdx}][is_required]`" value="1" x-model="grp.is_required" class="rounded text-amber-600 focus:ring-amber-500">
+                                        <span>Required</span>
+                                    </label>
+                                    <button type="button" @click="removeFoodOptionGroup(gIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">Remove</button>
+                                </div>
                             </div>
-                            <label class="inline-flex items-center gap-1.5 text-xs text-stone-700 cursor-pointer shrink-0">
-                                <input type="checkbox" :name="`modifiers[${mIdx}][is_required]`" value="1" x-model="m.is_required" class="rounded text-amber-600 focus:ring-amber-500">
-                                <span>Required</span>
-                            </label>
-                            <button type="button" @click="removeFoodModifier(mIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-2 py-1 cursor-pointer">✕</button>
+
+                            <div class="space-y-2">
+                                <template x-for="(opt, oIdx) in grp.options" :key="oIdx">
+                                    <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 p-2 rounded-lg bg-white border border-stone-200">
+                                        <input type="text" :name="`option_groups[${gIdx}][options][${oIdx}][modifier_name]`" x-model="opt.modifier_name" placeholder="Option Name (e.g. Classic Hand Tossed)" class="flex-1 min-w-[140px] text-xs font-semibold rounded-lg border-stone-200 py-1.5 px-2.5 bg-stone-50">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs font-bold text-stone-500">+₹</span>
+                                            <input type="number" step="0.01" min="0" :name="`option_groups[${gIdx}][options][${oIdx}][price_delta]`" x-model="opt.price_delta" placeholder="0.00" class="w-20 text-xs font-bold rounded-lg border-stone-200 py-1.5 px-2 bg-stone-50">
+                                        </div>
+                                        <input type="hidden" :name="`option_groups[${gIdx}][options][${oIdx}][is_available]`" value="0">
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-stone-700 cursor-pointer shrink-0">
+                                            <input type="checkbox" :name="`option_groups[${gIdx}][options][${oIdx}][is_available]`" value="1" x-model="opt.is_available" class="rounded text-emerald-600">
+                                            <span>In Stock</span>
+                                        </label>
+                                        <input type="hidden" :name="`option_groups[${gIdx}][options][${oIdx}][is_default]`" value="0">
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-stone-700 cursor-pointer shrink-0">
+                                            <input type="checkbox" :name="`option_groups[${gIdx}][options][${oIdx}][is_default]`" value="1" x-model="opt.is_default" class="rounded text-amber-600">
+                                            <span>Default</span>
+                                        </label>
+                                        <button type="button" @click="removeFoodOptionFromGroup(gIdx, oIdx)" class="text-rose-600 hover:text-rose-800 text-xs font-bold px-1.5 cursor-pointer">✕</button>
+                                    </div>
+                                </template>
+                                <button type="button" @click="addFoodOptionToGroup(gIdx)" class="text-xs font-bold text-amber-700 hover:text-amber-900 cursor-pointer">
+                                    + Add Option to "<span x-text="grp.name || 'Group'"></span>"
+                                </button>
+                            </div>
                         </div>
                     </template>
                 </div>

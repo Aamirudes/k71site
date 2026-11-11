@@ -34,11 +34,14 @@
             
             <!-- Filter Tabs -->
             <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-4">
-                <a href="{{ route('admin.products') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ !request('status') && !request('stock') ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                <a href="{{ route('admin.products') }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ !request('status') && !request('stock') && !request('vertical') ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
                     All Products ({{ $counts['all'] }})
                 </a>
                 <a href="{{ route('admin.products', array_merge(request()->query(), ['status' => 'active', 'stock' => null])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('status') === 'active' && !request('stock') ? 'bg-emerald-600 text-white shadow-xs' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}">
                     Active ({{ $counts['active'] }})
+                </a>
+                <a href="{{ route('admin.products', array_merge(request()->query(), ['vertical' => 'used', 'status' => null, 'stock' => null])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('vertical') === 'used' ? 'bg-purple-700 text-white shadow-xs' : 'bg-purple-50 text-purple-700 hover:bg-purple-100' }}">
+                    Used Classifieds ({{ $counts['used'] ?? 0 }})
                 </a>
                 <a href="{{ route('admin.products', array_merge(request()->query(), ['stock' => 'low', 'status' => null])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('stock') === 'low' ? 'bg-amber-500 text-slate-950 shadow-xs' : 'bg-amber-50 text-amber-700 hover:bg-amber-100' }}">
                     Low Stock (≤3) ({{ $counts['low_stock'] }})
@@ -119,6 +122,9 @@
                                         <a href="{{ $product->vendor->storefront_url }}" target="_blank" class="text-[11px] font-mono text-amber-600 hover:underline">
                                             {{ $product->vendor->slug }}.{{ config('marketplace.domain', 'marblemandi.org') }} ↗
                                         </a>
+                                    @elseif($product->ownerUser())
+                                        <span class="font-bold text-slate-900 block">{{ $product->ownerUser()->name }}</span>
+                                        <span class="text-[11px] text-purple-700 font-semibold">Used Individual Seller</span>
                                     @else
                                         <span class="text-slate-400 font-medium">Direct Marketplace</span>
                                     @endif
@@ -170,7 +176,7 @@
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('product.show', $product->slug) }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors">
+                                        <a href="{{ $product->isUsedListing() ? route('used.show', $product->slug) : route('product.show', $product->slug) }}" target="_blank" class="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors">
                                             <span>View</span>
                                             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                         </a>

@@ -114,6 +114,10 @@
                                     Launch Provider Website &rarr;
                                 </a>
                             @endif
+                            <a href="{{ route('addresses.index') }}"
+                               class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
+                                Saved Addresses
+                            </a>
                             <a href="{{ route('services.projects.index') }}"
                                class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
                                 My Project Briefs
@@ -121,6 +125,14 @@
                             <a href="{{ route('services.orders.index') }}"
                                class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
                                 Service Orders
+                            </a>
+                            <a href="{{ route('used.dashboard') }}"
+                               class="px-3.5 py-1.5 rounded-full border border-white/20 bg-white/8 hover:bg-white/15 text-xs font-semibold text-white transition">
+                                Used Marketplace Hub
+                            </a>
+                            <a href="{{ route('used.sell') }}"
+                               class="px-3.5 py-1.5 rounded-full border border-[#ECD2F3]/40 bg-[#ECD2F3]/15 hover:bg-[#ECD2F3]/25 text-xs font-semibold text-[#ECD2F3] transition">
+                                + Sell Used Item
                             </a>
                             @if($user->isFleet())
                                 <a href="{{ route('delivery.dashboard') }}" 
@@ -219,6 +231,16 @@
                                 <span class="text-[#1A1018] font-medium">{{ $user->created_at->format('M d, Y') }}</span>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="k71-card p-5 sm:p-6 bg-white rounded-[24px] border border-black/8 shadow-[0_8px_28px_rgba(26,16,24,0.05)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="grail-display text-lg font-bold text-[#1A1018]">Saved Delivery Addresses</h3>
+                            <p class="text-xs text-[#7A6B78] mt-0.5">Save Home, Work, or other delivery locations for 1-tap K71 Food and Marketplace checkout.</p>
+                        </div>
+                        <a href="{{ route('addresses.index') }}" class="px-5 py-2.5 rounded-full bg-[#1A1018] hover:bg-black text-[#ECD2F3] text-xs font-bold text-center transition whitespace-nowrap">
+                            Manage Addresses &rarr;
+                        </a>
                     </div>
 
                     <!-- Privacy & Data Controls (Integrated discreetly into Profile) -->
