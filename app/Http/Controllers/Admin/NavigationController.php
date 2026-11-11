@@ -41,6 +41,7 @@ class NavigationController extends Controller
 
         if ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('nav_icons', 'public');
+            k71_sync_public_storage($path);
             $validated['image_url'] = '/storage/' . $path;
             $validated['icon_type'] = 'image';
         }
@@ -78,6 +79,7 @@ class NavigationController extends Controller
 
         if ($request->hasFile('image_file')) {
             $path = $request->file('image_file')->store('nav_icons', 'public');
+            k71_sync_public_storage($path);
             $validated['image_url'] = '/storage/' . $path;
             $validated['icon_type'] = 'image';
         }

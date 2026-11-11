@@ -7,26 +7,47 @@ use App\Models\Setting;
 use App\Models\Category;
 use App\Services\ScrollSequenceService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class HomepageController extends Controller
 {
-    public function edit()
+    public function edit(Request $request)
     {
         $homepage = Setting::getGroup('homepage');
         $servicesPage = Setting::getGroup('services_page');
         $foodPage = Setting::getGroup('food_page');
         $usedPage = Setting::getGroup('used_page');
         $seo = Setting::getGroup('seo');
-        $categories = Category::whereNull('parent_id')->orderBy('sort_order')->get();
-        $scrollSequence = ScrollSequenceService::resolveSequence($homepage['scroll_seq_folder'] ?? null);
 
-        return view('admin.homepage.edit', compact('homepage', 'servicesPage', 'foodPage', 'usedPage', 'seo', 'categories', 'scrollSequence'));
+        $categories = Category::whereNull('parent_id')
+            ->withCount(['products', 'children'])
+            ->orderByDesc('show_on_home')
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        $scrollSequence = ScrollSequenceService::resolveSequence($homepage['scroll_seq_folder'] ?? null);
+        $allowedTabs = ['homepage', 'categories', 'scroll_sequence', 'services', 'food', 'used', 'seo'];
+        $requestedTab = (string) $request->input('tab', session('active_tab', 'homepage'));
+        $activeTab = in_array($requestedTab, $allowedTabs, true) ? $requestedTab : 'homepage';
+
+        return view('admin.homepage.edit', compact(
+            'homepage',
+            'servicesPage',
+            'foodPage',
+            'usedPage',
+            'seo',
+            'categories',
+            'scrollSequence',
+            'activeTab'
+        ));
     }
 
     public function update(Request $request)
     {
         $validated = $request->validate([
+            'active_tab' => ['nullable', 'string', 'max:32'],
+
             // SEO Meta Settings
             'seo_meta_title' => ['nullable', 'string', 'max:100'],
             'seo_meta_description' => ['nullable', 'string', 'max:255'],
@@ -48,12 +69,14 @@ class HomepageController extends Controller
             'announcement_link' => ['nullable', 'string', 'max:255'],
 
             // Homepage Hero Section & 3-Image Carousel
+            'show_hero_carousel' => ['nullable', 'boolean'],
             'hero_badge' => ['nullable', 'string', 'max:80'],
             'hero_title_line1' => ['nullable', 'string', 'max:100'],
             'hero_title_line2' => ['nullable', 'string', 'max:100'],
             'hero_description' => ['nullable', 'string', 'max:500'],
             'hero_cta_primary_text' => ['nullable', 'string', 'max:50'],
             'hero_cta_primary_link' => ['nullable', 'string', 'max:255'],
+            'hero_image' => ['nullable', 'image', 'max:5120'],
             'search_placeholder' => ['nullable', 'string', 'max:100'],
 
             'slide1_badge' => ['nullable', 'string', 'max:80'],
@@ -65,6 +88,7 @@ class HomepageController extends Controller
             'slide1_btn2_link' => ['nullable', 'string', 'max:255'],
             'slide1_image' => ['nullable', 'image', 'max:5120'],
             'slide1_image_url' => ['nullable', 'string', 'max:500'],
+            'remove_slide1_image' => ['nullable', 'boolean'],
 
             'slide2_badge' => ['nullable', 'string', 'max:80'],
             'slide2_title' => ['nullable', 'string', 'max:150'],
@@ -75,6 +99,7 @@ class HomepageController extends Controller
             'slide2_btn2_link' => ['nullable', 'string', 'max:255'],
             'slide2_image' => ['nullable', 'image', 'max:5120'],
             'slide2_image_url' => ['nullable', 'string', 'max:500'],
+            'remove_slide2_image' => ['nullable', 'boolean'],
 
             'slide3_badge' => ['nullable', 'string', 'max:80'],
             'slide3_title' => ['nullable', 'string', 'max:150'],
@@ -85,6 +110,7 @@ class HomepageController extends Controller
             'slide3_btn2_link' => ['nullable', 'string', 'max:255'],
             'slide3_image' => ['nullable', 'image', 'max:5120'],
             'slide3_image_url' => ['nullable', 'string', 'max:500'],
+            'remove_slide3_image' => ['nullable', 'boolean'],
 
             // Homepage Section Titles
             'arrivals_section_title' => ['nullable', 'string', 'max:100'],
@@ -102,6 +128,18 @@ class HomepageController extends Controller
             'show_categories' => ['nullable', 'boolean'],
             'show_value_pillars' => ['nullable', 'boolean'],
             'show_seller_banner' => ['nullable', 'boolean'],
+
+            // Homepage Category Management
+            'category_images' => ['nullable', 'array'],
+            'category_images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:5120'],
+            'category_image_urls' => ['nullable', 'array'],
+            'category_image_urls.*' => ['nullable', 'string', 'max:500'],
+            'category_meta' => ['nullable', 'array'],
+            'category_meta.*.name' => ['nullable', 'string', 'max:100'],
+            'category_meta.*.icon' => ['nullable', 'string', 'max:20'],
+            'category_meta.*.sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'category_meta.*.show_on_home' => ['nullable'],
+            'category_meta.*.is_active' => ['nullable'],
 
             // Services Page Studio
             'services_hero_badge' => ['nullable', 'string', 'max:100'],
@@ -171,84 +209,174 @@ class HomepageController extends Controller
         // File uploads
         if ($request->hasFile('hero_image')) {
             $oldHero = Setting::get('hero_image');
-            if ($oldHero) Storage::disk('public')->delete($oldHero);
+            if ($oldHero && !str_starts_with($oldHero, 'http')) {
+                k71_delete_public_storage($oldHero);
+            }
             $path = $request->file('hero_image')->store('homepage', 'public');
+            k71_sync_public_storage($path);
             Setting::set('hero_image', $path, 'homepage', 'string');
         }
 
         if ($request->hasFile('seo_og_image')) {
             $oldOg = Setting::get('seo_og_image');
-            if ($oldOg) Storage::disk('public')->delete($oldOg);
+            if ($oldOg && !str_starts_with($oldOg, 'http')) {
+                k71_delete_public_storage($oldOg);
+            }
             $path = $request->file('seo_og_image')->store('seo', 'public');
+            k71_sync_public_storage($path);
             Setting::set('seo_og_image', $path, 'seo', 'string');
         }
 
-        // Slide Images Uploads (3-Image Carousel)
+        // Slide Images Uploads & Removals (3-Image Carousel)
         for ($s = 1; $s <= 3; $s++) {
             if ($request->hasFile("slide{$s}_image")) {
                 $oldSlide = Setting::get("slide{$s}_image");
-                if ($oldSlide) Storage::disk('public')->delete($oldSlide);
+                if ($oldSlide && !str_starts_with($oldSlide, 'http')) {
+                    k71_delete_public_storage($oldSlide);
+                }
                 $path = $request->file("slide{$s}_image")->store('homepage', 'public');
+                k71_sync_public_storage($path);
                 Setting::set("slide{$s}_image", $path, 'homepage', 'string');
+            } elseif ($request->boolean("remove_slide{$s}_image")) {
+                $oldSlide = Setting::get("slide{$s}_image");
+                if ($oldSlide && !str_starts_with($oldSlide, 'http')) {
+                    k71_delete_public_storage($oldSlide);
+                }
+                Setting::set("slide{$s}_image", null, 'homepage', 'string');
             }
         }
 
         // Services Hero Image Upload
         if ($request->hasFile('services_hero_image')) {
             $oldImg = Setting::get('services_hero_image');
-            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            if ($oldImg && !str_starts_with($oldImg, 'http')) {
+                k71_delete_public_storage($oldImg);
+            }
             $path = $request->file('services_hero_image')->store('services_page', 'public');
+            k71_sync_public_storage($path);
             Setting::set('services_hero_image', $path, 'services_page', 'string');
         }
 
         // Food Hero Image Upload
         if ($request->hasFile('food_hero_image')) {
             $oldImg = Setting::get('food_hero_image');
-            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            if ($oldImg && !str_starts_with($oldImg, 'http')) {
+                k71_delete_public_storage($oldImg);
+            }
             $path = $request->file('food_hero_image')->store('food_page', 'public');
+            k71_sync_public_storage($path);
             Setting::set('food_hero_image', $path, 'food_page', 'string');
         }
 
         // Used Hero Image Upload
         if ($request->hasFile('used_hero_image')) {
             $oldImg = Setting::get('used_hero_image');
-            if ($oldImg) Storage::disk('public')->delete($oldImg);
+            if ($oldImg && !str_starts_with($oldImg, 'http')) {
+                k71_delete_public_storage($oldImg);
+            }
             $path = $request->file('used_hero_image')->store('used_page', 'public');
+            k71_sync_public_storage($path);
             Setting::set('used_hero_image', $path, 'used_page', 'string');
         }
 
-        // Category Custom Images Upload / Removal
-        if ($request->hasFile('category_images')) {
-            foreach ($request->file('category_images') as $catId => $file) {
+        // Category Inline Edits (Name, Icon, Sort Order, Show on Homepage, Active)
+        $categoryMeta = $request->input('category_meta', []);
+        if (is_array($categoryMeta)) {
+            foreach ($categoryMeta as $catId => $meta) {
+                if (!is_array($meta)) {
+                    continue;
+                }
                 $cat = Category::find($catId);
-                if ($cat && $file && $file->isValid()) {
-                    if ($cat->image) Storage::disk('public')->delete($cat->image);
-                    $path = $file->store('categories', 'public');
-                    $cat->update(['image' => $path]);
+                if (!$cat) {
+                    continue;
+                }
+                $updates = [];
+                if (isset($meta['name']) && trim((string) $meta['name']) !== '') {
+                    $updates['name'] = Str::limit(trim((string) $meta['name']), 100, '');
+                }
+                if (array_key_exists('icon', $meta)) {
+                    $updates['icon'] = trim((string) $meta['icon']) ?: null;
+                }
+                if (array_key_exists('sort_order', $meta) && $meta['sort_order'] !== null && $meta['sort_order'] !== '') {
+                    $updates['sort_order'] = max(0, (int) $meta['sort_order']);
+                }
+                if (array_key_exists('show_on_home', $meta)) {
+                    $updates['show_on_home'] = filter_var($meta['show_on_home'], FILTER_VALIDATE_BOOLEAN);
+                }
+                if (array_key_exists('is_active', $meta)) {
+                    $updates['is_active'] = filter_var($meta['is_active'], FILTER_VALIDATE_BOOLEAN);
+                }
+                if (!empty($updates)) {
+                    $cat->update($updates);
                 }
             }
         }
 
-        if ($request->has('remove_category_image')) {
-            foreach ((array)$request->input('remove_category_image') as $catId => $val) {
+        // Category Custom Image Removal / External URL / File Upload
+        $removeCategoryImages = (array) $request->input('remove_category_image', []);
+        foreach ($removeCategoryImages as $catId => $val) {
+            if (!$val) {
+                continue;
+            }
+            $cat = Category::find($catId);
+            if ($cat && $cat->image) {
+                if (!str_starts_with($cat->image, 'http')) {
+                    k71_delete_public_storage($cat->image);
+                }
+                $cat->update(['image' => null]);
+            }
+        }
+
+        $uploadedCategoryIds = [];
+        if ($request->hasFile('category_images')) {
+            foreach ($request->file('category_images') as $catId => $file) {
                 $cat = Category::find($catId);
-                if ($cat && $cat->image) {
-                    Storage::disk('public')->delete($cat->image);
-                    $cat->update(['image' => null]);
+                if ($cat && $file && $file->isValid()) {
+                    if ($cat->image && !str_starts_with($cat->image, 'http')) {
+                        k71_delete_public_storage($cat->image);
+                    }
+                    $path = $file->store('categories', 'public');
+                    k71_sync_public_storage($path);
+                    $cat->update(['image' => $path]);
+                    $uploadedCategoryIds[] = (int) $catId;
+                }
+            }
+        }
+
+        $categoryImageUrls = $request->input('category_image_urls', []);
+        if (is_array($categoryImageUrls)) {
+            foreach ($categoryImageUrls as $catId => $rawUrl) {
+                if (in_array((int) $catId, $uploadedCategoryIds, true) || !empty($removeCategoryImages[$catId])) {
+                    continue;
+                }
+                $url = trim((string) $rawUrl);
+                if ($url === '') {
+                    continue;
+                }
+                $cat = Category::find($catId);
+                if ($cat && $cat->image !== $url) {
+                    if ($cat->image && !str_starts_with($cat->image, 'http')) {
+                        k71_delete_public_storage($cat->image);
+                    }
+                    $cat->update(['image' => Str::limit($url, 500, '')]);
                 }
             }
         }
 
         // Save SEO Settings
         $seoFields = [
-            'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords', 
+            'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords',
             'seo_canonical_url', 'seo_robots', 'seo_og_title', 'seo_og_description',
-            'seo_footer_title', 'seo_footer_content'
+            'seo_footer_title', 'seo_footer_content',
         ];
         foreach ($seoFields as $field) {
-            Setting::set($field, $request->input($field), 'seo', 'string');
+            if ($request->has($field)) {
+                Setting::set($field, $request->input($field), 'seo', 'string');
+            }
         }
-        Setting::set('seo_schema_enabled', $request->has('seo_schema_enabled'), 'seo', 'boolean');
+        if ($request->has('seo_schema_enabled')) {
+            Setting::set('seo_schema_enabled', $request->boolean('seo_schema_enabled'), 'seo', 'boolean');
+        }
 
         // Save Homepage Settings
         $stringHomepageFields = [
@@ -266,17 +394,21 @@ class HomepageController extends Controller
             'scroll_seq_beat3_kicker', 'scroll_seq_beat3_title', 'scroll_seq_beat3_desc',
         ];
         foreach ($stringHomepageFields as $field) {
-            Setting::set($field, $request->input($field), 'homepage', 'string');
+            if ($request->has($field)) {
+                Setting::set($field, $request->input($field), 'homepage', 'string');
+            }
         }
 
         // Save Homepage Booleans
         $boolHomepageFields = [
-            'announcement_enabled', 'show_trending_products', 'show_services_showcase',
+            'announcement_enabled', 'show_hero_carousel', 'show_trending_products', 'show_services_showcase',
             'show_food_showcase', 'show_categories', 'show_value_pillars', 'show_seller_banner',
             'scroll_seq_enabled',
         ];
         foreach ($boolHomepageFields as $field) {
-            Setting::set($field, $request->has($field), 'homepage', 'boolean');
+            if ($request->has($field)) {
+                Setting::set($field, $request->boolean($field), 'homepage', 'boolean');
+            }
         }
 
         // Save Services Page Settings
@@ -286,10 +418,12 @@ class HomepageController extends Controller
             'services_trending_title', 'services_trending_subtitle',
             'services_seller_cta_title', 'services_seller_cta_subtitle',
             'services_seller_cta_btn_text', 'services_seller_cta_btn_link',
-            'services_hero_image_url'
+            'services_hero_image_url',
         ];
         foreach ($servicesFields as $field) {
-            Setting::set($field, $request->input($field), 'services_page', 'string');
+            if ($request->has($field)) {
+                Setting::set($field, $request->input($field), 'services_page', 'string');
+            }
         }
 
         // Save Food Page Settings
@@ -299,10 +433,12 @@ class HomepageController extends Controller
             'food_trending_title', 'food_restaurants_title', 'food_restaurants_subtitle',
             'food_seller_cta_title', 'food_seller_cta_subtitle',
             'food_seller_cta_btn_text', 'food_seller_cta_btn_link',
-            'food_hero_image_url'
+            'food_hero_image_url',
         ];
         foreach ($foodFields as $field) {
-            Setting::set($field, $request->input($field), 'food_page', 'string');
+            if ($request->has($field)) {
+                Setting::set($field, $request->input($field), 'food_page', 'string');
+            }
         }
 
         // Save Used Page Settings
@@ -312,13 +448,95 @@ class HomepageController extends Controller
             'used_trending_title', 'used_trending_subtitle',
             'used_seller_cta_title', 'used_seller_cta_subtitle',
             'used_seller_cta_btn_text', 'used_seller_cta_btn_link',
-            'used_hero_image_url'
+            'used_hero_image_url',
         ];
         foreach ($usedFields as $field) {
-            Setting::set($field, $request->input($field), 'used_page', 'string');
+            if ($request->has($field)) {
+                Setting::set($field, $request->input($field), 'used_page', 'string');
+            }
         }
 
-        return back()->with('success', 'Page Studio settings successfully published live across all verticals!');
+        $targetTab = $request->input('active_tab', 'homepage');
+
+        return redirect()
+            ->route('admin.homepage', ['tab' => $targetTab])
+            ->with('success', 'Page Studio settings successfully published live across all verticals!');
+    }
+
+    /**
+     * Create a new parent category directly from Admin Homepage Studio.
+     */
+    public function storeCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,food,services,enquiry,used'],
+            'icon' => ['nullable', 'string', 'max:20'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
+            'show_on_home' => ['nullable', 'boolean'],
+            'is_active' => ['nullable', 'boolean'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:5120'],
+            'image_url' => ['nullable', 'string', 'max:500'],
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $name = trim($validated['name']);
+        $baseSlug = Str::slug($name) ?: 'category';
+        $slug = $baseSlug;
+        $counter = 1;
+        while (Category::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter++;
+        }
+
+        $vertical = $validated['vertical'] ?? 'marketplace';
+        $imagePath = null;
+
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $imagePath = $request->file('image')->store('categories', 'public');
+            k71_sync_public_storage($imagePath);
+        } elseif (!empty($validated['image_url'])) {
+            $imagePath = Str::limit(trim($validated['image_url']), 500, '');
+        }
+
+        Category::create([
+            'parent_id' => null,
+            'vertical' => $vertical,
+            'vertical_type' => $vertical === 'marketplace' ? 'retail' : $vertical,
+            'name' => $name,
+            'slug' => $slug,
+            'description' => trim((string) ($validated['description'] ?? '')) ?: null,
+            'image' => $imagePath,
+            'icon' => trim((string) ($validated['icon'] ?? '')) ?: null,
+            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+            'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
+            'show_on_home' => $request->has('show_on_home') ? $request->boolean('show_on_home') : true,
+        ]);
+
+        return redirect()
+            ->route('admin.homepage', ['tab' => 'categories'])
+            ->with('success', "Category '{$name}' added cleanly and ready for the main homepage!");
+    }
+
+    /**
+     * Safely remove an unused category created in Admin Studio.
+     */
+    public function deleteCategory(Category $category)
+    {
+        if ($category->products()->exists() || $category->children()->exists()) {
+            return redirect()
+                ->route('admin.homepage', ['tab' => 'categories'])
+                ->withErrors(['category_delete' => "Category '{$category->name}' has linked products or subcategories. Untick 'Show on Homepage' or deactivate it instead."]);
+        }
+
+        $name = $category->name;
+        if ($category->image && !str_starts_with($category->image, 'http')) {
+            k71_delete_public_storage($category->image);
+        }
+        $category->delete();
+
+        return redirect()
+            ->route('admin.homepage', ['tab' => 'categories'])
+            ->with('success', "Unused category '{$name}' deleted cleanly.");
     }
 
     /**

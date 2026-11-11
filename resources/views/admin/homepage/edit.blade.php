@@ -7,50 +7,69 @@
         $seoData = $seo ?? [];
         $seq = $scrollSequence ?? \App\Services\ScrollSequenceService::resolveSequence($hp['scroll_seq_folder'] ?? null);
         $seqEnabled = array_key_exists('scroll_seq_enabled', $hp) ? (bool) $hp['scroll_seq_enabled'] : true;
+        $homeCategoriesCount = isset($categories) ? $categories->where('show_on_home', true)->count() : 0;
+        $totalCategoriesCount = isset($categories) ? $categories->count() : 0;
     @endphp
 
     <div x-data="{
-        activeTab: 'homepage', // 'homepage', 'scroll_sequence', 'services', 'food', 'used', 'seo'
-        
+        activeTab: @js($activeTab ?? 'homepage'), // 'homepage', 'categories', 'scroll_sequence', 'services', 'food', 'used', 'seo'
+        catSearch: '',
+        catFilter: 'all',
+        catMatches(el) {
+            const q = (this.catSearch || '').trim().toLowerCase();
+            const text = (el.dataset.search || '');
+            const onHome = el.dataset.home === '1';
+            const vert = (el.dataset.vertical || 'marketplace');
+            if (q && !text.includes(q)) return false;
+            if (this.catFilter === 'home' && !onHome) return false;
+            if (this.catFilter === 'hidden' && onHome) return false;
+            if (this.catFilter === 'marketplace' && vert !== 'marketplace') return false;
+            return true;
+        },
+
         // Homepage Live State
-        hp_hero_badge: '{{ addslashes($hp['hero_badge'] ?? 'K71 UNIFIED MARKETPLACE • Verified Stores & Secure Escrow') }}',
-        hp_title_line1: '{{ addslashes($hp['hero_title_line1'] ?? 'Discover Top Stores &') }}',
-        hp_title_line2: '{{ addslashes($hp['hero_title_line2'] ?? 'Trending Products') }}',
-        hp_description: '{{ addslashes($hp['hero_description'] ?? 'Shop directly from authorized distributor storefronts, boutique ateliers, and certified suppliers nationwide.') }}',
-        hp_cta_text: '{{ addslashes($hp['hero_cta_primary_text'] ?? 'Search') }}',
-        hp_search_placeholder: '{{ addslashes($hp['search_placeholder'] ?? 'Search products, brands, model numbers, stores...') }}',
-        hp_arrivals_title: '{{ addslashes($hp['arrivals_section_title'] ?? 'Trending Products & Deals') }}',
-        hp_services_title: '{{ addslashes($hp['services_section_title'] ?? 'Top Freelance & Professional Services') }}',
-        hp_services_sub: '{{ addslashes($hp['services_section_subtitle'] ?? 'Hire vetted specialists for tech, video, marketing & home craftsmanship') }}',
-        hp_cat_title: '{{ addslashes($hp['cat_section_title'] ?? 'Structured Categories') }}',
-        hp_cat_sub: '{{ addslashes($hp['cat_section_subtitle'] ?? 'Explore retail and trade verticals tailored for specific sectors.') }}',
-        hp_show_trending: {{ ($hp['show_trending_products'] ?? true) ? 'true' : 'false' }},
-        hp_show_services: {{ ($hp['show_services_showcase'] ?? true) ? 'true' : 'false' }},
-        hp_show_categories: {{ ($hp['show_categories'] ?? true) ? 'true' : 'false' }},
-        hp_show_pillars: {{ ($hp['show_value_pillars'] ?? true) ? 'true' : 'false' }},
-        hp_show_seller: {{ ($hp['show_seller_banner'] ?? true) ? 'true' : 'false' }},
+        hp_hero_badge: @js($hp['hero_badge'] ?? 'K71 UNIFIED MARKETPLACE • Verified Stores & Secure Escrow'),
+        hp_title_line1: @js($hp['hero_title_line1'] ?? 'Discover Top Stores &'),
+        hp_title_line2: @js($hp['hero_title_line2'] ?? 'Trending Products'),
+        hp_description: @js($hp['hero_description'] ?? 'Shop directly from authorized distributor storefronts, boutique ateliers, and certified suppliers nationwide.'),
+        hp_cta_text: @js($hp['hero_cta_primary_text'] ?? 'Search'),
+        hp_search_placeholder: @js($hp['search_placeholder'] ?? 'Search products, brands, model numbers, stores...'),
+        hp_arrivals_title: @js(trim((string) ($hp['arrivals_section_title'] ?? '')) ?: 'Latest Products'),
+        hp_services_title: @js(trim((string) ($hp['services_section_title'] ?? '')) ?: 'Verified Services'),
+        hp_services_sub: @js(trim((string) ($hp['services_section_subtitle'] ?? '')) ?: 'Marble restoration, web engineering, photography & vetted home specialists.'),
+        hp_food_title: @js(trim((string) ($hp['food_section_title'] ?? '')) ?: 'Artisan Kitchens'),
+        hp_food_sub: @js(trim((string) ($hp['food_section_subtitle'] ?? '')) ?: 'Hygiene-certified cloud kitchens with fresh 30–45 min doorstep dispatch.'),
+        hp_cat_title: @js($hp['cat_section_title'] ?? 'Structured Categories'),
+        hp_cat_sub: @js($hp['cat_section_subtitle'] ?? 'Explore retail and trade verticals tailored for specific sectors.'),
+        hp_show_hero_carousel: @js(array_key_exists('show_hero_carousel', $hp) ? (bool) $hp['show_hero_carousel'] : true),
+        hp_show_trending: @js(array_key_exists('show_trending_products', $hp) ? (bool) $hp['show_trending_products'] : true),
+        hp_show_food: @js(array_key_exists('show_food_showcase', $hp) ? (bool) $hp['show_food_showcase'] : true),
+        hp_show_services: @js(array_key_exists('show_services_showcase', $hp) ? (bool) $hp['show_services_showcase'] : true),
+        hp_show_categories: @js(array_key_exists('show_categories', $hp) ? (bool) $hp['show_categories'] : true),
+        hp_show_pillars: @js(array_key_exists('show_value_pillars', $hp) ? (bool) $hp['show_value_pillars'] : true),
+        hp_show_seller: @js(array_key_exists('show_seller_banner', $hp) ? (bool) $hp['show_seller_banner'] : true),
 
         // Services Hub Live State
-        srv_hero_badge: '{{ addslashes($sp['services_hero_badge'] ?? 'K71 Verified Freelancers & Services') }}',
-        srv_hero_title: '{{ addslashes($sp['services_hero_title'] ?? 'Find the Perfect Freelance Services') }}',
-        srv_hero_sub: '{{ addslashes($sp['services_hero_subtitle'] ?? 'Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.') }}',
-        srv_search_placeholder: '{{ addslashes($sp['services_search_placeholder'] ?? 'What service are you looking for today? (e.g. Logo Design, Website)') }}',
-        srv_cat_title: '{{ addslashes($sp['services_cat_title'] ?? 'Explore Services by Category') }}',
-        srv_cat_sub: '{{ addslashes($sp['services_cat_subtitle'] ?? 'Select a category to view verified specialists') }}',
-        srv_trending_title: '{{ addslashes($sp['services_trending_title'] ?? 'Trending Services & Packages') }}',
-        srv_trending_sub: '{{ addslashes($sp['services_trending_subtitle'] ?? 'Vetted freelancers ready to start on your project today') }}',
-        srv_seller_title: '{{ addslashes($sp['services_seller_cta_title'] ?? 'Are You a Skilled Freelancer or Professional?') }}',
-        srv_seller_sub: '{{ addslashes($sp['services_seller_cta_subtitle'] ?? 'Join K71 Services and start earning. Create your gigs, set your packages, and receive guaranteed escrow payouts directly to your bank account.') }}',
+        srv_hero_badge: @js($sp['services_hero_badge'] ?? 'K71 Verified Freelancers & Services'),
+        srv_hero_title: @js($sp['services_hero_title'] ?? 'Find the Perfect Freelance Services'),
+        srv_hero_sub: @js($sp['services_hero_subtitle'] ?? 'Hire proven specialists with upfront package pricing, milestone safety, and fast delivery.'),
+        srv_search_placeholder: @js($sp['services_search_placeholder'] ?? 'What service are you looking for today? (e.g. Logo Design, Website)'),
+        srv_cat_title: @js($sp['services_cat_title'] ?? 'Explore Services by Category'),
+        srv_cat_sub: @js($sp['services_cat_subtitle'] ?? 'Select a category to view verified specialists'),
+        srv_trending_title: @js($sp['services_trending_title'] ?? 'Trending Services & Packages'),
+        srv_trending_sub: @js($sp['services_trending_subtitle'] ?? 'Vetted freelancers ready to start on your project today'),
+        srv_seller_title: @js($sp['services_seller_cta_title'] ?? 'Are You a Skilled Freelancer or Professional?'),
+        srv_seller_sub: @js($sp['services_seller_cta_subtitle'] ?? 'Join K71 Services and start earning. Create your gigs, set your packages, and receive guaranteed escrow payouts directly to your bank account.'),
 
         // Food Hub Live State
-        food_hero_badge: '{{ addslashes($fp['food_hero_badge'] ?? '25-30 MINUTE EXPRESS DOORSTEP DISPATCH') }}',
-        food_hero_title: '{{ addslashes($fp['food_hero_title'] ?? 'Crave it? Get it hot & fresh from top cloud kitchens.') }}',
-        food_hero_sub: '{{ addslashes($fp['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, fresh burgers, and pure veg royal thalis.') }}',
+        food_hero_badge: @js($fp['food_hero_badge'] ?? '25-30 MINUTE EXPRESS DOORSTEP DISPATCH'),
+        food_hero_title: @js($fp['food_hero_title'] ?? 'Crave it? Get it hot & fresh from top cloud kitchens.'),
+        food_hero_sub: @js($fp['food_hero_subtitle'] ?? 'Explore hand-crafted dum biryanis, wood-fired artisan pizzas, fresh burgers, and pure veg royal thalis.'),
 
         // Used Market Live State
-        used_hero_badge: '{{ addslashes($up['used_hero_badge'] ?? 'K71 VERIFIED PRE-LOVED & RE-COMMERCE') }}',
-        used_hero_title: '{{ addslashes($up['used_hero_title'] ?? 'Certified Second-Hand Goods & Direct Classifieds') }}',
-        used_hero_sub: '{{ addslashes($up['used_hero_subtitle'] ?? 'Buy and sell authenticated pre-owned smartphones, laptops, electronics, and vehicles safely.') }}',
+        used_hero_badge: @js($up['used_hero_badge'] ?? 'K71 VERIFIED PRE-LOVED & RE-COMMERCE'),
+        used_hero_title: @js($up['used_hero_title'] ?? 'Certified Second-Hand Goods & Direct Classifieds'),
+        used_hero_sub: @js($up['used_hero_subtitle'] ?? 'Buy and sell authenticated pre-owned smartphones, laptops, electronics, and vehicles safely.'),
     }" class="space-y-6">
 
         <!-- Top Header & Primary Actions -->
@@ -66,7 +85,7 @@
                     Storefront &amp; Merchandising Studio
                 </h2>
                 <p class="text-xs sm:text-sm text-zinc-500 mt-0.5">
-                    Configure homepage hero copy, vertical spotlight titles, search placeholders, and global SEO metadata.
+                    Toggle homepage sections, manage main homepage categories &amp; images, and configure vertical headlines.
                 </p>
             </div>
 
@@ -96,12 +115,30 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="p-4 bg-rose-50 text-rose-800 rounded-xl border border-rose-200 shadow-xs space-y-1">
+                <div class="text-xs sm:text-sm font-bold">Please fix the following issue(s):</div>
+                <ul class="list-disc list-inside text-xs space-y-0.5">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <!-- Minimal Monochrome Tabs Bar -->
         <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-zinc-200 pb-px">
             <button type="button" @click="activeTab = 'homepage'"
                     :class="activeTab === 'homepage' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
                     class="px-3.5 py-2 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer">
                 Homepage &amp; Retail
+            </button>
+            <button type="button" @click="activeTab = 'categories'"
+                    :class="activeTab === 'categories' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
+                    class="px-3.5 py-2 rounded-lg text-xs font-semibold transition shrink-0 cursor-pointer flex items-center gap-1.5">
+                <span>Homepage Categories</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-mono"
+                      :class="activeTab === 'categories' ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-700'">{{ $homeCategoriesCount }}/{{ $totalCategoriesCount }}</span>
             </button>
             <button type="button" @click="activeTab = 'scroll_sequence'"
                     :class="activeTab === 'scroll_sequence' ? 'bg-zinc-950 text-white shadow-xs font-bold' : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200/80'"
@@ -133,13 +170,118 @@
             </button>
         </div>
 
+        <!-- Standalone Form Above Master Form: Add New Category to Main Homepage (Zero Nested Forms) -->
+        <div x-show="activeTab === 'categories'" class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4" style="display: none;">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-zinc-100">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded bg-zinc-950 text-white font-bold text-[10px] uppercase tracking-wider">New Category</span>
+                        <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">Add Category to Main Homepage</h3>
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-0.5">Create a new storefront category with custom image, emoji icon, and immediate homepage visibility.</p>
+                </div>
+            </div>
+
+            <form action="{{ route('admin.homepage.categories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">
+                @csrf
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="sm:col-span-2">
+                        <label class="block font-semibold text-zinc-800 mb-1">Category Name <span class="text-rose-600">*</span></label>
+                        <input type="text" name="name" required maxlength="100" placeholder="e.g. Marble Slabs, Wedding Jewellery"
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 font-semibold">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-800 mb-1">Vertical</label>
+                        <select name="vertical" class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium">
+                            <option value="marketplace" selected>Marketplace (Retail)</option>
+                            <option value="food">Food &amp; Dining</option>
+                            <option value="services">Services Hub</option>
+                            <option value="enquiry">B2B / Wholesale</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Icon / Emoji</label>
+                            <input type="text" name="icon" maxlength="20" placeholder="🏺"
+                                   class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-medium text-center">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-zinc-800 mb-1">Sort Order</label>
+                            <input type="number" name="sort_order" min="0" max="9999" value="0"
+                                   class="w-full px-3 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-zinc-800 mb-1">Category Thumbnail Image (Upload)</label>
+                        <input type="file" name="image" accept="image/*"
+                               class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-zinc-800 mb-1">Or Image URL</label>
+                        <input type="text" name="image_url" maxlength="500" placeholder="https://..."
+                               class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <label class="inline-flex items-center gap-2 font-semibold text-zinc-900 cursor-pointer">
+                            <input type="hidden" name="show_on_home" value="0">
+                            <input type="checkbox" name="show_on_home" value="1" checked class="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950">
+                            <span>Show on Main Homepage Ribbon</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 font-semibold text-zinc-900 cursor-pointer">
+                            <input type="hidden" name="is_active" value="0">
+                            <input type="checkbox" name="is_active" value="1" checked class="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950">
+                            <span>Active in Catalog</span>
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                            class="px-5 py-2.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-white font-semibold text-xs transition shadow-xs cursor-pointer">
+                        + Add Category to Homepage
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Master Form -->
         <form id="page-studio-form" action="{{ route('admin.homepage.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
+            <input type="hidden" name="active_tab" :value="activeTab">
 
             <!-- TAB 1: HOMEPAGE CONTROLS -->
             <div x-show="activeTab === 'homepage'" class="space-y-6">
+
+                <!-- Quick Links Banner for Carousel & Homepage Categories -->
+                <div class="bg-zinc-950 text-white rounded-2xl p-5 border border-zinc-800 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <span class="text-[10px] font-mono uppercase tracking-[0.18em] text-fuchsia-300 font-bold block">Quick Storefront Controls</span>
+                        <h3 class="text-sm sm:text-base font-bold text-white">3-Slide Carousel Visibility &amp; Main Homepage Categories</h3>
+                        <p class="text-xs text-zinc-400">
+                            Carousel is currently <strong class="text-white" x-text="hp_show_hero_carousel ? 'VISIBLE' : 'HIDDEN'"></strong> •
+                            <strong class="text-white">{{ $homeCategoriesCount }}</strong> categories showing on main homepage ribbon.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button type="button"
+                                @click="hp_show_hero_carousel = !hp_show_hero_carousel"
+                                :class="hp_show_hero_carousel ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40' : 'bg-amber-500/20 text-amber-200 border-amber-400/40'"
+                                class="px-4 py-2 rounded-lg border text-xs font-semibold transition cursor-pointer flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full" :class="hp_show_hero_carousel ? 'bg-emerald-400' : 'bg-amber-400'"></span>
+                            <span x-text="hp_show_hero_carousel ? '3-Slide Carousel: ON (Click to Hide)' : '3-Slide Carousel: OFF (Click to Show)'"></span>
+                        </button>
+                        <button type="button"
+                                @click="activeTab = 'categories'"
+                                class="px-4 py-2 rounded-lg bg-white text-zinc-950 hover:bg-zinc-100 text-xs font-bold transition cursor-pointer">
+                            Edit Category Images &amp; Add Categories &rarr;
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- Hero Header Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-4">
@@ -196,34 +338,54 @@
 
                 <!-- Front Banner 3-Slide Carousel Studio Card -->
                 <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-6" x-data="{ activeSlideTab: 1 }">
-                    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-2">
+                    <div class="flex items-center justify-between pb-3 border-b border-zinc-100 flex-wrap gap-3">
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                                 <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold text-[10px] uppercase tracking-wider">3-Slide Carousel</span>
                                 <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
                                     Homepage Front Banner Carousel
                                 </h3>
+                                <span x-show="!hp_show_hero_carousel" x-cloak class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                                    Hidden on Homepage
+                                </span>
                             </div>
-                            <p class="text-xs text-zinc-500 mt-0.5">Customize images, titles, badges, and CTA buttons for all 3 rotating slides.</p>
+                            <p class="text-xs text-zinc-500 mt-0.5">Customize images, titles, badges, and CTA buttons for all 3 rotating slides, or toggle visibility below.</p>
                         </div>
 
-                        <!-- Slide Switcher Pills -->
-                        <div class="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl">
-                            <button type="button" @click="activeSlideTab = 1" 
-                                    :class="activeSlideTab === 1 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
-                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
-                                Slide 1 (Bazaar)
+                        <div class="flex items-center flex-wrap gap-3">
+                            <!-- Carousel Visibility Toggle Switch -->
+                            <button type="button"
+                                    role="switch"
+                                    :aria-checked="hp_show_hero_carousel ? 'true' : 'false'"
+                                    @click="hp_show_hero_carousel = !hp_show_hero_carousel"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer"
+                                    :class="hp_show_hero_carousel ? 'bg-zinc-950 text-white border-zinc-950' : 'bg-zinc-100 text-zinc-700 border-zinc-300'">
+                                <span class="w-7 h-4 rounded-full relative transition-colors flex items-center px-0.5"
+                                      :class="hp_show_hero_carousel ? 'bg-emerald-400' : 'bg-zinc-400'">
+                                    <span class="w-3 h-3 rounded-full bg-white shadow transition-transform"
+                                          :class="hp_show_hero_carousel ? 'translate-x-3' : 'translate-x-0'"></span>
+                                </span>
+                                <span x-text="hp_show_hero_carousel ? 'Shown on Homepage' : 'Hidden on Homepage'"></span>
                             </button>
-                            <button type="button" @click="activeSlideTab = 2" 
-                                    :class="activeSlideTab === 2 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
-                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
-                                Slide 2 (Dining)
-                            </button>
-                            <button type="button" @click="activeSlideTab = 3" 
-                                    :class="activeSlideTab === 3 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
-                                    class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
-                                Slide 3 (Craft & Pro)
-                            </button>
+
+                            <!-- Slide Switcher Pills -->
+                            <div class="flex items-center gap-1.5 bg-zinc-100 p-1 rounded-xl">
+                                <button type="button" @click="activeSlideTab = 1" 
+                                        :class="activeSlideTab === 1 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                        class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                    Slide 1 (Bazaar)
+                                </button>
+                                <button type="button" @click="activeSlideTab = 2" 
+                                        :class="activeSlideTab === 2 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                        class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                    Slide 2 (Dining)
+                                </button>
+                                <button type="button" @click="activeSlideTab = 3" 
+                                        :class="activeSlideTab === 3 ? 'bg-white text-zinc-950 shadow-xs font-bold' : 'text-zinc-600 hover:text-zinc-950 font-medium'"
+                                        class="px-3 py-1 rounded-lg text-xs transition cursor-pointer">
+                                    Slide 3 (Craft &amp; Pro)
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -258,7 +420,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-zinc-500 mb-0.5">Button Link / URL</label>
-                                    <input type="text" name="slide1_btn1_link" value="{{ $hp['slide1_btn1_link'] ?? '#product-showcase' }}"
+                                    <input type="text" name="slide1_btn1_link" value="{{ $hp['slide1_btn1_link'] ?? '#latest-products' }}"
                                            class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
                                 </div>
                             </div>
@@ -284,9 +446,13 @@
                                 <input type="file" name="slide1_image" accept="image/*"
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($hp['slide1_image']))
-                                    <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $hp['slide1_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                    <div class="mt-2 flex items-center gap-3 flex-wrap">
+                                        <img src="{{ format_image_url($hp['slide1_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-rose-700 font-semibold cursor-pointer">
+                                            <input type="checkbox" name="remove_slide1_image" value="1" class="rounded border-zinc-300 text-rose-600">
+                                            <span>Remove image</span>
+                                        </label>
                                     </div>
                                 @endif
                             </div>
@@ -355,9 +521,13 @@
                                 <input type="file" name="slide2_image" accept="image/*"
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($hp['slide2_image']))
-                                    <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $hp['slide2_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                    <div class="mt-2 flex items-center gap-3 flex-wrap">
+                                        <img src="{{ format_image_url($hp['slide2_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-rose-700 font-semibold cursor-pointer">
+                                            <input type="checkbox" name="remove_slide2_image" value="1" class="rounded border-zinc-300 text-rose-600">
+                                            <span>Remove image</span>
+                                        </label>
                                     </div>
                                 @endif
                             </div>
@@ -426,9 +596,13 @@
                                 <input type="file" name="slide3_image" accept="image/*"
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($hp['slide3_image']))
-                                    <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $hp['slide3_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                    <div class="mt-2 flex items-center gap-3 flex-wrap">
+                                        <img src="{{ format_image_url($hp['slide3_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom uploaded image active</span>
+                                        <label class="inline-flex items-center gap-1 text-[11px] text-rose-700 font-semibold cursor-pointer">
+                                            <input type="checkbox" name="remove_slide3_image" value="1" class="rounded border-zinc-300 text-rose-600">
+                                            <span>Remove image</span>
+                                        </label>
                                     </div>
                                 @endif
                             </div>
@@ -452,19 +626,32 @@
 
                     <div class="space-y-4 text-xs">
                         <div>
-                            <label class="block font-semibold text-zinc-800 mb-1">Trending Products Title</label>
+                            <label class="block font-semibold text-zinc-800 mb-1">Latest Products Title (Shown Right After Scroll Stage)</label>
                             <input type="text" name="arrivals_section_title" x-model="hp_arrivals_title"
                                    class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-bold">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block font-semibold text-zinc-800 mb-1">Freelance Showcase Title</label>
+                                <label class="block font-semibold text-zinc-800 mb-1">Food Showcase Title</label>
+                                <input type="text" name="food_section_title" x-model="hp_food_title"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-bold">
+                            </div>
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Food Showcase Subtitle</label>
+                                <input type="text" name="food_section_subtitle" x-model="hp_food_sub"
+                                       class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-medium">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block font-semibold text-zinc-800 mb-1">Services Showcase Title</label>
                                 <input type="text" name="services_section_title" x-model="hp_services_title"
                                        class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-bold">
                             </div>
                             <div>
-                                <label class="block font-semibold text-zinc-800 mb-1">Freelance Showcase Subtitle</label>
+                                <label class="block font-semibold text-zinc-800 mb-1">Services Showcase Subtitle</label>
                                 <input type="text" name="services_section_subtitle" x-model="hp_services_sub"
                                        class="w-full px-3.5 py-2.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 focus:border-zinc-950 font-medium">
                             </div>
@@ -495,33 +682,194 @@
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
-                            <span class="font-semibold text-zinc-900">Trending Products &amp; Deals</span>
-                            <input type="checkbox" name="show_trending_products" value="1" x-model="hp_show_trending" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
+                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/90 cursor-pointer hover:bg-indigo-100/70 transition sm:col-span-2">
+                            <div>
+                                <span class="font-bold text-zinc-950 block">3-Slide Hero Banner Carousel</span>
+                                <span class="text-[11px] text-zinc-600">Uncheck to hide the 3-slide carousel from the top of the main homepage</span>
+                            </div>
+                            <input type="hidden" name="show_hero_carousel" value="0">
+                            <input type="checkbox" name="show_hero_carousel" value="1" x-model="hp_show_hero_carousel" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
                         </label>
 
                         <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
-                            <span class="font-semibold text-zinc-900">Services &amp; Gigs Showcase</span>
-                            <input type="checkbox" name="show_services_showcase" value="1" x-model="hp_show_services" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
-                        </label>
-
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
-                            <span class="font-semibold text-zinc-900">Structured Categories</span>
+                            <span class="font-semibold text-zinc-900">Top Category Ribbon</span>
+                            <input type="hidden" name="show_categories" value="0">
                             <input type="checkbox" name="show_categories" value="1" x-model="hp_show_categories" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
                         </label>
 
                         <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
+                            <span class="font-semibold text-zinc-900">Latest Products Showcase</span>
+                            <input type="hidden" name="show_trending_products" value="0">
+                            <input type="checkbox" name="show_trending_products" value="1" x-model="hp_show_trending" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
+                            <span class="font-semibold text-zinc-900">Food &amp; Cloud Kitchens Showcase</span>
+                            <input type="hidden" name="show_food_showcase" value="0">
+                            <input type="checkbox" name="show_food_showcase" value="1" x-model="hp_show_food" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
+                            <span class="font-semibold text-zinc-900">Services &amp; Gigs Showcase</span>
+                            <input type="hidden" name="show_services_showcase" value="0">
+                            <input type="checkbox" name="show_services_showcase" value="1" x-model="hp_show_services" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
+                        </label>
+
+                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
                             <span class="font-semibold text-zinc-900">Value Assurance Pillars</span>
+                            <input type="hidden" name="show_value_pillars" value="0">
                             <input type="checkbox" name="show_value_pillars" value="1" x-model="hp_show_pillars" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
                         </label>
 
-                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition sm:col-span-2">
+                        <label class="flex items-center justify-between p-3.5 rounded-xl bg-zinc-50 border border-zinc-200/80 cursor-pointer hover:bg-zinc-100 transition">
                             <span class="font-semibold text-zinc-900">Seller Onboarding Banner</span>
+                            <input type="hidden" name="show_seller_banner" value="0">
                             <input type="checkbox" name="show_seller_banner" value="1" x-model="hp_show_seller" class="w-4 h-4 text-zinc-950 rounded border-zinc-300 focus:ring-zinc-950">
                         </label>
                     </div>
                 </div>
 
+            </div>
+
+            <!-- TAB 1B: HOMEPAGE CATEGORIES (EDIT IMAGES, ORDER, HOMEPAGE RIBBON) -->
+            <div x-show="activeTab === 'categories'" class="space-y-6" style="display: none;">
+                <div class="bg-white rounded-2xl p-6 border border-zinc-200/80 shadow-xs space-y-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-100">
+                        <div>
+                            <h3 class="text-sm font-bold text-zinc-950 uppercase tracking-wider">
+                                Main Homepage Categories &amp; Images
+                            </h3>
+                            <p class="text-xs text-zinc-500 mt-0.5">
+                                Upload custom images, paste external image URLs, reorder tiles, or toggle which categories appear on the main homepage top ribbon.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <input type="search" x-model="catSearch" placeholder="Search categories..."
+                                   class="px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white focus:ring-2 focus:ring-zinc-950 w-48 sm:w-56">
+                            <div class="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg">
+                                <button type="button" @click="catFilter = 'all'"
+                                        :class="catFilter === 'all' ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-zinc-600'"
+                                        class="px-2.5 py-1 rounded text-[11px] cursor-pointer">All</button>
+                                <button type="button" @click="catFilter = 'home'"
+                                        :class="catFilter === 'home' ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-zinc-600'"
+                                        class="px-2.5 py-1 rounded text-[11px] cursor-pointer">On Home</button>
+                                <button type="button" @click="catFilter = 'hidden'"
+                                        :class="catFilter === 'hidden' ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-zinc-600'"
+                                        class="px-2.5 py-1 rounded text-[11px] cursor-pointer">Off Home</button>
+                                <button type="button" @click="catFilter = 'marketplace'"
+                                        :class="catFilter === 'marketplace' ? 'bg-white text-zinc-950 font-bold shadow-xs' : 'text-zinc-600'"
+                                        class="px-2.5 py-1 rounded text-[11px] cursor-pointer">Retail</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if(isset($categories) && $categories->isNotEmpty())
+                        <div class="divide-y divide-zinc-200/80 border border-zinc-200/80 rounded-xl overflow-hidden">
+                            @foreach($categories as $cat)
+                                @php
+                                    $catVert = $cat->vertical ?: 'marketplace';
+                                    $canDeleteCat = ($cat->products_count ?? 0) === 0 && ($cat->children_count ?? 0) === 0;
+                                @endphp
+                                <div x-show="catMatches($el)"
+                                     data-search="{{ strtolower($cat->name . ' ' . $cat->slug) }}"
+                                     data-home="{{ $cat->show_on_home ? '1' : '0' }}"
+                                     data-vertical="{{ $catVert }}"
+                                     class="p-4 bg-white hover:bg-zinc-50/70 transition space-y-3 text-xs">
+                                    <div class="flex flex-col lg:flex-row lg:items-center gap-4">
+                                        <!-- Preview Thumbnail -->
+                                        <div class="flex items-center gap-3 shrink-0">
+                                            <div class="w-16 h-16 rounded-xl bg-zinc-950 text-white border border-zinc-200 flex items-center justify-center overflow-hidden shrink-0">
+                                                @if(!empty($cat->image))
+                                                    <img src="{{ format_image_url($cat->image) }}" alt="{{ $cat->name }}" class="w-full h-full object-cover">
+                                                @elseif(!empty($cat->icon))
+                                                    <span class="text-2xl leading-none">{{ $cat->icon }}</span>
+                                                @else
+                                                    <span class="text-sm font-bold text-fuchsia-200 uppercase">{{ mb_substr($cat->name, 0, 2) }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="lg:hidden">
+                                                <div class="font-bold text-zinc-950 text-sm">{{ $cat->name }}</div>
+                                                <div class="text-[11px] text-zinc-500">{{ ucfirst($catVert) }} • {{ $cat->products_count ?? 0 }} products</div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Editable Meta Inputs -->
+                                        <div class="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                                            <div class="sm:col-span-4">
+                                                <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Name</label>
+                                                <input type="text" name="category_meta[{{ $cat->id }}][name]" value="{{ $cat->name }}"
+                                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-semibold">
+                                            </div>
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Icon / Emoji</label>
+                                                <input type="text" name="category_meta[{{ $cat->id }}][icon]" value="{{ $cat->icon }}" placeholder="🛍️"
+                                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white text-center">
+                                            </div>
+                                            <div class="sm:col-span-2">
+                                                <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Order</label>
+                                                <input type="number" name="category_meta[{{ $cat->id }}][sort_order]" min="0" max="9999" value="{{ (int) $cat->sort_order }}"
+                                                       class="w-full px-3 py-2 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono">
+                                            </div>
+                                            <div class="sm:col-span-4 flex flex-wrap items-center gap-3 pb-1.5">
+                                                <label class="inline-flex items-center gap-1.5 font-semibold text-zinc-900 cursor-pointer">
+                                                    <input type="hidden" name="category_meta[{{ $cat->id }}][show_on_home]" value="0">
+                                                    <input type="checkbox" name="category_meta[{{ $cat->id }}][show_on_home]" value="1"
+                                                           {{ $cat->show_on_home ? 'checked' : '' }}
+                                                           class="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950">
+                                                    <span>Show on Home</span>
+                                                </label>
+                                                <label class="inline-flex items-center gap-1.5 font-semibold text-zinc-700 cursor-pointer">
+                                                    <input type="hidden" name="category_meta[{{ $cat->id }}][is_active]" value="0">
+                                                    <input type="checkbox" name="category_meta[{{ $cat->id }}][is_active]" value="1"
+                                                           {{ $cat->is_active ? 'checked' : '' }}
+                                                           class="w-4 h-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950">
+                                                    <span>Active</span>
+                                                </label>
+                                                @if($canDeleteCat)
+                                                    <button type="button"
+                                                            onclick="if(confirm('Delete unused category?')) document.getElementById('delete-category-{{ $cat->id }}').submit();"
+                                                            class="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold text-[11px] cursor-pointer">
+                                                        Delete
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Image Upload / URL / Removal Row -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2 border-t border-zinc-100 items-center">
+                                        <div class="sm:col-span-5">
+                                            <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Upload Custom Image</label>
+                                            <input type="file" name="category_images[{{ $cat->id }}]" accept="image/*"
+                                                   class="w-full text-[11px] text-zinc-500 file:mr-2 file:py-1.5 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
+                                        </div>
+                                        <div class="sm:col-span-5">
+                                            <label class="block text-[11px] font-semibold text-zinc-600 mb-1">Or Image URL</label>
+                                            <input type="text" name="category_image_urls[{{ $cat->id }}]"
+                                                   value="{{ (!empty($cat->image) && str_starts_with($cat->image, 'http')) ? $cat->image : '' }}"
+                                                   placeholder="https://..."
+                                                   class="w-full px-3 py-1.5 rounded-lg border border-zinc-300 text-zinc-900 bg-white font-mono text-[11px]">
+                                        </div>
+                                        <div class="sm:col-span-2 flex flex-col justify-end gap-1">
+                                            <span class="text-[10px] font-mono text-zinc-400 truncate">{{ ucfirst($catVert) }} • {{ $cat->products_count ?? 0 }} items</span>
+                                            @if(!empty($cat->image))
+                                                <label class="inline-flex items-center gap-1.5 text-[11px] text-rose-700 font-semibold cursor-pointer">
+                                                    <input type="checkbox" name="remove_category_image[{{ $cat->id }}]" value="1" class="rounded border-zinc-300 text-rose-600">
+                                                    <span>Remove img</span>
+                                                </label>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-8 text-center rounded-xl bg-zinc-50 border border-zinc-200 text-xs text-zinc-500">
+                            No categories yet. Use the form above to add your first main homepage category.
+                        </div>
+                    @endif
+                </div>
             </div>
 
             <!-- TAB 2: SERVICES HUB CONTROLS -->
@@ -571,7 +919,7 @@
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($sp['services_hero_image']))
                                     <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $sp['services_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <img src="{{ format_image_url($sp['services_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom banner active</span>
                                     </div>
                                 @endif
@@ -727,7 +1075,7 @@
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($fp['food_hero_image']))
                                     <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $fp['food_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <img src="{{ format_image_url($fp['food_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom banner active</span>
                                     </div>
                                 @endif
@@ -876,7 +1224,7 @@
                                        class="w-full text-xs text-zinc-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200">
                                 @if(!empty($up['used_hero_image']))
                                     <div class="mt-2 flex items-center gap-2">
-                                        <img src="{{ asset('storage/' . $up['used_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
+                                        <img src="{{ format_image_url($up['used_hero_image']) }}" class="w-16 h-10 object-cover rounded border">
                                         <span class="text-[11px] text-zinc-500">Custom banner active</span>
                                     </div>
                                 @endif
@@ -1203,6 +1551,7 @@
                             <p class="text-xs text-zinc-500 mt-0.5">Configure sticky runway height, inertial smoothing, and the 3 headlines scrubbed over your animation.</p>
                         </div>
                         <label class="inline-flex items-center gap-2 text-xs font-semibold text-zinc-900 cursor-pointer">
+                            <input type="hidden" name="scroll_seq_enabled" value="0">
                             <input type="checkbox" name="scroll_seq_enabled" value="1"
                                    class="rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950"
                                    {{ $seqEnabled ? 'checked' : '' }}>
@@ -1317,6 +1666,17 @@
                 </button>
             </div>
         </form>
+
+        @if(isset($categories) && $categories->isNotEmpty())
+            @foreach($categories as $cat)
+                @if(($cat->products_count ?? 0) === 0 && ($cat->children_count ?? 0) === 0)
+                    <form id="delete-category-{{ $cat->id }}" action="{{ route('admin.homepage.categories.destroy', $cat) }}" method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                @endif
+            @endforeach
+        @endif
 
     </div>
 

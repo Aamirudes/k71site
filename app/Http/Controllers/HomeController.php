@@ -225,11 +225,13 @@ class HomeController extends Controller
             
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
+            ->where('show_on_home', true)
             ->where(function($q) {
                 $q->whereNull('vertical')->orWhere('vertical', '!=', 'used');
             })
             ->with(['children' => fn($q) => $q->where('is_active', true)])
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
 
         foreach ($categories as $cat) {
@@ -239,16 +241,20 @@ class HomeController extends Controller
                 ->excludeUsed()
                 ->count();
 
-            // Automatically fetch the latest real product image from this category
-            $sampleProduct = Product::whereIn('category_id', $categoryIds)
-                ->where('status', 'active')
-                ->excludeUsed()
-                ->whereHas('images')
-                ->with(['images' => fn($q) => $q->orderBy('sort_order')])
-                ->latest('updated_at')
-                ->first();
+            if (!empty($cat->image)) {
+                $cat->sample_image = $cat->image;
+            } else {
+                // Automatically fetch the latest real product image from this category
+                $sampleProduct = Product::whereIn('category_id', $categoryIds)
+                    ->where('status', 'active')
+                    ->excludeUsed()
+                    ->whereHas('images')
+                    ->with(['images' => fn($q) => $q->orderBy('sort_order')])
+                    ->latest('updated_at')
+                    ->first();
 
-            $cat->sample_image = $sampleProduct?->images->first()?->path ?? null;
+                $cat->sample_image = $sampleProduct?->images->first()?->path ?? null;
+            }
         }
 
         $topVendors = \App\Models\Vendor::where('status', 'approved')

@@ -306,7 +306,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
-            'vertical' => ['nullable', 'string', 'in:marketplace,food,feasto,services,used,enquiry'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,ecommerce,retail,food,feasto,services,used,enquiry'],
             'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
             'custom_fields' => ['nullable', 'array'],
             'base_price' => ['required', 'numeric', 'min:0'],
@@ -728,7 +728,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
-            'vertical' => ['nullable', 'string', 'in:marketplace,food,feasto,services,used,enquiry'],
+            'vertical' => ['nullable', 'string', 'in:marketplace,ecommerce,retail,food,feasto,services,used,enquiry'],
             'listing_type' => ['nullable', 'string', 'in:purchase,enquiry,booking,auction,contact_seller'],
             'custom_fields' => ['nullable', 'array'],
             'base_price' => ['required', 'numeric', 'min:0'],

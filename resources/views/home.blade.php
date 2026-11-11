@@ -40,7 +40,7 @@
             'btn1_link' => $hp['slide1_btn1_link'] ?? ($hp['hero_cta_primary_link'] ?? '#latest-products'),
             'btn2_text' => $hp['slide1_btn2_text'] ?? '₹199 Budget Store',
             'btn2_link' => $hp['slide1_btn2_link'] ?? '/catalog?sort=price_low',
-            'image' => !empty($hp['slide1_image']) ? asset('storage/' . $hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80'),
+            'image' => !empty($hp['slide1_image']) ? format_image_url($hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80'),
             'kicker' => 'Chapter 01 • Direct Mart',
         ],
         [
@@ -51,7 +51,7 @@
             'btn1_link' => $hp['slide2_btn1_link'] ?? '/food',
             'btn2_text' => $hp['slide2_btn2_text'] ?? 'View Restaurants',
             'btn2_link' => $hp['slide2_btn2_link'] ?? '/food',
-            'image' => !empty($hp['slide2_image']) ? asset('storage/' . $hp['slide2_image']) : (!empty($hp['slide2_image_url']) ? $hp['slide2_image_url'] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1400&q=80'),
+            'image' => !empty($hp['slide2_image']) ? format_image_url($hp['slide2_image']) : (!empty($hp['slide2_image_url']) ? $hp['slide2_image_url'] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1400&q=80'),
             'kicker' => 'Chapter 02 • Feasto Dining',
         ],
         [
@@ -62,25 +62,38 @@
             'btn1_link' => $hp['slide3_btn1_link'] ?? '/services',
             'btn2_text' => $hp['slide3_btn2_text'] ?? 'Submit B2B Enquiry',
             'btn2_link' => $hp['slide3_btn2_link'] ?? '/enquiry',
-            'image' => !empty($hp['slide3_image']) ? asset('storage/' . $hp['slide3_image']) : (!empty($hp['slide3_image_url']) ? $hp['slide3_image_url'] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=80'),
+            'image' => !empty($hp['slide3_image']) ? format_image_url($hp['slide3_image']) : (!empty($hp['slide3_image_url']) ? $hp['slide3_image_url'] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=80'),
             'kicker' => 'Chapter 03 • Pro & Quarry',
         ]
     ];
+
+    $showHeroCarousel = array_key_exists('show_hero_carousel', $hp) ? (bool) $hp['show_hero_carousel'] : true;
+    $showCategories = array_key_exists('show_categories', $hp) ? (bool) $hp['show_categories'] : true;
+    $showTrendingProducts = array_key_exists('show_trending_products', $hp) ? (bool) $hp['show_trending_products'] : true;
+    $showFoodShowcase = array_key_exists('show_food_showcase', $hp) ? (bool) $hp['show_food_showcase'] : true;
+    $showServicesShowcase = array_key_exists('show_services_showcase', $hp) ? (bool) $hp['show_services_showcase'] : true;
+    $showValuePillars = array_key_exists('show_value_pillars', $hp) ? (bool) $hp['show_value_pillars'] : true;
+    $showSellerBanner = array_key_exists('show_seller_banner', $hp) ? (bool) $hp['show_seller_banner'] : true;
 
     $displayLatest = (isset($latestProducts) && $latestProducts->isNotEmpty())
         ? $latestProducts
         : (isset($allCatalogProducts) ? $allCatalogProducts->take(20) : collect());
 
+    $hasVisibleFood = $showFoodShowcase && ($foodRestaurants->isNotEmpty() || $featuredFood->isNotEmpty());
+    $hasVisibleServices = $showServicesShowcase && $featuredServices->isNotEmpty();
+
     $hasAnyVerticalSection = (
-        $foodRestaurants->isNotEmpty()
-        || $featuredFood->isNotEmpty()
-        || $featuredServices->isNotEmpty()
+        $hasVisibleFood
+        || $hasVisibleServices
         || $featuredUsed->isNotEmpty()
         || $featuredEnquiries->isNotEmpty()
     );
 
     $seq = $scrollSequence ?? \App\Services\ScrollSequenceService::resolveSequence($hp['scroll_seq_folder'] ?? null);
     $seqEnabled = array_key_exists('scroll_seq_enabled', $hp) ? (bool) $hp['scroll_seq_enabled'] : true;
+    $useBeatH1 = !$showHeroCarousel && $seqEnabled;
+    $useLatestH1 = !$showHeroCarousel && !$seqEnabled && $showTrendingProducts;
+    $useBudgetH1 = !$showHeroCarousel && !$seqEnabled && !$showTrendingProducts;
     $seqFrames = $seq['frames'] ?? [];
     $defaultHeightVh = count($seqFrames) >= 150 ? 360 : 290;
     $seqHeightVh = max(180, min(450, (int) (($hp['scroll_seq_height_vh'] ?? 0) ?: $defaultHeightVh)));
@@ -116,99 +129,43 @@
         <!-- =========================================================
              0. TOP VERTICAL & CATEGORY RIBBON (OBSIDIAN SURFACE)
              ========================================================= -->
+        @if($showCategories)
         <section class="w-full bg-[#060606] border-b border-white/10" data-pill-zone="dark">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
                 <div class="flex items-center gap-3.5 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth py-1 touch-pan-x">
 
                     <!-- All Deals -->
-                    <a href="{{ route('catalog.index') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                    <a href="{{ route('catalog.index') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
                             🛍️
                             <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#ECD2F3] text-[#1A1018] text-[8px] font-bold uppercase tracking-wider">HOT</span>
                         </div>
                         <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">All Deals</span>
                     </a>
 
-                    <!-- Mobiles -->
-                    <a href="{{ route('catalog.index', ['search' => 'phone']) }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            📱
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#C9A24A] text-black text-[8px] font-bold uppercase tracking-wider">5G</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Mobiles</span>
-                    </a>
-
-                    <!-- Fashion -->
-                    <a href="{{ route('catalog.index', ['search' => 'saree']) }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            👗
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#FFCDFF] text-[#1A1018] text-[8px] font-bold uppercase tracking-wider">SALE</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Fashion</span>
-                    </a>
-
-                    <!-- Electronics -->
-                    <a href="{{ route('catalog.index', ['search' => 'laptop']) }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            💻
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Electronics</span>
-                    </a>
-
-                    <!-- Cloud Dining -->
-                    <a href="{{ k71_vertical_url('food') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            🍲
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">FRESH</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Dining</span>
-                    </a>
-
-                    <!-- Services -->
-                    <a href="{{ k71_vertical_url('services') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            ⚡
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#C9A24A] text-[8px] font-bold uppercase tracking-wider">PRO</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Services</span>
-                    </a>
-
-                    <!-- Pre-Owned -->
-                    <a href="{{ k71_vertical_url('used') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            ♻️
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">USED</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Pre-Owned</span>
-                    </a>
-
-                    <!-- B2B Wholesale -->
-                    <a href="{{ k71_vertical_url('enquiry') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            📋
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">B2B</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Wholesale</span>
-                    </a>
-
-                    <!-- Video Reels -->
-                    <a href="{{ k71_vertical_url('shorts') }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                        <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
-                            ▶
-                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#FFCDFF] text-[#1A1018] text-[8px] font-bold uppercase tracking-wider">LIVE</span>
-                        </div>
-                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Reels</span>
-                    </a>
-
-                    <!-- Real Database Categories -->
+                    <!-- Main Homepage Database Categories (Admin Curated & Custom Images) -->
                     @if(!empty($categories))
-                        @foreach($categories->take(6) as $cat)
-                            <a href="{{ route('catalog.index', ['category' => $cat->slug]) }}" class="group flex flex-col items-center shrink-0 w-[62px] sm:w-[74px] text-center cursor-pointer">
-                                <div class="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 flex items-center justify-center text-sm overflow-hidden transition-all duration-200 group-hover:scale-105">
-                                    @if($cat->sample_image)
-                                        <img src="{{ \App\Services\ImageService::url($cat->sample_image, 120) }}" alt="{{ $cat->name }}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100">
+                        @foreach($categories as $cat)
+                            @php
+                                $catRawImg = $cat->image ?: $cat->sample_image;
+                                $catUrl = match ($cat->vertical) {
+                                    'services' => route('services.category', $cat->slug),
+                                    'food' => k71_vertical_url('food'),
+                                    'enquiry' => route('enquiry.index', ['category' => $cat->slug]),
+                                    'shorts' => k71_vertical_url('shorts'),
+                                    default => route('catalog.index', ['category' => $cat->slug]),
+                                };
+                            @endphp
+                            <a href="{{ $catUrl }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer" data-home-category="{{ $cat->slug }}">
+                                <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 flex items-center justify-center text-sm overflow-hidden transition-all duration-200 group-hover:scale-105">
+                                    @if(!empty($catRawImg))
+                                        <img src="{{ (str_starts_with($catRawImg, 'http://') || str_starts_with($catRawImg, 'https://')) ? $catRawImg : \App\Services\ImageService::url($catRawImg, 160) }}"
+                                             alt="{{ $cat->name }}"
+                                             class="w-full h-full object-cover opacity-92 group-hover:opacity-100">
+                                    @elseif(!empty($cat->icon))
+                                        <span class="text-lg sm:text-xl leading-none">{{ $cat->icon }}</span>
                                     @else
-                                        <span class="text-[#ECD2F3] font-semibold text-xs uppercase">{{ substr($cat->name, 0, 2) }}</span>
+                                        <span class="text-[#ECD2F3] font-semibold text-xs uppercase">{{ mb_substr($cat->name, 0, 2) }}</span>
                                     @endif
                                 </div>
                                 <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">{{ $cat->name }}</span>
@@ -216,14 +173,61 @@
                         @endforeach
                     @endif
 
+                    <!-- Cloud Dining -->
+                    <a href="{{ k71_vertical_url('food') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                            🍲
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">FRESH</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Dining</span>
+                    </a>
+
+                    <!-- Services -->
+                    <a href="{{ k71_vertical_url('services') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                            ⚡
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#C9A24A] text-[8px] font-bold uppercase tracking-wider">PRO</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Services</span>
+                    </a>
+
+                    <!-- Pre-Owned -->
+                    <a href="{{ k71_vertical_url('used') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                            ♻️
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">USED</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Pre-Owned</span>
+                    </a>
+
+                    <!-- B2B Wholesale -->
+                    <a href="{{ k71_vertical_url('enquiry') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                            📋
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-white/15 border border-white/20 text-[#EFE9F2] text-[8px] font-bold uppercase tracking-wider">B2B</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Wholesale</span>
+                    </a>
+
+                    <!-- Video Reels -->
+                    <a href="{{ k71_vertical_url('shorts') }}" class="group flex flex-col items-center shrink-0 w-[64px] sm:w-[76px] text-center cursor-pointer">
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#161616] border border-white/12 group-hover:border-[#ECD2F3]/70 group-hover:bg-[#221826] flex items-center justify-center text-lg sm:text-xl transition-all duration-200 relative group-hover:scale-105">
+                            ▶
+                            <span class="absolute -top-1.5 -right-1 px-1.5 py-0.2 rounded-full bg-[#FFCDFF] text-[#1A1018] text-[8px] font-bold uppercase tracking-wider">LIVE</span>
+                        </div>
+                        <span class="text-[11px] sm:text-xs font-medium text-[#EFE9F2]/80 group-hover:text-white mt-1.5 tracking-tight truncate w-full">Reels</span>
+                    </a>
+
                 </div>
             </div>
         </section>
+        @endif
 
         <!-- =========================================================
              ACT 1: OBSIDIAN HERO STAGE (#000000 • GRAIL WORD-RISE & 3D TILT)
              ========================================================= -->
-        <section class="relative bg-[#000000] text-[#EFE9F2] pt-5 sm:pt-8 pb-14 sm:pb-20 overflow-hidden" data-pill-zone="dark">
+        @if($showHeroCarousel)
+        <section id="hero-carousel" class="relative bg-[#000000] text-[#EFE9F2] pt-5 sm:pt-8 pb-14 sm:pb-20 overflow-hidden" data-pill-zone="dark">
             <!-- Atmospheric Radial Orchid & Antique Gold Aura -->
             <div class="pointer-events-none absolute -top-24 left-1/4 w-[56vw] h-[420px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(233,184,255,0.16)_0%,rgba(201,162,74,0.06)_48%,transparent_72%)] blur-3xl"></div>
             <div class="pointer-events-none grail-scrim-b1 absolute inset-x-0 top-0 h-20 z-10"></div>
@@ -393,6 +397,7 @@
                 </div>
             </div>
         </section>
+        @endif
 
         @if($seqEnabled)
         @php
@@ -439,7 +444,7 @@
                             </span>
                         </div>
 
-                        <a href="#budget-stores"
+                        <a href="{{ $showTrendingProducts ? '#latest-products' : '#budget-stores' }}"
                            class="pointer-events-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/55 hover:bg-black/85 border border-white/15 text-[11px] font-medium text-[#EFE9F2]/75 hover:text-white backdrop-blur-xl transition cursor-pointer">
                             <span>Skip</span>
                             <span aria-hidden="true">&#8595;</span>
@@ -457,9 +462,15 @@
                                         <span>{{ $beat['kicker'] }}</span>
                                     </div>
 
-                                    <h2 class="grail-display grail-heading-flex text-[clamp(1.95rem,4.4vw,3.9rem)] text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.88)]">
-                                        {{ $beat['title'] }}
-                                    </h2>
+                                    @if($useBeatH1 && $bIdx === 0)
+                                        <h1 class="grail-display grail-heading-flex text-[clamp(1.95rem,4.4vw,3.9rem)] text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.88)]">
+                                            {{ $beat['title'] }}
+                                        </h1>
+                                    @else
+                                        <h2 class="grail-display grail-heading-flex text-[clamp(1.95rem,4.4vw,3.9rem)] text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.88)]">
+                                            {{ $beat['title'] }}
+                                        </h2>
+                                    @endif
 
                                     <p class="text-xs sm:text-base text-[#EFE9F2]/85 max-w-xl leading-relaxed font-normal drop-shadow-[0_1px_12px_rgba(0,0,0,0.9)]">
                                         {{ $beat['desc'] }}
@@ -467,7 +478,7 @@
 
                                     @if($bIdx === 2)
                                         <div class="flex flex-wrap items-center gap-3 pt-1 pointer-events-auto">
-                                            <a href="#latest-products"
+                                            <a href="{{ $showTrendingProducts ? '#latest-products' : '#budget-stores' }}"
                                                class="grail-cta-pill inline-flex items-center gap-2.5 px-6 py-3 text-xs sm:text-sm tracking-wide cursor-pointer">
                                                 <span>Explore Curated Drops</span>
                                                 <span aria-hidden="true">&rarr;</span>
@@ -513,7 +524,81 @@
         @endif
 
         <!-- =========================================================
-             ACT 2: OBSIDIAN BUDGET STATS (MASKED LINE RISE + FILL REVEAL)
+             ACT 2: PEEL-DECK WARM STONE LIGHT SHEET (#F6F6F6 • LATEST 20)
+             ========================================================= -->
+        @if($showTrendingProducts)
+        @php
+            $latestSectionTitle = trim((string) ($hp['arrivals_section_title'] ?? '')) ?: 'Latest Products';
+        @endphp
+        <section id="latest-products"
+                 class="bg-[#000000] px-0 sm:px-3 lg:px-6 pt-6 pb-8 border-t border-white/10"
+                 data-pill-zone="light">
+            <div class="grail-peel-sheet grail-light-sheet px-3 sm:px-8 lg:px-12 py-12 sm:py-16 shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
+                 data-grail-peel>
+                <div class="max-w-7xl mx-auto space-y-8 sm:space-y-10">
+
+                    <!-- Sheet Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-black/10">
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2.5">
+                                <span class="px-3 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] font-bold text-[10px] uppercase tracking-[0.14em]">
+                                    Fresh Arrivals
+                                </span>
+                                <span class="text-xs text-[#623562] font-semibold">Direct from Verified Sellers</span>
+                            </div>
+                            @if($useLatestH1)
+                                <h1 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-black">
+                                    {{ $latestSectionTitle }}
+                                </h1>
+                            @else
+                                <h2 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-black">
+                                    {{ $latestSectionTitle }}
+                                </h2>
+                            @endif
+                        </div>
+
+                        <a href="{{ route('catalog.index') }}"
+                           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-black/12 hover:border-[#623562] text-xs sm:text-sm font-semibold text-black transition">
+                            <span>View Entire Catalog</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                    <!-- Product Grid (Up to 20 Items with Staggered Reveal) -->
+                    @if($displayLatest->isNotEmpty())
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5" data-grail-reveal>
+                            @foreach($displayLatest->take(20) as $prod)
+                                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 5) * 65 }}ms;">
+                                    <x-product-card :product="$prod" />
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="p-10 sm:p-14 rounded-3xl bg-white border border-black/10 text-center space-y-3">
+                            <p class="text-sm sm:text-base font-medium text-[#221826]">Products are being curated directly from verified Indian boutiques.</p>
+                            <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1A1018] text-[#EFE9F2] text-xs font-semibold hover:bg-[#623562] transition">
+                                <span>Explore Marketplace Catalog</span>
+                                <span>&rarr;</span>
+                            </a>
+                        </div>
+                    @endif
+
+                    <!-- Load More Button -->
+                    <div class="text-center pt-4">
+                        <a href="{{ route('catalog.index') }}"
+                           class="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#EFE9F2] font-semibold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer">
+                            <span>Load More Products</span>
+                            <span>&rarr;</span>
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+        @endif
+
+        <!-- =========================================================
+             ACT 3: OBSIDIAN BUDGET STATS (MASKED LINE RISE + FILL REVEAL)
              ========================================================= -->
         <section id="budget-stores" class="relative bg-[#060606] text-[#EFE9F2] py-14 sm:py-20 border-t border-white/10" data-grail-reveal data-pill-zone="dark">
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-8 sm:space-y-12">
@@ -521,10 +606,17 @@
                 <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div class="space-y-3">
                         <span class="text-[11px] uppercase tracking-[0.2em] text-[#C9A24A] font-semibold block">Curated Price Corners</span>
-                        <h2 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-white">
-                            <span class="grail-line-mask"><span class="grail-line-rise">Shop by Budget</span></span>
-                            <span class="grail-line-mask"><span class="grail-line-rise" style="transition-delay: 95ms;">&amp; Factory Steals</span></span>
-                        </h2>
+                        @if($useBudgetH1)
+                            <h1 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-white">
+                                <span class="grail-line-mask"><span class="grail-line-rise">Shop by Budget</span></span>
+                                <span class="grail-line-mask"><span class="grail-line-rise" style="transition-delay: 95ms;">&amp; Factory Steals</span></span>
+                            </h1>
+                        @else
+                            <h2 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-white">
+                                <span class="grail-line-mask"><span class="grail-line-rise">Shop by Budget</span></span>
+                                <span class="grail-line-mask"><span class="grail-line-rise" style="transition-delay: 95ms;">&amp; Factory Steals</span></span>
+                            </h2>
+                        @endif
                     </div>
 
                     <div class="flex flex-col sm:items-end gap-3">
@@ -727,69 +819,6 @@
         </section>
 
         <!-- =========================================================
-             ACT 4: PEEL-DECK WARM STONE LIGHT SHEET (#F6F6F6 • LATEST 20)
-             ========================================================= -->
-        <section id="latest-products"
-                 class="bg-[#000000] px-0 sm:px-3 lg:px-6 pt-6 pb-8"
-                 data-pill-zone="light">
-            <div class="grail-peel-sheet grail-light-sheet px-3 sm:px-8 lg:px-12 py-12 sm:py-16 shadow-[0_30px_90px_rgba(0,0,0,0.45)]"
-                 data-grail-peel>
-                <div class="max-w-7xl mx-auto space-y-8 sm:space-y-10">
-
-                    <!-- Sheet Header -->
-                    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-black/10">
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-2.5">
-                                <span class="px-3 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] font-bold text-[10px] uppercase tracking-[0.14em]">
-                                    Fresh Arrivals
-                                </span>
-                                <span class="text-xs text-[#623562] font-semibold">Direct from Verified Sellers</span>
-                            </div>
-                            <h2 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-black">
-                                Latest Products
-                            </h2>
-                        </div>
-
-                        <a href="{{ route('catalog.index') }}"
-                           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-black/12 hover:border-[#623562] text-xs sm:text-sm font-semibold text-black transition">
-                            <span>View Entire Catalog</span>
-                            <span>&rarr;</span>
-                        </a>
-                    </div>
-
-                    <!-- Product Grid (Up to 20 Items with Staggered Reveal) -->
-                    @if($displayLatest->isNotEmpty())
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5" data-grail-reveal>
-                            @foreach($displayLatest->take(20) as $prod)
-                                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 5) * 65 }}ms;">
-                                    <x-product-card :product="$prod" />
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="p-10 sm:p-14 rounded-3xl bg-white border border-black/10 text-center space-y-3">
-                            <p class="text-sm sm:text-base font-medium text-[#221826]">Products are being curated directly from verified Indian boutiques.</p>
-                            <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1A1018] text-[#EFE9F2] text-xs font-semibold hover:bg-[#623562] transition">
-                                <span>Explore Marketplace Catalog</span>
-                                <span>&rarr;</span>
-                            </a>
-                        </div>
-                    @endif
-
-                    <!-- Load More Button -->
-                    <div class="text-center pt-4">
-                        <a href="{{ route('catalog.index') }}"
-                           class="inline-flex items-center gap-2.5 px-8 py-4 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#EFE9F2] font-semibold text-xs sm:text-sm tracking-wide shadow-sm active:scale-95 transition cursor-pointer">
-                            <span>Load More Products</span>
-                            <span>&rarr;</span>
-                        </a>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- =========================================================
              ACT 5: MULTI-VERTICAL SPLIT-REVEAL SHOWCASE (#FAFAF8 PARCHMENT)
              ========================================================= -->
         @if($hasAnyVerticalSection)
@@ -798,18 +827,22 @@
                 <div class="max-w-7xl mx-auto space-y-14 sm:space-y-16">
 
                     <!-- 5A. Cloud Dining & Artisan Kitchens -->
-                    @if($foodRestaurants->isNotEmpty() || $featuredFood->isNotEmpty())
+                    @if($hasVisibleFood)
+                    @php
+                        $foodHomeTitle = trim((string) ($hp['food_section_title'] ?? '')) ?: 'Artisan Kitchens';
+                        $foodHomeSub = trim((string) ($hp['food_section_subtitle'] ?? '')) ?: 'Hygiene-certified cloud kitchens with fresh 30–45 min doorstep dispatch.';
+                    @endphp
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
                                 <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Feasto Dining</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-black">Artisan Kitchens</h2>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">{{ $foodHomeTitle }}</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
                                 <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">🍲</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-black/65">Hygiene-certified cloud kitchens with fresh 30–45 min doorstep dispatch.</p>
+                                <p class="text-xs sm:text-sm text-black/65">{{ $foodHomeSub }}</p>
                                 <a href="{{ k71_vertical_url('food') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>All Menus</span>
                                     <span>&rarr;</span>
@@ -853,18 +886,22 @@
                     @endif
 
                     <!-- 5B. Verified Services & Specialists -->
-                    @if($featuredServices->isNotEmpty())
+                    @if($hasVisibleServices)
+                    @php
+                        $servicesHomeTitle = trim((string) ($hp['services_section_title'] ?? '')) ?: 'Verified Services';
+                        $servicesHomeSub = trim((string) ($hp['services_section_subtitle'] ?? '')) ?: 'Marble restoration, web engineering, photography & vetted home specialists.';
+                    @endphp
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
                                 <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Pro Network</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-black">Verified Services</h2>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">{{ $servicesHomeTitle }}</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
                                 <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">⚡</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-black/65">Marble restoration, web engineering, photography &amp; vetted home specialists.</p>
+                                <p class="text-xs sm:text-sm text-black/65">{{ $servicesHomeSub }}</p>
                                 <a href="{{ k71_vertical_url('services') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>All Services</span>
                                     <span>&rarr;</span>
@@ -999,12 +1036,14 @@
         <!-- =========================================================
              ACT 6: OBSIDIAN TRUST PILLARS & LUMINOUS SELLER EMBLEM (#000000)
              ========================================================= -->
+        @if($showValuePillars || $showSellerBanner)
         <section class="relative bg-[#000000] text-[#EFE9F2] pt-12 sm:pt-16 pb-20 sm:pb-28 overflow-hidden" data-pill-zone="dark">
             <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[72vw] h-[380px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(233,184,255,0.20)_0%,rgba(201,162,74,0.08)_46%,transparent_72%)] blur-3xl"></div>
 
             <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-14 sm:space-y-20 relative z-10">
 
                 <!-- 4-Column Trust & Escrow Hairline Grid -->
+                @if($showValuePillars)
                 <div class="grid grid-cols-2 sm:grid-cols-4 border border-white/12 divide-y sm:divide-y-0 sm:divide-x divide-white/12 rounded-2xl bg-[#060606] overflow-hidden" data-grail-reveal>
                     <div class="grail-card-reveal p-5 text-center sm:text-left" style="--delay: 0ms;">
                         <span class="text-[10px] uppercase tracking-[0.18em] text-[#C9A24A] font-semibold block mb-1.5">Verified</span>
@@ -1027,8 +1066,10 @@
                         <p class="text-xs text-[#EFE9F2]/50 mt-0.5">WhatsApp &amp; Live In-App DM</p>
                     </div>
                 </div>
+                @endif
 
                 <!-- Seller Onboarding Grail Emblem Stage -->
+                @if($showSellerBanner)
                 <div class="max-w-4xl mx-auto text-center space-y-7 sm:space-y-9" data-grail-reveal>
                     <div class="inline-flex grail-emblem-tile w-16 h-16 sm:w-20 sm:h-20 rounded-3xl items-center justify-center mx-auto">
                         <span class="grail-display text-2xl sm:text-3xl font-normal text-[#221826] tracking-tight">K71</span>
@@ -1061,15 +1102,17 @@
                         </button>
                     </div>
                 </div>
+                @endif
 
             </div>
         </section>
+        @endif
 
         <!-- =========================================================
              ADAPTIVE GRAIL FLOATING PILL (MORPHS THEME BY SCROLL ZONE)
              Positioned bottom-left to stay clear of floating-six-nav
              ========================================================= -->
-        <a href="#latest-products"
+        <a href="{{ $showTrendingProducts ? '#latest-products' : '#budget-stores' }}"
            data-grail-pill
            data-pill-theme="dark"
            aria-label="Explore Curated Drops"

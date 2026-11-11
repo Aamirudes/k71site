@@ -25,10 +25,12 @@ class Category extends Model
         'seo_content',
         'sort_order',
         'is_active',
+        'show_on_home',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'show_on_home' => 'boolean',
     ];
 
     public function fields(): HasMany

@@ -114,6 +114,7 @@ class FloatingLauncherController extends Controller
             $file = $request->file('trigger_image_file');
             if ($file && $file->isValid()) {
                 $path = $file->store('floating_launcher', 'public');
+                k71_sync_public_storage($path);
                 Setting::set('floating_launcher_trigger_image', '/storage/' . $path, 'navigation');
             }
         } elseif ($request->filled('trigger_image_url')) {
@@ -150,6 +151,7 @@ class FloatingLauncherController extends Controller
                 $file = $request->file("items.{$index}.image_file");
                 if ($file && $file->isValid()) {
                     $path = $file->store('floating_launcher', 'public');
+                    k71_sync_public_storage($path);
                     $imageUrl = '/storage/' . $path;
                     $iconType = 'image';
                 }

@@ -407,15 +407,13 @@ class AdminController extends Controller
         if (method_exists($product, 'images')) {
             foreach ($product->images as $img) {
                 if ($img->path) {
-                    @unlink(storage_path('app/public/' . $img->path));
-                    @unlink(public_path('storage/' . $img->path));
+                    k71_delete_public_storage($img->path);
                 }
             }
             $product->images()->delete();
         }
         if ($product->video_path) {
-            @unlink(storage_path('app/public/' . $product->video_path));
-            @unlink(public_path('storage/' . $product->video_path));
+            k71_delete_public_storage($product->video_path);
         }
         $product->forceDelete();
 

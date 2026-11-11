@@ -341,6 +341,8 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/orders/{order}/add-note', [\App\Http\Controllers\AdminController::class, 'addOrderNote'])->name('orders.add_note');
     Route::get('/homepage', [\App\Http\Controllers\Admin\HomepageController::class, 'edit'])->name('homepage');
     Route::put('/homepage', [\App\Http\Controllers\Admin\HomepageController::class, 'update'])->name('homepage.update');
+    Route::post('/homepage/categories', [\App\Http\Controllers\Admin\HomepageController::class, 'storeCategory'])->name('homepage.categories.store');
+    Route::delete('/homepage/categories/{category}', [\App\Http\Controllers\Admin\HomepageController::class, 'deleteCategory'])->name('homepage.categories.destroy');
     Route::post('/homepage/scroll-frames/batch', [\App\Http\Controllers\Admin\HomepageController::class, 'uploadScrollFramesBatch'])->name('homepage.scroll_frames.batch');
     Route::post('/homepage/scroll-frames/zip', [\App\Http\Controllers\Admin\HomepageController::class, 'uploadScrollFramesZip'])->name('homepage.scroll_frames.zip');
     Route::delete('/homepage/scroll-frames', [\App\Http\Controllers\Admin\HomepageController::class, 'clearScrollFrames'])->name('homepage.scroll_frames.clear');
@@ -393,9 +395,7 @@ Route::get('/storage/{path}', function ($path) {
     // 1. Check if the file exists in storage/app/public
     $source = storage_path('app/public/' . $path);
     if (file_exists($source) && is_file($source)) {
-        $target = public_path('storage/' . $path);
-        @mkdir(dirname($target), 0755, true);
-        @copy($source, $target);
+        k71_sync_public_storage($path);
         return response()->file($source);
     }
 

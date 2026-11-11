@@ -308,10 +308,7 @@ if (!function_exists('k71_delete_public_storage')) {
             return;
         }
 
-        $source = storage_path('app/public/' . $relativePath);
-        if (is_file($source)) {
-            @unlink($source);
-        }
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($relativePath);
 
         if (!is_link(public_path('storage'))) {
             $target = public_path('storage/' . $relativePath);
