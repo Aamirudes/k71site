@@ -116,80 +116,90 @@ class ServiceStudioController extends Controller
             $slug = $baseSlug . '-' . $counter++;
         }
 
-        // Store Product
-        $product = Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $validated['category_id'],
-            'title' => $validated['title'],
-            'slug' => $slug,
-            'description' => $validated['description'],
-            'vertical' => 'services',
-            'listing_type' => 'gig',
-            'base_price' => (int) round($validated['basic_price'] * 100),
-            'gst_rate' => 18.00,
-            'status' => 'active',
-            'requirements_prompt' => $validated['requirements_prompt'] ?? 'Please describe your project specifications and attach any reference files.',
-        ]);
-
-        // Create Basic Package
-        $basicFeatures = array_filter(array_map('trim', explode("\n", $validated['basic_features'] ?? '')));
-        ProductGigPackage::create([
-            'product_id' => $product->id,
-            'tier' => 'basic',
-            'title' => $validated['basic_title'],
-            'description' => $validated['basic_description'],
-            'price' => $validated['basic_price'],
-            'delivery_days' => $validated['basic_delivery_days'],
-            'revisions' => $validated['basic_revisions'],
-            'features_json' => $basicFeatures,
-        ]);
-
-        // Standard Package
-        if (!empty($validated['standard_title']) && !empty($validated['standard_price'])) {
-            $standardFeatures = array_filter(array_map('trim', explode("\n", $validated['standard_features'] ?? '')));
-            ProductGigPackage::create([
-                'product_id' => $product->id,
-                'tier' => 'standard',
-                'title' => $validated['standard_title'],
-                'description' => $validated['standard_description'] ?? '',
-                'price' => $validated['standard_price'],
-                'delivery_days' => $validated['standard_delivery_days'] ?? 5,
-                'revisions' => $validated['standard_revisions'] ?? 2,
-                'features_json' => $standardFeatures,
-            ]);
-        }
-
-        // Premium Package
-        if (!empty($validated['premium_title']) && !empty($validated['premium_price'])) {
-            $premiumFeatures = array_filter(array_map('trim', explode("\n", $validated['premium_features'] ?? '')));
-            ProductGigPackage::create([
-                'product_id' => $product->id,
-                'tier' => 'premium',
-                'title' => $validated['premium_title'],
-                'description' => $validated['premium_description'] ?? '',
-                'price' => $validated['premium_price'],
-                'delivery_days' => $validated['premium_delivery_days'] ?? 7,
-                'revisions' => $validated['premium_revisions'] ?? 5,
-                'features_json' => $premiumFeatures,
-            ]);
-        }
-
-        // Upload Images
-        if ($request->hasFile('images')) {
-            $sortOrder = 0;
-            foreach ($request->file('images') as $img) {
-                if (!$img || !$img->isValid()) {
-                    continue;
-                }
-                $path = $img->store('products', 'public');
-                k71_sync_public_storage($path);
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'path' => $path,
-                    'alt_text' => $product->title,
-                    'sort_order' => $sortOrder++,
+        $uploadedPaths = [];
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($request, $vendor, $validated, $slug, &$uploadedPaths) {
+                $product = Product::create([
+                    'vendor_id' => $vendor->id,
+                    'category_id' => $validated['category_id'],
+                    'title' => $validated['title'],
+                    'slug' => $slug,
+                    'description' => $validated['description'],
+                    'vertical' => 'services',
+                    'listing_type' => 'gig',
+                    'base_price' => (int) round($validated['basic_price'] * 100),
+                    'gst_rate' => 18.00,
+                    'status' => 'active',
+                    'requirements_prompt' => $validated['requirements_prompt'] ?? 'Please describe your project specifications and attach any reference files.',
                 ]);
+
+                // Create Basic Package
+                $basicFeatures = array_filter(array_map('trim', explode("\n", $validated['basic_features'] ?? '')));
+                ProductGigPackage::create([
+                    'product_id' => $product->id,
+                    'tier' => 'basic',
+                    'title' => $validated['basic_title'],
+                    'description' => $validated['basic_description'],
+                    'price' => $validated['basic_price'],
+                    'delivery_days' => $validated['basic_delivery_days'],
+                    'revisions' => $validated['basic_revisions'],
+                    'features_json' => $basicFeatures,
+                ]);
+
+                // Standard Package
+                if (!empty($validated['standard_title']) && !empty($validated['standard_price'])) {
+                    $standardFeatures = array_filter(array_map('trim', explode("\n", $validated['standard_features'] ?? '')));
+                    ProductGigPackage::create([
+                        'product_id' => $product->id,
+                        'tier' => 'standard',
+                        'title' => $validated['standard_title'],
+                        'description' => $validated['standard_description'] ?? '',
+                        'price' => $validated['standard_price'],
+                        'delivery_days' => $validated['standard_delivery_days'] ?? 5,
+                        'revisions' => $validated['standard_revisions'] ?? 2,
+                        'features_json' => $standardFeatures,
+                    ]);
+                }
+
+                // Premium Package
+                if (!empty($validated['premium_title']) && !empty($validated['premium_price'])) {
+                    $premiumFeatures = array_filter(array_map('trim', explode("\n", $validated['premium_features'] ?? '')));
+                    ProductGigPackage::create([
+                        'product_id' => $product->id,
+                        'tier' => 'premium',
+                        'title' => $validated['premium_title'],
+                        'description' => $validated['premium_description'] ?? '',
+                        'price' => $validated['premium_price'],
+                        'delivery_days' => $validated['premium_delivery_days'] ?? 7,
+                        'revisions' => $validated['premium_revisions'] ?? 5,
+                        'features_json' => $premiumFeatures,
+                    ]);
+                }
+
+                // Upload Images
+                if ($request->hasFile('images')) {
+                    $sortOrder = 0;
+                    foreach ($request->file('images') as $img) {
+                        if (!$img || !$img->isValid()) {
+                            continue;
+                        }
+                        $path = $img->store('products', 'public');
+                        k71_sync_public_storage($path);
+                        $uploadedPaths[] = $path;
+                        ProductImage::create([
+                            'product_id' => $product->id,
+                            'path' => $path,
+                            'alt_text' => $product->title,
+                            'sort_order' => $sortOrder++,
+                        ]);
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            foreach ($uploadedPaths as $path) {
+                k71_delete_public_storage($path);
             }
+            throw $e;
         }
 
         $vendor->bumpWebsiteCache();
@@ -335,18 +345,38 @@ class ServiceStudioController extends Controller
     public function duplicate(Request $request, Product $product): RedirectResponse
     {
         $vendor = $this->authorizeProduct($request, $product);
-
-        $copy = $product->replicate();
-        $copy->title = $product->title . ' (Copy)';
-        $copy->slug = Str::slug($copy->title) . '-' . Str::lower(Str::random(5));
-        $copy->status = 'paused';
-        $copy->save();
-
-        foreach ($product->gigPackages as $pkg) {
-            $pkgCopy = $pkg->replicate();
-            $pkgCopy->product_id = $copy->id;
-            $pkgCopy->save();
+        $check = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services');
+        if (!$check['allowed']) {
+            return back()->with('error', $check['reason']);
         }
+
+        $copy = \Illuminate\Support\Facades\DB::transaction(function () use ($product) {
+            $copy = $product->replicate();
+            $copy->title = $product->title . ' (Copy)';
+            $baseSlug = Str::slug($copy->title) ?: 'service-copy';
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
+            }
+            $copy->slug = $slug;
+            $copy->status = 'paused';
+            $copy->save();
+
+            foreach ($product->gigPackages as $pkg) {
+                $pkgCopy = $pkg->replicate();
+                $pkgCopy->product_id = $copy->id;
+                $pkgCopy->save();
+            }
+
+            foreach ($product->images as $img) {
+                $imgCopy = $img->replicate();
+                $imgCopy->product_id = $copy->id;
+                $imgCopy->save();
+            }
+
+            return $copy;
+        });
 
         $vendor->bumpWebsiteCache();
 

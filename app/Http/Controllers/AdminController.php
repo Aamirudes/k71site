@@ -31,7 +31,9 @@ class AdminController extends Controller
         app(\App\Services\SettlementService::class)->autoClearDueOrders();
 
         // 1. Treasury Ledger & Reconciliations
-        $paidOrders = Order::where('payment_status', 'paid')->get();
+        $paidOrders = Order::where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
+            ->get();
         $paidPayoutOrders = Order::with('orderCommission')->where('vendor_payout_status', 'paid')->get(['id', 'vendor_id', 'subtotal', 'discount_amount', 'vendor_payout_amount', 'order_type']);
 
         $grossGmv = $paidOrders->sum('total_amount');
@@ -85,12 +87,12 @@ class AdminController extends Controller
 
         // 5. Top 5 Performing Boutiques
         $topVendors = Vendor::withCount(['orders' => function ($q) {
-                $q->where('payment_status', 'paid');
+                $q->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
             }])
             ->with(['settings', 'user'])
             ->get()
             ->map(function ($vendor) {
-                $orders = $vendor->orders()->where('payment_status', 'paid')->get();
+                $orders = $vendor->orders()->where('payment_status', 'paid')->where('status', '!=', 'cancelled')->get();
                 $vendor->gmv = $orders->sum('total_amount');
                 $vendor->disbursed = $orders->where('vendor_payout_status', 'paid')->sum('vendor_payout_amount');
                 return $vendor;
@@ -618,54 +620,83 @@ class AdminController extends Controller
         $action = $validated['action'];
         $notes = $validated['admin_notes'] ?? null;
 
-        // Execute real enforcement action based on target
-        $reportable = $report->reportable;
-        if ($action === 'block_product' && $reportable instanceof Product) {
-            $updates = ['status' => 'inactive'];
-            if ($reportable->isUsedListing()) {
-                $updates['used_status'] = 'paused';
+        $outcome = DB::transaction(function () use ($report, $action, $notes, $request) {
+            $lockedReport = Report::whereKey($report->id)->lockForUpdate()->firstOrFail();
+            if ($lockedReport->status !== 'pending') {
+                return 'already_resolved';
             }
-            $reportable->update($updates);
-            \App\Http\Controllers\SitemapController::clearCache();
-        } elseif ($action === 'warn_vendor') {
-            if ($reportable instanceof Vendor) {
-                $reportable->update(['status' => 'suspended']);
+
+            // Execute real enforcement action based on target
+            $reportable = $lockedReport->reportable;
+            if ($action === 'block_product' && $reportable instanceof Product) {
+                $updates = ['status' => 'inactive'];
+                if ($reportable->isUsedListing()) {
+                    $updates['used_status'] = 'paused';
+                }
+                $reportable->update($updates);
                 \App\Http\Controllers\SitemapController::clearCache();
-            } elseif ($reportable instanceof UsedSellerProfile) {
-                $reportable->user?->update([
-                    'is_blocked' => true,
-                    'blocked_reason' => $notes ?: 'Used marketplace account suspended by moderation.',
-                ]);
-            } elseif ($reportable instanceof User) {
-                $reportable->update([
-                    'is_blocked' => true,
-                    'blocked_reason' => $notes ?: 'Account suspended by moderation.',
-                ]);
+            } elseif ($action === 'warn_vendor') {
+                if ($reportable instanceof Vendor) {
+                    $reportable->update(['status' => 'suspended']);
+                    \App\Http\Controllers\SitemapController::clearCache();
+                } elseif ($reportable instanceof UsedSellerProfile) {
+                    $reportable->user?->update([
+                        'is_blocked' => true,
+                        'blocked_reason' => $notes ?: 'Used marketplace account suspended by moderation.',
+                    ]);
+                } elseif ($reportable instanceof User) {
+                    $reportable->update([
+                        'is_blocked' => true,
+                        'blocked_reason' => $notes ?: 'Account suspended by moderation.',
+                    ]);
+                }
+            } elseif ($action === 'delete_review') {
+                if ($reportable instanceof Review) {
+                    $reportable->update(['is_approved' => false]);
+                    if ($reportable->product_id) {
+                        $prod = Product::withoutGlobalScopes()->find($reportable->product_id);
+                        if ($prod) {
+                            $approvedQ = Review::where('product_id', $prod->id)->where('is_approved', true);
+                            $cnt = (int) $approvedQ->count();
+                            $avg = $cnt > 0 ? round((float) $approvedQ->avg('rating'), 2) : null;
+                            $prod->update(['review_count' => $cnt, 'avg_rating' => $avg]);
+                        }
+                    }
+                    $revVendor = $reportable->vendor ?: $reportable->product?->vendor;
+                    if ($revVendor && $revVendor->isFood()) {
+                        app(\App\Services\Food\FoodMarketplaceService::class)->refreshRestaurantRatingCache($revVendor);
+                    }
+                    if ($reportable->reviewed_user_id) {
+                        app(\App\Services\Used\UsedMarketplaceService::class)->recalculateSellerStats((int) $reportable->reviewed_user_id);
+                    }
+                } elseif ($reportable instanceof UsedThreadMessage) {
+                    $reportable->update(['body' => '[Message removed by moderation]']);
+                }
             }
-        } elseif ($action === 'delete_review') {
-            if ($reportable instanceof Review) {
-                $reportable->update(['is_approved' => false]);
-            } elseif ($reportable instanceof UsedThreadMessage) {
-                $reportable->update(['body' => '[Message removed by moderation]']);
-            }
+
+            $lockedReport->update([
+                'status' => $action === 'dismiss' ? 'dismissed' : 'action_taken',
+                'action_taken' => $action,
+                'admin_notes' => $notes,
+                'resolved_by' => auth()->id(),
+                'resolved_at' => now(),
+            ]);
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'auditable_type' => $lockedReport->reportable_type,
+                'auditable_id' => $lockedReport->reportable_id,
+                'action' => 'moderation_' . $action,
+                'new_values' => ['report_id' => $lockedReport->id, 'status' => $lockedReport->status, 'notes' => $notes],
+                'ip_address' => $request->ip(),
+            ]);
+
+            return 'resolved';
+        });
+
+        if ($outcome === 'already_resolved') {
+            return back()->with('info', 'This moderation report has already been resolved.');
         }
-
-        $report->update([
-            'status' => $action === 'dismiss' ? 'dismissed' : 'action_taken',
-            'action_taken' => $action,
-            'admin_notes' => $notes,
-            'resolved_by' => auth()->id(),
-            'resolved_at' => now(),
-        ]);
-
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'auditable_type' => $report->reportable_type,
-            'auditable_id' => $report->reportable_id,
-            'action' => 'moderation_' . $action,
-            'new_values' => ['report_id' => $report->id, 'status' => $report->status, 'notes' => $notes],
-            'ip_address' => $request->ip(),
-        ]);
 
         return back()->with('success', 'Report has been processed and status updated.');
     }
@@ -805,10 +836,30 @@ class AdminController extends Controller
 
         $name = $user->name ?: $user->email;
 
-        // If user is a vendor, delete or detach vendor
+        // If user is a vendor, deactivate/suspend subscriptions and delete vendor
         if ($user->vendor) {
-            $user->vendor->products()->delete();
+            \App\Models\VendorSubscription::where('vendor_id', $user->vendor->id)
+                ->whereIn('status', ['active', 'grace', 'pending'])
+                ->update(['status' => 'suspended']);
+            $user->vendor->products()->withoutGlobalScopes()->delete();
             $user->vendor->delete();
+        }
+
+        // Deactivate peer-to-peer Used ads and take delivery partner offline cleanly
+        Product::withoutGlobalScopes()
+            ->where('user_id', $user->id)
+            ->where('status', '!=', 'inactive')
+            ->update(['status' => 'inactive', 'used_status' => 'removed']);
+
+        if ($user->deliveryPartner) {
+            $user->deliveryPartner->update([
+                'is_online' => false,
+                'is_verified' => false,
+            ]);
+        }
+
+        if ($user->avatar && str_starts_with((string) $user->avatar, 'avatars/')) {
+            k71_delete_public_storage($user->avatar);
         }
 
         // Delete user's cart, sessions, etc.
@@ -818,7 +869,9 @@ class AdminController extends Controller
         DB::table('carts')->where('user_id', $user->id)->delete();
         DB::table('wishlists')->where('user_id', $user->id)->delete();
 
+        $user->update(['remember_token' => null]);
         $user->delete();
+        \App\Http\Controllers\SitemapController::clearCache();
 
         return back()->with('success', "User '{$name}' (ID #{$user->id}) was permanently deleted by Master Admin.");
     }

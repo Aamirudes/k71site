@@ -121,7 +121,10 @@ class UsedListingController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|min:4|max:180',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => [
+                'nullable',
+                \Illuminate\Validation\Rule::exists('categories', 'id')->where(fn ($q) => $q->where('vertical', 'used')),
+            ],
             'category' => 'nullable|string|max:120',
             'description' => ($isDraft ? 'nullable' : 'required') . '|string|max:5000',
             'brand' => 'nullable|string|max:100',
@@ -460,12 +463,21 @@ class UsedListingController extends Controller
 
         $action = $request->input('action', 'save');
         $commercialVendor = ($user->vendor && $user->vendor->vendor_type === 'used') ? $user->vendor : null;
-        if ($commercialVendor && $action === 'publish') {
+        $uploadedPhotos = $request->file('photos', []);
+        $newPhotoCount = is_array($uploadedPhotos) ? count(array_filter($uploadedPhotos, fn ($f) => $f && $f->isValid())) : 0;
+        $removeIds = array_map('intval', (array) $request->input('remove_images', []));
+        $remainingExistingCount = empty($removeIds)
+            ? $product->images()->count()
+            : $product->images()->whereNotIn('id', $removeIds)->count();
+        $projectedImageCount = $remainingExistingCount + $newPhotoCount;
+        $willBeActive = $action === 'publish' || ($action === 'save' && $product->status === 'active');
+
+        if ($commercialVendor && ($willBeActive || $newPhotoCount > 0)) {
             $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
                 $commercialVendor,
                 'used',
-                true,
-                count($request->file('photos', [])) + $product->images()->count(),
+                $willBeActive,
+                $projectedImageCount,
                 0,
                 $product->id,
                 []

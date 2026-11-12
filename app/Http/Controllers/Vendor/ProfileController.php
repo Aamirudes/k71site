@@ -60,49 +60,84 @@ class ProfileController extends Controller
             'store_policies' => ['nullable', 'string', 'max:3000'],
         ]);
 
-        if ($request->hasFile('logo')) {
-            if ($vendor->logo) {
-                k71_delete_public_storage($vendor->logo);
+        if ($request->filled('vendor_type') && $request->input('vendor_type') !== $vendor->vendor_type) {
+            $sectorRegistry = app(\App\Services\Monetization\SectorRegistryService::class);
+            $requestedSector = $sectorRegistry->normalizeSectorKey((string) $request->input('vendor_type'));
+            $currentSector = $vendor->getCanonicalSectorKey();
+
+            $hasExistingOperations = $vendor->products()->withoutGlobalScopes()->exists()
+                || \App\Models\VendorSubscription::where('vendor_id', $vendor->id)
+                    ->whereIn('status', ['active', 'grace'])
+                    ->exists();
+
+            if ($hasExistingOperations && $requestedSector !== $currentSector) {
+                return back()->withInput()->withErrors([
+                    'vendor_type' => 'Business category cannot be switched across sectors after listings or subscriptions exist. Contact admin support.',
+                ]);
             }
-            $validated['logo'] = $request->file('logo')->store('vendors/' . $vendor->id, 'public');
-            k71_sync_public_storage($validated['logo']);
         }
 
-        if ($request->hasFile('banner')) {
-            if ($vendor->banner) {
-                k71_delete_public_storage($vendor->banner);
+        $oldLogo = $vendor->logo;
+        $oldBanner = $vendor->banner;
+        $newLogo = null;
+        $newBanner = null;
+
+        try {
+            if ($request->hasFile('logo')) {
+                $newLogo = $request->file('logo')->store('vendors/' . $vendor->id, 'public');
+                k71_sync_public_storage($newLogo);
+                $validated['logo'] = $newLogo;
             }
-            $validated['banner'] = $request->file('banner')->store('vendors/' . $vendor->id, 'public');
-            k71_sync_public_storage($validated['banner']);
+
+            if ($request->hasFile('banner')) {
+                $newBanner = $request->file('banner')->store('vendors/' . $vendor->id, 'public');
+                k71_sync_public_storage($newBanner);
+                $validated['banner'] = $newBanner;
+            }
+
+            // Merge social links & storefront customizations into social_links json
+            $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode((string) ($vendor->social_links ?? ''), true) ?: []);
+            $social['tagline'] = $request->input('tagline');
+            $social['custom_badge'] = $request->input('custom_badge');
+            $social['announcement_bar'] = $request->input('announcement_bar');
+            $social['announcement_bar_enabled'] = $request->has('announcement_bar_enabled');
+            $social['announcement_emoji'] = $request->input('announcement_emoji', '✨');
+            $social['announcement_link'] = $request->input('announcement_link');
+            $social['established_year'] = $request->input('established_year');
+            $social['craft_specialty'] = $request->input('craft_specialty');
+            $social['craft_highlight_1'] = $request->input('craft_highlight_1');
+            $social['craft_highlight_2'] = $request->input('craft_highlight_2');
+            $social['craft_highlight_3'] = $request->input('craft_highlight_3');
+            $social['show_stats_strip'] = $request->has('show_stats_strip');
+            $social['show_whatsapp_button'] = $request->has('show_whatsapp_button');
+            $social['show_spotlight'] = $request->has('show_spotlight');
+            $social['text_preset'] = $request->input('text_preset', 'obsidian');
+            $social['instagram'] = $request->input('instagram');
+            $social['whatsapp'] = $request->input('whatsapp');
+            $social['website'] = $request->input('website');
+            $validated['social_links'] = $social;
+
+            if (!empty($validated['gstin'])) {
+                $validated['gstin'] = strtoupper(trim((string) $validated['gstin']));
+            }
+
+            $vendor->update($validated);
+        } catch (\Throwable $e) {
+            if ($newLogo) {
+                k71_delete_public_storage($newLogo);
+            }
+            if ($newBanner) {
+                k71_delete_public_storage($newBanner);
+            }
+            throw $e;
         }
 
-        // Merge social links & storefront customizations into social_links json
-        $social = is_array($vendor->social_links) ? $vendor->social_links : (json_decode((string) ($vendor->social_links ?? ''), true) ?: []);
-        $social['tagline'] = $request->input('tagline');
-        $social['custom_badge'] = $request->input('custom_badge');
-        $social['announcement_bar'] = $request->input('announcement_bar');
-        $social['announcement_bar_enabled'] = $request->has('announcement_bar_enabled');
-        $social['announcement_emoji'] = $request->input('announcement_emoji', '✨');
-        $social['announcement_link'] = $request->input('announcement_link');
-        $social['established_year'] = $request->input('established_year');
-        $social['craft_specialty'] = $request->input('craft_specialty');
-        $social['craft_highlight_1'] = $request->input('craft_highlight_1');
-        $social['craft_highlight_2'] = $request->input('craft_highlight_2');
-        $social['craft_highlight_3'] = $request->input('craft_highlight_3');
-        $social['show_stats_strip'] = $request->has('show_stats_strip');
-        $social['show_whatsapp_button'] = $request->has('show_whatsapp_button');
-        $social['show_spotlight'] = $request->has('show_spotlight');
-        $social['text_preset'] = $request->input('text_preset', 'obsidian');
-        $social['instagram'] = $request->input('instagram');
-        $social['whatsapp'] = $request->input('whatsapp');
-        $social['website'] = $request->input('website');
-        $validated['social_links'] = $social;
-
-        if (!empty($validated['gstin'])) {
-            $validated['gstin'] = strtoupper(trim((string) $validated['gstin']));
+        if ($newLogo && $oldLogo && $oldLogo !== $newLogo) {
+            k71_delete_public_storage($oldLogo);
         }
-
-        $vendor->update($validated);
+        if ($newBanner && $oldBanner && $oldBanner !== $newBanner) {
+            k71_delete_public_storage($oldBanner);
+        }
         $vendor->bumpWebsiteCache();
         \App\Http\Controllers\SitemapController::clearCache();
 

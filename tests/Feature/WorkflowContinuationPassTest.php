@@ -2716,4 +2716,368 @@ class WorkflowContinuationPassTest extends TestCase
         $toggleRes->assertOk()
             ->assertJson(['success' => true, 'is_wishlisted' => true, 'count' => 1]);
     }
+
+    public function test_workflow_60_61_62_63_64_used_leaks_tx_locks_renewals_moderation_and_profile(): void
+    {
+        // Workflow 60: UsedController hides suspended commercial listings from counts, similarItems & sellerOtherAds + escapes LIKE wildcards
+        $usedCat = Category::firstOrCreate(['slug' => 'used-mobiles-wf60'], ['name' => 'Used Mobiles', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $suspUser = User::factory()->create(['email_verified_at' => now()]);
+        $suspVendor = Vendor::create([
+            'user_id' => $suspUser->id,
+            'shop_name' => 'Suspended Mobile Hub WF60',
+            'slug' => 'susp-mobile-wf60',
+            'vendor_type' => 'used',
+            'city' => 'Pune',
+            'status' => 'suspended',
+        ]);
+        Product::create([
+            'vendor_id' => $suspVendor->id,
+            'user_id' => $suspUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Ghost Suspended Phone WF60',
+            'slug' => 'ghost-suspended-phone-wf60',
+            'description' => 'Should stay hidden everywhere',
+            'base_price' => 1500000,
+            'total_stock' => 1,
+            'city' => 'Pune',
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $publicAd = Product::create([
+            'user_id' => $this->buyer->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Legit Clean Pixel 8 WF60',
+            'slug' => 'legit-clean-pixel-8-wf60',
+            'description' => 'Clean unit in Pune',
+            'base_price' => 3500000,
+            'total_stock' => 1,
+            'city' => 'Pune',
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+
+        $this->get(route('used.index', ['city' => 'Pune']))
+            ->assertOk()
+            ->assertSee('Legit Clean Pixel 8 WF60')
+            ->assertDontSee('Ghost Suspended Phone WF60');
+        $this->get(route('used.index', ['search' => '%%%']))
+            ->assertOk()
+            ->assertDontSee('Legit Clean Pixel 8 WF60');
+        $this->get(route('used.show', $publicAd->slug))
+            ->assertOk()
+            ->assertDontSee('Ghost Suspended Phone WF60');
+
+        // Workflow 61: UsedTransactionController cancel idempotency & atomic lock
+        $tx = \App\Models\UsedTransaction::create([
+            'transaction_number' => 'K71U-WF61TX',
+            'product_id' => $publicAd->id,
+            'seller_id' => $this->buyer->id,
+            'buyer_id' => $this->vendorUser->id,
+            'agreed_price' => 3300000,
+            'quantity' => 1,
+            'status' => 'reserved',
+            'reserved_at' => now(),
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('used.transactions.cancel', $tx))
+            ->assertSessionHas('success');
+        $this->assertSame('cancelled', $tx->fresh()->status);
+        $this->actingAs($this->vendorUser)
+            ->post(route('used.transactions.cancel', $tx))
+            ->assertSessionHas('info');
+        $this->actingAs($this->buyer)
+            ->post(route('used.transactions.complete', $tx))
+            ->assertSessionHas('error');
+
+        // Workflow 62: SubscriptionController rejects inactive plan, deduplicates pending requests & notifies admin
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
+        $admin->roles()->attach($adminRole->id);
+
+        $inactivePlan = \App\Models\SubscriptionPlan::create([
+            'name' => 'Archived Pro Plan WF62',
+            'slug' => 'archived-pro-wf62-' . uniqid(),
+            'sector_key' => 'products',
+            'status' => 'archived',
+            'billing_cycle' => 'monthly',
+            'price_paise' => 99900,
+            'duration_days' => 30,
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.subscription.request_renewal'), [
+                'sector_key' => 'products',
+                'requested_plan_id' => $inactivePlan->id,
+            ])
+            ->assertSessionHas('error');
+
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.subscription.request_renewal'), [
+                'sector_key' => 'products',
+                'message' => 'Please renew our boutique plan',
+            ])
+            ->assertSessionHas('success');
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.subscription.request_renewal'), [
+                'sector_key' => 'products',
+                'message' => 'Duplicate click',
+            ])
+            ->assertSessionHas('info');
+        $this->assertSame(1, \App\Models\SubscriptionRenewalRequest::where('vendor_id', $this->vendor->id)->where('status', 'pending')->count());
+        $this->assertGreaterThanOrEqual(1, \Illuminate\Support\Facades\DB::table('notifications')->where('notifiable_id', $admin->id)->count());
+
+        // Workflow 63: AdminController resolveReport recalculates product review stats + deleteUser cleans up fleet & Used ads
+        $retCat = Category::firstOrCreate(['slug' => 'fashion-wf63'], ['name' => 'Fashion WF63', 'vertical' => 'products', 'is_active' => true, 'sort_order' => 1]);
+        $reviewedProd = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $retCat->id,
+            'vertical' => 'products',
+            'listing_type' => 'purchase',
+            'title' => 'Linen Shirt WF63',
+            'slug' => 'linen-shirt-wf63',
+            'description' => 'Pure linen',
+            'base_price' => 120000,
+            'total_stock' => 5,
+            'status' => 'active',
+            'avg_rating' => 1.0,
+            'review_count' => 1,
+        ]);
+        $badReview = \App\Models\Review::create([
+            'product_id' => $reviewedProd->id,
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->buyer->id,
+            'rating' => 1,
+            'body' => 'Abusive spam review',
+            'is_approved' => true,
+        ]);
+        $report = \App\Models\Report::create([
+            'user_id' => $this->vendorUser->id,
+            'reportable_type' => \App\Models\Review::class,
+            'reportable_id' => $badReview->id,
+            'reason' => 'abuse',
+            'status' => 'pending',
+        ]);
+        $this->actingAs($admin)
+            ->post(route('admin.reports.resolve', $report), ['action' => 'delete_review'])
+            ->assertSessionHas('success');
+        $this->assertFalse((bool) $badReview->fresh()->is_approved);
+        $this->assertSame(0, (int) $reviewedProd->fresh()->review_count);
+        $this->assertNull($reviewedProd->fresh()->avg_rating);
+        $this->actingAs($admin)
+            ->post(route('admin.reports.resolve', $report), ['action' => 'dismiss'])
+            ->assertSessionHas('info');
+
+        $doomedUser = User::factory()->create(['email_verified_at' => now()]);
+        $doomedAd = Product::create([
+            'user_id' => $doomedUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Doomed Used Desk WF63',
+            'slug' => 'doomed-used-desk-wf63',
+            'description' => 'To be cleaned on delete',
+            'base_price' => 500000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $doomedFleet = \App\Models\DeliveryPartner::create([
+            'user_id' => $doomedUser->id,
+            'name' => 'Doomed Rider WF63',
+            'phone' => '9876543277',
+            'is_online' => true,
+            'is_verified' => true,
+        ]);
+        $this->actingAs($admin)
+            ->delete(route('admin.users.destroy', $doomedUser))
+            ->assertSessionHas('success');
+        $this->assertSame('inactive', Product::withoutGlobalScopes()->find($doomedAd->id)->status);
+        $this->assertFalse((bool) $doomedFleet->fresh()->is_online);
+        $this->assertFalse((bool) $doomedFleet->fresh()->is_verified);
+
+        // Workflow 64: Vendor ProfileController prevents cross-sector vendor_type switch once products/subs exist
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.profile.update'), [
+                'shop_name' => $this->vendor->shop_name,
+                'vendor_type' => 'food',
+            ])
+            ->assertSessionHasErrors(['vendor_type']);
+        $this->assertNotSame('food', $this->vendor->fresh()->vendor_type);
+    }
+
+    public function test_workflow_65_66_67_68_69_settings_bulk_delete_studio_services_and_used_validation(): void
+    {
+        // Workflow 65: Vendor SettingsController normalizes serviceable_pincodes safely
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.settings.update'), [
+                'payment_mode' => 'both',
+                'upi_id' => 'vendor65@okaxis',
+                'serviceable_pincodes' => ' 302001, 302002 , 302001 , 110001 ',
+            ])
+            ->assertSessionHas('success');
+        $settings = $this->vendor->fresh()->settings;
+        $this->assertSame(['302001', '302002', '110001'], json_decode($settings->serviceable_pincodes, true));
+
+        // Workflow 66: Vendor ProductController bulk delete & destroy archive products with OrderItems instead of purging history
+        $cat = Category::firstOrCreate(['slug' => 'products-wf66'], ['name' => 'Products WF66', 'vertical' => 'products', 'is_active' => true, 'sort_order' => 1]);
+        $orderedProd = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $cat->id,
+            'vertical' => 'products',
+            'listing_type' => 'purchase',
+            'title' => 'Ordered Ceramic Bowl WF66',
+            'slug' => 'ordered-bowl-wf66',
+            'description' => 'Purchased item',
+            'base_price' => 45000,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+        $freeProd = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $cat->id,
+            'vertical' => 'products',
+            'listing_type' => 'purchase',
+            'title' => 'Unordered Draft Bowl WF66',
+            'slug' => 'unordered-bowl-wf66',
+            'description' => 'Never ordered',
+            'base_price' => 45000,
+            'total_stock' => 5,
+            'status' => 'draft',
+        ]);
+        $ord = Order::create([
+            'order_number' => 'ORD-WF66-LOCK',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 45000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 45000,
+            'item_count' => 1,
+            'status' => 'delivered',
+            'payment_method' => 'cod',
+            'payment_status' => 'paid',
+            'address_snapshot' => ['shipping' => ['city' => 'Jaipur']],
+        ]);
+        \App\Models\OrderItem::create([
+            'order_id' => $ord->id,
+            'product_id' => $orderedProd->id,
+            'snapshot' => ['title' => $orderedProd->title],
+            'quantity' => 1,
+            'unit_price' => 45000,
+            'tax_amount' => 0,
+            'gst_rate' => 0,
+            'total_price' => 45000,
+        ]);
+
+        $bulkDelRes = $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.bulk_action'), [
+                'action' => 'delete',
+                'product_ids' => [$orderedProd->id, $freeProd->id],
+            ]);
+        $bulkDelRes->assertRedirect();
+        $bulkDelRes->assertSessionHas('success');
+        $this->assertNull(Product::withoutGlobalScopes()->find($freeProd->id));
+        $archivedOrdered = Product::withoutGlobalScopes()->find($orderedProd->id);
+        $this->assertNotNull($archivedOrdered);
+        $this->assertSame('archived', $archivedOrdered->status);
+
+        // Workflow 67: Vendor ServiceStudioController duplicate requires sector entitlement
+        $svcUser = User::factory()->create(['email_verified_at' => now()]);
+        $svcVendor = Vendor::create([
+            'user_id' => $svcUser->id,
+            'shop_name' => 'Studio WF67',
+            'slug' => 'studio-wf67',
+            'vendor_type' => 'services',
+            'status' => 'approved',
+        ]);
+        $svcCat = Category::firstOrCreate(['slug' => 'design-wf67'], ['name' => 'Design WF67', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+        $gig = Product::create([
+            'vendor_id' => $svcVendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'gig',
+            'title' => 'Brand Identity Kit WF67',
+            'slug' => 'brand-identity-wf67',
+            'description' => 'Custom brand identity system',
+            'base_price' => 500000,
+            'status' => 'active',
+        ]);
+        $this->actingAs($svcUser)
+            ->post(route('vendor.services.duplicate', $gig))
+            ->assertSessionHas('error');
+        $this->assertSame(1, Product::withoutGlobalScopes()->where('vendor_id', $svcVendor->id)->count());
+
+        $this->grantVendorTestSubscription($svcVendor, 'services');
+        $this->actingAs($svcUser)
+            ->post(route('vendor.services.duplicate', $gig))
+            ->assertSessionHas('success');
+        $this->assertSame(2, Product::withoutGlobalScopes()->where('vendor_id', $svcVendor->id)->count());
+
+        // Workflow 68: ServicesController escapes LIKE wildcards & preserves existing multi-sector vendor_type
+        $this->get(route('services.index', ['search' => '%%%']))
+            ->assertOk()
+            ->assertDontSee('Brand Identity Kit WF67');
+
+        $this->actingAs($this->vendorUser)
+            ->post(route('services.store_seller'), [
+                'shop_name' => $this->vendor->shop_name,
+                'tagline' => 'Custom Boutique Tailoring',
+                'description' => 'Tailoring and alterations',
+                'skills' => 'Tailoring, Alterations',
+            ])
+            ->assertRedirect();
+        $freshRetailVendor = $this->vendor->fresh();
+        $this->assertNotSame('service', $freshRetailVendor->vendor_type);
+        $this->assertContains('services', (array) $freshRetailVendor->operating_sectors);
+
+        // Workflow 69: UsedListingController rejects non-used category_id on store & enforces media check on commercial update
+        $this->actingAs($this->buyer)
+            ->postJson(route('used.sell.store'), [
+                'title' => 'Wrong Category Camera WF69',
+                'category_id' => $cat->id,
+                'description' => 'Trying retail category in used route',
+                'price' => 12000,
+                'city' => 'Mumbai',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['category_id']);
+
+        $usedCat = Category::firstOrCreate(['slug' => 'used-elec-wf69'], ['name' => 'Used Elec WF69', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $commUsedUser = User::factory()->create(['email_verified_at' => now()]);
+        $commUsedVendor = Vendor::create([
+            'user_id' => $commUsedUser->id,
+            'shop_name' => 'Refurbished Hub WF69',
+            'slug' => 'refurbished-hub-wf69',
+            'vendor_type' => 'used',
+            'status' => 'suspended',
+        ]);
+        $commAd = Product::create([
+            'vendor_id' => $commUsedVendor->id,
+            'user_id' => $commUsedUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Refurbished ThinkPad WF69',
+            'slug' => 'refurbished-thinkpad-wf69',
+            'description' => 'Suspended vendor edit check',
+            'base_price' => 2500000,
+            'total_stock' => 1,
+            'city' => 'Bengaluru',
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $this->actingAs($commUsedUser)
+            ->putJson(route('used.update', $commAd), [
+                'action' => 'save',
+                'title' => 'Refurbished ThinkPad Updated WF69',
+                'category_id' => $usedCat->id,
+                'description' => 'Should be blocked while suspended',
+                'price' => 24000,
+                'city' => 'Bengaluru',
+            ])
+            ->assertStatus(403);
+    }
 }

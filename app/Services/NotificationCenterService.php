@@ -64,5 +64,29 @@ class NotificationCenterService
             return false;
         }
     }
+
+    /**
+     * Dispatch a notification to all admin users.
+     */
+    public function notifyAdmins(
+        string $icon,
+        string $title,
+        string $message,
+        string $url = '/admin',
+        string $category = 'admin',
+        ?string $dedupeKey = null
+    ): void {
+        try {
+            $adminIds = User::whereHas('roles', fn ($q) => $q->where('name', 'admin'))
+                ->pluck('id')
+                ->all();
+
+            foreach ($adminIds as $adminId) {
+                $this->notifyUser((int) $adminId, $icon, $title, $message, $url, $category, $dedupeKey);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
 }
 

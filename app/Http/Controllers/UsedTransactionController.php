@@ -29,21 +29,23 @@ class UsedTransactionController extends Controller
             abort(403, 'Only the seller can mark this handover complete.');
         }
 
-        if ($transaction->isCompleted()) {
-            return back()->with('success', 'This transaction is already completed.');
-        }
-        if ($transaction->isCancelled()) {
-            return back()->with('error', 'Cannot complete a cancelled reservation.');
-        }
+        $outcome = DB::transaction(function () use ($transaction, $user, $request) {
+            $locked = UsedTransaction::whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
-        DB::transaction(function () use ($transaction, $user, $request) {
-            $transaction->update([
+            if ($locked->isCompleted()) {
+                return ['status' => 'already_completed', 'tx' => $locked];
+            }
+            if ($locked->isCancelled()) {
+                return ['status' => 'cancelled', 'tx' => $locked];
+            }
+
+            $locked->update([
                 'status' => 'completed',
                 'completed_at' => now(),
-                'seller_notes' => $request->input('seller_notes', $transaction->seller_notes),
+                'seller_notes' => $request->input('seller_notes', $locked->seller_notes),
             ]);
 
-            $product = $transaction->product()->lockForUpdate()->first();
+            $product = $locked->product()->lockForUpdate()->first();
             if ($product) {
                 $product->markAsSold();
                 UsedThread::where('product_id', $product->id)->update(['status' => 'locked']);
@@ -56,19 +58,29 @@ class UsedTransactionController extends Controller
             AuditLog::create([
                 'user_id' => $user->id,
                 'auditable_type' => UsedTransaction::class,
-                'auditable_id' => $transaction->id,
+                'auditable_id' => $locked->id,
                 'action' => 'used_transaction_completed',
-                'new_values' => ['status' => 'completed', 'agreed_price' => $transaction->agreed_price],
+                'new_values' => ['status' => 'completed', 'agreed_price' => $locked->agreed_price],
                 'ip_address' => $request->ip(),
             ]);
+
+            return ['status' => 'ok', 'tx' => $locked];
         });
 
-        $this->usedService->recalculateSellerStats($transaction->seller_id);
+        if ($outcome['status'] === 'already_completed') {
+            return back()->with('success', 'This transaction is already completed.');
+        }
+        if ($outcome['status'] === 'cancelled') {
+            return back()->with('error', 'Cannot complete a cancelled reservation.');
+        }
+
+        $locked = $outcome['tx'];
+        $this->usedService->recalculateSellerStats($locked->seller_id);
         $this->usedService->notifyUser(
-            $transaction->buyer_id,
+            $locked->buyer_id,
             '⭐',
             'Handover Completed — Leave a Review',
-            "Your purchase of \"{$transaction->product?->title}\" has been marked completed. You can now rate the seller.",
+            "Your purchase of \"{$locked->product?->title}\" has been marked completed. You can now rate the seller.",
             route('used.dashboard', ['tab' => 'buyer'])
         );
 
@@ -89,20 +101,25 @@ class UsedTransactionController extends Controller
             abort(403, 'Unauthorized to cancel this reservation.');
         }
 
-        if ($transaction->isCompleted()) {
-            return back()->with('error', 'Completed transactions cannot be cancelled.');
-        }
+        $outcome = DB::transaction(function () use ($transaction, $user, $request) {
+            $locked = UsedTransaction::whereKey($transaction->id)->lockForUpdate()->firstOrFail();
 
-        DB::transaction(function () use ($transaction, $user, $request) {
-            $transaction->update([
+            if ($locked->isCompleted()) {
+                return ['status' => 'completed', 'tx' => $locked];
+            }
+            if ($locked->isCancelled()) {
+                return ['status' => 'already_cancelled', 'tx' => $locked];
+            }
+
+            $locked->update([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
             ]);
 
-            $product = $transaction->product()->lockForUpdate()->first();
+            $product = $locked->product()->lockForUpdate()->first();
             if ($product && !$product->isSold()) {
                 $otherReserved = UsedTransaction::where('product_id', $product->id)
-                    ->where('id', '!=', $transaction->id)
+                    ->where('id', '!=', $locked->id)
                     ->where('status', 'reserved')
                     ->exists();
                 if (!$otherReserved) {
@@ -113,19 +130,29 @@ class UsedTransactionController extends Controller
             AuditLog::create([
                 'user_id' => $user->id,
                 'auditable_type' => UsedTransaction::class,
-                'auditable_id' => $transaction->id,
+                'auditable_id' => $locked->id,
                 'action' => 'used_transaction_cancelled',
                 'new_values' => ['status' => 'cancelled'],
                 'ip_address' => $request->ip(),
             ]);
+
+            return ['status' => 'ok', 'tx' => $locked];
         });
 
-        $peerId = (int) $user->id === (int) $transaction->seller_id ? $transaction->buyer_id : $transaction->seller_id;
+        if ($outcome['status'] === 'completed') {
+            return back()->with('error', 'Completed transactions cannot be cancelled.');
+        }
+        if ($outcome['status'] === 'already_cancelled') {
+            return back()->with('info', 'This reservation is already cancelled.');
+        }
+
+        $locked = $outcome['tx'];
+        $peerId = (int) $user->id === (int) $locked->seller_id ? $locked->buyer_id : $locked->seller_id;
         $this->usedService->notifyUser(
             $peerId,
             '↩️',
             'Reservation Cancelled',
-            "Reservation #{$transaction->transaction_number} for \"{$transaction->product?->title}\" was cancelled.",
+            "Reservation #{$locked->transaction_number} for \"{$locked->product?->title}\" was cancelled.",
             route('used.dashboard', ['tab' => 'transactions'])
         );
 

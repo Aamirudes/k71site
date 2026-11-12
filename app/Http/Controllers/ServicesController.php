@@ -52,14 +52,15 @@ class ServicesController extends Controller
         $visibility->scopeVisibleProducts($query, 'services');
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('brand', 'like', "%{$search}%")
-                  ->orWhereHas('vendor', function ($vq) use ($search) {
-                      $vq->where('shop_name', 'like', "%{$search}%")
-                         ->orWhere('tagline', 'like', "%{$search}%")
-                         ->orWhere('city', 'like', "%{$search}%");
+            $searchPattern = '%' . addcslashes((string) $search, '%_\\') . '%';
+            $query->where(function ($q) use ($searchPattern) {
+                $q->where('title', 'like', $searchPattern)
+                  ->orWhere('description', 'like', $searchPattern)
+                  ->orWhere('brand', 'like', $searchPattern)
+                  ->orWhereHas('vendor', function ($vq) use ($searchPattern) {
+                      $vq->where('shop_name', 'like', $searchPattern)
+                         ->orWhere('tagline', 'like', $searchPattern)
+                         ->orWhere('city', 'like', $searchPattern);
                   });
             });
         }
@@ -362,6 +363,16 @@ class ServicesController extends Controller
                 ]);
             }
         } else {
+            $existingSectors = is_array($vendor->operating_sectors) ? $vendor->operating_sectors : [];
+            $primarySector = $vendor->getCanonicalSectorKey();
+            $mergedSectors = array_values(array_unique(array_filter(array_merge([$primarySector], $existingSectors, ['services']))));
+            $hasNonServiceOperations = $primarySector !== 'services'
+                && ($vendor->products()->withoutGlobalScopes()->where('vertical', '!=', 'services')->exists()
+                    || \App\Models\VendorSubscription::where('vendor_id', $vendor->id)
+                        ->whereIn('status', ['active', 'grace'])
+                        ->where('sector_key', '!=', 'services')
+                        ->exists());
+
             $vendor->update([
                 'shop_name' => $validated['shop_name'],
                 'tagline' => $validated['tagline'],
@@ -371,7 +382,8 @@ class ServicesController extends Controller
                 'hourly_rate' => $validated['hourly_rate'] ?? $vendor->hourly_rate,
                 'city' => $validated['city'] ?? $vendor->city,
                 'contact_phone' => $cleanPhone ?? $vendor->contact_phone,
-                'vendor_type' => 'service',
+                'vendor_type' => $hasNonServiceOperations ? $vendor->vendor_type : 'service',
+                'operating_sectors' => $mergedSectors,
             ]);
         }
 

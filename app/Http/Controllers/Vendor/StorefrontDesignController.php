@@ -437,6 +437,10 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
+        $oldLogoToDelete = null;
+        $oldBannerToDelete = null;
+        $newUploadedPaths = [];
+
         try {
             $request->validate([
                 'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,avif|max:8192',
@@ -462,10 +466,11 @@ class StorefrontDesignController extends Controller
         // Store Logo File Upload
         if ($request->hasFile('logo')) {
             if ($vendor->logo) {
-                k71_delete_public_storage($vendor->logo);
+                $oldLogoToDelete = $vendor->logo;
             }
             $path = $request->file('logo')->store('vendors/' . $vendor->id . '/logo', 'public');
             $mirrorToPublic($path);
+            $newUploadedPaths[] = $path;
             $logoUrl = '/storage/' . $path;
             $vendor->logo = $path;
             $currentConfig['brand']['logo_url'] = $logoUrl;
@@ -474,10 +479,11 @@ class StorefrontDesignController extends Controller
         // Store Banner File Upload
         if ($request->hasFile('banner')) {
             if ($vendor->banner) {
-                k71_delete_public_storage($vendor->banner);
+                $oldBannerToDelete = $vendor->banner;
             }
             $path = $request->file('banner')->store('vendors/' . $vendor->id . '/banner', 'public');
             $mirrorToPublic($path);
+            $newUploadedPaths[] = $path;
             $bannerUrl = '/storage/' . $path;
             $vendor->banner = $path;
             $currentConfig['brand']['banner_url'] = $bannerUrl;
@@ -757,12 +763,22 @@ class StorefrontDesignController extends Controller
         $vendor->save();
         $vendor->bumpWebsiteCache();
 
+        if ($oldLogoToDelete) {
+            k71_delete_public_storage($oldLogoToDelete);
+        }
+        if ($oldBannerToDelete) {
+            k71_delete_public_storage($oldBannerToDelete);
+        }
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Storefront essentials & customer stories saved and published live!',
                 'public_url' => $vendor->storefront_url,
             ]);
         } catch (\Throwable $e) {
+            foreach ($newUploadedPaths as $upPath) {
+                k71_delete_public_storage($upPath);
+            }
             \Illuminate\Support\Facades\Log::error('Error saving quick settings: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json([
                 'status' => 'error',

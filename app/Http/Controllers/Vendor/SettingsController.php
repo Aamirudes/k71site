@@ -174,43 +174,60 @@ class SettingsController extends Controller
             }
         }
 
-        if ($request->hasFile('upi_qr_image')) {
-            if ($settings->upi_qr_image) {
-                k71_delete_public_storage($settings->upi_qr_image);
+        $oldUpiQr = $settings->upi_qr_image;
+        $newUpiQr = null;
+
+        try {
+            if ($request->hasFile('upi_qr_image')) {
+                $newUpiQr = $request->file('upi_qr_image')->store('vendors/' . $vendor->id, 'public');
+                k71_sync_public_storage($newUpiQr);
+                $validated['upi_qr_image'] = $newUpiQr;
             }
-            
-            $filename = $request->file('upi_qr_image')->store('vendors/' . $vendor->id, 'public');
-            k71_sync_public_storage($filename);
-            $validated['upi_qr_image'] = $filename;
+
+            if (!empty($validated['bank_ifsc'])) {
+                $validated['bank_ifsc'] = strtoupper(trim((string) $validated['bank_ifsc']));
+            }
+            if (array_key_exists('upi_id', $validated) && $validated['upi_id'] !== null) {
+                $validated['upi_id'] = trim((string) $validated['upi_id']) ?: null;
+            }
+
+            $validated['shipping_flat_rate'] = (isset($validated['shipping_flat_rate']) && $validated['shipping_flat_rate'] !== null && $validated['shipping_flat_rate'] !== '') ? (int) ($validated['shipping_flat_rate'] * 100) : 5000;
+            $validated['shipping_free_above'] = (isset($validated['shipping_free_above']) && $validated['shipping_free_above'] !== null && $validated['shipping_free_above'] !== '') ? (int) ($validated['shipping_free_above'] * 100) : null;
+            $validated['allow_customer_cancellation'] = $request->has('allow_customer_cancellation');
+            $validated['cancellation_window_hours'] = $request->input('cancellation_window_hours', 24);
+
+            if ($request->filled('serviceable_pincodes')) {
+                $rawPincodes = $request->input('serviceable_pincodes');
+                $decoded = is_string($rawPincodes) && str_starts_with(trim($rawPincodes), '[')
+                    ? json_decode($rawPincodes, true)
+                    : explode(',', (string) $rawPincodes);
+                $pincodes = array_values(array_unique(array_filter(array_map(
+                    static fn ($p) => preg_replace('/\s+/', '', (string) $p),
+                    is_array($decoded) ? $decoded : []
+                ), static fn ($p) => $p !== '')));
+                $validated['serviceable_pincodes'] = !empty($pincodes) ? json_encode($pincodes) : null;
+            } else {
+                $validated['serviceable_pincodes'] = null;
+            }
+
+            $newUpiId = $validated['upi_id'] ?? null;
+            if (!empty($newUpiId) && $settings->upi_id !== $newUpiId) {
+                $validated['upi_id_previous'] = $settings->upi_id;
+                $validated['upi_id_changed_at'] = now();
+            }
+
+            unset($validated['payment_mode'], $validated['pickup_address']);
+            $settings->update($validated);
+        } catch (\Throwable $e) {
+            if ($newUpiQr) {
+                k71_delete_public_storage($newUpiQr);
+            }
+            throw $e;
         }
 
-        if (!empty($validated['bank_ifsc'])) {
-            $validated['bank_ifsc'] = strtoupper(trim((string) $validated['bank_ifsc']));
+        if ($newUpiQr && $oldUpiQr && $oldUpiQr !== $newUpiQr) {
+            k71_delete_public_storage($oldUpiQr);
         }
-        if (array_key_exists('upi_id', $validated) && $validated['upi_id'] !== null) {
-            $validated['upi_id'] = trim((string) $validated['upi_id']) ?: null;
-        }
-
-        $validated['shipping_flat_rate'] = (isset($validated['shipping_flat_rate']) && $validated['shipping_flat_rate'] !== null && $validated['shipping_flat_rate'] !== '') ? (int) ($validated['shipping_flat_rate'] * 100) : 5000;
-        $validated['shipping_free_above'] = (isset($validated['shipping_free_above']) && $validated['shipping_free_above'] !== null && $validated['shipping_free_above'] !== '') ? (int) ($validated['shipping_free_above'] * 100) : null;
-        $validated['allow_customer_cancellation'] = $request->has('allow_customer_cancellation');
-        $validated['cancellation_window_hours'] = $request->input('cancellation_window_hours', 24);
-
-        if ($request->filled('serviceable_pincodes')) {
-            $pincodes = array_filter(array_map('trim', explode(',', $request->input('serviceable_pincodes'))));
-            $validated['serviceable_pincodes'] = !empty($pincodes) ? json_encode(array_values($pincodes)) : null;
-        } else {
-            $validated['serviceable_pincodes'] = null;
-        }
-
-        $newUpiId = $validated['upi_id'] ?? null;
-        if (!empty($newUpiId) && $settings->upi_id !== $newUpiId) {
-            $validated['upi_id_previous'] = $settings->upi_id;
-            $validated['upi_id_changed_at'] = now();
-        }
-
-        unset($validated['payment_mode'], $validated['pickup_address']);
-        $settings->update($validated);
         $vendor->bumpWebsiteCache();
 
         return back()->with('success', 'Operations & shipping pickup address updated successfully.');

@@ -56,14 +56,19 @@ class UsedController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $activeCountsByCat = Product::withoutGlobalScopes()
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $escapeLike = static fn (string $v): string => addcslashes($v, '%_\\');
+
+        $activeCountsQuery = Product::withoutGlobalScopes()
             ->select('category_id', DB::raw('COUNT(*) as aggregate'))
             ->where('vertical', 'used')
             ->where('status', 'active')
             ->where('is_sold', false)
             ->where(function ($q) {
                 $q->whereNull('used_status')->orWhere('used_status', 'active');
-            })
+            });
+        $visibility->scopeVisibleProducts($activeCountsQuery, 'used', true);
+        $activeCountsByCat = $activeCountsQuery
             ->groupBy('category_id')
             ->pluck('aggregate', 'category_id');
 
@@ -89,16 +94,21 @@ class UsedController extends Controller
 
         // Real city list from active listings + standard regional centers
         $defaultCities = collect(config('used_marketplace.default_cities', []));
-        $productCities = Product::withoutGlobalScopes()
+        $productCitiesQuery = Product::withoutGlobalScopes()
             ->where('vertical', 'used')
             ->where('status', 'active')
-            ->whereNotNull('city')
-            ->pluck('city')
-            ->unique();
-        $vendorCities = Vendor::whereHas('products', fn($q) => $q->where('vertical', 'used')->where('status', 'active'))
-            ->whereNotNull('city')
-            ->pluck('city')
-            ->unique();
+            ->where('is_sold', false)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
+            ->whereNotNull('city');
+        $visibility->scopeVisibleProducts($productCitiesQuery, 'used', true);
+        $productCities = $productCitiesQuery->pluck('city')->unique();
+
+        $vendorCitiesQuery = Vendor::whereHas('products', fn($q) => $q->where('vertical', 'used')->where('status', 'active'))
+            ->whereNotNull('city');
+        $visibility->scopeVisibleVendors($vendorCitiesQuery, 'used');
+        $vendorCities = $vendorCitiesQuery->pluck('city')->unique();
 
         $availableCities = $defaultCities
             ->merge($productCities)
@@ -107,8 +117,6 @@ class UsedController extends Controller
             ->filter()
             ->unique()
             ->values();
-
-        $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
         // Main discovery query
         $query = Product::withoutGlobalScopes()
@@ -131,29 +139,31 @@ class UsedController extends Controller
         }
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('brand', 'like', "%{$search}%")
-                  ->orWhere('model_name', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%")
-                  ->orWhere('locality', 'like', "%{$search}%")
-                  ->orWhere('tags', 'like', "%{$search}%")
-                  ->orWhereHas('category', fn($cq) => $cq->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%"))
-                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', "%{$search}%")->orWhere('city', 'like', "%{$search}%"))
-                  ->orWhereHas('sellerUser.usedSellerProfile', fn($sq) => $sq->where('display_name', 'like', "%{$search}%")->orWhere('handle', 'like', "%{$search}%"));
+            $searchPattern = '%' . $escapeLike($search) . '%';
+            $query->where(function ($q) use ($searchPattern) {
+                $q->where('title', 'like', $searchPattern)
+                  ->orWhere('description', 'like', $searchPattern)
+                  ->orWhere('brand', 'like', $searchPattern)
+                  ->orWhere('model_name', 'like', $searchPattern)
+                  ->orWhere('city', 'like', $searchPattern)
+                  ->orWhere('locality', 'like', $searchPattern)
+                  ->orWhere('tags', 'like', $searchPattern)
+                  ->orWhereHas('category', fn($cq) => $cq->where('name', 'like', $searchPattern)->orWhere('slug', 'like', $searchPattern))
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('shop_name', 'like', $searchPattern)->orWhere('city', 'like', $searchPattern))
+                  ->orWhereHas('sellerUser.usedSellerProfile', fn($sq) => $sq->where('display_name', 'like', $searchPattern)->orWhere('handle', 'like', $searchPattern));
             });
         }
 
         $activeCategoryObj = null;
         if ($selectedCategory !== '' && $selectedCategory !== 'all') {
+            $catPattern = '%' . $escapeLike($selectedCategory) . '%';
             $activeCategoryObj = Category::where('vertical', 'used')
-                ->where(function ($q) use ($selectedCategory) {
+                ->where(function ($q) use ($selectedCategory, $catPattern) {
                     $q->where('slug', $selectedCategory);
                     if (is_numeric($selectedCategory)) {
                         $q->orWhere('id', (int) $selectedCategory);
                     }
-                    $q->orWhere('name', 'like', "%{$selectedCategory}%");
+                    $q->orWhere('name', 'like', $catPattern);
                 })
                 ->with('children')
                 ->first();
@@ -162,10 +172,10 @@ class UsedController extends Controller
                 $catIds = $activeCategoryObj->children->pluck('id')->push($activeCategoryObj->id)->all();
                 $query->whereIn('category_id', $catIds);
             } else {
-                $query->where(function ($q) use ($selectedCategory) {
-                    $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', "%{$selectedCategory}%")->orWhere('name', 'like', "%{$selectedCategory}%"))
-                      ->orWhere('title', 'like', "%{$selectedCategory}%")
-                      ->orWhere('brand', 'like', "%{$selectedCategory}%");
+                $query->where(function ($q) use ($catPattern) {
+                    $q->whereHas('category', fn($cq) => $cq->where('slug', 'like', $catPattern)->orWhere('name', 'like', $catPattern))
+                      ->orWhere('title', 'like', $catPattern)
+                      ->orWhere('brand', 'like', $catPattern);
                 });
             }
         }
@@ -173,23 +183,25 @@ class UsedController extends Controller
         if ($condition !== '') {
             $normalizedGrade = $this->usedService->normalizeConditionGrade($condition);
             $aliases = config("used_marketplace.conditions.{$normalizedGrade}.aliases", [$condition]);
-            $query->where(function ($q) use ($normalizedGrade, $condition, $aliases) {
+            $condPattern = '%' . $escapeLike($condition) . '%';
+            $query->where(function ($q) use ($normalizedGrade, $condPattern, $aliases, $escapeLike) {
                 $q->where('condition_grade', $normalizedGrade)
-                  ->orWhere('custom_fields->condition', 'like', "%{$condition}%")
-                  ->orWhere('custom_fields->specs->Condition', 'like', "%{$condition}%");
+                  ->orWhere('custom_fields->condition', 'like', $condPattern)
+                  ->orWhere('custom_fields->specs->Condition', 'like', $condPattern);
                 foreach ($aliases as $alias) {
-                    $q->orWhere('custom_fields->condition', 'like', "%{$alias}%");
+                    $q->orWhere('custom_fields->condition', 'like', '%' . $escapeLike((string) $alias) . '%');
                 }
             });
         }
 
         if ($city !== '' && $city !== 'All India') {
             $cityClean = trim(explode(',', $city)[0]);
-            $query->where(function ($q) use ($cityClean) {
-                $q->where('city', 'like', "%{$cityClean}%")
-                  ->orWhere('locality', 'like', "%{$cityClean}%")
-                  ->orWhere('custom_fields->location', 'like', "%{$cityClean}%")
-                  ->orWhereHas('vendor', fn($vq) => $vq->where('city', 'like', "%{$cityClean}%"));
+            $cityPattern = '%' . $escapeLike($cityClean) . '%';
+            $query->where(function ($q) use ($cityPattern) {
+                $q->where('city', 'like', $cityPattern)
+                  ->orWhere('locality', 'like', $cityPattern)
+                  ->orWhere('custom_fields->location', 'like', $cityPattern)
+                  ->orWhereHas('vendor', fn($vq) => $vq->where('city', 'like', $cityPattern));
             });
         }
 
@@ -226,7 +238,7 @@ class UsedController extends Controller
         foreach ($specFilters as $sKey => $sVal) {
             $safeKey = preg_replace('/[^a-zA-Z0-9_\- ]/', '', (string) $sKey);
             if ($safeKey !== '') {
-                $query->where("custom_fields->specs->{$safeKey}", 'like', "%{$sVal}%");
+                $query->where("custom_fields->specs->{$safeKey}", 'like', '%' . $escapeLike((string) $sVal) . '%');
             }
         }
 
@@ -236,7 +248,7 @@ class UsedController extends Controller
         } elseif ($sort === 'price_high') {
             $query->orderBy('base_price', 'desc')->orderByDesc('created_at');
         } elseif ($sort === 'relevance' && $search !== '') {
-            $query->orderByRaw('CASE WHEN LOWER(title) LIKE ? THEN 0 ELSE 1 END', ['%' . strtolower($search) . '%'])
+            $query->orderByRaw('CASE WHEN LOWER(title) LIKE ? THEN 0 ELSE 1 END', ['%' . $escapeLike(strtolower($search)) . '%'])
                   ->orderByDesc('refreshed_at')
                   ->orderByDesc('created_at');
         } else {
@@ -262,7 +274,8 @@ class UsedController extends Controller
         $nearLocationItems = collect();
         if ($city !== '' && $city !== 'All India') {
             $cityClean = trim(explode(',', $city)[0]);
-            $nearLocationItems = Product::withoutGlobalScopes()
+            $nearPattern = '%' . $escapeLike($cityClean) . '%';
+            $nearLocationQuery = Product::withoutGlobalScopes()
                 ->with(['images', 'category', 'sellerUser.usedSellerProfile'])
                 ->where('vertical', 'used')
                 ->where('status', 'active')
@@ -270,26 +283,28 @@ class UsedController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('used_status')->orWhere('used_status', 'active');
                 })
-                ->where(function ($q) use ($cityClean) {
-                    $q->where('city', 'like', "%{$cityClean}%")
-                      ->orWhere('locality', 'like', "%{$cityClean}%");
-                })
-                ->latest()
-                ->take(4)
-                ->get();
+                ->where(function ($q) use ($nearPattern) {
+                    $q->where('city', 'like', $nearPattern)
+                      ->orWhere('locality', 'like', $nearPattern);
+                });
+            $visibility->scopeVisibleProducts($nearLocationQuery, 'used', true);
+            $nearLocationItems = $nearLocationQuery->latest()->take(4)->get();
         }
 
         // Recently viewed real items from session
         $recentIds = array_map('intval', (array) $request->session()->get('used_recently_viewed', []));
         $recentlyViewed = collect();
         if (!empty($recentIds)) {
-            $recentlyViewedMap = Product::withoutGlobalScopes()
+            $recentlyViewedQuery = Product::withoutGlobalScopes()
                 ->with(['images', 'category'])
                 ->where('vertical', 'used')
                 ->where('status', 'active')
-                ->whereIn('id', $recentIds)
-                ->get()
-                ->keyBy('id');
+                ->where(function ($q) {
+                    $q->whereNull('used_status')->orWhereIn('used_status', ['active', 'reserved']);
+                })
+                ->whereIn('id', $recentIds);
+            $visibility->scopeVisibleProducts($recentlyViewedQuery, 'used', true);
+            $recentlyViewedMap = $recentlyViewedQuery->get()->keyBy('id');
             $recentlyViewed = collect($recentIds)->map(fn($id) => $recentlyViewedMap->get($id))->filter()->values();
         }
 
@@ -308,7 +323,7 @@ class UsedController extends Controller
                 ->all();
         }
         if (!empty($signalCatIds)) {
-            $relevantRecommendations = Product::withoutGlobalScopes()
+            $relevantQuery = Product::withoutGlobalScopes()
                 ->with(['images', 'category', 'sellerUser.usedSellerProfile'])
                 ->where('vertical', 'used')
                 ->where('status', 'active')
@@ -317,10 +332,9 @@ class UsedController extends Controller
                     $q->whereNull('used_status')->orWhere('used_status', 'active');
                 })
                 ->whereIn('category_id', $signalCatIds)
-                ->when(!empty($recentIds), fn($q) => $q->whereNotIn('id', $recentIds))
-                ->latest()
-                ->take(4)
-                ->get();
+                ->when(!empty($recentIds), fn($q) => $q->whereNotIn('id', $recentIds));
+            $visibility->scopeVisibleProducts($relevantQuery, 'used', true);
+            $relevantRecommendations = $relevantQuery->latest()->take(4)->get();
         }
 
         // DB-backed saved IDs + Saved Searches + My Ads summary
@@ -422,7 +436,9 @@ class UsedController extends Controller
         $viewer = auth()->user();
         $isOwner = $product->isOwnedBy($viewer);
 
-        if ((!$product->isPubliclyVisible() || ($product->vendor_id && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product))) && !$isOwner) {
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $isOwnerOrAdmin = $viewer && ($product->isOwnedBy($viewer) || $viewer->hasRole('admin'));
+        if ((!$product->isPubliclyVisible() || ($product->vendor_id && !$visibility->isProductPubliclyVisible($product))) && !$isOwnerOrAdmin) {
             abort(404);
         }
 
@@ -436,21 +452,23 @@ class UsedController extends Controller
         $sellerOtherAds = collect();
         if ($ownerUser) {
             $ownerVendorId = $ownerUser->vendor?->id;
-            $sellerOtherAds = Product::withoutGlobalScopes()
+            $sellerOtherQuery = Product::withoutGlobalScopes()
                 ->with(['images', 'category'])
                 ->where('vertical', 'used')
                 ->where('id', '!=', $product->id)
                 ->where('status', 'active')
                 ->where('is_sold', false)
+                ->where(function ($q) {
+                    $q->whereNull('used_status')->orWhere('used_status', 'active');
+                })
                 ->where(function ($q) use ($ownerUser, $ownerVendorId) {
                     $q->where('user_id', $ownerUser->id);
                     if ($ownerVendorId) {
                         $q->orWhere('vendor_id', $ownerVendorId);
                     }
-                })
-                ->latest()
-                ->take(4)
-                ->get();
+                });
+            $visibility->scopeVisibleProducts($sellerOtherQuery, 'used', true);
+            $sellerOtherAds = $sellerOtherQuery->latest()->take(4)->get();
         }
 
         $sellerReviews = $ownerUser
@@ -462,7 +480,7 @@ class UsedController extends Controller
                 ->get()
             : collect();
 
-        $similarItems = Product::withoutGlobalScopes()
+        $similarQuery = Product::withoutGlobalScopes()
             ->with(['images', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active')
@@ -471,13 +489,12 @@ class UsedController extends Controller
                 $q->whereNull('used_status')->orWhere('used_status', 'active');
             })
             ->where('id', '!=', $product->id)
-            ->where('category_id', $product->category_id)
-            ->latest()
-            ->take(4)
-            ->get();
+            ->where('category_id', $product->category_id);
+        $visibility->scopeVisibleProducts($similarQuery, 'used', true);
+        $similarItems = $similarQuery->latest()->take(4)->get();
 
         if ($similarItems->isEmpty()) {
-            $similarItems = Product::withoutGlobalScopes()
+            $fallbackSimilarQuery = Product::withoutGlobalScopes()
                 ->with(['images', 'vendor', 'sellerUser.usedSellerProfile'])
                 ->where('vertical', 'used')
                 ->where('status', 'active')
@@ -485,10 +502,9 @@ class UsedController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('used_status')->orWhere('used_status', 'active');
                 })
-                ->where('id', '!=', $product->id)
-                ->latest()
-                ->take(4)
-                ->get();
+                ->where('id', '!=', $product->id);
+            $visibility->scopeVisibleProducts($fallbackSimilarQuery, 'used', true);
+            $similarItems = $fallbackSimilarQuery->latest()->take(4)->get();
         }
 
         $isSaved = false;

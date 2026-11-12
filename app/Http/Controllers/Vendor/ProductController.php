@@ -91,7 +91,7 @@ class ProductController extends Controller
 
         $search = trim((string) $request->query('search', ''));
         if ($search !== '') {
-            $wildcard = '%' . $search . '%';
+            $wildcard = '%' . addcslashes($search, '%_\\') . '%';
             $query->where(function ($q) use ($wildcard) {
                 $q->where('title', 'LIKE', $wildcard)
                   ->orWhere('sku', 'LIKE', $wildcard)
@@ -242,6 +242,20 @@ class ProductController extends Controller
                 $product->update(['status' => 'draft']);
                 $succeeded++;
             } elseif ($action === 'delete') {
+                $hasReferences = \App\Models\OrderItem::where('product_id', $product->id)->exists()
+                    || \App\Models\Booking::where('product_id', $product->id)->exists()
+                    || \App\Models\ServiceOrder::where('product_id', $product->id)->exists()
+                    || \App\Models\Bid::where('product_id', $product->id)->exists();
+
+                if ($hasReferences) {
+                    $product->update([
+                        'status' => 'archived',
+                        'total_stock' => 0,
+                    ]);
+                    $skipped[] = "{$product->title}: archived instead of purged to preserve order/booking history";
+                    continue;
+                }
+
                 $product->modifiers()->delete();
                 $product->optionGroups()->delete();
                 $product->gigPackages()->delete();
@@ -1482,6 +1496,20 @@ class ProductController extends Controller
 
         try {
             $productTitle = $product->title;
+            $hasReferences = \App\Models\OrderItem::where('product_id', $product->id)->exists()
+                || \App\Models\Booking::where('product_id', $product->id)->exists()
+                || \App\Models\ServiceOrder::where('product_id', $product->id)->exists()
+                || \App\Models\Bid::where('product_id', $product->id)->exists();
+
+            if ($hasReferences) {
+                $product->update([
+                    'status' => 'archived',
+                    'total_stock' => 0,
+                ]);
+                \App\Http\Controllers\SitemapController::clearCache();
+                return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has linked orders/bookings and was archived safely to preserve transaction records.");
+            }
+
             // Cleanly delete associated variants, add-ons, gig packages, images, and permanently remove product from site
             $product->modifiers()->delete();
             $product->optionGroups()->delete();
