@@ -165,6 +165,13 @@
                             <div class="flex flex-wrap items-center gap-2 mt-2">
                                 <span class="text-base font-black text-brand-text">₹{{ number_format($product->base_price / 100, 2) }}</span>
                                 <span class="text-xs font-semibold {{ $product->total_stock < 5 ? 'text-red-500' : 'text-gray-500' }}">Stock: {{ $product->total_stock }}</span>
+                                @if(!empty($completenessMap[$product->id]))
+                                    @php $comp = $completenessMap[$product->id]; @endphp
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $comp['badge_class'] }}"
+                                          title="{{ !empty($comp['missing']) ? 'Missing: ' . implode(', ', $comp['missing']) : 'Listing quality verified' }}">
+                                        {{ $comp['score'] }}% {{ $comp['grade'] }}
+                                    </span>
+                                @endif
                                 @if($product->vertical === 'food')
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border {{ $product->is_dish_available ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
                                         {{ $product->is_dish_available ? 'In Kitchen Stock' : 'Sold Out' }}
@@ -312,6 +319,16 @@
                                         <span>{{ $product->status === 'active' ? 'Live on Store' : 'Draft (Hidden)' }}</span>
                                     </button>
                                 </form>
+                                @if(!empty($completenessMap[$product->id]))
+                                    @php $comp = $completenessMap[$product->id]; @endphp
+                                    <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border {{ $comp['badge_class'] }}"
+                                          title="{{ !empty($comp['missing']) ? 'Improve by: ' . implode(' • ', $comp['missing']) : 'All key listing fields complete' }}">
+                                        <span>Readiness {{ $comp['score'] }}%</span>
+                                        @if(!empty($comp['missing']))
+                                            <span class="opacity-70">({{ count($comp['missing']) }} tip)</span>
+                                        @endif
+                                    </span>
+                                @endif
                                 @if($product->vertical === 'food')
                                     <form action="{{ route('vendor.products.toggle_availability', $product) }}" method="POST" class="inline">
                                         @csrf

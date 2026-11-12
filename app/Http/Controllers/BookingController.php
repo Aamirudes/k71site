@@ -4,20 +4,38 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Product;
+use App\Services\Monetization\EntitlementService;
+use App\Services\Monetization\VisibilityService;
+use App\Services\NotificationCenterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class BookingController extends Controller
 {
+    public function __construct(
+        protected VisibilityService $visibility,
+        protected EntitlementService $entitlements,
+        protected NotificationCenterService $notifications
+    ) {}
+
     /**
      * Store a new service booking appointment.
      */
     public function store(Request $request, Product $product): RedirectResponse
     {
-        if ($product->status !== 'active') {
+        if ($product->status !== 'active' || !$this->visibility->isProductPubliclyVisible($product)) {
             return back()->with('error', 'This service is currently not available for bookings.');
+        }
+
+        if ($product->vertical !== 'services' && !in_array($product->listing_type, ['booking', 'service', 'gig'], true)) {
+            return back()->with('error', 'Appointments can only be scheduled on eligible service listings.');
+        }
+
+        if (auth()->check() && $product->vendor && (int) $product->vendor->user_id === (int) auth()->id()) {
+            return back()->with('error', 'You cannot book an appointment for your own service.');
         }
 
         $validated = $request->validate([
@@ -29,6 +47,17 @@ class BookingController extends Controller
             'booking_slot' => 'required|string|max:60',
             'notes' => 'nullable|string|max:1000',
         ]);
+
+        // Prevent double-booking active time slots for the same service
+        $slotTaken = Booking::where('product_id', $product->id)
+            ->whereDate('booking_date', $validated['booking_date'])
+            ->where('booking_slot', trim($validated['booking_slot']))
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($slotTaken) {
+            return back()->withInput()->with('error', 'That time slot has already been requested or confirmed. Please choose another slot.');
+        }
 
         $bookingNumber = 'BK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
@@ -42,11 +71,22 @@ class BookingController extends Controller
             'customer_email' => $validated['customer_email'] ?? auth()->user()?->email,
             'service_address' => $validated['service_address'],
             'booking_date' => $validated['booking_date'],
-            'booking_slot' => $validated['booking_slot'],
+            'booking_slot' => trim($validated['booking_slot']),
             'total_amount' => $product->base_price,
             'status' => 'pending',
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        session()->put("guest_booking_{$booking->id}", true);
+
+        $this->notifications->notifyUser(
+            $product->vendor?->user_id,
+            '📅',
+            "New Booking Request #{$booking->booking_number}",
+            "{$validated['customer_name']} requested {$product->title} on {$booking->booking_date} ({$booking->booking_slot}).",
+            route('vendor.bookings.index'),
+            'service_booking'
+        );
 
         return redirect()->route('bookings.show', $booking->booking_number)
             ->with('success', 'Your appointment request has been submitted successfully! The professional will confirm shortly.');
@@ -58,10 +98,26 @@ class BookingController extends Controller
     public function show(string $booking_number): View
     {
         $booking = Booking::where('booking_number', $booking_number)
-            ->with(['product.images', 'vendor.settings'])
+            ->with(['product.images', 'product.category', 'vendor.settings'])
             ->firstOrFail();
 
-        return view('services.booking-show', compact('booking'));
+        $user = auth()->user();
+        $isOwner = $user && $booking->user_id && (int) $user->id === (int) $booking->user_id;
+        $isVendorOwner = $user && $booking->vendor && (int) $booking->vendor->user_id === (int) $user->id;
+        $isAdmin = $user && $user->isAdmin();
+        $hasGuestSession = (bool) session("guest_booking_{$booking->id}");
+
+        // Block signed-in unrelated third parties from inspecting another customer's booking
+        if ($user && !$isOwner && !$isVendorOwner && !$isAdmin && ($booking->user_id !== null || !$hasGuestSession)) {
+            abort(403, 'Unauthorized access to this booking record.');
+        }
+
+        $canViewSensitiveContact = $isOwner
+            || $isVendorOwner
+            || $isAdmin
+            || ($hasGuestSession && (!$user || $booking->user_id === null));
+
+        return view('services.booking-show', compact('booking', 'canViewSensitiveContact'));
     }
 
     /**
@@ -87,7 +143,7 @@ class BookingController extends Controller
         $query = Booking::with(['product.images', 'user'])
             ->where('vendor_id', $vendor->id);
 
-        if ($status && in_array($status, ['pending', 'confirmed', 'completed', 'cancelled'])) {
+        if ($status && in_array($status, ['pending', 'confirmed', 'completed', 'cancelled'], true)) {
             $query->where('status', $status);
         }
 
@@ -102,8 +158,13 @@ class BookingController extends Controller
     public function vendorUpdateStatus(Request $request, Booking $booking): RedirectResponse
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
-        if (!$vendor || $booking->vendor_id !== $vendor->id) {
+        if (!$vendor || (int) $booking->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized action on this booking.');
+        }
+
+        $authCheck = $this->entitlements->authorizeSectorWrite($vendor, 'services');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
         }
 
         $validated = $request->validate([
@@ -112,22 +173,47 @@ class BookingController extends Controller
             'cancelled_reason' => 'nullable|string|max:500',
         ]);
 
-        $updateData = [
-            'status' => $validated['status'],
-            'vendor_notes' => $validated['vendor_notes'] ?? $booking->vendor_notes,
+        $allowedTransitions = [
+            'pending' => ['confirmed', 'completed', 'cancelled'],
+            'confirmed' => ['completed', 'cancelled'],
+            'completed' => [],
+            'cancelled' => [],
         ];
 
-        if ($validated['status'] === 'confirmed') {
-            $updateData['confirmed_at'] = now();
-        } elseif ($validated['status'] === 'completed') {
-            $updateData['completed_at'] = now();
-        } elseif ($validated['status'] === 'cancelled') {
-            $updateData['cancelled_at'] = now();
-            $updateData['cancelled_reason'] = $validated['cancelled_reason'] ?? 'Cancelled by service provider';
+        $targetStatus = $validated['status'];
+        if (!in_array($targetStatus, $allowedTransitions[$booking->status] ?? [], true)) {
+            return back()->with('error', "Booking #{$booking->booking_number} cannot transition from '{$booking->status}' to '{$targetStatus}'.");
         }
 
-        $booking->update($updateData);
+        DB::transaction(function () use ($booking, $validated, $targetStatus) {
+            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
 
-        return back()->with('success', "Booking #{$booking->booking_number} status updated to " . ucfirst($validated['status']) . ".");
+            $updateData = [
+                'status' => $targetStatus,
+                'vendor_notes' => $validated['vendor_notes'] ?? $locked->vendor_notes,
+            ];
+
+            if ($targetStatus === 'confirmed') {
+                $updateData['confirmed_at'] = now();
+            } elseif ($targetStatus === 'completed') {
+                $updateData['completed_at'] = now();
+            } elseif ($targetStatus === 'cancelled') {
+                $updateData['cancelled_at'] = now();
+                $updateData['cancelled_reason'] = $validated['cancelled_reason'] ?? 'Cancelled by service provider';
+            }
+
+            $locked->update($updateData);
+        });
+
+        $this->notifications->notifyUser(
+            $booking->user_id,
+            '📅',
+            "Booking #{$booking->booking_number} " . ucfirst($targetStatus),
+            "{$vendor->shop_name} marked your booking for " . ($booking->product?->title ?? 'service') . " as {$targetStatus}.",
+            route('bookings.show', $booking->booking_number),
+            'service_booking'
+        );
+
+        return back()->with('success', "Booking #{$booking->booking_number} status updated to " . ucfirst($targetStatus) . '.');
     }
 }

@@ -428,6 +428,8 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/promotions', [\App\Http\Controllers\AdminController::class, 'storePromotion'])->name('promotions.store');
     Route::post('/promotions/{promotion}/toggle', [\App\Http\Controllers\AdminController::class, 'togglePromotion'])->name('promotions.toggle');
     Route::get('/audit-logs', [\App\Http\Controllers\AdminController::class, 'auditLogs'])->name('audit_logs.index');
+    Route::get('/diagnostics', [\App\Http\Controllers\AdminController::class, 'diagnostics'])->name('diagnostics');
+    Route::post('/diagnostics/reconcile', [\App\Http\Controllers\AdminController::class, 'reconcile'])->name('diagnostics.reconcile');
 
     // Navigation & Mobile App Drawer Studio
     Route::get('/navigation', [\App\Http\Controllers\Admin\NavigationController::class, 'index'])->name('navigation.index');

@@ -28,6 +28,9 @@
                 <a href="{{ route('admin.homepage') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 border border-zinc-200/80 transition">
                     <span>Homepage Studio ↗</span>
                 </a>
+                <a href="{{ route('admin.diagnostics') }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-zinc-50 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-950 border border-zinc-200/80 transition">
+                    <span>System Diagnostics</span>
+                </a>
             </div>
         </div>
 

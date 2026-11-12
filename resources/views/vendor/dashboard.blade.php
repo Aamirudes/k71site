@@ -1043,6 +1043,86 @@
         </div>
         @endif
 
+        <!-- VENDOR ACTION QUEUE & OPERATIONAL ACTIVITY TIMELINE -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bw-card p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-200">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-black">Priority Action Queue</h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Live store actions generated from open orders, RFQs, inventory &amp; plan state</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold {{ !empty($actionQueue) ? 'bg-black text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                        {{ count($actionQueue ?? []) }} {{ Str::plural('Task', count($actionQueue ?? [])) }}
+                    </span>
+                </div>
+
+                @if(!empty($actionQueue))
+                    <div class="space-y-2.5">
+                        @foreach($actionQueue as $task)
+                            <div class="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/70 hover:border-black transition-colors flex items-center justify-between gap-3">
+                                <div class="flex items-start gap-3 min-w-0">
+                                    <span class="text-lg shrink-0">{{ $task['icon'] }}</span>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="text-xs font-black text-black">{{ $task['title'] }}</span>
+                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase {{ $task['priority'] === 'high' ? 'bg-rose-100 text-rose-800' : ($task['priority'] === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-zinc-200 text-zinc-700') }}">
+                                                {{ $task['count'] }}
+                                            </span>
+                                        </div>
+                                        <p class="text-[11px] text-zinc-600 mt-0.5">{{ $task['detail'] }}</p>
+                                    </div>
+                                </div>
+                                <a href="{{ $task['url'] }}" class="bw-btn-black px-3 py-1.5 text-[11px] font-bold shrink-0 whitespace-nowrap">
+                                    {{ $task['cta'] }} &rarr;
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-6 text-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50">
+                        <p class="text-xs font-bold text-black">All operational queues are clear</p>
+                        <p class="text-[11px] text-zinc-500 mt-1">Pending orders, RFQs, low-stock items, and subscription alerts will appear here automatically.</p>
+                    </div>
+                @endif
+            </div>
+
+            <div class="bw-card p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-200">
+                    <div>
+                        <h3 class="text-sm font-black uppercase tracking-wider text-black">Store Activity Timeline</h3>
+                        <p class="text-xs text-zinc-500 mt-0.5">Chronological events across orders, bookings, RFQs, catalog &amp; plans</p>
+                    </div>
+                    <span class="text-[11px] font-mono text-zinc-500">Live Feed</span>
+                </div>
+
+                @if(isset($activityTimeline) && $activityTimeline->isNotEmpty())
+                    <div class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                        @foreach($activityTimeline as $ev)
+                            <a href="{{ $ev['url'] }}" class="block p-3 rounded-xl border border-zinc-200/80 hover:border-black transition-colors bg-white">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-start gap-2.5 min-w-0">
+                                        <span class="text-base shrink-0">{{ $ev['icon'] }}</span>
+                                        <div class="min-w-0">
+                                            <div class="text-xs font-bold text-black truncate">{{ $ev['title'] }}</div>
+                                            <div class="text-[11px] text-zinc-500 truncate mt-0.5">{{ $ev['subtitle'] }}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-zinc-400 shrink-0 whitespace-nowrap">
+                                        {{ $ev['timestamp']->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="p-6 text-center rounded-xl border border-dashed border-zinc-200 bg-zinc-50/50">
+                        <p class="text-xs font-bold text-black">No recent store events recorded yet</p>
+                        <p class="text-[11px] text-zinc-500 mt-1">New orders, bookings, product additions, and plan events will stream here.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
     </div>
 
     <!-- Monochromatic Chart.js Script -->

@@ -8,7 +8,10 @@ use App\Models\CategoryField;
 use App\Models\FoodMenuCategory;
 use App\Models\Product;
 use App\Models\ProductOptionGroup;
+use App\Models\ProductVariant;
+use App\Services\Catalog\ListingCompletenessService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -139,12 +142,15 @@ class ProductController extends Controller
             ->get();
 
         $products = $this->buildFilteredProductsQuery($vendor, $request)
+            ->with(['gigPackages'])
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
+        $completenessMap = app(ListingCompletenessService::class)->evaluateMany($products->items());
+
         return view('vendor.products.index', compact(
-            'products', 'vendor', 'targetVertical', 'search', 'status', 'stockFilter', 'categoryId', 'counts', 'categories'
+            'products', 'vendor', 'targetVertical', 'search', 'status', 'stockFilter', 'categoryId', 'counts', 'categories', 'completenessMap'
         ));
     }
 
@@ -1528,90 +1534,118 @@ class ProductController extends Controller
             return back()->with('error', $dupAuth['reason']);
         }
 
-        // Replicate product model
-        $clone = $product->replicate([
-            'slug',
-            'created_at',
-            'updated_at',
-        ]);
-
-        $clone->title = $product->title . ' (Copy)';
-        
-        $baseSlug = Str::slug($clone->title) ?: 'product-copy';
-        $slug = $baseSlug;
-        $counter = 1;
-        while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter++;
-        }
-        $clone->slug = $slug;
-        $clone->status = 'draft';
-        $clone->published_at = null;
-        $clone->save();
-
-        // Replicate variants
-        foreach ($product->variants as $variant) {
-            $variantClone = $variant->replicate([
-                'product_id',
+        $clone = DB::transaction(function () use ($product, $vendor) {
+            $clone = $product->replicate([
+                'slug',
                 'created_at',
                 'updated_at',
             ]);
-            $variantClone->product_id = $clone->id;
-            if ($variantClone->sku) {
-                $variantClone->sku = Str::limit($variantClone->sku, 185, '') . '-COPY';
+
+            $clone->title = $product->title . ' (Copy)';
+
+            $baseSlug = Str::slug($clone->title) ?: 'product-copy';
+            $slug = $baseSlug;
+            $counter = 1;
+            while (Product::withoutGlobalScopes()->where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter++;
             }
-            $variantClone->save();
-        }
+            $clone->slug = $slug;
+            $clone->status = 'draft';
+            $clone->published_at = null;
 
-        // Replicate images (pointing to same storage path)
-        foreach ($product->images as $img) {
-            $imgClone = $img->replicate([
-                'product_id',
-                'created_at',
-                'updated_at',
-            ]);
-            $imgClone->product_id = $clone->id;
-            $imgClone->save();
-        }
+            if (!empty($product->sku)) {
+                $clone->sku = $this->generateUniqueCopySku($product->sku, true);
+            }
 
-        // Replicate option groups and remapped modifiers
-        $groupIdMap = [];
-        foreach ($product->optionGroups()->with('modifiers')->get() as $group) {
-            $groupClone = $group->replicate([
-                'product_id',
-                'created_at',
-                'updated_at',
-            ]);
-            $groupClone->product_id = $clone->id;
-            $groupClone->save();
-            $groupIdMap[$group->id] = $groupClone->id;
-        }
+            $clone->save();
 
-        foreach ($product->modifiers as $modifier) {
-            $modClone = $modifier->replicate([
-                'product_id',
-                'option_group_id',
-                'created_at',
-                'updated_at',
-            ]);
-            $modClone->product_id = $clone->id;
-            $modClone->option_group_id = $modifier->option_group_id
-                ? ($groupIdMap[$modifier->option_group_id] ?? null)
-                : null;
-            $modClone->save();
-        }
+            foreach ($product->variants as $variant) {
+                $variantClone = $variant->replicate([
+                    'product_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+                $variantClone->product_id = $clone->id;
+                if (!empty($variantClone->sku)) {
+                    $variantClone->sku = $this->generateUniqueCopySku($variantClone->sku, false);
+                }
+                $variantClone->save();
+            }
 
-        foreach ($product->gigPackages as $pkg) {
-            $pkgClone = $pkg->replicate([
-                'product_id',
-                'created_at',
-                'updated_at',
-            ]);
-            $pkgClone->product_id = $clone->id;
-            $pkgClone->save();
-        }
+            foreach ($product->images as $img) {
+                $imgClone = $img->replicate([
+                    'product_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+                $imgClone->product_id = $clone->id;
+                $imgClone->save();
+            }
+
+            $groupIdMap = [];
+            foreach ($product->optionGroups()->with('modifiers')->get() as $group) {
+                $groupClone = $group->replicate([
+                    'product_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+                $groupClone->product_id = $clone->id;
+                $groupClone->save();
+                $groupIdMap[$group->id] = $groupClone->id;
+            }
+
+            foreach ($product->modifiers as $modifier) {
+                $modClone = $modifier->replicate([
+                    'product_id',
+                    'option_group_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+                $modClone->product_id = $clone->id;
+                $modClone->option_group_id = $modifier->option_group_id
+                    ? ($groupIdMap[$modifier->option_group_id] ?? null)
+                    : null;
+                $modClone->save();
+            }
+
+            foreach ($product->gigPackages as $pkg) {
+                $pkgClone = $pkg->replicate([
+                    'product_id',
+                    'created_at',
+                    'updated_at',
+                ]);
+                $pkgClone->product_id = $clone->id;
+                $pkgClone->save();
+            }
+
+            return $clone;
+        });
 
         return redirect()->route('vendor.products.edit', $clone)
             ->with('success', "Product '{$product->title}' duplicated successfully as Draft! You can now update images or details and publish.");
+    }
+
+    protected function generateUniqueCopySku(string $sourceSku, bool $isProductSku): string
+    {
+        $cleanBase = preg_replace('/-COPY(?:-\d+)?$/', '', trim($sourceSku)) ?: 'ITEM';
+        $attempt = 0;
+
+        do {
+            $suffix = $attempt === 0 ? '-COPY' : '-COPY-' . ($attempt + 1);
+            $maxPrefixLen = max(1, 100 - strlen($suffix));
+            $candidate = Str::limit($cleanBase, $maxPrefixLen, '') . $suffix;
+            $exists = $isProductSku
+                ? Product::withoutGlobalScopes()->where('sku', $candidate)->exists()
+                : ProductVariant::where('sku', $candidate)->exists();
+            $attempt++;
+        } while ($exists && $attempt < 50);
+
+        if ($exists) {
+            $randSuffix = '-COPY-' . strtoupper(Str::random(4));
+            $candidate = Str::limit($cleanBase, max(1, 100 - strlen($randSuffix)), '') . $randSuffix;
+        }
+
+        return $candidate;
     }
 
     public function toggleAvailability(Request $request, Product $product)

@@ -41,6 +41,7 @@ class UniversalDynamicVariantEngineTest extends TestCase
             'is_verified' => true,
             'status' => 'approved',
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
 
         \App\Models\VendorSetting::create([
             'vendor_id' => $this->vendor->id,
@@ -334,7 +335,8 @@ class UniversalDynamicVariantEngineTest extends TestCase
             'listing_type' => 'enquiry',
         ]);
 
-        $this->actingAs($this->user);
+        $buyer = User::factory()->create();
+        $this->actingAs($buyer);
         $response = $this->postJson(route('rfq.submit', $product->id), [
             'quantity' => '15 Units',
             'destination' => 'Mundra Port / 370421',

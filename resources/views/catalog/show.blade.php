@@ -2070,6 +2070,66 @@
         </div>
     </section>
     @endif
+
+    @if(!empty($boughtTogetherProducts) && $boughtTogetherProducts->count() > 0)
+    <section class="mt-12 mb-4">
+        <div class="flex items-center justify-between mb-6 pb-3.5 border-b border-black/10">
+            <div>
+                <span class="grail-eyebrow block leading-none text-[#623562]">Verified Order Pairs</span>
+                <h2 class="grail-display text-xl sm:text-2xl font-bold text-[#1A1018] mt-1.5">Frequently Bought Together</h2>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            @foreach($boughtTogetherProducts as $bp)
+                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 4) * 65 }}ms;">
+                    <x-product-card :product="$bp" />
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
+    @if(!empty($relatedProducts) && $relatedProducts->count() > 0)
+    <section class="mt-12 mb-4">
+        <div class="flex items-center justify-between mb-6 pb-3.5 border-b border-black/10">
+            <div>
+                <span class="grail-eyebrow block leading-none text-[#623562]">Similar Finds</span>
+                <h2 class="grail-display text-xl sm:text-2xl font-bold text-[#1A1018] mt-1.5">Similar &amp; Related Pieces</h2>
+            </div>
+            @if($product->category)
+                <a href="{{ route('category.show', $product->category->slug) }}" class="grail-btn-ghost-light px-4 py-2 text-xs font-bold flex items-center gap-1 transition-colors">
+                    <span>Explore {{ $product->category->name }}</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </a>
+            @endif
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            @foreach($relatedProducts as $rp)
+                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 4) * 65 }}ms;">
+                    <x-product-card :product="$rp" />
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
+    @if(!empty($recentlyViewedProducts) && $recentlyViewedProducts->count() > 0)
+    <section class="mt-12 mb-4">
+        <div class="flex items-center justify-between mb-6 pb-3.5 border-b border-black/10">
+            <div>
+                <span class="grail-eyebrow block leading-none text-[#623562]">Your History</span>
+                <h2 class="grail-display text-xl sm:text-2xl font-bold text-[#1A1018] mt-1.5">Recently Viewed</h2>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            @foreach($recentlyViewedProducts as $rvp)
+                <div class="grail-card-reveal h-full" style="--delay: {{ ($loop->index % 4) * 65 }}ms;">
+                    <x-product-card :product="$rvp" />
+                </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
         </div>
     </div>
 </x-layouts.public>

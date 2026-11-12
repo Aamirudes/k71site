@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\Vendor\VendorWorkspaceService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -174,63 +175,12 @@ class DashboardController extends Controller
             ->get();
 
         // 6. Dynamic Chart Data based on period (STRICTLY realized paid revenue)
-        $chartData = [];
-        $rangeDays = ($startDate && $endDate)
-            ? (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay())
-            : null;
+        $effectiveRateRatio = $totalRevenue > 0
+            ? ($netPayout / $totalRevenue)
+            : ((100 - (float) $commissionService->resolveEffectiveRule($vendor, $vendor->getCanonicalSectorKey())['rate_percent']) / 100);
 
-        $effectiveRateRatio = $totalRevenue > 0 ? ($netPayout / $totalRevenue) : ((100 - (float) $commissionService->resolveEffectiveRule($vendor, $vendor->getCanonicalSectorKey())['rate_percent']) / 100);
-
-        if ($period === 'today' || $period === 'yesterday') {
-            // Group by 4-hour intervals
-            for ($h = 0; $h < 24; $h += 4) {
-                $bStart = $startDate->copy()->addHours($h);
-                $bEnd = $bStart->copy()->addHours(4)->subSecond();
-                $sum = Order::where('vendor_id', $vendor->id)
-                    ->where('payment_status', 'paid')
-                    ->where('status', '!=', 'cancelled')
-                    ->whereBetween('created_at', [$bStart, $bEnd])
-                    ->sum(DB::raw('subtotal - discount_amount'));
-                $chartData[] = [
-                    'label' => $bStart->format('g A'),
-                    'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
-                ];
-            }
-        } elseif ($period === '7_days' || $period === 'this_month' || $period === 'last_month' || ($rangeDays !== null && $rangeDays <= 31)) {
-            // Group by each day
-            $days = ($rangeDays ?? 6) + 1;
-            for ($d = 0; $d < $days; $d++) {
-                $currentDay = $startDate->copy()->addDays($d);
-                $sum = Order::where('vendor_id', $vendor->id)
-                    ->where('payment_status', 'paid')
-                    ->where('status', '!=', 'cancelled')
-                    ->whereDate('created_at', $currentDay->toDateString())
-                    ->sum(DB::raw('subtotal - discount_amount'));
-                $chartData[] = [
-                    'label' => $currentDay->format('d M'),
-                    'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
-                ];
-            }
-        } else {
-            // Monthly points
-            $monthsCount = ($period === 'this_year') ? max(1, Carbon::now()->month) : 6;
-            for ($i = $monthsCount - 1; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                $sum = Order::where('vendor_id', $vendor->id)
-                    ->where('payment_status', 'paid')
-                    ->where('status', '!=', 'cancelled')
-                    ->whereYear('created_at', $month->year)
-                    ->whereMonth('created_at', $month->month)
-                    ->sum(DB::raw('subtotal - discount_amount'));
-                $chartData[] = [
-                    'label' => $month->format('M Y'),
-                    'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
-                ];
-            }
-        }
+        $workspace = app(VendorWorkspaceService::class);
+        $chartData = $workspace->buildRealizedRevenueChart($vendor, $period, $startDate, $endDate, $effectiveRateRatio);
 
         // Fetch customer payment submissions (UTR / Screenshots) waiting for vendor approval
         $pendingPaymentClaims = \App\Models\PaymentClaim::with(['order.user', 'order.items.product'])
@@ -336,6 +286,9 @@ class DashboardController extends Controller
             ];
         }
 
+        $actionQueue = $workspace->buildActionQueue($vendor, $pendingPaymentClaims->count());
+        $activityTimeline = $workspace->buildActivityTimeline($vendor, 10);
+
         return view('vendor.dashboard', compact(
             'vendor',
             'period',
@@ -361,7 +314,9 @@ class DashboardController extends Controller
             'isFoodOrFeasto',
             'pendingDispatchOrders',
             'serviceMetrics',
-            'foodKitchenMetrics'
+            'foodKitchenMetrics',
+            'actionQueue',
+            'activityTimeline'
         ));
     }
 }

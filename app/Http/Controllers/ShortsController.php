@@ -152,14 +152,16 @@ class ShortsController extends Controller
         }
         $allTaggedIds = $allTaggedIds->unique()->take(12)->values()->all();
 
-        $shoppableProducts = \App\Models\Product::with(['images', 'vendor', 'category', 'variants'])
+        $shoppableQuery = \App\Models\Product::with(['images', 'vendor', 'category', 'variants'])
             ->whereIn('id', $allTaggedIds)
-            ->where('status', 'active')
-            ->take(12)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($shoppableQuery);
+        $shoppableProducts = $shoppableQuery->take(12)->get();
 
-        // Featured boutique creators & stores
-        $creators = \App\Models\Vendor::whereHas('shorts', fn($q) => $q->whereIn('status', ['published', 'approved', 'active']))
+        // Featured boutique creators & stores (scoped to publicly visible merchants)
+        $creatorsQuery = \App\Models\Vendor::whereHas('shorts', fn($q) => $q->whereIn('status', ['published', 'approved', 'active']));
+        $visibility->scopeVisibleVendors($creatorsQuery);
+        $creators = $creatorsQuery
             ->withCount(['shorts' => fn($q) => $q->whereIn('status', ['published', 'approved', 'active'])])
             ->take(8)
             ->get();

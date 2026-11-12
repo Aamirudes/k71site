@@ -26,13 +26,20 @@ class ServicesController extends Controller
         $workMode = $request->query('work_mode');
         $sort = $request->query('sort', 'newest');
 
+        $minPrice = ($minPrice !== null && $minPrice !== '' && is_numeric($minPrice)) ? max(0, (float) $minPrice) : null;
+        $maxPrice = ($maxPrice !== null && $maxPrice !== '' && is_numeric($maxPrice)) ? max(0, (float) $maxPrice) : null;
+        if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
+            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+        }
+
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
-        // Fetch active service categories with real service count
+        // Fetch active service categories with real visible service count
         $servicesCategories = Category::where('vertical', 'services')
             ->where('is_active', true)
-            ->withCount(['products' => function ($q) {
+            ->withCount(['products' => function ($q) use ($visibility) {
                 $q->where('vertical', 'services')->where('status', 'active');
+                $visibility->scopeVisibleProducts($q, 'services');
             }])
             ->orderBy('sort_order')
             ->get();
@@ -182,28 +189,29 @@ class ServicesController extends Controller
             ->with(['images', 'category', 'vendor.settings', 'gigPackages', 'reviews.user'])
             ->firstOrFail();
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $service->vendor_id || auth()->user()->hasRole('admin'));
-        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($service)) {
+        if (!$isOwnerOrAdmin && !$visibility->isProductPubliclyVisible($service)) {
             abort(404);
         }
 
-        // Other services by same provider
-        $providerServices = Product::with(['images', 'category'])
+        // Other services by same provider (visible)
+        $providerServicesQuery = Product::with(['images', 'category', 'vendor'])
             ->where('vendor_id', $service->vendor_id)
             ->where('vertical', 'services')
             ->where('id', '!=', $service->id)
-            ->where('status', 'active')
-            ->take(4)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($providerServicesQuery, 'services');
+        $providerServices = $providerServicesQuery->take(4)->get();
 
-        // Similar services in same category
-        $similarServices = Product::with(['images', 'vendor', 'category'])
+        // Similar services in same category (visible)
+        $similarServicesQuery = Product::with(['images', 'vendor', 'category'])
             ->where('category_id', $service->category_id)
             ->where('id', '!=', $service->id)
             ->where('vertical', 'services')
-            ->where('status', 'active')
-            ->take(4)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($similarServicesQuery, 'services');
+        $similarServices = $similarServicesQuery->take(4)->get();
 
         return view('services.show', compact('service', 'providerServices', 'similarServices'));
     }

@@ -9,6 +9,7 @@ use App\Models\ProductGigPackage;
 use App\Models\ProductModifier;
 use App\Models\ProductVariant;
 use App\Services\Food\FoodMarketplaceService;
+use App\Services\Monetization\VisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +71,13 @@ class CartController extends Controller
 
         if (!$product) {
             return response()->json(['success' => false, 'message' => 'Product not found.'], 404);
+        }
+
+        if (!app(VisibilityService::class)->isProductPubliclyVisible($product)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This listing is currently unavailable for purchase.',
+            ], 422);
         }
 
         // Gig Package resolution
@@ -250,10 +258,38 @@ class CartController extends Controller
         }
 
         if ($cartItem) {
-            if (!$gigPackage && $variant && ($cartItem->quantity + $validated['quantity'] > $variant->stock)) {
+            $newQuantity = $cartItem->quantity + $validated['quantity'];
+            if (!$gigPackage && $variant && ($newQuantity > $variant->stock)) {
                 return response()->json(['success' => false, 'message' => 'Cannot add more than available stock.'], 400);
             }
-            $cartItem->increment('quantity', $validated['quantity']);
+            if (!$gigPackage && !$variant) {
+                $availStock = (int) ($product->total_stock ?? 100);
+                if ($newQuantity > $availStock) {
+                    return response()->json(['success' => false, 'message' => "Only {$availStock} pieces available in stock."], 400);
+                }
+            }
+
+            // Recompute B2B volume discount unit price on cumulative quantity for standard products
+            $updatePayload = ['quantity' => $newQuantity];
+            if (!$gigPackage && !$isFoodProduct && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
+                $recomputedBase = $variant?->price_override
+                    ?? (int) round(((float) ($variant?->price ?? 0)) * 100)
+                    ?: $product->base_price;
+                $tiers = collect($product->b2b_tiers_json)->sortByDesc(fn ($t) => (int) ($t['min_qty'] ?? 1));
+                foreach ($tiers as $tier) {
+                    if ($newQuantity >= (int) ($tier['min_qty'] ?? 1) && !empty($tier['price'])) {
+                        $recomputedBase = (int) round(((float) $tier['price']) * 100);
+                        break;
+                    }
+                }
+                $modDeltaPaise = 0;
+                if (!empty($modifiersSnapshot)) {
+                    $modDeltaPaise = (int) round(collect($modifiersSnapshot)->sum('price_delta') * 100);
+                }
+                $updatePayload['price_at_add'] = $recomputedBase + $modDeltaPaise;
+            }
+
+            $cartItem->update($updatePayload);
         } else {
             $cart->items()->create([
                 'product_id' => $product->id,
@@ -343,7 +379,28 @@ class CartController extends Controller
             return back()->with('error', "Only {$availableStock} items available in stock.");
         }
 
-        $item->update(['quantity' => $validated['quantity']]);
+        $updatePayload = ['quantity' => $validated['quantity']];
+        $product = $item->product ?? Product::withoutGlobalScopes()->with('vendor.settings')->find($item->product_id);
+        if ($product && $product->vertical !== 'food' && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
+            $variant = $item->variant_id ? ProductVariant::withoutGlobalScopes()->find($item->variant_id) : null;
+            $recomputedBase = $variant?->price_override
+                ?? (int) round(((float) ($variant?->price ?? 0)) * 100)
+                ?: $product->base_price;
+            $tiers = collect($product->b2b_tiers_json)->sortByDesc(fn ($t) => (int) ($t['min_qty'] ?? 1));
+            foreach ($tiers as $tier) {
+                if ($validated['quantity'] >= (int) ($tier['min_qty'] ?? 1) && !empty($tier['price'])) {
+                    $recomputedBase = (int) round(((float) $tier['price']) * 100);
+                    break;
+                }
+            }
+            $modDeltaPaise = 0;
+            if (!empty($item->selected_modifiers_json) && is_array($item->selected_modifiers_json)) {
+                $modDeltaPaise = (int) round(collect($item->selected_modifiers_json)->sum('price_delta') * 100);
+            }
+            $updatePayload['price_at_add'] = $recomputedBase + $modDeltaPaise;
+        }
+
+        $item->update($updatePayload);
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return $this->data();

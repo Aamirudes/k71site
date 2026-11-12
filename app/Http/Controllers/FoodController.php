@@ -104,18 +104,19 @@ class FoodController extends Controller
         $selectedCity = $selectedLocation['city'] ?? null;
         $selectedPincode = $selectedLocation['pincode'] ?? null;
 
-        // 1. Fetch active food categories
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
+        // 1. Fetch active food categories scoped to publicly visible dishes
         $foodCategories = Category::where('vertical', 'food')
             ->where('is_active', true)
-            ->withCount(['products' => function ($q) {
+            ->withCount(['products' => function ($q) use ($visibility) {
                 $q->where('vertical', 'food')
                   ->where('status', 'active')
                   ->where('is_dish_available', true);
+                $visibility->scopeVisibleProducts($q, 'food');
             }])
             ->orderBy('sort_order')
             ->get();
-
-        $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
         // 2. Query Restaurants & Cloud Kitchens (both 'approved' and 'active' vendor states, verified + visible subscription)
         $restaurantsQuery = Vendor::whereIn('vendors.status', ['approved', 'active']);
@@ -329,7 +330,8 @@ class FoodController extends Controller
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
             })
-            ->whereHas('vendor', function ($vq) {
+            ->whereHas('vendor', function ($vq) use ($visibility) {
+                $visibility->scopeVisibleVendors($vq, 'food');
                 $vq->whereIn('status', ['approved', 'active'])
                    ->where(function ($fq) {
                        $fq->where('vendor_type', 'food')

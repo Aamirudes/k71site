@@ -99,7 +99,11 @@
                         <div class="p-4 rounded-2xl bg-[#FAFAF8] border border-[#E6E2E8] space-y-2">
                             <div class="text-xs font-bold text-[#1A1018]/55 uppercase tracking-[0.12em]">Service Address</div>
                             <div class="text-sm text-[#1A1018] font-medium leading-relaxed">
-                                {{ $booking->service_address }}
+                                @if($canViewSensitiveContact ?? true)
+                                    {{ $booking->service_address }}
+                                @else
+                                    {{ \Illuminate\Support\Str::limit($booking->service_address, 14, '•••• (Hidden for privacy)') }}
+                                @endif
                             </div>
                             @if($booking->notes)
                                 <div class="text-xs text-[#1A1018]/65 pt-2 border-t border-[#E6E2E8]">
@@ -111,9 +115,13 @@
                         <div class="p-4 rounded-2xl bg-[#FAFAF8] border border-[#E6E2E8] space-y-2">
                             <div class="text-xs font-bold text-[#1A1018]/55 uppercase tracking-[0.12em]">Customer Details</div>
                             <div class="text-sm text-[#1A1018] font-medium">{{ $booking->customer_name }}</div>
-                            <div class="text-xs text-[#1A1018]/70">Phone: {{ $booking->customer_phone }}</div>
-                            @if($booking->customer_email)
-                                <div class="text-xs text-[#1A1018]/70">Email: {{ $booking->customer_email }}</div>
+                            @if($canViewSensitiveContact ?? true)
+                                <div class="text-xs text-[#1A1018]/70">Phone: {{ $booking->customer_phone }}</div>
+                                @if($booking->customer_email)
+                                    <div class="text-xs text-[#1A1018]/70">Email: {{ $booking->customer_email }}</div>
+                                @endif
+                            @else
+                                <div class="text-xs text-[#1A1018]/60">Contact details hidden — sign in with the booking account to view full contact info.</div>
                             @endif
                         </div>
                     </div>

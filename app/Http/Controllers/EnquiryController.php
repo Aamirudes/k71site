@@ -2,29 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Enquiry;
 use App\Models\Product;
 use App\Models\Quote;
 use App\Models\Vendor;
+use App\Services\Monetization\EntitlementService;
+use App\Services\Monetization\VisibilityService;
+use App\Services\NotificationCenterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class EnquiryController extends Controller
 {
+    public function __construct(
+        protected VisibilityService $visibility,
+        protected EntitlementService $entitlements,
+        protected NotificationCenterService $notifications
+    ) {}
+
     /**
      * Display the public B2B & Custom Requirements Marketplace Hub (enquiry.k71.in).
      */
     public function index(Request $request): View
     {
-        $search = $request->query('search');
+        $search = trim((string) $request->query('search', ''));
         $selectedCategory = $request->query('cat');
         $city = $request->query('city');
         $urgency = $request->query('urgency');
         $minBudget = $request->query('min_budget');
         $maxBudget = $request->query('max_budget');
+
+        if ($minBudget !== null && is_numeric($minBudget) && $maxBudget !== null && is_numeric($maxBudget)) {
+            if ((float) $minBudget > (float) $maxBudget) {
+                [$minBudget, $maxBudget] = [$maxBudget, $minBudget];
+            }
+        }
 
         // Fetch active enquiry categories
         $enquiryCategories = Category::where('vertical', 'enquiry')
@@ -34,22 +51,23 @@ class EnquiryController extends Controller
             ->get();
 
         // Available distinct cities from open enquiries
-        $availableCities = Enquiry::where('status', 'open')
+        $availableCities = Enquiry::whereIn('status', ['open', 'quoted'])
             ->whereNotNull('city')
+            ->where('city', '!=', '')
+            ->distinct()
+            ->orderBy('city')
             ->pluck('city')
-            ->unique()
             ->values();
 
-        // Main RFQs / Enquiries Query
+        // Main RFQs / Enquiries Query (never match private buyer names/phones on public search)
         $query = Enquiry::with(['category', 'vendor', 'quotes'])
             ->whereIn('status', ['open', 'quoted']);
 
-        if ($search) {
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%")
-                  ->orWhere('buyer_name', 'like', "%{$search}%");
+                  ->orWhere('city', 'like', "%{$search}%");
             });
         }
 
@@ -75,9 +93,7 @@ class EnquiryController extends Controller
 
         $enquiries = $query->latest()->paginate(12)->withQueryString();
 
-        $visibility = app(\App\Services\Monetization\VisibilityService::class);
-
-        // Fetch strictly recommended B2B & Wholesale products (excluding retail, food, footwear, clothing, services)
+        // Fetch strictly recommended B2B & Wholesale products (excluding retail, food, footwear, clothing, services, used)
         $b2bQuery = Product::with(['vendor', 'images', 'category'])
             ->where('status', 'active')
             ->where(function($q) {
@@ -105,7 +121,7 @@ class EnquiryController extends Controller
                    ->orWhere('slug', 'like', '%apparel%')
                    ->orWhere('slug', 'like', '%shirt%');
             });
-        $visibility->scopeVisibleProducts($b2bQuery, 'enquiry');
+        $this->visibility->scopeVisibleProducts($b2bQuery, 'enquiry');
         $b2bProducts = $b2bQuery->take(8)->get();
 
         // Fetch verified B2B / Industrial / Marble / Machinery suppliers strictly
@@ -117,17 +133,20 @@ class EnquiryController extends Controller
                   });
             })
             ->whereNotIn('vendor_type', ['food', 'restaurant', 'clothing', 'footwear', 'services']);
-        $visibility->scopeVisibleVendors($verifiedSuppliersQuery, 'enquiry');
+        $this->visibility->scopeVisibleVendors($verifiedSuppliersQuery, 'enquiry');
         $verifiedSuppliers = $verifiedSuppliersQuery
             ->withCount(['products' => fn($q) => $q->where('status', 'active')])
             ->orderByDesc('products_count')
             ->take(6)
             ->get();
 
+        $visibleSupplierCountQuery = Vendor::query();
+        $this->visibility->scopeVisibleVendors($visibleSupplierCountQuery, 'enquiry');
+
         $stats = [
-            'total_rfqs' => max(Enquiry::count(), 42),
-            'total_quotes' => max(Quote::count(), 128),
-            'verified_suppliers' => Vendor::where('status', 'approved')->count(),
+            'total_rfqs' => Enquiry::count(),
+            'total_quotes' => Quote::count(),
+            'verified_suppliers' => $visibleSupplierCountQuery->count(),
             'total_categories' => $enquiryCategories->count(),
         ];
 
@@ -159,12 +178,18 @@ class EnquiryController extends Controller
 
         $targetVendor = null;
         if ($request->has('vendor_id')) {
-            $targetVendor = Vendor::find($request->query('vendor_id'));
+            $candidateVendor = Vendor::find($request->query('vendor_id'));
+            if ($candidateVendor && $this->visibility->isVendorPubliclyVisible($candidateVendor, 'enquiry')) {
+                $targetVendor = $candidateVendor;
+            }
         }
 
         $targetProduct = null;
         if ($request->has('product_id')) {
-            $targetProduct = Product::find($request->query('product_id'));
+            $candidateProduct = Product::find($request->query('product_id'));
+            if ($candidateProduct && $this->visibility->isProductPubliclyVisible($candidateProduct)) {
+                $targetProduct = $candidateProduct;
+            }
         }
 
         return view('enquiry.create', compact('categories', 'targetVendor', 'targetProduct'));
@@ -191,6 +216,17 @@ class EnquiryController extends Controller
             'product_id' => 'nullable|exists:products,id',
         ]);
 
+        // Prevent duplicate accidental re-POSTs within 60 seconds
+        $recentDuplicate = Enquiry::where('buyer_phone', $validated['buyer_phone'])
+            ->where('title', trim($validated['title']))
+            ->where('created_at', '>=', now()->subMinutes(1))
+            ->first();
+
+        if ($recentDuplicate) {
+            return redirect()->route('enquiry.show', $recentDuplicate->enquiry_number)
+                ->with('info', 'This requirement was just submitted and is active for supplier quotes.');
+        }
+
         $enquiryNumber = 'ENQ-' . date('Ymd') . '-' . strtoupper(Str::random(6));
 
         $enquiry = Enquiry::create([
@@ -199,21 +235,35 @@ class EnquiryController extends Controller
             'vendor_id' => $validated['vendor_id'] ?? null,
             'category_id' => $validated['category_id'] ?? null,
             'product_id' => $validated['product_id'] ?? null,
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'quantity' => $validated['quantity'],
+            'title' => trim($validated['title']),
+            'description' => trim($validated['description']),
+            'quantity' => trim($validated['quantity']),
             'target_budget' => isset($validated['target_budget']) && is_numeric($validated['target_budget'])
                 ? (int) ($validated['target_budget'] * 100)
                 : null,
-            'city' => $validated['city'],
+            'city' => trim($validated['city']),
             'pincode' => $validated['pincode'] ?? null,
             'urgency' => $validated['urgency'] ?? 'flexible',
-            'buyer_name' => $validated['buyer_name'],
-            'buyer_phone' => $validated['buyer_phone'],
+            'buyer_name' => trim($validated['buyer_name']),
+            'buyer_phone' => trim($validated['buyer_phone']),
             'buyer_email' => $validated['buyer_email'] ?? auth()->user()?->email,
             'status' => 'open',
             'quotes_count' => 0,
         ]);
+
+        session()->put("guest_enquiry_{$enquiry->id}", true);
+
+        if (!empty($enquiry->vendor_id)) {
+            $targetVendorUserId = Vendor::whereKey($enquiry->vendor_id)->value('user_id');
+            $this->notifications->notifyUser(
+                $targetVendorUserId,
+                '📋',
+                "New Direct RFQ #{$enquiry->enquiry_number}",
+                "{$enquiry->title} ({$enquiry->quantity}) from {$enquiry->city}.",
+                route('vendor.enquiries.index', ['tab' => 'direct']),
+                'b2b_enquiry'
+            );
+        }
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([
@@ -221,7 +271,7 @@ class EnquiryController extends Controller
                 'message' => 'Requirement posted successfully! RFQ Number: ' . $enquiry->enquiry_number,
                 'enquiry_number' => $enquiry->enquiry_number,
                 'enquiry' => $enquiry,
-                'redirect' => route('enquiry.show', $enquiry->enquiry_number)
+                'redirect' => route('enquiry.show', $enquiry->enquiry_number),
             ]);
         }
 
@@ -238,7 +288,18 @@ class EnquiryController extends Controller
             ->with(['category', 'vendor', 'product', 'quotes.vendor.settings', 'user'])
             ->firstOrFail();
 
-        return view('enquiry.show', compact('enquiry'));
+        $user = auth()->user();
+        $isOwner = $user && $enquiry->user_id && (int) $user->id === (int) $enquiry->user_id;
+        $isAdmin = $user && $user->isAdmin();
+        $isVerifiedMerchant = $user && $user->vendor && in_array($user->vendor->status, ['approved', 'active'], true);
+        $hasGuestOwnerSession = (bool) session("guest_enquiry_{$enquiry->id}");
+
+        $canViewBuyerContact = $isOwner || $isAdmin || $isVerifiedMerchant || $hasGuestOwnerSession;
+        $canAcceptQuotes = $enquiry->user_id !== null
+            ? ($isOwner || $isAdmin)
+            : ($isAdmin || $hasGuestOwnerSession);
+
+        return view('enquiry.show', compact('enquiry', 'canViewBuyerContact', 'canAcceptQuotes'));
     }
 
     /**
@@ -253,7 +314,7 @@ class EnquiryController extends Controller
 
         $sectorKey = $vendor->isServices() ? 'services' : 'enquiry';
         $featureKey = $sectorKey === 'services' ? 'allow_enquiry_management' : 'allow_rfq_responses';
-        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
+        $authCheck = $this->entitlements->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
         if (!$authCheck['allowed']) {
             return redirect()->route('vendor.subscription.index')->with('error', $authCheck['reason']);
         }
@@ -296,7 +357,7 @@ class EnquiryController extends Controller
     }
 
     /**
-     * Vendor submits a quote on an enquiry.
+     * Vendor submits or updates a quote on an enquiry.
      */
     public function vendorQuote(Request $request, Enquiry $enquiry): RedirectResponse
     {
@@ -307,16 +368,20 @@ class EnquiryController extends Controller
 
         $sectorKey = $vendor->isServices() ? 'services' : 'enquiry';
         $featureKey = $sectorKey === 'services' ? 'allow_enquiry_management' : 'allow_rfq_responses';
-        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
+        $authCheck = $this->entitlements->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
         if (!$authCheck['allowed']) {
             return back()->with('error', $authCheck['reason']);
+        }
+
+        if ($enquiry->user_id && (int) $enquiry->user_id === (int) auth()->id()) {
+            return back()->with('error', 'You cannot submit a quotation on your own requirement.');
         }
 
         if ($enquiry->isClosed()) {
             return back()->with('error', 'This enquiry is closed and is no longer accepting quotations.');
         }
 
-        if ($enquiry->vendor_id && $enquiry->vendor_id !== $vendor->id) {
+        if ($enquiry->vendor_id && (int) $enquiry->vendor_id !== (int) $vendor->id) {
             abort(403, 'This enquiry is directed to another vendor.');
         }
 
@@ -327,28 +392,49 @@ class EnquiryController extends Controller
             'valid_until' => 'nullable|date|after:today',
         ]);
 
-        $quoteNumber = 'QT-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+        $quote = DB::transaction(function () use ($enquiry, $vendor, $validated) {
+            $lockedEnquiry = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
+            if ($lockedEnquiry->isClosed()) {
+                throw new \RuntimeException('This enquiry is closed and is no longer accepting quotations.');
+            }
 
-        // Create or update vendor's quote
-        $quote = Quote::updateOrCreate(
-            [
-                'enquiry_id' => $enquiry->id,
-                'vendor_id' => $vendor->id,
-            ],
-            [
-                'quote_number' => $quoteNumber,
-                'quote_amount' => (int) ($validated['quote_amount'] * 100),
-                'lead_time_days' => $validated['lead_time_days'],
-                'notes' => $validated['notes'] ?? null,
-                'valid_until' => $validated['valid_until'] ?? null,
-                'status' => 'sent',
-            ]
+            $existingQuote = Quote::where('enquiry_id', $lockedEnquiry->id)
+                ->where('vendor_id', $vendor->id)
+                ->first();
+
+            $quoteNumber = $existingQuote?->quote_number ?: ('QT-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
+
+            $quote = Quote::updateOrCreate(
+                [
+                    'enquiry_id' => $lockedEnquiry->id,
+                    'vendor_id' => $vendor->id,
+                ],
+                [
+                    'quote_number' => $quoteNumber,
+                    'quote_amount' => (int) round((float) $validated['quote_amount'] * 100),
+                    'lead_time_days' => $validated['lead_time_days'],
+                    'notes' => $validated['notes'] ?? null,
+                    'valid_until' => $validated['valid_until'] ?? null,
+                    'status' => 'sent',
+                ]
+            );
+
+            $lockedEnquiry->update([
+                'status' => 'quoted',
+                'quotes_count' => $lockedEnquiry->quotes()->count(),
+            ]);
+
+            return $quote;
+        });
+
+        $this->notifications->notifyUser(
+            $enquiry->user_id,
+            '💼',
+            "New Quotation Received — #{$enquiry->enquiry_number}",
+            "{$vendor->shop_name} quoted ₹" . number_format($quote->quote_amount / 100, 2) . " ({$quote->lead_time_days} days lead time).",
+            route('enquiry.show', $enquiry->enquiry_number),
+            'b2b_quote'
         );
-
-        $enquiry->update([
-            'status' => 'quoted',
-            'quotes_count' => $enquiry->quotes()->count(),
-        ]);
 
         return back()->with('success', "Your quotation of ₹" . number_format($quote->quote_amount / 100, 2) . " has been submitted to the buyer.");
     }
@@ -359,18 +445,68 @@ class EnquiryController extends Controller
     public function acceptQuote(Request $request, Quote $quote): RedirectResponse
     {
         $enquiry = $quote->enquiry;
+        if (!$enquiry || (int) $quote->enquiry_id !== (int) $enquiry->id) {
+            abort(404);
+        }
 
-        $quote->update([
-            'status' => 'accepted',
-            'accepted_at' => now(),
-        ]);
+        // Strict IDOR protection for user-owned enquiries
+        if ($enquiry->user_id !== null) {
+            $user = auth()->user();
+            if (!$user || ((int) $user->id !== (int) $enquiry->user_id && !$user->isAdmin())) {
+                abort(403, 'Only the owner of this enquiry can accept a quotation.');
+            }
+        }
 
-        // Mark other quotes on same enquiry as rejected
-        Quote::where('enquiry_id', $enquiry->id)
-            ->where('id', '!=', $quote->id)
-            ->update(['status' => 'rejected']);
+        if ($enquiry->isClosed()) {
+            return back()->with('error', 'This enquiry is already closed.');
+        }
 
-        $enquiry->update(['status' => 'closed']);
+        if (!$quote->isSent()) {
+            return back()->with('error', 'Only active sent quotations can be accepted.');
+        }
+
+        DB::transaction(function () use ($quote, $enquiry, $request) {
+            $lockedEnquiry = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
+            $lockedQuote = Quote::whereKey($quote->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedEnquiry->isClosed() || !$lockedQuote->isSent()) {
+                throw new \RuntimeException('This quotation is no longer eligible for acceptance.');
+            }
+
+            $lockedQuote->update([
+                'status' => 'accepted',
+                'accepted_at' => now(),
+            ]);
+
+            Quote::where('enquiry_id', $lockedEnquiry->id)
+                ->where('id', '!=', $lockedQuote->id)
+                ->where('status', 'sent')
+                ->update(['status' => 'rejected']);
+
+            $lockedEnquiry->update(['status' => 'closed']);
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'auditable_type' => Quote::class,
+                'auditable_id' => $lockedQuote->id,
+                'action' => 'enquiry_quote_accepted',
+                'new_values' => [
+                    'enquiry_id' => $lockedEnquiry->id,
+                    'vendor_id' => $lockedQuote->vendor_id,
+                    'quote_amount' => $lockedQuote->quote_amount,
+                ],
+                'ip_address' => $request->ip(),
+            ]);
+        });
+
+        $this->notifications->notifyUser(
+            $quote->vendor?->user_id,
+            '🎉',
+            "Quotation Accepted — #{$enquiry->enquiry_number}",
+            "Your quote #{$quote->quote_number} (₹" . number_format($quote->quote_amount / 100, 2) . ") was accepted by the buyer.",
+            route('vendor.enquiries.index', ['tab' => 'closed']),
+            'b2b_quote'
+        );
 
         return back()->with('success', "You have accepted the quotation from {$quote->vendor->shop_name}. You can now coordinate final fulfillment via WhatsApp or direct call.");
     }
@@ -380,6 +516,19 @@ class EnquiryController extends Controller
      */
     public function submitRfq(Request $request, Product $product): RedirectResponse|\Illuminate\Http\JsonResponse
     {
+        if (!$this->visibility->isProductPubliclyVisible($product)) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => 'This product is currently unavailable for RFQ submissions.'], 404)
+                : back()->with('error', 'This product is currently unavailable for RFQ submissions.');
+        }
+
+        if (auth()->check() && $product->vendor && (int) $product->vendor->user_id === (int) auth()->id()) {
+            $msg = 'You cannot submit a commercial RFQ on your own product.';
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
         $validated = $request->validate([
             'quantity' => 'required|string|max:100',
             'destination' => 'required|string|max:150',
@@ -397,18 +546,29 @@ class EnquiryController extends Controller
             'category_id' => $product->category_id,
             'product_id' => $product->id,
             'title' => 'Commercial RFQ: ' . $product->title . ' (' . $validated['quantity'] . ' units)',
-            'description' => "Commercial RFQ for {$product->title}\nQuantity: {$validated['quantity']}\nDestination: {$validated['destination']}\n" . ($validated['requirements'] ? "Requirements: {$validated['requirements']}" : ""),
+            'description' => "Commercial RFQ for {$product->title}\nQuantity: {$validated['quantity']}\nDestination: {$validated['destination']}\n" . ($validated['requirements'] ? "Requirements: {$validated['requirements']}" : ''),
             'quantity' => (string) $validated['quantity'],
             'target_budget' => null,
             'city' => $validated['destination'],
             'pincode' => is_numeric($validated['destination']) ? $validated['destination'] : null,
             'urgency' => 'immediate',
-            'buyer_name' => $validated['company_name'],
-            'buyer_phone' => $validated['phone'],
+            'buyer_name' => trim($validated['company_name']),
+            'buyer_phone' => trim($validated['phone']),
             'buyer_email' => auth()->user()?->email,
             'status' => 'open',
             'quotes_count' => 0,
         ]);
+
+        session()->put("guest_enquiry_{$enquiry->id}", true);
+
+        $this->notifications->notifyUser(
+            $product->vendor?->user_id,
+            '📦',
+            "New Commercial RFQ #{$enquiryNumber}",
+            "{$validated['company_name']} requested {$validated['quantity']} units of {$product->title}.",
+            route('vendor.enquiries.index', ['tab' => 'direct']),
+            'b2b_rfq'
+        );
 
         $msg = "Your commercial RFQ ({$enquiryNumber}) for {$product->title} has been submitted to the seller!";
 
@@ -424,4 +584,3 @@ class EnquiryController extends Controller
         return back()->with('success', $msg);
     }
 }
-

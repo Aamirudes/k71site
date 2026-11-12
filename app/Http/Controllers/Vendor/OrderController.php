@@ -223,6 +223,14 @@ class OrderController extends Controller
         $oldStatus = $order->status;
         $newStatus = $validated['status'];
 
+        if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+            return back()->with('error', 'Cancelled orders cannot be reopened once cancelled and inventory is restored.');
+        }
+
+        if ($oldStatus === 'delivered' && $newStatus !== 'delivered') {
+            return back()->with('error', 'Delivered orders cannot be moved back to an earlier fulfillment status.');
+        }
+
         if ($order->isFoodOrder()) {
             $foodService = app(FoodMarketplaceService::class);
             if (!$foodService->canTransitionFoodOrderStatus($oldStatus, $newStatus)) {
@@ -263,6 +271,19 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $oldStatus = $order->status;
+
+            if ($oldStatus === 'cancelled' && $newStatus !== 'cancelled') {
+                DB::rollBack();
+                return back()->with('error', 'Cancelled orders cannot be reopened once cancelled and inventory is restored.');
+            }
+
+            if ($oldStatus === 'delivered' && $newStatus !== 'delivered') {
+                DB::rollBack();
+                return back()->with('error', 'Delivered orders cannot be moved back to an earlier fulfillment status.');
+            }
+
             $updateData = [
                 'status' => $newStatus,
                 'courier_name' => $validated['courier_name'] ?? $order->courier_name,

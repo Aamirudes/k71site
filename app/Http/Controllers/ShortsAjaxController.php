@@ -110,9 +110,19 @@ class ShortsAjaxController extends Controller
         if ($page === 1 && $filter !== 'latest' && $filter !== 'featured') {
             $promoted = Short::with(['vendor', 'category'])
                 ->whereIn('status', ['published', 'approved', 'active'])
+                ->whereHas('vendor', $visibleVendorScope)
                 ->where(function ($q) {
                     $q->where('is_manual_boost', true)
-                      ->orWhere('is_boosted', true);
+                      ->orWhere(function ($bq) {
+                          $bq->where('is_boosted', true)
+                             ->where(function ($eq) {
+                                 $eq->whereDoesntHave('boosts')
+                                    ->orWhereHas('boosts', function ($ab) {
+                                        $ab->where('status', 'active')
+                                           ->where(fn ($dt) => $dt->whereNull('ends_at')->orWhere('ends_at', '>', now()));
+                                    });
+                             });
+                      });
                 })
                 ->orderByDesc('is_manual_boost')
                 ->orderByDesc('id')
@@ -154,13 +164,25 @@ class ShortsAjaxController extends Controller
      */
     public function getFeatured(Request $request): JsonResponse
     {
-        $count = (int) $request->input('count', 8);
+        $count = min(24, max(1, (int) $request->input('count', 8)));
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
         $shorts = Short::with(['vendor', 'category'])
             ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
             ->where(function ($q) {
-                $q->where('is_boosted', true)
-                  ->orWhere('is_featured', true);
+                $q->where('is_manual_boost', true)
+                  ->orWhere('is_featured', true)
+                  ->orWhere(function ($bq) {
+                      $bq->where('is_boosted', true)
+                         ->where(function ($eq) {
+                             $eq->whereDoesntHave('boosts')
+                                ->orWhereHas('boosts', function ($ab) {
+                                    $ab->where('status', 'active')
+                                       ->where(fn ($dt) => $dt->whereNull('ends_at')->orWhere('ends_at', '>', now()));
+                                });
+                         });
+                  });
             })
             ->orderByDesc('is_boosted')
             ->orderByDesc('id')
@@ -407,10 +429,12 @@ class ShortsAjaxController extends Controller
             return response()->json(['success' => true, 'products' => []]);
         }
 
-        $products = Product::with(['images', 'vendor'])
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $productsQuery = Product::with(['images', 'vendor'])
             ->whereIn('id', array_slice($ids, 0, 8))
-            ->where('status', 'active')
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($productsQuery);
+        $products = $productsQuery->get();
 
         $trayItems = [];
         foreach ($products as $p) {
@@ -420,6 +444,14 @@ class ShortsAjaxController extends Controller
             $discountPct = $isOnSale ? (int) round((1 - ($priceRupees / $compareRupees)) * 100) : 0;
 
             $imageUrl = $p->primary_image_url;
+            $productUrl = route('product.show', $p->slug);
+            if ($p->vertical === 'used' || $p->listing_type === 'classified') {
+                $productUrl = route('used.show', $p->slug);
+            } elseif ($p->vertical === 'services' || in_array($p->listing_type, ['gig', 'service', 'booking'], true)) {
+                $productUrl = route('services.show', $p->slug);
+            } elseif ($p->vertical === 'food' && $p->vendor) {
+                $productUrl = route('food.restaurant', $p->vendor->slug);
+            }
 
             $trayItems[] = [
                 'id' => $p->id,
@@ -432,7 +464,7 @@ class ShortsAjaxController extends Controller
                 'discount_pct' => $discountPct,
                 'image' => $imageUrl,
                 'gallery' => $p->images->map(fn($img) => $img->url)->toArray(),
-                'url' => route('product.show', $p->slug),
+                'url' => $productUrl,
                 'add_to_cart' => route('cart.add', ['product' => $p->id]),
                 'in_stock' => $p->total_stock > 0,
                 'stock_qty' => $p->total_stock,
@@ -465,7 +497,11 @@ class ShortsAjaxController extends Controller
     public function getShortData(Request $request): JsonResponse
     {
         $id = (int) $request->input('id', $request->input('short_id', 0));
-        $short = Short::with(['vendor', 'category'])->find($id);
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $short = Short::with(['vendor', 'category'])
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
+            ->find($id);
 
         if (!$short) {
             return response()->json(['success' => false, 'message' => 'Short not found'], 404);
@@ -558,15 +594,18 @@ class ShortsAjaxController extends Controller
      */
     public function postComment(Request $request): JsonResponse
     {
-        $shortId = (int) $request->input('short_id', 0);
-        $content = trim($request->input('content', ''));
-        $short = Short::find($shortId);
-
-        if (!$short || empty($content)) {
-            return response()->json(['success' => false, 'message' => 'Invalid content'], 422);
+        $userId = auth()->id();
+        if (!$userId) {
+            return response()->json(['success' => false, 'message' => 'Please login to post a comment.'], 401);
         }
 
-        $userId = auth()->id() ?? 1; // Fallback to guest user ID
+        $shortId = (int) $request->input('short_id', 0);
+        $content = trim((string) $request->input('content', ''));
+        $short = Short::find($shortId);
+
+        if (!$short || empty($content) || mb_strlen($content) > 500) {
+            return response()->json(['success' => false, 'message' => 'Please enter a valid comment (max 500 characters).'], 422);
+        }
 
         $comment = ShortComment::create([
             'short_id' => $shortId,
@@ -645,8 +684,10 @@ class ShortsAjaxController extends Controller
             return response()->json(['success' => true, 'shorts' => []]);
         }
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $shorts = Short::with(['vendor', 'category'])
             ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
             ->where(function ($q) use ($term) {
                 $q->where('title', 'like', "%{$term}%")
                   ->orWhere('description', 'like', "%{$term}%");

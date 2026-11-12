@@ -174,13 +174,20 @@ class AccountController extends Controller
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        // If user operates a vendor store, mark vendor closed
+        // If user operates a vendor store, suspend vendor and pull active public listings
         if ($user->vendor) {
+            \App\Models\Product::withoutGlobalScopes()
+                ->where('vendor_id', $user->vendor->id)
+                ->where('status', 'active')
+                ->update(['status' => 'inactive']);
+
             $user->vendor->update([
                 'status' => 'suspended',
                 'vacation_mode' => true,
                 'vacation_message' => 'Store closed by account owner.',
             ]);
+
+            \App\Http\Controllers\SitemapController::clearCache();
         }
 
         // Anonymize personal identifiable information (PII) before soft-deleting (username <= 20 chars)

@@ -931,4 +931,36 @@ class AdminController extends Controller
 
         return back()->with('success', "Service '{$service->title}' status updated to " . strtoupper($validated['status']) . ".");
     }
+
+    /**
+     * System Health, Consistency & Reconciliation Diagnostics (read-only by default, optional deterministic repair).
+     */
+    public function diagnostics(Request $request)
+    {
+        $report = app(\App\Services\Admin\MarketplaceDiagnosticsService::class)->inspect(false);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json($report);
+        }
+
+        return view('admin.diagnostics', compact('report'));
+    }
+
+    /**
+     * Run safe deterministic reconciliation (sync enquiry counts & expire overdue short boosts).
+     */
+    public function reconcile(Request $request)
+    {
+        $report = app(\App\Services\Admin\MarketplaceDiagnosticsService::class)->inspect(true, auth()->id());
+
+        $fixes = $report['fixes_applied'];
+        $msg = sprintf(
+            'Deterministic reconciliation completed: synced %d enquiry count(s) and expired %d overdue boost(s). Remaining flagged checks: %d.',
+            $fixes['enquiry_quotes_synced'],
+            $fixes['short_boosts_expired'],
+            $report['issues_count']
+        );
+
+        return redirect()->route('admin.diagnostics')->with('success', $msg);
+    }
 }

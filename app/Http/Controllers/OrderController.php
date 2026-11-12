@@ -79,6 +79,13 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with(['items.variant', 'items.product', 'shipment', 'user'])->firstOrFail();
+            if (!$lockedOrder->canCustomerCancel()) {
+                DB::rollBack();
+                return back()->with('error', 'This order has already been updated and cannot be cancelled again.');
+            }
+
+            $oldStatus = $lockedOrder->status;
             $updatePayload = [
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
@@ -86,44 +93,44 @@ class OrderController extends Controller
                 'cancel_reason' => $reason,
             ];
 
-            if ($order->isFoodOrder()) {
+            if ($lockedOrder->isFoodOrder()) {
                 $updatePayload['food_fulfillment_stage'] = 'cancelled';
             }
 
             // If customer paid online, flag for refund
-            if ($order->payment_status === 'paid') {
+            if ($lockedOrder->payment_status === 'paid') {
                 $updatePayload['payment_status'] = 'refund_pending';
             }
 
             // If vendor payout was already disbursed, flag for reversal
-            if ($order->vendor_payout_status === 'paid') {
+            if ($lockedOrder->vendor_payout_status === 'paid') {
                 $updatePayload['vendor_payout_status'] = 'reversal_pending';
             }
 
-            $order->update($updatePayload);
+            $lockedOrder->update($updatePayload);
 
             // Cancel Shiprocket consignment if shipment was created
-            if ($order->shipment && $order->shipment->status !== 'cancelled') {
+            if ($lockedOrder->shipment && $lockedOrder->shipment->status !== 'cancelled') {
                 try {
-                    app(\App\Services\Shipping\ShiprocketService::class)->cancelShipment($order->shipment);
+                    app(\App\Services\Shipping\ShiprocketService::class)->cancelShipment($lockedOrder->shipment);
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::warning("Failed to cancel Shiprocket shipment on order cancel: " . $e->getMessage());
                 }
             }
 
             // Restore product inventory stock (both variant and total_stock)
-            \App\Services\StockManagerService::restoreOrderStock($order);
+            \App\Services\StockManagerService::restoreOrderStock($lockedOrder);
 
             // Reverse recorded commission idempotently on cancellation
-            app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($order, 'Order cancelled by customer', auth()->id());
+            app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($lockedOrder, 'Order cancelled by customer', auth()->id());
 
             // Log status history
-            $refundNote = ($order->payment_status === 'paid' || (($updatePayload['payment_status'] ?? '') === 'refund_pending'))
-                ? " (Online payment of ₹" . number_format($order->total_amount / 100, 2) . " flagged for refund)"
+            $refundNote = (($updatePayload['payment_status'] ?? '') === 'refund_pending')
+                ? " (Online payment of ₹" . number_format($lockedOrder->total_amount / 100, 2) . " flagged for refund)"
                 : "";
 
             OrderStatusLog::create([
-                'order_id' => $order->id,
+                'order_id' => $lockedOrder->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'cancelled',
                 'actor_type' => 'customer',
@@ -133,21 +140,32 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
+            $order = $lockedOrder->fresh(['user', 'vendor']);
 
-            // Send notification to customer
+            // Send notification to customer and vendor
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
+
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                $order->vendor?->user_id,
+                '↩️',
+                "Order #{$order->order_number} Cancelled",
+                'Customer cancelled this order; reserved stock has been restored.',
+                route('vendor.orders.show', $order),
+                'order_cancelled'
+            );
 
             // Send email alert to Admin if online refund is required
             if ($order->payment_method === 'phonepe' || ($updatePayload['payment_status'] ?? '') === 'refund_pending') {
                 try {
                     $adminEmail = config('mail.admin_email', 'crab.hashir@gmail.com');
+                    $customerLabel = ($order->user?->name ?? 'Customer') . ' (' . ($order->user?->email ?? 'N/A') . ')';
                     \Illuminate\Support\Facades\Mail::raw(
                         "Order #{$order->order_number} has been cancelled by the customer.\n\n" .
                         "Payment Method: " . strtoupper($order->payment_method) . "\n" .
                         "Total Amount to Refund: ₹" . number_format($order->total_amount / 100, 2) . "\n" .
-                        "Customer Name: {$order->user->name} ({$order->user->email})\n" .
+                        "Customer Name: {$customerLabel}\n" .
                         "Cancellation Reason: {$reason}\n\n" .
                         "Please review and initiate the refund via your PhonePe Merchant Dashboard.",
                         function ($m) use ($adminEmail, $order) {

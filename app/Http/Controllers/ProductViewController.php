@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\Catalog\RecommendationService;
+use App\Services\Monetization\VisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -15,8 +17,9 @@ class ProductViewController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        $visibility = app(VisibilityService::class);
         $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $product->vendor_id || auth()->user()->hasRole('admin'));
-        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product)) {
+        if (!$isOwnerOrAdmin && !$visibility->isProductPubliclyVisible($product)) {
             abort(404);
         }
 
@@ -154,14 +157,21 @@ class ProductViewController extends Controller
             ],
         ];
 
-        // More products from same vendor (strictly exclude used/classifieds)
-        $vendorProducts = Product::with(['vendor', 'images'])
+        // More products from same vendor (strictly exclude used/classifieds + respect visibility)
+        $vendorProductsQuery = Product::with(['vendor', 'images'])
             ->where('vendor_id', $product->vendor_id)
             ->where('id', '!=', $product->id)
             ->where('status', 'active')
-            ->excludeUsed()
-            ->take(4)
-            ->get();
+            ->excludeUsed();
+        $visibility->scopeVisibleProducts($vendorProductsQuery);
+        $vendorProducts = $vendorProductsQuery->take(4)->get();
+
+        // Track privacy-safe recently viewed history & genuine recommendations
+        $recommendations = app(RecommendationService::class);
+        $recommendations->trackRecentlyViewed($product);
+        $relatedProducts = $recommendations->getRelatedProducts($product, 4);
+        $boughtTogetherProducts = $recommendations->getFrequentlyBoughtTogether($product, 4);
+        $recentlyViewedProducts = $recommendations->getRecentlyViewed((int) $product->id, 4);
 
         return view('catalog.show', compact(
             'product', 
@@ -170,7 +180,10 @@ class ProductViewController extends Controller
             'ogImage', 
             'canonicalUrl',
             'schemaJson',
-            'vendorProducts'
+            'vendorProducts',
+            'relatedProducts',
+            'boughtTogetherProducts',
+            'recentlyViewedProducts'
         ));
     }
 }

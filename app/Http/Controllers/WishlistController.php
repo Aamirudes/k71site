@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Wishlist;
+use App\Services\Monetization\VisibilityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,15 +12,20 @@ class WishlistController extends Controller
 {
     public function index()
     {
+        $visibility = app(VisibilityService::class);
+
         if (Auth::check()) {
             // Auto-merge any items saved while browsing as guest
             $guestItems = session()->get('guest_wishlist', []);
             if (!empty($guestItems)) {
                 foreach ($guestItems as $pid) {
-                    Wishlist::firstOrCreate([
-                        'user_id' => Auth::id(),
-                        'product_id' => (int) $pid,
-                    ]);
+                    $candidate = Product::withoutGlobalScopes()->find((int) $pid);
+                    if ($candidate && $visibility->isProductPubliclyVisible($candidate)) {
+                        Wishlist::firstOrCreate([
+                            'user_id' => Auth::id(),
+                            'product_id' => (int) $pid,
+                        ]);
+                    }
                 }
                 session()->forget('guest_wishlist');
             }
@@ -26,12 +33,17 @@ class WishlistController extends Controller
             $wishlists = Wishlist::with(['product', 'product.vendor', 'product.images', 'product.variants'])
                 ->where('user_id', Auth::id())
                 ->latest()
-                ->get();
+                ->get()
+                ->filter(fn ($w) => $w->product && $visibility->isProductPubliclyVisible($w->product))
+                ->values();
         } else {
             $guestItems = session()->get('guest_wishlist', []);
-            $products = \App\Models\Product::with(['vendor', 'images', 'variants'])
+            $products = Product::with(['vendor', 'images', 'variants'])
                 ->whereIn('id', $guestItems)
-                ->get();
+                ->where('status', 'active')
+                ->get()
+                ->filter(fn ($product) => $visibility->isProductPubliclyVisible($product))
+                ->values();
 
             // Transform into wishlist-compatible structure for the view
             $wishlists = $products->map(function ($product) {
@@ -53,6 +65,8 @@ class WishlistController extends Controller
         ]);
 
         $productId = (int) $validated['product_id'];
+        $product = Product::withoutGlobalScopes()->with('vendor')->find($productId);
+        $visibility = app(VisibilityService::class);
 
         if (Auth::check()) {
             $wishlist = Wishlist::where('user_id', Auth::id())
@@ -63,6 +77,12 @@ class WishlistController extends Controller
                 $wishlist->delete();
                 $action = 'removed';
             } else {
+                if (!$product || !$visibility->isProductPubliclyVisible($product)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This listing is currently unavailable.',
+                    ], 422);
+                }
                 Wishlist::create([
                     'user_id' => Auth::id(),
                     'product_id' => $productId
@@ -73,7 +93,6 @@ class WishlistController extends Controller
             $count = Wishlist::where('user_id', Auth::id())->count();
 
             $savesCount = null;
-            $product = \App\Models\Product::withoutGlobalScopes()->find($productId);
             if ($product && $product->isUsedListing()) {
                 $savesCount = app(\App\Services\Used\UsedMarketplaceService::class)->syncSavesCount($productId);
             }
@@ -84,6 +103,12 @@ class WishlistController extends Controller
                 $guestWishlist = array_values(array_diff($guestWishlist, [$productId]));
                 $action = 'removed';
             } else {
+                if (!$product || !$visibility->isProductPubliclyVisible($product)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This listing is currently unavailable.',
+                    ], 422);
+                }
                 $guestWishlist[] = $productId;
                 $action = 'added';
             }
@@ -106,22 +131,39 @@ class WishlistController extends Controller
 
     public function getJson()
     {
+        $visibility = app(VisibilityService::class);
+
         if (Auth::check()) {
             $wishlists = Wishlist::with(['product.vendor', 'product.images', 'product.variants'])
                 ->where('user_id', Auth::id())
                 ->latest()
                 ->get();
-            $products = $wishlists->map(fn($w) => $w->product)->filter();
+            $products = $wishlists->map(fn ($w) => $w->product)
+                ->filter(fn ($product) => $product && $visibility->isProductPubliclyVisible($product))
+                ->values();
         } else {
             $guestItems = session()->get('guest_wishlist', []);
-            $products = \App\Models\Product::with(['vendor', 'images', 'variants'])
+            $products = Product::with(['vendor', 'images', 'variants'])
                 ->whereIn('id', $guestItems)
-                ->get();
+                ->where('status', 'active')
+                ->get()
+                ->filter(fn ($product) => $visibility->isProductPubliclyVisible($product))
+                ->values();
         }
 
         $items = $products->map(function ($product) {
             $img = $product->images->first();
             $imageUrl = $img ? (str_starts_with($img->path, 'http') ? $img->path : asset('storage/' . $img->path)) : null;
+
+            $url = route('product.show', $product->slug);
+            if ($product->isUsedListing()) {
+                $url = route('used.show', $product->slug);
+            } elseif ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking'], true)) {
+                $url = route('services.show', $product->slug);
+            } elseif ($product->vertical === 'food' && $product->vendor) {
+                $url = route('food.restaurant', $product->vendor->slug);
+            }
+
             return [
                 'id' => $product->id,
                 'title' => $product->title,
@@ -130,7 +172,7 @@ class WishlistController extends Controller
                 'price' => $product->base_price,
                 'price_formatted' => '₹' . number_format($product->base_price / 100, 2),
                 'image_url' => $imageUrl,
-                'url' => $product->isUsedListing() ? route('used.show', $product->slug) : route('product.show', $product->slug),
+                'url' => $url,
                 'in_stock' => $product->stock_quantity > 0,
             ];
         })->values();
