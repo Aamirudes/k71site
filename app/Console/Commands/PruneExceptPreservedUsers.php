@@ -276,7 +276,7 @@ class PruneExceptPreservedUsers extends Command
         $this->line("  Chat conversations kept: " . count($keepChatConvIds) . " (legacy: " . count($keepLegacyConvIds) . ", used threads: " . count($keepUsedThreadIds) . ")");
 
         // Gather all files referenced by KEPT records BEFORE deletion
-        $keptRelativePaths = $this->collectKeptStoragePaths($keepUserIds, $keepVendorIds, $keepProductIds, $keepChatConvIds, $keepUsedThreadIds, $keepShortIds);
+        $keptRelativePaths = $this->collectKeptStoragePaths($keepUserIds, $keepVendorIds, $keepProductIds, $keepOrderIds, $keepChatConvIds, $keepUsedThreadIds, $keepShortIds);
         $this->line('  Storage files referenced by kept entities/settings: ' . count($keptRelativePaths));
 
         if ($dryRun) {
@@ -507,7 +507,7 @@ class PruneExceptPreservedUsers extends Command
     /**
      * Collect all storage/app/public relative file paths referenced by kept users, vendors, products, chats, and site settings.
      */
-    private function collectKeptStoragePaths(array $keepUserIds, array $keepVendorIds, array $keepProductIds, array $keepChatConvIds, array $keepUsedThreadIds, array $keepShortIds): array
+    private function collectKeptStoragePaths(array $keepUserIds, array $keepVendorIds, array $keepProductIds, array $keepOrderIds, array $keepChatConvIds, array $keepUsedThreadIds, array $keepShortIds): array
     {
         $rawValues = [];
 
@@ -518,9 +518,10 @@ class PruneExceptPreservedUsers extends Command
             $rawValues = array_merge($rawValues, DB::table('categories')->pluck('image')->filter()->all());
         }
         if (Schema::hasTable('navigation_items')) {
-            $rawValues = array_merge($rawValues, DB::table('navigation_items')->pluck('icon')->filter()->all());
-            if (Schema::hasColumn('navigation_items', 'image')) {
-                $rawValues = array_merge($rawValues, DB::table('navigation_items')->pluck('image')->filter()->all());
+            foreach (['icon', 'image', 'image_url'] as $col) {
+                if (Schema::hasColumn('navigation_items', $col)) {
+                    $rawValues = array_merge($rawValues, DB::table('navigation_items')->pluck($col)->filter()->all());
+                }
             }
         }
         if (Schema::hasTable('banners')) {
@@ -546,7 +547,7 @@ class PruneExceptPreservedUsers extends Command
                 }
             }
             if (Schema::hasTable('vendor_settings')) {
-                foreach (['fssai_certificate', 'fssai_document', 'gst_certificate', 'hero_image', 'banner_image'] as $col) {
+                foreach (['fssai_certificate', 'fssai_document', 'gst_certificate', 'hero_image', 'banner_image', 'upi_qr_image'] as $col) {
                     if (Schema::hasColumn('vendor_settings', $col)) {
                         $rawValues = array_merge($rawValues, DB::table('vendor_settings')->whereIn('vendor_id', $keepVendorIds)->pluck($col)->filter()->all());
                     }
@@ -575,18 +576,34 @@ class PruneExceptPreservedUsers extends Command
             if (Schema::hasTable('product_images')) {
                 $rawValues = array_merge($rawValues, DB::table('product_images')->whereIn('product_id', $keepProductIds)->pluck('path')->filter()->all());
             }
-            if (Schema::hasTable('product_variants') && Schema::hasColumn('product_variants', 'image')) {
-                $rawValues = array_merge($rawValues, DB::table('product_variants')->whereIn('product_id', $keepProductIds)->pluck('image')->filter()->all());
+            if (Schema::hasTable('product_variants')) {
+                foreach (['image', 'image_url'] as $col) {
+                    if (Schema::hasColumn('product_variants', $col)) {
+                        $rawValues = array_merge($rawValues, DB::table('product_variants')->whereIn('product_id', $keepProductIds)->pluck($col)->filter()->all());
+                    }
+                }
             }
             foreach (['og_image', 'video_path', 'video_url'] as $col) {
                 if (Schema::hasColumn('products', $col)) {
                     $rawValues = array_merge($rawValues, DB::table('products')->whereIn('id', $keepProductIds)->pluck($col)->filter()->all());
                 }
             }
+            if (Schema::hasTable('reviews') && Schema::hasColumn('reviews', 'images')) {
+                $rawValues = array_merge($rawValues, DB::table('reviews')->whereIn('product_id', $keepProductIds)->pluck('images')->filter()->all());
+            }
+        }
+
+        if (!empty($keepOrderIds)) {
+            if (Schema::hasTable('payment_claims') && Schema::hasColumn('payment_claims', 'screenshot')) {
+                $rawValues = array_merge($rawValues, DB::table('payment_claims')->whereIn('order_id', $keepOrderIds)->pluck('screenshot')->filter()->all());
+            }
+            if (Schema::hasTable('return_requests') && Schema::hasColumn('return_requests', 'photos')) {
+                $rawValues = array_merge($rawValues, DB::table('return_requests')->whereIn('order_id', $keepOrderIds)->pluck('photos')->filter()->all());
+            }
         }
 
         if (!empty($keepChatConvIds) && Schema::hasTable('chat_messages')) {
-            foreach (['attachment_path', 'media_path', 'image', 'file_path'] as $col) {
+            foreach (['attachment_url', 'attachment_path', 'media_path', 'image', 'file_path'] as $col) {
                 if (Schema::hasColumn('chat_messages', $col)) {
                     $rawValues = array_merge($rawValues, DB::table('chat_messages')->whereIn('conversation_id', $keepChatConvIds)->pluck($col)->filter()->all());
                 }
@@ -594,7 +611,7 @@ class PruneExceptPreservedUsers extends Command
         }
 
         if (!empty($keepUsedThreadIds) && Schema::hasTable('used_thread_messages')) {
-            foreach (['attachment_path', 'image'] as $col) {
+            foreach (['attachment_url', 'attachment_path', 'image'] as $col) {
                 if (Schema::hasColumn('used_thread_messages', $col)) {
                     $rawValues = array_merge($rawValues, DB::table('used_thread_messages')->whereIn('thread_id', $keepUsedThreadIds)->pluck($col)->filter()->all());
                 }
@@ -625,7 +642,7 @@ class PruneExceptPreservedUsers extends Command
             if (!is_string($raw) || $raw === '') {
                 continue;
             }
-            if (preg_match_all('/(?:vendors|products|categories|settings|chats|shorts|portfolio|scroll-frames|uploads|avatars|banners)\/[A-Za-z0-9._\-\/]+/i', $raw, $m)) {
+            if (preg_match_all('/(?:vendors|products|categories|settings|chats|chat_attachments|chat_videos|chat_voice|shorts|portfolio|scroll-frames|uploads|avatars|banners|nav_icons|payment_claims|floating_launcher|homepage|seo|services_page|food_page|used_page|reviews|service_requirements|workspace_files|deliverables|contracts)\/[A-Za-z0-9._\-\/]+/i', $raw, $m)) {
                 foreach ($m[0] as $match) {
                     $pushPath($match);
                 }
@@ -633,13 +650,14 @@ class PruneExceptPreservedUsers extends Command
             $pushPath($raw);
         }
 
-        // Always keep files directly inside kept vendor directories (`vendors/{id}/...`)
+        // Always keep files directly inside kept vendor directories & site-wide system assets
         foreach ($keepVendorIds as $vid) {
             $normalized["__DIR_PREFIX__:vendors/{$vid}/"] = true;
+            $normalized["__DIR_PREFIX__:portfolio/{$vid}/"] = true;
         }
-        // Keep shared non-user system folders like categories/ and settings/
-        $normalized['__DIR_PREFIX__:categories/'] = true;
-        $normalized['__DIR_PREFIX__:settings/'] = true;
+        foreach (['categories/', 'settings/', 'scroll-frames/', 'homepage/', 'seo/', 'services_page/', 'food_page/', 'used_page/', 'floating_launcher/'] as $sysPrefix) {
+            $normalized['__DIR_PREFIX__:' . $sysPrefix] = true;
+        }
 
         return array_keys($normalized);
     }
