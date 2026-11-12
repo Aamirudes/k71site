@@ -348,7 +348,7 @@ class K71ServicesEcosystemTest extends TestCase
             'features_json' => ['Video Walkthrough'],
         ]);
 
-        $tenPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic'];
+        $tenPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue'];
 
         foreach ($tenPresets as $preset) {
             $this->actingAs($user)

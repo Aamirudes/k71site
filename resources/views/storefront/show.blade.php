@@ -64,7 +64,7 @@
     ];
 
     $rawKey = strtolower(trim((string)($config['preset'] ?? 'velora')));
-    $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($rawKey);
+    $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKeyForVendor($rawKey, $vendor);
     $presetView = 'storefront.presets.' . $presetKey;
     if (!view()->exists($presetView)) {
         $presetView = 'storefront.presets.velora';

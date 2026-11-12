@@ -34,8 +34,8 @@ class WebsiteHubController extends Controller
     {
         $vendor = $this->resolveServiceVendor($request);
         $config = $vendor->getStorefrontConfig(true);
-        $presets = $this->presetService->getPresets();
-        $activePreset = $config['preset'] ?? $vendor->layout_preset ?? 'velora';
+        $presets = $this->presetService->getPresetsForVendor($vendor);
+        $activePreset = $this->presetService->normalizePresetKeyForVendor((string) ($config['preset'] ?? $vendor->layout_preset ?? 'velora'), $vendor);
         $readiness = $this->presenter->evaluatePublishReadiness($vendor);
         $siteData = $this->presenter->build($vendor, true, $config);
         $domain = config('marketplace.domain', 'marblemandi.org');
@@ -66,6 +66,9 @@ class WebsiteHubController extends Controller
         ]);
 
         $requestedPreset = strtolower(trim($validated['preset_key']));
+        if ($this->presetService->normalizePresetKey($requestedPreset) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            abort(403, 'Scroll Motion is not enabled for your boutique.');
+        }
         $currentConfig = $vendor->getStorefrontConfig(true);
         $nextConfig = $this->presetService->switchPresetPreservingContent($vendor, $requestedPreset, $currentConfig);
         $sanitized = $this->presetService->sanitizeConfig($nextConfig, $vendor);

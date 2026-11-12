@@ -30,7 +30,7 @@ class StorefrontDesignController extends Controller
             return redirect()->route('vendor.register');
         }
 
-        $presets = $this->presetService->getPresets();
+        $presets = $this->presetService->getPresetsForVendor($vendor);
         $defaultPreset = $this->presetService->getRecommendedPresetForVendor($vendor);
         $defaultConfig = $this->presetService->getDefaultConfig($defaultPreset, $vendor);
 
@@ -47,10 +47,12 @@ class StorefrontDesignController extends Controller
             ]
         );
 
-        $activePresetKey = $configRecord->preset_key;
-        $currentConfig = $configRecord->getEffectiveConfig(false);
+        $activePresetKey = $this->presetService->normalizePresetKeyForVendor((string) $configRecord->preset_key, $vendor);
+        $currentConfig = $vendor->getStorefrontConfig(false);
         $hasUnpublishedDraft = !empty($configRecord->draft_config) && ($configRecord->draft_config != $configRecord->published_config);
-        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $currentConfig);
+        $vendorScrollSequence = $vendor->hasKineticScrollAccess()
+            ? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $currentConfig)
+            : ['frames' => [], 'count' => 0, 'video_url' => null];
 
         return view('vendor.design.index', compact(
             'vendor',
@@ -89,15 +91,15 @@ class StorefrontDesignController extends Controller
             ]
         );
 
-        $draftConfig = !empty($configRecord->draft_config) 
-            ? $configRecord->draft_config 
-            : $this->presetService->getDefaultConfig($configRecord->preset_key, $vendor);
+        $draftConfig = $vendor->getStorefrontConfig(true);
 
-        $presets = $this->presetService->getPresets();
-        $availableSections = $this->presetService->getAvailableSections();
+        $presets = $this->presetService->getPresetsForVendor($vendor);
+        $availableSections = $this->presetService->getAvailableSections($vendor);
         $vendorProducts = $vendor->products()->where('status', 'active')->select('id', 'title', 'base_price', 'slug')->get();
         $vendorCategories = \App\Models\Category::whereHas('products', fn($q) => $q->where('vendor_id', $vendor->id))->get();
-        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $draftConfig);
+        $vendorScrollSequence = $vendor->hasKineticScrollAccess()
+            ? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $draftConfig)
+            : ['frames' => [], 'count' => 0, 'video_url' => null];
 
         return view('vendor.design.editor', compact(
             'vendor',
@@ -122,7 +124,7 @@ class StorefrontDesignController extends Controller
         }
 
         $configRecord = $vendor->storefrontConfig;
-        $config = $configRecord?->draft_config ?: $this->presetService->getDefaultConfig('atelier', $vendor);
+        $config = $vendor->getStorefrontConfig(true);
 
         // Fetch vendor store data
         $query = $vendor->products()->with(['images', 'category', 'variants'])->where('status', 'active');
@@ -152,7 +154,9 @@ class StorefrontDesignController extends Controller
             ->take(24)
             ->get();
         $isPreview = true;
-        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config);
+        $vendorScrollSequence = $vendor->hasKineticScrollAccess()
+            ? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config)
+            : ['frames' => [], 'count' => 0, 'video_url' => null];
 
         return view('storefront.show', compact(
             'vendor',
@@ -180,6 +184,11 @@ class StorefrontDesignController extends Controller
         $rawConfig = $request->input('config');
         if (!is_array($rawConfig)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid configuration payload'], 422);
+        }
+
+        $reqPreset = strtolower(trim((string) ($rawConfig['preset'] ?? '')));
+        if ($this->presetService->normalizePresetKey($reqPreset) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
         }
 
         // Validate & sanitize incoming config
@@ -298,6 +307,9 @@ class StorefrontDesignController extends Controller
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
         }
+        if ($this->presetService->normalizePresetKey($requestedPreset) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
+        }
 
         $newDraft = $this->presetService->switchPresetPreservingContent($vendor, $requestedPreset);
         $newDraft['preset'] = $requestedPreset;
@@ -339,6 +351,9 @@ class StorefrontDesignController extends Controller
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
+        }
+        if ($this->presetService->normalizePresetKey($requestedPreset) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
         }
 
         $newConfig = $this->presetService->switchPresetPreservingContent($vendor, $requestedPreset);
@@ -530,14 +545,14 @@ class StorefrontDesignController extends Controller
             $currentConfig['theme']['accent_color'] = $accent;
         }
 
-        // Kinetic Video-to-JPG Scroll Sequence Controls
-        if (
+        // Kinetic Video-to-JPG Scroll Sequence Controls (only for authorized vendors)
+        if ($vendor->hasKineticScrollAccess() && (
             $request->has('scroll_seq_enabled')
             || $request->has('scroll_seq_height_vh')
             || $request->has('scroll_seq_beat1_title')
             || $request->has('scroll_seq_beat2_title')
             || $request->has('scroll_seq_beat3_title')
-        ) {
+        )) {
             $seqCfg = is_array($currentConfig['scroll_sequence'] ?? null) ? $currentConfig['scroll_sequence'] : [];
             if ($request->has('scroll_seq_enabled')) {
                 $seqCfg['enabled'] = $request->boolean('scroll_seq_enabled');
@@ -832,8 +847,8 @@ class StorefrontDesignController extends Controller
     public function uploadScrollFramesBatch(Request $request)
     {
         $vendor = auth()->user()?->vendor;
-        if (!$vendor) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        if (!$vendor || !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
         }
 
         $request->validate([
@@ -915,8 +930,8 @@ class StorefrontDesignController extends Controller
     public function uploadScrollVideo(Request $request)
     {
         $vendor = auth()->user()?->vendor;
-        if (!$vendor) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        if (!$vendor || !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
         }
 
         $request->validate([
@@ -991,8 +1006,8 @@ class StorefrontDesignController extends Controller
     public function clearScrollFrames(Request $request)
     {
         $vendor = auth()->user()?->vendor;
-        if (!$vendor) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        if (!$vendor || !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
         }
 
         \App\Services\ScrollSequenceService::clearVendorFrames($vendor);

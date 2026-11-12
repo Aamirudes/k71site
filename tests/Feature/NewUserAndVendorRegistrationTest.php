@@ -372,11 +372,11 @@ class NewUserAndVendorRegistrationTest extends TestCase
             $publishRes->assertOk()->assertJson(['status' => 'success']);
         }
 
-        // Sweep all 16 presets (11 signature + 5 legacy aliases) on a 0-product store
+        // Sweep all 15 default presets (10 signature + 5 legacy aliases) on a 0-product store; kinetic stays restricted until admin grants access
         $this->actingAs($firstUser);
         $presets = [
             'velora', 'noire', 'aurel', 'chroma', 'orbit',
-            'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic',
+            'zenith', 'solaris', 'nexus', 'elysium', 'vogue',
             'atelier', 'object', 'commerce', 'market', 'signature',
         ];
         foreach ($presets as $preset) {
@@ -386,6 +386,7 @@ class NewUserAndVendorRegistrationTest extends TestCase
 
             $this->get("/s/{$firstVendor->slug}")->assertOk();
         }
+        $this->postJson(route('vendor.design.activate'), ['preset' => 'kinetic'])->assertStatus(403);
     }
 
     public function test_account_deletion_form_works_and_truncates_username_under_20_chars(): void

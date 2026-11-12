@@ -388,6 +388,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/vendors', [\App\Http\Controllers\AdminController::class, 'vendors'])->name('vendors');
     Route::put('/vendors/{vendor}/status', [\App\Http\Controllers\AdminController::class, 'updateVendorStatus'])->name('vendors.status');
     Route::post('/vendors/{vendor}/verify-fssai', [\App\Http\Controllers\AdminController::class, 'verifyFssai'])->name('vendors.verify_fssai');
+    Route::post('/vendors/{vendor}/toggle-kinetic-scroll', [\App\Http\Controllers\AdminController::class, 'toggleKineticScroll'])->name('vendors.toggle_kinetic_scroll');
     Route::delete('/vendors/{vendor}', [\App\Http\Controllers\AdminController::class, 'deleteVendor'])->name('vendors.destroy');
 
     // Products Control

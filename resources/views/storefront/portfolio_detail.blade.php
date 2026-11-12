@@ -3,7 +3,7 @@
     $theme = $config['theme'] ?? [];
     $brand = $config['brand'] ?? [];
     $rawKey = strtolower(trim((string) ($config['preset'] ?? 'velora')));
-    $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($rawKey);
+    $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKeyForVendor($rawKey, $vendor);
     $isKineticPreset = $presetKey === 'kinetic';
     $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium', 'kinetic'], true) || !empty($theme['dark_mode']);
     $headingFont = $theme['font_heading'] ?? 'Playfair Display';

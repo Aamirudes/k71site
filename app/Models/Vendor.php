@@ -40,6 +40,7 @@ class Vendor extends Model
         'og_image',
         'colour_palette',
         'layout_preset',
+        'can_use_kinetic_scroll',
         'product_preset',
         'status',
         'approved_at',
@@ -87,6 +88,7 @@ class Vendor extends Model
         'slug_reserved_at' => 'datetime',
         'slug_released_at' => 'datetime',
         'vacation_mode' => 'boolean',
+        'can_use_kinetic_scroll' => 'boolean',
         'website_published_at' => 'datetime',
         'onboarding_step' => 'integer',
         'response_time_minutes' => 'integer',
@@ -116,18 +118,39 @@ class Vendor extends Model
         return $this->hasMany(VendorStorefrontRevision::class)->latest();
     }
 
+    public function hasKineticScrollAccess(): bool
+    {
+        return (bool) ($this->can_use_kinetic_scroll ?? false);
+    }
+
     public function getStorefrontConfig(bool $preview = false): array
     {
+        $presetService = app(\App\Services\Storefront\StorefrontPresetService::class);
         $configRecord = $this->storefrontConfig;
         if ($configRecord) {
             $effective = $configRecord->getEffectiveConfig($preview);
             if (!empty($effective)) {
+                $rawPreset = (string) ($effective['preset'] ?? 'velora');
+                if ($presetService->normalizePresetKey($rawPreset) === 'kinetic' && !$this->hasKineticScrollAccess()) {
+                    $effective['preset'] = 'velora';
+                }
+                if (!$this->hasKineticScrollAccess()) {
+                    if (isset($effective['scroll_sequence']) && is_array($effective['scroll_sequence'])) {
+                        $effective['scroll_sequence']['enabled'] = false;
+                    }
+                    if (!empty($effective['sections']) && is_array($effective['sections'])) {
+                        $effective['sections'] = array_values(array_filter(
+                            $effective['sections'],
+                            fn ($sec) => ($sec['type'] ?? '') !== 'scroll_sequence'
+                        ));
+                    }
+                }
                 return $effective;
             }
         }
 
-        return app(\App\Services\Storefront\StorefrontPresetService::class)->getDefaultConfig(
-            $configRecord?->preset_key ?? $this->layout_preset ?? 'atelier',
+        return $presetService->getDefaultConfig(
+            $presetService->normalizePresetKeyForVendor((string) ($configRecord?->preset_key ?? $this->layout_preset ?? 'atelier'), $this),
             $this
         );
     }

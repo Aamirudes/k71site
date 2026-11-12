@@ -11,9 +11,9 @@ class StorefrontPresetService
     /**
      * Supported Signature Presets definitions.
      */
-    public function getPresets(): array
+    public function getPresets(bool $includeKinetic = true): array
     {
-        return [
+        $presets = [
             'velora' => [
                 'id' => 'velora',
                 'name' => 'Velora',
@@ -180,6 +180,35 @@ class StorefrontPresetService
                 'recommended_for_types' => ['luxury', 'fashion', 'footwear', 'electronics', 'jewelry'],
             ],
         ];
+
+        if (!$includeKinetic) {
+            unset($presets['kinetic']);
+        }
+
+        return $presets;
+    }
+
+    public function getPresetsForVendor(?Vendor $vendor = null): array
+    {
+        return $this->getPresets((bool) $vendor?->hasKineticScrollAccess());
+    }
+
+    public function isPresetAllowedForVendor(string $key, ?Vendor $vendor = null): bool
+    {
+        $norm = $this->normalizePresetKey($key);
+        if ($norm === 'kinetic') {
+            return (bool) $vendor?->hasKineticScrollAccess();
+        }
+        return isset($this->getPresets()[$norm]);
+    }
+
+    public function normalizePresetKeyForVendor(string $key, ?Vendor $vendor = null): string
+    {
+        $norm = $this->normalizePresetKey($key);
+        if ($norm === 'kinetic' && !$vendor?->hasKineticScrollAccess()) {
+            return 'velora';
+        }
+        return $norm;
     }
 
     /**
@@ -220,15 +249,17 @@ class StorefrontPresetService
      */
     public function getRecommendedPresetForVendor(Vendor $vendor): string
     {
+        $allowedPresets = $this->getPresetsForVendor($vendor);
+
         if ($vendor->layout_preset) {
-            $norm = $this->normalizePresetKey($vendor->layout_preset);
-            if (isset($this->getPresets()[$norm])) {
+            $norm = $this->normalizePresetKeyForVendor($vendor->layout_preset, $vendor);
+            if (isset($allowedPresets[$norm])) {
                 return $norm;
             }
         }
 
         $type = $vendor->vendor_type ?? 'clothing';
-        foreach ($this->getPresets() as $key => $preset) {
+        foreach ($allowedPresets as $key => $preset) {
             if (in_array($type, $preset['recommended_for_types'])) {
                 return $key;
             }
@@ -597,7 +628,10 @@ class StorefrontPresetService
     public function switchPresetPreservingContent(Vendor $vendor, string $requestedPreset, ?array $existingConfig = null): array
     {
         $requestedPreset = strtolower(trim($requestedPreset));
-        $normalizedPreset = $this->normalizePresetKey($requestedPreset);
+        if (!$this->isPresetAllowedForVendor($requestedPreset, $vendor)) {
+            $requestedPreset = 'velora';
+        }
+        $normalizedPreset = $this->normalizePresetKeyForVendor($requestedPreset, $vendor);
         $newDefaults = $this->getDefaultConfig($normalizedPreset, $vendor);
 
         $current = $existingConfig;
@@ -1056,9 +1090,9 @@ class StorefrontPresetService
     /**
      * Library of all supported sections with their metadata for the Add Section modal.
      */
-    public function getAvailableSections(): array
+    public function getAvailableSections(?Vendor $vendor = null): array
     {
-        return [
+        $sections = [
             'hero_editorial' => [
                 'type' => 'hero_editorial',
                 'name' => 'Editorial Hero Banner',
@@ -1232,6 +1266,12 @@ class StorefrontPresetService
                 ],
             ],
         ];
+
+        if (!$vendor?->hasKineticScrollAccess()) {
+            unset($sections['scroll_sequence']);
+        }
+
+        return $sections;
     }
 
     /**
@@ -1239,9 +1279,12 @@ class StorefrontPresetService
      */
     public function sanitizeConfig(array $input, Vendor $vendor): array
     {
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
-        $presetKey = in_array($input['preset'] ?? '', $allowedPresets) 
-            ? $input['preset'] 
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        if ($vendor->hasKineticScrollAccess()) {
+            $allowedPresets[] = 'kinetic';
+        }
+        $presetKey = in_array($input['preset'] ?? '', $allowedPresets)
+            ? $input['preset']
             : 'velora';
 
         $safeHex = function ($color, $default) {
@@ -1355,7 +1398,7 @@ class StorefrontPresetService
 
         // 4. Sections Sanitization
         $rawSections = is_array($input['sections'] ?? null) ? $input['sections'] : [];
-        $availableSections = $this->getAvailableSections();
+        $availableSections = $this->getAvailableSections($vendor);
         $sections = [];
 
         foreach ($rawSections as $sec) {
@@ -1484,7 +1527,9 @@ class StorefrontPresetService
 
         $rawSeq = is_array($input['scroll_sequence'] ?? null) ? $input['scroll_sequence'] : [];
         $scrollSequence = [
-            'enabled' => array_key_exists('enabled', $rawSeq) ? (bool) $rawSeq['enabled'] : true,
+            'enabled' => $vendor->hasKineticScrollAccess()
+                ? (array_key_exists('enabled', $rawSeq) ? (bool) $rawSeq['enabled'] : true)
+                : false,
             'height_vh' => max(180, min(600, (int) ($rawSeq['height_vh'] ?? 320))),
             'smoothing' => max(0.05, min(0.45, round((float) ($rawSeq['smoothing'] ?? 0.16), 2))),
             'video_url' => $safeUrl($rawSeq['video_url'] ?? ''),

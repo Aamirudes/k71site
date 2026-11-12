@@ -56,6 +56,9 @@
                 <a href="{{ route('admin.vendors', array_merge(request()->query(), ['type' => request('type') === 'food' ? null : 'food'])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('type') === 'food' ? 'bg-orange-600 text-white shadow-xs' : 'bg-orange-50 text-orange-700 hover:bg-orange-100' }}">
                     🍽️ Food Kitchens ({{ $counts['food'] ?? 0 }})
                 </a>
+                <a href="{{ route('admin.vendors', array_merge(request()->query(), ['feature' => request('feature') === 'kinetic' ? null : 'kinetic'])) }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all {{ request('feature') === 'kinetic' ? 'bg-zinc-900 text-[#ECD2F3] shadow-xs' : 'bg-fuchsia-50 text-fuchsia-800 hover:bg-fuchsia-100' }}">
+                    🎬 Scroll Motion ({{ $counts['kinetic'] ?? 0 }})
+                </a>
             </div>
 
             <!-- Search Form -->
@@ -66,6 +69,9 @@
                 @if(request('type'))
                     <input type="hidden" name="type" value="{{ request('type') }}">
                 @endif
+                @if(request('feature'))
+                    <input type="hidden" name="feature" value="{{ request('feature') }}">
+                @endif
                 <div class="relative flex-1">
                     <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by shop name, slug, merchant name, email, or phone..." class="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium">
@@ -75,7 +81,7 @@
                     <button type="submit" class="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-slate-950 shadow-xs transition-all cursor-pointer">
                         Filter Boutiques
                     </button>
-                    @if(request()->hasAny(['search', 'status', 'type']))
+                    @if(request()->hasAny(['search', 'status', 'type', 'feature']))
                         <a href="{{ route('admin.vendors') }}" class="px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-600 transition-colors">
                             Clear
                         </a>
@@ -190,6 +196,15 @@
                                             <option value="pending" {{ $vendor->status == 'pending' ? 'selected' : '' }}>● PENDING REVIEW</option>
                                             <option value="suspended" {{ $vendor->status == 'suspended' ? 'selected' : '' }}>● SUSPENDED</option>
                                         </select>
+                                    </form>
+                                    <form action="{{ route('admin.vendors.toggle_kinetic_scroll', $vendor) }}" method="POST" class="mt-2">
+                                        @csrf
+                                        <input type="hidden" name="enabled" value="{{ $vendor->hasKineticScrollAccess() ? '0' : '1' }}">
+                                        <button type="submit"
+                                                title="Allow this vendor to use Kinetic Video-to-JPG Scroll Motion"
+                                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-colors {{ $vendor->hasKineticScrollAccess() ? 'bg-zinc-900 text-[#ECD2F3] border-zinc-800 hover:bg-zinc-800' : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' }}">
+                                            <span>{{ $vendor->hasKineticScrollAccess() ? '🎬 Scroll Motion: ON' : '🎬 Scroll Motion: OFF' }}</span>
+                                        </button>
                                     </form>
                                 </td>
 

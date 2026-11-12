@@ -278,7 +278,9 @@ class StorefrontController extends Controller
             ->get();
 
         $config = $vendor->getStorefrontConfig($isPreview);
-        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config);
+        $vendorScrollSequence = $vendor->hasKineticScrollAccess()
+            ? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config)
+            : ['frames' => [], 'count' => 0, 'video_url' => null];
         $providerSite = null;
 
         if ($isServiceWebsite) {

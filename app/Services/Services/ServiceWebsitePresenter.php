@@ -186,7 +186,7 @@ class ServiceWebsitePresenter
             ->implode('') ?: 'K7';
 
         $rawPresetKey = $config['preset'] ?? $vendor->layout_preset ?? 'velora';
-        $presetKey = $this->presetService->normalizePresetKey($rawPresetKey);
+        $presetKey = $this->presetService->normalizePresetKeyForVendor((string) $rawPresetKey, $vendor);
         $presetMeta = $this->presetService->getPreset($presetKey);
         $tokens = self::presetTokens($presetKey, is_array($config['theme'] ?? null) ? $config['theme'] : []);
 

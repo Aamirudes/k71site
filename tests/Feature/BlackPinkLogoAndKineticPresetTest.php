@@ -190,7 +190,7 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
         $this->assertSame($cleanPath, $cleanUser->fresh()->avatar);
     }
 
-    public function test_vendor_can_upload_converted_jpg_frames_and_render_kinetic_preset_before_products(): void
+    public function test_kinetic_scroll_motion_is_hidden_by_default_and_admin_can_grant_compact_step_wizard(): void
     {
         [$vendorUserA, $vendorA] = $this->createVendor('kinetic-a@test.com', 'Obsidian Stone Craft', 'obsidian-stone');
         [$vendorUserB, $vendorB] = $this->createVendor('kinetic-b@test.com', 'Second Atelier', 'second-atelier');
@@ -211,6 +211,62 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
             'total_stock' => 5,
             'status' => 'active',
         ]);
+
+        // 1. Default state: hidden in design studio & forbidden across endpoints
+        $this->assertFalse($vendorA->hasKineticScrollAccess());
+        $designDefault = $this->actingAs($vendorUserA)->get(route('vendor.design.index'));
+        $designDefault->assertOk();
+        $designDefault->assertDontSee('id="kinetic-studio"', false);
+        $designDefault->assertDontSee('id="preset-card-kinetic"', false);
+
+        $this->actingAs($vendorUserA)->postJson(route('vendor.design.activate'), [
+            'preset' => 'kinetic',
+        ])->assertStatus(403);
+
+        $this->actingAs($vendorUserA)->postJson(route('vendor.design.scroll_frames.batch'), [
+            'frames' => [UploadedFile::fake()->image('frame_00001.jpg', 160, 90)],
+        ])->assertStatus(403);
+
+        // Non-admin cannot toggle Scroll Motion permission
+        $this->actingAs($vendorUserA)->post(route('admin.vendors.toggle_kinetic_scroll', $vendorA), [
+            'enabled' => 1,
+        ])->assertRedirect();
+        $this->assertFalse($vendorA->fresh()->hasKineticScrollAccess());
+
+        // 2. Admin grants Scroll Motion access exclusively to Vendor A
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Master Admin', 'description' => 'Full Access']);
+        $adminUser = User::factory()->create(['email' => 'admin@marblemandi.org', 'email_verified_at' => now()]);
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $this->actingAs($adminUser)
+            ->withSession(['admin_authenticated' => true, 'admin_2fa_verified' => true, 'admin_2fa_passed' => true])
+            ->post(route('admin.vendors.toggle_kinetic_scroll', $vendorA), ['enabled' => 1])
+            ->assertRedirect();
+
+        $vendorA->refresh();
+        $vendorB->refresh();
+        $this->assertTrue($vendorA->hasKineticScrollAccess());
+        $this->assertFalse($vendorB->hasKineticScrollAccess());
+
+        $this->actingAs($adminUser)
+            ->withSession(['admin_authenticated' => true, 'admin_2fa_verified' => true, 'admin_2fa_passed' => true])
+            ->get(route('admin.vendors'))
+            ->assertOk()
+            ->assertSee('Scroll Motion: ON');
+
+        // 3. Vendor A sees compact 3-step wizard and preset card; Vendor B still blocked
+        $vendorUserA = $vendorUserA->fresh();
+        $vendorUserB = $vendorUserB->fresh();
+        $designGranted = $this->actingAs($vendorUserA)->get(route('vendor.design.index'));
+        $designGranted->assertOk();
+        $designGranted->assertSee('id="kinetic-studio"', false);
+        $designGranted->assertSee('id="kinetic-step-1"', false);
+        $designGranted->assertSee('id="kinetic-step-2"', false);
+        $designGranted->assertSee('id="kinetic-step-3"', false);
+        $designGranted->assertSee('1 · Video');
+        $designGranted->assertSee('2 · Scrub & Text');
+        $designGranted->assertSee('3 · Publish');
+        $designGranted->assertSee('id="preset-card-kinetic"', false);
 
         // Upload both .jpg and .png batches (backend normalizes everything into frame_%05d.jpg)
         $resp = $this->actingAs($vendorUserA)->postJson(route('vendor.design.scroll_frames.batch'), [
@@ -267,9 +323,9 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
         $this->assertNotFalse($prodPos);
         $this->assertTrue($stagePos < $prodPos, 'Kinetic JPG scroll stage must appear before product catalog.');
 
-        // Vendor B clearing frames must NOT delete Vendor A's JPG frames
+        // Vendor B (unauthorized) receives 403 and does NOT delete Vendor A's JPG frames
         $this->actingAs($vendorUserB)->deleteJson(route('vendor.design.scroll_frames.clear'))
-            ->assertOk();
+            ->assertStatus(403);
         $this->assertFileExists($frame1);
 
         // Vendor A clearing own frames removes them
@@ -277,6 +333,17 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
             ->assertOk()
             ->assertJson(['status' => 'success']);
         $this->assertFileDoesNotExist($frame1);
+
+        // 4. Admin revokes Scroll Motion permission -> Vendor A reverts cleanly from kinetic
+        $this->actingAs($adminUser)
+            ->withSession(['admin_authenticated' => true, 'admin_2fa_verified' => true, 'admin_2fa_passed' => true])
+            ->post(route('admin.vendors.toggle_kinetic_scroll', $vendorA), ['enabled' => 0])
+            ->assertRedirect();
+
+        auth()->logout();
+        $this->assertFalse($vendorA->fresh()->hasKineticScrollAccess());
+        $this->assertSame('velora', $vendorA->fresh()->layout_preset);
+        $this->get("/s/{$vendorA->slug}")->assertOk()->assertDontSee('id="k71-scroll-stage"', false);
     }
 
     public function test_kinetic_preset_works_on_service_provider_website_without_cart_popup(): void
@@ -285,6 +352,7 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
             'vendor_type' => 'services',
             'provider_mode' => 'individual',
             'layout_preset' => 'kinetic',
+            'can_use_kinetic_scroll' => true,
             'website_status' => 'published',
             'website_published_at' => now(),
             'headline' => 'Spatial Luxury Architecture',

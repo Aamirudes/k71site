@@ -343,6 +343,10 @@ class AdminController extends Controller
             });
         }
 
+        if ($request->input('feature') === 'kinetic') {
+            $query->where('can_use_kinetic_scroll', true);
+        }
+
         $vendors = $query->latest()->paginate(20)->withQueryString();
 
         // Calculate GMV for each vendor on current page
@@ -360,6 +364,7 @@ class AdminController extends Controller
                 $fq->where('vendor_type', 'food')
                    ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
             })->count(),
+            'kinetic' => Vendor::where('can_use_kinetic_scroll', true)->count(),
         ];
 
         return view('admin.vendors.index', compact('vendors', 'counts'));
@@ -374,6 +379,71 @@ class AdminController extends Controller
         $vendor->update(['status' => $validated['status']]);
 
         return back()->with('success', "Boutique {$vendor->shop_name} status updated to " . strtoupper($validated['status']) . ".");
+    }
+
+    public function toggleKineticScroll(Request $request, Vendor $vendor)
+    {
+        $enabled = $request->has('enabled')
+            ? $request->boolean('enabled')
+            : !$vendor->hasKineticScrollAccess();
+
+        $vendor->forceFill(['can_use_kinetic_scroll' => $enabled])->save();
+
+        if (!$enabled) {
+            $presetService = app(\App\Services\Storefront\StorefrontPresetService::class);
+            if ($presetService->normalizePresetKey((string) $vendor->layout_preset) === 'kinetic') {
+                $vendor->update(['layout_preset' => 'velora']);
+            }
+            $cfg = $vendor->storefrontConfig;
+            if ($cfg) {
+                $draft = is_array($cfg->draft_config) ? $cfg->draft_config : [];
+                $pub = is_array($cfg->published_config) ? $cfg->published_config : [];
+                $changed = false;
+                if (($cfg->preset_key ?? '') === 'kinetic' || ($draft['preset'] ?? '') === 'kinetic') {
+                    $draft = $presetService->sanitizeConfig(array_merge($draft, ['preset' => 'velora']), $vendor);
+                    $changed = true;
+                }
+                if (($pub['preset'] ?? '') === 'kinetic') {
+                    $pub = $presetService->sanitizeConfig(array_merge($pub, ['preset' => 'velora']), $vendor);
+                    $changed = true;
+                }
+                if ($changed) {
+                    $cfg->update([
+                        'preset_key' => 'velora',
+                        'draft_config' => $draft,
+                        'published_config' => $pub,
+                    ]);
+                }
+            }
+        }
+
+        $vendor->bumpWebsiteCache();
+
+        try {
+            AuditLog::record(
+                $enabled ? 'vendor.kinetic_scroll_enabled' : 'vendor.kinetic_scroll_disabled',
+                $vendor,
+                null,
+                [
+                    'vendor_id' => $vendor->id,
+                    'can_use_kinetic_scroll' => $enabled,
+                ]
+            );
+        } catch (\Throwable $e) {}
+
+        $msg = $enabled
+            ? "Scroll Motion (Kinetic Video-to-JPG) enabled for {$vendor->shop_name}."
+            : "Scroll Motion (Kinetic Video-to-JPG) disabled for {$vendor->shop_name}.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'can_use_kinetic_scroll' => $enabled,
+                'message' => $msg,
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function verifyFssai(Request $request, Vendor $vendor)

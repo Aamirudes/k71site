@@ -610,6 +610,7 @@
                     </div>
                 </template>
 
+                @if($vendor->hasKineticScrollAccess())
                 <!-- Kinetic Scroll Sequence Controls -->
                 <template x-if="selectedSection?.type === 'scroll_sequence'">
                     <div class="space-y-3 pt-2 border-t border-stone-100">
@@ -645,6 +646,7 @@
                         </a>
                     </div>
                 </template>
+                @endif
 
                 <!-- Alignment Control -->
                 <template x-if="selectedSection?.alignment !== undefined">

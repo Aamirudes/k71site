@@ -25,7 +25,7 @@
             <div class="flex items-center justify-between gap-2">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white font-heading">
-                        Eleven Signature Storefront Presets
+                        {{ count($presets) === 11 ? 'Eleven' : 'Ten' }} Signature Storefront Presets
                     </h2>
                     <p class="text-xs text-slate-500 dark:text-zinc-400">
                         Choose your store layout. Instant live switch with 1-tap.
@@ -33,7 +33,7 @@
                 </div>
                 
                 @php
-                    $activeNorm = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($activePresetKey);
+                    $activeNorm = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKeyForVendor((string) $activePresetKey, $vendor);
                 @endphp
 
                 <!-- Right-Aligned Nav Arrows -->
@@ -282,241 +282,249 @@
             </div>
         </div>
 
-        <!-- Kinetic Video-to-JPG Scroll Motion Studio -->
+        <!-- Compact Step-by-Step Scroll Motion Box (Admin-Enabled Vendors Only) -->
         @php
-            $seqState = $vendorScrollSequence ?? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $currentConfig);
+            $hasKineticAccess = $vendor->hasKineticScrollAccess();
+            $seqState = $hasKineticAccess
+                ? ($vendorScrollSequence ?? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $currentConfig))
+                : ['frames' => [], 'count' => 0, 'video_url' => null];
             $seqFramesList = $seqState['frames'] ?? [];
             $seqCfg = $currentConfig['scroll_sequence'] ?? [];
-            $isKineticActive = ($activeNorm === 'kinetic' || $activePresetKey === 'kinetic');
         @endphp
-        <div id="kinetic-studio" class="p-6 sm:p-8 rounded-3xl bg-[#070709] text-[#EFE9F2] border border-[#ECD2F3]/30 shadow-[0_24px_70px_-24px_rgba(236,210,243,0.18)] space-y-6">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-white/10">
-                <div class="space-y-1.5">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-[10px] font-bold uppercase tracking-wider">
-                            Kinetic Preset Studio
-                        </span>
-                        <span id="kinetic-status-pill"
-                              class="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold {{ count($seqFramesList) > 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-white/10 text-[#ECD2F3] border border-white/15' }}">
-                            @if(count($seqFramesList) > 0)
-                                ✓ {{ count($seqFramesList) }} JPG Frames Live
-                            @elseif(!empty($seqState['video_url']))
-                                ● Video Stream Active
-                            @else
-                                ● 3D Studio Preview (Upload video for JPG frames)
-                            @endif
-                        </span>
-                    </div>
-                    <h3 class="text-lg sm:text-xl font-bold tracking-tight text-white">
-                        Auto Video-to-JPG Scroll Motion Showcase
+        @if($hasKineticAccess)
+        <div id="kinetic-studio" class="max-w-xl rounded-2xl bg-[#070709] text-[#EFE9F2] border border-[#ECD2F3]/30 shadow-[0_18px_50px_-22px_rgba(236,210,243,0.22)] p-4 sm:p-5 space-y-4">
+            <!-- Compact Header + Frame Pill -->
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-white/10">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="px-2 py-0.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-[9px] font-bold uppercase tracking-wider shrink-0">
+                        Scroll Motion
+                    </span>
+                    <h3 class="text-sm font-bold text-white truncate">
+                        Video → JPG Studio
                     </h3>
-                    <p class="text-xs text-[#EFE9F2]/70 max-w-2xl">
-                        Upload any product video (MP4, WebM, MOV) — K71 automatically converts its frames into `.jpg` images and scrubs them frame-by-frame as shoppers scroll before revealing your products, exact like the K71 Marketplace.
-                    </p>
+                </div>
+                <span id="kinetic-status-pill"
+                      class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 {{ count($seqFramesList) > 0 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-white/10 text-[#ECD2F3] border border-white/15' }}">
+                    @if(count($seqFramesList) > 0)
+                        ✓ {{ count($seqFramesList) }} JPG
+                    @elseif(!empty($seqState['video_url']))
+                        ● Video Ready
+                    @else
+                        00 JPG
+                    @endif
+                </span>
+            </div>
+
+            <!-- 3-Step Compact Pill Navigation -->
+            <div class="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] font-bold">
+                <button type="button" id="kinetic-tab-1" onclick="goToKineticStep(1)"
+                        class="py-1.5 px-2 rounded-lg transition cursor-pointer bg-[#ECD2F3] text-[#1A1018]">
+                    1 · Video
+                </button>
+                <button type="button" id="kinetic-tab-2" onclick="goToKineticStep(2)"
+                        class="py-1.5 px-2 rounded-lg transition cursor-pointer text-[#EFE9F2]/65 hover:text-white">
+                    2 · Scrub &amp; Text
+                </button>
+                <button type="button" id="kinetic-tab-3" onclick="goToKineticStep(3)"
+                        class="py-1.5 px-2 rounded-lg transition cursor-pointer text-[#EFE9F2]/65 hover:text-white">
+                    3 · Publish
+                </button>
+            </div>
+
+            <!-- STEP 1: Upload Video (Auto-converts to JPG frames) -->
+            <div id="kinetic-step-1" class="space-y-3">
+                <label for="kinetic-video-input"
+                       class="block border-2 border-dashed border-[#ECD2F3]/35 hover:border-[#ECD2F3] rounded-xl p-4 bg-[#101015] hover:bg-[#16131c] transition text-center cursor-pointer">
+                    <input type="file"
+                           id="kinetic-video-input"
+                           accept="video/mp4,video/webm,video/quicktime,video/*"
+                           onchange="handleKineticVideoSelected(this)"
+                           class="sr-only">
+                    <div class="space-y-1">
+                        <div class="text-lg leading-none">🎬</div>
+                        <p class="text-xs font-bold text-white">Upload Product Video (MP4 / MOV / WebM)</p>
+                        <p class="text-[10px] text-[#EFE9F2]/60">Auto-converts frames to `.jpg` for scroll motion</p>
+                    </div>
+                </label>
+
+                <div class="flex items-center justify-between gap-2 text-[11px]">
+                    <div class="flex items-center gap-1.5">
+                        <label for="kinetic-target-frames" class="text-[#EFE9F2]/60">Quality:</label>
+                        <select id="kinetic-target-frames"
+                                class="px-2 py-1 rounded-lg bg-[#131318] border border-white/15 text-[11px] text-white focus:outline-none focus:border-[#ECD2F3]">
+                            <option value="36">36 JPG (Fast)</option>
+                            <option value="72" selected>72 JPG (Smooth)</option>
+                            <option value="108">108 JPG (Cinema)</option>
+                        </select>
+                    </div>
+                    <label class="text-[#ECD2F3] hover:underline font-semibold cursor-pointer">
+                        <span>Or pick JPGs</span>
+                        <input type="file"
+                               id="kinetic-jpg-batch-input"
+                               accept="image/jpeg,image/jpg,image/png,image/webp"
+                               multiple
+                               onchange="handleKineticJpgBatchSelected(this)"
+                               class="sr-only">
+                    </label>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 shrink-0">
-                    <a href="{{ $vendor->storefrontUrl(['preset' => 'kinetic']) }}"
-                       target="_blank"
-                       rel="noopener"
-                       class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/18 border border-white/15 text-xs font-bold text-white transition">
-                        Preview Kinetic ↗
-                    </a>
-                    <button type="button"
-                            id="kinetic-clear-btn"
-                            onclick="clearKineticFrames()"
-                            class="px-3.5 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/30 text-rose-200 text-xs font-bold transition cursor-pointer {{ count($seqFramesList) === 0 && empty($seqState['video_url']) ? 'hidden' : '' }}">
-                        🗑 Clear Frames
+                <!-- Live Extraction Progress -->
+                <div id="kinetic-progress-wrap" class="hidden p-3 rounded-xl bg-[#141118] border border-[#ECD2F3]/30 space-y-2">
+                    <div class="flex items-center justify-between text-[11px] font-bold">
+                        <span id="kinetic-progress-status" class="text-[#ECD2F3] truncate pr-2">Generating JPG frames...</span>
+                        <span id="kinetic-progress-pct" class="font-mono text-white shrink-0">0%</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div id="kinetic-progress-bar" class="h-full bg-gradient-to-r from-[#C9A24A] via-[#ECD2F3] to-[#FFCDFF] transition-all duration-150" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <canvas id="kinetic-extract-preview" width="160" height="90" class="w-16 h-10 rounded bg-black object-cover border border-white/15 shrink-0"></canvas>
+                        <span id="kinetic-progress-detail" class="text-[10px] text-[#EFE9F2]/65">Preparing frame capture...</span>
+                    </div>
+                </div>
+
+                <div id="kinetic-error-box" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-400/35 text-rose-200 text-[11px] font-semibold"></div>
+
+                <div class="flex justify-end pt-1">
+                    <button type="button" onclick="goToKineticStep(2)"
+                            class="px-3.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/18 text-white text-xs font-bold transition cursor-pointer">
+                        Next: Scrub &amp; Text →
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <!-- Left Column: Video-to-JPG Upload Dropzone -->
-                <div class="lg:col-span-6 space-y-4">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label for="kinetic-target-frames" class="block text-[10px] font-bold uppercase tracking-wider text-[#EFE9F2]/65 mb-1">
-                                Auto-Generated JPG Frames
-                            </label>
-                            <select id="kinetic-target-frames"
-                                    class="w-full px-3 py-2 rounded-xl bg-[#131318] border border-white/15 text-xs text-white focus:outline-none focus:border-[#ECD2F3]">
-                                <option value="36">36 JPG Frames (Ultra-Fast Load)</option>
-                                <option value="72" selected>72 JPG Frames (Cinematic Smooth)</option>
-                                <option value="108">108 JPG Frames (Studio Slow-Mo)</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end pb-1">
-                            <label class="inline-flex items-center gap-2 text-xs text-[#EFE9F2]/85 cursor-pointer select-none">
-                                <input type="checkbox" id="kinetic-auto-activate" checked class="rounded border-white/30 bg-[#131318] text-[#ECD2F3] focus:ring-[#ECD2F3]">
-                                <span>Activate Kinetic preset on upload</span>
-                            </label>
+            <!-- STEP 2: Test Scrub & Short Caption -->
+            <div id="kinetic-step-2" class="hidden space-y-3">
+                <div class="rounded-xl bg-[#0d0d11] border border-white/12 p-2.5 space-y-2">
+                    <div class="flex items-center justify-between text-[10px]">
+                        <span class="font-bold uppercase tracking-wider text-[#ECD2F3]">Frame Scrub Preview</span>
+                        <span id="kinetic-scrub-num" class="font-mono text-[#C9A24A]">
+                            {{ count($seqFramesList) > 0 ? sprintf('01 / %02d', count($seqFramesList)) : '00 / 00' }}
+                        </span>
+                    </div>
+                    <div class="relative h-36 rounded-lg overflow-hidden bg-black border border-white/10 flex items-center justify-center">
+                        <img id="kinetic-scrub-img"
+                             src="{{ $seqFramesList[0] ?? '' }}"
+                             alt="Kinetic frame preview"
+                             class="w-full h-full object-cover {{ empty($seqFramesList) ? 'hidden' : '' }}">
+                        <div id="kinetic-scrub-empty" class="text-center px-3 {{ !empty($seqFramesList) ? 'hidden' : '' }}">
+                            <span class="text-[11px] text-[#EFE9F2]/55">Upload a video in Step 1 to scrub `.jpg` frames.</span>
                         </div>
                     </div>
-
-                    <label for="kinetic-video-input"
-                           class="block relative border-2 border-dashed border-[#ECD2F3]/40 hover:border-[#ECD2F3] rounded-2xl p-6 bg-[#101015] hover:bg-[#16131c] transition text-center cursor-pointer">
-                        <input type="file"
-                               id="kinetic-video-input"
-                               accept="video/mp4,video/webm,video/quicktime,video/*"
-                               onchange="handleKineticVideoSelected(this)"
-                               class="sr-only">
-                        <div class="space-y-2">
-                            <div class="w-11 h-11 rounded-2xl bg-[#ECD2F3]/15 border border-[#ECD2F3]/35 text-[#ECD2F3] flex items-center justify-center mx-auto text-xl">
-                                🎬
-                            </div>
-                            <p class="text-xs sm:text-sm font-bold text-white">
-                                Click or Tap to Upload Product Video
-                            </p>
-                            <p class="text-[11px] text-[#EFE9F2]/60">
-                                Automatically extracts high-clarity <span class="text-[#ECD2F3] font-mono">.jpg</span> frames &amp; publishes to your Kinetic storefront
-                            </p>
-                        </div>
-                    </label>
-
-                    <!-- Secondary Direct Multi-JPG Picker -->
-                    <div class="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] text-[#EFE9F2]/75">
-                        <span>Already exported `.jpg` frames? Upload directly:</span>
-                        <label class="px-3 py-1 rounded-lg bg-[#ECD2F3]/15 hover:bg-[#ECD2F3]/25 text-[#ECD2F3] font-bold cursor-pointer transition">
-                            <span>Select JPG Sequence</span>
-                            <input type="file"
-                                   id="kinetic-jpg-batch-input"
-                                   accept="image/jpeg,image/jpg,image/png,image/webp"
-                                   multiple
-                                   onchange="handleKineticJpgBatchSelected(this)"
-                                   class="sr-only">
-                        </label>
-                    </div>
-
-                    <!-- Real-Time Video-to-JPG Extraction & Batch Upload Progress -->
-                    <div id="kinetic-progress-wrap" class="hidden p-4 rounded-2xl bg-[#141118] border border-[#ECD2F3]/35 space-y-3">
-                        <div class="flex items-center justify-between text-xs font-bold">
-                            <span id="kinetic-progress-status" class="text-[#ECD2F3] truncate pr-2">Generating JPG frames...</span>
-                            <span id="kinetic-progress-pct" class="font-mono text-white shrink-0">0%</span>
-                        </div>
-                        <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                            <div id="kinetic-progress-bar" class="h-full bg-gradient-to-r from-[#C9A24A] via-[#ECD2F3] to-[#FFCDFF] transition-all duration-150" style="width: 0%;"></div>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <canvas id="kinetic-extract-preview" width="160" height="90" class="w-24 h-14 rounded-lg bg-black object-cover border border-white/15 shrink-0"></canvas>
-                            <span id="kinetic-progress-detail" class="text-[11px] text-[#EFE9F2]/65">
-                                Preparing hardware canvas frame capture...
-                            </span>
-                        </div>
-                    </div>
-
-                    <div id="kinetic-error-box" class="hidden p-3 rounded-xl bg-rose-500/15 border border-rose-400/35 text-rose-200 text-xs font-semibold"></div>
+                    <input type="range"
+                           id="kinetic-scrub-slider"
+                           min="0"
+                           max="{{ max(0, count($seqFramesList) - 1) }}"
+                           value="0"
+                           oninput="previewKineticScrubIndex(this.value)"
+                           {{ empty($seqFramesList) ? 'disabled' : '' }}
+                           class="w-full accent-[#ECD2F3] cursor-pointer disabled:opacity-35">
                 </div>
 
-                <!-- Right Column: Live JPG Frame Scrubber & Beat Text Customization -->
-                <div class="lg:col-span-6 space-y-4">
-                    <div class="rounded-2xl bg-[#0d0d11] border border-white/12 p-3.5 space-y-3">
-                        <div class="flex items-center justify-between text-[11px]">
-                            <span class="font-bold uppercase tracking-wider text-[#ECD2F3]">Live JPG Scroll Frame Preview</span>
-                            <span id="kinetic-scrub-num" class="font-mono text-[#C9A24A]">
-                                {{ count($seqFramesList) > 0 ? sprintf('01 / %02d', count($seqFramesList)) : '00 / 00' }}
-                            </span>
-                        </div>
-                        <div class="relative aspect-video rounded-xl overflow-hidden bg-black border border-white/10 flex items-center justify-center">
-                            <img id="kinetic-scrub-img"
-                                 src="{{ $seqFramesList[0] ?? '' }}"
-                                 alt="Kinetic frame preview"
-                                 class="w-full h-full object-cover {{ empty($seqFramesList) ? 'hidden' : '' }}">
-                            <div id="kinetic-scrub-empty" class="text-center px-4 {{ !empty($seqFramesList) ? 'hidden' : '' }}">
-                                <span class="text-xs text-[#EFE9F2]/55">Upload a video on the left to inspect every generated `.jpg` scroll frame here.</span>
-                            </div>
-                        </div>
-                        <input type="range"
-                               id="kinetic-scrub-slider"
-                               min="0"
-                               max="{{ max(0, count($seqFramesList) - 1) }}"
-                               value="0"
-                               oninput="previewKineticScrubIndex(this.value)"
-                               {{ empty($seqFramesList) ? 'disabled' : '' }}
-                               class="w-full accent-[#ECD2F3] cursor-pointer disabled:opacity-35">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Hero Headline</label>
+                        <input type="text"
+                               name="scroll_seq_beat1_title"
+                               value="{{ $seqCfg['beat1_title'] ?? strtoupper($vendor->shop_name) }}"
+                               class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white focus:outline-none focus:border-[#ECD2F3]">
                     </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Action Button</label>
+                        <input type="text"
+                               id="ctrl-scroll-seq-cta"
+                               name="scroll_seq_cta_text"
+                               value="{{ $seqCfg['cta_text'] ?? 'Explore Collection' }}"
+                               class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white focus:outline-none focus:border-[#ECD2F3]">
+                    </div>
+                </div>
 
-                    <!-- Kinetic Story Beats & Scroll Speed Settings (Persisted via quick_settings) -->
-                    <div class="p-4 rounded-2xl bg-[#0d0d11] border border-white/12 space-y-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-white">Scroll Beat Copy &amp; Speed</span>
-                            <label class="inline-flex items-center gap-1.5 text-[11px] text-[#EFE9F2]/80 cursor-pointer">
-                                <input type="checkbox"
-                                       id="ctrl-scroll-seq-enabled"
-                                       name="scroll_seq_enabled"
-                                       {{ array_key_exists('enabled', $seqCfg) ? ($seqCfg['enabled'] ? 'checked' : '') : 'checked' }}
-                                       class="rounded border-white/30 bg-[#131318] text-[#ECD2F3]">
-                                <span>Enable Scroll Cinema</span>
-                            </label>
+                @php $currVh = (int) ($seqCfg['height_vh'] ?? 320); @endphp
+                <div class="flex items-center justify-between gap-2 text-[11px]">
+                    <span class="text-[#EFE9F2]/65 font-semibold">Scroll Length:</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="setKineticSpeedPreset(220, this)" class="kinetic-vh-btn px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-pointer {{ $currVh <= 250 ? 'bg-[#ECD2F3] text-[#1A1018] border-[#ECD2F3]' : 'bg-white/5 text-white/80 border-white/15' }}">Fast</button>
+                        <button type="button" onclick="setKineticSpeedPreset(320, this)" class="kinetic-vh-btn px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-pointer {{ $currVh > 250 && $currVh <= 360 ? 'bg-[#ECD2F3] text-[#1A1018] border-[#ECD2F3]' : 'bg-white/5 text-white/80 border-white/15' }}">Balanced</button>
+                        <button type="button" onclick="setKineticSpeedPreset(420, this)" class="kinetic-vh-btn px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-pointer {{ $currVh > 360 ? 'bg-[#ECD2F3] text-[#1A1018] border-[#ECD2F3]' : 'bg-white/5 text-white/80 border-white/15' }}">Cinema</button>
+                    </div>
+                </div>
+
+                <details class="rounded-xl bg-white/[0.03] border border-white/10 px-3 py-2 text-[11px]">
+                    <summary class="cursor-pointer font-semibold text-[#EFE9F2]/70 select-none">Optional: Beat 2 &amp; 3 headlines</summary>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2.5">
+                        <input type="hidden" id="ctrl-scroll-seq-height" name="scroll_seq_height_vh" value="{{ $currVh }}">
+                        <input type="hidden" id="ctrl-scroll-seq-smoothing" name="scroll_seq_smoothing" value="{{ $seqCfg['smoothing'] ?? 0.16 }}">
+                        <div>
+                            <label class="block text-[9px] text-[#EFE9F2]/55 mb-0.5">Beat 2 Headline</label>
+                            <input type="text" name="scroll_seq_beat2_title" value="{{ $seqCfg['beat2_title'] ?? 'CRAFTED IN PURE MOTION.' }}" class="w-full px-2 py-1 rounded bg-[#14141a] border border-white/15 text-[11px] text-white">
                         </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Scroll Height (vh)</label>
-                                <input type="number"
-                                       id="ctrl-scroll-seq-height"
-                                       name="scroll_seq_height_vh"
-                                       min="180"
-                                       max="600"
-                                       value="{{ $seqCfg['height_vh'] ?? 320 }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Damping (0.05–0.45)</label>
-                                <input type="number"
-                                       id="ctrl-scroll-seq-smoothing"
-                                       name="scroll_seq_smoothing"
-                                       step="0.02"
-                                       min="0.05"
-                                       max="0.45"
-                                       value="{{ $seqCfg['smoothing'] ?? 0.16 }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Beat 3 CTA Label</label>
-                                <input type="text"
-                                       id="ctrl-scroll-seq-cta"
-                                       name="scroll_seq_cta_text"
-                                       value="{{ $seqCfg['cta_text'] ?? 'Explore Collection' }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Beat 1 Headline</label>
-                                <input type="text"
-                                       name="scroll_seq_beat1_title"
-                                       value="{{ $seqCfg['beat1_title'] ?? strtoupper($vendor->shop_name) }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Beat 2 Headline</label>
-                                <input type="text"
-                                       name="scroll_seq_beat2_title"
-                                       value="{{ $seqCfg['beat2_title'] ?? 'CRAFTED IN PURE MOTION.' }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-[#EFE9F2]/60 mb-1">Beat 3 Headline</label>
-                                <input type="text"
-                                       name="scroll_seq_beat3_title"
-                                       value="{{ $seqCfg['beat3_title'] ?? 'DISCOVER THE COLLECTION.' }}"
-                                       class="w-full px-2.5 py-1.5 rounded-lg bg-[#14141a] border border-white/15 text-xs text-white">
-                            </div>
-                        </div>
-
-                        <div class="flex justify-end pt-1">
-                            <button type="button"
-                                    onclick="saveEssentialSettings('main')"
-                                    class="px-4 py-2 rounded-xl bg-[#ECD2F3] hover:bg-[#F6E3FB] text-[#1A1018] text-xs font-bold transition cursor-pointer">
-                                💾 Save Motion &amp; Beat Copy
-                            </button>
+                        <div>
+                            <label class="block text-[9px] text-[#EFE9F2]/55 mb-0.5">Beat 3 Headline</label>
+                            <input type="text" name="scroll_seq_beat3_title" value="{{ $seqCfg['beat3_title'] ?? 'DISCOVER THE COLLECTION.' }}" class="w-full px-2 py-1 rounded bg-[#14141a] border border-white/15 text-[11px] text-white">
                         </div>
                     </div>
+                </details>
+
+                <div class="flex items-center justify-between pt-1">
+                    <button type="button" onclick="goToKineticStep(1)" class="px-3 py-1.5 rounded-lg bg-white/8 hover:bg-white/15 text-xs font-semibold text-white/80 cursor-pointer">
+                        ← Back
+                    </button>
+                    <button type="button" onclick="goToKineticStep(3)" class="px-3.5 py-1.5 rounded-lg bg-white/12 hover:bg-white/20 text-xs font-bold text-white cursor-pointer">
+                        Next: Publish →
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Save & Publish Live -->
+            <div id="kinetic-step-3" class="hidden space-y-3">
+                <div class="p-3 rounded-xl bg-[#0d0d11] border border-white/12 flex items-center justify-between gap-2 text-xs">
+                    <div>
+                        <span id="kinetic-step3-summary" class="font-bold text-white block">
+                            {{ count($seqFramesList) > 0 ? count($seqFramesList) . ' JPG scroll frames ready' : '3D Studio preview ready' }}
+                        </span>
+                        <span class="text-[10px] text-[#EFE9F2]/60">Plays frame-by-frame before your products on scroll</span>
+                    </div>
+                    <label class="inline-flex items-center gap-1.5 text-[11px] text-[#ECD2F3] font-semibold cursor-pointer shrink-0">
+                        <input type="checkbox"
+                               id="ctrl-scroll-seq-enabled"
+                               name="scroll_seq_enabled"
+                               {{ array_key_exists('enabled', $seqCfg) ? ($seqCfg['enabled'] ? 'checked' : '') : 'checked' }}
+                               class="rounded border-white/30 bg-[#131318] text-[#ECD2F3]">
+                        <span>Active</span>
+                    </label>
+                </div>
+
+                <input type="checkbox" id="kinetic-auto-activate" checked class="hidden">
+
+                <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="goToKineticStep(2)" class="px-3 py-2 rounded-xl bg-white/8 hover:bg-white/15 text-xs font-semibold text-white/80 cursor-pointer">
+                            ← Back
+                        </button>
+                        <a href="{{ $vendor->storefrontUrl(['preset' => 'kinetic']) }}"
+                           target="_blank"
+                           rel="noopener"
+                           class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/18 text-xs font-bold text-white transition">
+                            Preview ↗
+                        </a>
+                        <button type="button"
+                                id="kinetic-clear-btn"
+                                onclick="clearKineticFrames()"
+                                class="px-2.5 py-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 text-xs font-bold transition cursor-pointer {{ count($seqFramesList) === 0 && empty($seqState['video_url']) ? 'hidden' : '' }}">
+                            Clear
+                        </button>
+                    </div>
+
+                    <button type="button"
+                            id="kinetic-publish-btn"
+                            onclick="publishKineticWizard()"
+                            class="px-4 py-2 rounded-xl bg-[#ECD2F3] hover:bg-[#F6E3FB] text-[#1A1018] text-xs font-extrabold transition cursor-pointer">
+                        ✓ Save &amp; Publish Live
+                    </button>
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Essential Customization Controls (Compact, Single-Card, No Visual Editor) -->
         <div class="p-6 sm:p-8 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-6">
@@ -1238,13 +1246,11 @@
             if (lbl) lbl.textContent = hex;
         }
 
-        let kineticFrames = @json($seqFramesList ?? []);
-
         function highlightActivePresetCard(key) {
             const heroBadge = document.getElementById('hero-active-preset');
             if (heroBadge) heroBadge.textContent = key;
 
-            const allPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic'];
+            const allPresets = @json(array_keys($presets));
             allPresets.forEach(k => {
                 const card = document.getElementById('preset-card-' + k);
                 const b = document.getElementById('btn-activate-' + k);
@@ -1270,9 +1276,38 @@
             });
         }
 
+        @if($hasKineticAccess)
+        let kineticFrames = @json($seqFramesList ?? []);
+
+        function goToKineticStep(step) {
+            const target = Math.max(1, Math.min(3, parseInt(step, 10) || 1));
+            [1, 2, 3].forEach((n) => {
+                const panel = document.getElementById('kinetic-step-' + n);
+                const tab = document.getElementById('kinetic-tab-' + n);
+                if (panel) panel.classList.toggle('hidden', n !== target);
+                if (tab) {
+                    tab.className = n === target
+                        ? 'py-1.5 px-2 rounded-lg transition cursor-pointer bg-[#ECD2F3] text-[#1A1018]'
+                        : 'py-1.5 px-2 rounded-lg transition cursor-pointer text-[#EFE9F2]/65 hover:text-white';
+                }
+            });
+        }
+
+        function setKineticSpeedPreset(vh, btn) {
+            const input = document.getElementById('ctrl-scroll-seq-height');
+            if (input) input.value = String(vh);
+            document.querySelectorAll('#kinetic-studio .kinetic-vh-btn').forEach((el) => {
+                el.className = 'kinetic-vh-btn px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-pointer bg-white/5 text-white/80 border-white/15';
+            });
+            if (btn) {
+                btn.className = 'kinetic-vh-btn px-2.5 py-1 rounded-lg border text-[10px] font-bold cursor-pointer bg-[#ECD2F3] text-[#1A1018] border-[#ECD2F3]';
+            }
+        }
+
         function updateKineticSequenceUI(seq) {
             kineticFrames = Array.isArray(seq?.frames) ? seq.frames : [];
             const pill = document.getElementById('kinetic-status-pill');
+            const summaryEl = document.getElementById('kinetic-step3-summary');
             const clearBtn = document.getElementById('kinetic-clear-btn');
             const slider = document.getElementById('kinetic-scrub-slider');
             const img = document.getElementById('kinetic-scrub-img');
@@ -1281,15 +1316,20 @@
 
             if (pill) {
                 if (kineticFrames.length > 0) {
-                    pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-                    pill.textContent = `✓ ${kineticFrames.length} JPG Frames Live`;
+                    pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                    pill.textContent = `✓ ${kineticFrames.length} JPG`;
                 } else if (seq?.video_url) {
-                    pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#ECD2F3]/15 text-[#ECD2F3] border border-[#ECD2F3]/35';
-                    pill.textContent = '● Video Stream Active';
+                    pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 bg-[#ECD2F3]/15 text-[#ECD2F3] border border-[#ECD2F3]/35';
+                    pill.textContent = '● Video Ready';
                 } else {
-                    pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/10 text-[#ECD2F3] border border-white/15';
-                    pill.textContent = '● 3D Studio Preview (Upload video for JPG frames)';
+                    pill.className = 'px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 bg-white/10 text-[#ECD2F3] border border-white/15';
+                    pill.textContent = '00 JPG';
                 }
+            }
+            if (summaryEl) {
+                summaryEl.textContent = kineticFrames.length > 0
+                    ? `${kineticFrames.length} JPG scroll frames ready`
+                    : (seq?.video_url ? 'Video scroll stream ready' : '3D Studio preview ready');
             }
             if (clearBtn) {
                 clearBtn.classList.toggle('hidden', kineticFrames.length === 0 && !seq?.video_url);
@@ -1369,7 +1409,7 @@
                 lastData = json;
                 const doneCount = Math.min(total, i + slice.length);
                 const pct = startPct + ((doneCount / total) * (100 - startPct));
-                setKineticProgress(pct, `Uploading JPG frames to storefront (${doneCount} / ${total})...`, `Stored ${json.count || doneCount} verified .jpg images`);
+                setKineticProgress(pct, `Uploading JPG frames (${doneCount} / ${total})...`, `Stored ${json.count || doneCount} .jpg images`);
             }
 
             if (lastData?.sequence) {
@@ -1382,7 +1422,7 @@
         }
 
         async function fallbackUploadRawVideo(file, targetFrames, activateKinetic) {
-            setKineticProgress(35, 'Uploading video for server processing...', file.name);
+            setKineticProgress(35, 'Uploading video for processing...', file.name);
             const fd = new FormData();
             fd.append('video', file);
             fd.append('target_frames', String(targetFrames));
@@ -1406,8 +1446,9 @@
             if (activateKinetic) {
                 highlightActivePresetCard('kinetic');
             }
-            setKineticProgress(100, json.extracted ? `✓ ${json.count} JPG frames generated & live!` : '✓ Video scroll stream live on Kinetic preset!', 'Preview your Kinetic storefront anytime.');
-            showToast('✓ Kinetic scroll motion published live!');
+            setKineticProgress(100, json.extracted ? `✓ ${json.count} JPG frames ready!` : '✓ Video stream ready!', 'Advancing to Step 2 preview.');
+            showToast('✓ Scroll motion processed! Review Step 2 & Publish.');
+            goToKineticStep(2);
         }
 
         async function handleKineticVideoSelected(input) {
@@ -1423,7 +1464,7 @@
             const targetFrames = parseInt(document.getElementById('kinetic-target-frames')?.value || '72', 10) || 72;
             const activateKinetic = Boolean(document.getElementById('kinetic-auto-activate')?.checked);
 
-            setKineticProgress(4, 'Reading video stream for automatic JPG conversion...', file.name);
+            setKineticProgress(4, 'Reading video for JPG extraction...', file.name);
 
             const objectUrl = URL.createObjectURL(file);
             const vid = document.createElement('video');
@@ -1515,8 +1556,9 @@
                 }
 
                 const result = await uploadKineticBlobsInBatches(blobs, activateKinetic, 55);
-                setKineticProgress(100, `✓ Converted video into ${result?.count || blobs.length} JPG frames & published live!`, 'Scroll motion is active on your Kinetic storefront.');
-                showToast(`✓ Generated ${result?.count || blobs.length} JPG scroll frames from your video!`);
+                setKineticProgress(100, `✓ ${result?.count || blobs.length} JPG frames ready!`, 'Preview your frames in Step 2.');
+                showToast(`✓ Generated ${result?.count || blobs.length} JPG frames! Now check Step 2.`);
+                goToKineticStep(2);
             } catch (err) {
                 try {
                     await fallbackUploadRawVideo(file, targetFrames, activateKinetic);
@@ -1547,10 +1589,11 @@
             const activateKinetic = Boolean(document.getElementById('kinetic-auto-activate')?.checked);
 
             try {
-                setKineticProgress(15, `Preparing ${files.length} image frames...`, 'Uploading chronological JPG sequence');
+                setKineticProgress(15, `Preparing ${files.length} image frames...`, 'Uploading JPG sequence');
                 const result = await uploadKineticBlobsInBatches(files.slice(0, 360), activateKinetic, 20);
-                setKineticProgress(100, `✓ Uploaded ${result?.count || files.length} JPG scroll frames live!`, 'Ready to scrub on Kinetic storefront.');
-                showToast(`✓ ${result?.count || files.length} JPG scroll frames published!`);
+                setKineticProgress(100, `✓ Uploaded ${result?.count || files.length} JPG frames!`, 'Advancing to Step 2 preview.');
+                showToast(`✓ ${result?.count || files.length} JPG frames uploaded! Check Step 2.`);
+                goToKineticStep(2);
             } catch (err) {
                 if (errBox) {
                     errBox.textContent = err.message || 'Failed uploading JPG sequence.';
@@ -1562,8 +1605,60 @@
             }
         }
 
+        async function publishKineticWizard() {
+            const btn = document.getElementById('kinetic-publish-btn');
+            const origText = btn ? btn.textContent : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Publishing...';
+            }
+
+            try {
+                const fd = new FormData();
+                document.querySelectorAll('#kinetic-studio [name^="scroll_seq_"]').forEach((el) => {
+                    fd.append(el.name, el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value);
+                });
+
+                const saveRes = await fetch('{{ route('vendor.design.quick_settings') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: fd
+                });
+                if (!saveRes.ok) {
+                    throw new Error('Could not save Scroll Motion settings.');
+                }
+
+                const actRes = await fetch('{{ route('vendor.design.activate') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ preset: 'kinetic' })
+                });
+                const actJson = await actRes.json();
+                if (!actRes.ok || actJson.status !== 'success') {
+                    throw new Error(actJson.message || 'Could not activate Kinetic preset.');
+                }
+
+                highlightActivePresetCard('kinetic');
+                showToast('✓ Scroll Motion published live on Kinetic preset!');
+            } catch (err) {
+                showToast(err.message || 'Failed to publish Scroll Motion', false);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = origText;
+                }
+            }
+        }
+
         function clearKineticFrames() {
-            if (!confirm('Remove all uploaded Kinetic JPG scroll frames? Your storefront will fall back to the 3D Studio preview.')) return;
+            if (!confirm('Remove all uploaded Kinetic JPG scroll frames?')) return;
             fetch('{{ route('vendor.design.scroll_frames.clear') }}', {
                 method: 'DELETE',
                 headers: {
@@ -1576,6 +1671,7 @@
                 if (data.status === 'success') {
                     updateKineticSequenceUI(data.sequence || { frames: [], count: 0, video_url: null });
                     document.getElementById('kinetic-progress-wrap')?.classList.add('hidden');
+                    goToKineticStep(1);
                     showToast('✓ Cleared Kinetic scroll frames');
                 } else {
                     showToast(data.message || 'Could not clear frames', false);
@@ -1583,6 +1679,7 @@
             })
             .catch(() => showToast('Network error clearing frames', false));
         }
+        @endif
 
         function activatePresetInstant(key, name) {
             const btn = document.getElementById('btn-activate-' + key);

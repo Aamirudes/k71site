@@ -32,13 +32,14 @@ class ServiceOnboardingController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        $presets = $this->presetService->getPresets();
         $vendor = auth()->user()?->vendor;
+        $presets = $this->presetService->getPresetsForVendor($vendor);
         $step = (int) $request->query('step', $vendor?->onboarding_step ?: 1);
         $step = max(1, min(5, $step));
 
         $activeConfig = $vendor?->storefrontConfig;
-        $selectedPreset = $activeConfig?->preset_key ?? $vendor?->layout_preset ?? 'velora';
+        $rawSelected = $activeConfig?->preset_key ?? $vendor?->layout_preset ?? 'velora';
+        $selectedPreset = $this->presetService->normalizePresetKeyForVendor((string) $rawSelected, $vendor);
         $effectiveConfig = $vendor ? $vendor->getStorefrontConfig(true) : [];
         $readiness = $vendor ? $this->presenter->evaluatePublishReadiness($vendor) : null;
         $portfolioCount = $vendor ? $vendor->portfolioProjects()->count() : 0;
@@ -230,7 +231,7 @@ class ServiceOnboardingController extends Controller
 
     protected function handleStep3Preset(Request $request, Vendor $vendor)
     {
-        $allowed = array_keys($this->presetService->getPresets());
+        $allowed = array_keys($this->presetService->getPresetsForVendor($vendor));
         $requested = strtolower(trim((string) $request->input('preset_key', 'velora')));
 
         if (!in_array($requested, $allowed, true)) {
