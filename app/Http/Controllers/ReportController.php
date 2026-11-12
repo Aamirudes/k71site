@@ -56,8 +56,22 @@ class ReportController extends Controller
 
         $modelClass = $typeMap[$validated['reportable_type']];
         $model = $modelClass === Product::class
-            ? Product::withoutGlobalScopes()->findOrFail($validated['reportable_id'])
+            ? Product::withoutGlobalScopes()->whereNull('deleted_at')->findOrFail($validated['reportable_id'])
             : $modelClass::findOrFail($validated['reportable_id']);
+
+        $isSelfTarget = ($model instanceof User && (int) $model->id === (int) $user->id)
+            || ($model instanceof Vendor && (int) $model->user_id === (int) $user->id)
+            || ($model instanceof Product && ($model->isOwnedBy($user) || ((int) ($model->vendor?->user_id ?? 0) === (int) $user->id)))
+            || ($model instanceof Review && (int) $model->user_id === (int) $user->id)
+            || ($model instanceof UsedSellerProfile && (int) $model->user_id === (int) $user->id)
+            || ($model instanceof UsedThreadMessage && (int) $model->sender_id === (int) $user->id);
+
+        if ($isSelfTarget) {
+            $msg = 'You cannot report your own account or content.';
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
 
         $alreadyPending = Report::where('user_id', $user->id)
             ->where('reportable_type', $modelClass)

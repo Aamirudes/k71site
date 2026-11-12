@@ -90,7 +90,11 @@ class WishlistController extends Controller
                 $action = 'added';
             }
 
-            $count = Wishlist::where('user_id', Auth::id())->count();
+            $count = Wishlist::where('user_id', Auth::id())
+                ->with('product.vendor')
+                ->get()
+                ->filter(fn ($w) => $w->product && $visibility->isProductPubliclyVisible($w->product))
+                ->count();
 
             $savesCount = null;
             if ($product && $product->isUsedListing()) {
@@ -113,7 +117,12 @@ class WishlistController extends Controller
                 $action = 'added';
             }
             session()->put('guest_wishlist', $guestWishlist);
-            $count = count($guestWishlist);
+            $count = empty($guestWishlist) ? 0 : Product::with('vendor')
+                ->whereIn('id', $guestWishlist)
+                ->where('status', 'active')
+                ->get()
+                ->filter(fn ($item) => $visibility->isProductPubliclyVisible($item))
+                ->count();
             $savesCount = null;
         }
 

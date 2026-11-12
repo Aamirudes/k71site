@@ -2368,4 +2368,352 @@ class WorkflowContinuationPassTest extends TestCase
             'action' => 'offer_accept_counter',
         ]);
     }
+
+    public function test_workflow_50_51_52_53_dpdp_bid_export_order_locks_service_cleanup_and_food_deals(): void
+    {
+        // Workflow 50: DPDP export uses real Bid::$bid_amount & account deletion suspends direct used ads + delivery partner + vendor subs
+        $auctionCat = Category::firstOrCreate(['slug' => 'collectibles-wf50'], ['name' => 'Collectibles', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $auctionProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $auctionCat->id,
+            'vertical' => 'products',
+            'listing_type' => 'auction',
+            'title' => 'Vintage Wristwatch WF50',
+            'slug' => 'vintage-wristwatch-wf50',
+            'description' => 'Collector timepiece',
+            'base_price' => 500000,
+            'starting_bid' => 500000,
+            'reserve_price' => 1000000,
+            'min_bid_increment' => 10000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'auction_status' => 'live',
+            'auction_ends_at' => now()->addDays(2),
+        ]);
+        \App\Models\Bid::create([
+            'product_id' => $auctionProduct->id,
+            'user_id' => $this->buyer->id,
+            'bid_amount' => 625000,
+            'status' => 'winning',
+        ]);
+
+        $exportRes = $this->actingAs($this->buyer)->get('/account/export');
+        $exportRes->assertOk();
+        $json = json_decode($exportRes->streamedContent(), true);
+        $this->assertSame(625000, $json['bids'][0]['amount'] ?? null);
+
+        $erasureUser = User::factory()->create(['email_verified_at' => now()]);
+        $erasureUsed = Product::create([
+            'user_id' => $erasureUser->id,
+            'category_id' => $auctionCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Erased Seller Camera',
+            'slug' => 'erased-seller-camera-wf50',
+            'description' => 'Camera',
+            'base_price' => 1500000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $fleetPartner = \App\Models\DeliveryPartner::create([
+            'user_id' => $erasureUser->id,
+            'name' => 'Erasure Rider',
+            'phone' => '9876543299',
+            'is_online' => true,
+            'is_verified' => true,
+        ]);
+        $this->actingAs($erasureUser)->post('/account/delete', ['confirm_delete' => '1'])->assertRedirect('/');
+        $this->assertSame('inactive', $erasureUsed->fresh()->status);
+        $this->assertFalse((bool) $fleetPartner->fresh()->is_online);
+        $this->assertFalse((bool) $fleetPartner->fresh()->is_verified);
+
+        // Workflow 51: Vendor/OrderController blocks prepaid accept on cancelled orders, approves/rejects payment proof safely, and requires online fleet partner
+        $cancelledOnlineOrder = Order::create([
+            'order_number' => 'ORD-WF51-CANC',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 100000,
+            'item_count' => 1,
+            'status' => 'cancelled',
+            'payment_method' => 'phonepe',
+            'payment_status' => 'pending',
+            'settlement_status' => 'cleared',
+            'address_snapshot' => ['shipping' => ['city' => 'Jaipur']],
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.orders.accept', $cancelledOnlineOrder))
+            ->assertSessionHas('error');
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.orders.approve_payment', $cancelledOnlineOrder))
+            ->assertSessionHas('error');
+        $this->assertSame('pending', $cancelledOnlineOrder->fresh()->payment_status);
+
+        $paidOrder = Order::create([
+            'order_number' => 'ORD-WF51-PAID',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 120000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 120000,
+            'item_count' => 1,
+            'status' => 'ready_for_pickup',
+            'payment_method' => 'upi',
+            'payment_status' => 'paid',
+            'address_snapshot' => ['shipping' => ['city' => 'Jaipur']],
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.orders.reject_payment', $paidOrder), ['reason' => 'Tamper'])
+            ->assertSessionHas('error');
+        $this->assertSame('paid', $paidOrder->fresh()->payment_status);
+
+        $offlineRiderUser = User::factory()->create(['email_verified_at' => now()]);
+        $fleetRole = \App\Models\Role::firstOrCreate(['name' => 'fleet']);
+        $offlineRiderUser->roles()->attach($fleetRole->id);
+        $offlineRider = \App\Models\DeliveryPartner::create([
+            'user_id' => $offlineRiderUser->id,
+            'name' => 'Offline Rider WF51',
+            'phone' => '9876543288',
+            'is_online' => false,
+            'is_verified' => true,
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.orders.assign_partner', $paidOrder), ['delivery_partner_id' => $offlineRider->id])
+            ->assertStatus(422);
+        $offlineRider->update(['is_online' => true]);
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.orders.assign_partner', $paidOrder), ['delivery_partner_id' => $offlineRider->id])
+            ->assertStatus(200);
+        $this->assertSame('ready_for_pickup', $paidOrder->fresh()->status);
+
+        // Workflow 52: ServiceOrderController rejects non-services product inside transaction
+        $this->actingAs($this->buyer)
+            ->post(route('services.order.place', $auctionProduct), [
+                'tier' => 'basic',
+                'requirements' => 'Build me a full store workflow test requirements',
+            ])
+            ->assertSessionHas('error');
+        $this->assertSame(0, \App\Models\ServiceOrder::where('product_id', $auctionProduct->id)->count());
+
+        // Workflow 53: FoodController hides exhausted coupons & escapes LIKE wildcards in food.suggest
+        $foodUser = User::factory()->create(['email_verified_at' => now()]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodUser->id,
+            'shop_name' => 'Saffron Spoon Kitchen WF53',
+            'slug' => 'saffron-spoon-wf53',
+            'vendor_type' => 'food',
+            'city' => 'Jaipur',
+            'status' => 'approved',
+        ]);
+        \App\Models\VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+            'is_accepting_food_orders' => true,
+            'cuisine_types' => 'Rajasthani',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        Coupon::create([
+            'vendor_id' => $foodVendor->id,
+            'code' => 'EXHAUSTED53',
+            'type' => 'fixed',
+            'value' => 5000,
+            'is_active' => true,
+            'starts_at' => now()->subDay(),
+            'expires_at' => now()->addDays(5),
+            'total_limit' => 2,
+            'usage_count' => 2,
+        ]);
+        Coupon::create([
+            'vendor_id' => $foodVendor->id,
+            'code' => 'LIVEFOOD53',
+            'type' => 'fixed',
+            'value' => 4000,
+            'is_active' => true,
+            'starts_at' => now()->subDay(),
+            'expires_at' => now()->addDays(5),
+            'total_limit' => 10,
+            'usage_count' => 1,
+        ]);
+
+        $this->get(route('food.restaurant', $foodVendor->slug))
+            ->assertOk()
+            ->assertDontSee('EXHAUSTED53')
+            ->assertSee('LIVEFOOD53');
+        $suggestPercent = $this->getJson(route('food.suggest', ['q' => '%%%']));
+        $suggestPercent->assertOk()->assertJson(['restaurants' => [], 'dishes' => []]);
+    }
+
+    public function test_workflow_54_55_56_57_58_59_used_visibility_bookings_reviews_reports_and_wishlist(): void
+    {
+        // Workflow 54 & 55: UsedThreadController blocks reply on sold/unavailable ad & UsedSellerController enforces vendor visibility
+        $usedCat = Category::firstOrCreate(['slug' => 'used-tech-wf54'], ['name' => 'Used Tech', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $suspendedVendorUser = User::factory()->create(['email_verified_at' => now()]);
+        $suspendedUsedVendor = Vendor::create([
+            'user_id' => $suspendedVendorUser->id,
+            'shop_name' => 'Paused Used Dealer WF55',
+            'slug' => 'paused-used-dealer-wf55',
+            'vendor_type' => 'used',
+            'status' => 'suspended',
+        ]);
+        $sellerProfile = \App\Models\UsedSellerProfile::create([
+            'user_id' => $suspendedVendorUser->id,
+            'handle' => 'paused-dealer-wf55',
+            'display_name' => 'Paused Used Dealer',
+            'show_sold_history' => true,
+        ]);
+        $hiddenVendorAd = Product::create([
+            'vendor_id' => $suspendedUsedVendor->id,
+            'user_id' => $suspendedVendorUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Suspended Vendor iPad Pro WF55',
+            'slug' => 'suspended-ipad-wf55',
+            'description' => 'Should stay hidden',
+            'base_price' => 4000000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+
+        $this->get(route('used.seller.profile', $sellerProfile->handle))
+            ->assertOk()
+            ->assertDontSee('Suspended Vendor iPad Pro WF55');
+
+        $soldAd = Product::create([
+            'user_id' => $this->vendorUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Sold Mac Mini WF54',
+            'slug' => 'sold-mac-mini-wf54',
+            'description' => 'Sold item',
+            'base_price' => 3000000,
+            'total_stock' => 0,
+            'status' => 'active',
+            'used_status' => 'sold',
+            'is_sold' => true,
+        ]);
+        $thread = \App\Models\UsedThread::create([
+            'product_id' => $soldAd->id,
+            'seller_id' => $this->vendorUser->id,
+            'buyer_id' => $this->buyer->id,
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->buyer)
+            ->postJson(route('used.threads.reply', $thread), ['body' => 'Still available?'])
+            ->assertStatus(422);
+
+        // Workflow 56: BookingController validates transition inside lock & booking view has no dummy phone fallback
+        $svcCat = Category::firstOrCreate(['slug' => 'services-wf56'], ['name' => 'Services WF56', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+        $svcProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'booking',
+            'title' => 'Home Consultation WF56',
+            'slug' => 'home-consultation-wf56',
+            'description' => 'On-site survey',
+            'base_price' => 50000,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+        $booking = \App\Models\Booking::create([
+            'booking_number' => 'BK-WF56-TEST',
+            'product_id' => $svcProduct->id,
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->buyer->id,
+            'customer_name' => 'Rohan Verma',
+            'customer_phone' => '9811223344',
+            'service_address' => '21 Park Ave',
+            'booking_date' => now()->addDay()->toDateString(),
+            'booking_slot' => '10:00 AM',
+            'total_amount' => 50000,
+            'status' => 'cancelled',
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.bookings.status', $booking), ['status' => 'confirmed'])
+            ->assertSessionHas('error');
+        $this->assertSame('cancelled', $booking->fresh()->status);
+
+        $this->actingAs($this->buyer)
+            ->get(route('bookings.show', $booking->booking_number))
+            ->assertOk()
+            ->assertDontSee('919876543210');
+
+        // Workflow 57: ReviewController food order review uses transactional duplicate lock
+        $foodOrder = Order::create([
+            'order_number' => 'ORD-WF57-FOOD',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'order_type' => 'food_delivery',
+            'subtotal' => 45000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 45000,
+            'item_count' => 1,
+            'status' => 'delivered',
+            'payment_status' => 'paid',
+            'payment_method' => 'upi',
+            'address_snapshot' => ['shipping' => ['city' => 'Jaipur']],
+        ]);
+        $this->actingAs($this->buyer)
+            ->post(route('food.orders.review', $foodOrder), ['rating' => 5, 'body' => 'Delicious piping hot food!'])
+            ->assertSessionHas('success');
+        $this->actingAs($this->buyer)
+            ->post(route('food.orders.review', $foodOrder), ['rating' => 1, 'body' => 'Duplicate attempt'])
+            ->assertSessionHas('error');
+        $this->assertSame(1, \App\Models\Review::where('order_id', $foodOrder->id)->count());
+
+        // Workflow 58: ReportController blocks self-reporting account or own product
+        $retailProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'products',
+            'listing_type' => 'purchase',
+            'title' => 'Active Retail Item WF58',
+            'slug' => 'active-retail-item-wf58',
+            'description' => 'Active listing',
+            'base_price' => 25000,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('reports.store'), [
+                'reportable_type' => 'product',
+                'reportable_id' => $retailProduct->id,
+                'reason' => 'spam',
+            ])
+            ->assertStatus(422);
+        $this->actingAs($this->buyer)
+            ->postJson(route('reports.store'), [
+                'reportable_type' => 'user',
+                'reportable_id' => $this->buyer->id,
+                'reason' => 'spam',
+            ])
+            ->assertStatus(422);
+
+        // Workflow 59: WishlistController toggle count excludes hidden/inactive products
+        $deadProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'products',
+            'listing_type' => 'purchase',
+            'title' => 'Archived Item WF59',
+            'slug' => 'archived-item-wf59',
+            'description' => 'Now inactive',
+            'base_price' => 10000,
+            'total_stock' => 5,
+            'status' => 'inactive',
+        ]);
+        Wishlist::create(['user_id' => $this->buyer->id, 'product_id' => $deadProduct->id]);
+        $toggleRes = $this->actingAs($this->buyer)
+            ->postJson(route('wishlist.toggle'), ['product_id' => $retailProduct->id]);
+        $toggleRes->assertOk()
+            ->assertJson(['success' => true, 'is_wishlisted' => true, 'count' => 1]);
+    }
 }

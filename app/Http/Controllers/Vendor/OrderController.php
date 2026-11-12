@@ -573,43 +573,51 @@ class OrderController extends Controller
             }
         }
 
-        // Guard 1: Cannot accept until bank settlement is cleared
-        if ($order->settlement_status !== 'cleared') {
-            $unlockTime = $order->settlement_expected_at ? $order->settlement_expected_at->format('M d, Y h:i A') : 'the next banking day';
-            return back()->with('error', "Cannot accept order yet: Customer payment settlement is still clearing with PhonePe. Funds will unlock on {$unlockTime}.");
-        }
-
-        // Guard 2: Verify vendor has configured a UPI ID
         $settings = $vendor->settings;
         if (!$settings || empty(trim($settings->upi_id ?? ''))) {
             return back()->with('error', "Please configure your UPI ID under Operations & Payments settings before accepting orders.");
         }
 
-        // Guard 3: Prevent duplicate acceptance / payouts
-        if ($order->vendor_payout_status === 'paid') {
-            return back()->with('info', "Order is already accepted and payout was previously transferred.");
-        }
-
         DB::beginTransaction();
         try {
-            // Disburse instant payout to vendor's UPI ID
-            $payoutResult = $payoutService->disburseVendorPayout($order);
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-            $oldStatus = $order->status;
+            if (in_array($lockedOrder->status, ['cancelled', 'delivered', 'shipped', 'out_for_delivery'], true)) {
+                DB::rollBack();
+                return back()->with('error', "Order #{$lockedOrder->order_number} is already {$lockedOrder->status} and cannot be accepted.");
+            }
+
+            // Guard 1: Cannot accept until bank settlement is cleared
+            if ($lockedOrder->settlement_status !== 'cleared') {
+                DB::rollBack();
+                $unlockTime = $lockedOrder->settlement_expected_at ? $lockedOrder->settlement_expected_at->format('M d, Y h:i A') : 'the next banking day';
+                return back()->with('error', "Cannot accept order yet: Customer payment settlement is still clearing with PhonePe. Funds will unlock on {$unlockTime}.");
+            }
+
+            // Guard 2: Prevent duplicate acceptance / payouts
+            if ($lockedOrder->vendor_payout_status === 'paid') {
+                DB::rollBack();
+                return back()->with('info', "Order is already accepted and payout was previously transferred.");
+            }
+
+            // Disburse instant payout to vendor's UPI ID
+            $payoutResult = $payoutService->disburseVendorPayout($lockedOrder);
+
+            $oldStatus = $lockedOrder->status;
             $acceptOnlinePayload = [
                 'status' => 'processing',
-                'packed_at' => $order->packed_at ?: now(),
+                'packed_at' => $lockedOrder->packed_at ?: now(),
                 'vendor_accepted_at' => now(),
             ];
-            if ($order->isFoodOrder()) {
-                $acceptOnlinePayload['accepted_at'] = $order->accepted_at ?: now();
-                $acceptOnlinePayload['preparing_at'] = $order->preparing_at ?: now();
+            if ($lockedOrder->isFoodOrder()) {
+                $acceptOnlinePayload['accepted_at'] = $lockedOrder->accepted_at ?: now();
+                $acceptOnlinePayload['preparing_at'] = $lockedOrder->preparing_at ?: now();
                 $acceptOnlinePayload['food_fulfillment_stage'] = 'preparing';
             }
-            $order->update($acceptOnlinePayload);
+            $lockedOrder->update($acceptOnlinePayload);
 
             OrderStatusLog::create([
-                'order_id' => $order->id,
+                'order_id' => $lockedOrder->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'processing',
                 'actor_type' => 'vendor',
@@ -619,6 +627,7 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
+            $order = $lockedOrder->fresh(['user']);
 
             // Notify customer
             try {
@@ -797,25 +806,37 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            if ($order->paymentClaim) {
-                $order->paymentClaim->update([
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with('paymentClaim')->firstOrFail();
+
+            if ($lockedOrder->status === 'cancelled' || $lockedOrder->payment_status === 'refund_pending') {
+                DB::rollBack();
+                return back()->with('error', "Order #{$lockedOrder->order_number} is cancelled or flagged for refund and cannot be marked paid.");
+            }
+
+            if ($lockedOrder->payment_status === 'paid') {
+                DB::rollBack();
+                return back()->with('info', "Order #{$lockedOrder->order_number} is already marked as Paid.");
+            }
+
+            if ($lockedOrder->paymentClaim) {
+                $lockedOrder->paymentClaim->update([
                     'status' => 'approved',
                     'verified_at' => now(),
                 ]);
             }
 
-            $oldStatus = $order->status;
+            $oldStatus = $lockedOrder->status;
             $newStatus = $oldStatus === 'pending' ? 'processing' : $oldStatus;
 
-            $order->update([
+            $lockedOrder->update([
                 'payment_status' => 'paid',
                 'status' => $newStatus,
             ]);
 
-            app(\App\Services\Monetization\CommissionService::class)->recordOrderCommission($order);
+            app(\App\Services\Monetization\CommissionService::class)->recordOrderCommission($lockedOrder);
 
             \App\Models\OrderStatusLog::create([
-                'order_id' => $order->id,
+                'order_id' => $lockedOrder->id,
                 'from_status' => $oldStatus,
                 'to_status' => $newStatus,
                 'actor_type' => 'vendor',
@@ -825,7 +846,7 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', "Payment approved successfully! Order #{$order->order_number} is now marked as Paid.");
+            return back()->with('success', "Payment approved successfully! Order #{$lockedOrder->order_number} is now marked as Paid.");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', "Failed to approve payment: " . $e->getMessage());
@@ -842,25 +863,33 @@ class OrderController extends Controller
             abort(403, 'Unauthorized access to order.');
         }
 
-        $reason = $request->input('reason', $request->input('rejection_reason', 'Transaction ID / UTR not found in bank statement'));
+        $reason = trim((string) $request->input('reason', $request->input('rejection_reason', 'Transaction ID / UTR not found in bank statement')))
+            ?: 'Transaction ID / UTR not found in bank statement';
 
         DB::beginTransaction();
         try {
-            if ($order->paymentClaim) {
-                $order->paymentClaim->update([
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with('paymentClaim')->firstOrFail();
+
+            if ($lockedOrder->payment_status === 'paid' || $lockedOrder->payment_status === 'refund_pending' || in_array($lockedOrder->status, ['cancelled', 'shipped', 'out_for_delivery', 'delivered'], true)) {
+                DB::rollBack();
+                return back()->with('error', "Payment proof cannot be rejected after Order #{$lockedOrder->order_number} is {$lockedOrder->payment_status}/{$lockedOrder->status}.");
+            }
+
+            if ($lockedOrder->paymentClaim) {
+                $lockedOrder->paymentClaim->update([
                     'status' => 'rejected',
                     'rejection_reason' => $reason,
                 ]);
             }
 
-            $order->update([
+            $lockedOrder->update([
                 'payment_status' => 'failed',
             ]);
 
             \App\Models\OrderStatusLog::create([
-                'order_id' => $order->id,
-                'from_status' => $order->status,
-                'to_status' => $order->status,
+                'order_id' => $lockedOrder->id,
+                'from_status' => $lockedOrder->status,
+                'to_status' => $lockedOrder->status,
                 'actor_type' => 'vendor',
                 'actor_id' => auth()->id(),
                 'note' => "Payment proof rejected by vendor: {$reason}",
@@ -868,7 +897,7 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
-            return back()->with('success', "Payment proof rejected for Order #{$order->order_number}.");
+            return back()->with('success', "Payment proof rejected for Order #{$lockedOrder->order_number}.");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', "Failed to reject payment: " . $e->getMessage());
@@ -939,7 +968,10 @@ class OrderController extends Controller
         }
 
         $partnerId = $request->input('delivery_partner_id');
-        $partner = \App\Models\DeliveryPartner::realFleet()->findOrFail($partnerId);
+        $partner = \App\Models\DeliveryPartner::realFleet()->with('user')->findOrFail($partnerId);
+        if (!$partner->is_online || $partner->user?->is_blocked) {
+            return response()->json(['success' => false, 'message' => 'This delivery partner is currently offline or unavailable.'], 422);
+        }
 
         $vLat = null;
         $vLng = null;
@@ -983,15 +1015,20 @@ class OrderController extends Controller
                 ]);
 
                 $oldStatus = $lockedOrder->status;
-                $lockedOrder->update([
-                    'status' => 'processing',
-                ]);
+                $targetStatus = in_array($oldStatus, ['ready_for_pickup', 'shipped', 'out_for_delivery'], true)
+                    ? $oldStatus
+                    : 'processing';
+                if ($targetStatus !== $oldStatus) {
+                    $lockedOrder->update([
+                        'status' => $targetStatus,
+                    ]);
+                }
 
                 $distText = $dist !== null ? "{$dist} km away • " : '';
                 \App\Models\OrderStatusLog::create([
                     'order_id' => $lockedOrder->id,
                     'from_status' => $oldStatus,
-                    'to_status' => 'processing',
+                    'to_status' => $targetStatus,
                     'actor_type' => 'vendor',
                     'actor_id' => auth()->id(),
                     'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$distText}₹{$fare} delivery fare). Pickup alert ring dispatched.",

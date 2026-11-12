@@ -73,23 +73,6 @@ class ServiceOrderController extends Controller
             'selected_addons' => 'nullable|array',
         ]);
 
-        $package = $product->gigPackages->firstWhere('tier', $validated['tier']);
-        $basePrice = $package ? (float) $package->price : ($product->base_price / 100);
-        $deliveryDays = $package ? (int) $package->delivery_days : 3;
-        $revisionsAllowed = $package ? (int) $package->revisions : 1;
-
-        // Process add-ons if selected
-        $addonsTotal = 0;
-        if (!empty($validated['selected_addons']) && is_array($product->addons_json)) {
-            foreach ($product->addons_json as $addon) {
-                if (in_array($addon['name'] ?? '', $validated['selected_addons'], true)) {
-                    $addonsTotal += max(0, (float) ($addon['price'] ?? 0));
-                }
-            }
-        }
-
-        $totalPrice = $basePrice + $addonsTotal;
-
         $orderNumber = 'SO-' . strtoupper(Str::random(10));
 
         // Handle file uploads safely via shared MediaUploadService
@@ -107,35 +90,74 @@ class ServiceOrderController extends Controller
             }
         }
 
-        $order = DB::transaction(function () use ($orderNumber, $product, $package, $validated, $totalPrice, $deliveryDays, $revisionsAllowed, $uploadedFiles) {
-            $order = ServiceOrder::create([
-                'order_number' => $orderNumber,
-                'buyer_id' => auth()->id(),
-                'vendor_id' => $product->vendor_id,
-                'product_id' => $product->id,
-                'gig_package_id' => $package?->id,
-                'package_tier' => $validated['tier'],
-                'package_title' => $package?->title ?? $product->title,
-                'amount' => (int) round($totalPrice * 100),
-                'delivery_days' => $deliveryDays,
-                'due_at' => now()->addDays($deliveryDays),
-                'revisions_allowed' => $revisionsAllowed,
-                'revisions_used' => 0,
-                'status' => 'in_progress',
-                'requirements' => $validated['requirements'],
-                'requirements_files' => $uploadedFiles,
-            ]);
+        try {
+            $order = DB::transaction(function () use ($orderNumber, $product, $validated, $uploadedFiles) {
+                $lockedProduct = Product::withoutGlobalScopes()
+                    ->whereKey($product->id)
+                    ->with(['vendor', 'gigPackages'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
 
-            ServiceOrderMessage::create([
-                'service_order_id' => $order->id,
-                'user_id' => auth()->id(),
-                'sender_type' => 'buyer',
-                'message' => "Project started! Here are the submitted requirements:\n\n" . $validated['requirements'],
-                'attachments' => $uploadedFiles,
-            ]);
+                if ($lockedProduct->vertical !== 'services' || !$this->visibility->isProductPubliclyVisible($lockedProduct)) {
+                    throw new \RuntimeException('This service is currently unavailable or paused.');
+                }
 
-            return $order;
-        });
+                $package = $lockedProduct->gigPackages->firstWhere('tier', $validated['tier']);
+                $basePrice = $package ? (float) $package->price : ($lockedProduct->base_price / 100);
+                $deliveryDays = $package ? (int) $package->delivery_days : 3;
+                $revisionsAllowed = $package ? (int) $package->revisions : 1;
+
+                $addonsTotal = 0;
+                if (!empty($validated['selected_addons']) && is_array($lockedProduct->addons_json)) {
+                    foreach ($lockedProduct->addons_json as $addon) {
+                        if (in_array($addon['name'] ?? '', $validated['selected_addons'], true)) {
+                            $addonsTotal += max(0, (float) ($addon['price'] ?? 0));
+                        }
+                    }
+                }
+                $totalPrice = $basePrice + $addonsTotal;
+
+                $order = ServiceOrder::create([
+                    'order_number' => $orderNumber,
+                    'buyer_id' => auth()->id(),
+                    'vendor_id' => $lockedProduct->vendor_id,
+                    'product_id' => $lockedProduct->id,
+                    'gig_package_id' => $package?->id,
+                    'package_tier' => $validated['tier'],
+                    'package_title' => $package?->title ?? $lockedProduct->title,
+                    'amount' => (int) round($totalPrice * 100),
+                    'delivery_days' => $deliveryDays,
+                    'due_at' => now()->addDays($deliveryDays),
+                    'revisions_allowed' => $revisionsAllowed,
+                    'revisions_used' => 0,
+                    'status' => 'in_progress',
+                    'requirements' => $validated['requirements'],
+                    'requirements_files' => $uploadedFiles,
+                ]);
+
+                ServiceOrderMessage::create([
+                    'service_order_id' => $order->id,
+                    'user_id' => auth()->id(),
+                    'sender_type' => 'buyer',
+                    'message' => "Project started! Here are the submitted requirements:\n\n" . $validated['requirements'],
+                    'attachments' => $uploadedFiles,
+                ]);
+
+                return $order;
+            });
+        } catch (\Throwable $e) {
+            foreach ($uploadedFiles as $meta) {
+                if (!empty($meta['path']) && function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($meta['path']);
+                }
+            }
+
+            if ($e instanceof \RuntimeException) {
+                return back()->with('error', $e->getMessage());
+            }
+
+            return back()->with('error', 'Unable to start project order right now. Please try again.');
+        }
 
         $this->notifications->notifyUser(
             $product->vendor?->user_id,

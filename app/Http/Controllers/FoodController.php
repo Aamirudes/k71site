@@ -145,25 +145,27 @@ class FoodController extends Controller
         }
 
         if ($search) {
-            $restaurantsQuery->where(function ($q) use ($search) {
-                $q->where('vendors.shop_name', 'like', "%{$search}%")
-                  ->orWhere('vendors.city', 'like', "%{$search}%")
-                  ->orWhere('vendors.description', 'like', "%{$search}%")
-                  ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$search}%"))
+            $escapedSearch = addcslashes($search, '%_\\');
+            $restaurantsQuery->where(function ($q) use ($escapedSearch) {
+                $q->where('vendors.shop_name', 'like', "%{$escapedSearch}%")
+                  ->orWhere('vendors.city', 'like', "%{$escapedSearch}%")
+                  ->orWhere('vendors.description', 'like', "%{$escapedSearch}%")
+                  ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedSearch}%"))
                   ->orWhereHas('products', fn ($pq) => $pq->where('products.vertical', 'food')
                       ->where('products.status', 'active')
-                      ->where(function ($dq) use ($search) {
-                          $dq->where('products.title', 'like', "%{$search}%")
-                             ->orWhere('products.description', 'like', "%{$search}%");
+                      ->where(function ($dq) use ($escapedSearch) {
+                          $dq->where('products.title', 'like', "%{$escapedSearch}%")
+                             ->orWhere('products.description', 'like', "%{$escapedSearch}%");
                       }));
             });
         }
 
         if ($cuisine) {
-            $restaurantsQuery->where(function ($q) use ($cuisine) {
-                $q->where('vendors.description', 'like', "%{$cuisine}%")
-                  ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$cuisine}%"))
-                  ->orWhereHas('products', fn ($pq) => $pq->where('products.custom_fields->cuisine', 'like', "%{$cuisine}%"));
+            $escapedCuisine = addcslashes((string) $cuisine, '%_\\');
+            $restaurantsQuery->where(function ($q) use ($escapedCuisine) {
+                $q->where('vendors.description', 'like', "%{$escapedCuisine}%")
+                  ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedCuisine}%"))
+                  ->orWhereHas('products', fn ($pq) => $pq->where('products.custom_fields->cuisine', 'like', "%{$escapedCuisine}%"));
             });
         }
 
@@ -251,26 +253,29 @@ class FoodController extends Controller
         }
 
         if ($search) {
-            $dishesQuery->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhereHas('vendor', fn ($vq) => $vq->where('shop_name', 'like', "%{$search}%"));
+            $escapedSearch = addcslashes($search, '%_\\');
+            $dishesQuery->where(function ($q) use ($escapedSearch) {
+                $q->where('title', 'like', "%{$escapedSearch}%")
+                  ->orWhere('description', 'like', "%{$escapedSearch}%")
+                  ->orWhereHas('vendor', fn ($vq) => $vq->where('shop_name', 'like', "%{$escapedSearch}%"));
             });
         }
 
         if ($dietary) {
-            $dishesQuery->where(function ($q) use ($dietary) {
-                $q->where('dietary_label', 'like', "%{$dietary}%")
-                  ->orWhere('custom_fields->dietary_type', 'like', "%{$dietary}%");
+            $escapedDietary = addcslashes((string) $dietary, '%_\\');
+            $dishesQuery->where(function ($q) use ($escapedDietary) {
+                $q->where('dietary_label', 'like', "%{$escapedDietary}%")
+                  ->orWhere('custom_fields->dietary_type', 'like', "%{$escapedDietary}%");
             });
         }
 
         if ($cuisine) {
-            $dishesQuery->where(function ($q) use ($cuisine) {
-                $q->where('custom_fields->cuisine', 'like', "%{$cuisine}%")
-                  ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$cuisine}%")->orWhere('slug', 'like', "%{$cuisine}%"))
-                  ->orWhereHas('foodMenuCategory', fn ($mq) => $mq->where('name', 'like', "%{$cuisine}%"))
-                  ->orWhereHas('vendor.settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$cuisine}%"));
+            $escapedCuisine = addcslashes((string) $cuisine, '%_\\');
+            $dishesQuery->where(function ($q) use ($escapedCuisine) {
+                $q->where('custom_fields->cuisine', 'like', "%{$escapedCuisine}%")
+                  ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$escapedCuisine}%")->orWhere('slug', 'like', "%{$escapedCuisine}%"))
+                  ->orWhereHas('foodMenuCategory', fn ($mq) => $mq->where('name', 'like', "%{$escapedCuisine}%"))
+                  ->orWhereHas('vendor.settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedCuisine}%"));
             });
         }
 
@@ -329,6 +334,9 @@ class FoodController extends Controller
             })
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('total_limit')->orWhereColumn('usage_count', '<', 'total_limit');
             })
             ->whereHas('vendor', function ($vq) use ($visibility) {
                 $visibility->scopeVisibleVendors($vq, 'food');
@@ -449,9 +457,10 @@ class FoodController extends Controller
         }
 
         if ($menuSearch) {
-            $menuQuery->where(function ($q) use ($menuSearch) {
-                $q->where('title', 'like', "%{$menuSearch}%")
-                  ->orWhere('description', 'like', "%{$menuSearch}%");
+            $escapedMenuSearch = addcslashes($menuSearch, '%_\\');
+            $menuQuery->where(function ($q) use ($escapedMenuSearch) {
+                $q->where('title', 'like', "%{$escapedMenuSearch}%")
+                  ->orWhere('description', 'like', "%{$escapedMenuSearch}%");
             });
         }
 
@@ -509,6 +518,9 @@ class FoodController extends Controller
             ->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>=', now());
             })
+            ->where(function ($q) {
+                $q->whereNull('total_limit')->orWhereColumn('usage_count', '<', 'total_limit');
+            })
             ->get();
 
         // Real customer reviews (restaurant + dish reviews combined)
@@ -558,6 +570,7 @@ class FoodController extends Controller
         if (strlen($q) < 2) {
             return response()->json(['restaurants' => [], 'dishes' => []]);
         }
+        $escapedQ = addcslashes($q, '%_\\');
 
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $restaurantsSuggestQuery = Vendor::whereIn('status', ['approved', 'active']);
@@ -568,10 +581,10 @@ class FoodController extends Controller
                       ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true))
                       ->orWhereHas('products', fn ($pq) => $pq->where('vertical', 'food')->where('status', 'active'));
             })
-            ->where(function ($query) use ($q) {
-                $query->where('shop_name', 'like', "%{$q}%")
-                      ->orWhere('city', 'like', "%{$q}%")
-                      ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$q}%"));
+            ->where(function ($query) use ($escapedQ) {
+                $query->where('shop_name', 'like', "%{$escapedQ}%")
+                      ->orWhere('city', 'like', "%{$escapedQ}%")
+                      ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedQ}%"));
             })
             ->with('settings')
             ->take(5)
@@ -580,7 +593,7 @@ class FoodController extends Controller
         $dishesSuggestQuery = Product::where('vertical', 'food')
             ->where('status', 'active')
             ->where('is_dish_available', true)
-            ->where('title', 'like', "%{$q}%");
+            ->where('title', 'like', "%{$escapedQ}%");
         $visibility->scopeVisibleProducts($dishesSuggestQuery, 'food');
         $dishes = $dishesSuggestQuery
             ->with(['vendor:id,shop_name,slug', 'images'])

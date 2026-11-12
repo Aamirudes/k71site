@@ -186,37 +186,42 @@ class BookingController extends Controller
             'cancelled_reason' => 'nullable|string|max:500',
         ]);
 
-        $allowedTransitions = [
-            'pending' => ['confirmed', 'completed', 'cancelled'],
-            'confirmed' => ['completed', 'cancelled'],
-            'completed' => [],
-            'cancelled' => [],
-        ];
-
         $targetStatus = $validated['status'];
-        if (!in_array($targetStatus, $allowedTransitions[$booking->status] ?? [], true)) {
-            return back()->with('error', "Booking #{$booking->booking_number} cannot transition from '{$booking->status}' to '{$targetStatus}'.");
+
+        try {
+            DB::transaction(function () use ($booking, $validated, $targetStatus) {
+                $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+
+                $allowedTransitions = [
+                    'pending' => ['confirmed', 'completed', 'cancelled'],
+                    'confirmed' => ['completed', 'cancelled'],
+                    'completed' => [],
+                    'cancelled' => [],
+                ];
+
+                if (!in_array($targetStatus, $allowedTransitions[$locked->status] ?? [], true)) {
+                    throw new \RuntimeException("Booking #{$locked->booking_number} cannot transition from '{$locked->status}' to '{$targetStatus}'.");
+                }
+
+                $updateData = [
+                    'status' => $targetStatus,
+                    'vendor_notes' => $validated['vendor_notes'] ?? $locked->vendor_notes,
+                ];
+
+                if ($targetStatus === 'confirmed') {
+                    $updateData['confirmed_at'] = now();
+                } elseif ($targetStatus === 'completed') {
+                    $updateData['completed_at'] = now();
+                } elseif ($targetStatus === 'cancelled') {
+                    $updateData['cancelled_at'] = now();
+                    $updateData['cancelled_reason'] = $validated['cancelled_reason'] ?? 'Cancelled by service provider';
+                }
+
+                $locked->update($updateData);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        DB::transaction(function () use ($booking, $validated, $targetStatus) {
-            $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
-
-            $updateData = [
-                'status' => $targetStatus,
-                'vendor_notes' => $validated['vendor_notes'] ?? $locked->vendor_notes,
-            ];
-
-            if ($targetStatus === 'confirmed') {
-                $updateData['confirmed_at'] = now();
-            } elseif ($targetStatus === 'completed') {
-                $updateData['completed_at'] = now();
-            } elseif ($targetStatus === 'cancelled') {
-                $updateData['cancelled_at'] = now();
-                $updateData['cancelled_reason'] = $validated['cancelled_reason'] ?? 'Cancelled by service provider';
-            }
-
-            $locked->update($updateData);
-        });
 
         $this->notifications->notifyUser(
             $booking->user_id,

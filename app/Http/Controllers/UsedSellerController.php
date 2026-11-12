@@ -32,16 +32,20 @@ class UsedSellerController extends Controller
             ->firstOrFail();
 
         $sellerUser = $profile->user;
-        if (!$sellerUser || ($sellerUser->is_blocked && !auth()->user()?->hasRole('admin'))) {
+        $viewer = auth()->user();
+        $isOwnerOrAdmin = $viewer && ($viewer->hasRole('admin') || ($sellerUser && (int) $viewer->id === (int) $sellerUser->id));
+        if (!$sellerUser || ($sellerUser->is_blocked && !$viewer?->hasRole('admin'))) {
             abort(404);
         }
         $vendorId = $sellerUser->vendor?->id;
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
         $activeListings = Product::withoutGlobalScopes()
-            ->with(['images', 'category'])
+            ->with(['images', 'category', 'vendor'])
             ->where('vertical', 'used')
             ->where('status', 'active')
             ->where('is_sold', false)
+            ->whereNull('deleted_at')
             ->where(function ($q) use ($sellerUser, $vendorId) {
                 $q->where('user_id', $sellerUser->id);
                 if ($vendorId) {
@@ -53,13 +57,17 @@ class UsedSellerController extends Controller
             })
             ->latest('refreshed_at')
             ->latest()
-            ->get();
+            ->get()
+            ->filter(fn (Product $listing) => $isOwnerOrAdmin || $visibility->isProductPubliclyVisible($listing))
+            ->values();
 
         $soldListings = collect();
-        if ($profile->show_sold_history) {
+        $canShowVendorHistory = !$sellerUser->vendor || $isOwnerOrAdmin || $visibility->isVendorPubliclyVisible($sellerUser->vendor, 'used');
+        if ($profile->show_sold_history && $canShowVendorHistory) {
             $soldListings = Product::withoutGlobalScopes()
                 ->with(['images', 'category'])
                 ->where('vertical', 'used')
+                ->whereNull('deleted_at')
                 ->where(function ($q) use ($sellerUser, $vendorId) {
                     $q->where('user_id', $sellerUser->id);
                     if ($vendorId) {

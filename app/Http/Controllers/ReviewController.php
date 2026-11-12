@@ -8,6 +8,7 @@ use App\Models\Review;
 use App\Services\Food\FoodMarketplaceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReviewController extends Controller
 {
@@ -55,35 +56,47 @@ class ReviewController extends Controller
         }
 
         $existingReview = Review::where('product_id', $product->id)->where('user_id', $user->id)->first();
-        if ($existingReview && empty($storedImages) && !empty($existingReview->images)) {
-            $storedImages = $existingReview->images;
+        $imagesToSave = !empty($storedImages)
+            ? $storedImages
+            : ($existingReview && !empty($existingReview->images) ? $existingReview->images : null);
+
+        try {
+            DB::transaction(function () use ($product, $user, $validated, $imagesToSave, $isVerifiedPurchase) {
+                Product::withoutGlobalScopes()->whereKey($product->id)->lockForUpdate()->first();
+
+                Review::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'vendor_id' => $product->vendor_id,
+                        'review_type' => $product->vertical === 'food' ? 'food_dish' : 'product',
+                        'rating' => $validated['rating'],
+                        'title' => $validated['title'] ?? null,
+                        'body' => $validated['body'],
+                        'images' => $imagesToSave,
+                        'is_verified_purchase' => $isVerifiedPurchase,
+                        'is_approved' => true,
+                    ]
+                );
+
+                $approvedReviews = Review::where('product_id', $product->id)->where('is_approved', true);
+                $reviewCount = $approvedReviews->count();
+                $avgRating = $reviewCount > 0 ? round($approvedReviews->avg('rating'), 2) : null;
+                $product->update([
+                    'review_count' => $reviewCount,
+                    'avg_rating' => $avgRating,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            foreach ($storedImages as $path) {
+                if (function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($path);
+                }
+            }
+            return back()->with('error', 'Unable to publish your review right now. Please try again.');
         }
-
-        Review::updateOrCreate(
-            [
-                'product_id' => $product->id,
-                'user_id' => $user->id,
-            ],
-            [
-                'vendor_id' => $product->vendor_id,
-                'review_type' => $product->vertical === 'food' ? 'food_dish' : 'product',
-                'rating' => $validated['rating'],
-                'title' => $validated['title'] ?? null,
-                'body' => $validated['body'],
-                'images' => !empty($storedImages) ? $storedImages : null,
-                'is_verified_purchase' => $isVerifiedPurchase,
-                'is_approved' => true,
-            ]
-        );
-
-        // Update product average rating & review count cache
-        $approvedReviews = Review::where('product_id', $product->id)->where('is_approved', true);
-        $reviewCount = $approvedReviews->count();
-        $avgRating = $reviewCount > 0 ? round($approvedReviews->avg('rating'), 2) : null;
-        $product->update([
-            'review_count' => $reviewCount,
-            'avg_rating' => $avgRating,
-        ]);
 
         if ($product->vertical === 'food' && $product->vendor) {
             app(FoodMarketplaceService::class)->refreshRestaurantRatingCache($product->vendor);
@@ -161,19 +174,49 @@ class ReviewController extends Controller
             }
         }
 
-        Review::create([
-            'user_id' => $user->id,
-            'vendor_id' => $order->vendor_id,
-            'order_id' => $order->id,
-            'product_id' => null,
-            'review_type' => 'food_order',
-            'rating' => (int) $validated['rating'],
-            'title' => $validated['title'] ?? null,
-            'body' => trim($validated['body']),
-            'images' => !empty($storedImages) ? $storedImages : null,
-            'is_verified_purchase' => true,
-            'is_approved' => true,
-        ]);
+        try {
+            DB::transaction(function () use ($order, $user, $validated, $storedImages) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedOrder->status !== 'delivered') {
+                    throw new \RuntimeException('You can submit a restaurant review once your order has been delivered.');
+                }
+
+                $duplicate = Review::where('order_id', $lockedOrder->id)
+                    ->where('user_id', $user->id)
+                    ->whereNull('product_id')
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($duplicate) {
+                    throw new \RuntimeException('You have already submitted a review for this order.');
+                }
+
+                Review::create([
+                    'user_id' => $user->id,
+                    'vendor_id' => $lockedOrder->vendor_id,
+                    'order_id' => $lockedOrder->id,
+                    'product_id' => null,
+                    'review_type' => 'food_order',
+                    'rating' => (int) $validated['rating'],
+                    'title' => $validated['title'] ?? null,
+                    'body' => trim($validated['body']),
+                    'images' => !empty($storedImages) ? $storedImages : null,
+                    'is_verified_purchase' => true,
+                    'is_approved' => true,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            foreach ($storedImages as $path) {
+                if (function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($path);
+                }
+            }
+            if ($e instanceof \RuntimeException) {
+                return back()->with('error', $e->getMessage());
+            }
+            return back()->with('error', 'Unable to submit your food review right now.');
+        }
 
         if ($order->vendor) {
             $foodService->refreshRestaurantRatingCache($order->vendor);

@@ -116,7 +116,7 @@ class UsedThreadController extends Controller
         }
 
         $product = $thread->product;
-        if (!$product || $product->trashed() || $product->isPaused() || $product->isDraft()) {
+        if (!$product || $product->trashed() || $product->isPaused() || $product->isDraft() || $product->isSold() || !$product->isPubliclyVisible()) {
             $msg = 'This listing is currently unavailable; new enquiry messages are disabled.';
             return $request->wantsJson()
                 ? response()->json(['success' => false, 'message' => $msg], 422)

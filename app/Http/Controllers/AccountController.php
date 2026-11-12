@@ -117,7 +117,7 @@ class AccountController extends Controller
             ->map(function ($bid) {
                 return [
                     'product' => $bid->product?->title ?? 'Product',
-                    'amount' => $bid->amount,
+                    'amount' => $bid->bid_amount,
                     'status' => $bid->status,
                     'placed_at' => $bid->created_at?->toIso8601String(),
                 ];
@@ -218,12 +218,35 @@ class AccountController extends Controller
         $user = auth()->user();
 
         DB::transaction(function () use ($user) {
-            // If user operates a vendor store, suspend vendor and pull active public listings
+            // Pull any individual listings (e.g., Used ads) owned directly by this user
+            \App\Models\Product::withoutGlobalScopes()
+                ->where('user_id', $user->id)
+                ->whereIn('status', ['active', 'pending'])
+                ->update(['status' => 'inactive']);
+
+            // Take any delivery partner profile offline & unverified
+            \App\Models\DeliveryPartner::where('user_id', $user->id)->update([
+                'is_online' => false,
+                'is_verified' => false,
+            ]);
+
+            // If user operates a vendor store, suspend vendor, subscriptions, and pull active public listings
             if ($user->vendor) {
                 \App\Models\Product::withoutGlobalScopes()
                     ->where('vendor_id', $user->vendor->id)
                     ->where('status', 'active')
                     ->update(['status' => 'inactive']);
+
+                \App\Models\VendorSubscription::where('vendor_id', $user->vendor->id)
+                    ->whereIn('status', [
+                        \App\Models\VendorSubscription::STATUS_ACTIVE,
+                        \App\Models\VendorSubscription::STATUS_GRACE_PERIOD,
+                        \App\Models\VendorSubscription::STATUS_PENDING_ACTIVATION,
+                    ])
+                    ->update([
+                        'status' => \App\Models\VendorSubscription::STATUS_SUSPENDED,
+                        'suspended_at' => now(),
+                    ]);
 
                 $user->vendor->update([
                     'status' => 'suspended',
@@ -232,6 +255,10 @@ class AccountController extends Controller
                 ]);
 
                 \App\Http\Controllers\SitemapController::clearCache();
+            }
+
+            if ($user->avatar && str_starts_with($user->avatar, 'avatars/') && function_exists('k71_delete_public_storage')) {
+                k71_delete_public_storage($user->avatar);
             }
 
             // Anonymize personal identifiable information (PII) before soft-deleting (username <= 20 chars)
@@ -246,6 +273,7 @@ class AccountController extends Controller
                 'avatar' => null,
                 'two_factor_secret' => null,
                 'two_factor_enabled' => false,
+                'remember_token' => null,
             ]);
 
             // Soft delete the user record
