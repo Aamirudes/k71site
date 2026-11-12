@@ -108,6 +108,22 @@ class OfferController extends Controller
         $buyerName = trim((string) (($validated['buyer_name'] ?? null) ?: $user->name));
         $buyerPhone = trim((string) (($validated['buyer_phone'] ?? null) ?: ($user->phone ?? 'Not shared')));
 
+        $activeOfferExists = Offer::where('product_id', $product->id)
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['pending', 'countered'])
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+
+        if ($activeOfferExists) {
+            $msg = 'You already have an active offer on this item. Wait for the seller or withdraw it first before sending another offer.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->with('error', $msg);
+        }
+
         $offer = Offer::create([
             'product_id' => $product->id,
             'vendor_id' => $product->vendor_id,

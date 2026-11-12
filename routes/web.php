@@ -199,6 +199,7 @@ Route::get('/b2b/create', [\App\Http\Controllers\EnquiryController::class, 'crea
 Route::post('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'store'])->middleware('throttle:30,1')->name('enquiry.store');
 Route::post('/rfq/submit/{product}', [\App\Http\Controllers\EnquiryController::class, 'submitRfq'])->middleware('throttle:30,1')->name('rfq.submit');
 Route::get('/enquiry/{enquiry_number}', [\App\Http\Controllers\EnquiryController::class, 'show'])->name('enquiry.show');
+Route::post('/enquiry/{enquiry_number}/close', [\App\Http\Controllers\EnquiryController::class, 'close'])->middleware('auth')->name('enquiry.close');
 Route::post('/quotes/{quote}/accept', [\App\Http\Controllers\EnquiryController::class, 'acceptQuote'])->middleware('throttle:30,1')->name('quotes.accept');
 
 // Auctions & Bidding Routes (Phase 9)

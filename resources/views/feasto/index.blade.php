@@ -391,7 +391,7 @@
                             </div>
                         </div>
 
-                        <!-- Bill Details (Blinkit Exact Format) -->
+                        <!-- Bill Details (Synced from Real Backend Cart & Vendor Fee Rules) -->
                         <div class="bg-white rounded-2xl p-4 border border-black/8 space-y-2 text-xs" x-show="cartCount > 0">
                             <div class="grail-eyebrow !text-[#623562] mb-1">Bill Details</div>
                             <div class="flex justify-between text-[#1A1018]/70">
@@ -399,13 +399,16 @@
                                 <span class="font-mono font-bold text-[#1A1018]" x-text="`₹${cartTotal}`"></span>
                             </div>
                             <div class="flex justify-between text-[#1A1018]/70">
-                                <span>Delivery Partner Fee (10-min speed)</span>
-                                <span class="text-emerald-700 font-bold uppercase text-[11px]">FREE</span>
+                                <span>Delivery Partner Fee</span>
+                                <span x-show="deliveryFeeRupees <= 0" class="text-emerald-700 font-bold uppercase text-[11px]">FREE</span>
+                                <span x-show="deliveryFeeRupees > 0" class="font-mono text-[#1A1018]" x-text="`₹${deliveryFeeRupees}`"></span>
                             </div>
-                            <div class="flex justify-between text-[#1A1018]/70">
-                                <span>Handling & Platform Fee</span>
-                                <span class="font-mono text-[#1A1018]">₹2</span>
-                            </div>
+                            <template x-if="packagingFeeRupees > 0">
+                                <div class="flex justify-between text-[#1A1018]/70">
+                                    <span>Packaging Fee</span>
+                                    <span class="font-mono text-[#1A1018]" x-text="`₹${packagingFeeRupees}`"></span>
+                                </div>
+                            </template>
                             <template x-if="tipAmount > 0">
                                 <div class="flex justify-between text-[#5F5138] font-semibold">
                                     <span>Delivery Partner Tip</span>
@@ -413,8 +416,8 @@
                                 </div>
                             </template>
                             <div class="pt-2 border-t border-black/10 flex justify-between font-black text-sm text-[#1A1018]">
-                                <span>Grand Total</span>
-                                <span class="font-mono" x-text="`₹${cartTotal + 2 + tipAmount}`"></span>
+                                <span>Estimated Total</span>
+                                <span class="font-mono" x-text="`₹${cartTotal + deliveryFeeRupees + packagingFeeRupees + tipAmount}`"></span>
                             </div>
                         </div>
 
@@ -432,14 +435,14 @@
                             </button>
                         </div>
 
-                        <a href="{{ route('cart.index') }}" 
+                        <a :href="checkoutUrl || '{{ route('cart.index') }}'" 
                            class="w-full py-2.5 px-5 rounded-full bg-[#0C831F] hover:bg-[#0B721B] active:scale-98 text-white font-black text-sm flex items-center justify-between shadow-md transition-all cursor-pointer max-h-12">
                             <div class="flex flex-col text-left leading-tight">
-                                <span class="text-base font-black text-white" x-text="`₹${cartTotal + 2 + tipAmount}`"></span>
+                                <span class="text-base font-black text-white" x-text="`₹${cartTotal + deliveryFeeRupees + packagingFeeRupees + tipAmount}`"></span>
                                 <span class="text-[10px] text-emerald-200 uppercase font-bold">Total to Pay</span>
                             </div>
                             <div class="flex items-center gap-1.5 font-black uppercase text-xs tracking-wider text-white">
-                                <span class="text-white font-black">View Cart &amp; Checkout</span>
+                                <span class="text-white font-black" x-text="vendorName ? `Checkout • ${vendorName}` : 'View Cart & Checkout'">View Cart &amp; Checkout</span>
                                 <span class="text-white font-black">→</span>
                             </div>
                         </a>
@@ -679,6 +682,10 @@
                 cart: {},
                 cartCount: 0,
                 cartTotal: 0,
+                deliveryFeeRupees: 0,
+                packagingFeeRupees: 0,
+                checkoutUrl: '{{ route('cart.index') }}',
+                vendorName: '',
                 tipAmount: 0,
                 popularLocations: [
                     'Kishangarh Central, Rajasthan (305801)',
@@ -748,11 +755,12 @@
                                     };
                                 }
                             });
-                            // If backend has items, overwrite to maintain 100% parity
-                            if (Object.keys(synced).length > 0) {
-                                this.cart = synced;
-                                this.updateCartTotals();
-                            }
+                            this.deliveryFeeRupees = Math.round((Number(data.delivery_fee_paise || 0)) / 100);
+                            this.packagingFeeRupees = Math.round((Number(data.packaging_fee_paise || 0)) / 100);
+                            this.checkoutUrl = data.checkout_url || '{{ route('cart.index') }}';
+                            this.vendorName = data.vendor_name || '';
+                            this.cart = synced;
+                            this.updateCartTotals();
                         }
                     } catch(e) {
                         console.error('Error syncing backend cart:', e);
@@ -801,7 +809,8 @@
                     this.filteredProducts = list;
                 },
 
-                async addToCart(product) {
+                async addToCart(product, clearExisting = false) {
+                    const prevCartSnapshot = JSON.parse(JSON.stringify(this.cart));
                     // Optimistic instant UI
                     if (!this.cart[product.id]) {
                         this.cart[product.id] = { ...product, qty: 1 };
@@ -823,23 +832,33 @@
                             },
                             body: JSON.stringify({
                                 product_id: product.id,
-                                quantity: 1
+                                quantity: 1,
+                                clear_existing: clearExisting
                             })
                         });
                         const data = await res.json();
-                        if (data.success) {
+                        if (res.ok && data.success) {
                             window.dispatchEvent(new CustomEvent('cart-updated'));
                             if (typeof window.showToast === 'function') {
                                 window.showToast(`${product.title} added to cart! 🛍️`);
                             }
-                            // Re-fetch backend cart to store new cart_item_id
-                            this.fetchBackendCart();
+                            await this.fetchBackendCart();
+                        } else if ((res.status === 409 || data.conflict) && !clearExisting) {
+                            this.cart = prevCartSnapshot;
+                            this.updateCartTotals();
+                            if (confirm(data.message || 'Your bag contains items from another restaurant. Clear bag and add this item instead?')) {
+                                return this.addToCart(product, true);
+                            }
                         } else {
+                            this.cart = prevCartSnapshot;
+                            this.updateCartTotals();
                             if (typeof window.showToast === 'function') {
                                 window.showToast(data.message || 'Could not add to cart', false);
                             }
                         }
                     } catch(e) {
+                        this.cart = prevCartSnapshot;
+                        this.updateCartTotals();
                         console.error('Error adding to cart:', e);
                     }
                 },
@@ -848,6 +867,7 @@
                     const item = this.cart[productId];
                     if (!item) return;
 
+                    const prevCartSnapshot = JSON.parse(JSON.stringify(this.cart));
                     const cartItemId = item.cart_item_id;
                     item.qty--;
                     const newQty = item.qty;
@@ -860,8 +880,9 @@
                     try {
                         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                         if (cartItemId) {
+                            let res;
                             if (newQty > 0) {
-                                await fetch(`/cart/${cartItemId}`, {
+                                res = await fetch(`/cart/${cartItemId}`, {
                                     method: 'PUT',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -872,7 +893,7 @@
                                     body: JSON.stringify({ quantity: newQty })
                                 });
                             } else {
-                                await fetch(`/cart/${cartItemId}`, {
+                                res = await fetch(`/cart/${cartItemId}`, {
                                     method: 'DELETE',
                                     headers: {
                                         'Content-Type': 'application/json',
@@ -882,11 +903,19 @@
                                     }
                                 });
                             }
+                            if (!res.ok) {
+                                this.cart = prevCartSnapshot;
+                                this.updateCartTotals();
+                            } else {
+                                await this.fetchBackendCart();
+                            }
                             window.dispatchEvent(new CustomEvent('cart-updated'));
                         } else {
-                            this.fetchBackendCart();
+                            await this.fetchBackendCart();
                         }
                     } catch(e) {
+                        this.cart = prevCartSnapshot;
+                        this.updateCartTotals();
                         console.error('Error updating cart:', e);
                     }
                 },

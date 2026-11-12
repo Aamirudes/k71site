@@ -120,6 +120,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         Route::middleware(['sector.sub:enquiry_or_primary'])->group(function () {
             Route::get('/enquiries', [\App\Http\Controllers\EnquiryController::class, 'vendorIndex'])->name('enquiries.index');
             Route::post('/enquiries/{enquiry}/quote', [\App\Http\Controllers\EnquiryController::class, 'vendorQuote'])->name('enquiries.quote');
+            Route::post('/quotes/{quote}/withdraw', [\App\Http\Controllers\EnquiryController::class, 'withdrawQuote'])->name('quotes.withdraw');
         });
 
         // Vendor Messages & Direct Inquiries (Phase 9)

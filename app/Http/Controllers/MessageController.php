@@ -29,13 +29,6 @@ class MessageController extends Controller
 
         $user = auth()->user();
         if ($user) {
-            if (session_status() === PHP_SESSION_NONE) {
-                @session_start();
-            }
-            $_SESSION['user_id'] = $user->id;
-            $_SESSION['username'] = $user->username ?? ($user->first_name ?? 'User');
-            @setcookie('k71_uid', (string)$user->id, time() + 86400 * 30, '/', '', false, false);
-
             self::ensureChatSchema();
             self::syncLegacyChats($user->id);
         }
@@ -335,13 +328,7 @@ class MessageController extends Controller
                 $uid = (int) auth()->id();
             }
         } catch (\Throwable $e) {
-            // Session guard not initialized in standalone script context
-        }
-
-        if (!$uid && !empty($_SESSION['user_id'])) {
-            $uid = (int) $_SESSION['user_id'];
-        } elseif (!$uid && !empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
-            $uid = (int) $_COOKIE['k71_uid'];
+            $uid = null;
         }
 
         if ($uid > 0) {
@@ -424,7 +411,6 @@ class MessageController extends Controller
             'raw_name' => $personName,
             'shop_name' => $vendor?->shop_name,
             'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
-            'email' => $u->email ?? '',
             'is_online' => $isOnline,
             'last_seen_at' => $u->last_seen_at ?? null,
             'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : 'Offline'),
@@ -685,7 +671,6 @@ class MessageController extends Controller
                         'raw_name' => $personName,
                         'shop_name' => $vendor?->shop_name,
                         'profile_pic' => $this->formatChatAvatar($u->avatar, $displayName),
-                        'email' => $u->email ?? '',
                         'is_online' => $isOnline,
                         'last_seen_at' => $u->last_seen_at ?? null,
                         'status_label' => $isOnline ? 'Active now' : ($lastSeenTime ? 'Active ' . $this->formatChatTimeAgo(date('Y-m-d H:i:s', $lastSeenTime)) . ' ago' : 'Offline'),
@@ -954,9 +939,26 @@ class MessageController extends Controller
                 return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
             }
 
-            $replyToId = $request->input('reply_to_id') ?: $request->json('reply_to_id');
-            $replyToBody = $request->input('reply_to_body') ?: $request->json('reply_to_body');
-            $replyToSender = $request->input('reply_to_sender_name') ?: $request->json('reply_to_sender_name');
+            if (($conv->status ?? 'accepted') === 'declined') {
+                return response()->json(['success' => false, 'error' => 'This message request was declined.'], 403);
+            }
+
+            $rawReplyToId = (int) ($request->input('reply_to_id') ?: $request->json('reply_to_id', 0));
+            $replyToId = null;
+            $replyToBody = null;
+            $replyToSender = null;
+            if ($rawReplyToId > 0) {
+                $targetReply = \Illuminate\Support\Facades\DB::table('chat_messages')
+                    ->where('id', $rawReplyToId)
+                    ->where('conversation_id', $conversationId)
+                    ->first();
+                if ($targetReply) {
+                    $replyToId = (int) $targetReply->id;
+                    $replyToBody = $targetReply->body;
+                    $replyUser = $this->getChatUserInfo((int) $targetReply->sender_id);
+                    $replyToSender = $replyUser['raw_name'] ?? 'Member';
+                }
+            }
 
             $now = now()->toDateTimeString();
             $carbonNow = \Carbon\Carbon::now('Asia/Kolkata');
@@ -971,7 +973,7 @@ class MessageController extends Controller
 
             if ($replyToId) {
                 $insertData['reply_to_id'] = (int) $replyToId;
-                $insertData['reply_to_body'] = Str::limit($replyToBody, 200);
+                $insertData['reply_to_body'] = Str::limit((string) $replyToBody, 200);
                 $insertData['reply_to_sender_name'] = $replyToSender;
             }
 
@@ -988,7 +990,13 @@ class MessageController extends Controller
                 $messageId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId($baseInsert);
             }
 
-            $convUpdate = ['last_message_at' => $now, 'status' => 'accepted'];
+            // Preserve 'pending' if original requester sends another message; auto-accept only if recipient replies
+            $newConvStatus = ($conv->status ?? 'accepted');
+            if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
+                $newConvStatus = 'accepted';
+            }
+
+            $convUpdate = ['last_message_at' => $now, 'status' => $newConvStatus];
             if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
                 $convUpdate['user_one_hidden_at'] = null;
                 $convUpdate['user_two_hidden_at'] = null;
@@ -1015,7 +1023,7 @@ class MessageController extends Controller
                 'success' => true,
                 'data' => $msgPayload,
                 'message' => $msgPayload,
-                'conversation_status' => 'accepted'
+                'conversation_status' => $newConvStatus
             ]);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::error('apiSendMessage error: ' . $e->getMessage());
@@ -1110,7 +1118,6 @@ class MessageController extends Controller
                     $q->where('users.username', 'like', $searchWildcard)
                       ->orWhere('users.first_name', 'like', $searchWildcard)
                       ->orWhere('users.last_name', 'like', $searchWildcard)
-                      ->orWhere('users.email', 'like', $searchWildcard)
                       ->orWhere('vendors.shop_name', 'like', $searchWildcard);
                 })
                 ->limit(25)
@@ -1120,7 +1127,6 @@ class MessageController extends Controller
                     'users.first_name',
                     'users.last_name',
                     'users.avatar',
-                    'users.email',
                     'vendors.shop_name'
                 ]);
 
@@ -1162,6 +1168,53 @@ class MessageController extends Controller
     }
 
     /**
+     * API: Handle incoming chat request decision (accept or decline).
+     */
+    public function apiRequestAction(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in to access messages.'], 401);
+        }
+
+        $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
+        $action = trim((string) ($request->input('action') ?: $request->json('action', '')));
+
+        if ($conversationId <= 0 || !in_array($action, ['accept', 'decline'], true)) {
+            return response()->json(['success' => false, 'error' => 'Invalid request action or conversation ID.'], 400);
+        }
+
+        $this->ensureChatSchema();
+
+        $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->where(function ($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if ($action === 'accept' && ($conv->status ?? 'accepted') === 'pending' && (int) ($conv->requested_by ?? 0) === $userId) {
+            return response()->json(['success' => false, 'error' => 'Only the recipient can accept a pending message request.'], 403);
+        }
+
+        $status = $action === 'accept' ? 'accepted' : 'declined';
+        \Illuminate\Support\Facades\DB::table('chat_conversations')
+            ->where('id', $conversationId)
+            ->update(['status' => $status]);
+
+        return response()->json([
+            'success' => true,
+            'action' => $action,
+            'conversation_id' => $conversationId,
+            'status' => $status,
+        ]);
+    }
+
+    /**
      * API: Follow actions (accept, decline, unfollow, follow).
      */
     public function apiFollowActions(Request $request)
@@ -1178,13 +1231,25 @@ class MessageController extends Controller
         $this->ensureChatSchema();
 
         try {
-            if ($conversationId > 0) {
+            if ($conversationId > 0 && in_array($action, ['accept', 'decline'], true)) {
+                $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+                    ->where('id', $conversationId)
+                    ->where(function ($q) use ($userId) {
+                        $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+                    })
+                    ->first();
+
+                if (!$conv) {
+                    return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+                }
+
+                if ($action === 'accept' && ($conv->status ?? 'accepted') === 'pending' && (int) ($conv->requested_by ?? 0) === $userId) {
+                    return response()->json(['success' => false, 'error' => 'Only the recipient can accept a pending message request.'], 403);
+                }
+
                 $status = ($action === 'accept') ? 'accepted' : 'declined';
                 \Illuminate\Support\Facades\DB::table('chat_conversations')
                     ->where('id', $conversationId)
-                    ->where(function($q) use ($userId) {
-                        $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
-                    })
                     ->update(['status' => $status]);
 
                 return response()->json([
@@ -1200,23 +1265,33 @@ class MessageController extends Controller
             }
 
             if ($action === 'accept' || $action === 'decline') {
-                $status = ($action === 'accept') ? 'accepted' : 'declined';
-                \Illuminate\Support\Facades\DB::table('chat_conversations')
+                $conv = \Illuminate\Support\Facades\DB::table('chat_conversations')
                     ->where(function($q) use ($userId, $targetId) {
                         $q->where('user_one_id', $userId)->where('user_two_id', $targetId);
                     })
                     ->orWhere(function($q) use ($userId, $targetId) {
                         $q->where('user_one_id', $targetId)->where('user_two_id', $userId);
                     })
-                    ->update(['status' => $status]);
+                    ->first();
+
+                if ($conv && $action === 'accept' && ($conv->status ?? 'accepted') === 'pending' && (int) ($conv->requested_by ?? 0) === $userId) {
+                    return response()->json(['success' => false, 'error' => 'Only the recipient can accept a pending message request.'], 403);
+                }
+
+                $status = ($action === 'accept') ? 'accepted' : 'declined';
+                if ($conv) {
+                    \Illuminate\Support\Facades\DB::table('chat_conversations')
+                        ->where('id', $conv->id)
+                        ->update(['status' => $status]);
+                }
 
                 return response()->json(['success' => true, 'action' => $action, 'target_id' => $targetId, 'status' => $status]);
             }
 
             return response()->json(['success' => true, 'action' => $action, 'target_id' => $targetId, 'status' => 'accepted']);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('apiSearchUsers query error: ' . $e->getMessage());
-            return response()->json(['success' => true, 'data' => []]);
+            \Illuminate\Support\Facades\Log::error('apiFollowActions error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Could not update conversation state.'], 500);
         }
     }
 
@@ -1371,6 +1446,10 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
         }
 
+        if (($conv->status ?? 'accepted') === 'declined') {
+            return response()->json(['success' => false, 'error' => 'This message request was declined.'], 403);
+        }
+
         if (!$request->hasFile('photo')) {
             return response()->json(['success' => false, 'error' => 'No photo uploaded.'], 400);
         }
@@ -1422,9 +1501,13 @@ class MessageController extends Controller
             'created_at' => $now,
         ]);
 
+        $newConvStatus = ($conv->status ?? 'accepted');
+        if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
+            $newConvStatus = 'accepted';
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
 
         $msgPayload = [
             'id' => (int) $messageId,
@@ -1443,7 +1526,7 @@ class MessageController extends Controller
             'success' => true,
             'data' => $msgPayload,
             'message' => $msgPayload,
-            'conversation_status' => 'accepted'
+            'conversation_status' => $newConvStatus
         ]);
     }
 
@@ -1473,6 +1556,10 @@ class MessageController extends Controller
 
         if (!$conv) {
             return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if (($conv->status ?? 'accepted') === 'declined') {
+            return response()->json(['success' => false, 'error' => 'This message request was declined.'], 403);
         }
 
         if (!$request->hasFile('video')) {
@@ -1529,9 +1616,13 @@ class MessageController extends Controller
             'created_at' => $now,
         ]);
 
+        $newConvStatus = ($conv->status ?? 'accepted');
+        if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
+            $newConvStatus = 'accepted';
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
 
         $msgPayload = [
             'id' => (int) $messageId,
@@ -1550,7 +1641,7 @@ class MessageController extends Controller
             'success' => true,
             'data' => $msgPayload,
             'message' => $msgPayload,
-            'conversation_status' => 'accepted'
+            'conversation_status' => $newConvStatus
         ]);
     }
 
@@ -1580,6 +1671,10 @@ class MessageController extends Controller
 
         if (!$conv) {
             return response()->json(['success' => false, 'error' => 'Conversation not found or access denied.'], 404);
+        }
+
+        if (($conv->status ?? 'accepted') === 'declined') {
+            return response()->json(['success' => false, 'error' => 'This message request was declined.'], 403);
         }
 
         if (!$request->hasFile('audio') && !$request->hasFile('voice')) {
@@ -1638,9 +1733,13 @@ class MessageController extends Controller
             'created_at' => $now,
         ]);
 
+        $newConvStatus = ($conv->status ?? 'accepted');
+        if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
+            $newConvStatus = 'accepted';
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => 'accepted']);
+            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
 
         \Illuminate\Support\Facades\Cache::forget("chat_typing_{$conversationId}_{$userId}");
 
@@ -1661,7 +1760,7 @@ class MessageController extends Controller
             'success' => true,
             'data' => $msgPayload,
             'message' => $msgPayload,
-            'conversation_status' => 'accepted'
+            'conversation_status' => $newConvStatus
         ]);
     }
 }

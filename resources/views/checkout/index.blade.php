@@ -371,27 +371,27 @@
                                 <p x-show="errorMsg" x-text="errorMsg" class="text-xs text-rose-600 mt-1 font-medium"></p>
                             </div>
 
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-2" x-show="orderType !== 'food_takeaway'">
                                 <label for="address_line_1" class="block text-sm font-medium text-[#1A1018] mb-1">
                                     {{ ($isFoodOrder ?? false) ? 'Flat / House No. / Building / Landmark' : 'Address' }}
                                 </label>
-                                <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1', $defaultSavedAddr?->line_1 ?? '') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm" placeholder="House/Flat No., Street, Landmark">
+                                <input type="text" id="address_line_1" name="address_line_1" value="{{ old('address_line_1', $defaultSavedAddr?->line_1 ?? '') }}" :required="orderType !== 'food_takeaway'" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm" placeholder="House/Flat No., Street, Landmark">
                             </div>
                             
-                            <div>
+                            <div x-show="orderType !== 'food_takeaway'">
                                 <label for="city" class="block text-sm font-medium text-[#1A1018] mb-1">City</label>
-                                <input type="text" id="city" name="city" value="{{ old('city', $defaultSavedAddr?->city ?? (($isFoodOrder ?? false) ? ($selectedLocation['city'] ?? '') : '')) }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="text" id="city" name="city" value="{{ old('city', $defaultSavedAddr?->city ?? (($isFoodOrder ?? false) ? ($selectedLocation['city'] ?? '') : '')) }}" :required="orderType !== 'food_takeaway'" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
                             
-                            <div>
+                            <div x-show="orderType !== 'food_takeaway'">
                                 <label for="state" class="block text-sm font-medium text-[#1A1018] mb-1">State</label>
-                                <input type="text" id="state" name="state" value="{{ old('state', $defaultSavedAddr?->state ?? '') }}" required class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
+                                <input type="text" id="state" name="state" value="{{ old('state', $defaultSavedAddr?->state ?? '') }}" :required="orderType !== 'food_takeaway'" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm">
                             </div>
                             
-                            <div>
+                            <div x-show="orderType !== 'food_takeaway'">
                                 <label for="pincode" class="block text-sm font-medium text-[#1A1018] mb-1">Pincode</label>
                                 <div class="relative">
-                                    <input type="text" id="pincode" name="pincode" value="{{ old('pincode', $defaultSavedAddr?->pincode ?? (($isFoodOrder ?? false) ? ($selectedLocation['pincode'] ?? '') : ($cachedShipping['pincode'] ?? ''))) }}" required pattern="[0-9]{6}" maxlength="6" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm pr-9" placeholder="6-digit pincode" @if(!($isFoodOrder ?? false)) oninput="window.handlePincodeChange(this.value)" @endif>
+                                    <input type="text" id="pincode" name="pincode" value="{{ old('pincode', $defaultSavedAddr?->pincode ?? (($isFoodOrder ?? false) ? ($selectedLocation['pincode'] ?? '') : ($cachedShipping['pincode'] ?? ''))) }}" :required="orderType !== 'food_takeaway'" pattern="[0-9]{6}" maxlength="6" class="grail-input-light w-full rounded-xl px-3.5 py-2.5 sm:text-sm pr-9" placeholder="6-digit pincode" @if(!($isFoodOrder ?? false)) oninput="window.handlePincodeChange(this.value)" @endif>
                                     <div id="pincode-spinner" class="hidden absolute right-3 top-3">
                                         <svg class="animate-spin h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

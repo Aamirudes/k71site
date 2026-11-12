@@ -13,16 +13,26 @@
          class="py-8 sm:py-12 border-y border-black/5 dark:border-white/10 relative z-10"
          x-data="storefrontReelsManager(@js($shortsToDisplay->map(function($s) use ($vendor) {
              $prod = $s->products->first();
+             $isLiked = auth()->check()
+                 ? \App\Models\ShortEvent::where('short_id', $s->id)->where('user_id', auth()->id())->where('event_type', 'like')->exists()
+                 : session()->has('liked_short_' . $s->id);
+             $isFollowed = auth()->check() && ($s->vendor_id || $vendor?->id)
+                 ? \App\Models\ShortFollow::where('follower_id', auth()->id())->where('vendor_id', $s->vendor_id ?? $vendor->id)->exists()
+                 : false;
              return [
                  'id' => $s->id,
+                 'vendor_id' => (int) ($s->vendor_id ?? $vendor->id ?? 0),
                  'title' => $s->title,
                  'description' => $s->description,
                  'video_url' => $s->video_url,
                  'thumb_url' => $s->thumb_url ?: ($s->thumbnail_path ? \App\Services\ImageService::url($s->thumbnail_path, 600) : ''),
                  'vendor_name' => $s->vendor?->shop_name ?? ($vendor->shop_name ?? 'Verified Store'),
                  'vendor_avatar' => $s->vendor?->logo ? asset('storage/' . $s->vendor->logo) : ($vendor->logo_url ?? asset('images/default-avatar.png')),
-                 'likes' => $s->likes_count ?: ($s->likes ?? 14),
-                 'shares' => $s->shares_count ?: 6,
+                 'likes' => (int) ($s->likes_count ?? $s->likes ?? 0),
+                 'shares' => (int) ($s->shares_count ?? $s->shares ?? 0),
+                 'views' => (int) ($s->views ?? 0),
+                 'is_liked' => $isLiked,
+                 'is_followed' => $isFollowed,
                  'duration' => $s->duration ? gmdate('i:s', $s->duration) : '0:30',
                  'product' => $prod ? [
                      'id' => $prod->id,
@@ -201,7 +211,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
                         </div>
-                        <span class="text-[11px] font-bold drop-shadow" x-text="(activeReel?.likes || 12) + (isLiked ? 1 : 0)"></span>
+                        <span class="text-[11px] font-bold drop-shadow" x-text="activeReel?.likes ?? 0"></span>
                     </button>
 
                     <!-- Tagged Products Button (Triggers Bottom Sheet) -->
@@ -223,7 +233,7 @@
                         <div class="w-11 h-11 rounded-full bg-black/40 backdrop-blur flex items-center justify-center group-hover:scale-110 transition">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         </div>
-                        <span class="text-[11px] font-bold drop-shadow" x-text="activeReel?.shares || 4"></span>
+                        <span class="text-[11px] font-bold drop-shadow" x-text="activeReel?.shares ?? 0"></span>
                     </button>
 
                     <!-- Desktop Up / Down Arrows -->
@@ -375,8 +385,7 @@
                 this.currentIndex = idx;
                 this.isOpen = true;
                 this.drawerOpen = false;
-                this.isLiked = false;
-                this.isFollowed = false;
+                this.syncActiveReelFlags();
                 document.body.style.overflow = 'hidden';
                 document.body.classList.add('shorts-modal-active');
                 window.dispatchEvent(new CustomEvent('shorts-modal-state', { detail: { open: true } }));
@@ -384,6 +393,27 @@
                 this.$nextTick(() => {
                     this.loadVideo();
                 });
+            },
+
+            syncActiveReelFlags() {
+                this.isLiked = !!(this.activeReel?.is_liked);
+                this.isFollowed = !!(this.activeReel?.is_followed);
+            },
+
+            async postShortAjax(action, payload = {}) {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const res = await fetch('/shorts/ajax', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ action, ...payload })
+                });
+                const data = await res.json().catch(() => ({}));
+                return { res, data };
             },
 
             closeModal() {
@@ -399,6 +429,7 @@
             loadVideo() {
                 const video = this.$refs.storeVideoEl;
                 if (!video || !this.activeReel) return;
+                this.syncActiveReelFlags();
                 video.src = this.activeReel.video_url;
                 video.load();
                 video.muted = this.isMuted;
@@ -411,6 +442,11 @@
                         this.isPlaying = true;
                     }).catch(e => console.warn('Autoplay prevented:', e));
                 });
+
+                if (this.activeReel.id && !this.activeReel._viewRecorded) {
+                    this.activeReel._viewRecorded = true;
+                    this.postShortAjax('zsu_record_view', { short_id: this.activeReel.id }).catch(() => {});
+                }
             },
 
             togglePlay() {
@@ -447,7 +483,6 @@
                     this.currentIndex = 0;
                 }
                 this.drawerOpen = false;
-                this.isLiked = false;
                 this.$nextTick(() => {
                     this.loadVideo();
                     setTimeout(() => { this.isSliding = false; }, 340);
@@ -463,7 +498,6 @@
                     this.currentIndex = this.reels.length - 1;
                 }
                 this.drawerOpen = false;
-                this.isLiked = false;
                 this.$nextTick(() => {
                     this.loadVideo();
                     setTimeout(() => { this.isSliding = false; }, 340);
@@ -486,23 +520,77 @@
                 }
             },
 
-            toggleLike() {
-                this.isLiked = !this.isLiked;
+            async toggleLike() {
+                if (!this.activeReel?.id) return;
+                const prevLiked = this.isLiked;
+                const prevLikes = Number(this.activeReel.likes || 0);
+                this.isLiked = !prevLiked;
+                this.activeReel.is_liked = this.isLiked;
+                this.activeReel.likes = Math.max(0, prevLikes + (this.isLiked ? 1 : -1));
+
+                try {
+                    const { res, data } = await this.postShortAjax('zsu_record_like', { short_id: this.activeReel.id });
+                    if (res.ok && data.success) {
+                        this.isLiked = (data.action === 'liked');
+                        this.activeReel.is_liked = this.isLiked;
+                        if (typeof data.raw === 'number') {
+                            this.activeReel.likes = data.raw;
+                        }
+                    } else {
+                        this.isLiked = prevLiked;
+                        this.activeReel.is_liked = prevLiked;
+                        this.activeReel.likes = prevLikes;
+                    }
+                } catch (e) {
+                    this.isLiked = prevLiked;
+                    this.activeReel.is_liked = prevLiked;
+                    this.activeReel.likes = prevLikes;
+                }
             },
 
-            toggleFollow() {
-                this.isFollowed = !this.isFollowed;
+            async toggleFollow() {
+                if (!this.activeReel?.vendor_id) return;
+                const action = this.isFollowed ? 'zsu_unfollow_vendor' : 'zsu_follow_vendor';
+                try {
+                    const { res, data } = await this.postShortAjax(action, { vendor_id: this.activeReel.vendor_id });
+                    if (res.status === 401) {
+                        if (typeof window.openAuthModal === 'function') {
+                            window.openAuthModal(() => this.toggleFollow(), 'login', 'buyer');
+                        } else {
+                            window.location.href = '{{ route('login') }}';
+                        }
+                        return;
+                    }
+                    if (res.ok && data.success) {
+                        const followed = !!data.followed;
+                        this.isFollowed = followed;
+                        this.reels.forEach(r => {
+                            if (r.vendor_id === this.activeReel.vendor_id) {
+                                r.is_followed = followed;
+                            }
+                        });
+                    }
+                } catch (e) {}
             },
 
-            shareVideo() {
+            async shareVideo() {
+                if (this.activeReel?.id) {
+                    this.activeReel.shares = Number(this.activeReel.shares || 0) + 1;
+                    this.postShortAjax('zsu_record_share', {
+                        short_id: this.activeReel.id,
+                        platform: navigator.share ? 'native_share' : 'copy_link'
+                    }).catch(() => {});
+                }
                 if (navigator.share) {
                     navigator.share({
                         title: this.activeReel?.title || 'K71 Reel',
                         url: window.location.href
                     }).catch(() => {});
-                } else {
-                    navigator.clipboard.writeText(window.location.href);
-                    alert('Reel link copied to clipboard!');
+                } else if (navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href).catch(() => {});
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Reel link copied to clipboard!');
+                    }
                 }
             }
         };

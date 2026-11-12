@@ -33,15 +33,48 @@ class FeastoController extends Controller
             });
         app(\App\Services\Monetization\VisibilityService::class)->scopeVisibleProducts($feastoQuery, 'food');
         $dbProducts = $feastoQuery
-            ->with(['category', 'vendor', 'images', 'variants'])
+            ->with(['category', 'vendor.settings', 'images', 'variants'])
             ->latest()
             ->get();
 
-        // 2. Format real items with reliable schema
+        $foodService = app(\App\Services\Food\FoodMarketplaceService::class);
+        $vendorStatusCache = [];
+
+        // 2. Format real items with reliable schema & real availability
         $allProducts = collect();
         $categorySlugsPresent = [];
 
         foreach ($dbProducts as $dp) {
+            $isFoodItem = ($dp->vertical === 'food')
+                || ($dp->vendor?->isFood() ?? false)
+                || ($dp->vendor?->settings?->is_restaurant ?? false);
+
+            $vendorOpen = true;
+            if ($dp->vendor) {
+                $vId = (int) $dp->vendor->id;
+                if (!isset($vendorStatusCache[$vId])) {
+                    $vendorStatusCache[$vId] = $foodService->getRestaurantOperationalStatus($dp->vendor);
+                }
+                if ($isFoodItem && !$vendorStatusCache[$vId]['accepting_orders']) {
+                    $vendorOpen = false;
+                }
+            }
+
+            if (!$vendorOpen) {
+                continue;
+            }
+
+            if ($isFoodItem && !$foodService->isDishAvailableForOrder($dp)) {
+                continue;
+            }
+
+            if ($dp->variants->isNotEmpty()) {
+                if ((int) $dp->variants->sum('stock') <= 0) {
+                    continue;
+                }
+            } elseif ($dp->total_stock !== null && (int) $dp->total_stock <= 0) {
+                continue;
+            }
             $catSlug = 'quick_bites';
             $cName = strtolower($dp->category?->name ?? '');
             $cSlug = strtolower($dp->category?->slug ?? '');

@@ -18,6 +18,14 @@ class ReviewController extends Controller
     {
         $user = auth()->user();
 
+        if ($product->isOwnedBy($user) || ($product->vendor && (int) $product->vendor->user_id === (int) $user->id)) {
+            abort(403, 'Sellers cannot review their own listing.');
+        }
+
+        if (!app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product)) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'rating' => 'required|integer|min:1|max:5',
             'title' => 'nullable|string|max:200',
@@ -38,6 +46,9 @@ class ReviewController extends Controller
             foreach ($request->file('images') as $imgFile) {
                 if ($imgFile && $imgFile->isValid()) {
                     $path = $imgFile->store('reviews', 'public');
+                    if (function_exists('k71_sync_public_storage')) {
+                        k71_sync_public_storage($path);
+                    }
                     $storedImages[] = $path;
                 }
             }
@@ -76,6 +87,18 @@ class ReviewController extends Controller
 
         if ($product->vertical === 'food' && $product->vendor) {
             app(FoodMarketplaceService::class)->refreshRestaurantRatingCache($product->vendor);
+        }
+
+        if ($product->vendor?->user_id) {
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                (int) $product->vendor->user_id,
+                '⭐',
+                'New Product Review Received',
+                "{$user->name} rated \"{$product->title}\" {$validated['rating']}/5 stars.",
+                route('vendor.reviews.index'),
+                'review',
+                'product_review_' . $product->id . '_' . $user->id
+            );
         }
 
         return back()->with('success', 'Thank you! Your photo review has been published.');
@@ -129,7 +152,11 @@ class ReviewController extends Controller
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $imgFile) {
                 if ($imgFile && $imgFile->isValid()) {
-                    $storedImages[] = $imgFile->store('reviews', 'public');
+                    $path = $imgFile->store('reviews', 'public');
+                    if (function_exists('k71_sync_public_storage')) {
+                        k71_sync_public_storage($path);
+                    }
+                    $storedImages[] = $path;
                 }
             }
         }
@@ -150,6 +177,17 @@ class ReviewController extends Controller
 
         if ($order->vendor) {
             $foodService->refreshRestaurantRatingCache($order->vendor);
+            if ($order->vendor->user_id) {
+                app(\App\Services\NotificationCenterService::class)->notifyUser(
+                    (int) $order->vendor->user_id,
+                    '⭐',
+                    'New Order Review Received',
+                    "{$user->name} rated order {$order->order_number} {$validated['rating']}/5 stars.",
+                    route('vendor.reviews.index'),
+                    'review',
+                    'food_order_review_' . $order->id
+                );
+            }
         }
 
         return back()->with('success', 'Thank you! Your verified food order review has been published.');

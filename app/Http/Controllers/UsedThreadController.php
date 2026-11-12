@@ -115,6 +115,14 @@ class UsedThreadController extends Controller
                 : back()->with('error', $msg);
         }
 
+        $product = $thread->product;
+        if (!$product || $product->trashed() || $product->isPaused() || $product->isDraft()) {
+            $msg = 'This listing is currently unavailable; new enquiry messages are disabled.';
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
         $validated = $request->validate([
             'body' => 'required|string|min:1|max:2000',
         ]);

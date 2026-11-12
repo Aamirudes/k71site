@@ -268,21 +268,30 @@ class CheckoutController extends Controller
             }
         }
 
+        $isTakeawaySubmission = $request->input('order_type') === 'food_takeaway';
+
         $validated = $request->validate([
             'name' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:150',
             'selected_address_id' => 'nullable|integer',
             'save_address' => 'nullable|boolean',
-            'address_line_1' => 'required|string',
-            'city' => 'required|string',
-            'state' => 'required|string',
-            'pincode' => 'required|string|size:6',
+            'address_line_1' => $isTakeawaySubmission ? 'nullable|string|max:255' : 'required|string',
+            'city' => $isTakeawaySubmission ? 'nullable|string|max:100' : 'required|string',
+            'state' => $isTakeawaySubmission ? 'nullable|string|max:100' : 'required|string',
+            'pincode' => $isTakeawaySubmission ? 'nullable|string|size:6' : 'required|string|size:6',
             'phone' => 'required|string|min:10|max:15',
             'payment_method' => ['required', 'string', \Illuminate\Validation\Rule::in($allowedMethods)],
             'order_type' => 'nullable|string|in:standard,food_delivery,food_takeaway',
             'kitchen_notes' => 'nullable|string|max:500',
             'idempotency_key' => 'nullable|string|max:80',
         ]);
+
+        if ($isTakeawaySubmission) {
+            $validated['address_line_1'] = trim((string) ($validated['address_line_1'] ?? '')) ?: ('Self Pickup at ' . $vendor->shop_name);
+            $validated['city'] = trim((string) ($validated['city'] ?? '')) ?: ($vendor->city ?: 'Local');
+            $validated['state'] = trim((string) ($validated['state'] ?? '')) ?: ($vendor->state ?: 'Rajasthan');
+            $validated['pincode'] = trim((string) ($validated['pincode'] ?? '')) ?: (preg_match('/^\d{6}$/', (string) $vendor->pincode) ? (string) $vendor->pincode : '305801');
+        }
 
         if (!empty($validated['idempotency_key'])) {
             $idemScope = Auth::id() ?: session()->getId();
@@ -688,6 +697,7 @@ class CheckoutController extends Controller
                     ->where('is_active', true)
                     ->where('starts_at', '<=', now())
                     ->where('expires_at', '>=', now())
+                    ->lockForUpdate()
                     ->first();
 
                 if ($appliedCoupon) {
@@ -776,8 +786,8 @@ class CheckoutController extends Controller
 
             $order->items()->createMany($orderItems);
 
-            // Optionally persist delivery address to user address book
-            if ($request->boolean('save_address') && Auth::check() && Schema::hasTable('addresses')) {
+            // Optionally persist delivery address to user address book (skip synthetic takeaway fallback)
+            if ($request->boolean('save_address') && !$isTakeawaySubmission && Auth::check() && Schema::hasTable('addresses')) {
                 $existingSame = Address::where('user_id', Auth::id())
                     ->where('pincode', $validated['pincode'])
                     ->where('line_1', $validated['address_line_1'])
@@ -822,6 +832,32 @@ class CheckoutController extends Controller
             DB::commit();
 
             session()->put("guest_order_{$order->id}", true);
+
+            try {
+                $notif = app(\App\Services\NotificationCenterService::class);
+                if ($vendor->user_id) {
+                    $notif->notifyUser(
+                        (int) $vendor->user_id,
+                        '🛍️',
+                        'New Order Received: ' . $order->order_number,
+                        'New ' . strtoupper(str_replace('_', ' ', $order->order_type ?: 'order')) . ' of ₹' . number_format($order->total_amount / 100, 2) . ' received.',
+                        route('vendor.orders.show', $order->id),
+                        'order',
+                        'vendor_new_order_' . $order->id
+                    );
+                }
+                if ($order->user_id) {
+                    $notif->notifyUser(
+                        (int) $order->user_id,
+                        '✅',
+                        'Order Placed: ' . $order->order_number,
+                        'Your order with ' . $vendor->shop_name . ' for ₹' . number_format($order->total_amount / 100, 2) . ' has been created.',
+                        route('orders.show', $order->id),
+                        'order',
+                        'buyer_new_order_' . $order->id
+                    );
+                }
+            } catch (\Throwable $ne) {}
 
             if ($validated['payment_method'] === 'phonepe') {
                 return redirect()->route('payment.phonepe.initiate', $order->id);
@@ -896,6 +932,9 @@ class CheckoutController extends Controller
         $screenshotPath = null;
         if ($request->hasFile('payment_screenshot')) {
             $screenshotPath = $request->file('payment_screenshot')->store('payment_claims', 'public');
+            if (function_exists('k71_sync_public_storage')) {
+                k71_sync_public_storage($screenshotPath);
+            }
         }
 
         $claim = $order->paymentClaim()->updateOrCreate(

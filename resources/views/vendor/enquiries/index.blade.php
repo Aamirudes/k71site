@@ -147,6 +147,16 @@
                                             class="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-xs">
                                         {{ $myQuote ? '✏️ Revise Quotation' : '+ Submit Quotation' }}
                                     </button>
+                                    @if($myQuote && $myQuote->isSent())
+                                        <form action="{{ route('vendor.quotes.withdraw', $myQuote->id) }}" method="POST"
+                                              onsubmit="return confirm('Withdraw your quotation #{{ $myQuote->quote_number }}?');">
+                                            @csrf
+                                            <button type="submit"
+                                                    class="w-full py-1.5 px-3 rounded-xl bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold transition">
+                                                Withdraw Quote
+                                            </button>
+                                        </form>
+                                    @endif
                                 @endif
                             </div>
                         </div>

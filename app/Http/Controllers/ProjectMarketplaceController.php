@@ -10,6 +10,8 @@ use App\Models\ProjectContract;
 use App\Models\ProjectMilestone;
 use App\Models\ProjectProposal;
 use App\Models\ServiceProject;
+use App\Services\MediaUploadService;
+use App\Services\NotificationCenterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -208,8 +210,8 @@ class ProjectMarketplaceController extends Controller
             }
         }
 
-        DB::transaction(function () use ($project, $vendor, $validated, $validPortfolioIds, $cleanMilestones) {
-            ProjectProposal::create([
+        $proposal = DB::transaction(function () use ($project, $vendor, $validated, $validPortfolioIds, $cleanMilestones) {
+            $created = ProjectProposal::create([
                 'project_id' => $project->id,
                 'vendor_id' => $vendor->id,
                 'cover_letter' => $validated['cover_letter'],
@@ -222,7 +224,18 @@ class ProjectMarketplaceController extends Controller
             ]);
 
             $project->increment('proposals_count');
+            return $created;
         });
+
+        app(NotificationCenterService::class)->notifyUser(
+            $project->buyer_id,
+            '💼',
+            'New Project Proposal Received',
+            "{$vendor->shop_name} submitted a bid of {$proposal->formatted_bid} on \"{$project->title}\".",
+            route('services.projects.show', $project->slug),
+            'services_proposal',
+            'project_proposal_' . $proposal->id
+        );
 
         return back()->with('success', 'Proposal submitted with your portfolio samples!');
     }
@@ -239,6 +252,16 @@ class ProjectMarketplaceController extends Controller
             $proposal->project->update(['status' => 'shortlisting']);
         }
 
+        app(NotificationCenterService::class)->notifyUser(
+            $proposal->vendor?->user_id,
+            '⭐',
+            'Proposal Shortlisted!',
+            "Your proposal for \"{$proposal->project?->title}\" has been shortlisted by the client.",
+            route('services.projects.show', $proposal->project?->slug ?? ''),
+            'services_proposal',
+            'proposal_shortlisted_' . $proposal->id
+        );
+
         return back()->with('success', $proposal->vendor->shop_name . ' marked as Shortlisted.');
     }
 
@@ -250,6 +273,16 @@ class ProjectMarketplaceController extends Controller
         }
 
         $proposal->update(['status' => 'rejected']);
+
+        app(NotificationCenterService::class)->notifyUser(
+            $proposal->vendor?->user_id,
+            'ℹ️',
+            'Proposal Update',
+            "Your proposal on \"{$proposal->project?->title}\" was declined by the client.",
+            route('services.projects.index'),
+            'services_proposal',
+            'proposal_rejected_' . $proposal->id
+        );
 
         return back()->with('info', 'Proposal declined.');
     }
@@ -279,15 +312,55 @@ class ProjectMarketplaceController extends Controller
             ]
         );
 
+        $introBody = "Hi {$proposal->vendor->shop_name}, let's discuss your proposal ({$proposal->formatted_bid}) for \"{$project->title}\".";
+
         Message::create([
             'conversation_id' => $conversation->id,
             'sender_type' => 'user',
             'sender_id' => auth()->id(),
-            'body' => "Hi {$proposal->vendor->shop_name}, let's discuss your proposal ({$proposal->formatted_bid}) for \"{$project->title}\".",
+            'body' => $introBody,
             'is_read' => false,
         ]);
 
         $conversation->update(['last_message_at' => now()]);
+
+        // Mirror interview message into Direct Chat engine so real-time chat opens seamlessly
+        try {
+            $vendorUserId = (int) ($proposal->vendor?->user_id ?? 0);
+            $buyerId = (int) $project->buyer_id;
+            if ($vendorUserId > 0 && $buyerId > 0 && $vendorUserId !== $buyerId) {
+                MessageController::ensureChatSchema();
+                $u1 = min($buyerId, $vendorUserId);
+                $u2 = max($buyerId, $vendorUserId);
+                $nowStr = now()->toDateTimeString();
+
+                $chatConv = DB::table('chat_conversations')
+                    ->where('user_one_id', $u1)
+                    ->where('user_two_id', $u2)
+                    ->first();
+
+                if (!$chatConv) {
+                    $chatConvId = DB::table('chat_conversations')->insertGetId([
+                        'user_one_id' => $u1,
+                        'user_two_id' => $u2,
+                        'last_message_at' => $nowStr,
+                        'status' => 'accepted',
+                        'requested_by' => $buyerId,
+                    ]);
+                } else {
+                    $chatConvId = $chatConv->id;
+                    DB::table('chat_conversations')->where('id', $chatConvId)->update(['last_message_at' => $nowStr]);
+                }
+
+                DB::table('chat_messages')->insert([
+                    'conversation_id' => $chatConvId,
+                    'sender_id' => $buyerId,
+                    'body' => $introBody,
+                    'is_read' => 0,
+                    'created_at' => $nowStr,
+                ]);
+            }
+        } catch (\Throwable $e) {}
 
         return redirect()->route('messages.show', $conversation);
     }
@@ -376,6 +449,16 @@ class ProjectMarketplaceController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
+        app(NotificationCenterService::class)->notifyUser(
+            $proposal->vendor?->user_id,
+            '🎉',
+            'You Have Been Hired!',
+            "Contract #{$contract->contract_number} created for \"{$proposal->project?->title}\".",
+            route('services.contracts.show', $contract),
+            'services_contract',
+            'contract_hired_' . $contract->id
+        );
+
         return redirect()->route('services.contracts.show', $contract)
             ->with('success', 'Contract activated! ' . $proposal->vendor->shop_name . ' has been hired and project milestones created.');
     }
@@ -400,30 +483,61 @@ class ProjectMarketplaceController extends Controller
             return back()->with('error', 'This contract is no longer active.');
         }
 
+        if ($milestone->status === 'approved') {
+            return back()->with('error', 'This milestone is already approved and cannot be re-submitted.');
+        }
+
         $validated = $request->validate([
             'submitted_notes' => 'required|string|min:10|max:3000',
-            'deliverables.*' => 'nullable|file|max:20480|mimes:pdf,zip,png,jpg,jpeg,doc,docx,txt,fig,psd,ai',
+            'deliverables' => 'nullable|array|max:8',
+            'deliverables.*' => 'nullable|file|max:20480',
         ]);
 
         $uploaded = [];
         if ($request->hasFile('deliverables')) {
+            $mediaService = app(MediaUploadService::class);
+            $dir = 'contracts/' . $contract->contract_number . '/milestones/' . $milestone->id;
             foreach ($request->file('deliverables') as $file) {
-                $path = $file->store('contracts/' . $contract->contract_number . '/milestones/' . $milestone->id, 'public');
-                k71_sync_public_storage($path);
-                $uploaded[] = [
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $path,
-                    'size' => $file->getSize(),
-                ];
+                if ($file) {
+                    $meta = $mediaService->storeSafeDeliverable($file, $dir, 'deliverables');
+                    k71_sync_public_storage($meta['path']);
+                    $uploaded[] = $meta;
+                }
             }
         }
 
-        $milestone->update([
-            'status' => 'submitted',
-            'submitted_notes' => $validated['submitted_notes'],
-            'deliverables_json' => !empty($uploaded) ? $uploaded : $milestone->deliverables_json,
-            'submitted_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($contract, $milestone, $validated, $uploaded) {
+                $lockedContract = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
+                $lockedMilestone = ProjectMilestone::whereKey($milestone->id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedContract->status !== 'active') {
+                    throw new \RuntimeException('This contract is no longer active.');
+                }
+                if ($lockedMilestone->status === 'approved') {
+                    throw new \RuntimeException('This milestone is already approved and cannot be overwritten.');
+                }
+
+                $lockedMilestone->update([
+                    'status' => 'submitted',
+                    'submitted_notes' => $validated['submitted_notes'],
+                    'deliverables_json' => !empty($uploaded) ? $uploaded : $lockedMilestone->deliverables_json,
+                    'submitted_at' => now(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        app(NotificationCenterService::class)->notifyUser(
+            $contract->buyer_id,
+            '📦',
+            'Milestone Deliverables Submitted',
+            "{$contract->vendor?->shop_name} submitted deliverables for \"{$milestone->title}\".",
+            route('services.contracts.show', $contract),
+            'services_contract',
+            'milestone_submitted_' . $milestone->id . '_' . now()->timestamp
+        );
 
         return back()->with('success', 'Milestone deliverables submitted for buyer review.');
     }
@@ -433,10 +547,41 @@ class ProjectMarketplaceController extends Controller
         Gate::authorize('reviewMilestone', $contract);
         abort_if($milestone->contract_id !== $contract->id, 404);
 
-        $milestone->update([
-            'status' => 'approved',
-            'approved_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($contract, $milestone) {
+                $lockedContract = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
+                $lockedMilestone = ProjectMilestone::whereKey($milestone->id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedContract->status !== 'active') {
+                    throw new \RuntimeException('This contract is no longer active.');
+                }
+
+                if ($lockedMilestone->status === 'approved') {
+                    throw new \RuntimeException('This milestone is already approved.');
+                }
+
+                if (!in_array($lockedMilestone->status, ['submitted', 'revision_requested'], true)) {
+                    throw new \RuntimeException('Provider must submit deliverables before this milestone can be approved.');
+                }
+
+                $lockedMilestone->update([
+                    'status' => 'approved',
+                    'approved_at' => now(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        app(NotificationCenterService::class)->notifyUser(
+            $contract->vendor?->user_id,
+            '✅',
+            'Milestone Approved!',
+            "Client approved milestone \"{$milestone->title}\" on contract #{$contract->contract_number}.",
+            route('services.contracts.show', $contract),
+            'services_contract',
+            'milestone_approved_' . $milestone->id
+        );
 
         return back()->with('success', 'Milestone "' . $milestone->title . '" approved!');
     }
@@ -450,10 +595,41 @@ class ProjectMarketplaceController extends Controller
             'revision_notes' => 'required|string|min:10|max:2000',
         ]);
 
-        $milestone->update([
-            'status' => 'revision_requested',
-            'revision_notes' => $validated['revision_notes'],
-        ]);
+        try {
+            DB::transaction(function () use ($contract, $milestone, $validated) {
+                $lockedContract = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
+                $lockedMilestone = ProjectMilestone::whereKey($milestone->id)->lockForUpdate()->firstOrFail();
+
+                if ($lockedContract->status !== 'active') {
+                    throw new \RuntimeException('This contract is no longer active.');
+                }
+
+                if ($lockedMilestone->status === 'approved') {
+                    throw new \RuntimeException('Cannot request revision on an already approved milestone.');
+                }
+
+                if ($lockedMilestone->status !== 'submitted') {
+                    throw new \RuntimeException('Revisions can only be requested after the provider submits deliverables.');
+                }
+
+                $lockedMilestone->update([
+                    'status' => 'revision_requested',
+                    'revision_notes' => $validated['revision_notes'],
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        app(NotificationCenterService::class)->notifyUser(
+            $contract->vendor?->user_id,
+            '🔁',
+            'Milestone Revision Requested',
+            "Client requested updates on milestone \"{$milestone->title}\" for contract #{$contract->contract_number}.",
+            route('services.contracts.show', $contract),
+            'services_contract',
+            'milestone_revision_' . $milestone->id . '_' . now()->timestamp
+        );
 
         return back()->with('info', 'Revision request sent to provider for "' . $milestone->title . '".');
     }
@@ -467,29 +643,49 @@ class ProjectMarketplaceController extends Controller
             'review_text' => 'nullable|string|max:2000',
         ]);
 
-        DB::transaction(function () use ($contract, $validated) {
-            $contract->milestones()->where('status', '!=', 'approved')->update([
-                'status' => 'approved',
-                'approved_at' => now(),
-            ]);
+        try {
+            DB::transaction(function () use ($contract, $validated) {
+                $lockedContract = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
 
-            $updateData = [
-                'status' => 'completed',
-                'payment_status' => 'released',
-                'completed_at' => now(),
-            ];
+                if ($lockedContract->status !== 'active') {
+                    throw new \RuntimeException('This contract has already been completed or closed.');
+                }
 
-            if (!empty($validated['rating'])) {
-                $updateData['buyer_rating'] = (int) $validated['rating'];
-                $updateData['buyer_review'] = ($validated['review_text'] ?? null) ?: 'Excellent project delivery!';
-                $updateData['reviewed_at'] = now();
-            }
+                $lockedContract->milestones()->where('status', '!=', 'approved')->update([
+                    'status' => 'approved',
+                    'approved_at' => now(),
+                ]);
 
-            $contract->update($updateData);
-            $contract->project?->update(['status' => 'completed']);
-        });
+                $updateData = [
+                    'status' => 'completed',
+                    'payment_status' => 'released',
+                    'completed_at' => now(),
+                ];
+
+                if (!empty($validated['rating'])) {
+                    $updateData['buyer_rating'] = (int) $validated['rating'];
+                    $updateData['buyer_review'] = ($validated['review_text'] ?? null) ?: 'Excellent project delivery!';
+                    $updateData['reviewed_at'] = now();
+                }
+
+                $lockedContract->update($updateData);
+                $lockedContract->project?->update(['status' => 'completed']);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('info', $e->getMessage());
+        }
 
         $contract->vendor?->recomputeServiceMetrics();
+
+        app(NotificationCenterService::class)->notifyUser(
+            $contract->vendor?->user_id,
+            '🏆',
+            'Contract Completed & Payout Released!',
+            "Contract #{$contract->contract_number} has been marked completed by the client.",
+            route('services.contracts.show', $contract),
+            'services_contract',
+            'contract_completed_' . $contract->id
+        );
 
         return back()->with('success', 'Contract completed and verified review recorded!');
     }

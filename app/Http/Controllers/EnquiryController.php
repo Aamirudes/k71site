@@ -402,6 +402,10 @@ class EnquiryController extends Controller
                 ->where('vendor_id', $vendor->id)
                 ->first();
 
+            if ($existingQuote && $existingQuote->isAccepted()) {
+                throw new \RuntimeException('This quotation has already been accepted and cannot be modified.');
+            }
+
             $quoteNumber = $existingQuote?->quote_number ?: ('QT-' . date('Ymd') . '-' . strtoupper(Str::random(6)));
 
             $quote = Quote::updateOrCreate(
@@ -421,7 +425,7 @@ class EnquiryController extends Controller
 
             $lockedEnquiry->update([
                 'status' => 'quoted',
-                'quotes_count' => $lockedEnquiry->quotes()->count(),
+                'quotes_count' => $lockedEnquiry->quotes()->where('status', '!=', 'withdrawn')->count(),
             ]);
 
             return $quote;
@@ -465,39 +469,51 @@ class EnquiryController extends Controller
             return back()->with('error', 'Only active sent quotations can be accepted.');
         }
 
-        DB::transaction(function () use ($quote, $enquiry, $request) {
-            $lockedEnquiry = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
-            $lockedQuote = Quote::whereKey($quote->id)->lockForUpdate()->firstOrFail();
+        if ($quote->valid_until && $quote->valid_until->lt(now()->startOfDay())) {
+            return back()->with('error', 'This quotation has expired and can no longer be accepted.');
+        }
 
-            if ($lockedEnquiry->isClosed() || !$lockedQuote->isSent()) {
-                throw new \RuntimeException('This quotation is no longer eligible for acceptance.');
-            }
+        try {
+            DB::transaction(function () use ($quote, $enquiry, $request) {
+                $lockedEnquiry = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
+                $lockedQuote = Quote::whereKey($quote->id)->lockForUpdate()->firstOrFail();
 
-            $lockedQuote->update([
-                'status' => 'accepted',
-                'accepted_at' => now(),
-            ]);
+                if ($lockedEnquiry->isClosed() || !$lockedQuote->isSent()) {
+                    throw new \RuntimeException('This quotation is no longer eligible for acceptance.');
+                }
 
-            Quote::where('enquiry_id', $lockedEnquiry->id)
-                ->where('id', '!=', $lockedQuote->id)
-                ->where('status', 'sent')
-                ->update(['status' => 'rejected']);
+                if ($lockedQuote->valid_until && $lockedQuote->valid_until->lt(now()->startOfDay())) {
+                    throw new \RuntimeException('This quotation has expired and can no longer be accepted.');
+                }
 
-            $lockedEnquiry->update(['status' => 'closed']);
+                $lockedQuote->update([
+                    'status' => 'accepted',
+                    'accepted_at' => now(),
+                ]);
 
-            AuditLog::create([
-                'user_id' => auth()->id(),
-                'auditable_type' => Quote::class,
-                'auditable_id' => $lockedQuote->id,
-                'action' => 'enquiry_quote_accepted',
-                'new_values' => [
-                    'enquiry_id' => $lockedEnquiry->id,
-                    'vendor_id' => $lockedQuote->vendor_id,
-                    'quote_amount' => $lockedQuote->quote_amount,
-                ],
-                'ip_address' => $request->ip(),
-            ]);
-        });
+                Quote::where('enquiry_id', $lockedEnquiry->id)
+                    ->where('id', '!=', $lockedQuote->id)
+                    ->where('status', 'sent')
+                    ->update(['status' => 'rejected']);
+
+                $lockedEnquiry->update(['status' => 'closed']);
+
+                AuditLog::create([
+                    'user_id' => auth()->id(),
+                    'auditable_type' => Quote::class,
+                    'auditable_id' => $lockedQuote->id,
+                    'action' => 'enquiry_quote_accepted',
+                    'new_values' => [
+                        'enquiry_id' => $lockedEnquiry->id,
+                        'vendor_id' => $lockedQuote->vendor_id,
+                        'quote_amount' => $lockedQuote->quote_amount,
+                    ],
+                    'ip_address' => $request->ip(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         $this->notifications->notifyUser(
             $quote->vendor?->user_id,
@@ -509,6 +525,106 @@ class EnquiryController extends Controller
         );
 
         return back()->with('success', "You have accepted the quotation from {$quote->vendor->shop_name}. You can now coordinate final fulfillment via WhatsApp or direct call.");
+    }
+
+    /**
+     * Buyer closes their own open/quoted enquiry when requirement is no longer needed.
+     */
+    public function close(Request $request, string $enquiry_number): RedirectResponse
+    {
+        $enquiry = Enquiry::where('enquiry_number', $enquiry_number)->firstOrFail();
+        $user = auth()->user();
+
+        if (!$user || ($enquiry->user_id !== null && (int) $enquiry->user_id !== (int) $user->id && !$user->isAdmin())) {
+            abort(403, 'Only the enquiry owner can close this requirement.');
+        }
+
+        if ($enquiry->isClosed()) {
+            return back()->with('info', 'This enquiry is already closed.');
+        }
+
+        DB::transaction(function () use ($enquiry, $user, $request) {
+            $locked = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
+            if ($locked->isClosed()) {
+                return;
+            }
+            $locked->update(['status' => 'closed']);
+            Quote::where('enquiry_id', $locked->id)
+                ->where('status', 'sent')
+                ->update(['status' => 'rejected']);
+
+            AuditLog::create([
+                'user_id' => $user->id,
+                'auditable_type' => Enquiry::class,
+                'auditable_id' => $locked->id,
+                'action' => 'enquiry_closed_by_owner',
+                'ip_address' => $request->ip(),
+            ]);
+        });
+
+        return back()->with('success', "Requirement #{$enquiry->enquiry_number} has been closed.");
+    }
+
+    /**
+     * Vendor withdraws an active sent quote before it is accepted.
+     */
+    public function withdrawQuote(Request $request, Quote $quote): RedirectResponse
+    {
+        $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
+        if (!$vendor || (int) $quote->vendor_id !== (int) $vendor->id) {
+            abort(403, 'Unauthorized to withdraw this quotation.');
+        }
+
+        try {
+            $enquiry = DB::transaction(function () use ($quote, $request) {
+                $lockedQuote = Quote::whereKey($quote->id)->lockForUpdate()->firstOrFail();
+                $lockedEnquiry = Enquiry::whereKey($lockedQuote->enquiry_id)->lockForUpdate()->firstOrFail();
+
+                if (!$lockedQuote->isSent()) {
+                    throw new \RuntimeException('Only pending sent quotations can be withdrawn.');
+                }
+
+                if ($lockedEnquiry->isClosed()) {
+                    throw new \RuntimeException('This enquiry is already closed.');
+                }
+
+                $lockedQuote->update(['status' => 'withdrawn']);
+
+                $activeCount = Quote::where('enquiry_id', $lockedEnquiry->id)
+                    ->where('status', '!=', 'withdrawn')
+                    ->count();
+
+                $lockedEnquiry->update([
+                    'quotes_count' => $activeCount,
+                    'status' => $activeCount > 0 ? 'quoted' : 'open',
+                ]);
+
+                AuditLog::create([
+                    'user_id' => auth()->id(),
+                    'auditable_type' => Quote::class,
+                    'auditable_id' => $lockedQuote->id,
+                    'action' => 'enquiry_quote_withdrawn',
+                    'ip_address' => $request->ip(),
+                ]);
+
+                return $lockedEnquiry;
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        if ($enquiry->user_id) {
+            $this->notifications->notifyUser(
+                $enquiry->user_id,
+                '↩️',
+                "Quotation Withdrawn — #{$enquiry->enquiry_number}",
+                "{$vendor->shop_name} withdrew quote #{$quote->quote_number}.",
+                route('enquiry.show', $enquiry->enquiry_number),
+                'b2b_quote'
+            );
+        }
+
+        return back()->with('success', "Quotation #{$quote->quote_number} withdrawn.");
     }
 
     /**

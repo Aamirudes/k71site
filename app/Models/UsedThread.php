@@ -29,7 +29,7 @@ class UsedThread extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class)->withoutGlobalScopes();
+        return $this->belongsTo(Product::class)->withoutGlobalScopes()->withTrashed();
     }
 
     public function seller(): BelongsTo

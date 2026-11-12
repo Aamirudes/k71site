@@ -109,6 +109,8 @@ class Product extends Model
         'skills_json',
         'is_website_featured',
         'show_on_website',
+        'avg_rating',
+        'review_count',
     ];
 
     protected $casts = [
@@ -151,6 +153,8 @@ class Product extends Model
         'prep_time_mins' => 'integer',
         'menu_sort_order' => 'integer',
         'is_dish_available' => 'boolean',
+        'avg_rating' => 'float',
+        'review_count' => 'integer',
     ];
 
     /**

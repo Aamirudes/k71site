@@ -152,26 +152,40 @@ class UsedTransactionController extends Controller
             'body' => 'required|string|min:5|max:1500',
         ]);
 
-        $alreadyReviewed = Review::where('product_id', $transaction->product_id)
-            ->where('user_id', $user->id)
-            ->exists();
+        $review = DB::transaction(function () use ($transaction, $user, $validated) {
+            $lockedTx = UsedTransaction::where('id', $transaction->id)->lockForUpdate()->firstOrFail();
 
-        if ($alreadyReviewed) {
-            return back()->with('error', 'You have already submitted a review for this transaction.');
+            if (!$lockedTx->isCompleted()) {
+                return ['ok' => false, 'msg' => 'Reviews are unlocked once the handover transaction is marked completed.'];
+            }
+
+            $alreadyReviewed = Review::where('product_id', $lockedTx->product_id)
+                ->where('user_id', $user->id)
+                ->exists();
+
+            if ($alreadyReviewed) {
+                return ['ok' => false, 'msg' => 'You have already submitted a review for this transaction.'];
+            }
+
+            Review::create([
+                'product_id' => $lockedTx->product_id,
+                'user_id' => $user->id,
+                'vendor_id' => $lockedTx->product?->vendor_id,
+                'used_transaction_id' => $lockedTx->id,
+                'reviewed_user_id' => $lockedTx->seller_id,
+                'rating' => (int) $validated['rating'],
+                'title' => $validated['title'] ?? null,
+                'body' => trim($validated['body']),
+                'is_verified_purchase' => true,
+                'is_approved' => true,
+            ]);
+
+            return ['ok' => true];
+        });
+
+        if (!$review['ok']) {
+            return back()->with('error', $review['msg']);
         }
-
-        Review::create([
-            'product_id' => $transaction->product_id,
-            'user_id' => $user->id,
-            'vendor_id' => $transaction->product?->vendor_id,
-            'used_transaction_id' => $transaction->id,
-            'reviewed_user_id' => $transaction->seller_id,
-            'rating' => (int) $validated['rating'],
-            'title' => $validated['title'] ?? null,
-            'body' => trim($validated['body']),
-            'is_verified_purchase' => true,
-            'is_approved' => true,
-        ]);
 
         $this->usedService->recalculateSellerStats($transaction->seller_id);
 
