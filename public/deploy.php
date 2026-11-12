@@ -141,6 +141,9 @@ if ($syncRequested) {
                 if (file_exists($sourceDir . '/public/index.php')) {
                     @copy($sourceDir . '/public/index.php', $baseDir . '/public/index.php');
                 }
+                if (file_exists($sourceDir . '/public/deploy.php')) {
+                    @copy($sourceDir . '/public/deploy.php', $baseDir . '/deploy.php');
+                }
                 $standaloneFiles = ['deploy.php', 'messages.php', 'db.php', '.user.ini', '.htaccess'];
                 foreach ($standaloneFiles as $sf) {
                     if (file_exists($sourceDir . '/' . $sf)) {
