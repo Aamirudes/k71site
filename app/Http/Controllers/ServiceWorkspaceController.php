@@ -75,10 +75,14 @@ class ServiceWorkspaceController extends Controller
         $uploadedAttachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $uploadedAttachments[] = $this->mediaUploads->storeSafeDeliverable(
+                $meta = $this->mediaUploads->storeSafeDeliverable(
                     $file,
                     'workspace_files/' . $order->order_number
                 );
+                if (!empty($meta['path']) && function_exists('k71_sync_public_storage')) {
+                    k71_sync_public_storage($meta['path']);
+                }
+                $uploadedAttachments[] = $meta;
             }
         }
 
@@ -128,41 +132,49 @@ class ServiceWorkspaceController extends Controller
         $uploadedFiles = [];
         if ($request->hasFile('delivery_files')) {
             foreach ($request->file('delivery_files') as $file) {
-                $uploadedFiles[] = $this->mediaUploads->storeSafeDeliverable(
+                $meta = $this->mediaUploads->storeSafeDeliverable(
                     $file,
                     'deliverables/' . $order->order_number,
                     'delivery_files'
                 );
+                if (!empty($meta['path']) && function_exists('k71_sync_public_storage')) {
+                    k71_sync_public_storage($meta['path']);
+                }
+                $uploadedFiles[] = $meta;
             }
         }
 
-        DB::transaction(function () use ($order, $validated, $uploadedFiles, $userId) {
-            $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
-            if (!in_array($locked->status, ['in_progress', 'revision_requested'], true)) {
-                throw new \RuntimeException('Deliverables can only be submitted on active or revision-requested orders.');
-            }
+        try {
+            DB::transaction(function () use ($order, $validated, $uploadedFiles, $userId) {
+                $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if (!in_array($locked->status, ['in_progress', 'revision_requested'], true)) {
+                    throw new \RuntimeException('Deliverables can only be submitted on active or revision-requested orders.');
+                }
 
-            $currentDeliveries = is_array($locked->deliveries) ? $locked->deliveries : [];
-            $currentDeliveries[] = [
-                'notes' => $validated['notes'],
-                'files' => $uploadedFiles,
-                'submitted_at' => now()->toDateTimeString(),
-            ];
+                $currentDeliveries = is_array($locked->deliveries) ? $locked->deliveries : [];
+                $currentDeliveries[] = [
+                    'notes' => $validated['notes'],
+                    'files' => $uploadedFiles,
+                    'submitted_at' => now()->toDateTimeString(),
+                ];
 
-            $locked->update([
-                'deliveries' => $currentDeliveries,
-                'status' => 'delivered',
-                'delivered_at' => now(),
-            ]);
+                $locked->update([
+                    'deliveries' => $currentDeliveries,
+                    'status' => 'delivered',
+                    'delivered_at' => now(),
+                ]);
 
-            ServiceOrderMessage::create([
-                'service_order_id' => $locked->id,
-                'user_id' => $userId,
-                'sender_type' => 'seller',
-                'message' => "🎉 **Work Delivered!**\n\n" . $validated['notes'] . "\n\nPlease review the deliverables above. You can request revisions or approve to finalize the project.",
-                'attachments' => $uploadedFiles,
-            ]);
-        });
+                ServiceOrderMessage::create([
+                    'service_order_id' => $locked->id,
+                    'user_id' => $userId,
+                    'sender_type' => 'seller',
+                    'message' => "🎉 **Work Delivered!**\n\n" . $validated['notes'] . "\n\nPlease review the deliverables above. You can request revisions or approve to finalize the project.",
+                    'attachments' => $uploadedFiles,
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         $this->notifications->notifyUser(
             $order->buyer_id,
@@ -199,26 +211,30 @@ class ServiceWorkspaceController extends Controller
         ]);
 
         $revUsed = null;
-        DB::transaction(function () use ($order, $validated, $userId, &$revUsed) {
-            $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
-            if ($locked->status !== 'delivered' || $locked->revisions_used >= $locked->revisions_allowed) {
-                throw new \RuntimeException('Revision cannot be requested on the current order state.');
-            }
+        try {
+            DB::transaction(function () use ($order, $validated, $userId, &$revUsed) {
+                $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if ($locked->status !== 'delivered' || $locked->revisions_used >= $locked->revisions_allowed) {
+                    throw new \RuntimeException('Revision cannot be requested on the current order state.');
+                }
 
-            $revUsed = (int) $locked->revisions_used + 1;
-            $locked->update([
-                'revisions_used' => $revUsed,
-                'status' => 'revision_requested',
-            ]);
+                $revUsed = (int) $locked->revisions_used + 1;
+                $locked->update([
+                    'revisions_used' => $revUsed,
+                    'status' => 'revision_requested',
+                ]);
 
-            ServiceOrderMessage::create([
-                'service_order_id' => $locked->id,
-                'user_id' => $userId,
-                'sender_type' => 'buyer',
-                'message' => "🔄 **Revision Requested (Revision #{$revUsed}/{$locked->revisions_allowed})**\n\n" . $validated['revision_notes'],
-                'attachments' => [],
-            ]);
-        });
+                ServiceOrderMessage::create([
+                    'service_order_id' => $locked->id,
+                    'user_id' => $userId,
+                    'sender_type' => 'buyer',
+                    'message' => "🔄 **Revision Requested (Revision #{$revUsed}/{$locked->revisions_allowed})**\n\n" . $validated['revision_notes'],
+                    'attachments' => [],
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         $this->notifications->notifyUser(
             $order->vendor?->user_id,
@@ -255,50 +271,63 @@ class ServiceWorkspaceController extends Controller
             'review_text' => 'nullable|string|max:1500',
         ]);
 
-        DB::transaction(function () use ($order, $validated, $userId) {
-            $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
-            if ($locked->status !== 'delivered') {
-                throw new \RuntimeException('Only delivered service orders can be approved.');
-            }
+        try {
+            DB::transaction(function () use ($order, $validated, $userId) {
+                $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if ($locked->status !== 'delivered') {
+                    throw new \RuntimeException('Only delivered service orders can be approved.');
+                }
 
-            $updatePayload = [
-                'status' => 'completed',
-                'completed_at' => now(),
-            ];
+                $updatePayload = [
+                    'status' => 'completed',
+                    'completed_at' => now(),
+                ];
 
-            if (!empty($validated['rating'])) {
-                $rating = (int) $validated['rating'];
-                $reviewBody = trim((string) ($validated['review_text'] ?? 'Great service and smooth communication!'));
+                if (!empty($validated['rating'])) {
+                    $rating = (int) $validated['rating'];
+                    $reviewBody = trim((string) ($validated['review_text'] ?? 'Great service and smooth communication!'));
 
-                $updatePayload['buyer_rating'] = $rating;
-                $updatePayload['buyer_review'] = $reviewBody;
+                    $updatePayload['buyer_rating'] = $rating;
+                    $updatePayload['buyer_review'] = $reviewBody;
 
-                Review::updateOrCreate(
-                    [
-                        'product_id' => $locked->product_id,
-                        'user_id' => $userId,
-                    ],
-                    [
-                        'vendor_id' => $locked->vendor_id,
-                        'service_order_id' => $locked->id,
-                        'rating' => $rating,
-                        'body' => $reviewBody,
-                        'is_verified_purchase' => true,
-                        'is_approved' => true,
-                    ]
-                );
-            }
+                    Review::updateOrCreate(
+                        [
+                            'product_id' => $locked->product_id,
+                            'user_id' => $userId,
+                        ],
+                        [
+                            'vendor_id' => $locked->vendor_id,
+                            'service_order_id' => $locked->id,
+                            'rating' => $rating,
+                            'body' => $reviewBody,
+                            'is_verified_purchase' => true,
+                            'is_approved' => true,
+                        ]
+                    );
 
-            $locked->update($updatePayload);
+                    if ($locked->product_id && ($gigProduct = \App\Models\Product::withoutGlobalScopes()->find($locked->product_id))) {
+                        $approvedReviews = Review::where('product_id', $locked->product_id)->where('is_approved', true);
+                        $revCount = $approvedReviews->count();
+                        $gigProduct->update([
+                            'review_count' => $revCount,
+                            'avg_rating' => $revCount > 0 ? round((float) $approvedReviews->avg('rating'), 2) : null,
+                        ]);
+                    }
+                }
 
-            ServiceOrderMessage::create([
-                'service_order_id' => $locked->id,
-                'user_id' => $userId,
-                'sender_type' => 'buyer',
-                'message' => "✅ **Project Approved & Completed!**\nThank you for great collaboration.",
-                'attachments' => [],
-            ]);
-        });
+                $locked->update($updatePayload);
+
+                ServiceOrderMessage::create([
+                    'service_order_id' => $locked->id,
+                    'user_id' => $userId,
+                    'sender_type' => 'buyer',
+                    'message' => "✅ **Project Approved & Completed!**\nThank you for great collaboration.",
+                    'attachments' => [],
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         $order->vendor?->recomputeServiceMetrics();
 

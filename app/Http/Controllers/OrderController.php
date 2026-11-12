@@ -121,6 +121,9 @@ class OrderController extends Controller
             // Restore product inventory stock (both variant and total_stock)
             \App\Services\StockManagerService::restoreOrderStock($lockedOrder);
 
+            // Release coupon usage so cancelled orders do not burn customer/total coupon limits
+            \App\Services\StockManagerService::releaseOrderCouponUsage($lockedOrder);
+
             // Reverse recorded commission idempotently on cancellation
             app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($lockedOrder, 'Order cancelled by customer', auth()->id());
 

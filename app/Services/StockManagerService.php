@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Coupon;
+use App\Models\CouponUsage;
 use App\Models\Order;
 use App\Models\OrderStatusLog;
 use Illuminate\Support\Facades\DB;
@@ -29,15 +31,27 @@ class StockManagerService
         foreach ($expiredOrders as $order) {
             DB::beginTransaction();
             try {
-                $order->update([
+                $lockedOrder = Order::whereKey($order->id)
+                    ->lockForUpdate()
+                    ->with('items.variant', 'items.product')
+                    ->first();
+
+                if (!$lockedOrder || $lockedOrder->status !== 'pending' || $lockedOrder->payment_status !== 'pending') {
+                    DB::rollBack();
+                    continue;
+                }
+
+                $lockedOrder->update([
                     'status' => 'cancelled',
                     'cancelled_at' => now(),
                     'cancelled_by' => 'system',
                     'cancel_reason' => 'Payment session expired / abandoned (Stock released back to inventory)',
                 ]);
 
+                static::releaseOrderCouponUsage($lockedOrder);
+
                 // Restore stock for both variants and products
-                foreach ($order->items as $item) {
+                foreach ($lockedOrder->items as $item) {
                     if ($item->variant) {
                         $item->variant->increment('stock', $item->quantity);
                     }
@@ -47,7 +61,7 @@ class StockManagerService
                 }
 
                 OrderStatusLog::create([
-                    'order_id' => $order->id,
+                    'order_id' => $lockedOrder->id,
                     'from_status' => 'pending',
                     'to_status' => 'cancelled',
                     'actor_type' => 'system',
@@ -78,5 +92,26 @@ class StockManagerService
                 $item->product->increment('total_stock', $item->quantity);
             }
         }
+    }
+
+    /**
+     * Release coupon usage count & usage logs when an order is cancelled or expired.
+     */
+    public static function releaseOrderCouponUsage(Order $order): void
+    {
+        $usages = CouponUsage::where('order_id', $order->id)->get();
+        if ($usages->isEmpty()) {
+            return;
+        }
+
+        foreach ($usages->groupBy('coupon_id') as $couponId => $group) {
+            $coupon = Coupon::whereKey($couponId)->lockForUpdate()->first();
+            if ($coupon) {
+                $newCount = max(0, (int) $coupon->usage_count - $group->count());
+                $coupon->update(['usage_count' => $newCount]);
+            }
+        }
+
+        CouponUsage::where('order_id', $order->id)->delete();
     }
 }

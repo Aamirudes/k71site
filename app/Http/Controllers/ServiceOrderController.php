@@ -96,10 +96,14 @@ class ServiceOrderController extends Controller
         $uploadedFiles = [];
         if ($request->hasFile('reference_files')) {
             foreach ($request->file('reference_files') as $file) {
-                $uploadedFiles[] = $this->mediaUploads->storeSafeDeliverable(
+                $meta = $this->mediaUploads->storeSafeDeliverable(
                     $file,
                     'service_requirements/' . $orderNumber
                 );
+                if (!empty($meta['path']) && function_exists('k71_sync_public_storage')) {
+                    k71_sync_public_storage($meta['path']);
+                }
+                $uploadedFiles[] = $meta;
             }
         }
 

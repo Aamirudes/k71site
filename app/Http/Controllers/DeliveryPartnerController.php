@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\DeliveryAssignment;
 use App\Models\DeliveryPartner;
 use App\Models\Order;
+use App\Models\OrderStatusLog;
+use App\Services\NotificationCenterService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DeliveryPartnerController extends Controller
 {
@@ -336,17 +339,67 @@ class DeliveryPartnerController extends Controller
     public function acceptAssignment(DeliveryAssignment $assignment)
     {
         $partner = $this->getActivePartner();
-        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+        if (!$partner || ($assignment->delivery_partner_id && (int) $assignment->delivery_partner_id !== (int) $partner->id && !auth()->user()?->isAdmin())) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $assignment->update([
-            'status' => 'accepted',
-            'accepted_at' => now(),
-        ]);
+        try {
+            $order = DB::transaction(function () use ($assignment, $partner) {
+                $locked = DeliveryAssignment::whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+                if ($locked->status !== 'assigned') {
+                    throw new \RuntimeException("Assignment is currently '{$locked->status}' and cannot be accepted again.");
+                }
 
-        if ($assignment->order) {
-            $assignment->order->update(['status' => 'processing']);
+                $lockedOrder = $locked->order_id ? Order::whereKey($locked->order_id)->lockForUpdate()->first() : null;
+                if ($lockedOrder && in_array($lockedOrder->status, ['cancelled', 'delivered'], true)) {
+                    $locked->update(['status' => 'cancelled']);
+                    throw new \RuntimeException("Order is already {$lockedOrder->status} and can no longer be picked up.");
+                }
+
+                $locked->update([
+                    'delivery_partner_id' => $locked->delivery_partner_id ?: $partner->id,
+                    'status' => 'accepted',
+                    'accepted_at' => now(),
+                ]);
+
+                if ($lockedOrder) {
+                    $fromStatus = $lockedOrder->status;
+                    $orderUpdate = [
+                        'status' => 'processing',
+                        'packed_at' => $lockedOrder->packed_at ?: now(),
+                    ];
+                    if ($lockedOrder->isFoodOrder()) {
+                        $orderUpdate['accepted_at'] = $lockedOrder->accepted_at ?: now();
+                        $orderUpdate['preparing_at'] = $lockedOrder->preparing_at ?: now();
+                        $orderUpdate['food_fulfillment_stage'] = 'preparing';
+                    }
+                    $lockedOrder->update($orderUpdate);
+
+                    OrderStatusLog::create([
+                        'order_id' => $lockedOrder->id,
+                        'from_status' => $fromStatus,
+                        'to_status' => 'processing',
+                        'actor_type' => 'fleet',
+                        'actor_id' => auth()->id(),
+                        'note' => "Delivery partner {$partner->name} accepted assignment and is heading to pickup.",
+                    ]);
+                }
+
+                return $lockedOrder;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        if ($order && $order->user_id) {
+            app(NotificationCenterService::class)->notifyUser(
+                (int) $order->user_id,
+                '🛵',
+                "Rider Assigned — #{$order->order_number}",
+                "{$partner->name} accepted your delivery and is heading for pickup.",
+                route('orders.show', $order),
+                'delivery_tracking'
+            );
         }
 
         return response()->json(['status' => 'success', 'message' => 'Order accepted! Proceed to pickup.']);
@@ -358,17 +411,65 @@ class DeliveryPartnerController extends Controller
     public function pickupAssignment(DeliveryAssignment $assignment)
     {
         $partner = $this->getActivePartner();
-        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+        if (!$partner || ($assignment->delivery_partner_id && (int) $assignment->delivery_partner_id !== (int) $partner->id && !auth()->user()?->isAdmin())) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $assignment->update([
-            'status' => 'picked_up',
-            'picked_up_at' => now(),
-        ]);
+        try {
+            $order = DB::transaction(function () use ($assignment, $partner) {
+                $locked = DeliveryAssignment::whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+                if ($locked->status !== 'accepted') {
+                    throw new \RuntimeException("Order must be 'accepted' before marking picked up (currently '{$locked->status}').");
+                }
 
-        if ($assignment->order) {
-            $assignment->order->update(['status' => 'shipped']);
+                $lockedOrder = $locked->order_id ? Order::whereKey($locked->order_id)->lockForUpdate()->first() : null;
+                if ($lockedOrder && in_array($lockedOrder->status, ['cancelled', 'delivered'], true)) {
+                    $locked->update(['status' => 'cancelled']);
+                    throw new \RuntimeException("Order is already {$lockedOrder->status} and cannot be dispatched.");
+                }
+
+                $locked->update([
+                    'status' => 'picked_up',
+                    'picked_up_at' => now(),
+                ]);
+
+                if ($lockedOrder) {
+                    $fromStatus = $lockedOrder->status;
+                    $orderUpdate = [
+                        'status' => 'shipped',
+                        'shipped_at' => $lockedOrder->shipped_at ?: now(),
+                    ];
+                    if ($lockedOrder->isFoodOrder()) {
+                        $orderUpdate['out_for_delivery_at'] = $lockedOrder->out_for_delivery_at ?: now();
+                        $orderUpdate['food_fulfillment_stage'] = 'out_for_delivery';
+                    }
+                    $lockedOrder->update($orderUpdate);
+
+                    OrderStatusLog::create([
+                        'order_id' => $lockedOrder->id,
+                        'from_status' => $fromStatus,
+                        'to_status' => 'shipped',
+                        'actor_type' => 'fleet',
+                        'actor_id' => auth()->id(),
+                        'note' => "Order picked up by {$partner->name} and is out for delivery.",
+                    ]);
+                }
+
+                return $lockedOrder;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        if ($order && $order->user_id) {
+            app(NotificationCenterService::class)->notifyUser(
+                (int) $order->user_id,
+                '🚚',
+                "Out for Delivery — #{$order->order_number}",
+                "{$partner->name} picked up your order and is on the way.",
+                route('orders.show', $order),
+                'delivery_tracking'
+            );
         }
 
         return response()->json(['status' => 'success', 'message' => 'Order picked up! Now delivering.']);
@@ -380,19 +481,81 @@ class DeliveryPartnerController extends Controller
     public function deliverAssignment(DeliveryAssignment $assignment)
     {
         $partner = $this->getActivePartner();
-        if (!$partner || ($assignment->delivery_partner_id && $assignment->delivery_partner_id !== $partner->id && !auth()->user()?->isAdmin())) {
+        if (!$partner || ($assignment->delivery_partner_id && (int) $assignment->delivery_partner_id !== (int) $partner->id && !auth()->user()?->isAdmin())) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $assignment->update([
-            'status' => 'delivered',
-            'delivered_at' => now(),
-        ]);
+        try {
+            $order = DB::transaction(function () use ($assignment, $partner) {
+                $locked = DeliveryAssignment::whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+                if ($locked->status !== 'picked_up') {
+                    throw new \RuntimeException("Order must be 'picked_up' before marking delivered (currently '{$locked->status}').");
+                }
 
-        $assignment->deliveryPartner?->increment('total_deliveries');
+                $lockedOrder = $locked->order_id ? Order::whereKey($locked->order_id)->lockForUpdate()->first() : null;
+                if ($lockedOrder && $lockedOrder->status === 'cancelled') {
+                    $locked->update(['status' => 'cancelled']);
+                    throw new \RuntimeException('Cancelled orders cannot be marked as delivered.');
+                }
 
-        if ($assignment->order) {
-            $assignment->order->update(['status' => 'delivered']);
+                $locked->update([
+                    'status' => 'delivered',
+                    'delivered_at' => now(),
+                ]);
+
+                if ($locked->delivery_partner_id) {
+                    DeliveryPartner::whereKey($locked->delivery_partner_id)->increment('total_deliveries');
+                }
+
+                if ($lockedOrder) {
+                    $fromStatus = $lockedOrder->status;
+                    $orderUpdate = [
+                        'status' => 'delivered',
+                        'delivered_at' => $lockedOrder->delivered_at ?: now(),
+                    ];
+                    if ($lockedOrder->isFoodOrder()) {
+                        $orderUpdate['food_fulfillment_stage'] = 'delivered';
+                    }
+                    $lockedOrder->update($orderUpdate);
+
+                    OrderStatusLog::create([
+                        'order_id' => $lockedOrder->id,
+                        'from_status' => $fromStatus,
+                        'to_status' => 'delivered',
+                        'actor_type' => 'fleet',
+                        'actor_id' => auth()->id(),
+                        'note' => "Order delivered by {$partner->name}.",
+                    ]);
+                }
+
+                return $lockedOrder;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        if ($order) {
+            $notify = app(NotificationCenterService::class);
+            if ($order->user_id) {
+                $notify->notifyUser(
+                    (int) $order->user_id,
+                    '🎉',
+                    "Order Delivered — #{$order->order_number}",
+                    "Your order has been delivered by {$partner->name}. Enjoy!",
+                    route('orders.show', $order),
+                    'delivery_tracking'
+                );
+            }
+            if ($order->vendor?->user_id) {
+                $notify->notifyUser(
+                    (int) $order->vendor->user_id,
+                    '✅',
+                    "Order Delivered — #{$order->order_number}",
+                    "Fleet rider {$partner->name} completed delivery.",
+                    route('vendor.orders.show', $order),
+                    'delivery_tracking'
+                );
+            }
         }
 
         return response()->json(['status' => 'success', 'message' => 'Delivered successfully! Payout credited.']);

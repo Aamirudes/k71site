@@ -48,34 +48,47 @@ class BookingController extends Controller
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        // Prevent double-booking active time slots for the same service
-        $slotTaken = Booking::where('product_id', $product->id)
-            ->whereDate('booking_date', $validated['booking_date'])
-            ->where('booking_slot', trim($validated['booking_slot']))
-            ->whereIn('status', ['pending', 'confirmed'])
-            ->exists();
+        try {
+            $booking = DB::transaction(function () use ($product, $validated) {
+                $lockedProduct = Product::withoutGlobalScopes()->whereKey($product->id)->lockForUpdate()->firstOrFail();
 
-        if ($slotTaken) {
-            return back()->withInput()->with('error', 'That time slot has already been requested or confirmed. Please choose another slot.');
+                if ($lockedProduct->status !== 'active') {
+                    throw new \RuntimeException('This service is currently not available for bookings.');
+                }
+
+                // Prevent double-booking active time slots for the same service atomically
+                $slotTaken = Booking::where('product_id', $lockedProduct->id)
+                    ->whereDate('booking_date', $validated['booking_date'])
+                    ->where('booking_slot', trim($validated['booking_slot']))
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($slotTaken) {
+                    throw new \RuntimeException('That time slot has already been requested or confirmed. Please choose another slot.');
+                }
+
+                $bookingNumber = 'BK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
+
+                return Booking::create([
+                    'booking_number' => $bookingNumber,
+                    'product_id' => $lockedProduct->id,
+                    'vendor_id' => $lockedProduct->vendor_id,
+                    'user_id' => auth()->id(),
+                    'customer_name' => $validated['customer_name'],
+                    'customer_phone' => $validated['customer_phone'],
+                    'customer_email' => $validated['customer_email'] ?? auth()->user()?->email,
+                    'service_address' => $validated['service_address'],
+                    'booking_date' => $validated['booking_date'],
+                    'booking_slot' => trim($validated['booking_slot']),
+                    'total_amount' => $lockedProduct->base_price,
+                    'status' => 'pending',
+                    'notes' => $validated['notes'] ?? null,
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
-
-        $bookingNumber = 'BK-' . date('Ymd') . '-' . strtoupper(Str::random(6));
-
-        $booking = Booking::create([
-            'booking_number' => $bookingNumber,
-            'product_id' => $product->id,
-            'vendor_id' => $product->vendor_id,
-            'user_id' => auth()->id(),
-            'customer_name' => $validated['customer_name'],
-            'customer_phone' => $validated['customer_phone'],
-            'customer_email' => $validated['customer_email'] ?? auth()->user()?->email,
-            'service_address' => $validated['service_address'],
-            'booking_date' => $validated['booking_date'],
-            'booking_slot' => trim($validated['booking_slot']),
-            'total_amount' => $product->base_price,
-            'status' => 'pending',
-            'notes' => $validated['notes'] ?? null,
-        ]);
 
         session()->put("guest_booking_{$booking->id}", true);
 
@@ -215,5 +228,54 @@ class BookingController extends Controller
         );
 
         return back()->with('success', "Booking #{$booking->booking_number} status updated to " . ucfirst($targetStatus) . '.');
+    }
+
+    /**
+     * Customer cancels their own pending/confirmed appointment booking.
+     */
+    public function cancel(Request $request, string $booking_number): RedirectResponse
+    {
+        $booking = Booking::where('booking_number', $booking_number)->with(['vendor', 'product'])->firstOrFail();
+
+        $user = auth()->user();
+        $isOwner = $user && $booking->user_id && (int) $user->id === (int) $booking->user_id;
+        $isAdmin = $user && $user->isAdmin();
+        $hasGuestSession = (bool) session("guest_booking_{$booking->id}") && $booking->user_id === null;
+
+        if (!$isOwner && !$isAdmin && !$hasGuestSession) {
+            abort(403, 'Only the booking customer can cancel this appointment.');
+        }
+
+        $validated = $request->validate([
+            'cancelled_reason' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            DB::transaction(function () use ($booking, $validated) {
+                $locked = Booking::whereKey($booking->id)->lockForUpdate()->firstOrFail();
+                if (!in_array($locked->status, ['pending', 'confirmed'], true)) {
+                    throw new \RuntimeException("Booking #{$locked->booking_number} cannot be cancelled because it is already {$locked->status}.");
+                }
+
+                $locked->update([
+                    'status' => 'cancelled',
+                    'cancelled_at' => now(),
+                    'cancelled_reason' => trim((string) ($validated['cancelled_reason'] ?? '')) ?: 'Cancelled by customer',
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $this->notifications->notifyUser(
+            $booking->vendor?->user_id,
+            '🚫',
+            "Booking #{$booking->booking_number} Cancelled",
+            "{$booking->customer_name} cancelled the appointment for " . ($booking->product?->title ?? 'service') . " on {$booking->booking_date}.",
+            route('vendor.bookings.index'),
+            'service_booking'
+        );
+
+        return back()->with('success', "Appointment #{$booking->booking_number} has been cancelled and the slot is now released.");
     }
 }

@@ -190,6 +190,7 @@ Route::middleware('auth')->group(function () {
 // Preserved In-Person / Doorstep Bookings
 Route::post('/services/book/{product}', [\App\Http\Controllers\BookingController::class, 'store'])->middleware('throttle:30,1')->name('services.book');
 Route::get('/bookings/{booking_number}', [\App\Http\Controllers\BookingController::class, 'show'])->name('bookings.show');
+Route::post('/bookings/{booking_number}/cancel', [\App\Http\Controllers\BookingController::class, 'cancel'])->middleware('throttle:20,1')->name('bookings.cancel');
 
 // Enquiry Marketplace & Quotes Routes (Phase 8)
 Route::get('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('enquiry.index');

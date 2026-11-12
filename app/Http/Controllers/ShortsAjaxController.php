@@ -522,9 +522,15 @@ class ShortsAjaxController extends Controller
             return response()->json(['success' => false, 'message' => 'Please login to follow creators.'], 401);
         }
 
+        $vendor = Vendor::find($vendorId);
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        if (!$vendor || !$visibility->isVendorPubliclyVisible($vendor)) {
+            return response()->json(['success' => false, 'message' => 'Creator store is unavailable.'], 404);
+        }
+
         ShortFollow::firstOrCreate([
             'follower_id' => $userId,
-            'vendor_id' => $vendorId,
+            'vendor_id' => $vendor->id,
         ]);
 
         return response()->json(['success' => true, 'followed' => true]);
@@ -601,9 +607,17 @@ class ShortsAjaxController extends Controller
 
         $shortId = (int) $request->input('short_id', 0);
         $content = trim((string) $request->input('content', ''));
-        $short = Short::find($shortId);
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $short = Short::with('vendor')
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
+            ->find($shortId);
 
-        if (!$short || empty($content) || mb_strlen($content) > 500) {
+        if (!$short) {
+            return response()->json(['success' => false, 'message' => 'This reel is no longer available.'], 404);
+        }
+
+        if (empty($content) || mb_strlen($content) > 500) {
             return response()->json(['success' => false, 'message' => 'Please enter a valid comment (max 500 characters).'], 422);
         }
 
@@ -623,6 +637,17 @@ class ShortsAjaxController extends Controller
             'user_id' => $userId,
             'created_at' => now(),
         ]);
+
+        if ($short->vendor?->user_id && (int) $short->vendor->user_id !== (int) $userId) {
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                (int) $short->vendor->user_id,
+                '💬',
+                'New Comment on Your Reel',
+                (auth()->user()?->name ?? 'A shopper') . " commented on \"{$short->title}\".",
+                route('vendor.shorts.studio'),
+                'shorts_engagement'
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -650,26 +675,42 @@ class ShortsAjaxController extends Controller
             return response()->json(['success' => false, 'message' => 'Please login to save to wishlist.'], 401);
         }
 
+        $product = Product::withoutGlobalScopes()->with('vendor')->find($productId);
+        if (!$product) {
+            return response()->json(['success' => false, 'message' => 'Product not found.'], 404);
+        }
+
         // Toggle user wishlist
         $exists = DB::table('wishlists')
             ->where('user_id', $userId)
-            ->where('product_id', $productId)
+            ->where('product_id', $product->id)
             ->first();
 
         if ($exists) {
             DB::table('wishlists')
                 ->where('user_id', $userId)
-                ->where('product_id', $productId)
+                ->where('product_id', $product->id)
                 ->delete();
+            if ($product->isUsedListing()) {
+                app(\App\Services\Used\UsedMarketplaceService::class)->syncSavesCount($product->id);
+            }
             return response()->json(['success' => true, 'saved' => false]);
+        }
+
+        if (!app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product)) {
+            return response()->json(['success' => false, 'message' => 'This product is currently unavailable.'], 422);
         }
 
         DB::table('wishlists')->insert([
             'user_id' => $userId,
-            'product_id' => $productId,
+            'product_id' => $product->id,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
+        if ($product->isUsedListing()) {
+            app(\App\Services\Used\UsedMarketplaceService::class)->syncSavesCount($product->id);
+        }
 
         return response()->json(['success' => true, 'saved' => true]);
     }

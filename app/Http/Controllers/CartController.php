@@ -365,6 +365,35 @@ class CartController extends Controller
             $availableStock = (int) ($product->total_stock ?? 100);
         }
 
+        $productForCheck = Product::withoutGlobalScopes()->with('vendor.settings')->find($item->product_id);
+        if (!$productForCheck || !app(VisibilityService::class)->isProductPubliclyVisible($productForCheck)) {
+            $msg = 'This listing is currently unavailable.';
+            return ($request->expectsJson() || $request->wantsJson())
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
+        $isFoodUpdate = $productForCheck->vertical === 'food'
+            || ($productForCheck->vendor?->isFood() ?? false)
+            || ($productForCheck->vendor?->settings?->is_restaurant ?? false);
+
+        if ($isFoodUpdate && $productForCheck->vendor) {
+            $foodService = app(FoodMarketplaceService::class);
+            $opStatus = $foodService->getRestaurantOperationalStatus($productForCheck->vendor);
+            if (!$opStatus['accepting_orders']) {
+                $msg = $opStatus['reason'] ?: 'This restaurant is currently not accepting new orders.';
+                return ($request->expectsJson() || $request->wantsJson())
+                    ? response()->json(['success' => false, 'message' => $msg], 422)
+                    : back()->with('error', $msg);
+            }
+            if (!$foodService->isDishAvailableForOrder($productForCheck)) {
+                $msg = 'This dish is currently sold out or outside its serving hours.';
+                return ($request->expectsJson() || $request->wantsJson())
+                    ? response()->json(['success' => false, 'message' => $msg], 422)
+                    : back()->with('error', $msg);
+            }
+        }
+
         if ($availableStock <= 0) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => 'This item is now out of stock.'], 400);

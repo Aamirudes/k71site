@@ -717,6 +717,14 @@ class UsedListingController extends Controller
                     break;
                 }
                 $buyerId = !empty($validated['buyer_id']) ? (int) $validated['buyer_id'] : null;
+                $ownerId = (int) ($product->ownerUserId() ?? $user->id);
+                if ($buyerId && $buyerId === $ownerId) {
+                    $msg = 'You cannot reserve a listing for yourself.';
+                    if ($request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $msg], 422);
+                    }
+                    return back()->with('error', $msg);
+                }
                 $product->markReserved($buyerId);
                 if ($buyerId) {
                     $exists = UsedTransaction::where('product_id', $product->id)
@@ -823,6 +831,39 @@ class UsedListingController extends Controller
             'status' => 'inactive',
             'used_status' => 'removed',
         ]);
+
+        // Close open offers, reserved handovers, and threads cleanly when seller deletes listing
+        $openOffers = Offer::where('product_id', $product->id)
+            ->whereIn('status', ['pending', 'countered'])
+            ->get();
+        foreach ($openOffers as $openOffer) {
+            $openOffer->update([
+                'status' => 'rejected',
+                'rejected_at' => now(),
+                'responded_at' => now(),
+                'vendor_notes' => 'Listing removed by seller.',
+            ]);
+            if ($openOffer->user_id) {
+                $this->usedService->notifyUser(
+                    $openOffer->user_id,
+                    '🗑️',
+                    'Listing Removed',
+                    "\"{$product->title}\" was removed by the seller; your offer has been closed.",
+                    route('used.index')
+                );
+            }
+        }
+
+        UsedTransaction::where('product_id', $product->id)
+            ->where('status', 'reserved')
+            ->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'seller_notes' => 'Listing deleted by seller.',
+            ]);
+
+        UsedThread::where('product_id', $product->id)->update(['status' => 'locked']);
+
         $product->delete(); // SoftDeletes preserves historical FKs!
         Cache::forget('sitemap_products_xml');
 

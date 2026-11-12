@@ -9,6 +9,7 @@ use App\Models\PaymentClaim;
 use App\Models\Shipment;
 use App\Notifications\OrderStatusUpdated;
 use App\Services\Food\FoodMarketplaceService;
+use App\Services\NotificationCenterService;
 use App\Services\PayoutService;
 use App\Services\SettlementService;
 use App\Services\Shipping\ShiprocketService;
@@ -331,13 +332,19 @@ class OrderController extends Controller
                 $updateData['cancel_reason'] = $request->input('cancel_reason', 'Cancelled by vendor');
                 if ($order->isFoodOrder()) {
                     $updateData['food_fulfillment_stage'] = 'cancelled';
-                    if ($order->payment_status === 'paid') {
-                        $updateData['payment_status'] = 'refund_pending';
-                    }
+                }
+                if ($order->payment_status === 'paid') {
+                    $updateData['payment_status'] = 'refund_pending';
+                }
+                if ($order->vendor_payout_status === 'paid') {
+                    $updateData['vendor_payout_status'] = 'reversal_pending';
                 }
 
                 // Restore stock to inventory (both variants and total_stock)
                 \App\Services\StockManagerService::restoreOrderStock($order);
+
+                // Release coupon usage back cleanly
+                \App\Services\StockManagerService::releaseOrderCouponUsage($order);
 
                 // Reverse recorded commission idempotently if order had an active commission charge
                 app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($order, 'Order cancelled by vendor', auth()->id());
@@ -388,6 +395,17 @@ class OrderController extends Controller
             try {
                 $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
+
+            if ($oldStatus !== $newStatus && $order->user_id) {
+                app(NotificationCenterService::class)->notifyUser(
+                    (int) $order->user_id,
+                    '📦',
+                    "Order #{$order->order_number} Updated",
+                    'Your order status is now ' . ucfirst(str_replace('_', ' ', $newStatus)) . '.',
+                    route('orders.show', $order),
+                    'order_status'
+                );
+            }
 
             return back()->with('success', 'Order status updated successfully.');
         } catch (\Exception $e) {
@@ -500,21 +518,27 @@ class OrderController extends Controller
         if ($order->payment_method === 'cod') {
             DB::beginTransaction();
             try {
-                $oldStatus = $order->status;
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if (in_array($lockedOrder->status, ['cancelled', 'delivered', 'shipped', 'out_for_delivery'], true)) {
+                    DB::rollBack();
+                    return back()->with('error', "Order #{$lockedOrder->order_number} is already {$lockedOrder->status} and cannot be accepted.");
+                }
+
+                $oldStatus = $lockedOrder->status;
                 $acceptPayload = [
                     'status' => 'processing',
-                    'packed_at' => $order->packed_at ?: now(),
+                    'packed_at' => $lockedOrder->packed_at ?: now(),
                     'vendor_accepted_at' => now(),
                 ];
-                if ($order->isFoodOrder()) {
-                    $acceptPayload['accepted_at'] = $order->accepted_at ?: now();
-                    $acceptPayload['preparing_at'] = $order->preparing_at ?: now();
+                if ($lockedOrder->isFoodOrder()) {
+                    $acceptPayload['accepted_at'] = $lockedOrder->accepted_at ?: now();
+                    $acceptPayload['preparing_at'] = $lockedOrder->preparing_at ?: now();
                     $acceptPayload['food_fulfillment_stage'] = 'preparing';
                 }
-                $order->update($acceptPayload);
+                $lockedOrder->update($acceptPayload);
 
                 OrderStatusLog::create([
-                    'order_id' => $order->id,
+                    'order_id' => $lockedOrder->id,
                     'from_status' => $oldStatus,
                     'to_status' => 'processing',
                     'actor_type' => 'vendor',
@@ -524,11 +548,23 @@ class OrderController extends Controller
                 ]);
 
                 DB::commit();
+                $order = $lockedOrder->fresh(['user']);
 
                 // Notify customer
                 try {
                     $order->user?->notify(new OrderStatusUpdated($order));
                 } catch (\Throwable $e) {}
+
+                if ($order->user_id) {
+                    app(NotificationCenterService::class)->notifyUser(
+                        (int) $order->user_id,
+                        '✅',
+                        "Order #{$order->order_number} Accepted",
+                        "{$vendor->shop_name} has accepted your COD order and started preparing it.",
+                        route('orders.show', $order),
+                        'order_status'
+                    );
+                }
 
                 return back()->with('success', "🎉 COD Order Accepted! Please pack the garment for courier pickup. Cash will be collected upon delivery.");
             } catch (\Exception $e) {
@@ -625,8 +661,18 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
-            $oldStatus = $order->status;
-            $order->update([
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with(['items.variant', 'items.product'])->firstOrFail();
+            if ($lockedOrder->vendor_payout_status === 'paid') {
+                DB::rollBack();
+                return back()->with('error', "Cannot reject order: Payout has already been transferred to your account.");
+            }
+            if (in_array($lockedOrder->status, ['cancelled', 'delivered'], true)) {
+                DB::rollBack();
+                return back()->with('error', "Order #{$lockedOrder->order_number} is already {$lockedOrder->status}.");
+            }
+
+            $oldStatus = $lockedOrder->status;
+            $rejectPayload = [
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
                 'cancelled_by' => 'vendor',
@@ -634,13 +680,23 @@ class OrderController extends Controller
                 'vendor_rejected_at' => now(),
                 'vendor_rejection_reason' => $reason,
                 'vendor_payout_status' => 'refunded',
-            ]);
+            ];
+            if ($lockedOrder->isFoodOrder()) {
+                $rejectPayload['food_fulfillment_stage'] = 'cancelled';
+            }
+            if ($lockedOrder->payment_status === 'paid') {
+                $rejectPayload['payment_status'] = 'refund_pending';
+            }
 
-            // Restore inventory stock
-            \App\Services\StockManagerService::restoreOrderStock($order);
+            $lockedOrder->update($rejectPayload);
+
+            // Restore inventory stock & release coupon/commission cleanly
+            \App\Services\StockManagerService::restoreOrderStock($lockedOrder);
+            \App\Services\StockManagerService::releaseOrderCouponUsage($lockedOrder);
+            app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($lockedOrder, "Order rejected by vendor: {$reason}", auth()->id());
 
             OrderStatusLog::create([
-                'order_id' => $order->id,
+                'order_id' => $lockedOrder->id,
                 'from_status' => $oldStatus,
                 'to_status' => 'cancelled',
                 'actor_type' => 'vendor',
@@ -650,11 +706,23 @@ class OrderController extends Controller
             ]);
 
             DB::commit();
+            $order = $lockedOrder->fresh(['user']);
 
             // Notify customer
             try {
                 $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
+
+            if ($order->user_id) {
+                app(NotificationCenterService::class)->notifyUser(
+                    (int) $order->user_id,
+                    '❌',
+                    "Order #{$order->order_number} Cancelled",
+                    "{$vendor->shop_name} could not fulfill this order: {$reason}",
+                    route('orders.show', $order),
+                    'order_cancelled'
+                );
+            }
 
             return back()->with('success', "Order #{$order->order_number} has been rejected. Stock restored to inventory and customer refund initiated.");
         } catch (\Exception $e) {
@@ -883,31 +951,67 @@ class OrderController extends Controller
         $dist = $partner->distanceTo($vLat, $vLng);
         $fare = $partner->calculateDeliveryFee($dist);
 
-        $assignment = \App\Models\DeliveryAssignment::create([
-            'order_id' => $order->id,
-            'delivery_partner_id' => $partner->id,
-            'vendor_id' => $vendor->id,
-            'status' => 'assigned',
-            'pickup_distance_km' => $dist,
-            'payout_amount' => $fare,
-            'assigned_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($order, $vendor, $partner, $dist, $fare, $request) {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-        $oldStatus = $order->status;
-        $order->update([
-            'status' => 'processing',
-        ]);
+                if (in_array($lockedOrder->status, ['cancelled', 'delivered'], true)) {
+                    throw new \RuntimeException("Cannot assign a delivery partner to a {$lockedOrder->status} order.");
+                }
 
-        $distText = $dist !== null ? "{$dist} km away • " : '';
-        \App\Models\OrderStatusLog::create([
-            'order_id' => $order->id,
-            'from_status' => $oldStatus,
-            'to_status' => 'processing',
-            'actor_type' => 'vendor',
-            'actor_id' => auth()->id(),
-            'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$distText}₹{$fare} delivery fare). Pickup alert ring dispatched.",
-            'ip_address' => $request->ip(),
-        ]);
+                $inTransit = \App\Models\DeliveryAssignment::where('order_id', $lockedOrder->id)
+                    ->whereIn('status', ['accepted', 'picked_up'])
+                    ->lockForUpdate()
+                    ->exists();
+                if ($inTransit) {
+                    throw new \RuntimeException('A delivery partner has already accepted or picked up this order.');
+                }
+
+                // Close any earlier unaccepted offer cleanly before assigning new partner
+                \App\Models\DeliveryAssignment::where('order_id', $lockedOrder->id)
+                    ->where('status', 'assigned')
+                    ->update(['status' => 'cancelled']);
+
+                \App\Models\DeliveryAssignment::create([
+                    'order_id' => $lockedOrder->id,
+                    'delivery_partner_id' => $partner->id,
+                    'vendor_id' => $vendor->id,
+                    'status' => 'assigned',
+                    'pickup_distance_km' => $dist,
+                    'payout_amount' => $fare,
+                    'assigned_at' => now(),
+                ]);
+
+                $oldStatus = $lockedOrder->status;
+                $lockedOrder->update([
+                    'status' => 'processing',
+                ]);
+
+                $distText = $dist !== null ? "{$dist} km away • " : '';
+                \App\Models\OrderStatusLog::create([
+                    'order_id' => $lockedOrder->id,
+                    'from_status' => $oldStatus,
+                    'to_status' => 'processing',
+                    'actor_type' => 'vendor',
+                    'actor_id' => auth()->id(),
+                    'note' => "Assigned to Fast Delivery Partner {$partner->name} ({$distText}₹{$fare} delivery fare). Pickup alert ring dispatched.",
+                    'ip_address' => $request->ip(),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        if ($partner->user_id) {
+            app(NotificationCenterService::class)->notifyUser(
+                (int) $partner->user_id,
+                '🛵',
+                "New Delivery Assignment — #{$order->order_number}",
+                "{$vendor->shop_name} assigned a delivery pickup (Payout ₹" . number_format($fare, 2) . ").",
+                route('delivery.dashboard'),
+                'delivery_assignment'
+            );
+        }
 
         return response()->json([
             'success' => true,

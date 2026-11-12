@@ -3,10 +3,15 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\MessageController;
+use App\Models\Booking;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Coupon;
+use App\Models\CouponUsage;
+use App\Models\DeliveryAssignment;
+use App\Models\DeliveryPartner;
 use App\Models\Enquiry;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProjectContract;
 use App\Models\ProjectMilestone;
@@ -14,12 +19,15 @@ use App\Models\ProjectProposal;
 use App\Models\Quote;
 use App\Models\Review;
 use App\Models\Role;
+use App\Models\ServiceOrder;
 use App\Models\ServiceProject;
 use App\Models\Short;
 use App\Models\UsedThread;
+use App\Models\UsedTransaction;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorSetting;
+use App\Services\StockManagerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
@@ -696,5 +704,424 @@ class WorkflowContinuationPassTest extends TestCase
             ->post(route('enquiry.close', $enquiry->enquiry_number))
             ->assertSessionHas('success');
         $this->assertEquals('closed', $enquiry->fresh()->status);
+    }
+
+    public function test_workflow_11_booking_customer_cancellation_releases_slot_and_notifies_vendor(): void
+    {
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'home-repair'],
+            ['name' => 'Home Repair', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]
+        );
+
+        $serviceProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $servicesCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'booking',
+            'title' => 'Marble Floor Polish Visit',
+            'slug' => 'marble-floor-polish-visit',
+            'description' => 'Site visit and floor assessment.',
+            'base_price' => 150000,
+            'gst_rate' => 18,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+
+        $date = now()->addDays(2)->toDateString();
+
+        // Book slot
+        $bookRes = $this->actingAs($this->buyer)
+            ->post(route('services.book', $serviceProduct), [
+                'customer_name' => 'Riya Kapoor',
+                'customer_phone' => '9829011223',
+                'service_address' => '12 Civil Lines, Jaipur',
+                'booking_date' => $date,
+                'booking_slot' => '10:00 AM - 12:00 PM',
+            ]);
+        $bookRes->assertRedirect();
+
+        $booking = Booking::where('product_id', $serviceProduct->id)->firstOrFail();
+
+        // Non-owner signed-in buyer gets 403 trying to cancel another buyer's booking
+        $this->actingAs($this->secondBuyer)
+            ->post(route('bookings.cancel', $booking->booking_number))
+            ->assertStatus(403);
+
+        // Owner cancels booking -> vendor notified and slot released for next buyer
+        $this->actingAs($this->buyer)
+            ->post(route('bookings.cancel', $booking->booking_number), [
+                'cancelled_reason' => 'Rescheduling for next week',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertEquals('cancelled', $booking->fresh()->status);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $this->vendorUser->id,
+            'notifiable_type' => User::class,
+        ]);
+
+        // Another buyer can now book the freed slot
+        $rebook = $this->actingAs($this->secondBuyer)
+            ->post(route('services.book', $serviceProduct), [
+                'customer_name' => 'Arjun Verma',
+                'customer_phone' => '9829044556',
+                'service_address' => '25 Vaishali Nagar, Jaipur',
+                'booking_date' => $date,
+                'booking_slot' => '10:00 AM - 12:00 PM',
+            ]);
+        $rebook->assertRedirect();
+        $this->assertEquals(2, Booking::where('product_id', $serviceProduct->id)->count());
+    }
+
+    public function test_workflow_12_13_14_order_cancel_and_reject_restore_coupon_usage_and_flag_prepaid_refund(): void
+    {
+        $product = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'Marble Candle Stand',
+            'slug' => 'marble-candle-stand',
+            'description' => 'Hand-turned white marble candle holder.',
+            'base_price' => 100000,
+            'gst_rate' => 18,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+
+        $coupon = Coupon::create([
+            'vendor_id' => $this->vendor->id,
+            'code' => 'SAVE100TEST',
+            'type' => 'flat',
+            'value' => 10000,
+            'starts_at' => now()->subDay(),
+            'expires_at' => now()->addDays(5),
+            'is_active' => true,
+            'usage_count' => 2,
+            'total_limit' => 5,
+            'per_customer_limit' => 1,
+        ]);
+
+        // Order 1 cancelled by customer -> restores stock & coupon usage
+        $order1 = Order::create([
+            'order_number' => 'K71-CANC01',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'discount_amount' => 10000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 90000,
+            'coupon_id' => $coupon->id,
+            'coupon_code' => $coupon->code,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'pending',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        $order1->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 2,
+            'unit_price' => 50000,
+            'tax_amount' => 0,
+            'gst_rate' => 18,
+            'total_price' => 100000,
+            'snapshot' => ['title' => $product->title],
+        ]);
+        CouponUsage::create([
+            'coupon_id' => $coupon->id,
+            'user_id' => $this->buyer->id,
+            'order_id' => $order1->id,
+            'discount_amount' => 10000,
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->post(route('orders.cancel', $order1), ['reason' => 'Changed size'])
+            ->assertRedirect();
+
+        $this->assertEquals('cancelled', $order1->fresh()->status);
+        $this->assertEquals('refund_pending', $order1->fresh()->payment_status);
+        $this->assertEquals(12, $product->fresh()->total_stock);
+        $this->assertEquals(1, $coupon->fresh()->usage_count);
+        $this->assertDatabaseMissing('coupon_usages', ['order_id' => $order1->id]);
+
+        // Order 2 cancelled by vendor via updateStatus -> flags prepaid refund_pending, notifies buyer & restores remaining coupon usage
+        $order2 = Order::create([
+            'order_number' => 'K71-VEND02',
+            'user_id' => $this->secondBuyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'discount_amount' => 10000,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 90000,
+            'coupon_id' => $coupon->id,
+            'coupon_code' => $coupon->code,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'processing',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        $order2->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 100000,
+            'tax_amount' => 0,
+            'gst_rate' => 18,
+            'total_price' => 100000,
+            'snapshot' => ['title' => $product->title],
+        ]);
+        CouponUsage::create([
+            'coupon_id' => $coupon->id,
+            'user_id' => $this->secondBuyer->id,
+            'order_id' => $order2->id,
+            'discount_amount' => 10000,
+        ]);
+
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.orders.status', $order2), [
+                'status' => 'cancelled',
+                'cancel_reason' => 'Out of stock',
+            ])
+            ->assertRedirect();
+
+        $this->assertEquals('cancelled', $order2->fresh()->status);
+        $this->assertEquals('refund_pending', $order2->fresh()->payment_status);
+        $this->assertEquals(0, $coupon->fresh()->usage_count);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $this->secondBuyer->id,
+            'notifiable_type' => User::class,
+        ]);
+    }
+
+    public function test_workflow_15_delivery_assignment_state_machine_prevents_skip_and_double_delivery_inflation(): void
+    {
+        $fleetRole = Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Partner', 'guard_name' => 'web']);
+        $riderUser = User::factory()->create(['first_name' => 'Vikram', 'last_name' => 'Rider']);
+        $riderUser->roles()->syncWithoutDetaching([$fleetRole->id]);
+
+        $partner = DeliveryPartner::create([
+            'user_id' => $riderUser->id,
+            'name' => 'Vikram Rider',
+            'phone' => '9829077788',
+            'email' => $riderUser->email,
+            'vehicle_type' => 'bike',
+            'city' => 'Jaipur',
+            'state' => 'Rajasthan',
+            'is_online' => true,
+            'is_verified' => true,
+            'total_deliveries' => 0,
+        ]);
+
+        $this->vendor->update(['vendor_type' => 'food']);
+        $this->vendor->settings()->update(['is_restaurant' => true]);
+
+        $order = Order::create([
+            'order_number' => 'K71-FLT01',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 25000,
+            'discount_amount' => 0,
+            'shipping_amount' => 3000,
+            'tax_amount' => 0,
+            'total_amount' => 28000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'order_type' => 'food_delivery',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.orders.assign_partner', $order), [
+                'delivery_partner_id' => $partner->id,
+            ])
+            ->assertStatus(200);
+
+        $assignment = DeliveryAssignment::where('order_id', $order->id)->firstOrFail();
+
+        // Cannot skip from 'assigned' straight to 'picked_up' or 'delivered' (422)
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.pickup', $assignment))
+            ->assertStatus(422);
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.deliver', $assignment))
+            ->assertStatus(422);
+
+        // Linear transitions: assigned -> accepted -> picked_up -> delivered
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.accept', $assignment))
+            ->assertStatus(200);
+        $this->assertEquals('accepted', $assignment->fresh()->status);
+
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.pickup', $assignment))
+            ->assertStatus(200);
+        $this->assertEquals('shipped', $order->fresh()->status);
+        $this->assertEquals('out_for_delivery', $order->fresh()->food_fulfillment_stage);
+
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.deliver', $assignment))
+            ->assertStatus(200);
+        $this->assertEquals('delivered', $order->fresh()->status);
+        $this->assertEquals('delivered', $order->fresh()->food_fulfillment_stage);
+        $this->assertNotNull($order->fresh()->delivered_at);
+        $this->assertEquals(1, $partner->fresh()->total_deliveries);
+
+        // Replay click on deliver MUST fail with 422 and NOT double-increment total_deliveries
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.assignments.deliver', $assignment))
+            ->assertStatus(422);
+        $this->assertEquals(1, $partner->fresh()->total_deliveries);
+    }
+
+    public function test_workflow_16_17_18_19_cart_food_pause_shorts_guards_workspace_rating_and_used_delete_cleanup(): void
+    {
+        // Workflow 16: Cart update blocks paused food kitchen quantity increment
+        $foodCat = Category::firstOrCreate(['slug' => 'biryani'], ['name' => 'Biryani', 'vertical' => 'food', 'is_active' => true, 'sort_order' => 1]);
+        $this->vendor->update(['vendor_type' => 'food']);
+        $this->vendor->settings()->update(['is_restaurant' => true, 'is_accepting_food_orders' => true]);
+        $dish = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $foodCat->id,
+            'title' => 'Tawa Pulao Special',
+            'slug' => 'tawa-pulao-special',
+            'description' => 'Freshly tossed spice pulao.',
+            'vertical' => 'food',
+            'listing_type' => 'purchase',
+            'base_price' => 20000,
+            'total_stock' => 20,
+            'gst_rate' => 5,
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->postJson('/cart/add', ['product_id' => $dish->id, 'quantity' => 1])
+            ->assertStatus(200);
+
+        $cartItem = Cart::where('user_id', $this->buyer->id)->first()->items()->first();
+        $this->vendor->settings()->update(['is_accepting_food_orders' => false]);
+
+        $this->actingAs($this->buyer)
+            ->putJson(route('cart.update', $cartItem), ['quantity' => 2])
+            ->assertStatus(422);
+
+        // Workflow 17: Shorts comment & wishlist reject unavailable entities
+        $this->vendor->settings()->update(['is_accepting_food_orders' => true]);
+        $hiddenShort = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Pending Moderation Reel',
+            'slug' => 'pending-moderation-reel',
+            'description' => 'Draft reel.',
+            'video_url' => 'https://example.com/videos/draft.mp4',
+            'status' => 'draft',
+        ]);
+        $this->actingAs($this->buyer)
+            ->postJson('/shorts/ajax', [
+                'action' => 'zsu_post_comment',
+                'short_id' => $hiddenShort->id,
+                'content' => 'Nice!',
+            ])
+            ->assertStatus(404);
+        $this->actingAs($this->buyer)
+            ->postJson('/shorts/ajax', [
+                'action' => 'zsu_wishlist_toggle',
+                'product_id' => 999999,
+            ])
+            ->assertStatus(404);
+
+        // Workflow 18: ServiceWorkspace approveOrder updates product review_count & avg_rating cache
+        $svcCat = Category::firstOrCreate(['slug' => 'design-svc'], ['name' => 'Design Services', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+        $gig = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'service',
+            'title' => 'Brand Identity Design',
+            'slug' => 'brand-identity-design',
+            'description' => 'Logo & style guide design.',
+            'base_price' => 250000,
+            'gst_rate' => 18,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+        $svcOrder = ServiceOrder::create([
+            'order_number' => 'SO-CACHE01',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $gig->id,
+            'package_tier' => 'basic',
+            'package_title' => 'Basic Identity',
+            'amount' => 250000,
+            'delivery_days' => 3,
+            'due_at' => now()->addDays(3),
+            'revisions_allowed' => 2,
+            'revisions_used' => 0,
+            'status' => 'delivered',
+            'requirements' => 'Need minimal luxury identity.',
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->post(route('services.workspace.approve', $svcOrder), [
+                'rating' => 5,
+                'review_text' => 'Super crisp brand kit!',
+            ])
+            ->assertSessionHas('success');
+
+        $this->assertEquals(1, $gig->fresh()->review_count);
+        $this->assertEquals(5.0, (float) $gig->fresh()->avg_rating);
+
+        // Workflow 19: Used listing destroy closes pending offers, reserved transactions, and threads cleanly
+        $usedCat = Category::firstOrCreate(['slug' => 'used-cameras'], ['name' => 'Cameras', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $usedCamera = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->vendorUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'contact_seller',
+            'title' => 'Fujifilm X-T30 Camera Body',
+            'slug' => 'fujifilm-xt30-body',
+            'description' => 'Clean shutter count under 4k.',
+            'base_price' => 4500000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'is_negotiable' => true,
+        ]);
+
+        $offerRes = $this->actingAs($this->buyer)
+            ->postJson(route('offers.store', $usedCamera), ['offer_amount' => 42000]);
+        $offerId = $offerRes->json('offer_id');
+
+        $tx = UsedTransaction::create([
+            'transaction_number' => 'K71U-DEL001',
+            'product_id' => $usedCamera->id,
+            'seller_id' => $this->vendorUser->id,
+            'buyer_id' => $this->buyer->id,
+            'agreed_price' => 4200000,
+            'quantity' => 1,
+            'status' => 'reserved',
+            'reserved_at' => now(),
+        ]);
+
+        // Self-reserve attempt blocked
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('used.status', $usedCamera), [
+                'action' => 'reserve',
+                'buyer_id' => $this->vendorUser->id,
+            ])
+            ->assertStatus(422);
+
+        // Delete listing -> offer closed, reserved transaction cancelled, thread locked
+        $this->actingAs($this->vendorUser)
+            ->deleteJson(route('used.delete', $usedCamera))
+            ->assertStatus(200);
+
+        $this->assertEquals('rejected', \App\Models\Offer::find($offerId)->status);
+        $this->assertEquals('cancelled', $tx->fresh()->status);
+        $this->assertEquals('locked', UsedThread::where('product_id', $usedCamera->id)->value('status'));
     }
 }
