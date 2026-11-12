@@ -21,7 +21,7 @@
     $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode(!empty($isServiceWebsite) ? "Hi {$storeName}, I visited your portfolio site." : "Namaste {$storeName}! I am viewing your boutique on K71.") : null;
 
     $searchQuery = request('search', '');
-    $isDarkPreset = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium']) || !empty($themeCfg['dark_mode']);
+    $isDarkPreset = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium', 'kinetic']) || !empty($themeCfg['dark_mode']);
 @endphp
 
 <!-- FLOATING LIQUID GLASS VENDOR STOREFRONT HEADER CAPSULE (ULTRA-RESPONSIVE) -->

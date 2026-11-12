@@ -3,8 +3,8 @@
     "short_name": "K71",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#09090b",
-    "theme_color": "#18181b",
+    "background_color": "#0D0D0D",
+    "theme_color": "#0D0D0D",
     "description": "Curated Multi-Vendor Marketplace",
     "icons": [
         {

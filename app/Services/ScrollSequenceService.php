@@ -10,6 +10,208 @@ class ScrollSequenceService
     public const MAX_FRAMES = 360;
     public const MAX_ZIP_UNCOMPRESSED_BYTES = 157286400; // 150 MB safety cap
 
+    public static function vendorRelativeDir(int $vendorId): string
+    {
+        return 'vendors/' . $vendorId . '/scroll-frames';
+    }
+
+    /**
+     * Resolve per-vendor scroll-scrubbed JPG frame sequence for the Kinetic storefront preset.
+     */
+    public static function resolveVendorSequence(int|\App\Models\Vendor $vendor, array $config = []): array
+    {
+        $vendorId = $vendor instanceof \App\Models\Vendor ? (int) $vendor->id : (int) $vendor;
+        $relDir = self::vendorRelativeDir($vendorId);
+        $uploadedStorageDir = storage_path('app/public/' . $relDir);
+        $uploadedPublicDir = public_path('storage/' . $relDir);
+
+        $uploadedFiles = self::scanImageFiles($uploadedStorageDir);
+        if (empty($uploadedFiles)) {
+            $uploadedFiles = self::scanImageFiles($uploadedPublicDir);
+        } elseif (!is_link(public_path('storage'))) {
+            self::syncDirectoryMirror($uploadedStorageDir, $uploadedPublicDir);
+        }
+
+        $videoUrl = trim((string) ($config['scroll_sequence']['video_url'] ?? ''));
+
+        if (!empty($uploadedFiles)) {
+            return [
+                'source' => 'uploaded',
+                'label' => 'Storefront JPG Motion Frames',
+                'directory' => '/storage/' . $relDir,
+                'count' => count($uploadedFiles),
+                'frames' => array_map(fn (string $f) => '/storage/' . $relDir . '/' . rawurlencode($f), $uploadedFiles),
+                'video_url' => $videoUrl ?: null,
+            ];
+        }
+
+        if ($videoUrl !== '') {
+            return [
+                'source' => 'video',
+                'label' => 'Storefront Motion Video',
+                'directory' => null,
+                'count' => 0,
+                'frames' => [],
+                'video_url' => $videoUrl,
+            ];
+        }
+
+        return [
+            'source' => 'fallback',
+            'label' => 'Interactive 3D Studio Preview (Upload any video to auto-generate JPG frames)',
+            'directory' => null,
+            'count' => 0,
+            'frames' => [],
+            'video_url' => null,
+        ];
+    }
+
+    /**
+     * Store a chunked batch of vendor scroll frames, always converting/writing genuine .jpg files.
+     *
+     * @param  array<int, UploadedFile>  $files
+     */
+    public static function storeVendorFrameBatch(\App\Models\Vendor $vendor, array $files, int $startIndex = 1, bool $resetBefore = false, array $config = []): array
+    {
+        if ($resetBefore) {
+            self::clearVendorFrames($vendor);
+        }
+
+        $relDir = self::vendorRelativeDir((int) $vendor->id);
+        $storageDir = storage_path('app/public/' . $relDir);
+        $publicDir = public_path('storage/' . $relDir);
+        self::ensureDirectory($storageDir);
+        if (!is_link(public_path('storage'))) {
+            self::ensureDirectory($publicDir);
+        }
+
+        $written = 0;
+        $seqIndex = max(1, $startIndex);
+
+        foreach ($files as $file) {
+            if (!$file instanceof UploadedFile || !$file->isValid()) {
+                continue;
+            }
+            if ($seqIndex > self::MAX_FRAMES) {
+                break;
+            }
+
+            $realPath = $file->getRealPath();
+            $imageInfo = $realPath ? @getimagesize($realPath) : false;
+            if ($imageInfo === false) {
+                continue;
+            }
+
+            $targetName = sprintf('frame_%05d.jpg', $seqIndex);
+            $destPath = $storageDir . DIRECTORY_SEPARATOR . $targetName;
+            $saved = false;
+
+            if ($imageInfo[2] === IMAGETYPE_JPEG) {
+                $saved = @copy($realPath, $destPath);
+            } elseif (function_exists('imagecreatefromstring') && function_exists('imagejpeg')) {
+                $bytes = @file_get_contents($realPath);
+                $gd = $bytes !== false ? @imagecreatefromstring($bytes) : false;
+                if ($gd) {
+                    $w = imagesx($gd);
+                    $h = imagesy($gd);
+                    $canvas = imagecreatetruecolor($w, $h);
+                    $black = imagecolorallocate($canvas, 0, 0, 0);
+                    imagefill($canvas, 0, 0, $black);
+                    imagecopy($canvas, $gd, 0, 0, 0, 0, $w, $h);
+                    $saved = @imagejpeg($canvas, $destPath, 86);
+                    imagedestroy($canvas);
+                    imagedestroy($gd);
+                }
+            }
+
+            if ($saved) {
+                if (!is_link(public_path('storage')) && is_dir($publicDir)) {
+                    @copy($destPath, $publicDir . DIRECTORY_SEPARATOR . $targetName);
+                }
+                $written++;
+                $seqIndex++;
+            }
+        }
+
+        return [
+            'written' => $written,
+            'sequence' => self::resolveVendorSequence($vendor, $config),
+        ];
+    }
+
+    /**
+     * Store uploaded vendor video and attempt server-side ffmpeg JPG frame extraction when available.
+     */
+    public static function extractVendorVideoFrames(\App\Models\Vendor $vendor, UploadedFile $videoFile, int $targetFrames = 72): array
+    {
+        $videoRelPath = $videoFile->store('vendors/' . $vendor->id . '/scroll-video', 'public');
+        k71_sync_public_storage($videoRelPath);
+        $videoUrl = '/storage/' . $videoRelPath;
+        $videoFullPath = storage_path('app/public/' . $videoRelPath);
+
+        $extracted = false;
+        if (function_exists('exec') && is_file($videoFullPath)) {
+            $ffmpegCheck = [];
+            $code = 1;
+            @exec('ffmpeg -version 2>&1', $ffmpegCheck, $code);
+            if ($code === 0) {
+                self::clearVendorFrames($vendor);
+                $relDir = self::vendorRelativeDir((int) $vendor->id);
+                $storageDir = storage_path('app/public/' . $relDir);
+                $publicDir = public_path('storage/' . $relDir);
+                self::ensureDirectory($storageDir);
+                if (!is_link(public_path('storage'))) {
+                    self::ensureDirectory($publicDir);
+                }
+
+                $targetFrames = max(12, min(140, $targetFrames));
+                $pattern = $storageDir . DIRECTORY_SEPARATOR . 'frame_%05d.jpg';
+                $cmd = sprintf(
+                    'ffmpeg -y -i %s -vf "scale=1280:-2:force_original_aspect_ratio=decrease" -frames:v %d -q:v 4 %s 2>&1',
+                    escapeshellarg($videoFullPath),
+                    $targetFrames,
+                    escapeshellarg($pattern)
+                );
+                $out = [];
+                $exCode = 1;
+                @exec($cmd, $out, $exCode);
+                if ($exCode === 0 && !empty(self::scanImageFiles($storageDir))) {
+                    self::syncDirectoryMirror($storageDir, $publicDir);
+                    $extracted = true;
+                }
+            }
+        }
+
+        return [
+            'video_url' => $videoUrl,
+            'extracted' => $extracted,
+            'sequence' => self::resolveVendorSequence($vendor, ['scroll_sequence' => ['video_url' => $videoUrl]]),
+        ];
+    }
+
+    /**
+     * Clear only a single vendor's uploaded JPG scroll frames.
+     */
+    public static function clearVendorFrames(\App\Models\Vendor $vendor): void
+    {
+        $relDir = self::vendorRelativeDir((int) $vendor->id);
+        foreach ([storage_path('app/public/' . $relDir), public_path('storage/' . $relDir)] as $dir) {
+            if (!is_dir($dir)) {
+                continue;
+            }
+            $items = @scandir($dir) ?: [];
+            foreach ($items as $item) {
+                if ($item === '.' || $item === '..') {
+                    continue;
+                }
+                $full = $dir . DIRECTORY_SEPARATOR . $item;
+                if (is_file($full)) {
+                    @unlink($full);
+                }
+            }
+        }
+    }
+
     /**
      * Discover and sort active scroll-scrubbed image frames.
      * Priority:

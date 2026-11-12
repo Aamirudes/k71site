@@ -1,5 +1,5 @@
 @php
-    $isDarkTheme = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium']) || !empty($theme['dark_mode']);
+    $isDarkTheme = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium', 'kinetic']) || !empty($theme['dark_mode']);
 @endphp
 
 <div id="k71-glass-cart-popup" 

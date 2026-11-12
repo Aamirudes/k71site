@@ -175,8 +175,8 @@ class ServiceWebsitePresenter
         $providerModeLabel = $providerMode === 'agency' ? 'Creative & Service Agency' : 'Independent Specialist';
 
         $displayName = $brandCfg['store_name'] ?? $vendor->shop_name;
-        $headline = $serviceSite['hero_headline'] ?? $vendor->headline ?? $vendor->tagline ?? $brandCfg['tagline'] ?? $displayName;
-        $subtitle = $serviceSite['hero_subtitle'] ?? $heroCfg['subtitle'] ?? $vendor->tagline ?? $brandCfg['tagline'] ?? '';
+        $headline = ($serviceSite['hero_headline'] ?? null) ?: ($vendor->headline ?: ($vendor->tagline ?: ($brandCfg['tagline'] ?? $displayName)));
+        $subtitle = ($serviceSite['hero_subtitle'] ?? null) ?: ($heroCfg['subtitle'] ?? null) ?: ($vendor->tagline ?: ($brandCfg['tagline'] ?? ''));
         $bio = $vendor->description ?: ($brandCfg['description'] ?? '');
 
         $initials = collect(explode(' ', trim($displayName)))
@@ -320,7 +320,7 @@ class ServiceWebsitePresenter
 
     public static function presetTokens(string $presetKey, array $theme = []): array
     {
-        $isDarkPreset = in_array($presetKey, ['noire', 'orbit', 'nexus', 'elysium'], true) || !empty($theme['dark_mode']);
+        $isDarkPreset = in_array($presetKey, ['noire', 'orbit', 'nexus', 'elysium', 'kinetic'], true) || !empty($theme['dark_mode']);
 
         $tokens = match ($presetKey) {
             'noire' => [
@@ -448,6 +448,20 @@ class ServiceWebsitePresenter
                 'btn_primary' => 'bg-black text-white hover:bg-[#e11d48] rounded-none font-mono font-bold uppercase tracking-widest',
                 'btn_secondary' => 'bg-white border-2 border-black text-black hover:bg-black hover:text-white rounded-none font-mono font-bold uppercase tracking-widest',
                 'input' => 'bg-white border-2 border-black text-black placeholder-zinc-400 rounded-none focus:border-[#e11d48] focus:ring-0',
+            ],
+            'kinetic' => [
+                'dark' => true,
+                'radius' => 'rounded-3xl',
+                'card' => 'bg-[#121216]/95 border border-white/12 ring-1 ring-[#ECD2F3]/15 text-[#EFE9F2] rounded-3xl shadow-[0_24px_70px_rgba(0,0,0,0.75)]',
+                'card_hover' => 'hover:border-[#ECD2F3]/50 hover:shadow-[0_28px_80px_rgba(236,210,243,0.16)] transition-all duration-300',
+                'surface_alt' => 'bg-[#08080b] border border-white/10 rounded-2xl',
+                'muted' => 'text-[#EFE9F2]/68',
+                'heading' => 'font-heading font-light uppercase tracking-tight text-white',
+                'pill' => 'bg-[#ECD2F3]/14 border border-[#ECD2F3]/30 text-[#FFCDFF] rounded-full',
+                'accent_badge' => 'bg-[#ECD2F3] text-[#1A1018] font-bold rounded-full',
+                'btn_primary' => 'bg-[#ECD2F3] hover:bg-[#F6E3FB] text-[#1A1018] rounded-full font-semibold shadow-[0_10px_28px_rgba(236,210,243,0.28)]',
+                'btn_secondary' => 'bg-white/10 border border-white/18 text-[#EFE9F2] hover:bg-white/18 rounded-full font-semibold',
+                'input' => 'bg-[#0b0b0f] border-white/15 text-[#EFE9F2] placeholder-white/40 rounded-2xl focus:border-[#ECD2F3] focus:ring-1 focus:ring-[#ECD2F3]',
             ],
             default => [
                 'dark' => false,

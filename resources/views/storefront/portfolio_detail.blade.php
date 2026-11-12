@@ -4,11 +4,13 @@
     $brand = $config['brand'] ?? [];
     $rawKey = strtolower(trim((string) ($config['preset'] ?? 'velora')));
     $presetKey = app(\App\Services\Storefront\StorefrontPresetService::class)->normalizePresetKey($rawKey);
-    $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium'], true) || !empty($theme['dark_mode']);
+    $isKineticPreset = $presetKey === 'kinetic';
+    $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium', 'kinetic'], true) || !empty($theme['dark_mode']);
     $headingFont = $theme['font_heading'] ?? 'Playfair Display';
     $bodyFont = $theme['font_body'] ?? 'Inter';
-    $fontsQuery = str_replace(' ', '+', $headingFont) . ':wght@400;600;700;800;900';
-    if ($bodyFont !== $headingFont) {
+    $headingWeights = $headingFont === 'Cormorant Garamond' ? '300;400;500;600;700' : '400;600;700;800;900';
+    $fontsQuery = str_replace(' ', '+', $headingFont) . ':wght@' . $headingWeights;
+    if ($bodyFont !== $headingFont && $bodyFont !== 'Switzer') {
         $fontsQuery .= '&family=' . str_replace(' ', '+', $bodyFont) . ':wght@300;400;500;600;700';
     }
     $providerName = $brand['store_name'] ?? $vendor->shop_name;
@@ -27,16 +29,20 @@
 >
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&display=swap" rel="stylesheet">
+    @if($isKineticPreset)
+        <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700,800&display=swap">
+    @endif
+    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --sf-primary: {{ $theme['primary_color'] ?? ($isDarkPreset ? '#ffffff' : '#18181b') }};
+            --sf-primary: {{ $theme['primary_color'] ?? ($isKineticPreset ? '#EFE9F2' : ($isDarkPreset ? '#ffffff' : '#18181b')) }};
             --sf-secondary: {{ $theme['secondary_color'] ?? ($isDarkPreset ? '#94a3b8' : '#71717a') }};
-            --sf-accent: {{ $theme['accent_color'] ?? ($isDarkPreset ? '#38bdf8' : '#c59b27') }};
-            --sf-bg: {{ $isDarkPreset ? '#050711' : ($theme['bg_color'] ?? '#fafaf9') }};
-            --sf-surface: {{ $isDarkPreset ? '#0c1228' : ($theme['surface_color'] ?? '#ffffff') }};
-            --sf-text: {{ $isDarkPreset ? '#f8fafc' : ($theme['text_color'] ?? '#18181b') }};
+            --sf-accent: {{ $theme['accent_color'] ?? ($isKineticPreset ? '#ECD2F3' : ($isDarkPreset ? '#38bdf8' : '#c59b27')) }};
+            --sf-bg: {{ $isKineticPreset ? '#000000' : ($isDarkPreset ? '#050711' : ($theme['bg_color'] ?? '#fafaf9')) }};
+            --sf-surface: {{ $isKineticPreset ? '#121216' : ($isDarkPreset ? '#0c1228' : ($theme['surface_color'] ?? '#ffffff')) }};
+            --sf-text: {{ $isKineticPreset ? '#EFE9F2' : ($isDarkPreset ? '#f8fafc' : ($theme['text_color'] ?? '#18181b')) }};
             --sf-font-heading: '{{ $headingFont }}', serif, sans-serif;
             --sf-font-body: '{{ $bodyFont }}', system-ui, -apple-system, sans-serif;
         }

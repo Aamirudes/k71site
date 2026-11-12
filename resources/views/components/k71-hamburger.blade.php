@@ -90,8 +90,8 @@
         <!-- Drawer Header -->
         <div class="px-5 py-4 border-b {{ $grailTheme ? 'border-white/10 bg-black/70' : 'border-zinc-100 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/80' }} flex items-center justify-between backdrop-blur-md">
             <div class="flex items-center gap-2.5">
-                <div class="h-8 w-8 flex items-center justify-center shrink-0 {{ $grailTheme ? 'rounded-xl bg-[#ECD2F3] p-1 shadow-[0_0_16px_rgba(236,210,243,0.22)]' : '' }}">
-                    <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
+                <div class="h-8 w-8 flex items-center justify-center shrink-0 rounded-xl overflow-hidden {{ $grailTheme ? 'bg-[#0D0D0D] ring-1 ring-[#ECD2F3]/45 shadow-[0_0_16px_rgba(236,210,243,0.22)]' : 'bg-[#0D0D0D] ring-1 ring-black/15' }}">
+                    <img src="{{ asset('images/k71-logo.png') }}?v=3" alt="K71" class="w-full h-full object-cover">
                 </div>
                 <div class="flex items-baseline gap-1.5 leading-none">
                     <span class="font-sans text-xl font-black tracking-tight {{ $grailTheme ? 'text-white' : 'text-zinc-950 dark:text-white' }}">

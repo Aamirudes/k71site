@@ -284,7 +284,8 @@
         }
         .glass-user-avatar-wrap:hover .glass-avatar-camera-badge {
             transform: scale(1.15);
-            background: #4f46e5;
+            background: #ECD2F3;
+            color: #1A1018;
         }
         .glass-avatar-camera-badge {
             position: absolute;
@@ -439,7 +440,7 @@
 
         .glass-search-input:focus {
             background: var(--glass-card);
-            border-color: #0600c2;
+            border-color: #ECD2F3;
             box-shadow: 0 0 0 3px var(--glass-glow);
         }
 
@@ -509,16 +510,16 @@
             right: 0px;
             width: 11px;
             height: 11px;
-            background: var(--primary, #4338CA);
+            background: var(--primary, #1A1018);
             border: 2px solid #FFFFFF;
             border-radius: 50%;
-            box-shadow: 0 0 8px rgba(67, 56, 202, 0.6);
+            box-shadow: 0 0 8px rgba(26, 16, 24, 0.45);
         }
 
         .dark .glass-unread-dot {
-            background: var(--primary, #6366F1);
-            border-color: #0E172A;
-            box-shadow: 0 0 8px rgba(99, 102, 241, 0.7);
+            background: var(--primary, #ECD2F3);
+            border-color: #0D0D0D;
+            box-shadow: 0 0 8px rgba(236, 210, 243, 0.7);
         }
 
         @keyframes instagramRedDotPing {
@@ -939,7 +940,7 @@
         }
 
         html:not(.dark) .glass-msg-row.sent .glass-msg-bubble {
-            background: linear-gradient(135deg, #0600c2 0%, #4338ca 60%, #6366f1 100%) !important;
+            background: linear-gradient(135deg, #1A1018 0%, #2E1D2B 100%) !important;
             color: #ffffff !important;
             -webkit-text-fill-color: #ffffff !important;
             border-bottom-right-radius: 4px;
@@ -1035,7 +1036,7 @@
             padding: 8px 18px;
             background: var(--glass-surface);
             border-top: 1px solid var(--glass-border);
-            border-left: 3px solid #6366f1;
+            border-left: 3px solid #623562;
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             z-index: 41;
@@ -1060,7 +1061,10 @@
         .glass-reply-title {
             font-size: 11px;
             font-weight: 800;
-            color: #6366f1;
+            color: #623562;
+        }
+        .dark .glass-reply-title {
+            color: #ECD2F3;
         }
         .glass-reply-body {
             font-size: 11px;
@@ -1089,7 +1093,7 @@
             padding: 5px 10px;
             margin-bottom: 5px;
             background: rgba(0, 0, 0, 0.06);
-            border-left: 3px solid #6366f1;
+            border-left: 3px solid #623562;
             border-radius: 8px;
             font-size: 11px;
             max-width: 260px;
@@ -1099,10 +1103,13 @@
         }
         .glass-reply-quote-author {
             font-weight: 800;
-            color: #6366f1;
+            color: #623562;
             display: block;
             font-size: 10px;
             margin-bottom: 2px;
+        }
+        .dark .glass-reply-quote-author {
+            color: #1A1018;
         }
         .glass-reply-quote-text {
             opacity: 0.85;
@@ -1485,7 +1492,7 @@
         .typing-dot:nth-child(3) { animation-delay: 0s; }
         @keyframes igTypingBounce {
             0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
-            40% { transform: translateY(-7px); opacity: 1; background: #0095f6; box-shadow: 0 2px 6px rgba(0, 149, 246, 0.4); }
+            40% { transform: translateY(-7px); opacity: 1; background: #ECD2F3; box-shadow: 0 2px 6px rgba(236, 210, 243, 0.4); }
         }
 
         /* Instagram Voice Message Elements (Exact Parity) */
@@ -1507,8 +1514,8 @@
             -webkit-tap-highlight-color: transparent;
         }
         .glass-composer-voice-btn:hover {
-            color: #0095f6;
-            background: rgba(0, 149, 246, 0.08);
+            color: #623562;
+            background: rgba(236, 210, 243, 0.22);
             transform: scale(1.08);
         }
         .glass-composer-voice-btn:active {
@@ -1607,20 +1614,21 @@
             height: 36px;
             border-radius: 50%;
             border: none;
-            background: #0095f6;
-            color: #ffffff;
+            background: #1A1018;
+            color: #ECD2F3;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(0, 149, 246, 0.4);
+            box-shadow: 0 2px 8px rgba(26, 16, 24, 0.35);
             transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
             flex-shrink: 0;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
         .glass-voice-confirm-btn:hover {
-            background: #0081d6;
+            background: #623562;
+            color: #ffffff;
             transform: scale(1.08);
         }
         .glass-voice-confirm-btn:active {
@@ -1646,9 +1654,13 @@
             transform: scale(0.985);
         }
         .glass-voice-player.sent {
-            background: linear-gradient(135deg, #0095f6 0%, #0077e6 100%);
+            background: linear-gradient(135deg, #1A1018 0%, #2E1D2B 100%);
             color: #ffffff;
             border-bottom-right-radius: 6px;
+        }
+        .dark .glass-voice-player.sent {
+            background: linear-gradient(135deg, #ECD2F3 0%, #FFCDFF 100%);
+            color: #000000;
         }
         .glass-voice-player.received {
             background: var(--color-bubble-received);
@@ -1669,14 +1681,22 @@
             transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .glass-voice-player.sent .glass-voice-play-btn {
-            background: #ffffff;
-            color: #0095f6;
+            background: #ECD2F3;
+            color: #1A1018;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         }
+        .dark .glass-voice-player.sent .glass-voice-play-btn {
+            background: #1A1018;
+            color: #ECD2F3;
+        }
         .glass-voice-player.received .glass-voice-play-btn {
-            background: #0095f6;
-            color: #ffffff;
-            box-shadow: 0 2px 6px rgba(0, 149, 246, 0.25);
+            background: #1A1018;
+            color: #ECD2F3;
+            box-shadow: 0 2px 6px rgba(26, 16, 24, 0.25);
+        }
+        .dark .glass-voice-player.received .glass-voice-play-btn {
+            background: #ECD2F3;
+            color: #1A1018;
         }
         .glass-voice-play-btn:hover {
             transform: scale(1.08);
@@ -1750,7 +1770,10 @@
             background: #ffffff;
         }
         .glass-voice-player.received .glass-voice-progress-fill {
-            background: #0095f6;
+            background: #623562;
+        }
+        .dark .glass-voice-player.received .glass-voice-progress-fill {
+            background: #ECD2F3;
         }
         .glass-voice-duration {
             font-size: 11.5px;
@@ -1760,6 +1783,9 @@
         }
         .glass-voice-player.sent .glass-voice-duration {
             color: rgba(255, 255, 255, 0.9);
+        }
+        .dark .glass-voice-player.sent .glass-voice-duration {
+            color: #000000;
         }
         .glass-voice-player.received .glass-voice-duration {
             color: var(--color-text-muted);
@@ -1914,16 +1940,16 @@
             text-align: center;
         }
         .glass-action-sheet-btn.edit {
-            background: rgba(99, 102, 241, 0.12);
-            color: #4f46e5;
+            background: rgba(236, 210, 243, 0.2);
+            color: #1A1018;
         }
         .dark .glass-action-sheet-btn.edit {
-            background: rgba(99, 102, 241, 0.2);
-            color: #818cf8;
+            background: rgba(236, 210, 243, 0.16);
+            color: #ECD2F3;
         }
         .glass-action-sheet-btn.edit:hover {
-            background: #4f46e5;
-            color: #ffffff;
+            background: #ECD2F3;
+            color: #1A1018;
         }
         .glass-action-sheet-btn.danger {
             background: rgba(239, 68, 68, 0.1);
@@ -2327,7 +2353,7 @@
             }
             .glass-composer-send-btn {
                 background: transparent !important;
-                color: #0095f6 !important;
+                color: #623562 !important;
                 border: none !important;
                 font-size: 14px !important;
                 font-weight: 700 !important;
@@ -2380,6 +2406,7 @@
                         <div class="glass-user-avatar-wrap" id="sidebarAvatarBtn" title="Click to upload profile photo">
                             <img src="{{ format_user_avatar($uAvatar, $uName) }}" 
                                  alt="{{ $uHandle }}" 
+                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}';"
                                  class="glass-user-avatar my-user-avatar"
                                  id="mySidebarAvatar">
                             <span class="glass-avatar-camera-badge" title="Change photo">
@@ -2607,11 +2634,11 @@
                     </div>
 
                     <!-- Instagram-Style Editing Message Preview Bar -->
-                    <div id="glassEditingBar" class="glass-reply-bar" style="display: none; background: rgba(99, 102, 241, 0.08); border-top: 1px solid rgba(99, 102, 241, 0.25);">
+                    <div id="glassEditingBar" class="glass-reply-bar" style="display: none; background: rgba(236, 210, 243, 0.12); border-top: 1px solid rgba(236, 210, 243, 0.3);">
                         <div class="glass-reply-left">
-                            <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            <svg class="w-4 h-4 text-[#C9A24A] dark:text-[#ECD2F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             <div class="glass-reply-text-col">
-                                <span class="glass-reply-title" style="color: #6366f1; font-weight: 700;">Editing message</span>
+                                <span class="glass-reply-title" style="color: #ECD2F3; font-weight: 700;">Editing message</span>
                                 <span class="glass-reply-body" id="glassEditingText">Original message</span>
                             </div>
                         </div>
@@ -2963,7 +2990,7 @@
                 const lastMsgTime = (c.last_message && c.last_message.time_formatted) ? c.last_message.time_formatted : '';
                 const recUsername = (c.recipient && c.recipient.username) ? c.recipient.username : 'user';
                 const recName = (c.recipient && c.recipient.name) ? c.recipient.name : 'User';
-                const recAvatar = (c.recipient && c.recipient.profile_pic) ? c.recipient.profile_pic : 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                const recAvatar = (c.recipient && c.recipient.profile_pic) ? c.recipient.profile_pic : 'https://ui-avatars.com/api/?name=User&background=1A1018&color=ECD2F3';
                 const recId = (c.recipient && c.recipient.id) ? c.recipient.id : 0;
 
                 return `
@@ -2980,7 +3007,7 @@
                             </div>
                             <div class="glass-conv-last-msg ${isUnread ? 'unread-bold' : ''}">
                                 ${c.is_typing 
-                                    ? '<span style="color:#0095f6; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#0095f6; animation:igTypingBounce 1s infinite;"></span> typing...</span>'
+                                    ? '<span style="color:#ECD2F3; font-weight:700; display:inline-flex; align-items:center; gap:4px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:#ECD2F3; animation:igTypingBounce 1s infinite;"></span> typing...</span>'
                                     : `<span>${escapeHtml(prefix + lastMsgText)}</span>`}
                             </div>
                         </div>
@@ -3052,7 +3079,7 @@
                 if (messagesCache.length > 0) {
                     oldestChatMsgId = messagesCache[0].id;
                 }
-                headerAvatar.src = cached.recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                headerAvatar.src = cached.recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=1A1018&color=ECD2F3';
                 headerAvatar.alt = cached.recipient.name || 'User';
                 headerUsername.textContent = '@' + (cached.recipient.username || 'user');
                 renderMessages(messagesCache, cached.recipient);
@@ -3105,13 +3132,13 @@
 
         function showTypingIndicator() {
             if (headerStatus) {
-                headerStatus.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span><span style="color:#0095f6; font-weight:700;">typing...</span>';
+                headerStatus.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse mr-1"></span><span style="color:#ECD2F3; font-weight:700;">typing...</span>';
             }
             let existingTyping = document.getElementById('glassTypingRow');
             if (!existingTyping && chatFeed) {
                 const recipientAvatar = (currentRecipientData && currentRecipientData.profile_pic)
                     ? currentRecipientData.profile_pic
-                    : 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                    : 'https://ui-avatars.com/api/?name=User&background=1A1018&color=ECD2F3';
                 const typingEl = document.createElement('div');
                 typingEl.id = 'glassTypingRow';
                 typingEl.className = 'glass-typing-row';
@@ -3211,7 +3238,7 @@
                     activeConversationStatus = convInfo.status || 'accepted';
 
                     // Update Active Chat Header with Online Indicator
-                    headerAvatar.src = recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                    headerAvatar.src = recipient.profile_pic || 'https://ui-avatars.com/api/?name=User&background=1A1018&color=ECD2F3';
                     headerAvatar.alt = recipient.name || 'User';
                     headerUsername.textContent = '@' + (recipient.username || 'user');
 
@@ -3295,7 +3322,7 @@
         function renderMessages(messages, recipient) {
             const recipientAvatar = (recipient && recipient.profile_pic) 
                 ? recipient.profile_pic 
-                : ('https://ui-avatars.com/api/?name=' + encodeURIComponent((recipient && recipient.name) ? recipient.name : 'User') + '&background=0095F6&color=fff');
+                : ('https://ui-avatars.com/api/?name=' + encodeURIComponent((recipient && recipient.name) ? recipient.name : 'User') + '&background=1A1018&color=ECD2F3');
 
             if (messages.length === 0) {
                 chatFeed.innerHTML = `
@@ -4356,7 +4383,7 @@
                 matchedBubbles.forEach(b => {
                     if (b.textContent.toLowerCase().includes(terms)) {
                         b.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        b.style.outline = '2px solid #0095f6';
+                        b.style.outline = '2px solid #ECD2F3';
                         b.style.borderRadius = '8px';
                         setTimeout(() => { b.style.outline = ''; }, 3000);
                         found = true;
@@ -4549,7 +4576,7 @@
 
             const avatarEl = document.getElementById('profileModalAvatar');
             if (avatarEl) {
-                avatarEl.src = data.profile_pic || 'https://ui-avatars.com/api/?name=User&background=0095F6&color=fff';
+                avatarEl.src = data.profile_pic || 'https://ui-avatars.com/api/?name=User&background=1A1018&color=ECD2F3';
                 avatarEl.alt = data.raw_name || data.name || 'User';
             }
 

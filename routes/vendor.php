@@ -28,6 +28,9 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::get('/design/revisions', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'revisions'])->name('design.revisions');
     Route::post('/design/restore', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'restoreRevision'])->name('design.restore');
     Route::post('/design/upload', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'uploadMedia'])->name('design.upload');
+    Route::post('/design/scroll-frames/batch', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'uploadScrollFramesBatch'])->name('design.scroll_frames.batch');
+    Route::post('/design/scroll-frames/video', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'uploadScrollVideo'])->name('design.scroll_frames.video');
+    Route::delete('/design/scroll-frames', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'clearScrollFrames'])->name('design.scroll_frames.clear');
 
     // Provider Personal Website Hub (Identity, Privacy, Domain, Sections, Publish)
     Route::get('/website', [\App\Http\Controllers\Vendor\WebsiteHubController::class, 'index'])->name('website.index');

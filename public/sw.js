@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cloths42-store-v2';
+const CACHE_NAME = 'k71-store-v3';
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();

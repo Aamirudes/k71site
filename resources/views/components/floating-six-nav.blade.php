@@ -20,7 +20,10 @@
 
     $launcherItems = \App\Http\Controllers\Admin\FloatingLauncherController::getLauncherItems();
     $activeLauncherItems = collect($launcherItems)->filter(fn($i) => !empty($i['is_active']))->values()->all();
-    $triggerImage = \App\Models\Setting::get('floating_launcher_trigger_image', null);
+    $rawTriggerImage = \App\Models\Setting::get('floating_launcher_trigger_image', null);
+    $triggerImage = (!empty($rawTriggerImage) && !preg_match('/(k71-logo|\/images\/logo\.)/i', (string) $rawTriggerImage))
+        ? $rawTriggerImage
+        : null;
     $closeText = \App\Models\Setting::get('floating_launcher_close_text', '✕');
 @endphp
 
@@ -127,23 +130,23 @@
             class="k71-circle-img-holder w-13 h-13 sm:w-14 sm:h-14 bg-black text-white flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200 relative group overflow-hidden focus:outline-none"
             style="border-radius: 100px; border: none; outline: none;">
         
-        <!-- Normal State: Image Only, No text, No color, No outline -->
-        <div x-show="!open" class="flex items-center justify-center w-full h-full" style="border-radius: 100px;">
+        <!-- Normal State: Obsidian Black + Orchid Pink K71 Trigger Mark -->
+        <div x-show="!open" class="flex items-center justify-center w-full h-full bg-[#0D0D0D] ring-1 ring-[#ECD2F3]/50" style="border-radius: 100px;">
             @if(!empty($triggerImage))
-                <img src="{{ $triggerImage }}" alt="Nav" class="w-full h-full object-cover" style="border-radius: 100px;">
+                <img src="{{ $triggerImage }}" alt="K71 Nav" class="w-full h-full object-cover" style="border-radius: 100px;">
             @else
-                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7" rx="2"></rect>
-                    <rect x="14" y="3" width="7" height="7" rx="2"></rect>
-                    <rect x="14" y="14" width="7" height="7" rx="2"></rect>
-                    <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                <svg class="w-full h-full" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="31" fill="#0D0D0D" stroke="#ECD2F3" stroke-opacity="0.7" stroke-width="2"/>
+                    <path d="M13 21 H18.2 V43 H13 Z M24.2 21 H29.5 L21 32 H18.2 Z M18.2 30.6 H21.6 L30 43 H24.2 Z" fill="#FBF6FD"/>
+                    <path d="M31 21 H44 V25.2 L36.2 43 H31.2 L38.6 25.2 H31 Z" fill="#FFCDFF"/>
+                    <path d="M45.5 23.4 L49 21 H52.8 V43 H48.6 V25.8 L45.5 26.8 Z" fill="#ECD2F3"/>
                 </svg>
             @endif
         </div>
 
         <!-- Active Open State: Retract Close Symbol -->
-        <div x-show="open" class="flex items-center justify-center w-full h-full">
-            <span class="text-xl sm:text-2xl font-black text-white leading-none">{{ $closeText }}</span>
+        <div x-show="open" class="flex items-center justify-center w-full h-full bg-[#0D0D0D] text-[#ECD2F3] ring-1 ring-[#ECD2F3]/50" style="border-radius: 100px;">
+            <span class="text-xl sm:text-2xl font-black text-[#ECD2F3] leading-none">{{ $closeText }}</span>
         </div>
 
     </button>

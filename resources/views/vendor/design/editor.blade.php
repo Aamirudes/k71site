@@ -19,7 +19,7 @@
     <!-- Google Fonts for typography previews -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700&family=Fraunces:wght@600;800&family=Outfit:wght@500;700&family=Syne:wght@700;800&family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Plus+Jakarta+Sans:wght@600;700&family=Fraunces:wght@600;800&family=Outfit:wght@500;700&family=Syne:wght@700;800&family=Space+Grotesk:wght@600;700&family=Cinzel:wght@600;700&family=Bodoni+Moda:wght@600;800&family=Chakra+Petch:wght@600;700&family=Prata&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
         [x-cloak] { display: none !important; }
@@ -607,6 +607,42 @@
                             <span class="text-xs text-stone-700 font-semibold">Quick Buy Button</span>
                             <input type="checkbox" x-model="selectedSection.show_quick_buy" @change="markDirty()" class="rounded text-stone-900">
                         </div>
+                    </div>
+                </template>
+
+                <!-- Kinetic Scroll Sequence Controls -->
+                <template x-if="selectedSection?.type === 'scroll_sequence'">
+                    <div class="space-y-3 pt-2 border-t border-stone-100">
+                        <div class="text-xs font-bold uppercase tracking-wider text-stone-400">Video-to-JPG Scroll Motion</div>
+                        <p class="text-[11px] text-stone-500 leading-relaxed">
+                            Upload any product video inside the Store Design Hub to automatically generate JPG scroll frames for this stage.
+                        </p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-stone-600">Scroll Stage (vh)</label>
+                                <input type="number" min="180" max="600" x-model.number="config.scroll_sequence.height_vh" @input="markDirty()" class="w-full text-xs rounded-xl border-stone-200 bg-stone-50 p-2 mt-1">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-stone-600">Damping (0.05-0.45)</label>
+                                <input type="number" step="0.02" min="0.05" max="0.45" x-model.number="config.scroll_sequence.smoothing" @input="markDirty()" class="w-full text-xs rounded-xl border-stone-200 bg-stone-50 p-2 mt-1">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-600">Beat 1 Headline</label>
+                            <input type="text" x-model="config.scroll_sequence.beat1_title" @input="markDirty()" class="w-full text-xs rounded-xl border-stone-200 bg-stone-50 p-2 mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-600">Beat 2 Headline</label>
+                            <input type="text" x-model="config.scroll_sequence.beat2_title" @input="markDirty()" class="w-full text-xs rounded-xl border-stone-200 bg-stone-50 p-2 mt-1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-stone-600">Beat 3 Headline</label>
+                            <input type="text" x-model="config.scroll_sequence.beat3_title" @input="markDirty()" class="w-full text-xs rounded-xl border-stone-200 bg-stone-50 p-2 mt-1">
+                        </div>
+                        <a href="{{ route('vendor.design.index') }}#kinetic-studio"
+                           class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition">
+                            <span>🎬 Open Video-to-JPG Uploader</span>
+                        </a>
                     </div>
                 </template>
 

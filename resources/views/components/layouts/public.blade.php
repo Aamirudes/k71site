@@ -67,12 +67,12 @@
 
     <!-- Favicon & PWA Icons -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="{{ $grailTheme ? '#000000' : '#1F2A26' }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
-    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}">
+    <meta name="theme-color" content="{{ $grailTheme ? '#000000' : '#0D0D0D' }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v=3">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v=3">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=3">
+    <link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v=3">
 
     <!-- Fonts & Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

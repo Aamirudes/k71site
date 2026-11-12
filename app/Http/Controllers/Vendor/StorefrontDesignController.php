@@ -50,6 +50,7 @@ class StorefrontDesignController extends Controller
         $activePresetKey = $configRecord->preset_key;
         $currentConfig = $configRecord->getEffectiveConfig(false);
         $hasUnpublishedDraft = !empty($configRecord->draft_config) && ($configRecord->draft_config != $configRecord->published_config);
+        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $currentConfig);
 
         return view('vendor.design.index', compact(
             'vendor',
@@ -57,7 +58,8 @@ class StorefrontDesignController extends Controller
             'configRecord',
             'activePresetKey',
             'currentConfig',
-            'hasUnpublishedDraft'
+            'hasUnpublishedDraft',
+            'vendorScrollSequence'
         ));
     }
 
@@ -95,6 +97,7 @@ class StorefrontDesignController extends Controller
         $availableSections = $this->presetService->getAvailableSections();
         $vendorProducts = $vendor->products()->where('status', 'active')->select('id', 'title', 'base_price', 'slug')->get();
         $vendorCategories = \App\Models\Category::whereHas('products', fn($q) => $q->where('vendor_id', $vendor->id))->get();
+        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $draftConfig);
 
         return view('vendor.design.editor', compact(
             'vendor',
@@ -103,7 +106,8 @@ class StorefrontDesignController extends Controller
             'presets',
             'availableSections',
             'vendorProducts',
-            'vendorCategories'
+            'vendorCategories',
+            'vendorScrollSequence'
         ));
     }
 
@@ -148,6 +152,7 @@ class StorefrontDesignController extends Controller
             ->take(24)
             ->get();
         $isPreview = true;
+        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config);
 
         return view('storefront.show', compact(
             'vendor',
@@ -157,6 +162,7 @@ class StorefrontDesignController extends Controller
             'vendorShorts',
             'vendorReviews',
             'config',
+            'vendorScrollSequence',
             'isPreview'
         ));
     }
@@ -287,7 +293,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
@@ -329,7 +335,7 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid preset selected.'], 422);
@@ -522,6 +528,43 @@ class StorefrontDesignController extends Controller
         if ($request->filled('accent_color')) {
             $accent = $request->input('accent_color');
             $currentConfig['theme']['accent_color'] = $accent;
+        }
+
+        // Kinetic Video-to-JPG Scroll Sequence Controls
+        if (
+            $request->has('scroll_seq_enabled')
+            || $request->has('scroll_seq_height_vh')
+            || $request->has('scroll_seq_beat1_title')
+            || $request->has('scroll_seq_beat2_title')
+            || $request->has('scroll_seq_beat3_title')
+        ) {
+            $seqCfg = is_array($currentConfig['scroll_sequence'] ?? null) ? $currentConfig['scroll_sequence'] : [];
+            if ($request->has('scroll_seq_enabled')) {
+                $seqCfg['enabled'] = $request->boolean('scroll_seq_enabled');
+            }
+            if ($request->filled('scroll_seq_height_vh')) {
+                $seqCfg['height_vh'] = max(180, min(600, (int) $request->input('scroll_seq_height_vh')));
+            }
+            if ($request->filled('scroll_seq_smoothing')) {
+                $seqCfg['smoothing'] = max(0.05, min(0.45, round((float) $request->input('scroll_seq_smoothing'), 2)));
+            }
+            foreach ([
+                'scroll_seq_beat1_kicker' => 'beat1_kicker',
+                'scroll_seq_beat1_title' => 'beat1_title',
+                'scroll_seq_beat1_desc' => 'beat1_desc',
+                'scroll_seq_beat2_kicker' => 'beat2_kicker',
+                'scroll_seq_beat2_title' => 'beat2_title',
+                'scroll_seq_beat2_desc' => 'beat2_desc',
+                'scroll_seq_beat3_kicker' => 'beat3_kicker',
+                'scroll_seq_beat3_title' => 'beat3_title',
+                'scroll_seq_beat3_desc' => 'beat3_desc',
+                'scroll_seq_cta_text' => 'cta_text',
+            ] as $inputKey => $cfgKey) {
+                if ($request->has($inputKey)) {
+                    $seqCfg[$cfgKey] = trim((string) $request->input($inputKey, ''));
+                }
+            }
+            $currentConfig['scroll_sequence'] = $seqCfg;
         }
 
         // WhatsApp & Instagram Social Connect
@@ -780,6 +823,200 @@ class StorefrontDesignController extends Controller
             'status' => 'success',
             'url' => $url,
             'path' => $path,
+        ]);
+    }
+
+    /**
+     * Store auto-generated JPG scroll sequence frames in chunked batches for the Kinetic preset.
+     */
+    public function uploadScrollFramesBatch(Request $request)
+    {
+        $vendor = auth()->user()?->vendor;
+        if (!$vendor) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'frames' => ['required', 'array', 'min:1', 'max:30'],
+            'frames.*' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:6144'],
+            'start_index' => ['nullable', 'integer', 'min:1', 'max:' . \App\Services\ScrollSequenceService::MAX_FRAMES],
+            'reset_before' => ['nullable', 'boolean'],
+            'activate_kinetic' => ['nullable', 'boolean'],
+            'video_url' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $configRecord = $vendor->storefrontConfig;
+        $currentConfig = $configRecord?->getEffectiveConfig(false)
+            ?: $this->presetService->getDefaultConfig($vendor->layout_preset ?: 'kinetic', $vendor);
+
+        $result = \App\Services\ScrollSequenceService::storeVendorFrameBatch(
+            $vendor,
+            $request->file('frames', []),
+            (int) $request->input('start_index', 1),
+            $request->boolean('reset_before', false),
+            $currentConfig
+        );
+
+        $activateKinetic = $request->boolean('activate_kinetic', false);
+        if ($activateKinetic) {
+            $currentConfig = $this->presetService->switchPresetPreservingContent($vendor, 'kinetic', $currentConfig);
+            $currentConfig['preset'] = 'kinetic';
+        }
+
+        if (!isset($currentConfig['scroll_sequence']) || !is_array($currentConfig['scroll_sequence'])) {
+            $currentConfig['scroll_sequence'] = [];
+        }
+        $currentConfig['scroll_sequence']['enabled'] = true;
+        if ($request->filled('video_url')) {
+            $currentConfig['scroll_sequence']['video_url'] = trim((string) $request->input('video_url'));
+        }
+
+        $sanitizedConfig = $this->presetService->sanitizeConfig($currentConfig, $vendor);
+        $presetKey = $activateKinetic ? 'kinetic' : ($configRecord?->preset_key ?: ($sanitizedConfig['preset'] ?? 'kinetic'));
+        $sanitizedConfig['preset'] = $presetKey;
+
+        $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'preset_key' => $presetKey,
+                'schema_version' => 2,
+                'draft_config' => $sanitizedConfig,
+                'published_config' => $sanitizedConfig,
+                'is_published' => true,
+            ]
+        );
+        $configRecord->update([
+            'preset_key' => $presetKey,
+            'draft_config' => $sanitizedConfig,
+            'published_config' => $sanitizedConfig,
+            'is_published' => true,
+            'last_saved_at' => now(),
+            'last_published_at' => now(),
+        ]);
+
+        if ($activateKinetic) {
+            $vendor->update(['layout_preset' => 'kinetic']);
+        }
+        $vendor->bumpWebsiteCache();
+
+        return response()->json([
+            'status' => 'success',
+            'written' => $result['written'],
+            'count' => $result['sequence']['count'] ?? 0,
+            'sequence' => $result['sequence'],
+            'preset' => $presetKey,
+            'public_url' => $vendor->storefront_url,
+        ]);
+    }
+
+    /**
+     * Store uploaded showcase video and run server-side ffmpeg JPG frame extraction when available.
+     */
+    public function uploadScrollVideo(Request $request)
+    {
+        $vendor = auth()->user()?->vendor;
+        if (!$vendor) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'video' => ['required', 'file', 'mimes:mp4,webm,mov,m4v,quicktime', 'max:61440'],
+            'target_frames' => ['nullable', 'integer', 'min:12', 'max:140'],
+            'activate_kinetic' => ['nullable', 'boolean'],
+        ]);
+
+        $res = \App\Services\ScrollSequenceService::extractVendorVideoFrames(
+            $vendor,
+            $request->file('video'),
+            (int) $request->input('target_frames', 72)
+        );
+
+        $configRecord = $vendor->storefrontConfig;
+        $currentConfig = $configRecord?->getEffectiveConfig(false)
+            ?: $this->presetService->getDefaultConfig($vendor->layout_preset ?: 'kinetic', $vendor);
+
+        $activateKinetic = $request->boolean('activate_kinetic', false);
+        if ($activateKinetic) {
+            $currentConfig = $this->presetService->switchPresetPreservingContent($vendor, 'kinetic', $currentConfig);
+            $currentConfig['preset'] = 'kinetic';
+        }
+
+        if (!isset($currentConfig['scroll_sequence']) || !is_array($currentConfig['scroll_sequence'])) {
+            $currentConfig['scroll_sequence'] = [];
+        }
+        $currentConfig['scroll_sequence']['enabled'] = true;
+        $currentConfig['scroll_sequence']['video_url'] = $res['video_url'];
+
+        $sanitizedConfig = $this->presetService->sanitizeConfig($currentConfig, $vendor);
+        $presetKey = $activateKinetic ? 'kinetic' : ($configRecord?->preset_key ?: ($sanitizedConfig['preset'] ?? 'kinetic'));
+        $sanitizedConfig['preset'] = $presetKey;
+
+        $configRecord = $vendor->storefrontConfig()->firstOrCreate(
+            ['vendor_id' => $vendor->id],
+            [
+                'preset_key' => $presetKey,
+                'schema_version' => 2,
+                'draft_config' => $sanitizedConfig,
+                'published_config' => $sanitizedConfig,
+                'is_published' => true,
+            ]
+        );
+        $configRecord->update([
+            'preset_key' => $presetKey,
+            'draft_config' => $sanitizedConfig,
+            'published_config' => $sanitizedConfig,
+            'is_published' => true,
+            'last_saved_at' => now(),
+            'last_published_at' => now(),
+        ]);
+
+        if ($activateKinetic) {
+            $vendor->update(['layout_preset' => 'kinetic']);
+        }
+        $vendor->bumpWebsiteCache();
+
+        return response()->json([
+            'status' => 'success',
+            'video_url' => $res['video_url'],
+            'extracted' => $res['extracted'],
+            'count' => $res['sequence']['count'] ?? 0,
+            'sequence' => $res['sequence'],
+            'preset' => $presetKey,
+        ]);
+    }
+
+    /**
+     * Clear all vendor-uploaded JPG scroll sequence frames.
+     */
+    public function clearScrollFrames(Request $request)
+    {
+        $vendor = auth()->user()?->vendor;
+        if (!$vendor) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        \App\Services\ScrollSequenceService::clearVendorFrames($vendor);
+
+        $configRecord = $vendor->storefrontConfig;
+        if ($configRecord) {
+            $cfg = $configRecord->getEffectiveConfig(false) ?: [];
+            if (isset($cfg['scroll_sequence']) && is_array($cfg['scroll_sequence'])) {
+                $cfg['scroll_sequence']['video_url'] = '';
+            }
+            $sanitizedConfig = $this->presetService->sanitizeConfig($cfg, $vendor);
+            $configRecord->update([
+                'draft_config' => $sanitizedConfig,
+                'published_config' => $sanitizedConfig,
+                'last_saved_at' => now(),
+                'last_published_at' => now(),
+            ]);
+        }
+        $vendor->bumpWebsiteCache();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Cleared all scroll JPG frames.',
+            'sequence' => \App\Services\ScrollSequenceService::resolveVendorSequence($vendor),
         ]);
     }
 }

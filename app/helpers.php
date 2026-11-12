@@ -223,7 +223,7 @@ if (!function_exists('format_user_avatar')) {
             return '/storage/' . ltrim($avatar, '/');
         }
         $name = trim($name ?? 'User');
-        return 'https://ui-avatars.com/api/?name=' . urlencode($name ?: 'User') . '&background=0095F6&color=ffffff&size=200&bold=true&format=svg';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name ?: 'User') . '&background=1A1018&color=ECD2F3&size=200&bold=true&format=svg';
     }
 }
 

@@ -1,22 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
     <defs>
         <linearGradient id="k71IconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#18181b"/>
-            <stop offset="100%" stop-color="#09090b"/>
+            <stop offset="0%" stop-color="#1A1018"/>
+            <stop offset="55%" stop-color="#0D0D0D"/>
+            <stop offset="100%" stop-color="#050507"/>
         </linearGradient>
-        <filter id="k71Glow" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
-        </filter>
+        <linearGradient id="k71PinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFCDFF"/>
+            <stop offset="55%" stop-color="#ECD2F3"/>
+            <stop offset="100%" stop-color="#D29CE2"/>
+        </linearGradient>
     </defs>
 
-    <!-- Base Squircle with Soft Rim -->
-    <rect x="6" y="6" width="108" height="108" rx="28" fill="url(#k71IconGrad)" stroke="#27272a" stroke-width="1.5" filter="url(#k71Glow)"/>
-    <rect x="7" y="7" width="106" height="106" rx="27" fill="none" stroke="#ffffff" stroke-width="0.75" stroke-opacity="0.08"/>
+    <!-- Obsidian Base Squircle with Orchid Pink Rim -->
+    <rect x="4" y="4" width="112" height="112" rx="28" fill="url(#k71IconGrad)" stroke="url(#k71PinkGrad)" stroke-width="2.2" stroke-opacity="0.72"/>
 
-    <!-- Geometric K71 Monogram Mark -->
-    <g transform="translate(60, 60)" text-anchor="middle" dominant-baseline="central">
-        <text font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="40" font-weight="900" letter-spacing="-1.5" fill="#ffffff">
-            K<tspan fill="#a1a1aa">71</tspan>
-        </text>
-    </g>
+    <!-- Sculpted Geometric K71 Mark -->
+    <path d="M25 38 H33 V79 H25 Z M44 38 H53 L39 59 H33 Z M33 56.5 H40.5 L53.5 79 H44.5 Z" fill="#FBF6FD"/>
+    <path d="M56 38 H78 V45.5 L65 79 H56.5 L68.5 45.5 H56 Z" fill="url(#k71PinkGrad)"/>
+    <path d="M81 42 L86 38 H93.5 V79 H85.8 V46.8 L81 48 Z" fill="url(#k71PinkGrad)"/>
+    <rect x="28" y="86.5" width="63" height="2.6" rx="1.3" fill="url(#k71PinkGrad)" fill-opacity="0.88"/>
 </svg>

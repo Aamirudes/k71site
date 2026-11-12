@@ -41,8 +41,8 @@ class Setting extends Model
     {
         $stringValue = match ($type) {
             'boolean' => $value ? '1' : '0',
-            'json' => is_array($value) ? json_encode($value) : (string) $value,
-            default => (string) $value,
+            'json' => $value === null ? null : (is_array($value) ? json_encode($value) : (string) $value),
+            default => $value === null ? null : (string) $value,
         };
 
         static::updateOrCreate(

@@ -88,7 +88,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <h2 class="text-base font-black text-zinc-950">Website Presets (Non-Destructive Switch)</h2>
-                    <p class="text-xs text-zinc-500 mt-0.5">Switch freely across all 10 K71 design presets — your bio, portfolio case studies, services, reviews, and subdomain stay intact.</p>
+                    <p class="text-xs text-zinc-500 mt-0.5">Switch freely across all {{ isset($presets) ? count($presets) : 11 }} K71 design presets — your bio, portfolio case studies, services, reviews, and subdomain stay intact.</p>
                 </div>
                 <a href="{{ route('vendor.design.index') }}" class="px-3.5 py-2 rounded-xl border border-zinc-300 text-xs font-bold text-zinc-700 hover:bg-zinc-50 shrink-0">
                     Open Advanced Visual Studio →

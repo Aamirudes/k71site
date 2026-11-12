@@ -369,7 +369,7 @@ class MessageController extends Controller
             }
             return '/storage/' . ltrim($avatar, '/');
         }
-        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=0095F6&color=ffffff&size=200&bold=true&format=svg';
+        return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&background=1A1018&color=ECD2F3&size=200&bold=true&format=svg';
     }
 
     private function formatChatTimeAgo(?string $datetime): string

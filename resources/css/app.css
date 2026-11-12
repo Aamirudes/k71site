@@ -13,14 +13,14 @@
   --color-brand-surface: #FFFFFF;
   --color-brand-text: #0F172A;
   --color-brand-muted: #64748B;
-  --color-brand-sage: #0600c2;
-  --color-brand-rose: #0600c2;
-  --color-brand-gold: #0600c2;
+  --color-brand-sage: #1A1018;
+  --color-brand-rose: #ECD2F3;
+  --color-brand-gold: #C9A24A;
   --color-brand-error: #EF4444;
-  --color-brand-primary: #0600c2;
-  --color-brand-primary-hover: #0500a8;
-  --color-brand-royal: #0600c2;
-  --color-brand-cobalt: #0600c2;
+  --color-brand-primary: #1A1018;
+  --color-brand-primary-hover: #2E1D2B;
+  --color-brand-royal: #1A1018;
+  --color-brand-cobalt: #ECD2F3;
 
   --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-serif: 'Outfit', sans-serif;
@@ -72,7 +72,7 @@
         --color-brand-surface: #FFFFFF;
         --color-brand-text: #0F172A;
         --color-brand-muted: #64748B;
-        --color-brand-sage: #4F46E5;
+        --color-brand-sage: #1A1018;
     }
 }
 
@@ -94,14 +94,14 @@
     }
     .luxury-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 20px 40px -15px rgba(6, 0, 194, 0.12);
-        border-color: rgba(6, 0, 194, 0.35);
+        box-shadow: 0 20px 40px -15px rgba(26, 16, 24, 0.16);
+        border-color: rgba(236, 210, 243, 0.65);
     }
 
     /* Primary Button */
     .btn-primary {
-        background-color: #0600c2;
-        color: #FFFFFF;
+        background-color: #1A1018;
+        color: #ECD2F3;
         padding: 0.75rem 1.75rem;
         border-radius: 9999px;
         font-weight: 700;
@@ -112,12 +112,13 @@
         justify-content: center;
         gap: 0.5rem;
         letter-spacing: -0.01em;
-        box-shadow: 0 4px 14px rgba(6, 0, 194, 0.25);
+        box-shadow: 0 4px 14px rgba(26, 16, 24, 0.25);
     }
     .btn-primary:hover {
-        background-color: #0500a8;
+        background-color: #2E1D2B;
+        color: #FFCDFF;
         transform: translateY(-1px);
-        box-shadow: 0 10px 25px -4px rgba(6, 0, 194, 0.4);
+        box-shadow: 0 10px 25px -4px rgba(26, 16, 24, 0.38);
     }
 
     /* Standard Product Aspect Ratio (3:4) */
@@ -269,7 +270,7 @@
         inset: 0;
         border-radius: inherit;
         padding: 1px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.1), rgba(6, 0, 194, 0.2));
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(236, 210, 243, 0.25), rgba(26, 16, 24, 0.2));
         -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
         -webkit-mask-composite: xor;
         mask-composite: exclude;

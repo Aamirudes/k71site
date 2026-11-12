@@ -135,8 +135,8 @@
                         </a>
                     @else
                         <a href="{{ route('home') }}" class="flex items-center gap-2.5 group" aria-label="K71 Homepage">
-                            <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 {{ $grailTheme ? 'rounded-xl bg-[#ECD2F3] p-1 shadow-[0_0_20px_rgba(236,210,243,0.22)]' : '' }}">
-                                <img src="{{ asset('images/k71-logo.png') }}" alt="K71" class="w-full h-full object-contain">
+                            <div class="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0 rounded-xl overflow-hidden {{ $grailTheme ? 'bg-[#0D0D0D] ring-1 ring-[#ECD2F3]/45 shadow-[0_0_20px_rgba(236,210,243,0.22)]' : 'bg-[#0D0D0D] ring-1 ring-black/15 shadow-xs' }}">
+                                <img src="{{ asset('images/k71-logo.png') }}?v=3" alt="K71" class="w-full h-full object-cover">
                             </div>
                             <div class="flex items-baseline gap-1.5 leading-none">
                                 <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-white' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black' }} transition-colors">

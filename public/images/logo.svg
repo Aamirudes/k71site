@@ -1,19 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 80" fill="none">
-    <!-- Icon Mark (Left) -->
+    <defs>
+        <linearGradient id="k71LogoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1A1018"/>
+            <stop offset="100%" stop-color="#0D0D0D"/>
+        </linearGradient>
+        <linearGradient id="k71LogoPink" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFCDFF"/>
+            <stop offset="100%" stop-color="#ECD2F3"/>
+        </linearGradient>
+    </defs>
+    <!-- Black-Pink Icon Mark -->
     <g transform="translate(6, 12)">
-        <rect width="56" height="56" rx="16" fill="#09090b" stroke="#27272a" stroke-width="1.2"/>
-        <text x="28" y="37" text-anchor="middle" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="22" font-weight="900" letter-spacing="-0.5" fill="#ffffff">
-            K<tspan fill="#a1a1aa">71</tspan>
-        </text>
+        <rect width="56" height="56" rx="16" fill="url(#k71LogoBg)" stroke="url(#k71LogoPink)" stroke-width="1.6" stroke-opacity="0.78"/>
+        <path d="M12 18 H16.5 V38 H12 Z M22 18 H26.5 L19.5 28 H16.5 Z M16.5 26.8 H20 L26.5 38 H22 Z" fill="#FBF6FD"/>
+        <path d="M27.5 18 H38.5 V21.8 L32 38 H27.8 L33.8 21.8 H27.5 Z" fill="url(#k71LogoPink)"/>
+        <path d="M39.8 20 L42.4 18 H46 V38 H42.2 V22.4 L39.8 23 Z" fill="url(#k71LogoPink)"/>
     </g>
 
     <!-- Wordmark -->
-    <text x="76" y="47" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="34" font-weight="900" letter-spacing="-1" fill="#09090b">
-        K71<tspan font-size="16" font-weight="700" fill="#71717a" letter-spacing="0">.IN</tspan>
+    <text x="76" y="47" font-family="'Switzer', system-ui, -apple-system, 'SF Pro Display', sans-serif" font-size="34" font-weight="900" letter-spacing="-1" fill="#0D0D0D">
+        K71<tspan font-size="16" font-weight="700" fill="#623562" letter-spacing="0">.IN</tspan>
     </text>
 
     <!-- Subtitle -->
-    <text x="78" y="63" font-family="system-ui, -apple-system, 'SF Pro Display', 'Inter', sans-serif" font-size="8.5" font-weight="600" letter-spacing="3.5" fill="#71717a">
+    <text x="78" y="63" font-family="'Switzer', system-ui, -apple-system, 'SF Pro Display', sans-serif" font-size="8.5" font-weight="700" letter-spacing="3.5" fill="#7C4F74">
         CURATED MARKETPLACE
     </text>
 </svg>

@@ -14,10 +14,10 @@
     <meta property="og:description" content="{{ $metaDescription ?? 'Source commercial products, bulk materials and machinery directly from verified manufacturers.' }}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#0D0D0D">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v=3">
     
     <!-- Grail Fonts: Switzer + Cormorant Garamond + Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

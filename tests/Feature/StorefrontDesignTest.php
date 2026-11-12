@@ -49,7 +49,7 @@ class StorefrontDesignTest extends TestCase
         $response = $this->actingAs($user)->get('/vendor/design');
         $response->assertStatus(200);
         $response->assertSee('Store Design & Presets');
-        $response->assertSee('Ten Signature Storefront Presets');
+        $response->assertSee('Eleven Signature Storefront Presets');
         
         // Check signature presets are visible
         $response->assertSee('Velora');
@@ -62,6 +62,7 @@ class StorefrontDesignTest extends TestCase
         $response->assertSee('Nexus');
         $response->assertSee('Elysium');
         $response->assertSee('Vogue');
+        $response->assertSee('Kinetic');
     }
 
     public function test_vendor_can_open_visual_editor(): void
@@ -273,7 +274,7 @@ class StorefrontDesignTest extends TestCase
     {
         [$user, $vendor] = $this->createVendor('modern@test.com', 'Modern Maison', 'modern-maison');
 
-        $modernPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue'];
+        $modernPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic'];
 
         foreach ($modernPresets as $preset) {
             $response = $this->actingAs($user)->postJson('/vendor/design/activate', [

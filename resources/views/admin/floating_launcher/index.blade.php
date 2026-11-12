@@ -274,10 +274,10 @@
                         <button type="button" @click="launcherOpen = !launcherOpen"
                                 class="w-13 h-13 rounded-full bg-black text-white shadow-2xl border border-white/30 backdrop-blur-2xl flex items-center justify-center relative z-20 cursor-pointer hover:scale-105 active:scale-95 transition-transform overflow-hidden">
                             <span x-show="!launcherOpen" class="flex flex-col items-center justify-center">
-                                @if(!empty($triggerImage))
-                                    <img src="{{ $triggerImage }}" class="w-6 h-6 object-contain rounded-full">
+                                @if(!empty($triggerImage) && !preg_match('/(k71-logo|\/images\/logo\.)/i', (string) $triggerImage))
+                                    <img src="{{ $triggerImage }}" class="w-6 h-6 object-cover rounded-full">
                                 @else
-                                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect></svg>
+                                    <img src="{{ asset('images/k71-logo.png') }}?v=3" class="w-7 h-7 object-cover rounded-full">
                                 @endif
                                 <span class="text-[7px] font-black uppercase text-white/80 leading-none mt-0.5">{{ $triggerText ?? 'NAV' }}</span>
                             </span>

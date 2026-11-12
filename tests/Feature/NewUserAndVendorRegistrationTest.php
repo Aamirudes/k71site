@@ -372,11 +372,11 @@ class NewUserAndVendorRegistrationTest extends TestCase
             $publishRes->assertOk()->assertJson(['status' => 'success']);
         }
 
-        // Sweep all 15 presets on a 0-product store
+        // Sweep all 16 presets (11 signature + 5 legacy aliases) on a 0-product store
         $this->actingAs($firstUser);
         $presets = [
             'velora', 'noire', 'aurel', 'chroma', 'orbit',
-            'zenith', 'solaris', 'nexus', 'elysium', 'vogue',
+            'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic',
             'atelier', 'object', 'commerce', 'market', 'signature',
         ];
         foreach ($presets as $preset) {

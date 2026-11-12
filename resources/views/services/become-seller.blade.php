@@ -1,12 +1,13 @@
 <x-layouts.services 
     title="Become a K71 Service Provider — Personal Website & Marketplace Onboarding"
-    metaDescription="Launch your own K71 service provider website, claim a custom subdomain, choose from 10+ premium presets, and get hired on K71 Services."
+    metaDescription="Launch your own K71 service provider website, claim a custom subdomain, choose from 11+ premium presets, and get hired on K71 Services."
 >
     @php
+        $presetTotalCount = isset($presets) ? count($presets) : 11;
         $stepsMeta = [
             1 => ['num' => 1, 'title' => 'Identity & Expertise', 'sub' => 'Individual or agency profile'],
             2 => ['num' => 2, 'title' => 'Website Subdomain', 'sub' => 'Claim your .k71 domain'],
-            3 => ['num' => 3, 'title' => 'Choose Design Preset', 'sub' => '10+ signature themes'],
+            3 => ['num' => 3, 'title' => 'Choose Design Preset', 'sub' => $presetTotalCount . ' signature themes'],
             4 => ['num' => 4, 'title' => 'Portfolio Setup', 'sub' => 'Hero, links & case study'],
             5 => ['num' => 5, 'title' => 'Publish Live', 'sub' => 'Checklist & launch'],
         ];
@@ -26,7 +27,7 @@
                     Become a K71 Service Provider
                 </h1>
                 <p class="text-xs sm:text-sm text-[#EFE9F2]/75 max-w-2xl mx-auto font-normal leading-relaxed">
-                    Get your own independent portfolio website on a custom subdomain, showcase your best work across 10+ luxury design presets, offer fixed packages, and bid on custom client briefs.
+                    Get your own independent portfolio website on a custom subdomain, showcase your best work across {{ $presetTotalCount }} luxury design presets, offer fixed packages, and bid on custom client briefs.
                 </p>
 
                 <!-- 5-STEP PROGRESS STEPPER -->
@@ -325,7 +326,7 @@
 
                         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-[#E6E2E8]">
                             <div>
-                                <span class="grail-eyebrow !text-[#623562]">Step 3 of 5 · 10 Signature Website Themes</span>
+                                <span class="grail-eyebrow !text-[#623562]">Step 3 of 5 · {{ count($presets) }} Signature Website Themes</span>
                                 <h2 class="text-xl sm:text-2xl font-bold text-[#1A1018] mt-1">Choose Your Website Design Preset</h2>
                                 <p class="text-xs text-[#1A1018]/65 mt-1">You can switch presets anytime later without losing your portfolio, services, or reviews.</p>
                             </div>
@@ -345,7 +346,7 @@
                                         <div class="flex items-center justify-between text-[10px] uppercase tracking-widest opacity-75 mb-3">
                                             <span>{{ $vendor?->slug }}.{{ $domain }}</span>
                                             <span class="px-2 py-0.5 rounded-full font-bold"
-                                                  style="background: {{ $preset['preview_accent'] }}; color: {{ $preset['preview_bg'] === '#121214' || $preset['preview_bg'] === '#07080f' || $preset['preview_bg'] === '#0a0b0e' || $preset['preview_bg'] === '#060913' ? '#09090b' : '#ffffff' }};">
+                                                  style="background: {{ $preset['preview_accent'] }}; color: {{ in_array($preset['preview_bg'] ?? '', ['#121214', '#07080f', '#0a0b0e', '#060913', '#060606'], true) ? '#09090b' : '#ffffff' }};">
                                                 {{ $preset['badge'] }}
                                             </span>
                                         </div>

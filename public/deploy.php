@@ -150,6 +150,20 @@ if ($syncRequested) {
                         }
                     }
                 }
+
+                // Mirror public static icons/favicons/manifest/sw into root as well so host Apache never serves stale root icons
+                $publicRootAssets = [
+                    'favicon.ico', 'favicon.svg', 'favicon-16x16.png', 'favicon-32x32.png',
+                    'favicon-48x48.png', 'favicon-64x64.png', 'apple-touch-icon.png',
+                    'icon-192x192.png', 'icon-512x512.png', 'manifest.json', 'sw.js',
+                ];
+                foreach ($publicRootAssets as $pra) {
+                    $srcAsset = $baseDir . '/public/' . $pra;
+                    $dstAsset = $baseDir . '/' . $pra;
+                    if (file_exists($srcAsset) && $srcAsset !== $dstAsset) {
+                        @copy($srcAsset, $dstAsset);
+                    }
+                }
                 
                 // Mirror public/assets and public/build into document root for direct web server static delivery
                 $mirrorDirs = ['assets', 'build', 'images'];

@@ -73,8 +73,9 @@
     // Google Fonts selection
     $headingFont = $theme['font_heading'] ?? 'Playfair Display';
     $bodyFont = $theme['font_body'] ?? 'Inter';
-    $fontsQuery = str_replace(' ', '+', $headingFont) . ':wght@400;600;700;800;900';
-    if ($bodyFont !== $headingFont) {
+    $headingWeights = $headingFont === 'Cormorant Garamond' ? '300;400;500;600;700' : '400;600;700;800;900';
+    $fontsQuery = str_replace(' ', '+', $headingFont) . ':wght@' . $headingWeights;
+    if ($bodyFont !== $headingFont && $bodyFont !== 'Switzer') {
         $fontsQuery .= '&family=' . str_replace(' ', '+', $bodyFont) . ':wght@300;400;500;600;700';
     }
 @endphp
@@ -92,13 +93,18 @@
     <!-- Dynamic Google Fonts Preload for Signature Presets -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;600;700&family=Cinzel:wght@600;700;800;900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,800;0,6..96,900;1,6..96,600&family=Chakra+Petch:wght@500;700;800&family=Prata&display=swap" rel="stylesheet">
+    @if($presetKey === 'kinetic')
+        <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700,800&display=swap">
+    @endif
+    <link href="https://fonts.googleapis.com/css2?family={{ $fontsQuery }}&family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800;900&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,800;1,9..144,400&family=Plus+Jakarta+Sans:wght@500;700;800&family=Outfit:wght@400;500;600;700&family=Cinzel:wght@600;700;800;900&family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,800;0,6..96,900;1,6..96,600&family=Chakra+Petch:wght@500;700;800&family=Prata&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
 
     @php
-        $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium']) || !empty($theme['dark_mode']);
-        $defaultSfBg = $isDarkPreset ? '#050711' : '#fafaf9';
-        $defaultSfText = $isDarkPreset ? '#f8fafc' : '#18181b';
-        $defaultSfSurface = $isDarkPreset ? '#0c1228' : '#ffffff';
+        $isDarkPreset = in_array($presetKey, ['orbit', 'noire', 'nexus', 'elysium', 'kinetic']) || !empty($theme['dark_mode']);
+        $isKineticPreset = $presetKey === 'kinetic';
+        $defaultSfBg = $isKineticPreset ? '#000000' : ($isDarkPreset ? '#050711' : '#fafaf9');
+        $defaultSfText = $isKineticPreset ? '#EFE9F2' : ($isDarkPreset ? '#f8fafc' : '#18181b');
+        $defaultSfSurface = $isKineticPreset ? '#121216' : ($isDarkPreset ? '#0c1228' : '#ffffff');
     @endphp
 
     <script>
@@ -116,12 +122,12 @@
     <!-- Storefront CSS Theme Variables -->
     <style>
         :root {
-            --sf-primary: {{ $theme['primary_color'] ?? ($isDarkPreset ? '#ffffff' : '#18181b') }};
+            --sf-primary: {{ $theme['primary_color'] ?? ($isKineticPreset ? '#EFE9F2' : ($isDarkPreset ? '#ffffff' : '#18181b')) }};
             --sf-secondary: {{ $theme['secondary_color'] ?? ($isDarkPreset ? '#94a3b8' : '#71717a') }};
-            --sf-accent: {{ $theme['accent_color'] ?? ($isDarkPreset ? '#38bdf8' : '#c59b27') }};
-            --sf-bg: {{ $isDarkPreset ? '#050711' : ($theme['bg_color'] ?? $defaultSfBg) }};
-            --sf-surface: {{ $isDarkPreset ? '#0c1228' : ($theme['surface_color'] ?? $defaultSfSurface) }};
-            --sf-text: {{ $isDarkPreset ? '#f8fafc' : ($theme['text_color'] ?? $defaultSfText) }};
+            --sf-accent: {{ $theme['accent_color'] ?? ($isKineticPreset ? '#ECD2F3' : ($isDarkPreset ? '#38bdf8' : '#c59b27')) }};
+            --sf-bg: {{ $isKineticPreset ? '#000000' : ($isDarkPreset ? '#050711' : ($theme['bg_color'] ?? $defaultSfBg)) }};
+            --sf-surface: {{ $isKineticPreset ? '#121216' : ($isDarkPreset ? '#0c1228' : ($theme['surface_color'] ?? $defaultSfSurface)) }};
+            --sf-text: {{ $isKineticPreset ? '#EFE9F2' : ($isDarkPreset ? '#f8fafc' : ($theme['text_color'] ?? $defaultSfText)) }};
             --sf-font-heading: '{{ $headingFont }}', serif, sans-serif;
             --sf-font-body: '{{ $bodyFont }}', system-ui, -apple-system, sans-serif;
         }

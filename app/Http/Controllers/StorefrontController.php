@@ -278,6 +278,7 @@ class StorefrontController extends Controller
             ->get();
 
         $config = $vendor->getStorefrontConfig($isPreview);
+        $vendorScrollSequence = \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config);
         $providerSite = null;
 
         if ($isServiceWebsite) {
@@ -297,6 +298,7 @@ class StorefrontController extends Controller
                 'vendorShorts',
                 'vendorReviews',
                 'config',
+                'vendorScrollSequence',
                 'isPreview',
                 'isServiceWebsite',
                 'providerSite'

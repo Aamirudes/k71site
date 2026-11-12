@@ -15,7 +15,7 @@
     if ($waPhone && strlen($waPhone) === 10) { $waPhone = '91' . $waPhone; }
     $waUrl = $waPhone ? "https://wa.me/{$waPhone}?text=" . rawurlencode(!empty($isServiceWebsite) ? "Hi {$storeName}, I viewed your portfolio site." : "Namaste {$storeName}! I am viewing your boutique on K71.") : null;
     $searchQuery = request('search', '');
-    $isDark = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium']) || !empty($theme['dark_mode']);
+    $isDark = in_array($presetKey ?? '', ['noire', 'orbit', 'nexus', 'elysium', 'kinetic']) || !empty($theme['dark_mode']);
 @endphp
 
 <!-- UNIVERSAL SLIDE-FROM-LEFT FULL-VH MENU DRAWER (TELEPORTED TO BODY FOR ABSOLUTE TOP Z-INDEX) -->

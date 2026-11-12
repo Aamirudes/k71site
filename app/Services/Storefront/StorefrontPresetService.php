@@ -164,6 +164,21 @@ class StorefrontPresetService
                 'badge' => 'Runway Editorial',
                 'recommended_for_types' => ['clothing', 'fashion', 'designer', 'footwear', 'beauty'],
             ],
+            'kinetic' => [
+                'id' => 'kinetic',
+                'name' => 'Kinetic',
+                'tagline' => 'Obsidian Cinema · Video-to-JPG Scroll Motion',
+                'description' => 'A cinematic obsidian-and-orchid flagship inspired by K71 Grail. Upload any video to automatically extract JPG frames and deliver a smooth frame-by-frame scroll showcase leading straight into your products.',
+                'best_for' => 'Flagship drops, lookbooks, jewelry, sneakers, electronics, artisan studios, and video-led launches.',
+                'preview_accent' => '#ECD2F3',
+                'preview_bg' => '#060606',
+                'preview_card_bg' => '#121216',
+                'preview_text' => '#EFE9F2',
+                'display_font' => 'Cormorant Garamond',
+                'body_font' => 'Outfit',
+                'badge' => 'Video Motion',
+                'recommended_for_types' => ['luxury', 'fashion', 'footwear', 'electronics', 'jewelry'],
+            ],
         ];
     }
 
@@ -380,6 +395,20 @@ class StorefrontPresetService
                 'content_width' => 'wide',
                 'dark_mode' => false,
             ],
+            'kinetic' => [
+                'font_heading' => 'Cormorant Garamond',
+                'font_body' => 'Outfit',
+                'font_scale' => 'large',
+                'primary_color' => '#EFE9F2',
+                'secondary_color' => '#B8A8BE',
+                'accent_color' => '#ECD2F3',
+                'bg_color' => '#060606',
+                'surface_color' => '#121216',
+                'text_color' => '#EFE9F2',
+                'border_radius' => 'rounded-2xl',
+                'content_width' => 'wide',
+                'dark_mode' => true,
+            ],
             // Legacy aliases for backward compatibility
             'atelier' => [
                 'font_heading' => 'Playfair Display',
@@ -457,9 +486,10 @@ class StorefrontPresetService
 
         // Header configuration
         $header = [
-            'layout' => $presetKey === 'commerce' ? 'search_prominent' : ($presetKey === 'object' ? 'minimal' : ($presetKey === 'signature' ? 'stacked' : 'split')),
+            'layout' => $presetKey === 'commerce' ? 'search_prominent' : (in_array($presetKey, ['object', 'kinetic'], true) ? 'minimal' : ($presetKey === 'signature' ? 'stacked' : 'split')),
             'logo_height' => 38,
             'sticky' => true,
+            'transparent_on_hero' => true,
             'show_search' => true,
             'show_cart' => true,
             'show_wishlist' => true,
@@ -467,8 +497,8 @@ class StorefrontPresetService
             'announcement_enabled' => true,
             'announcement_text' => '',
             'announcement_link' => $social['announcement_link'] ?? '',
-            'announcement_bg' => $presetKey === 'signature' ? '#22c55e' : ($presetKey === 'market' ? '#2d4a3e' : '#18181b'),
-            'announcement_text_color' => $presetKey === 'signature' ? '#000000' : '#ffffff',
+            'announcement_bg' => $presetKey === 'kinetic' ? '#0D0D0D' : ($presetKey === 'signature' ? '#22c55e' : ($presetKey === 'market' ? '#2d4a3e' : '#18181b')),
+            'announcement_text_color' => $presetKey === 'kinetic' ? '#ECD2F3' : ($presetKey === 'signature' ? '#000000' : '#ffffff'),
         ];
 
         // Default sections by preset
@@ -486,8 +516,25 @@ class StorefrontPresetService
             'newsletter_title' => 'Receive Private Atelier Dispatches',
             'newsletter_subtext' => 'Direct notifications of new studio drops, fabric weaves, and seasonal reductions.',
             'copyright_text' => "© " . date('Y') . " {$shopName}. Verified K71 Merchant.",
-            'bg_color' => $presetKey === 'signature' ? '#000000' : ($presetKey === 'market' ? '#1c2826' : '#0c1310'),
+            'bg_color' => in_array($presetKey, ['signature', 'kinetic'], true) ? '#000000' : ($presetKey === 'market' ? '#1c2826' : '#0c1310'),
             'text_color' => '#fafaf9',
+        ];
+
+        $scrollSequence = [
+            'enabled' => true,
+            'height_vh' => 320,
+            'smoothing' => 0.16,
+            'video_url' => '',
+            'beat1_kicker' => 'CHAPTER I • STUDIO CRAFT',
+            'beat1_title' => strtoupper($shopName),
+            'beat1_desc' => $tagline,
+            'beat2_kicker' => 'CHAPTER II • FRAME BY FRAME',
+            'beat2_title' => 'CRAFTED IN PURE MOTION.',
+            'beat2_desc' => Str::limit($description, 150),
+            'beat3_kicker' => 'CHAPTER III • FLAGSHIP DROP',
+            'beat3_title' => 'DISCOVER THE COLLECTION.',
+            'beat3_desc' => 'Scroll seamlessly into verified pieces from ' . $shopName . '.',
+            'cta_text' => 'Explore Collection',
         ];
 
         return [
@@ -509,6 +556,7 @@ class StorefrontPresetService
                 'email' => $vendor->contact_email,
             ],
             'header' => $header,
+            'scroll_sequence' => $scrollSequence,
             'sections' => $sections,
             'footer' => $footer,
             'happy_customers' => [
@@ -603,6 +651,9 @@ class StorefrontPresetService
         }
         if (!empty($current['products']) && is_array($current['products'])) {
             $merged['products'] = $current['products'];
+        }
+        if (!empty($current['scroll_sequence']) && is_array($current['scroll_sequence'])) {
+            $merged['scroll_sequence'] = array_merge($newDefaults['scroll_sequence'] ?? [], $current['scroll_sequence']);
         }
         if (!empty($current['service_site']) && is_array($current['service_site'])) {
             $merged['service_site'] = array_merge($newDefaults['service_site'], $current['service_site']);
@@ -878,6 +929,56 @@ class StorefrontPresetService
                     ],
                 ];
 
+            case 'kinetic':
+                return [
+                    [
+                        'id' => 'sec_scroll_' . uniqid(),
+                        'type' => 'scroll_sequence',
+                        'visible' => true,
+                        'title' => strtoupper($shopName),
+                        'subtitle' => $tagline,
+                        'description' => $description,
+                        'badge' => 'CINEMATIC MOTION • SCROLL SCRUB',
+                        'cta_primary_text' => 'Explore Collection',
+                        'cta_primary_link' => '#kinetic-products',
+                    ],
+                    [
+                        'id' => 'sec_featured_' . uniqid(),
+                        'type' => 'featured_products',
+                        'visible' => true,
+                        'title' => 'SIGNATURE CURATION',
+                        'subtitle' => 'Scroll seamlessly from frame-by-frame motion directly into verified drops',
+                        'source' => 'all',
+                        'limit' => 12,
+                        'columns' => 4,
+                        'aspect_ratio' => '3:4',
+                        'show_quick_buy' => true,
+                        'show_specs' => true,
+                    ],
+                    [
+                        'id' => 'sec_cat_bubbles_' . uniqid(),
+                        'type' => 'category_bubbles',
+                        'visible' => true,
+                        'title' => 'Curated Departments',
+                        'subtitle' => 'Filter pieces by discipline',
+                    ],
+                    [
+                        'id' => 'sec_video_' . uniqid(),
+                        'type' => 'video_showcase',
+                        'visible' => true,
+                        'title' => 'Studio Reels & Motion',
+                        'subtitle' => 'Behind-the-scenes craft and live unboxings',
+                    ],
+                    [
+                        'id' => 'sec_contact_' . uniqid(),
+                        'type' => 'contact_policies',
+                        'visible' => true,
+                        'title' => 'Studio Concierge & Policies',
+                        'show_whatsapp' => true,
+                        'show_pickup' => true,
+                    ],
+                ];
+
             case 'atelier':
             default:
                 return [
@@ -994,6 +1095,21 @@ class StorefrontPresetService
                     'cta_secondary_link' => '#story',
                     'image_url' => null,
                     'alignment' => 'left',
+                ],
+            ],
+            'scroll_sequence' => [
+                'type' => 'scroll_sequence',
+                'name' => 'Kinetic Video-to-JPG Scroll Stage',
+                'icon' => '🎞️',
+                'category' => 'Heroes & Headers',
+                'description' => 'Pinned fullscreen JPG frame-by-frame scrub animation synced to scroll, followed by products.',
+                'default_settings' => [
+                    'title' => 'Crafted in Pure Motion',
+                    'subtitle' => 'Frame-by-frame cinematic product showcase',
+                    'description' => 'Upload any video in Store Design to auto-generate JPG frames for this scroll stage.',
+                    'badge' => 'CINEMATIC SCRUB',
+                    'cta_primary_text' => 'Explore Collection',
+                    'cta_primary_link' => '#kinetic-products',
                 ],
             ],
             'category_bubbles' => [
@@ -1123,7 +1239,7 @@ class StorefrontPresetService
      */
     public function sanitizeConfig(array $input, Vendor $vendor): array
     {
-        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'atelier', 'object', 'commerce', 'market', 'signature'];
+        $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $presetKey = in_array($input['preset'] ?? '', $allowedPresets) 
             ? $input['preset'] 
             : 'velora';
@@ -1366,12 +1482,33 @@ class StorefrontPresetService
             'layout' => in_array($input['products']['layout'] ?? '', ['grid', 'slider']) ? $input['products']['layout'] : 'grid',
         ];
 
+        $rawSeq = is_array($input['scroll_sequence'] ?? null) ? $input['scroll_sequence'] : [];
+        $scrollSequence = [
+            'enabled' => array_key_exists('enabled', $rawSeq) ? (bool) $rawSeq['enabled'] : true,
+            'height_vh' => max(180, min(600, (int) ($rawSeq['height_vh'] ?? 320))),
+            'smoothing' => max(0.05, min(0.45, round((float) ($rawSeq['smoothing'] ?? 0.16), 2))),
+            'video_url' => $safeUrl($rawSeq['video_url'] ?? ''),
+            'beat1_kicker' => $safeText($rawSeq['beat1_kicker'] ?? 'CHAPTER I • STUDIO CRAFT', 60) ?: 'CHAPTER I • STUDIO CRAFT',
+            'beat1_title' => $safeText($rawSeq['beat1_title'] ?? strtoupper($brand['store_name']), 120) ?: strtoupper($brand['store_name']),
+            'beat1_desc' => $safeText($rawSeq['beat1_desc'] ?? ($brand['tagline'] ?: ''), 260),
+            'beat2_kicker' => $safeText($rawSeq['beat2_kicker'] ?? 'CHAPTER II • FRAME BY FRAME', 60) ?: 'CHAPTER II • FRAME BY FRAME',
+            'beat2_title' => $safeText($rawSeq['beat2_title'] ?? 'CRAFTED IN PURE MOTION.', 120) ?: 'CRAFTED IN PURE MOTION.',
+            'beat2_desc' => $safeText($rawSeq['beat2_desc'] ?? Str::limit((string) ($brand['description'] ?? ''), 150), 260),
+            'beat3_kicker' => $safeText($rawSeq['beat3_kicker'] ?? 'CHAPTER III • FLAGSHIP DROP', 60) ?: 'CHAPTER III • FLAGSHIP DROP',
+            'beat3_title' => $safeText($rawSeq['beat3_title'] ?? 'DISCOVER THE COLLECTION.', 120) ?: 'DISCOVER THE COLLECTION.',
+            'beat3_desc' => $safeText($rawSeq['beat3_desc'] ?? ('Scroll seamlessly into verified pieces from ' . $brand['store_name'] . '.'), 260),
+            'cta_text' => $safeText($rawSeq['cta_text'] ?? 'Explore Collection', 50) ?: 'Explore Collection',
+        ];
+
         $rawServiceSite = is_array($input['service_site'] ?? null) ? $input['service_site'] : [];
         $rawVis = is_array($rawServiceSite['section_visibility'] ?? null) ? $rawServiceSite['section_visibility'] : [];
         $rawNav = is_array($rawServiceSite['nav_labels'] ?? null) ? $rawServiceSite['nav_labels'] : [];
         $serviceSite = [
-            'hero_headline' => $safeText($rawServiceSite['hero_headline'] ?? $brand['tagline'] ?? $vendor->headline ?? '', 180),
-            'hero_subtitle' => $safeText($rawServiceSite['hero_subtitle'] ?? $vendor->tagline ?? '', 240),
+            'hero_headline' => $safeText(
+                ($rawServiceSite['hero_headline'] ?? null) ?: ($vendor->headline ?: ($vendor->tagline ?: ($brand['tagline'] ?? ''))),
+                180
+            ),
+            'hero_subtitle' => $safeText(($rawServiceSite['hero_subtitle'] ?? null) ?: ($vendor->tagline ?? ''), 240),
             'about_title' => $safeText($rawServiceSite['about_title'] ?? ($vendor->provider_mode === 'agency' ? 'About Our Studio' : 'About Me'), 100),
             'cta_primary_text' => $safeText($rawServiceSite['cta_primary_text'] ?? 'Start a Project', 40),
             'cta_secondary_text' => $safeText($rawServiceSite['cta_secondary_text'] ?? 'View Work', 40),
@@ -1401,6 +1538,7 @@ class StorefrontPresetService
             'header' => $header,
             'hero' => $hero,
             'products' => $productsCfg,
+            'scroll_sequence' => $scrollSequence,
             'sections' => $sections,
             'footer' => $footer,
             'happy_customers' => $happyCustomers,
