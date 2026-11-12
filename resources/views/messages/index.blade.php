@@ -2642,7 +2642,7 @@
                                 <span class="glass-reply-body" id="glassEditingText">Original message</span>
                             </div>
                         </div>
-                        <button type="button" id="glassEditingCancelBtn" onclick="cancelEditingMessage()" class="glass-reply-close-btn" title="Cancel edit">✕</button>
+                        <button type="button" id="glassEditingCancelBtn" class="glass-reply-close-btn" title="Cancel edit">✕</button>
                     </div>
 
                     <!-- Sticky Bottom Input Composer -->
@@ -2930,11 +2930,18 @@
         tabRequestsBtn.addEventListener('click', () => switchTab('requests'));
 
         function fetchConversations(silent = false) {
-            fetch(`/api/chat/get_conversations.php?tab=${currentTab}`, {
+            fetch(`/chat/api/conversations?tab=${encodeURIComponent(currentTab)}`, {
                 method: 'GET',
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
             })
-            .then(res => res.json())
+            .then(async res => {
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data) {
+                    throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
+                }
+                return data;
+            })
             .then(result => {
                 if (result.success && Array.isArray(result.data)) {
                     conversationsCache = result.data;
@@ -2957,7 +2964,13 @@
                 }
             })
             .catch(err => {
-                if (!silent) console.error('Error fetching conversations:', err);
+                if (!silent) {
+                    console.error('Error fetching conversations:', err);
+                    conversationsList.innerHTML = `
+                        <li style="padding: 36px 20px; text-align: center; color: var(--color-text-muted); font-size: 13px; line-height: 1.5;">
+                            Could not load conversations (${escapeHtml(err.message || 'Network error')}).
+                        </li>`;
+                }
             });
         }
 
@@ -3196,28 +3209,30 @@
                     } catch(e) {}
                 }
                 if (currentConversationId) {
-                    fetch('/api/chat/typing.php', {
+                    fetch('/chat/api/typing', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}'
                         },
-                        body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID, stop: 1 })
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
                     }).catch(() => {});
                 }
             }, 3000);
 
             if (now - lastTypingPing > 2000) {
                 lastTypingPing = now;
-                fetch('/api/chat/typing.php', {
+                fetch('/chat/api/typing', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID })
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ conversation_id: currentConversationId })
                 }).catch(() => {});
             }
         }
@@ -3225,9 +3240,10 @@
         function fetchMessages(scrollToBottom = false) {
             if (!currentConversationId) return;
 
-            fetch(`/api/chat/get_messages.php?conversation_id=${currentConversationId}`, {
+            fetch(`/chat/api/messages?conversation_id=${currentConversationId}`, {
                 method: 'GET',
-                headers: { 'Accept': 'application/json' }
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin'
             })
             .then(res => res.json())
             .then(result => {
@@ -3752,6 +3768,11 @@
                 updateSendButtonState();
             }
         }
+        window.cancelEditingMessage = cancelEditingMessage;
+        const cancelEditBtn = document.getElementById('glassEditingCancelBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', cancelEditingMessage);
+        }
 
         // Chunked Pagination & Long Chat Preserver
         let oldestChatMsgId = 0;
@@ -3764,7 +3785,10 @@
                 const prevScrollHeight = chatFeed.scrollHeight;
                 const prevScrollTop = chatFeed.scrollTop;
 
-                fetch(`/api/chat/get_messages.php?conversation_id=${currentConversationId}&before_id=${oldestChatMsgId}&limit=40`)
+                fetch(`/chat/api/messages?conversation_id=${currentConversationId}&before_id=${oldestChatMsgId}&limit=40`, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                })
                     .then(r => r.json())
                     .then(res => {
                         isFetchingOlderHistory = false;
@@ -3835,13 +3859,14 @@
                 }
 
                 // POST edit to backend
-                fetch('/api/chat/edit_message.php', {
+                fetch('/chat/api/edit_message', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         message_id: editMsgId,
                         body: text
@@ -3886,14 +3911,15 @@
                 } catch(e) {}
             }
             if (currentConversationId) {
-                fetch('/api/chat/typing.php', {
+                fetch('/chat/api/typing', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ conversation_id: currentConversationId, user_id: CURRENT_USER_ID, stop: 1 })
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ conversation_id: currentConversationId, stop: 1 })
                 }).catch(() => {});
             }
 
@@ -3930,13 +3956,14 @@
                 postBody.reply_to_sender_name = replyData.author;
             }
 
-            fetch('/api/chat/send_message.php', {
+            fetch('/chat/api/send', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify(postBody)
             })
             .then(res => res.json())
@@ -4081,12 +4108,13 @@
             formData.append('photo', file);
             formData.append('_token', '{{ csrf_token() }}');
 
-            fetch('/api/chat/upload_photo.php', {
+            fetch('/chat/api/upload_photo', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: formData
             })
             .then(res => res.json())
@@ -4169,12 +4197,13 @@
                 formData.append('video', file);
                 formData.append('_token', '{{ csrf_token() }}');
 
-                fetch('/api/chat/upload_video.php', {
+                fetch('/chat/api/upload_video', {
                     method: 'POST',
                     headers: {
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
+                    credentials: 'same-origin',
                     body: formData
                 })
                 .then(res => res.json())
@@ -4277,13 +4306,14 @@
 
             if (type === 'conversation') {
                 if (!confirm('Hide this conversation? It will be removed from your chat list, but messages are safely preserved.')) return;
-                fetch('/api/chat/delete_conversation.php', {
+                fetch('/chat/api/delete_conversation', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ conversation_id: id })
                 })
                 .then(res => res.json())
@@ -4308,13 +4338,14 @@
         });
 
         function unsendMessage(msgId) {
-            fetch('/api/chat/unsend_message.php', {
+            fetch('/chat/api/unsend', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ message_id: msgId })
             })
             .then(res => res.json())
@@ -4378,7 +4409,7 @@
                 const query = prompt('Search messages in this conversation:');
                 if (!query) return;
                 const terms = query.toLowerCase();
-                const matchedBubbles = chatFeed.querySelectorAll('.glass-msg-body');
+                const matchedBubbles = chatFeed.querySelectorAll('.glass-msg-bubble');
                 let found = false;
                 matchedBubbles.forEach(b => {
                     if (b.textContent.toLowerCase().includes(terms)) {
@@ -4410,13 +4441,14 @@
                 if (chatOptionsDropdown) chatOptionsDropdown.classList.add('hidden');
                 if (!currentConversationId) return;
                 if (!confirm('Hide this conversation? It will be removed from your chat list, but messages are safely preserved.')) return;
-                fetch('/api/chat/delete_conversation.php', {
+                fetch('/chat/api/delete_conversation', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({ conversation_id: currentConversationId })
                 })
                 .then(res => res.json())
@@ -4457,13 +4489,14 @@
             btnAcceptRequest.disabled = true;
             btnAcceptRequest.textContent = 'Accepting...';
 
-            fetch('/api/chat/request_action.php', {
+            fetch('/chat/api/request_action', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     conversation_id: currentConversationId,
                     action: 'accept'
@@ -4496,13 +4529,14 @@
             btnDeclineRequest.disabled = true;
             btnDeclineRequest.textContent = 'Declining...';
 
-            fetch('/api/chat/request_action.php', {
+            fetch('/chat/api/request_action', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     conversation_id: currentConversationId,
                     action: 'decline'
@@ -4720,18 +4754,41 @@
                 return;
             }
 
+            modalUserList.innerHTML = `
+                <li style="padding: 24px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                    Searching users...
+                </li>`;
+
             searchDebounceTimer = setTimeout(() => {
-                fetch(`/api/chat/search_users.php?q=${encodeURIComponent(query)}`, {
+                fetch(`/chat/api/search?q=${encodeURIComponent(query)}`, {
                     method: 'GET',
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
                 })
-                .then(res => res.json())
+                .then(async res => {
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data) {
+                        throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
+                    }
+                    return data;
+                })
                 .then(result => {
                     if (result.success && Array.isArray(result.data)) {
                         renderSearchResults(result.data);
+                    } else {
+                        modalUserList.innerHTML = `
+                            <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                                ${escapeHtml((result && result.error) || 'Could not search users right now.')}
+                            </li>`;
                     }
                 })
-                .catch(err => console.error('Search error:', err));
+                .catch(err => {
+                    console.error('Search error:', err);
+                    modalUserList.innerHTML = `
+                        <li style="padding: 32px; text-align: center; color: var(--color-text-muted); font-size: 13px;">
+                            Search unavailable (${escapeHtml(err.message || 'Network error')}).
+                        </li>`;
+                });
             }, 250);
         });
 
@@ -4761,35 +4818,60 @@
                 </li>
             `).join('');
 
-            modalUserList.querySelectorAll('.glass-modal-user-item, .glass-modal-msg-btn').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    const targetId = parseInt(el.getAttribute('data-user-id'), 10);
-                    if (!targetId) return;
+            let isStartingChat = false;
+            const startChatWithUser = (targetId) => {
+                if (!targetId || isStartingChat) return;
+                isStartingChat = true;
 
-                    fetch('/api/chat/search_users.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            action: 'start_or_find',
-                            target_user_id: targetId
-                        })
+                fetch('/chat/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        action: 'start_or_find',
+                        target_user_id: targetId
                     })
-                    .then(res => res.json())
-                    .then(result => {
-                        if (result.success && result.conversation_id) {
-                            closeModal();
-                            loadConversation(result.conversation_id, targetId);
-                            fetchConversations(true);
-                            setTimeout(() => messageInput.focus(), 200);
-                        } else {
-                            alert(result.error || 'Failed to start conversation.');
-                        }
-                    })
-                    .catch(err => console.error('Start chat error:', err));
+                })
+                .then(async res => {
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data) {
+                        throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
+                    }
+                    return data;
+                })
+                .then(result => {
+                    isStartingChat = false;
+                    if (result.success && result.conversation_id) {
+                        closeModal();
+                        loadConversation(result.conversation_id, targetId);
+                        fetchConversations(true);
+                        setTimeout(() => messageInput.focus(), 200);
+                    } else {
+                        alert(result.error || 'Failed to start conversation.');
+                    }
+                })
+                .catch(err => {
+                    isStartingChat = false;
+                    console.error('Start chat error:', err);
+                    alert(err.message || 'Could not start conversation.');
+                });
+            };
+
+            modalUserList.querySelectorAll('.glass-modal-user-item').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    const targetId = parseInt(row.getAttribute('data-user-id'), 10);
+                    startChatWithUser(targetId);
+                });
+            });
+            modalUserList.querySelectorAll('.glass-modal-msg-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const targetId = parseInt(btn.getAttribute('data-user-id'), 10);
+                    startChatWithUser(targetId);
                 });
             });
         }
@@ -4845,13 +4927,14 @@
         if (qConv) {
             loadConversation(parseInt(qConv, 10), null);
         } else if (qUser) {
-            fetch('/api/chat/search_users.php', {
+            fetch('/chat/api/search', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     action: 'start_or_find',
                     target_user_id: parseInt(qUser, 10)
@@ -5175,12 +5258,13 @@
             formData.append('voice', blob, `voice_${Date.now()}.webm`);
             formData.append('_token', '{{ csrf_token() }}');
 
-            fetch('/api/chat/upload_voice.php', {
+            fetch('/chat/api/upload-voice', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
+                credentials: 'same-origin',
                 body: formData
             })
             .then(res => res.json())

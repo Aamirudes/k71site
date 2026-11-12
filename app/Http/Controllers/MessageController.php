@@ -183,7 +183,12 @@ class MessageController extends Controller
                     ]);
                 } else {
                     $chatConvId = $chatConv->id;
-                    DB::table('chat_conversations')->where('id', $chatConvId)->update(['last_message_at' => $nowStr]);
+                    $convUpdate = ['last_message_at' => $nowStr];
+                    if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                        $convUpdate['user_one_hidden_at'] = null;
+                        $convUpdate['user_two_hidden_at'] = null;
+                    }
+                    DB::table('chat_conversations')->where('id', $chatConvId)->update($convUpdate);
                 }
 
                 DB::table('chat_messages')->insert([
@@ -193,6 +198,10 @@ class MessageController extends Controller
                     'is_read' => 0,
                     'created_at' => $nowStr,
                 ]);
+
+                Cache::forget('synced_legacy_chats_v2_' . $user->id);
+                Cache::forget('synced_legacy_chats_v2_' . (int) $vendor->user_id);
+                Cache::forget('synced_legacy_chats_v2_all');
 
                 if ($request->expectsJson() || $request->wantsJson()) {
                     return response()->json([
@@ -256,16 +265,35 @@ class MessageController extends Controller
                     ->where('user_two_id', $u2)
                     ->first();
 
-                if ($chatConv) {
-                    DB::table('chat_conversations')->where('id', $chatConv->id)->update(['last_message_at' => $nowStr]);
-                    DB::table('chat_messages')->insert([
-                        'conversation_id' => $chatConv->id,
-                        'sender_id' => auth()->id(),
-                        'body' => $validated['body'],
-                        'is_read' => 0,
-                        'created_at' => $nowStr,
+                if (!$chatConv) {
+                    $chatConvId = DB::table('chat_conversations')->insertGetId([
+                        'user_one_id' => $u1,
+                        'user_two_id' => $u2,
+                        'last_message_at' => $nowStr,
+                        'status' => 'accepted',
+                        'requested_by' => auth()->id(),
                     ]);
+                } else {
+                    $chatConvId = $chatConv->id;
+                    $convUpdate = ['last_message_at' => $nowStr];
+                    if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                        $convUpdate['user_one_hidden_at'] = null;
+                        $convUpdate['user_two_hidden_at'] = null;
+                    }
+                    DB::table('chat_conversations')->where('id', $chatConvId)->update($convUpdate);
                 }
+
+                DB::table('chat_messages')->insert([
+                    'conversation_id' => $chatConvId,
+                    'sender_id' => auth()->id(),
+                    'body' => $validated['body'],
+                    'is_read' => 0,
+                    'created_at' => $nowStr,
+                ]);
+
+                Cache::forget('synced_legacy_chats_v2_' . auth()->id());
+                Cache::forget('synced_legacy_chats_v2_' . (int) $vendor->user_id);
+                Cache::forget('synced_legacy_chats_v2_all');
             }
         } catch (\Throwable $e) {}
 
@@ -351,16 +379,35 @@ class MessageController extends Controller
                     ->where('user_two_id', $u2)
                     ->first();
 
-                if ($chatConv) {
-                    DB::table('chat_conversations')->where('id', $chatConv->id)->update(['last_message_at' => $nowStr]);
-                    DB::table('chat_messages')->insert([
-                        'conversation_id' => $chatConv->id,
-                        'sender_id' => (int)$vendor->user_id,
-                        'body' => $validated['body'],
-                        'is_read' => 0,
-                        'created_at' => $nowStr,
+                if (!$chatConv) {
+                    $chatConvId = DB::table('chat_conversations')->insertGetId([
+                        'user_one_id' => $u1,
+                        'user_two_id' => $u2,
+                        'last_message_at' => $nowStr,
+                        'status' => 'accepted',
+                        'requested_by' => (int) $conversation->user_id,
                     ]);
+                } else {
+                    $chatConvId = $chatConv->id;
+                    $convUpdate = ['last_message_at' => $nowStr];
+                    if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                        $convUpdate['user_one_hidden_at'] = null;
+                        $convUpdate['user_two_hidden_at'] = null;
+                    }
+                    DB::table('chat_conversations')->where('id', $chatConvId)->update($convUpdate);
                 }
+
+                DB::table('chat_messages')->insert([
+                    'conversation_id' => $chatConvId,
+                    'sender_id' => (int) $vendor->user_id,
+                    'body' => $validated['body'],
+                    'is_read' => 0,
+                    'created_at' => $nowStr,
+                ]);
+
+                Cache::forget('synced_legacy_chats_v2_' . (int) $conversation->user_id);
+                Cache::forget('synced_legacy_chats_v2_' . (int) $vendor->user_id);
+                Cache::forget('synced_legacy_chats_v2_all');
             }
         } catch (\Throwable $e) {}
 
@@ -516,6 +563,12 @@ class MessageController extends Controller
                     if (!Schema::hasColumn('chat_conversations', 'user_two_hidden_at')) {
                         $table->timestamp('user_two_hidden_at')->nullable();
                     }
+                    if (!Schema::hasColumn('chat_conversations', 'typing_user_id')) {
+                        $table->unsignedBigInteger('typing_user_id')->nullable();
+                    }
+                    if (!Schema::hasColumn('chat_conversations', 'typing_at')) {
+                        $table->timestamp('typing_at')->nullable();
+                    }
                 });
             }
 
@@ -531,6 +584,8 @@ class MessageController extends Controller
                     $table->text('reply_to_body')->nullable();
                     $table->string('reply_to_sender_name', 100)->nullable();
                     $table->boolean('is_read')->default(false);
+                    $table->boolean('is_edited')->default(false);
+                    $table->timestamp('edited_at')->nullable();
                     $table->timestamp('created_at')->useCurrent();
                     $table->index('conversation_id');
                     $table->index('sender_id');
@@ -552,6 +607,12 @@ class MessageController extends Controller
                     }
                     if (!Schema::hasColumn('chat_messages', 'reply_to_sender_name')) {
                         $table->string('reply_to_sender_name', 100)->nullable();
+                    }
+                    if (!Schema::hasColumn('chat_messages', 'is_edited')) {
+                        $table->boolean('is_edited')->default(false);
+                    }
+                    if (!Schema::hasColumn('chat_messages', 'edited_at')) {
+                        $table->timestamp('edited_at')->nullable();
                     }
                 });
             }
@@ -609,6 +670,11 @@ class MessageController extends Controller
                     ]);
                 } else {
                     $chatConvId = $chatConv->id;
+                    if (!empty($lc->last_message_at) && (empty($chatConv->last_message_at) || strtotime($lc->last_message_at) > strtotime($chatConv->last_message_at))) {
+                        DB::table('chat_conversations')
+                            ->where('id', $chatConvId)
+                            ->update(['last_message_at' => $lc->last_message_at]);
+                    }
                 }
 
                 $legacyMessages = DB::table('messages')
@@ -624,6 +690,7 @@ class MessageController extends Controller
                         ->where('conversation_id', $chatConvId)
                         ->where('sender_id', $senderId)
                         ->where('created_at', $createdAt)
+                        ->where('body', $lm->body)
                         ->exists();
 
                     if (!$alreadyInChat) {
@@ -680,7 +747,7 @@ class MessageController extends Controller
             }
 
             $rawConversations = $query->orderByDesc('last_message_at')
-                ->limit(50)
+                ->limit(100)
                 ->get();
 
             if ($rawConversations->isEmpty()) {
@@ -773,6 +840,7 @@ class MessageController extends Controller
                 }
             }
 
+            $tab = strtolower(trim((string) $request->input('tab', '')));
             $requestsCount = 0;
             $conversations = [];
             foreach ($rawConversations as $conv) {
@@ -783,16 +851,24 @@ class MessageController extends Controller
                 $latestMsg = $latestMessages[$conv->id] ?? null;
                 $unreadCount = $unreadCounts[$conv->id] ?? 0;
 
-                $isIncomingRequest = (($conv->status ?? 'accepted') === 'pending' && (int)($conv->requested_by ?? 0) !== $userId);
+                $convStatus = $conv->status ?? 'accepted';
+                $isIncomingRequest = ($convStatus === 'pending' && (int)($conv->requested_by ?? 0) !== $userId);
                 if ($isIncomingRequest) {
                     $requestsCount++;
+                }
+
+                if ($tab === 'requests' && !$isIncomingRequest) {
+                    continue;
+                }
+                if ($tab === 'primary' && ($isIncomingRequest || $convStatus === 'declined')) {
+                    continue;
                 }
 
                 $isConvTyping = (bool) \Illuminate\Support\Facades\Cache::has("chat_typing_{$conv->id}_{$recipientId}");
 
                 $conversations[] = [
                     'id' => (int) $conv->id,
-                    'status' => $conv->status ?? 'accepted',
+                    'status' => $convStatus,
                     'requested_by' => $conv->requested_by ? (int)$conv->requested_by : null,
                     'recipient' => $recipientInfo,
                     'is_typing' => $isConvTyping,
@@ -903,6 +979,8 @@ class MessageController extends Controller
                     'sender_id' => $senderId,
                     'is_mine' => ($senderId === $userId),
                     'is_read' => (bool) $m->is_read,
+                    'is_edited' => !empty($m->is_edited),
+                    'edited_at' => $m->edited_at ?? null,
                     'created_at' => $carbonDate->toIso8601String(),
                     'time_formatted' => $carbonDate->format('g:i A'),
                     'date_header' => $carbonDate->format('M j, Y'),
@@ -972,8 +1050,39 @@ class MessageController extends Controller
         }
 
         $conversationId = (int) ($request->input('conversation_id') ?: $request->json('conversation_id', 0));
+        $recipientId = (int) ($request->input('recipient_id') ?: $request->json('recipient_id', 0));
         $rawBody = $request->input('message') ?: ($request->input('body') ?: ($request->json('message') ?: $request->json('body', '')));
         $cleanBody = htmlspecialchars(trim((string)$rawBody), ENT_QUOTES, 'UTF-8');
+
+        if ($conversationId <= 0 && $recipientId > 0 && $recipientId !== $userId && $cleanBody !== '') {
+            self::ensureChatSchema();
+            $u1 = min($userId, $recipientId);
+            $u2 = max($userId, $recipientId);
+            $existingConv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+                ->where('user_one_id', $u1)
+                ->where('user_two_id', $u2)
+                ->first();
+            if ($existingConv) {
+                $conversationId = (int) $existingConv->id;
+            } else {
+                $recipientValid = \App\Models\User::query()
+                    ->where('id', $recipientId)
+                    ->whereNull('deleted_at')
+                    ->where(function ($q) {
+                        $q->where('is_blocked', false)->orWhereNull('is_blocked');
+                    })
+                    ->exists();
+                if ($recipientValid) {
+                    $conversationId = (int) \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+                        'user_one_id' => $u1,
+                        'user_two_id' => $u2,
+                        'status' => 'accepted',
+                        'requested_by' => $userId,
+                        'last_message_at' => now()->toDateTimeString(),
+                    ]);
+                }
+            }
+        }
 
         if ($conversationId <= 0 || $cleanBody === '') {
             return response()->json(['success' => false, 'error' => 'Invalid conversation or message body.'], 400);
@@ -1104,6 +1213,17 @@ class MessageController extends Controller
                 return response()->json(['success' => false, 'error' => 'Invalid target user ID.'], 400);
             }
 
+            $targetUser = \App\Models\User::query()
+                ->where('id', $targetUserId)
+                ->whereNull('deleted_at')
+                ->where(function ($q) {
+                    $q->where('is_blocked', false)->orWhereNull('is_blocked');
+                })
+                ->first(['id']);
+            if (!$targetUser) {
+                return response()->json(['success' => false, 'error' => 'Target user account is unavailable.'], 404);
+            }
+
             try {
                 $existing = \Illuminate\Support\Facades\DB::table('chat_conversations')
                     ->where(function($q) use ($userId, $targetUserId) {
@@ -1135,13 +1255,29 @@ class MessageController extends Controller
                 $userTwo = max($userId, $targetUserId);
                 $now = now()->toDateTimeString();
 
-                $newId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
-                    'user_one_id' => $userOne,
-                    'user_two_id' => $userTwo,
-                    'status' => 'accepted',
-                    'requested_by' => $userId,
-                    'last_message_at' => $now,
-                ]);
+                try {
+                    $newId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+                        'user_one_id' => $userOne,
+                        'user_two_id' => $userTwo,
+                        'status' => 'accepted',
+                        'requested_by' => $userId,
+                        'last_message_at' => $now,
+                    ]);
+                } catch (\Throwable $dupErr) {
+                    $existing = \Illuminate\Support\Facades\DB::table('chat_conversations')
+                        ->where('user_one_id', $userOne)
+                        ->where('user_two_id', $userTwo)
+                        ->first();
+                    if ($existing) {
+                        return response()->json([
+                            'success' => true,
+                            'conversation_id' => (int) $existing->id,
+                            'status' => $existing->status ?? 'accepted',
+                            'is_new' => false
+                        ]);
+                    }
+                    throw $dupErr;
+                }
 
                 return response()->json([
                     'success' => true,
@@ -1157,23 +1293,34 @@ class MessageController extends Controller
         }
 
         // 2. Handle GET user search
-        $query = trim((string) $request->input('q', ''));
+        $rawQuery = trim((string) $request->input('q', ''));
+        $query = ltrim($rawQuery, '@');
         if (mb_strlen($query) < 1) {
             return response()->json(['success' => true, 'data' => []]);
         }
 
         try {
-            $searchWildcard = '%' . $query . '%';
-            $matched = \Illuminate\Support\Facades\DB::table('users')
+            $tokens = array_values(array_filter(preg_split('/\s+/', $query) ?: []));
+            $matchedQuery = \Illuminate\Support\Facades\DB::table('users')
                 ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
                 ->where('users.id', '!=', $userId)
                 ->whereNull('users.deleted_at')
-                ->where(function($q) use ($searchWildcard) {
-                    $q->where('users.username', 'like', $searchWildcard)
-                      ->orWhere('users.first_name', 'like', $searchWildcard)
-                      ->orWhere('users.last_name', 'like', $searchWildcard)
-                      ->orWhere('vendors.shop_name', 'like', $searchWildcard);
-                })
+                ->where(function ($q) {
+                    $q->where('users.is_blocked', false)->orWhereNull('users.is_blocked');
+                });
+
+            foreach ($tokens as $tok) {
+                $like = '%' . $tok . '%';
+                $matchedQuery->where(function ($q) use ($like) {
+                    $q->where('users.username', 'like', $like)
+                      ->orWhere('users.first_name', 'like', $like)
+                      ->orWhere('users.last_name', 'like', $like)
+                      ->orWhere('vendors.shop_name', 'like', $like)
+                      ->orWhere('vendors.slug', 'like', $like);
+                });
+            }
+
+            $matched = $matchedQuery
                 ->limit(25)
                 ->get([
                     'users.id',
@@ -1185,8 +1332,14 @@ class MessageController extends Controller
                 ]);
 
             $results = [];
+            $seenUserIds = [];
             foreach ($matched as $u) {
                 $targetId = (int) $u->id;
+                if (isset($seenUserIds[$targetId])) {
+                    continue;
+                }
+                $seenUserIds[$targetId] = true;
+
                 $personName = trim(($u->first_name ?? '') . ' ' . ($u->last_name ?? ''));
                 if ($personName === '') $personName = $u->username ?? ('User #' . $targetId);
                 $displayName = $personName;
@@ -1219,6 +1372,98 @@ class MessageController extends Controller
             \Illuminate\Support\Facades\Log::error('apiSearchUsers query error: ' . $e->getMessage());
             return response()->json(['success' => true, 'data' => []]);
         }
+    }
+
+    /**
+     * API: Edit an existing chat message owned by the authenticated user.
+     */
+    public function apiEditMessage(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized. Please log in to edit messages.'], 401);
+        }
+
+        $messageId = (int) ($request->input('message_id') ?: $request->json('message_id', 0));
+        $rawBody = $request->input('new_body') ?: ($request->input('body') ?: ($request->json('new_body') ?: $request->json('body', '')));
+        $cleanBody = htmlspecialchars(trim((string) $rawBody), ENT_QUOTES, 'UTF-8');
+
+        if ($messageId <= 0 || $cleanBody === '') {
+            return response()->json(['success' => false, 'error' => 'Message ID and new body text are required.'], 400);
+        }
+
+        self::ensureChatSchema();
+
+        $msg = \Illuminate\Support\Facades\DB::table('chat_messages')
+            ->where('id', $messageId)
+            ->first();
+
+        if (!$msg) {
+            return response()->json(['success' => false, 'error' => 'Message not found.'], 404);
+        }
+
+        if ((int) $msg->sender_id !== (int) $userId) {
+            return response()->json(['success' => false, 'error' => 'You can only edit your own messages.'], 403);
+        }
+
+        $now = now()->toDateTimeString();
+        $updatePayload = ['body' => $cleanBody];
+        if (Schema::hasColumn('chat_messages', 'is_edited')) {
+            $updatePayload['is_edited'] = 1;
+        }
+        if (Schema::hasColumn('chat_messages', 'edited_at')) {
+            $updatePayload['edited_at'] = $now;
+        }
+
+        \Illuminate\Support\Facades\DB::table('chat_messages')
+            ->where('id', $messageId)
+            ->update($updatePayload);
+
+        return response()->json([
+            'success' => true,
+            'message_id' => $messageId,
+            'conversation_id' => (int) $msg->conversation_id,
+            'new_body' => $cleanBody,
+            'is_edited' => true,
+            'edited_at' => $now,
+        ]);
+    }
+
+    /**
+     * API: Lightweight unread message counter for nav badges.
+     */
+    public function apiGetUnreadCount(Request $request)
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json([
+                'success' => true,
+                'unread' => 0,
+                'chat_unread' => 0,
+                'legacy_unread' => 0,
+                'authenticated' => false,
+            ]);
+        }
+
+        self::ensureChatSchema();
+
+        $chatUnread = (int) \Illuminate\Support\Facades\DB::table('chat_messages as m')
+            ->join('chat_conversations as c', 'm.conversation_id', '=', 'c.id')
+            ->where(function ($q) use ($userId) {
+                $q->where('c.user_one_id', $userId)->orWhere('c.user_two_id', $userId);
+            })
+            ->where('m.sender_id', '!=', $userId)
+            ->where('m.is_read', 0)
+            ->count();
+
+        return response()->json([
+            'success' => true,
+            'unread' => $chatUnread,
+            'chat_unread' => $chatUnread,
+            'legacy_unread' => 0,
+            'authenticated' => true,
+            'user_id' => $userId,
+        ]);
     }
 
     /**
@@ -1559,9 +1804,14 @@ class MessageController extends Controller
         if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
             $newConvStatus = 'accepted';
         }
+        $convUpdate = ['last_message_at' => $now, 'status' => $newConvStatus];
+        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+            $convUpdate['user_one_hidden_at'] = null;
+            $convUpdate['user_two_hidden_at'] = null;
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
+            ->update($convUpdate);
 
         $msgPayload = [
             'id' => (int) $messageId,
@@ -1674,9 +1924,14 @@ class MessageController extends Controller
         if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
             $newConvStatus = 'accepted';
         }
+        $convUpdate = ['last_message_at' => $now, 'status' => $newConvStatus];
+        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+            $convUpdate['user_one_hidden_at'] = null;
+            $convUpdate['user_two_hidden_at'] = null;
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
+            ->update($convUpdate);
 
         $msgPayload = [
             'id' => (int) $messageId,
@@ -1791,9 +2046,14 @@ class MessageController extends Controller
         if ($newConvStatus === 'pending' && (int) ($conv->requested_by ?? 0) !== $userId) {
             $newConvStatus = 'accepted';
         }
+        $convUpdate = ['last_message_at' => $now, 'status' => $newConvStatus];
+        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+            $convUpdate['user_one_hidden_at'] = null;
+            $convUpdate['user_two_hidden_at'] = null;
+        }
         \Illuminate\Support\Facades\DB::table('chat_conversations')
             ->where('id', $conversationId)
-            ->update(['last_message_at' => $now, 'status' => $newConvStatus]);
+            ->update($convUpdate);
 
         \Illuminate\Support\Facades\Cache::forget("chat_typing_{$conversationId}_{$userId}");
 

@@ -231,6 +231,7 @@ Route::middleware('web')->group(function () {
     Route::get('/api/chat/get_conversations.php', [\App\Http\Controllers\MessageController::class, 'apiGetConversations']);
     Route::get('/api/chat/get_messages.php', [\App\Http\Controllers\MessageController::class, 'apiGetMessages']);
     Route::post('/api/chat/send_message.php', [\App\Http\Controllers\MessageController::class, 'apiSendMessage']);
+    Route::post('/api/chat/edit_message.php', [\App\Http\Controllers\MessageController::class, 'apiEditMessage']);
     Route::match(['get', 'post'], '/api/chat/search_users.php', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers']);
     Route::post('/api/chat/follow_actions.php', [\App\Http\Controllers\MessageController::class, 'apiFollowActions']);
     Route::post('/api/chat/request_action.php', [\App\Http\Controllers\MessageController::class, 'apiRequestAction']);
@@ -240,18 +241,22 @@ Route::middleware('web')->group(function () {
     Route::post('/api/chat/upload_photo.php', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto']);
     Route::post('/api/chat/upload_video.php', [\App\Http\Controllers\MessageController::class, 'apiUploadVideo']);
     Route::post('/api/chat/upload_voice.php', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice']);
+    Route::get('/api/chat/get_unread_count.php', [\App\Http\Controllers\MessageController::class, 'apiGetUnreadCount']);
     Route::post('/chat/api/upload-voice', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice'])->name('chat.api.upload_voice');
 
     Route::get('/chat/api/conversations', [\App\Http\Controllers\MessageController::class, 'apiGetConversations'])->name('chat.api.conversations');
     Route::get('/chat/api/messages', [\App\Http\Controllers\MessageController::class, 'apiGetMessages'])->name('chat.api.messages');
     Route::post('/chat/api/send', [\App\Http\Controllers\MessageController::class, 'apiSendMessage'])->name('chat.api.send');
+    Route::post('/chat/api/edit_message', [\App\Http\Controllers\MessageController::class, 'apiEditMessage'])->name('chat.api.edit_message');
     Route::match(['get', 'post'], '/chat/api/search', [\App\Http\Controllers\MessageController::class, 'apiSearchUsers'])->name('chat.api.search');
     Route::post('/chat/api/follow', [\App\Http\Controllers\MessageController::class, 'apiFollowActions'])->name('chat.api.follow');
+    Route::post('/chat/api/request_action', [\App\Http\Controllers\MessageController::class, 'apiRequestAction'])->name('chat.api.request_action');
     Route::post('/chat/api/typing', [\App\Http\Controllers\MessageController::class, 'apiTyping'])->name('chat.api.typing');
     Route::post('/chat/api/unsend', [\App\Http\Controllers\MessageController::class, 'apiUnsendMessage'])->name('chat.api.unsend');
     Route::post('/chat/api/delete_conversation', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation'])->name('chat.api.delete_conversation');
     Route::post('/chat/api/upload_photo', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto'])->name('chat.api.upload_photo');
     Route::post('/chat/api/upload_video', [\App\Http\Controllers\MessageController::class, 'apiUploadVideo'])->name('chat.api.upload_video');
+    Route::get('/chat/api/unread_count', [\App\Http\Controllers\MessageController::class, 'apiGetUnreadCount'])->name('chat.api.unread_count');
 });
 
 

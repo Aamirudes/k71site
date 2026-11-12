@@ -140,67 +140,55 @@ $db = $pdo;
 if (!function_exists('get_current_user_id')) {
 function get_current_user_id(): ?int
 {
-    // Check direct PHP session variables first
-    if (!empty($_SESSION['user_id'])) {
-        return (int) $_SESSION['user_id'];
-    }
-    if (!empty($_SESSION['uid'])) {
-        return (int) $_SESSION['uid'];
-    }
-    if (!empty($_SESSION['id'])) {
-        return (int) $_SESSION['id'];
-    }
-
-    // Check fast bridge cookie
-    if (!empty($_COOKIE['k71_uid']) && is_numeric($_COOKIE['k71_uid'])) {
-        $uid = (int) $_COOKIE['k71_uid'];
-        $_SESSION['user_id'] = $uid;
-        return $uid;
-    }
-
     // Check if Laravel Auth is available in runtime
     if (class_exists('\Illuminate\Support\Facades\Auth')) {
         $laravelId = \Illuminate\Support\Facades\Auth::id();
         if ($laravelId) {
-            $_SESSION['user_id'] = (int) $laravelId;
             return (int) $laravelId;
         }
     }
 
-    // Fallback: Check Laravel file & database session from cookie
+    // Check direct server-side PHP session variables if set internally
+    if (!empty($_SESSION['user_id'])) {
+        return (int) $_SESSION['user_id'];
+    }
+
+    // Fallback: Check Laravel encrypted session cookie strictly against matching session ID
     global $basePath, $pdo, $envVars;
-    
-    // Detect session cookie value from any candidate cookie
+
     $cookieVal = null;
     foreach ($_COOKIE as $k => $v) {
-        if ($k === 'k71-session' || $k === 'laravel-session' || str_contains($k, 'session')) {
-            if (!empty($v) && is_string($v)) {
-                $cookieVal = $v;
-                break;
-            }
+        if (($k === 'k71-session' || $k === 'laravel-session') && !empty($v) && is_string($v)) {
+            $cookieVal = $v;
+            break;
         }
     }
 
     if ($cookieVal) {
-        // Attempt decryption with APP_KEY if available
         $rawSessionId = null;
         if (!empty($envVars['APP_KEY'])) {
             $appKey = $envVars['APP_KEY'];
             $key = str_starts_with($appKey, 'base64:') ? base64_decode(substr($appKey, 7)) : $appKey;
             $payload = json_decode(base64_decode(urldecode($cookieVal)), true);
-            if (isset($payload['iv'], $payload['value'])) {
-                $dec = openssl_decrypt(base64_decode($payload['value']), 'AES-256-CBC', $key, OPENSSL_RAW_DATA, base64_decode($payload['iv']));
-                if ($dec) {
-                    $unser = @unserialize($dec);
-                    $candidate = ($unser !== false && is_string($unser)) ? $unser : $dec;
-                    $rawSessionId = preg_replace('/[^a-zA-Z0-9_-]/', '', $candidate);
+            if (isset($payload['iv'], $payload['value'], $payload['mac'])) {
+                $calcMac = hash_hmac('sha256', $payload['iv'] . $payload['value'], $key);
+                if (hash_equals($calcMac, (string) $payload['mac'])) {
+                    $dec = openssl_decrypt(base64_decode($payload['value']), 'AES-256-CBC', $key, OPENSSL_RAW_DATA, base64_decode($payload['iv']));
+                    if ($dec) {
+                        $unser = @unserialize($dec);
+                        $candidate = ($unser !== false && is_string($unser)) ? $unser : $dec;
+                        if (str_contains($candidate, '|')) {
+                            $parts = explode('|', $candidate, 2);
+                            $candidate = $parts[1] ?? $candidate;
+                        }
+                        $rawSessionId = preg_replace('/[^a-zA-Z0-9_-]/', '', $candidate);
+                    }
                 }
             }
         }
 
-        $sessionIds = array_filter([$rawSessionId, preg_replace('/[^a-zA-Z0-9_-]/', '', $cookieVal)]);
+        $sessionIds = array_filter([$rawSessionId]);
 
-        // 1. Try file session driver
         $sessionDir = $basePath . '/storage/framework/sessions';
         if (!is_dir($sessionDir) && is_dir(dirname($basePath) . '/storage/framework/sessions')) {
             $sessionDir = dirname($basePath) . '/storage/framework/sessions';
@@ -212,31 +200,12 @@ function get_current_user_id(): ?int
                 if (file_exists($directFile)) {
                     $content = @file_get_contents($directFile);
                     if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
-                        $uid = (int) $matches[1];
-                        $_SESSION['user_id'] = $uid;
-                        return $uid;
-                    }
-                }
-            }
-
-            // Fallback: Check most recent session files
-            $files = glob($sessionDir . '/*');
-            if ($files) {
-                usort($files, function ($a, $b) {
-                    return filemtime($b) <=> filemtime($a);
-                });
-                foreach (array_slice($files, 0, 10) as $f) {
-                    $content = @file_get_contents($f);
-                    if ($content && preg_match('/login_web_[a-f0-9]+";i:(\d+)/', $content, $matches)) {
-                        $uid = (int) $matches[1];
-                        $_SESSION['user_id'] = $uid;
-                        return $uid;
+                        return (int) $matches[1];
                     }
                 }
             }
         }
 
-        // 2. Try database session driver if PDO available
         if ($pdo) {
             foreach ($sessionIds as $sId) {
                 try {
@@ -244,9 +213,7 @@ function get_current_user_id(): ?int
                     $stmtDb->execute([$sId]);
                     $dbUid = $stmtDb->fetchColumn();
                     if ($dbUid) {
-                        $uid = (int) $dbUid;
-                        $_SESSION['user_id'] = $uid;
-                        return $uid;
+                        return (int) $dbUid;
                     }
                 } catch (\Throwable $t) {}
             }
