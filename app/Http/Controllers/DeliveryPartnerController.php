@@ -66,6 +66,11 @@ class DeliveryPartnerController extends Controller
                     ]);
                 }
                 if ($user) {
+                    if ($user->is_blocked) {
+                        return back()->withInput()->withErrors([
+                            'email' => 'This account has been suspended. Please contact K71 support.',
+                        ]);
+                    }
                     if ($user->isAdmin() || $user->isVendor() || $user->vendor()->exists()) {
                         return back()->withInput()->withErrors([
                             'email' => 'This email belongs to a store or admin account. Please register with a separate email for your Fleet account.',
@@ -103,8 +108,16 @@ class DeliveryPartnerController extends Controller
                 $user->roles()->syncWithoutDetaching([$fleetRole->id]);
                 $user->unsetRelation('roles');
                 \Illuminate\Support\Facades\Auth::login($user, true);
+                if ($request->hasSession()) {
+                    $request->session()->regenerate();
+                }
             } elseif (auth()->check()) {
                 $currentUser = auth()->user();
+                if ($currentUser->is_blocked) {
+                    return back()->withInput()->withErrors([
+                        'email' => 'Your account has been suspended. Please contact K71 support.',
+                    ]);
+                }
                 if ($currentUser->isAdmin() || $currentUser->isVendor()) {
                     return back()->withInput()->withErrors([
                         'email' => 'Store and Admin accounts must register a separate email for a Fleet Partner profile.',
@@ -157,9 +170,10 @@ class DeliveryPartnerController extends Controller
     {
         $partnerId = session('delivery_partner_id');
         if ($partnerId) {
-            $partner = DeliveryPartner::realFleet()->find($partnerId);
+            $partner = DeliveryPartner::with('user')->realFleet()->find($partnerId);
             if ($partner) {
-                if (auth()->check() && !auth()->user()->isAdmin() && $partner->user_id !== auth()->id()) {
+                $riderBlocked = (bool) ($partner->user?->is_blocked ?? false);
+                if ($riderBlocked || (auth()->check() && !auth()->user()->isAdmin() && $partner->user_id !== auth()->id())) {
                     session()->forget('delivery_partner_id');
                 } else {
                     return $partner;
@@ -175,6 +189,10 @@ class DeliveryPartnerController extends Controller
             // 1. Admin can inspect the fleet dashboard in administrative oversight mode (real registered riders only)
             if ($user->isAdmin()) {
                 return DeliveryPartner::realFleet()->latest('id')->first();
+            }
+
+            if ($user->is_blocked) {
+                return null;
             }
 
             // 2. Dedicated Fleet Partner user account
@@ -251,12 +269,23 @@ class DeliveryPartnerController extends Controller
 
         $lat = $request->input('latitude');
         $lng = $request->input('longitude');
-        $isOnline = $request->input('is_online');
 
         $updateData = ['last_active_at' => now()];
-        if ($lat !== null) $updateData['current_latitude'] = (float) $lat;
-        if ($lng !== null) $updateData['current_longitude'] = (float) $lng;
-        if ($isOnline !== null) $updateData['is_online'] = (bool) $isOnline;
+        if ($lat !== null && is_numeric($lat)) {
+            $latVal = (float) $lat;
+            if ($latVal >= -90 && $latVal <= 90) {
+                $updateData['current_latitude'] = $latVal;
+            }
+        }
+        if ($lng !== null && is_numeric($lng)) {
+            $lngVal = (float) $lng;
+            if ($lngVal >= -180 && $lngVal <= 180) {
+                $updateData['current_longitude'] = $lngVal;
+            }
+        }
+        if ($request->has('is_online') && $request->input('is_online') !== null) {
+            $updateData['is_online'] = $request->boolean('is_online');
+        }
 
         $partner->update($updateData);
 

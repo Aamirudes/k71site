@@ -73,8 +73,33 @@ class ShortsSpinController extends Controller
             ], 429);
         }
 
-        // Fetch active spin prizes with associated coupons
-        $prizes = SpinPrize::with('coupon')->where('is_active', true)->get();
+        $now = now();
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
+        $isValidCoupon = static function (?Coupon $coupon) use ($now, $visibility): bool {
+            if (!$coupon || !$coupon->is_active) {
+                return false;
+            }
+            if ($coupon->starts_at && $coupon->starts_at->gt($now)) {
+                return false;
+            }
+            if ($coupon->expires_at && $coupon->expires_at->lt($now)) {
+                return false;
+            }
+            if ($coupon->total_limit !== null && (int) $coupon->usage_count >= (int) $coupon->total_limit) {
+                return false;
+            }
+            if ($coupon->vendor_id) {
+                $vendor = $coupon->vendor;
+                if (!$vendor || !$visibility->isVendorPubliclyVisible($vendor)) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        // Fetch active spin prizes with valid, un-expired, within-limit coupons
+        $prizes = SpinPrize::with(['coupon.vendor'])->where('is_active', true)->get();
 
         if ($prizes->isEmpty()) {
             return response()->json([
@@ -83,10 +108,31 @@ class ShortsSpinController extends Controller
             ], 404);
         }
 
+        // Pre-fetch fallback pool of real currently valid coupons in case a prize lacks a valid linked coupon
+        $fallbackCoupon = Coupon::with('vendor')
+            ->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', $now))
+            ->where(fn ($q) => $q->whereNull('total_limit')->orWhereColumn('usage_count', '<', 'total_limit'))
+            ->get()
+            ->first(fn (Coupon $c) => $isValidCoupon($c));
+
+        $eligiblePrizes = $prizes->filter(fn (SpinPrize $p) => $isValidCoupon($p->coupon));
+        $candidatePool = $eligiblePrizes->isNotEmpty()
+            ? $eligiblePrizes
+            : ($fallbackCoupon ? $prizes : collect());
+
+        if ($candidatePool->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid coupon rewards are currently available.',
+            ], 404);
+        }
+
         // Weighted selection based on prize probability
         $pool = [];
-        foreach ($prizes as $prize) {
-            $weight = max(1, $prize->probability);
+        foreach ($candidatePool as $prize) {
+            $weight = max(1, (int) $prize->probability);
             for ($i = 0; $i < $weight; $i++) {
                 $pool[] = $prize;
             }
@@ -95,19 +141,17 @@ class ShortsSpinController extends Controller
         /** @var SpinPrize $selectedPrize */
         $selectedPrize = $pool[array_rand($pool)];
 
-        // Enforce Decision D8: Must map to an active real coupon
-        $couponCode = $selectedPrize->value;
-        if ($selectedPrize->coupon) {
-            $couponCode = $selectedPrize->coupon->code;
-        } else {
-            // Verify or fallback to real coupon from database
-            $realCoupon = Coupon::where('is_active', true)->first();
-            if ($realCoupon) {
-                $couponCode = $realCoupon->code;
-            }
+        // Enforce Decision D8: Must resolve to a verified valid coupon (never an expired or fake code)
+        $resolvedCoupon = $isValidCoupon($selectedPrize->coupon) ? $selectedPrize->coupon : $fallbackCoupon;
+        if (!$resolvedCoupon) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid coupon rewards are currently available.',
+            ], 404);
         }
+        $couponCode = $resolvedCoupon->code;
 
-        // Record cooldown in Cache
+        // Record cooldown in Cache only after a real valid coupon reward is selected
         Cache::put($key, time(), $cooldownSeconds);
 
         return response()->json([

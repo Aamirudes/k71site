@@ -13,7 +13,9 @@ use App\Models\CouponUsage;
 use App\Models\DeliveryAssignment;
 use App\Models\DeliveryPartner;
 use App\Models\Enquiry;
+use App\Models\Offer;
 use App\Models\Order;
+use App\Models\PortfolioProject;
 use App\Models\Product;
 use App\Models\ProjectContract;
 use App\Models\ProjectMilestone;
@@ -27,6 +29,7 @@ use App\Models\Shipment;
 use App\Models\Short;
 use App\Models\ShortBoost;
 use App\Models\ShortCoin;
+use App\Models\SpinPrize;
 use App\Models\UsedSellerProfile;
 use App\Models\UsedThread;
 use App\Models\UsedTransaction;
@@ -1945,5 +1948,424 @@ class WorkflowContinuationPassTest extends TestCase
             ])
             ->assertStatus(200);
         $this->assertEquals('active', $usedDraft->fresh()->status);
+    }
+
+    public function test_workflow_40_41_42_shorts_ajax_visibility_spin_coupon_validity_and_portfolio_quota(): void
+    {
+        // Workflow 40: ShortsAjaxController blocks metrics/likes/products on draft/hidden shorts & never fabricates 5.0 ratings
+        $draftShort = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Draft Hidden Short',
+            'slug' => 'draft-hidden-short-wf40',
+            'video_url' => 'https://example.com/draft.mp4',
+            'status' => 'pending',
+        ]);
+
+        $this->postJson('/shorts/ajax', ['action' => 'zsu_record_view', 'short_id' => $draftShort->id])->assertStatus(404);
+        $this->postJson('/shorts/ajax', ['action' => 'zsu_record_like', 'short_id' => $draftShort->id])->assertStatus(404);
+        $this->postJson('/shorts/ajax', ['action' => 'zsu_record_share', 'short_id' => $draftShort->id])->assertStatus(404);
+        $this->postJson('/shorts/ajax', ['action' => 'zsu_record_watch_pct', 'short_id' => $draftShort->id, 'pct' => 75])->assertStatus(404);
+        $this->assertEquals(0, $draftShort->fresh()->views);
+
+        $liveProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'Unrated Onyx Cuff',
+            'slug' => 'unrated-onyx-cuff-wf40',
+            'description' => 'Product with no reviews yet.',
+            'base_price' => 89900,
+            'gst_rate' => 18,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+        $liveShort = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Published Studio Short',
+            'slug' => 'published-studio-short-wf40',
+            'video_url' => 'https://example.com/live.mp4',
+            'status' => 'published',
+        ]);
+        $liveShort->products()->sync([$liveProduct->id]);
+
+        $this->getJson('/shorts/ajax?action=zsu_get_products&short_id=' . $liveShort->id)
+            ->assertStatus(200)
+            ->assertJsonPath('products.0.rating', null)
+            ->assertJsonPath('products.0.review_count', 0);
+
+        // Workflow 41: ShortsSpinController rejects expired coupons without triggering user cooldown, and serves valid coupons cleanly
+        SpinPrize::query()->delete();
+        Coupon::query()->delete();
+        $expiredCoupon = Coupon::create([
+            'vendor_id' => $this->vendor->id,
+            'code' => 'EXPIRED50',
+            'type' => 'percentage',
+            'value' => 50,
+            'starts_at' => now()->subDays(10),
+            'expires_at' => now()->subDay(),
+            'is_active' => true,
+        ]);
+        SpinPrize::create([
+            'label' => 'Expired Prize',
+            'color' => '#FF1493',
+            'type' => 'coupon',
+            'value' => 'BOGUSCODE',
+            'coupon_id' => $expiredCoupon->id,
+            'probability' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->postJson('/shorts/ajax', ['action' => 'zsu_home_spin_result'])
+            ->assertStatus(404);
+        $this->actingAs($this->buyer)
+            ->getJson('/shorts/ajax?action=zsu_home_spin_check')
+            ->assertStatus(200)
+            ->assertJson(['can_spin' => true]);
+
+        $validCoupon = Coupon::create([
+            'vendor_id' => $this->vendor->id,
+            'code' => 'LIVEWIN15',
+            'type' => 'percentage',
+            'value' => 15,
+            'starts_at' => now()->subHour(),
+            'expires_at' => now()->addDays(5),
+            'total_limit' => 25,
+            'is_active' => true,
+        ]);
+        SpinPrize::create([
+            'label' => '15% Studio Off',
+            'color' => '#00D2FF',
+            'type' => 'coupon',
+            'value' => 'LIVEWIN15',
+            'coupon_id' => $validCoupon->id,
+            'probability' => 10,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->postJson('/shorts/ajax', ['action' => 'zsu_home_spin_result'])
+            ->assertStatus(200)
+            ->assertJsonPath('coupon_code', 'LIVEWIN15');
+
+        // Workflow 42: PortfolioController update/toggleFeatured checks sector authorization BEFORE deleting old cover_image
+        Storage::fake('public');
+        $this->vendor->update(['vendor_type' => 'services']);
+        $this->grantVendorTestSubscription($this->vendor->fresh(), 'services');
+
+        $portfolio = PortfolioProject::create([
+            'vendor_id' => $this->vendor->id,
+            'title' => 'Original Case Study',
+            'slug' => 'original-case-study-wf42',
+            'cover_image' => 'portfolio/' . $this->vendor->id . '/keep-cover.jpg',
+            'status' => 'draft',
+        ]);
+        Storage::disk('public')->put($portfolio->cover_image, 'cover-bytes');
+
+        // Expire/suspend subscription before update attempt -> old cover must NOT be deleted
+        \App\Models\VendorSubscription::where('vendor_id', $this->vendor->id)->update(['status' => 'expired']);
+        $this->vendor->update(['status' => 'suspended']);
+
+        $newCover = UploadedFile::fake()->image('new.jpg', 400, 400);
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.portfolio.update', $portfolio), [
+                'title' => 'Blocked Update',
+                'status' => 'published',
+                'cover_image' => $newCover,
+            ])
+            ->assertSessionHas('error');
+
+        Storage::disk('public')->assertExists('portfolio/' . $this->vendor->id . '/keep-cover.jpg');
+        $this->assertEquals('Original Case Study', $portfolio->fresh()->title);
+
+        $this->actingAs($this->vendorUser)
+            ->patch(route('vendor.portfolio.toggle_featured', $portfolio))
+            ->assertSessionHas('error');
+        $this->assertFalse((bool) $portfolio->fresh()->is_featured);
+    }
+
+    public function test_workflow_43_44_45_46_service_reviews_settlement_exclusion_fleet_blocks_and_project_category(): void
+    {
+        // Workflow 43: Distinct service orders record 'service' typed reviews & recompute gig avg_rating cleanly
+        $this->vendor->update(['vendor_type' => 'services']);
+        $this->grantVendorTestSubscription($this->vendor->fresh(), 'services');
+        $svcCatWf43 = Category::firstOrCreate(['slug' => 'svc-cat-wf43'], ['name' => 'Brand Identity', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+        $gig1 = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCatWf43->id,
+            'vertical' => 'services',
+            'listing_type' => 'service',
+            'title' => 'Brand Identity Package',
+            'slug' => 'brand-identity-pkg-wf43',
+            'description' => 'Full logo and typography identity.',
+            'base_price' => 150000,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+        $gig2 = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCatWf43->id,
+            'vertical' => 'services',
+            'listing_type' => 'service',
+            'title' => 'Packaging Design Package',
+            'slug' => 'packaging-design-pkg-wf43',
+            'description' => 'Custom box dielines and print files.',
+            'base_price' => 200000,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+
+        $svcOrder1 = ServiceOrder::create([
+            'order_number' => 'SVC-WF43-1',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $gig1->id,
+            'package_title' => 'Custom Branding',
+            'amount' => 150000,
+            'delivery_days' => 5,
+            'revisions_allowed' => 2,
+            'revisions_used' => 0,
+            'status' => 'delivered',
+        ]);
+        $svcOrder2 = ServiceOrder::create([
+            'order_number' => 'SVC-WF43-2',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $gig2->id,
+            'package_title' => 'Packaging Design',
+            'amount' => 200000,
+            'delivery_days' => 7,
+            'revisions_allowed' => 2,
+            'revisions_used' => 0,
+            'status' => 'delivered',
+        ]);
+
+        $this->actingAs($this->buyer)->post(route('services.workspace.approve', $svcOrder1), ['rating' => 5, 'review_text' => 'First service review'])->assertSessionHas('success');
+        $this->actingAs($this->buyer)->post(route('services.workspace.approve', $svcOrder2), ['rating' => 4, 'review_text' => 'Second service review'])->assertSessionHas('success');
+
+        $this->assertEquals(2, Review::where('user_id', $this->buyer->id)->where('vendor_id', $this->vendor->id)->count());
+        $this->assertDatabaseHas('reviews', ['service_order_id' => $svcOrder1->id, 'rating' => 5, 'review_type' => 'service']);
+        $this->assertDatabaseHas('reviews', ['service_order_id' => $svcOrder2->id, 'rating' => 4, 'review_type' => 'service']);
+        $this->assertEquals(5.0, (float) $gig1->fresh()->avg_rating);
+        $this->assertEquals(4.0, (float) $gig2->fresh()->avg_rating);
+
+        // Workflow 44: SettlementController excludes cancelled/refunded paid orders from payout settlement sums
+        Order::create([
+            'order_number' => 'K71-STL-LIVE1',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 100000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'settlement_status' => 'cleared',
+            'settled_at' => now(),
+            'status' => 'delivered',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        Order::create([
+            'order_number' => 'K71-STL-CANC1',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 200000,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 200000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'settlement_status' => 'cleared',
+            'settled_at' => now(),
+            'status' => 'cancelled',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $stlRes = $this->actingAs($adminUser)->get(route('admin.settlements', ['month' => now('Asia/Kolkata')->format('Y-m')]));
+        $stlRes->assertStatus(200);
+        $stlRes->assertViewHas('settlements', function ($settlements) {
+            return count($settlements) === 1
+                && $settlements[0]['orders_count'] === 1
+                && $settlements[0]['gross_rupees'] === '1,000.00';
+        });
+
+        // Workflow 45: DeliveryPartnerController parses string 'false' properly & locks out blocked riders
+        $fleetRole = Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Partner']);
+        $riderUser = User::factory()->create(['is_blocked' => false]);
+        $riderUser->roles()->syncWithoutDetaching([$fleetRole->id]);
+        $riderPartner = DeliveryPartner::create([
+            'user_id' => $riderUser->id,
+            'name' => 'Test Rider',
+            'phone' => '9876543210',
+            'email' => $riderUser->email,
+            'vehicle_type' => 'bike',
+            'city' => 'Jaipur',
+            'state' => 'Rajasthan',
+            'is_online' => true,
+            'is_verified' => true,
+        ]);
+
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.location'), ['is_online' => 'false', 'latitude' => 26.9124, 'longitude' => 75.7873])
+            ->assertStatus(200)
+            ->assertJson(['is_online' => false]);
+        $this->assertFalse((bool) $riderPartner->fresh()->is_online);
+
+        $riderUser->update(['is_blocked' => true]);
+        $this->actingAs($riderUser)
+            ->postJson(route('delivery.location'), ['is_online' => true])
+            ->assertStatus(401);
+
+        // Workflow 46: ProjectMarketplaceController restricts project category_id to vertical='services'
+        $foodCat = Category::firstOrCreate(['slug' => 'food-only-wf46'], ['name' => 'Food Only', 'vertical' => 'food', 'is_active' => true, 'sort_order' => 1]);
+        $svcCat = Category::firstOrCreate(['slug' => 'svc-only-wf46'], ['name' => 'Design Systems', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+
+        $this->actingAs($this->buyer)
+            ->post(route('services.projects.store'), [
+                'title' => 'Need Full UI Brand System',
+                'category_id' => $foodCat->id,
+                'description' => 'Comprehensive design tokens, components and motion guidelines needed.',
+                'budget_type' => 'fixed',
+                'budget_min' => 5000,
+                'work_mode' => 'remote',
+            ])
+            ->assertSessionHasErrors('category_id');
+
+        $this->actingAs($this->buyer)
+            ->post(route('services.projects.store'), [
+                'title' => 'Need Full UI Brand System',
+                'category_id' => $svcCat->id,
+                'description' => 'Comprehensive design tokens, components and motion guidelines needed.',
+                'budget_type' => 'fixed',
+                'budget_min' => 5000,
+                'work_mode' => 'remote',
+            ])
+            ->assertRedirect();
+        $this->assertDatabaseHas('service_projects', ['title' => 'Need Full UI Brand System', 'category_id' => $svcCat->id]);
+    }
+
+    public function test_workflow_47_48_49_enquiry_guest_idor_catalog_type_coercion_and_offer_counter_closure(): void
+    {
+        // Workflow 47: EnquiryController rejects direct RFQ to suspended vendor & blocks unauthenticated/stranger acceptance of guest RFQ quotes
+        $suspendedUser = User::factory()->create();
+        $suspendedVendor = Vendor::create([
+            'user_id' => $suspendedUser->id,
+            'shop_name' => 'Suspended B2B Supplier',
+            'slug' => 'suspended-b2b-wf47',
+            'email' => $suspendedUser->email,
+            'vendor_type' => 'enquiry',
+            'status' => 'suspended',
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->post(route('enquiry.store'), [
+                'title' => '1000 Ton Makrana White Slab',
+                'description' => 'Need commercial quote for flooring project.',
+                'quantity' => '1000 sq ft',
+                'city' => 'Kishangarh',
+                'buyer_name' => 'Buyer Co',
+                'buyer_phone' => '9876500011',
+                'vendor_id' => $suspendedVendor->id,
+            ])
+            ->assertSessionHas('error');
+        $this->assertEquals(0, Enquiry::count());
+
+        // Guest RFQ submitted cleanly (null user_id, guest session token set)
+        $this->post(route('enquiry.store'), [
+            'title' => 'Guest Marble Slab Inquiry',
+            'description' => 'Need 500 slabs cut to size.',
+            'quantity' => '500 units',
+            'city' => 'Udaipur',
+            'buyer_name' => 'Guest Builder',
+            'buyer_phone' => '9988776611',
+        ])->assertRedirect();
+
+        $guestEnquiry = Enquiry::firstOrFail();
+        $quote = Quote::create([
+            'enquiry_id' => $guestEnquiry->id,
+            'vendor_id' => $this->vendor->id,
+            'quote_number' => 'QT-WF47-01',
+            'quote_amount' => 250000,
+            'lead_time_days' => 5,
+            'status' => 'sent',
+        ]);
+
+        // Unrelated logged-in user (secondBuyer, with empty guest session) MUST receive 403 trying to accept guest quote
+        $this->app['session']->flush();
+        $this->actingAs($this->secondBuyer)
+            ->post(route('quotes.accept', $quote))
+            ->assertStatus(403);
+        $this->assertEquals('sent', $quote->fresh()->status);
+
+        // Workflow 48: CatalogController does not coerce '999-nonexistent' into category/vendor ID & hides suspended store filters
+        $realCat = Category::first();
+        $this->get('/catalog?category=' . $realCat->id . '-fake-coercion')
+            ->assertStatus(200)
+            ->assertViewHas('currentCategory', null);
+
+        $this->get('/catalog?store=' . $suspendedVendor->id . '-fake-slug')
+            ->assertStatus(200)
+            ->assertViewHas('currentStore', null);
+        $this->get('/catalog?store=' . $suspendedVendor->slug)
+            ->assertStatus(200)
+            ->assertViewHas('currentStore', null)
+            ->assertDontSee('Suspended B2B Supplier');
+
+        // Workflow 49: OfferController buyerRespondCounter reveals private_pickup_area into UsedThread, logs AuditLog & guards markSold
+        $usedCat = Category::firstOrCreate(['slug' => 'used-audio-wf49'], ['name' => 'Used Audio', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $usedItem = Product::create([
+            'vendor_id' => null,
+            'user_id' => $this->vendorUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Sony WH-1000XM5 Headphones',
+            'slug' => 'sony-wh1000xm5-wf49',
+            'description' => 'Lightly used noise cancelling headphones.',
+            'base_price' => 2000000,
+            'total_stock' => 1,
+            'quantity_available' => 1,
+            'is_negotiable' => true,
+            'private_pickup_area' => 'C-Scheme Metro Gate 2, Jaipur',
+            'status' => 'active',
+            'used_status' => 'active',
+            'city' => 'Jaipur',
+        ]);
+
+        $this->actingAs($this->buyer)
+            ->post(route('offers.store', $usedItem), ['offer_amount' => 16000])
+            ->assertSessionHas('success');
+        $offer = Offer::where('product_id', $usedItem->id)->firstOrFail();
+
+        $this->actingAs($this->vendorUser)
+            ->put(route('used.offers.seller_respond', $offer), ['action' => 'counter', 'counter_amount' => 17500])
+            ->assertSessionHas('success');
+
+        $this->actingAs($this->buyer)
+            ->post(route('used.offers.respond_counter', $offer), ['action' => 'accept_counter'])
+            ->assertSessionHas('success');
+
+        $this->assertEquals('reserved', $usedItem->fresh()->used_status);
+        $this->assertDatabaseHas('used_threads', [
+            'product_id' => $usedItem->id,
+            'buyer_id' => $this->buyer->id,
+            'shared_pickup_location' => 'C-Scheme Metro Gate 2, Jaipur',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'auditable_type' => Offer::class,
+            'auditable_id' => $offer->id,
+            'action' => 'offer_accept_counter',
+        ]);
     }
 }

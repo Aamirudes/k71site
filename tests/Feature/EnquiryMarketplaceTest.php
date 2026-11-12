@@ -257,7 +257,8 @@ class EnquiryMarketplaceTest extends TestCase
             'status' => 'sent',
         ]);
 
-        $response = $this->post(route('quotes.accept', $quote->id));
+        $response = $this->withSession(["guest_enquiry_{$enquiry->id}" => true])
+            ->post(route('quotes.accept', $quote->id));
 
         $response->assertRedirect();
         $quote->refresh();

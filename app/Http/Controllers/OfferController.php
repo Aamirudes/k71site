@@ -108,37 +108,47 @@ class OfferController extends Controller
         $buyerName = trim((string) (($validated['buyer_name'] ?? null) ?: $user->name));
         $buyerPhone = trim((string) (($validated['buyer_phone'] ?? null) ?: ($user->phone ?? 'Not shared')));
 
-        $activeOfferExists = Offer::where('product_id', $product->id)
-            ->where('user_id', $user->id)
-            ->whereIn('status', ['pending', 'countered'])
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
-            ->exists();
+        try {
+            $offer = DB::transaction(function () use ($product, $user, $sellerId, $buyerName, $buyerPhone, $validated, $offerPaise) {
+                $lockedProduct = Product::withoutGlobalScopes()->whereKey($product->id)->lockForUpdate()->firstOrFail();
+                if ($lockedProduct->isSold() || $lockedProduct->isReserved()) {
+                    throw new \RuntimeException('This item is no longer available for new offers.');
+                }
 
-        if ($activeOfferExists) {
-            $msg = 'You already have an active offer on this item. Wait for the seller or withdraw it first before sending another offer.';
+                $activeOfferExists = Offer::where('product_id', $lockedProduct->id)
+                    ->where('user_id', $user->id)
+                    ->whereIn('status', ['pending', 'countered'])
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+                    })
+                    ->exists();
+
+                if ($activeOfferExists) {
+                    throw new \RuntimeException('You already have an active offer on this item. Wait for the seller or withdraw it first before sending another offer.');
+                }
+
+                return Offer::create([
+                    'product_id' => $lockedProduct->id,
+                    'vendor_id' => $lockedProduct->vendor_id,
+                    'seller_id' => $sellerId,
+                    'user_id' => $user->id,
+                    'buyer_name' => $buyerName,
+                    'buyer_phone' => $buyerPhone,
+                    'buyer_email' => $validated['buyer_email'] ?? $user->email,
+                    'offer_amount' => $offerPaise,
+                    'message' => $validated['message'] ?? null,
+                    'handoff_preference' => $validated['handoff_preference'] ?? 'local_pickup',
+                    'status' => 'pending',
+                    'last_action_by' => 'buyer',
+                    'expires_at' => now()->addDays((int) config('used_marketplace.offer_expiry_days', 7)),
+                ]);
+            });
+        } catch (\RuntimeException $e) {
             if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => $msg], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
-            return back()->with('error', $msg);
+            return back()->with('error', $e->getMessage());
         }
-
-        $offer = Offer::create([
-            'product_id' => $product->id,
-            'vendor_id' => $product->vendor_id,
-            'seller_id' => $sellerId,
-            'user_id' => $user->id,
-            'buyer_name' => $buyerName,
-            'buyer_phone' => $buyerPhone,
-            'buyer_email' => $validated['buyer_email'] ?? $user->email,
-            'offer_amount' => $offerPaise,
-            'message' => $validated['message'] ?? null,
-            'handoff_preference' => $validated['handoff_preference'] ?? 'local_pickup',
-            'status' => 'pending',
-            'last_action_by' => 'buyer',
-            'expires_at' => now()->addDays((int) config('used_marketplace.offer_expiry_days', 7)),
-        ]);
 
         if ($sellerId) {
             $note = "Submitted an offer of " . $offer->formattedOfferAmount()
@@ -253,13 +263,12 @@ class OfferController extends Controller
                     return ['ok' => false, 'msg' => 'Listing is already marked as sold.'];
                 }
 
-                $conflictingReservation = UsedTransaction::where('product_id', $product->id)
+                $existingReservation = UsedTransaction::where('product_id', $product->id)
                     ->whereIn('status', ['reserved', 'completed'])
-                    ->where('buyer_id', '!=', (int) ($lockedOffer->user_id ?? 0))
                     ->exists();
 
-                if ($product->isReserved() && $conflictingReservation) {
-                    return ['ok' => false, 'msg' => 'Listing is already reserved for another buyer. Cancel existing reservation first.'];
+                if ($product->isReserved() || $existingReservation) {
+                    return ['ok' => false, 'msg' => 'Listing is already reserved for a handover. Cancel existing reservation first.'];
                 }
 
                 $lockedOffer->update([
@@ -445,12 +454,11 @@ class OfferController extends Controller
                     return ['ok' => false, 'msg' => 'Listing has already been marked sold.'];
                 }
 
-                $conflict = UsedTransaction::where('product_id', $product->id)
+                $existingReservation = UsedTransaction::where('product_id', $product->id)
                     ->whereIn('status', ['reserved', 'completed'])
-                    ->where('buyer_id', '!=', $user->id)
                     ->exists();
-                if ($product->isReserved() && $conflict) {
-                    return ['ok' => false, 'msg' => 'Item is currently reserved for another buyer.'];
+                if ($product->isReserved() || $existingReservation) {
+                    return ['ok' => false, 'msg' => 'Item is currently reserved for a handover.'];
                 }
 
                 $agreedPaise = (int) ($lockedOffer->counter_amount ?: $lockedOffer->offer_amount);
@@ -479,6 +487,18 @@ class OfferController extends Controller
 
                 $product->markReserved($user->id);
 
+                // Reveal private pickup area inside their listing thread if configured
+                if ($product->private_pickup_area && $sellerId) {
+                    $thread = UsedThread::firstOrCreate(
+                        ['product_id' => $product->id, 'buyer_id' => $user->id],
+                        ['seller_id' => $sellerId, 'status' => 'open', 'last_message_at' => now()]
+                    );
+                    $thread->update([
+                        'shared_pickup_location' => $product->private_pickup_area,
+                        'pickup_shared_at' => now(),
+                    ]);
+                }
+
                 return ['ok' => true, 'accepted' => true, 'agreed' => $agreedPaise];
             }
 
@@ -497,6 +517,16 @@ class OfferController extends Controller
                 ? response()->json(['success' => false, 'message' => $result['msg']], 422)
                 : back()->with('error', $result['msg']);
         }
+
+        $offer->refresh();
+        AuditLog::create([
+            'user_id' => $user->id,
+            'auditable_type' => Offer::class,
+            'auditable_id' => $offer->id,
+            'action' => 'offer_' . $validated['action'],
+            'new_values' => ['status' => $offer->status, 'counter_amount' => $offer->counter_amount],
+            'ip_address' => $request->ip(),
+        ]);
 
         if ($offer->seller_id) {
             $statusMsg = $result['accepted']
@@ -526,7 +556,7 @@ class OfferController extends Controller
     /**
      * Mark a used item as Sold (supports both merchant vendor & individual seller).
      */
-    public function markSold(Request $request, Product $product): RedirectResponse
+    public function markSold(Request $request, Product $product): RedirectResponse|JsonResponse
     {
         $user = auth()->user();
         if (!$product->isOwnedBy($user)) {
@@ -534,8 +564,6 @@ class OfferController extends Controller
         }
 
         $request->merge(['action' => 'mark_sold']);
-        app(UsedListingController::class)->updateStatus($request, $product);
-
-        return back()->with('success', "Product '{$product->title}' has been marked as SOLD.");
+        return app(UsedListingController::class)->updateStatus($request, $product);
     }
 }

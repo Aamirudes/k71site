@@ -15,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class EnquiryController extends Controller
@@ -202,7 +203,7 @@ class EnquiryController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:200',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('is_active', true)],
             'description' => 'required|string|max:2000',
             'quantity' => 'required|string|max:100',
             'target_budget' => 'nullable|numeric|min:0',
@@ -215,6 +216,32 @@ class EnquiryController extends Controller
             'vendor_id' => 'nullable|exists:vendors,id',
             'product_id' => 'nullable|exists:products,id',
         ]);
+
+        if (!empty($validated['vendor_id'])) {
+            $targetVendor = Vendor::find($validated['vendor_id']);
+            if (!$targetVendor || !$this->visibility->isVendorPubliclyVisible($targetVendor, 'enquiry')) {
+                $msg = 'The selected supplier is not currently accepting direct enquiries.';
+                return $request->expectsJson()
+                    ? response()->json(['success' => false, 'message' => $msg], 422)
+                    : back()->withInput()->with('error', $msg);
+            }
+            if (auth()->check() && (int) $targetVendor->user_id === (int) auth()->id()) {
+                $msg = 'You cannot send a direct RFQ to your own store.';
+                return $request->expectsJson()
+                    ? response()->json(['success' => false, 'message' => $msg], 422)
+                    : back()->withInput()->with('error', $msg);
+            }
+        }
+
+        if (!empty($validated['product_id'])) {
+            $targetProduct = Product::withoutGlobalScopes()->with('vendor')->find($validated['product_id']);
+            if (!$targetProduct || !$this->visibility->isProductPubliclyVisible($targetProduct)) {
+                $msg = 'The selected product is currently unavailable for direct enquiries.';
+                return $request->expectsJson()
+                    ? response()->json(['success' => false, 'message' => $msg], 422)
+                    : back()->withInput()->with('error', $msg);
+            }
+        }
 
         // Prevent duplicate accidental re-POSTs within 60 seconds
         $recentDuplicate = Enquiry::where('buyer_phone', $validated['buyer_phone'])
@@ -453,12 +480,17 @@ class EnquiryController extends Controller
             abort(404);
         }
 
-        // Strict IDOR protection for user-owned enquiries
+        $user = auth()->user();
+        $isAdmin = $user && $user->isAdmin();
+        $hasGuestOwnerSession = (bool) session("guest_enquiry_{$enquiry->id}");
+
+        // Strict IDOR protection for both logged-in and guest-owned enquiries
         if ($enquiry->user_id !== null) {
-            $user = auth()->user();
-            if (!$user || ((int) $user->id !== (int) $enquiry->user_id && !$user->isAdmin())) {
+            if (!$user || ((int) $user->id !== (int) $enquiry->user_id && !$isAdmin)) {
                 abort(403, 'Only the owner of this enquiry can accept a quotation.');
             }
+        } elseif (!$isAdmin && !$hasGuestOwnerSession) {
+            abort(403, 'Only the creator session or an administrator can accept a quotation on this guest enquiry.');
         }
 
         if ($enquiry->isClosed()) {
@@ -534,8 +566,14 @@ class EnquiryController extends Controller
     {
         $enquiry = Enquiry::where('enquiry_number', $enquiry_number)->firstOrFail();
         $user = auth()->user();
+        $isAdmin = $user && $user->isAdmin();
+        $hasGuestOwnerSession = (bool) session("guest_enquiry_{$enquiry->id}");
 
-        if (!$user || ($enquiry->user_id !== null && (int) $enquiry->user_id !== (int) $user->id && !$user->isAdmin())) {
+        if ($enquiry->user_id !== null) {
+            if (!$user || ((int) $enquiry->user_id !== (int) $user->id && !$isAdmin)) {
+                abort(403, 'Only the enquiry owner can close this requirement.');
+            }
+        } elseif (!$isAdmin && !$hasGuestOwnerSession) {
             abort(403, 'Only the enquiry owner can close this requirement.');
         }
 
@@ -554,7 +592,7 @@ class EnquiryController extends Controller
                 ->update(['status' => 'rejected']);
 
             AuditLog::create([
-                'user_id' => $user->id,
+                'user_id' => $user?->id,
                 'auditable_type' => Enquiry::class,
                 'auditable_id' => $locked->id,
                 'action' => 'enquiry_closed_by_owner',

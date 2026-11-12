@@ -37,9 +37,10 @@ class SettlementController extends Controller
         $startOfMonth = $currentMonth->copy()->startOfDay();
         $endOfMonth = $currentMonth->copy()->endOfMonth()->endOfDay();
 
-        // 3. Query all paid orders for the selected month
-        $orders = Order::with(['vendor.settings', 'user'])
+        // 3. Query all paid (non-cancelled/non-refunded) orders for the selected month
+        $orders = Order::with(['vendor.settings', 'user', 'orderCommission'])
             ->where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'refunded'])
             ->where(function ($q) use ($startOfMonth, $endOfMonth) {
                 $q->whereBetween('settled_at', [$startOfMonth, $endOfMonth])
                   ->orWhere(function ($sub) use ($startOfMonth, $endOfMonth) {
@@ -98,8 +99,8 @@ class SettlementController extends Controller
                     'id' => $o->id,
                     'order_number' => $o->order_number,
                     'customer' => $o->user ? ($o->user->first_name . ' ' . $o->user->last_name) : 'Guest Shopper',
-                    'shop_name' => $o->vendor->shop_name ?? 'Independent Boutique',
-                    'vendor_slug' => $o->vendor->slug ?? null,
+                    'shop_name' => $o->vendor?->shop_name ?? 'Independent Boutique',
+                    'vendor_slug' => $o->vendor?->slug ?? null,
                     'total_amount' => $o->total_amount / 100,
                     'vendor_payout' => ($o->vendor_payout_amount ?: $breakdown['vendor_net_paise']) / 100,
                     'vendor_payout_status' => $o->vendor_payout_status,
@@ -135,8 +136,9 @@ class SettlementController extends Controller
         // Sort settlements descending by initiated_at
         usort($settlements, fn($a, $b) => strcmp($b['id'], $a['id']));
 
-        // 5. Last Settlement Summary (Most recent cleared settlement across all history)
+        // 5. Last Settlement Summary (Most recent cleared settlement across all non-cancelled/non-refunded history)
         $latestClearedOrder = Order::where('payment_status', 'paid')
+            ->whereNotIn('status', ['cancelled', 'refunded'])
             ->where('settlement_status', 'cleared')
             ->latest('settled_at')
             ->first();
@@ -145,6 +147,7 @@ class SettlementController extends Controller
         if ($latestClearedOrder) {
             $latestDate = $latestClearedOrder->settled_at ?: $latestClearedOrder->created_at;
             $sameDayOrders = Order::where('payment_status', 'paid')
+                ->whereNotIn('status', ['cancelled', 'refunded'])
                 ->where('settlement_status', 'cleared')
                 ->whereDate('settled_at', $latestDate->format('Y-m-d'))
                 ->get();

@@ -230,12 +230,29 @@ class ShortsAjaxController extends Controller
     }
 
     /**
+     * Resolve a publicly visible, published short whose vendor passes storefront visibility.
+     */
+    protected function findVisibleShort(int $shortId): ?Short
+    {
+        if ($shortId <= 0) {
+            return null;
+        }
+
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
+        return Short::with(['vendor', 'category'])
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
+            ->find($shortId);
+    }
+
+    /**
      * Record a video view.
      */
     public function recordView(Request $request): JsonResponse
     {
         $shortId = (int) $request->input('short_id', 0);
-        $short = Short::find($shortId);
+        $short = $this->findVisibleShort($shortId);
 
         if (!$short) {
             return response()->json(['success' => false, 'message' => 'Short not found'], 404);
@@ -253,7 +270,7 @@ class ShortsAjaxController extends Controller
             'country' => 'IN',
             'referrer' => Str::limit($request->header('referer', ''), 500),
             'ip_hash' => hash('sha256', $request->ip() ?: '127.0.0.1'),
-            'watch_pct' => (int) $request->input('watch_pct', 0),
+            'watch_pct' => max(0, min(100, (int) $request->input('watch_pct', 0))),
             'created_at' => now(),
         ]);
 
@@ -271,7 +288,7 @@ class ShortsAjaxController extends Controller
     public function recordLike(Request $request): JsonResponse
     {
         $shortId = (int) $request->input('short_id', 0);
-        $short = Short::find($shortId);
+        $short = $this->findVisibleShort($shortId);
 
         if (!$short) {
             return response()->json(['success' => false, 'message' => 'Short not found'], 404);
@@ -346,7 +363,7 @@ class ShortsAjaxController extends Controller
     {
         $shortId = (int) $request->input('short_id', 0);
         $platform = $request->input('platform', 'generic');
-        $short = Short::find($shortId);
+        $short = $this->findVisibleShort($shortId);
 
         if (!$short) {
             return response()->json(['success' => false, 'message' => 'Short not found'], 404);
@@ -386,15 +403,20 @@ class ShortsAjaxController extends Controller
     public function recordWatchPct(Request $request): JsonResponse
     {
         $shortId = (int) $request->input('short_id', 0);
-        $pct = (int) $request->input('pct', 0);
+        $pct = max(0, min(100, (int) $request->input('pct', 0)));
 
-        if ($shortId > 0 && $pct > 0) {
+        $short = $this->findVisibleShort($shortId);
+        if (!$short) {
+            return response()->json(['success' => false, 'message' => 'Short not found'], 404);
+        }
+
+        if ($pct > 0) {
             ShortEvent::create([
-                'short_id' => $shortId,
+                'short_id' => $short->id,
                 'event_type' => 'watch_pct',
                 'user_id' => auth()->id() ?? 0,
                 'session_id' => session()->getId() ?: '',
-                'watch_pct' => min(100, $pct),
+                'watch_pct' => $pct,
                 'device' => $this->detectDevice($request),
                 'browser' => $this->detectBrowser($request),
                 'created_at' => now(),
@@ -411,6 +433,11 @@ class ShortsAjaxController extends Controller
     {
         $rawIds = $request->input('ids', []);
         $shortId = (int) $request->input('short_id', 0);
+        $visibleShort = $shortId > 0 ? $this->findVisibleShort($shortId) : null;
+
+        if ($shortId > 0 && !$visibleShort) {
+            return response()->json(['success' => false, 'message' => 'Short not found'], 404);
+        }
 
         if (is_string($rawIds)) {
             $ids = array_filter(array_map('intval', explode(',', $rawIds)));
@@ -418,11 +445,8 @@ class ShortsAjaxController extends Controller
             $ids = array_filter(array_map('intval', (array) $rawIds));
         }
 
-        if (empty($ids) && $shortId > 0) {
-            $short = Short::find($shortId);
-            if ($short) {
-                $ids = $short->products()->pluck('products.id')->toArray();
-            }
+        if (empty($ids) && $visibleShort) {
+            $ids = $visibleShort->products()->pluck('products.id')->toArray();
         }
 
         if (empty($ids)) {
@@ -468,7 +492,7 @@ class ShortsAjaxController extends Controller
                 'add_to_cart' => route('cart.add', ['product' => $p->id]),
                 'in_stock' => $p->total_stock > 0,
                 'stock_qty' => $p->total_stock,
-                'rating' => (float) ($p->avg_rating ?? 5.0),
+                'rating' => $p->avg_rating !== null ? (float) $p->avg_rating : null,
                 'review_count' => (int) ($p->review_count ?? 0),
                 'sku' => $p->sku ?? '',
                 'vendor_name' => $p->vendor?->shop_name ?? '',
@@ -476,11 +500,11 @@ class ShortsAjaxController extends Controller
             ];
         }
 
-        // Record click event on short if requested
-        if ($shortId > 0) {
-            Short::where('id', $shortId)->increment('clicks');
+        // Record click event only for a verified visible short
+        if ($visibleShort) {
+            Short::where('id', $visibleShort->id)->increment('clicks');
             ShortEvent::create([
-                'short_id' => $shortId,
+                'short_id' => $visibleShort->id,
                 'event_type' => 'click',
                 'user_id' => auth()->id() ?? 0,
                 'session_id' => session()->getId() ?: '',
@@ -577,6 +601,10 @@ class ShortsAjaxController extends Controller
     public function getComments(Request $request): JsonResponse
     {
         $shortId = (int) $request->input('short_id', 0);
+        if (!$this->findVisibleShort($shortId)) {
+            return response()->json(['success' => false, 'message' => 'Short not found'], 404);
+        }
+
         $comments = ShortComment::with('user')
             ->where('short_id', $shortId)
             ->where('status', 'approved')

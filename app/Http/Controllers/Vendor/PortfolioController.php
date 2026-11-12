@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PortfolioController extends Controller
@@ -172,7 +173,7 @@ class PortfolioController extends Controller
             'client_name' => 'nullable|string|max:120',
             'role' => 'nullable|string|max:120',
             'work_category' => 'nullable|string|max:80',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('vertical', 'services')],
             'service_product_id' => 'nullable|integer',
             'skills_input' => 'nullable|string|max:500',
             'deliverables_input' => 'nullable|string|max:1200',
@@ -184,6 +185,27 @@ class PortfolioController extends Controller
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,avif|max:8192',
         ]);
 
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+        $authCheck = $entitlements->authorizeSectorWrite($vendor, 'services');
+        if (!$authCheck['allowed']) {
+            return back()->withInput()->with('error', $authCheck['reason']);
+        }
+        if ($validated['status'] === 'published' && $portfolio->status !== 'published') {
+            $quotaCheck = $entitlements->checkNumericQuota($vendor, 'services', 'max_portfolio_projects', 1);
+            if (!$quotaCheck['allowed']) {
+                return back()->withInput()->with('error', $quotaCheck['reason']);
+            }
+        }
+
+        $galleryPaths = is_array($portfolio->gallery_json) ? $portfolio->gallery_json : [];
+        $galleryUploadCount = $request->hasFile('gallery') ? count(array_filter((array) $request->file('gallery'))) : 0;
+        if ($galleryUploadCount > 0) {
+            $mediaLimit = $entitlements->getNumericLimit($vendor, 'services', 'max_portfolio_media');
+            if ($mediaLimit !== null && (count($galleryPaths) + $galleryUploadCount) > $mediaLimit) {
+                return back()->withInput()->with('error', "Your current services plan allows up to {$mediaLimit} gallery photo(s) per portfolio case study.");
+            }
+        }
+
         $coverPath = $portfolio->cover_image;
         if ($request->hasFile('cover_image') && $request->file('cover_image')->isValid()) {
             if ($coverPath) {
@@ -193,19 +215,6 @@ class PortfolioController extends Controller
             k71_sync_public_storage($coverPath);
         }
 
-        $galleryPaths = is_array($portfolio->gallery_json) ? $portfolio->gallery_json : [];
-        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
-        $authCheck = $entitlements->authorizeSectorWrite($vendor, 'services');
-        if (!$authCheck['allowed']) {
-            return back()->withInput()->with('error', $authCheck['reason']);
-        }
-        $galleryUploadCount = $request->hasFile('gallery') ? count(array_filter((array) $request->file('gallery'))) : 0;
-        if ($galleryUploadCount > 0) {
-            $mediaLimit = $entitlements->getNumericLimit($vendor, 'services', 'max_portfolio_media');
-            if ($mediaLimit !== null && (count($galleryPaths) + $galleryUploadCount) > $mediaLimit) {
-                return back()->withInput()->with('error', "Your current services plan allows up to {$mediaLimit} gallery photo(s) per portfolio case study.");
-            }
-        }
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 if ($file && $file->isValid()) {
@@ -277,6 +286,12 @@ class PortfolioController extends Controller
     public function toggleFeatured(Request $request, PortfolioProject $portfolio): RedirectResponse
     {
         Gate::authorize('update', $portfolio);
+        if ($portfolio->vendor) {
+            $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($portfolio->vendor, 'services');
+            if (!$authCheck['allowed']) {
+                return back()->with('error', $authCheck['reason']);
+            }
+        }
         $portfolio->update(['is_featured' => !$portfolio->is_featured]);
         $portfolio->vendor?->bumpWebsiteCache();
 

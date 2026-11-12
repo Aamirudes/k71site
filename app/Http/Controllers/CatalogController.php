@@ -20,11 +20,18 @@ class CatalogController extends Controller
         $activeFilters = [];
         $appName = config('marketplace.name', 'K71');
 
-        // 1. Category Filter (supports slug or ID, including child categories)
+        // 1. Category Filter (supports slug or strictly numeric ID, including child categories)
         $currentCategory = null;
         if ($request->filled('category')) {
-            $catSlug = $request->input('category');
-            $currentCategory = Category::where('slug', $catSlug)->orWhere('id', $catSlug)->first();
+            $catSlug = trim((string) $request->input('category'));
+            $currentCategory = Category::where('is_active', true)
+                ->where(function ($q) use ($catSlug) {
+                    $q->where('slug', $catSlug);
+                    if (ctype_digit($catSlug)) {
+                        $q->orWhere('id', (int) $catSlug);
+                    }
+                })
+                ->first();
             if ($currentCategory) {
                 $categoryIds = Category::where('id', $currentCategory->id)
                     ->orWhere('parent_id', $currentCategory->id)
@@ -37,15 +44,24 @@ class CatalogController extends Controller
                     'label' => $currentCategory->name,
                     'remove_url' => $this->buildFilterUrl($request, 'category')
                 ];
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
-        // 2. Boutique / Atelier Store Filter
+        // 2. Boutique / Atelier Store Filter (enforces storefront visibility; avoids string->int coercion)
         $currentStore = null;
         if ($request->filled('store') || $request->filled('vendor')) {
-            $storeIdentifier = $request->input('store', $request->input('vendor'));
-            $currentStore = Vendor::where('slug', $storeIdentifier)->orWhere('id', $storeIdentifier)->first();
-            if ($currentStore) {
+            $storeIdentifier = trim((string) $request->input('store', $request->input('vendor')));
+            $candidateStore = Vendor::where(function ($q) use ($storeIdentifier) {
+                    $q->where('slug', $storeIdentifier);
+                    if (ctype_digit($storeIdentifier)) {
+                        $q->orWhere('id', (int) $storeIdentifier);
+                    }
+                })
+                ->first();
+            if ($candidateStore && $visibility->isVendorPubliclyVisible($candidateStore)) {
+                $currentStore = $candidateStore;
                 $query->where('vendor_id', $currentStore->id);
 
                 $activeFilters[] = [
@@ -53,6 +69,8 @@ class CatalogController extends Controller
                     'label' => 'Boutique: ' . $currentStore->shop_name,
                     'remove_url' => $this->buildFilterUrl($request, ['store', 'vendor'])
                 ];
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
 
@@ -176,8 +194,9 @@ class CatalogController extends Controller
         // 10. Powerful Search Filter across titles, categories, vendors, and tags
         $searchQuery = $request->input('search', $request->input('q'));
         if (!empty($searchQuery)) {
-            $searchTerm = trim($searchQuery);
-            $wildcard = '%' . $searchTerm . '%';
+            $searchTerm = trim((string) $searchQuery);
+            $escapedTerm = addcslashes($searchTerm, '%_\\');
+            $wildcard = '%' . $escapedTerm . '%';
             $query->where(function($q) use ($wildcard) {
                 $q->where('title', 'LIKE', $wildcard)
                   ->orWhere('description', 'LIKE', $wildcard)
@@ -506,7 +525,8 @@ class CatalogController extends Controller
         }
 
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
-        $wildcard = '%' . $term . '%';
+        $escapedTerm = addcslashes($term, '%_\\');
+        $wildcard = '%' . $escapedTerm . '%';
 
         // 1. Matching Verified Stores
         $storeQuery = Vendor::query()
@@ -547,6 +567,8 @@ class CatalogController extends Controller
                 $url = route('used.show', $p->slug);
             } elseif ($p->vertical === 'services' || in_array($p->listing_type, ['gig', 'service'], true)) {
                 $url = route('services.show', $p->slug);
+            } elseif ($p->vertical === 'food' && $p->vendor) {
+                $url = route('food.restaurant', $p->vendor->slug);
             } else {
                 $url = route('product.show', $p->slug);
             }

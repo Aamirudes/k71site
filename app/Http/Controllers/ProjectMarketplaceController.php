@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ProjectMarketplaceController extends Controller
@@ -88,7 +89,7 @@ class ProjectMarketplaceController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|min:8|max:200',
-            'category_id' => 'nullable|exists:categories,id',
+            'category_id' => ['nullable', Rule::exists('categories', 'id')->where('vertical', 'services')],
             'description' => 'required|string|min:20|max:5000',
             'skills' => 'nullable|string|max:400',
             'deliverables' => 'nullable|string|max:1000',
@@ -349,7 +350,12 @@ class ProjectMarketplaceController extends Controller
                     ]);
                 } else {
                     $chatConvId = $chatConv->id;
-                    DB::table('chat_conversations')->where('id', $chatConvId)->update(['last_message_at' => $nowStr]);
+                    DB::table('chat_conversations')->where('id', $chatConvId)->update([
+                        'last_message_at' => $nowStr,
+                        'status' => 'accepted',
+                        'user_one_hidden_at' => null,
+                        'user_two_hidden_at' => null,
+                    ]);
                 }
 
                 DB::table('chat_messages')->insert([
@@ -525,8 +531,13 @@ class ProjectMarketplaceController extends Controller
                     'submitted_at' => now(),
                 ]);
             });
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            foreach ($uploaded as $meta) {
+                if (!empty($meta['path']) && function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($meta['path']);
+                }
+            }
+            return back()->with('error', $e instanceof \RuntimeException ? $e->getMessage() : 'Failed to submit milestone deliverables.');
         }
 
         app(NotificationCenterService::class)->notifyUser(

@@ -88,13 +88,22 @@ class ServiceWorkspaceController extends Controller
 
         $isBuyer = (int) $order->buyer_id === (int) auth()->id();
 
-        ServiceOrderMessage::create([
-            'service_order_id' => $order->id,
-            'user_id' => auth()->id(),
-            'sender_type' => $isBuyer ? 'buyer' : 'seller',
-            'message' => trim((string) ($validated['message'] ?? '')) ?: 'Uploaded attachments',
-            'attachments' => $uploadedAttachments,
-        ]);
+        try {
+            ServiceOrderMessage::create([
+                'service_order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'sender_type' => $isBuyer ? 'buyer' : 'seller',
+                'message' => trim((string) ($validated['message'] ?? '')) ?: 'Uploaded attachments',
+                'attachments' => $uploadedAttachments,
+            ]);
+        } catch (\Throwable $e) {
+            foreach ($uploadedAttachments as $meta) {
+                if (!empty($meta['path']) && function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($meta['path']);
+                }
+            }
+            return back()->with('error', 'Failed to send message. Please try again.');
+        }
 
         $recipientUserId = $isBuyer ? $order->vendor?->user_id : $order->buyer_id;
         $this->notifications->notifyUser(
@@ -172,8 +181,13 @@ class ServiceWorkspaceController extends Controller
                     'attachments' => $uploadedFiles,
                 ]);
             });
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            foreach ($uploadedFiles as $meta) {
+                if (!empty($meta['path']) && function_exists('k71_delete_public_storage')) {
+                    k71_delete_public_storage($meta['path']);
+                }
+            }
+            return back()->with('error', $e instanceof \RuntimeException ? $e->getMessage() : 'Failed to record deliverables. Please try again.');
         }
 
         $this->notifications->notifyUser(
@@ -290,20 +304,32 @@ class ServiceWorkspaceController extends Controller
                     $updatePayload['buyer_rating'] = $rating;
                     $updatePayload['buyer_review'] = $reviewBody;
 
-                    Review::updateOrCreate(
-                        [
-                            'product_id' => $locked->product_id,
-                            'user_id' => $userId,
-                        ],
-                        [
-                            'vendor_id' => $locked->vendor_id,
-                            'service_order_id' => $locked->id,
-                            'rating' => $rating,
-                            'body' => $reviewBody,
-                            'is_verified_purchase' => true,
-                            'is_approved' => true,
-                        ]
-                    );
+                    $existingReview = Review::where('service_order_id', $locked->id)
+                        ->where('user_id', $userId)
+                        ->first();
+                    if (!$existingReview && $locked->product_id) {
+                        $existingReview = Review::where('product_id', $locked->product_id)
+                            ->where('user_id', $userId)
+                            ->first();
+                    }
+
+                    $reviewAttrs = [
+                        'product_id' => $locked->product_id,
+                        'user_id' => $userId,
+                        'vendor_id' => $locked->vendor_id,
+                        'review_type' => 'service',
+                        'service_order_id' => $locked->id,
+                        'rating' => $rating,
+                        'body' => $reviewBody,
+                        'is_verified_purchase' => true,
+                        'is_approved' => true,
+                    ];
+
+                    if ($existingReview) {
+                        $existingReview->update($reviewAttrs);
+                    } else {
+                        Review::create($reviewAttrs);
+                    }
 
                     if ($locked->product_id && ($gigProduct = \App\Models\Product::withoutGlobalScopes()->find($locked->product_id))) {
                         $approvedReviews = Review::where('product_id', $locked->product_id)->where('is_approved', true);
