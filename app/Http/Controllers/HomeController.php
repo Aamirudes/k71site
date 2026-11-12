@@ -51,54 +51,41 @@ class HomeController extends Controller
             });
         };
 
-        $featuredProducts = Product::with(['images', 'vendor', 'category', 'variants'])
-            ->where('status', 'active')
-            ->where($retailFilter)
-            ->where('is_featured', true)
-            ->latest()
-            ->take(12)
-            ->get();
-            
-        $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
-            ->where('status', 'active')
-            ->where($retailFilter)
-            ->latest()
-            ->take(24)
-            ->get();
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
 
-        // If new arrivals is small, include any active non-used retail products
-        if ($newArrivals->count() < 8) {
-            $newArrivals = Product::with(['images', 'vendor', 'category', 'variants'])
-                ->where('status', 'active')
-                ->where($retailFilter)
-                ->latest()
-                ->take(24)
-                ->get();
-        }
+        $featuredProductsQuery = Product::with(['images', 'vendor', 'category', 'variants'])
+            ->where('status', 'active')
+            ->where($retailFilter)
+            ->where('is_featured', true);
+        $visibility->scopeVisibleProducts($featuredProductsQuery, 'products');
+        $featuredProducts = $featuredProductsQuery->latest()->take(12)->get();
+
+        $newArrivalsQuery = Product::with(['images', 'vendor', 'category', 'variants'])
+            ->where('status', 'active')
+            ->where($retailFilter);
+        $visibility->scopeVisibleProducts($newArrivalsQuery, 'products');
+        $newArrivals = $newArrivalsQuery->latest()->take(24)->get();
 
         // Dedicated 20 Latest Retail Products for Homepage (strictly filtered to active retail items)
-        $latestProducts = Product::with(['images', 'vendor', 'category', 'variants'])
+        $latestProductsQuery = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
-            ->where($retailFilter)
-            ->latest()
-            ->take(20)
-            ->get();
+            ->where($retailFilter);
+        $visibility->scopeVisibleProducts($latestProductsQuery, 'products');
+        $latestProducts = $latestProductsQuery->latest()->take(20)->get();
 
         // Dedicated Services & Freelancers for Homepage Showcase
-        $featuredServices = Product::with(['images', 'vendor', 'category', 'gigPackages'])
+        $featuredServicesQuery = Product::with(['images', 'vendor', 'category', 'gigPackages'])
             ->where('vertical', 'services')
-            ->where('status', 'active')
-            ->latest()
-            ->take(4)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($featuredServicesQuery, 'services');
+        $featuredServices = $featuredServicesQuery->latest()->take(4)->get();
 
         // Dedicated Food & Kitchens for Homepage Showcase
-        $featuredFood = Product::with(['images', 'vendor', 'category'])
+        $featuredFoodQuery = Product::with(['images', 'vendor', 'category'])
             ->where('vertical', 'food')
-            ->where('status', 'active')
-            ->latest()
-            ->take(4)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($featuredFoodQuery, 'food');
+        $featuredFood = $featuredFoodQuery->latest()->take(4)->get();
             
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
@@ -134,10 +121,11 @@ class HomeController extends Controller
             }
         }
 
-        $topVendors = \App\Models\Vendor::where('status', 'approved')
-            ->where(function($q) {
+        $topVendorsQuery = \App\Models\Vendor::where(function($q) {
                 $q->whereNull('vendor_type')->orWhere('vendor_type', '!=', 'used');
-            })
+            });
+        $visibility->scopeVisibleVendors($topVendorsQuery);
+        $topVendors = $topVendorsQuery
             ->withCount(['products' => function($q) {
                 $q->where('status', 'active')->excludeUsed();
             }])
@@ -149,7 +137,7 @@ class HomeController extends Controller
             ->get();
 
         // Dedicated Used / Re-Commerce Listings (active public only)
-        $featuredUsed = Product::with(['images', 'vendor', 'sellerUser.usedSellerProfile', 'category'])
+        $featuredUsedQuery = Product::with(['images', 'vendor', 'sellerUser.usedSellerProfile', 'category'])
             ->where(function($q) {
                 $q->where('vertical', 'used')
                   ->orWhere('listing_type', 'classified');
@@ -158,10 +146,9 @@ class HomeController extends Controller
             ->where('is_sold', false)
             ->where(function ($q) {
                 $q->whereNull('used_status')->orWhere('used_status', 'active');
-            })
-            ->latest()
-            ->take(4)
-            ->get();
+            });
+        $visibility->scopeVisibleProducts($featuredUsedQuery, 'used', true);
+        $featuredUsed = $featuredUsedQuery->latest()->take(4)->get();
 
         // Dedicated B2B & Wholesale Enquiries & Products
         $featuredEnquiries = \App\Models\Enquiry::with(['category', 'vendor', 'quotes'])
@@ -170,26 +157,23 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        $featuredEnquiryProducts = Product::with(['images', 'vendor', 'category'])
+        $featuredEnquiryProductsQuery = Product::with(['images', 'vendor', 'category'])
             ->where(function($q) {
                 $q->where('vertical', 'enquiry')
                   ->orWhere('listing_type', 'enquiry')
                   ->orWhere('listing_type', 'quote_only');
             })
-            ->where('status', 'active')
-            ->latest()
-            ->take(4)
-            ->get();
+            ->where('status', 'active');
+        $visibility->scopeVisibleProducts($featuredEnquiryProductsQuery, 'enquiry');
+        $featuredEnquiryProducts = $featuredEnquiryProductsQuery->latest()->take(4)->get();
 
-        $foodRestaurants = \App\Models\Vendor::whereIn('status', ['approved', 'active'])
-            ->where(function ($q) {
+        $foodRestaurantsQuery = \App\Models\Vendor::where(function ($q) {
                 $q->where('vendor_type', 'food')
                   ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
             })
-            ->with('settings')
-            ->latest()
-            ->take(4)
-            ->get();
+            ->with('settings');
+        $visibility->scopeVisibleVendors($foodRestaurantsQuery, 'food');
+        $foodRestaurants = $foodRestaurantsQuery->latest()->take(4)->get();
 
         $homepageSettings = \App\Models\Setting::getGroup('homepage');
         $scrollSequence = \App\Services\ScrollSequenceService::resolveSequence(

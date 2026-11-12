@@ -36,6 +36,7 @@ class VendorProductUploadTest extends TestCase
             'is_verified' => true,
             'status' => 'approved',
         ]);
+        $this->grantVendorTestSubscription($vendor, 'all');
 
         return [$user, $vendor];
     }

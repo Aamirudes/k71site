@@ -32,6 +32,7 @@ class StorefrontDesignTest extends TestCase
             'email' => $email,
             'vendor_type' => 'clothing',
         ]);
+        $this->grantVendorTestSubscription($vendor, 'all');
 
         return [$user, $vendor];
     }

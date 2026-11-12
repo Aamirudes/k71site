@@ -13,14 +13,22 @@ class AuditLog extends Model
 
     protected $fillable = [
         'user_id',
+        'vendor_id',
+        'sector_key',
         'auditable_type',
         'auditable_id',
         'action',
+        'reason',
         'old_values',
         'new_values',
         'ip_address',
         'user_agent',
     ];
+
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 
     protected $casts = [
         'old_values' => 'array',

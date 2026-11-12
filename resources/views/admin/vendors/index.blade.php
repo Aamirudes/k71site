@@ -16,6 +16,9 @@
                 <p class="text-xs sm:text-sm text-slate-500 mt-1">Audit merchant applications, verified UPI settlement VPAs, catalog volume, and gross platform performance.</p>
             </div>
             <div class="flex items-center gap-3">
+                <a href="{{ route('admin.vendor_management.index') }}" class="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-xs font-bold text-white shadow-xs transition-colors">
+                    Subscription &amp; Verification Console
+                </a>
                 <span class="px-3.5 py-2 rounded-2xl bg-slate-900 text-xs font-mono font-bold text-white shadow-xs">
                     {{ $vendors->total() ?? $vendors->count() }} Boutiques
                 </span>
@@ -211,6 +214,9 @@
                                 <!-- Actions -->
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
+                                        <a href="{{ route('admin.vendor_management.show', $vendor) }}" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold text-xs transition-colors">
+                                            Plan &amp; Verify
+                                        </a>
                                         <a href="{{ route('admin.orders', ['vendor_id' => $vendor->id]) }}" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors">
                                             Orders ({{ $vendor->orders_count }})
                                         </a>

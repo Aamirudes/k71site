@@ -76,11 +76,12 @@ class SettlementController extends Controller
             $totalFeePaise = $gatewayFeePaise + $gstOnFeePaise;
             $netPaise = max(0, $grossPaise - $totalFeePaise);
 
+            $commissionService = app(\App\Services\Monetization\CommissionService::class);
             $vendorDisbursedPaise = $batchOrders->where('vendor_payout_status', 'paid')->sum('vendor_payout_amount');
-            $vendorPendingPaise = $batchOrders->where('vendor_payout_status', '!=', 'paid')->sum(function ($o) {
-                return (int) round(max(0, $o->subtotal - $o->discount_amount) * 0.95);
+            $vendorPendingPaise = $batchOrders->where('vendor_payout_status', '!=', 'paid')->sum(function ($o) use ($commissionService) {
+                return (int) ($o->vendor_payout_amount ?: $commissionService->calculateBreakdownForOrder($o)['vendor_net_paise']);
             });
-            $platformProfitPaise = (int) round($batchOrders->sum(fn($o) => max(0, $o->subtotal - $o->discount_amount) * 0.05));
+            $platformProfitPaise = $batchOrders->sum(fn($o) => (int) ($o->orderCommission?->calculated_commission_paise ?? $commissionService->calculateBreakdownForOrder($o)['calculated_commission_paise']));
 
             // Bank UTR generation / retrieval
             $primaryOrder = $batchOrders->first();
@@ -91,8 +92,8 @@ class SettlementController extends Controller
                 $utr = 'CMS' . str_pad((string) $hash, 10, '7', STR_PAD_LEFT);
             }
 
-            $orderList = $batchOrders->map(function ($o) {
-                $productVal = max(0, $o->subtotal - $o->discount_amount);
+            $orderList = $batchOrders->map(function ($o) use ($commissionService) {
+                $breakdown = $commissionService->calculateBreakdownForOrder($o);
                 return [
                     'id' => $o->id,
                     'order_number' => $o->order_number,
@@ -100,7 +101,7 @@ class SettlementController extends Controller
                     'shop_name' => $o->vendor->shop_name ?? 'Independent Boutique',
                     'vendor_slug' => $o->vendor->slug ?? null,
                     'total_amount' => $o->total_amount / 100,
-                    'vendor_payout' => ($o->vendor_payout_amount ?: round($productVal * 0.95)) / 100,
+                    'vendor_payout' => ($o->vendor_payout_amount ?: $breakdown['vendor_net_paise']) / 100,
                     'vendor_payout_status' => $o->vendor_payout_status,
                     'vendor_payout_utr' => $o->vendor_payout_utr,
                     'settlement_status' => $o->settlement_status,

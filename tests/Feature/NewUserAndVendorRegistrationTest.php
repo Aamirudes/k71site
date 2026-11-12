@@ -215,7 +215,8 @@ class NewUserAndVendorRegistrationTest extends TestCase
         $rohanVendor = Vendor::where('user_id', $rohan->id)->first();
         $this->assertNotNull($rohanVendor);
         $this->assertSame('kishangarh-stone-2026', $rohanVendor->slug);
-        $this->assertSame('approved', $rohanVendor->status);
+        $this->assertSame('pending', $rohanVendor->status);
+        $this->assertSame('pending_review', $rohanVendor->verification_status);
 
         // 2. Verify validation endpoints reject reserved slugs, >30-char slugs, invalid usernames cleanly
         $this->getJson('/api/validate-slug?slug=admin')
@@ -323,6 +324,9 @@ class NewUserAndVendorRegistrationTest extends TestCase
 
             $vendor = Vendor::where('slug', $slug)->first();
             $this->assertNotNull($vendor, "Vendor not created for type {$type}");
+            $this->assertSame('pending', $vendor->status);
+            $this->assertSame('pending_review', $vendor->verification_status);
+            $this->grantVendorTestSubscription($vendor, 'all');
 
             if ($index === 0) {
                 $firstVendor = $vendor;
@@ -440,6 +444,7 @@ class NewUserAndVendorRegistrationTest extends TestCase
         $this->assertTrue($freelancer->hasRole('vendor'));
         $this->assertTrue($freelancer->hasRole('customer'));
         $this->get('/vendor/dashboard')->assertOk();
+        $this->grantVendorTestSubscription($freelancer->vendor->fresh(), 'all');
 
         // 2. Gig creation & editing via BOTH services.gig.update AND vendor.services.edit/update
         $serviceCat = Category::create([

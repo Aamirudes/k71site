@@ -69,6 +69,7 @@ class AuctionsAndMessagingTest extends TestCase
             'upi_enabled' => true,
             'cod_enabled' => true,
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
 
         $this->category = Category::firstOrCreate(
             ['slug' => 'vintage-collectibles'],

@@ -81,6 +81,7 @@ class FreelanceMarketplaceAndAdminSuperpowersTest extends TestCase
             'skills_json' => ['Figma', 'UI/UX', 'Logo Design', 'TailwindCSS'],
             'languages_json' => ['English', 'Hindi'],
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'services');
 
         // Category
         $this->category = Category::firstOrCreate(

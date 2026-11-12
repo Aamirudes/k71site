@@ -69,6 +69,12 @@ class FoodMenuController extends Controller
     public function storeCategory(Request $request)
     {
         $vendor = Auth::user()->vendor;
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'food');
+        if (!$authCheck['allowed']) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $authCheck['reason']], 403)
+                : back()->with('error', $authCheck['reason']);
+        }
 
         $validated = $request->validate([
             'name' => 'required|string|max:80',
@@ -173,6 +179,12 @@ class FoodMenuController extends Controller
     public function toggleAcceptingOrders(Request $request)
     {
         $vendor = Auth::user()->vendor;
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'food', 'allow_food_orders');
+        if (!$authCheck['allowed']) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $authCheck['reason']], 403)
+                : back()->with('error', $authCheck['reason']);
+        }
         $settings = VendorSetting::firstOrCreate(['vendor_id' => $vendor->id]);
 
         $validated = $request->validate([

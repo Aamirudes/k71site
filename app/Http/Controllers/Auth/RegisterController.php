@@ -246,7 +246,8 @@ class RegisterController extends Controller
             }
 
             $targetUser = $user;
-            $autoApprove = config('marketplace.vendor.auto_approve');
+            // Manual verification rule: NEVER auto-approve vendors; admin verifies & assigns subscription manually
+            $autoApprove = false;
 
             $pickupAddress = null;
             if ($request->filled('pincode') || $request->filled('address')) {
@@ -260,14 +261,19 @@ class RegisterController extends Controller
             }
 
             $vendorType = $validated['vendor_type'] ?? $request->input('vendor_type', 'clothing');
+            $canonicalSector = app(\App\Services\Monetization\SectorRegistryService::class)->normalizeSectorKey($vendorType);
             $vendorPayload = [
                 'user_id' => $user->id,
                 'slug' => $normalizedSlug,
                 'shop_name' => $validated['shop_name'],
                 'vendor_type' => $vendorType,
+                'operating_sectors' => [$canonicalSector],
+                'whatsapp_number' => $validated['phone'] ?? $user->phone ?? null,
+                'contact_person' => trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: null,
                 'pickup_address' => $pickupAddress,
-                'status' => $autoApprove ? VendorStatus::Approved->value : VendorStatus::Pending->value,
-                'approved_at' => $autoApprove ? now() : null,
+                'status' => VendorStatus::Pending->value,
+                'verification_status' => 'pending_review',
+                'approved_at' => null,
                 'slug_reserved_at' => !$isLoggedIn ? now() : null, // Reserved during verification if new user
             ];
 

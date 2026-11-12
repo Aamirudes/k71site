@@ -50,6 +50,8 @@ class EnquiryMarketplaceTest extends TestCase
             'cod_enabled' => false,
         ]);
 
+        $this->grantVendorTestSubscription($this->vendor, 'enquiry');
+
         $this->enquiryCategory = Category::firstOrCreate(
             ['slug' => 'enquiry-wholesale-fabrics'],
             [
@@ -332,12 +334,13 @@ class EnquiryMarketplaceTest extends TestCase
 
         $vendorUserB = User::factory()->create();
         $vendorUserB->roles()->syncWithoutDetaching([Role::firstOrCreate(['name' => 'vendor'])->id]);
-        Vendor::create([
+        $vendorB = Vendor::create([
             'user_id' => $vendorUserB->id,
             'shop_name' => 'Competing Fabrics Ltd',
             'slug' => 'competing-fabrics',
             'status' => 'approved',
         ]);
+        $this->grantVendorTestSubscription($vendorB, 'enquiry');
 
         $this->actingAs($vendorUserB);
 

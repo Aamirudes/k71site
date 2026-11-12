@@ -278,8 +278,27 @@ class UsedListingController extends Controller
             }
         }
 
+        $commercialVendor = ($user->vendor && $user->vendor->vendor_type === 'used') ? $user->vendor : null;
+        if ($commercialVendor) {
+            $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+                $commercialVendor,
+                'used',
+                !$isDraft,
+                count($request->file('photos', []) ?: ($request->hasFile('image') ? [$request->file('image')] : [])),
+                0,
+                null,
+                []
+            );
+            if (!$entitlementCheck['allowed']) {
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $entitlementCheck['reason']], 403);
+                }
+                return back()->withInput()->with('error', $entitlementCheck['reason']);
+            }
+        }
+
         $product = Product::create([
-            'vendor_id' => $user->vendor?->id,
+            'vendor_id' => $commercialVendor?->id,
             'user_id' => $user->id,
             'category_id' => $category->id,
             'vertical' => 'used',
@@ -440,6 +459,25 @@ class UsedListingController extends Controller
         }
 
         $action = $request->input('action', 'save');
+        $commercialVendor = ($user->vendor && $user->vendor->vendor_type === 'used') ? $user->vendor : null;
+        if ($commercialVendor && $action === 'publish') {
+            $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+                $commercialVendor,
+                'used',
+                true,
+                count($request->file('photos', [])) + $product->images()->count(),
+                0,
+                $product->id,
+                []
+            );
+            if (!$entitlementCheck['allowed']) {
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $entitlementCheck['reason']], 403);
+                }
+                return back()->withInput()->with('error', $entitlementCheck['reason']);
+            }
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|min:4|max:180',
             'category_id' => 'required|exists:categories,id',
@@ -617,6 +655,27 @@ class UsedListingController extends Controller
 
         $action = $validated['action'];
         $msg = 'Listing status updated.';
+
+        if (in_array($action, ['publish', 'activate'], true)) {
+            $commercialVendor = ($user->vendor && $user->vendor->vendor_type === 'used') ? $user->vendor : null;
+            if ($commercialVendor) {
+                $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+                    $commercialVendor,
+                    'used',
+                    true,
+                    0,
+                    0,
+                    $product->id,
+                    []
+                );
+                if (!$entitlementCheck['allowed']) {
+                    if ($request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $entitlementCheck['reason']], 403);
+                    }
+                    return back()->with('error', $entitlementCheck['reason']);
+                }
+            }
+        }
 
         switch ($action) {
             case 'publish':

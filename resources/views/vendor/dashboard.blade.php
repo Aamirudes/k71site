@@ -89,6 +89,47 @@
         rejectingClaimId: null,
         rejectionReason: ''
     }">
+        @php
+            $dashSector = $vendor->getCanonicalSectorKey();
+            $dashSub = app(\App\Services\Monetization\EntitlementService::class)->resolveEffectiveSubscription($vendor, $dashSector);
+            $dashAnySub = $vendor->subscriptions()->where('sector_key', $dashSector)->latest('id')->first();
+        @endphp
+
+        @if(!$vendor->isVerifiedMerchant() || !$dashSub)
+            <div class="rounded-2xl border p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 {{ !$vendor->isVerifiedMerchant() ? 'bg-amber-50 border-amber-300 text-amber-950' : 'bg-zinc-900 border-zinc-800 text-white' }}">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-wider">
+                        @if(!$vendor->isVerifiedMerchant())
+                            Verification Status: {{ ucfirst(str_replace('_', ' ', $vendor->verification_status ?: $vendor->status)) }}
+                        @elseif($dashAnySub && $dashAnySub->status === 'pending_activation')
+                            Plan Assigned ({{ $dashAnySub->plan_name_snapshot }}) — Pending Admin Activation
+                        @elseif($dashAnySub && $dashAnySub->status === 'expired')
+                            Subscription Expired ({{ $dashAnySub->plan_name_snapshot }})
+                        @else
+                            No Active {{ ucfirst($dashSector) }} Subscription
+                        @endif
+                    </p>
+                    <p class="text-xs mt-0.5 opacity-90">
+                        Storefront visibility &amp; sector publishing require admin verification and an active subscription plan managed via WhatsApp.
+                    </p>
+                </div>
+                <a href="{{ route('vendor.subscription.index') }}" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold {{ !$vendor->isVerifiedMerchant() ? 'bg-zinc-950 text-white' : 'bg-white text-zinc-950' }}">
+                    View Plan &amp; Request Activation →
+                </a>
+            </div>
+        @elseif($dashSub->days_remaining !== null && $dashSub->days_remaining <= 7)
+            <div class="rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <p class="text-xs font-black uppercase tracking-wider">
+                        Subscription Expiring in {{ $dashSub->days_remaining }} Day(s) — {{ $dashSub->plan_name_snapshot }}
+                    </p>
+                    <p class="text-xs mt-0.5">Expires on {{ $dashSub->ends_at?->format('d M Y') }}. Request renewal early to avoid storefront interruption.</p>
+                </div>
+                <a href="{{ route('vendor.subscription.index') }}" class="shrink-0 px-4 py-2 rounded-xl text-xs font-bold bg-zinc-950 text-white">
+                    Renew Plan →
+                </a>
+            </div>
+        @endif
         
         @if($vendor->isServices() && !empty($serviceMetrics))
             @php

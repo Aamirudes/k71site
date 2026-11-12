@@ -34,6 +34,7 @@ class ProductionFixesRegressionTest extends TestCase
             'vendor_type' => 'electronics',
             'status' => 'approved',
         ]);
+        $this->grantVendorTestSubscription($vendor, 'all');
 
         return [$user, $vendor];
     }

@@ -114,6 +114,9 @@ class OrderController extends Controller
             // Restore product inventory stock (both variant and total_stock)
             \App\Services\StockManagerService::restoreOrderStock($order);
 
+            // Reverse recorded commission idempotently on cancellation
+            app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($order, 'Order cancelled by customer', auth()->id());
+
             // Log status history
             $refundNote = ($order->payment_status === 'paid' || (($updatePayload['payment_status'] ?? '') === 'refund_pending'))
                 ? " (Online payment of ₹" . number_format($order->total_amount / 100, 2) . " flagged for refund)"

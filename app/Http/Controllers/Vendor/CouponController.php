@@ -22,6 +22,15 @@ class CouponController extends Controller
 
     public function store(Request $request)
     {
+        $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_coupons');
+        if (!$authCheck['allowed']) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
+            }
+            return back()->withInput()->with('error', $authCheck['reason']);
+        }
+
         $validated = $request->validate([
             'code' => 'required|string|max:30|unique:coupons,code',
             'type' => 'required|in:percentage,flat',
@@ -36,8 +45,6 @@ class CouponController extends Controller
             'is_active' => 'boolean',
         ]);
 
-        $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
-        
         $coupon = new Coupon($validated);
         $coupon->vendor_id = $vendor->id;
         

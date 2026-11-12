@@ -105,9 +105,20 @@ class ResolveStorefront
                 abort(404, 'Store not found.');
             }
 
-            // Check if vendor is active
-            if (!in_array($vendor->status, ['approved', 'active'])) {
-                return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+            // Check if vendor is active & publicly visible (or accessing own vendor dashboard/onboarding/preview/platform endpoints)
+            $isVendorRoute = $request->is('dashboard*', 'vendor*', 'services/onboarding*');
+            $isPlatformInfraRoute = $request->is('sitemap*.xml', 'robots.txt', 'feeds/*', 'api/*', 'account*', 'login', 'register', 'logout', 'sell*');
+            $isOwnerPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+            if (!$isVendorRoute && !$isPlatformInfraRoute && !$isOwnerPreview) {
+                if ($vendor->isServices() && $vendor->website_status === 'draft' && !in_array($vendor->status, ['suspended', 'closed'], true) && $vendor->verification_status !== 'rejected') {
+                    return response()
+                        ->view('errors.website-unpublished', ['vendor' => $vendor], 404)
+                        ->header('X-Robots-Tag', 'noindex, nofollow')
+                        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+                }
+                if (!app(\App\Services\Monetization\VisibilityService::class)->isVendorVisibleInAnySector($vendor)) {
+                    return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+                }
             }
 
             // Bind the vendor to the request and service container
@@ -117,7 +128,7 @@ class ResolveStorefront
             // Also mark if we are in the vendor dashboard context.
             // This is used by VendorScope to isolate queries.
             // A request to /dashboard or /vendor on a storefront is vendor context.
-            if ($request->is('dashboard*') || $request->is('vendor*')) {
+            if ($isVendorRoute) {
                 $request->attributes->set('vendor_context', true);
             }
         }

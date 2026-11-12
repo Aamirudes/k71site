@@ -37,9 +37,11 @@ class AdminPayoutDueNotification extends Notification
         $vendorName = $vendor->shop_name ?? 'Vendor';
         $upiId = $vendor->settings->upi_id ?? ($this->payoutData['vpa'] ?? 'Not Configured');
 
-        $productSubtotal = max(0, $this->order->subtotal - $this->order->discount_amount);
-        $platformFee = (int) round($productSubtotal * 0.05);
-        $vendorPayout = $this->order->vendor_payout_amount ?: ($productSubtotal - $platformFee);
+        $breakdown = app(\App\Services\Monetization\CommissionService::class)->calculateBreakdownForOrder($this->order);
+        $productSubtotal = $breakdown['commission_base_paise'];
+        $platformFee = $this->order->orderCommission?->calculated_commission_paise ?? $breakdown['calculated_commission_paise'];
+        $vendorPayout = $this->order->vendor_payout_amount ?: $breakdown['vendor_net_paise'];
+        $appliedRate = number_format((float) ($this->order->orderCommission?->rate_percent ?? $breakdown['rate_percent']), 2);
 
         $amountRupees = number_format($vendorPayout / 100, 2);
         $totalPaidByCustomer = number_format($this->order->total_amount / 100, 2);
@@ -54,11 +56,11 @@ class AdminPayoutDueNotification extends Notification
             ->line("**💰 Payout Transfer Details:**")
             ->line("• **Vendor Shop:** {$vendorName}")
             ->line("• **Vendor UPI ID:** `{$upiId}`")
-            ->line("• **Exact Amount to Pay (95% Net):** **₹{$amountRupees}**")
+            ->line("• **Exact Amount to Pay (Vendor Net):** **₹{$amountRupees}**")
             ->line("---")
             ->line("**📊 Transaction Breakdown:**")
             ->line("• Customer Paid Total: ₹{$totalPaidByCustomer}")
-            ->line("• Your 5% Platform Profit Kept: ₹{$feeRupees}")
+            ->line("• Your {$appliedRate}% Platform Commission Kept: ₹{$feeRupees}")
             ->line("• Shipping Fee Retained: ₹{$shippingRupees}")
             ->action('View Order in Admin Dashboard', url('/admin/orders/' . $this->order->id))
             ->line("💡 **Next Step:** Open PhonePe or Google Pay on your phone, transfer **₹{$amountRupees}** to `{$upiId}`, and record the UTR in your Admin Dashboard.");

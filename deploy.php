@@ -601,6 +601,11 @@ if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') 
 
 $tasks['Clear All Stale Caches'] = ['cmd' => 'optimize:clear', 'args' => []];
 
+if (!empty($_GET['check_monetization'])) {
+    $tasks['Process Subscription Expiries Sweep'] = ['cmd' => 'subscriptions:process-expiry', 'args' => ['--trigger' => 'deploy_check']];
+    $tasks['Scheduler Task List'] = ['cmd' => 'schedule:list', 'args' => []];
+}
+
 foreach ($tasks as $label => $task) {
     echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";
     try {
@@ -652,10 +657,24 @@ echo "</div>";
 // 11b. Active Vendors In Database Verification
 echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
 try {
-    $allVendors = DB::table('vendors')->select('id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
-    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\n\n";
+    $hasVerification = Schema::hasColumn('vendors', 'verification_status');
+    $cols = ['id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status'];
+    if ($hasVerification) {
+        $cols[] = 'verification_status';
+    }
+    $allVendors = DB::table('vendors')->select($cols)->get();
+    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\n";
+    if (!empty($_GET['check_monetization']) && Schema::hasTable('k71_sectors')) {
+        echo "Host Base Path: " . htmlspecialchars($baseDir) . "\n";
+        echo "Sectors: " . DB::table('k71_sectors')->count()
+            . " | Plans: " . DB::table('subscription_plans')->count()
+            . " | Commission Rules: " . DB::table('commission_rules')->count()
+            . " | Vendor Subscriptions: " . DB::table('vendor_subscriptions')->count() . "\n";
+    }
+    echo "\n";
     foreach ($allVendors as $v) {
-        echo "• ID {$v->id} (User #{$v->user_id}) | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
+        $ver = $hasVerification ? ($v->verification_status ?? 'n/a') : 'n/a';
+        echo "• ID {$v->id} (User #{$v->user_id}) | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status} | Verification: {$ver}\n";
     }
     echo "</pre>";
 } catch (\Throwable $e) {

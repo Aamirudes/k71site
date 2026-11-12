@@ -44,6 +44,7 @@ class ShortsFeatureTest extends TestCase
             'status' => 'approved',
             'approved_at' => now(),
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
 
         $this->category = Category::create([
             'name' => 'Kurtis & Sets',

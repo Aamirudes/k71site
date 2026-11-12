@@ -89,10 +89,13 @@ class PaymentController extends Controller
         if ($isSuccess) {
             DB::beginTransaction();
             try {
-                // Calculate 5% marketplace commission STRICTLY on Product Subtotal (excluding shipping)
-                $productSubtotal = max(0, $order->subtotal - $order->discount_amount);
-                $platformCommission = (int) round($productSubtotal * 0.05);
-                $vendorEarnings = $productSubtotal - $platformCommission;
+                // Calculate commission dynamically using CommissionService hierarchy & record idempotent ledger entry
+                $commissionService = app(\App\Services\Monetization\CommissionService::class);
+                $commissionRecord = $commissionService->recordOrderCommission($order);
+                $productSubtotal = (int) $commissionRecord->commission_base_paise;
+                $platformCommission = (int) $commissionRecord->calculated_commission_paise;
+                $vendorEarnings = (int) $commissionRecord->vendor_net_paise;
+                $appliedRate = number_format((float) $commissionRecord->rate_percent, 2);
                 $platformShippingRetained = (int) ($order->shipping_amount ?? 0);
 
                 // Keep tracking_number clean for courier AWB tracking
@@ -131,7 +134,7 @@ class PaymentController extends Controller
                     'from_status' => 'pending',
                     'to_status' => 'processing',
                     'actor_type' => 'system',
-                    'note' => "PhonePe Auto-Verified. Product: ₹" . number_format($productSubtotal / 100, 2) . " | 5% Fee: ₹" . number_format($platformCommission / 100, 2) . " | Vendor Payout: ₹" . number_format($vendorEarnings / 100, 2) . " | Settlement Scheduled: " . $expectedSettlementAt->format('M d, Y h:i A') . " | Shipping Retained: ₹" . number_format($platformShippingRetained / 100, 2),
+                    'note' => "PhonePe Auto-Verified. Product: ₹" . number_format($productSubtotal / 100, 2) . " | Fee ({$appliedRate}% / {$commissionRecord->rule_source}): ₹" . number_format($platformCommission / 100, 2) . " | Vendor Payout: ₹" . number_format($vendorEarnings / 100, 2) . " | Settlement Scheduled: " . $expectedSettlementAt->format('M d, Y h:i A') . " | Shipping Retained: ₹" . number_format($platformShippingRetained / 100, 2),
                     'ip_address' => $request->ip(),
                 ]);
 

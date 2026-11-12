@@ -83,6 +83,8 @@ class K71ServicesEcosystemTest extends TestCase
             ],
         ], $overrides));
 
+        $this->grantVendorTestSubscription($vendor, 'services');
+
         return [$user, $vendor];
     }
 
@@ -183,6 +185,9 @@ class K71ServicesEcosystemTest extends TestCase
         $ownerPreview->assertSee('Preview Mode');
         $ownerPreview->assertSee('Designing Iconic Digital Brands');
         $ownerPreview->assertSee('Fintech Mobile Redesign');
+
+        // Step 5: Admin verifies & activates services subscription before publishing live
+        $this->grantVendorTestSubscription($vendor->fresh(), 'services');
 
         // Step 5: Publish live
         $this->actingAs($user)
@@ -863,6 +868,7 @@ class K71ServicesEcosystemTest extends TestCase
             'email' => $user->email,
             'layout_preset' => 'velora',
         ]);
+        $this->grantVendorTestSubscription($retailVendor, 'products');
 
         Product::create([
             'vendor_id' => $retailVendor->id,

@@ -29,4 +29,10 @@ Artisan::command('inspire', function () {
     ->timezone('Asia/Kolkata')
     ->withoutOverlapping();
 
+// Process vendor subscription expiries, grace periods & deduplicated reminders hourly
+\Illuminate\Support\Facades\Schedule::command('subscriptions:process-expiry --trigger=scheduler')
+    ->hourly()
+    ->timezone('Asia/Kolkata')
+    ->withoutOverlapping();
+
 

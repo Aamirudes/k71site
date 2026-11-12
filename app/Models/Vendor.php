@@ -71,6 +71,16 @@ class Vendor extends Model
         'public_contact_preferences',
         'external_links',
         'website_cache_version',
+        'verification_status',
+        'verification_notes',
+        'verified_at',
+        'verified_by',
+        'whatsapp_number',
+        'contact_person',
+        'operating_sectors',
+        'last_admin_action',
+        'last_admin_action_at',
+        'last_admin_action_by',
     ];
 
     protected $casts = [
@@ -96,6 +106,9 @@ class Vendor extends Model
         'public_contact_preferences' => 'array',
         'external_links' => 'array',
         'website_cache_version' => 'integer',
+        'operating_sectors' => 'array',
+        'verified_at' => 'datetime',
+        'last_admin_action_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -120,7 +133,11 @@ class Vendor extends Model
 
     public function hasKineticScrollAccess(): bool
     {
-        return (bool) ($this->can_use_kinetic_scroll ?? false);
+        if ((bool) ($this->can_use_kinetic_scroll ?? false)) {
+            return true;
+        }
+        return app(\App\Services\Monetization\EntitlementService::class)
+            ->hasFeature($this, $this->getCanonicalSectorKey(), 'allow_kinetic_scroll', false);
     }
 
     public function getStorefrontConfig(bool $preview = false): array
@@ -1144,5 +1161,52 @@ class Vendor extends Model
     {
         $rating = (float) ($this->rating ?? 0);
         return $rating > 0 ? round($rating, 1) : null;
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(VendorSubscription::class)->latest('id');
+    }
+
+    public function commissionRules(): HasMany
+    {
+        return $this->hasMany(CommissionRule::class)->latest('id');
+    }
+
+    public function orderCommissions(): HasMany
+    {
+        return $this->hasMany(OrderCommission::class)->latest('id');
+    }
+
+    public function subscriptionNotifications(): HasMany
+    {
+        return $this->hasMany(SubscriptionNotification::class)->latest('id');
+    }
+
+    public function renewalRequests(): HasMany
+    {
+        return $this->hasMany(SubscriptionRenewalRequest::class)->latest('id');
+    }
+
+    public function getCanonicalSectorKey(): string
+    {
+        return app(\App\Services\Monetization\SectorRegistryService::class)->resolveVendorPrimarySector($this);
+    }
+
+    public function isVerifiedMerchant(): bool
+    {
+        if (in_array($this->verification_status, ['rejected', 'suspended'], true)) {
+            return false;
+        }
+        if ($this->verification_status === 'verified') {
+            return true;
+        }
+        return in_array($this->status, ['approved', 'active'], true);
+    }
+
+    public function activeSubscriptionForSector(?string $sectorKey = null): ?VendorSubscription
+    {
+        return app(\App\Services\Monetization\EntitlementService::class)
+            ->resolveEffectiveSubscription($this, $sectorKey ?? $this->getCanonicalSectorKey());
     }
 }

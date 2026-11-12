@@ -117,6 +117,11 @@ class ShortsStudioController extends Controller
             return response()->json(['success' => false, 'message' => 'Vendor profile not found. Please log in as a vendor.'], 403);
         }
 
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_shorts');
+        if (!$authCheck['allowed']) {
+            return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
+        }
+
         if (!$request->hasFile('video')) {
             $err = 'No video file was received. Please check if file exceeds maximum size or retry.';
             if (isset($_FILES['video']['error'])) {
@@ -179,6 +184,11 @@ class ShortsStudioController extends Controller
         $vendor = $this->getVendor();
         if (!$vendor) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_shorts');
+        if (!$authCheck['allowed']) {
+            return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
         }
 
         $shortId = (int) $request->input('short_id', 0);

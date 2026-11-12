@@ -526,6 +526,34 @@ class ProductController extends Controller
 
         $productAttributes['vendor_id'] = $vendor->id;
 
+        // Server-side monetization & entitlement check (active plan, numeric listing limits, image limits, feature flags)
+        $newImgCount = $request->hasFile('images') ? count(array_filter($request->file('images') ?? [], fn($f) => $f && $f->isValid())) : 0;
+        $requestedFeatures = [];
+        if (count($cleanVariants) > 0 && !in_array($targetVertical, ['food', 'services', 'used', 'enquiry'], true)) {
+            $requestedFeatures[] = 'allow_variants';
+        }
+        if ($targetVertical === 'food' && ($request->boolean('option_groups_submitted') || !empty($request->input('option_groups')) || !empty($request->input('modifiers')) || count($cleanFoodPortions) > 0)) {
+            $requestedFeatures[] = 'allow_menu_addons';
+        }
+        if ($targetVertical === 'enquiry' && !empty($validated['b2b_tiers_json'])) {
+            $requestedFeatures[] = 'allow_b2b_tiers';
+        }
+        $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+            $vendor,
+            $targetVertical,
+            ($validated['status'] ?? 'draft') === 'active',
+            $newImgCount,
+            0,
+            null,
+            $requestedFeatures
+        );
+        if (!$entitlementCheck['allowed']) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $entitlementCheck['reason']], 403);
+            }
+            return back()->withInput()->with('error', $entitlementCheck['reason']);
+        }
+
         try {
             return \Illuminate\Support\Facades\DB::transaction(function () use ($request, $validated, $productAttributes, $vendor, $cleanVariants, $cleanFoodPortions) {
                 $product = Product::create($productAttributes);
@@ -901,6 +929,23 @@ class ProductController extends Controller
             $validated['service_config_json'] = $request->service_config;
         }
 
+        // Server-side monetization & entitlement check for updates
+        $updateSector = $validated['vertical'] ?: $product->vertical ?: $vendor->getCanonicalSectorKey();
+        $newImgCount = $request->hasFile('images') ? count(array_filter($request->file('images') ?? [], fn($f) => $f && $f->isValid())) : 0;
+        $existingImgCount = $product->images()->count();
+        $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+            $vendor,
+            $updateSector,
+            ($validated['status'] ?? $product->status) === 'active',
+            $newImgCount,
+            $existingImgCount,
+            $product->id,
+            []
+        );
+        if (!$entitlementCheck['allowed']) {
+            return back()->withInput()->with('error', $entitlementCheck['reason']);
+        }
+
         $validated['base_price'] = (int) round(((float) $validated['base_price']) * 100);
         if (isset($validated['compare_at_price'])) {
             $validated['compare_at_price'] = (int) round(((float) $validated['compare_at_price']) * 100);
@@ -1268,6 +1313,19 @@ class ProductController extends Controller
         }
 
         $newStatus = $product->status === 'active' ? 'draft' : 'active';
+        $sector = $product->vertical ?: $vendor->getCanonicalSectorKey();
+        $entitlementCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite(
+            $vendor,
+            $sector,
+            $newStatus === 'active',
+            0,
+            0,
+            $product->id
+        );
+        if (!$entitlementCheck['allowed']) {
+            return back()->with('error', $entitlementCheck['reason']);
+        }
+
         $product->update([
             'status' => $newStatus,
             'published_at' => $newStatus === 'active' ? ($product->published_at ?? now()) : $product->published_at,

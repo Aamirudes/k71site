@@ -252,6 +252,9 @@ class OrderController extends Controller
 
                 // Restore stock to inventory (both variants and total_stock)
                 \App\Services\StockManagerService::restoreOrderStock($order);
+
+                // Reverse recorded commission idempotently if order had an active commission charge
+                app(\App\Services\Monetization\CommissionService::class)->reverseOrderCommission($order, 'Order cancelled by vendor', auth()->id());
             }
 
             // Payment status updates
@@ -275,6 +278,10 @@ class OrderController extends Controller
             }
 
             $order->update($updateData);
+
+            if ($order->payment_status === 'paid' && $newStatus !== 'cancelled') {
+                app(\App\Services\Monetization\CommissionService::class)->recordOrderCommission($order);
+            }
 
             // Log status transition
             if ($oldStatus !== $newStatus) {
@@ -650,6 +657,8 @@ class OrderController extends Controller
                 'payment_status' => 'paid',
                 'status' => $newStatus,
             ]);
+
+            app(\App\Services\Monetization\CommissionService::class)->recordOrderCommission($order);
 
             \App\Models\OrderStatusLog::create([
                 'order_id' => $order->id,

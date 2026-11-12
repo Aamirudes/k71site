@@ -115,9 +115,12 @@ class FoodController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        // 2. Query Restaurants & Cloud Kitchens (both 'approved' and 'active' vendor states)
-        $restaurantsQuery = Vendor::whereIn('vendors.status', ['approved', 'active'])
-            ->where(function ($q) {
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
+        // 2. Query Restaurants & Cloud Kitchens (both 'approved' and 'active' vendor states, verified + visible subscription)
+        $restaurantsQuery = Vendor::whereIn('vendors.status', ['approved', 'active']);
+        $visibility->scopeVisibleVendors($restaurantsQuery, 'food');
+        $restaurantsQuery->where(function ($q) {
                 $q->where('vendors.vendor_type', 'food')
                   ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true))
                   ->orWhereHas('products', fn ($pq) => $pq->where('products.vertical', 'food')->where('products.status', 'active'));
@@ -239,8 +242,8 @@ class FoodController extends Controller
         $dishesQuery = Product::with(['images', 'vendor.settings', 'category', 'foodMenuCategory', 'variants', 'optionGroups.modifiers', 'modifiers'])
             ->where('vertical', 'food')
             ->where('status', 'active')
-            ->where('is_dish_available', true)
-            ->whereHas('vendor', fn ($vq) => $vq->whereIn('status', ['approved', 'active']));
+            ->where('is_dish_available', true);
+        $visibility->scopeVisibleProducts($dishesQuery, 'food');
 
         if ($selectedCity || $selectedPincode || $openNowOnly || $takeawayOnly || $deliveryTime === 'under_30' || $rating === '4plus') {
             $dishesQuery->whereIn('vendor_id', !empty($visibleVendorIds) ? $visibleVendorIds : [-1]);
@@ -358,11 +361,13 @@ class FoodController extends Controller
         }
 
         // Known available cities for quick location suggestions (from real DB kitchens)
-        $availableCities = Vendor::whereIn('status', ['approved', 'active'])
+        $citiesVendorQuery = Vendor::whereIn('status', ['approved', 'active'])
             ->where(function ($q) {
                 $q->where('vendor_type', 'food')
                   ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
-            })
+            });
+        $visibility->scopeVisibleVendors($citiesVendorQuery, 'food');
+        $availableCities = $citiesVendorQuery
             ->whereNotNull('city')
             ->where('city', '!=', '')
             ->distinct()
@@ -408,6 +413,11 @@ class FoodController extends Controller
                 'foodMenuCategories' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
             ])
             ->firstOrFail();
+
+        $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $restaurant->id || auth()->user()->hasRole('admin'));
+        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isVendorPubliclyVisible($restaurant, 'food')) {
+            abort(404);
+        }
 
         $selectedCategory = $request->query('cat');
         $vegOnly = $request->boolean('veg_only');
@@ -547,7 +557,10 @@ class FoodController extends Controller
             return response()->json(['restaurants' => [], 'dishes' => []]);
         }
 
-        $restaurants = Vendor::whereIn('status', ['approved', 'active'])
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $restaurantsSuggestQuery = Vendor::whereIn('status', ['approved', 'active']);
+        $visibility->scopeVisibleVendors($restaurantsSuggestQuery, 'food');
+        $restaurants = $restaurantsSuggestQuery
             ->where(function ($query) {
                 $query->where('vendor_type', 'food')
                       ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true))
@@ -562,11 +575,12 @@ class FoodController extends Controller
             ->take(5)
             ->get(['id', 'shop_name', 'slug', 'city', 'logo', 'rating']);
 
-        $dishes = Product::where('vertical', 'food')
+        $dishesSuggestQuery = Product::where('vertical', 'food')
             ->where('status', 'active')
             ->where('is_dish_available', true)
-            ->where('title', 'like', "%{$q}%")
-            ->whereHas('vendor', fn ($vq) => $vq->whereIn('status', ['approved', 'active']))
+            ->where('title', 'like', "%{$q}%");
+        $visibility->scopeVisibleProducts($dishesSuggestQuery, 'food');
+        $dishes = $dishesSuggestQuery
             ->with(['vendor:id,shop_name,slug', 'images'])
             ->take(6)
             ->get(['id', 'vendor_id', 'title', 'slug', 'base_price', 'dietary_label', 'custom_fields']);

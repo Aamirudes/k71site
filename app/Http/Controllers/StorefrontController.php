@@ -18,8 +18,10 @@ class StorefrontController extends Controller
         $selectedCity = $request->input('city', 'all');
         $activeSort = $request->input('sort', 'popular');
 
-        $query = Vendor::where('status', 'approved')
-            ->withCount(['products' => function($q) {
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $query = Vendor::query();
+        $visibility->scopeVisibleVendors($query);
+        $query->withCount(['products' => function($q) {
                 $q->where('status', 'active');
             }])
             ->with(['products' => function($q) {
@@ -90,7 +92,7 @@ class StorefrontController extends Controller
             ->orderBy('city')
             ->pluck('city');
 
-        $totalStoresCount = Vendor::where('status', 'approved')->count();
+        $totalStoresCount = $visibility->scopeVisibleVendors(Vendor::query())->count();
 
         return view('stores.index', compact(
             'vendors',
@@ -143,15 +145,27 @@ class StorefrontController extends Controller
             abort(404);
         }
 
-        if (!in_array($vendor->status, ['approved', 'active'], true)) {
+        // Check if viewing draft preview (permitted if owner is logged in or admin)
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        $isServiceWebsite = $vendor->isServices();
+
+        if ($isServiceWebsite && $vendor->website_status === 'draft' && !in_array($vendor->status, ['suspended', 'closed'], true) && $vendor->verification_status !== 'rejected' && !$isPreview) {
+            return response()
+                ->view('errors.website-unpublished', ['vendor' => $vendor], 404)
+                ->header('X-Robots-Tag', 'noindex, nofollow')
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+        }
+
+        if (!$isPreview && !in_array($vendor->status, ['approved', 'active'], true)) {
             return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
         }
 
         app()->instance('current_vendor', $vendor);
 
-        // Check if viewing draft preview (permitted if owner is logged in or admin)
-        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
-        $isServiceWebsite = $vendor->isServices();
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        if (!$isPreview && !$visibility->isVendorVisibleInAnySector($vendor)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
 
         if ($isServiceWebsite && !$vendor->isWebsitePublished() && !$isPreview) {
             return response()
@@ -341,16 +355,16 @@ class StorefrontController extends Controller
             abort(404);
         }
 
-        if (!in_array($vendor->status, ['approved', 'active'], true)) {
-            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
-        }
-
         $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
 
-        if ($vendor->isServices() && !$vendor->isWebsitePublished() && !$isPreview) {
+        if ($vendor->isServices() && !$vendor->isWebsitePublished() && !$isPreview && !in_array($vendor->status, ['suspended', 'closed'], true) && $vendor->verification_status !== 'rejected') {
             return response()
                 ->view('errors.website-unpublished', ['vendor' => $vendor], 404)
                 ->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        if (!$isPreview && !in_array($vendor->status, ['approved', 'active'], true)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
         }
 
         $project = \App\Models\PortfolioProject::with(['category', 'serviceProduct'])

@@ -15,6 +15,11 @@ class ProductViewController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $product->vendor_id || auth()->user()->hasRole('admin'));
+        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product)) {
+            abort(404);
+        }
+
         // Strict vertical isolation: Redirect services, gigs, used, and food listings to their dedicated experiences
         if ($product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service', 'booking'])) {
             return redirect()->route('services.show', $product->slug);

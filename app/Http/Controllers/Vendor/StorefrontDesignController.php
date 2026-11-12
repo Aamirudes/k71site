@@ -180,6 +180,10 @@ class StorefrontDesignController extends Controller
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
+        }
 
         $rawConfig = $request->input('config');
         if (!is_array($rawConfig)) {
@@ -225,6 +229,10 @@ class StorefrontDesignController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
         $configRecord = $vendor->storefrontConfig;
@@ -302,6 +310,11 @@ class StorefrontDesignController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
 
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
+        }
+
         $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
         $requestedPreset = strtolower(trim((string)$request->input('preset')));
         if (!in_array($requestedPreset, $allowedPresets)) {
@@ -345,6 +358,10 @@ class StorefrontDesignController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
         $allowedPresets = ['velora', 'noire', 'aurel', 'chroma', 'orbit', 'zenith', 'solaris', 'nexus', 'elysium', 'vogue', 'kinetic', 'atelier', 'object', 'commerce', 'market', 'signature'];
@@ -408,6 +425,11 @@ class StorefrontDesignController extends Controller
         $vendor = auth()->user()?->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
         try {

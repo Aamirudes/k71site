@@ -104,12 +104,16 @@ class ShortsController extends Controller
             'spin_wheel_prizes' => $spinPrizes,
         ];
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $visibleVendorScope = fn($vq) => $visibility->scopeVisibleVendors($vq);
+
         // Fetch SEO short if openId is provided
-        $seoShort = $openId > 0 ? Short::with(['vendor', 'category', 'products.images'])->find($openId) : null;
+        $seoShort = $openId > 0 ? Short::with(['vendor', 'category', 'products.images'])->whereHas('vendor', $visibleVendorScope)->find($openId) : null;
 
         $featuredShorts = Short::with(['vendor', 'category', 'products.images'])
             ->whereIn('status', ['published', 'approved', 'active'])
             ->where('is_featured', true)
+            ->whereHas('vendor', $visibleVendorScope)
             ->orderByDesc('is_boosted')
             ->orderByDesc('id')
             ->take(8)
@@ -117,13 +121,15 @@ class ShortsController extends Controller
 
         $trendingShorts = Short::with(['vendor', 'category', 'products.images'])
             ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', $visibleVendorScope)
             ->orderByDesc('trending_score')
             ->orderByDesc('views')
             ->take(12)
             ->get();
 
         $initialQuery = Short::with(['vendor', 'category', 'products.images'])
-            ->whereIn('status', ['published', 'approved', 'active']);
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', $visibleVendorScope);
 
         if (!empty($openCat)) {
             $cat = Category::where('slug', $openCat)->first();

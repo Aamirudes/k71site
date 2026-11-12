@@ -108,11 +108,14 @@ class UsedController extends Controller
             ->unique()
             ->values();
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
         // Main discovery query
         $query = Product::withoutGlobalScopes()
             ->with(['images', 'category.parent', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active');
+        $visibility->scopeVisibleProducts($query, 'used', true);
 
         if ($showSold) {
             $query->where(function ($q) {
@@ -243,7 +246,7 @@ class UsedController extends Controller
         $items = $query->paginate(24)->withQueryString();
 
         // Only genuinely featured & active listings receive featured prominence
-        $featuredItems = Product::withoutGlobalScopes()
+        $featuredQuery = Product::withoutGlobalScopes()
             ->with(['images', 'category', 'vendor', 'sellerUser.usedSellerProfile'])
             ->where('vertical', 'used')
             ->where('status', 'active')
@@ -251,10 +254,9 @@ class UsedController extends Controller
             ->where('is_featured', true)
             ->where(function ($q) {
                 $q->whereNull('used_status')->orWhere('used_status', 'active');
-            })
-            ->latest('refreshed_at')
-            ->take(4)
-            ->get();
+            });
+        $visibility->scopeVisibleProducts($featuredQuery, 'used', true);
+        $featuredItems = $featuredQuery->latest('refreshed_at')->take(4)->get();
 
         // Nearby / selected-city listings strip when a city is selected
         $nearLocationItems = collect();
@@ -420,7 +422,7 @@ class UsedController extends Controller
         $viewer = auth()->user();
         $isOwner = $product->isOwnedBy($viewer);
 
-        if (!$product->isPubliclyVisible() && !$isOwner) {
+        if ((!$product->isPubliclyVisible() || ($product->vendor_id && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($product))) && !$isOwner) {
             abort(404);
         }
 

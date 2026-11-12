@@ -69,6 +69,18 @@ class PortfolioController extends Controller
             'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,avif|max:8192',
         ]);
 
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+        $authCheck = $entitlements->authorizeSectorWrite($vendor, 'services');
+        if (!$authCheck['allowed']) {
+            return back()->withInput()->with('error', $authCheck['reason']);
+        }
+        if ($validated['status'] === 'published') {
+            $quotaCheck = $entitlements->checkNumericQuota($vendor, 'services', 'max_portfolio_projects', 1);
+            if (!$quotaCheck['allowed']) {
+                return back()->withInput()->with('error', $quotaCheck['reason']);
+            }
+        }
+
         $coverPath = null;
         if ($request->hasFile('cover_image') && $request->file('cover_image')->isValid()) {
             $coverPath = $request->file('cover_image')->store('portfolio/' . $vendor->id, 'public');
@@ -223,6 +235,19 @@ class PortfolioController extends Controller
     {
         Gate::authorize('update', $portfolio);
         $next = $portfolio->status === 'published' ? 'draft' : 'published';
+        if ($portfolio->vendor) {
+            $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+            $authCheck = $entitlements->authorizeSectorWrite($portfolio->vendor, 'services');
+            if (!$authCheck['allowed']) {
+                return back()->with('error', $authCheck['reason']);
+            }
+            if ($next === 'published') {
+                $quotaCheck = $entitlements->checkNumericQuota($portfolio->vendor, 'services', 'max_portfolio_projects', 1);
+                if (!$quotaCheck['allowed']) {
+                    return back()->with('error', $quotaCheck['reason']);
+                }
+            }
+        }
         $portfolio->update(['status' => $next]);
         $portfolio->vendor?->bumpWebsiteCache();
 

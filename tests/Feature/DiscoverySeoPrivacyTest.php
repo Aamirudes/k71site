@@ -32,7 +32,7 @@ class DiscoverySeoPrivacyTest extends TestCase
             'last_name' => 'Owner',
         ]);
 
-        return Vendor::create([
+        $vendor = Vendor::create([
             'user_id' => $user->id,
             'shop_name' => $name,
             'slug' => \Illuminate\Support\Str::slug($name) . '-' . uniqid(),
@@ -45,6 +45,10 @@ class DiscoverySeoPrivacyTest extends TestCase
             'status' => 'approved',
             'approved_at' => now(),
         ]);
+
+        $this->grantVendorTestSubscription($vendor, 'all');
+
+        return $vendor;
     }
 
     private function createCategory(string $name = 'Apparel'): Category

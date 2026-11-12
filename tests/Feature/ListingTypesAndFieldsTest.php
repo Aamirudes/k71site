@@ -56,6 +56,7 @@ class ListingTypesAndFieldsTest extends TestCase
             'shipping_type' => 'flat',
             'shipping_flat_rate' => 6000,
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
     }
 
     public function test_product_model_has_vertical_listing_type_and_custom_fields_attributes(): void

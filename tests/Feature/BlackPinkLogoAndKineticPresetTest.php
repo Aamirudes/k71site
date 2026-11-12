@@ -57,6 +57,7 @@ class BlackPinkLogoAndKineticPresetTest extends TestCase
         ], $overrides));
 
         $this->vendorCleanupDirs[] = $vendor;
+        $this->grantVendorTestSubscription($vendor, 'all');
 
         return [$user, $vendor];
     }

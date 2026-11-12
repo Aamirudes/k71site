@@ -102,6 +102,12 @@ class ServiceStudioController extends Controller
             'images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif|max:15360',
         ]);
 
+        $newImgCount = $request->hasFile('images') ? count(array_filter($request->file('images') ?? [], fn($f) => $f && $f->isValid())) : 0;
+        $check = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite($vendor, 'services', true, $newImgCount);
+        if (!$check['allowed']) {
+            return back()->withInput()->with('error', $check['reason']);
+        }
+
         $baseSlug = Str::slug($validated['title']) ?: 'service-gig';
         $slug = $baseSlug;
         $counter = 1;
@@ -243,6 +249,12 @@ class ServiceStudioController extends Controller
             'packages.*.description' => 'nullable|string|max:1000',
         ]);
 
+        $nextStatus = $validated['status'] ?? $product->status;
+        $check = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite($vendor, 'services', $nextStatus === 'active', 0, 0, $product->id);
+        if (!$check['allowed']) {
+            return back()->withInput()->with('error', $check['reason']);
+        }
+
         $product->update([
             'title' => $validated['title'],
             'category_id' => $validated['category_id'],
@@ -292,6 +304,11 @@ class ServiceStudioController extends Controller
     {
         $vendor = $this->authorizeProduct($request, $product);
         $nextStatus = $product->status === 'active' ? 'paused' : 'active';
+        $check = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite($vendor, 'services', $nextStatus === 'active', 0, 0, $product->id);
+        if (!$check['allowed']) {
+            return back()->with('error', $check['reason']);
+        }
+
         $product->update(['status' => $nextStatus]);
         $vendor->bumpWebsiteCache();
 
@@ -301,6 +318,11 @@ class ServiceStudioController extends Controller
     public function toggleWebsiteVisibility(Request $request, Product $product): RedirectResponse
     {
         $vendor = $this->authorizeProduct($request, $product);
+        $check = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services');
+        if (!$check['allowed']) {
+            return back()->with('error', $check['reason']);
+        }
+
         $product->update([
             'show_on_website' => !($product->show_on_website ?? true),
         ]);

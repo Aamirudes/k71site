@@ -32,21 +32,27 @@ class AdminController extends Controller
 
         // 1. Treasury Ledger & Reconciliations
         $paidOrders = Order::where('payment_status', 'paid')->get();
-        $paidPayoutOrders = Order::where('vendor_payout_status', 'paid')->get(['subtotal', 'discount_amount', 'vendor_payout_amount']);
+        $paidPayoutOrders = Order::with('orderCommission')->where('vendor_payout_status', 'paid')->get(['id', 'vendor_id', 'subtotal', 'discount_amount', 'vendor_payout_amount', 'order_type']);
 
         $grossGmv = $paidOrders->sum('total_amount');
         $settledCash = $paidOrders->where('settlement_status', 'cleared')->sum('total_amount');
         $clearingBuffer = $paidOrders->where('settlement_status', 'pending')->sum('total_amount');
         $vendorDisbursed = Order::where('vendor_payout_status', 'paid')->sum('vendor_payout_amount');
-        $platformProfit = $paidPayoutOrders->sum(fn($o) => (int) round(($o->subtotal - $o->discount_amount) * 0.05));
+        $commissionService = app(\App\Services\Monetization\CommissionService::class);
+        $platformProfit = $paidPayoutOrders->sum(function ($o) use ($commissionService) {
+            if ($o->orderCommission) {
+                return (int) $o->orderCommission->calculated_commission_paise;
+            }
+            return (int) $commissionService->calculateBreakdownForOrder($o)['calculated_commission_paise'];
+        });
         $shippingPool = $paidOrders->sum('shipping_amount');
 
         // Ready for payout (cleared, not paid yet, not cancelled)
-        $readyPayoutOrders = Order::where('settlement_status', 'cleared')
+        $readyPayoutOrders = Order::with('orderCommission')->where('settlement_status', 'cleared')
             ->where('vendor_payout_status', '!=', 'paid')
             ->where('status', '!=', 'cancelled')
             ->get();
-        $pendingDisbursalAmount = $readyPayoutOrders->sum(fn($o) => $o->vendor_payout_amount ?: (int) round(($o->subtotal - $o->discount_amount) * 0.95));
+        $pendingDisbursalAmount = $readyPayoutOrders->sum(fn($o) => $o->vendor_payout_amount ?: (int) ($o->orderCommission?->vendor_net_paise ?? $commissionService->calculateBreakdownForOrder($o)['vendor_net_paise']));
 
         // 2. Fulfillment Pipeline Metrics
         $pipeline = [
@@ -175,13 +181,14 @@ class AdminController extends Controller
         $orders = $query->latest()->paginate(20)->withQueryString();
 
         // High-level financial cards
-        $paidPayoutOrders = Order::where('vendor_payout_status', 'paid')->get(['subtotal', 'discount_amount', 'vendor_payout_amount']);
+        $paidPayoutOrders = Order::with('orderCommission')->where('vendor_payout_status', 'paid')->get(['id', 'vendor_id', 'subtotal', 'discount_amount', 'vendor_payout_amount', 'order_type']);
+        $commissionService = app(\App\Services\Monetization\CommissionService::class);
         $settlementStats = [
             'gross_volume' => Order::where('payment_status', 'paid')->sum('total_amount'),
             'settled_volume' => Order::where('payment_status', 'paid')->where('settlement_status', 'cleared')->sum('total_amount'),
             'pending_settlement' => Order::where('payment_status', 'paid')->where('settlement_status', 'pending')->sum('total_amount'),
             'vendor_disbursed' => Order::where('vendor_payout_status', 'paid')->sum('vendor_payout_amount'),
-            'platform_retained' => $paidPayoutOrders->sum(fn($o) => (int) round(($o->subtotal - $o->discount_amount) * 0.05)),
+            'platform_retained' => $paidPayoutOrders->sum(fn($o) => (int) ($o->orderCommission?->calculated_commission_paise ?? $commissionService->calculateBreakdownForOrder($o)['calculated_commission_paise'])),
         ];
 
         // Counts for tabs/badges
@@ -221,8 +228,11 @@ class AdminController extends Controller
         $total = $order->total_amount;
         
         $productNet = max(0, $subtotal - $discount);
-        $platformFee = (int) round($productNet * 0.05);
-        $vendorNet = $order->vendor_payout_amount ?: (int) round($productNet * 0.95);
+        $commissionRecord = $order->orderCommission;
+        $platformFee = $commissionRecord
+            ? (int) $commissionRecord->calculated_commission_paise
+            : (int) app(\App\Services\Monetization\CommissionService::class)->calculateBreakdownForOrder($order)['calculated_commission_paise'];
+        $vendorNet = $order->vendor_payout_amount ?: ($commissionRecord ? (int) $commissionRecord->vendor_net_paise : max(0, $productNet - $platformFee));
 
         return view('admin.orders.show', compact('order', 'subtotal', 'discount', 'shipping', 'total', 'platformFee', 'vendorNet'));
     }

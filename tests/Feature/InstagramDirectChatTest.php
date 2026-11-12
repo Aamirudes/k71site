@@ -11,6 +11,12 @@ class InstagramDirectChatTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        unset($_SESSION['user_id'], $_SESSION['username'], $_COOKIE['k71_uid']);
+    }
+
     public function test_unauthenticated_request_returns_401(): void
     {
         $response = $this->getJson('/api/chat/get_conversations.php');

@@ -57,6 +57,7 @@ class ServicesAndBookingsTest extends TestCase
             'service_radius_km' => 30,
             'service_working_hours' => '08:00 AM - 08:00 PM',
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'services');
 
         $this->serviceCategory = Category::firstOrCreate(
             ['slug' => 'services-appliance-repair'],
@@ -124,6 +125,7 @@ class ServicesAndBookingsTest extends TestCase
             'status' => 'approved',
             'city' => 'Ajmer',
         ]);
+        $this->grantVendorTestSubscription($vendorAjmer, 'services');
 
         $serviceAjmer = Product::create([
             'vendor_id' => $vendorAjmer->id,
@@ -484,12 +486,13 @@ class ServicesAndBookingsTest extends TestCase
         // Create Vendor B
         $vendorUserB = User::factory()->create();
         $vendorUserB->roles()->syncWithoutDetaching([Role::firstOrCreate(['name' => 'vendor'])->id]);
-        Vendor::create([
+        $vendorB = Vendor::create([
             'user_id' => $vendorUserB->id,
             'shop_name' => 'Other Plumbers',
             'slug' => 'other-plumbers',
             'status' => 'approved',
         ]);
+        $this->grantVendorTestSubscription($vendorB, 'services');
 
         $this->actingAs($vendorUserB);
 

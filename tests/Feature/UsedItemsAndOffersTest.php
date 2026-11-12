@@ -55,6 +55,7 @@ class UsedItemsAndOffersTest extends TestCase
             'upi_enabled' => true,
             'cod_enabled' => false,
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
 
         $this->usedCategory = Category::create([
             'name' => 'Mobiles & Tablets',
@@ -386,6 +387,7 @@ class UsedItemsAndOffersTest extends TestCase
             'state' => 'Rajasthan',
             'pincode' => '302001',
         ]);
+        $this->grantVendorTestSubscription($vendor2, 'used');
 
         $this->actingAs($vendorUser2);
 

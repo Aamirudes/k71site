@@ -17,8 +17,8 @@ class FeastoController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. Fetch real active products from database
-        $dbProducts = Product::where('status', 'active')
+        // 1. Fetch real active products from visible verified kitchens/stores
+        $feastoQuery = Product::where('status', 'active')
             ->where(function ($q) {
                 $q->whereIn('vertical', ['food', 'groceries', 'feasto'])
                   ->orWhereHas('vendor', function ($vq) {
@@ -30,7 +30,9 @@ class FeastoController extends Controller
                   ->where('title', 'NOT LIKE', '%test%')
                   ->where('title', 'NOT LIKE', '%sample%')
                   ->where('title', 'NOT LIKE', '%fake%');
-            })
+            });
+        app(\App\Services\Monetization\VisibilityService::class)->scopeVisibleProducts($feastoQuery, 'food');
+        $dbProducts = $feastoQuery
             ->with(['category', 'vendor', 'images', 'variants'])
             ->latest()
             ->get();

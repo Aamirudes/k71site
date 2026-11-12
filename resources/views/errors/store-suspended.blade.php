@@ -6,10 +6,10 @@
             </div>
             <h1 class="text-4xl font-serif font-bold text-brand-text mb-4">Store Unavailable</h1>
             <p class="text-lg text-brand-muted mb-8 max-w-md mx-auto">
-                @if($vendor->status === 'pending')
-                    This store is currently under review by our team and is not yet open to the public. Check back soon!
+                @if($vendor->status === 'pending' || ($vendor->verification_status && $vendor->verification_status !== 'verified'))
+                    This storefront is pending merchant verification and activation and is not yet open to the public. Check back soon!
                 @else
-                    This store is currently unavailable. Please check back later.
+                    This storefront is currently unavailable. Please check back later.
                 @endif
             </p>
             <a href="{{ route('home') }}" class="inline-flex px-8 py-3 bg-brand-text text-white rounded-full font-bold hover:bg-black transition-colors">

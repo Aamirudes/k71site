@@ -7,8 +7,10 @@ use App\Http\Controllers\Vendor\CouponController;
 use App\Http\Controllers\Vendor\SettingsController;
 
 Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->group(function () {
-    // Routes that any vendor can access (even if pending)
+    // Routes that any vendor can access (even if pending or expired)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/subscription', [\App\Http\Controllers\Vendor\SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/subscription/request-renewal', [\App\Http\Controllers\Vendor\SubscriptionController::class, 'requestRenewal'])->name('subscription.request_renewal');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/preview-ajax', [ProfileController::class, 'previewAjax'])->name('profile.preview_ajax');

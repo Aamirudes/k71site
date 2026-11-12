@@ -11,9 +11,11 @@ class CatalogController extends Controller
 {
     public function index(Request $request)
     {
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $query = Product::with(['images', 'vendor', 'category'])
             ->where('status', 'active')
             ->excludeUsed();
+        $visibility->scopeVisibleProducts($query);
 
         $activeFilters = [];
         $appName = config('marketplace.name', 'K71');
@@ -286,7 +288,9 @@ class CatalogController extends Controller
             ->get();
 
         // Available Verified Boutiques / Ateliers with Live Product Counts
-        $vendors = Vendor::whereIn('status', ['approved', 'active'])
+        $vendorsQuery = Vendor::query();
+        $visibility->scopeVisibleVendors($vendorsQuery);
+        $vendors = $vendorsQuery
             ->withCount(['products' => function($q) {
                 $q->where('status', 'active');
             }])
@@ -315,21 +319,19 @@ class CatalogController extends Controller
         }
 
         // Recommended / Trending Masterpieces Carousel
-        $recommendedProducts = Product::with(['images', 'vendor'])
+        $recQuery = Product::with(['images', 'vendor'])
             ->where('status', 'active')
             ->excludeUsed()
-            ->where('is_featured', true)
-            ->inRandomOrder()
-            ->take(8)
-            ->get();
+            ->where('is_featured', true);
+        $visibility->scopeVisibleProducts($recQuery);
+        $recommendedProducts = $recQuery->inRandomOrder()->take(8)->get();
 
         if ($recommendedProducts->count() < 4) {
-            $recommendedProducts = Product::with(['images', 'vendor'])
+            $fallbackRecQuery = Product::with(['images', 'vendor'])
                 ->where('status', 'active')
-                ->excludeUsed()
-                ->orderBy('published_at', 'desc')
-                ->take(8)
-                ->get();
+                ->excludeUsed();
+            $visibility->scopeVisibleProducts($fallbackRecQuery);
+            $recommendedProducts = $fallbackRecQuery->orderBy('published_at', 'desc')->take(8)->get();
         }
 
         // SEO Title & Description Generation
@@ -490,14 +492,13 @@ class CatalogController extends Controller
         }
 
         $wildcard = '%' . $term . '%';
-        $products = Product::where('status', 'active')
+        $suggestQuery = Product::where('status', 'active')
             ->where(function($q) use ($wildcard) {
                 $q->where('title', 'LIKE', $wildcard)
                   ->orWhere('brand', 'LIKE', $wildcard);
-            })
-            ->with(['images', 'vendor'])
-            ->take(8)
-            ->get();
+            });
+        app(\App\Services\Monetization\VisibilityService::class)->scopeVisibleProducts($suggestQuery, null, true);
+        $products = $suggestQuery->with(['images', 'vendor'])->take(8)->get();
 
         $results = $products->map(function($p) {
             $img = $p->images->first();

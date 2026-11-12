@@ -61,8 +61,12 @@ class ShortsAjaxController extends Controller
         $search = $request->input('search', '');
         $exclude = (array) $request->input('exclude', []);
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $visibleVendorScope = fn($vq) => $visibility->scopeVisibleVendors($vq);
+
         $query = Short::with(['vendor', 'category'])
-            ->whereIn('status', ['published', 'approved', 'active']);
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', $visibleVendorScope);
 
         if (!empty($exclude)) {
             $query->whereNotIn('id', array_filter(array_map('intval', $exclude)));
@@ -178,8 +182,12 @@ class ShortsAjaxController extends Controller
         $catSlug = $request->input('cat', '');
         $limit = (int) $request->input('limit', 10);
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        $visibleVendorScope = fn($vq) => $visibility->scopeVisibleVendors($vq);
+
         $query = Short::with(['vendor', 'category'])
-            ->whereIn('status', ['published', 'approved', 'active']);
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', $visibleVendorScope);
 
         if ($catSlug) {
             $cat = Category::where('slug', $catSlug)->first();

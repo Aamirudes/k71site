@@ -42,10 +42,11 @@ class PayoutService
             throw new \Exception("Cannot complete payout: Vendor has not configured a UPI ID in their Operations & Payments settings.");
         }
 
-        // 2. Compute exact 95% net payout on product value
-        $productSubtotal = max(0, $order->subtotal - $order->discount_amount);
-        $platformFee = (int) round($productSubtotal * 0.05);
-        $vendorNetPaise = (int) ($order->vendor_payout_amount ?: ($productSubtotal - $platformFee));
+        // 2. Resolve stored OrderCommission snapshot (or compute via CommissionService hierarchy)
+        $commissionRecord = app(\App\Services\Monetization\CommissionService::class)->recordOrderCommission($order);
+        $productSubtotal = (int) $commissionRecord->commission_base_paise;
+        $platformFee = (int) $commissionRecord->calculated_commission_paise;
+        $vendorNetPaise = (int) ($order->vendor_payout_amount ?: $commissionRecord->vendor_net_paise);
 
         $amountRupees = number_format($vendorNetPaise / 100, 2, '.', '');
         $transferId = 'PO_ORD_' . $order->order_number . '_' . Str::upper(Str::random(6));
@@ -88,7 +89,7 @@ class PayoutService
             'from_status' => $order->status,
             'to_status' => $order->status,
             'actor_type' => 'system',
-            'note' => "Instant 95% Vendor Payout Disbursed: ₹{$amountRupees} transferred directly to UPI ({$upiId}). Bank UTR: {$utr}. Transfer ID: {$transferId}.",
+            'note' => "Instant Vendor Payout Disbursed ({$commissionRecord->rate_percent}% commission): ₹{$amountRupees} transferred directly to UPI ({$upiId}). Bank UTR: {$utr}. Transfer ID: {$transferId}.",
             'ip_address' => request()->ip(),
         ]);
 

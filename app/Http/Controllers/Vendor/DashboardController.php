@@ -106,12 +106,16 @@ class DashboardController extends Controller
             ->where('payment_status', 'paid')
             ->where('status', '!=', 'cancelled');
 
-        $totalRevenue = (int) $realizedQuery->sum(DB::raw('subtotal - discount_amount')); // in paise
-        $paidOrdersCount = $realizedQuery->count();
+        $realizedOrders = (clone $realizedQuery)->with('orderCommission')->get(['id', 'vendor_id', 'subtotal', 'discount_amount', 'order_type']);
+        $commissionService = app(\App\Services\Monetization\CommissionService::class);
+        $totalRevenue = (int) $realizedOrders->sum(fn($o) => max(0, (int) $o->subtotal - (int) $o->discount_amount)); // in paise
+        $paidOrdersCount = $realizedOrders->count();
 
-        // 95% Vendor Payout / 5% Marketplace Commission on Product Sales
-        $netPayout = (int) round($totalRevenue * 0.95);
-        $platformFee = $totalRevenue - $netPayout;
+        // Compute dynamic platform commission & vendor net payout from stored snapshots or CommissionService rules
+        $platformFee = (int) $realizedOrders->sum(function ($o) use ($commissionService) {
+            return (int) ($o->orderCommission?->calculated_commission_paise ?? $commissionService->calculateBreakdownForOrder($o)['calculated_commission_paise']);
+        });
+        $netPayout = max(0, $totalRevenue - $platformFee);
         $avgOrderValue = $paidOrdersCount > 0 ? (int) round($totalRevenue / $paidOrdersCount) : 0;
 
         // 2. Pending / Unpaid Orders in this period
@@ -147,6 +151,8 @@ class DashboardController extends Controller
             ? (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay())
             : null;
 
+        $effectiveRateRatio = $totalRevenue > 0 ? ($netPayout / $totalRevenue) : ((100 - (float) $commissionService->resolveEffectiveRule($vendor, $vendor->getCanonicalSectorKey())['rate_percent']) / 100);
+
         if ($period === 'today' || $period === 'yesterday') {
             // Group by 4-hour intervals
             for ($h = 0; $h < 24; $h += 4) {
@@ -160,7 +166,7 @@ class DashboardController extends Controller
                 $chartData[] = [
                     'label' => $bStart->format('g A'),
                     'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * 0.95) / 100, 2),
+                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
                 ];
             }
         } elseif ($period === '7_days' || $period === 'this_month' || $period === 'last_month' || ($rangeDays !== null && $rangeDays <= 31)) {
@@ -176,7 +182,7 @@ class DashboardController extends Controller
                 $chartData[] = [
                     'label' => $currentDay->format('d M'),
                     'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * 0.95) / 100, 2),
+                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
                 ];
             }
         } else {
@@ -193,7 +199,7 @@ class DashboardController extends Controller
                 $chartData[] = [
                     'label' => $month->format('M Y'),
                     'revenue' => round($sum / 100, 2),
-                    'net' => round(($sum * 0.95) / 100, 2),
+                    'net' => round(($sum * $effectiveRateRatio) / 100, 2),
                 ];
             }
         }

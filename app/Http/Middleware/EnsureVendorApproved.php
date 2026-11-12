@@ -17,8 +17,8 @@ class EnsureVendorApproved
     {
         if (auth()->check() && auth()->user()->vendor) {
             $vendor = auth()->user()->vendor;
-            if ($vendor->status !== 'approved') {
-                return redirect()->route('vendor.dashboard')->with('error', 'Your store is pending approval or suspended. You cannot perform this action yet.');
+            if (!in_array($vendor->status, ['approved', 'active'], true) || in_array($vendor->verification_status, ['rejected', 'suspended'], true)) {
+                return redirect()->route('vendor.dashboard')->with('error', 'Your store is pending verification or suspended. You cannot perform this action yet.');
             }
         }
         return $next($request);

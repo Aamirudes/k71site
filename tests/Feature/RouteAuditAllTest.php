@@ -49,6 +49,7 @@ class RouteAuditAllTest extends TestCase
             'state' => 'Rajasthan',
             'pincode' => '302001',
         ]);
+        $this->grantVendorTestSubscription($this->vendor, 'all');
 
         $this->category = Category::create([
             'name' => 'Audit Electronics',
@@ -175,6 +176,7 @@ class RouteAuditAllTest extends TestCase
             'state' => 'Rajasthan',
             'pincode' => '302001',
         ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
 
         $dish = Product::create([
             'vendor_id' => $foodVendor->id,

@@ -66,6 +66,8 @@ class ComprehensivePagesHealthCheckTest extends TestCase
             'is_verified_pro' => true,
         ]);
 
+        $this->grantVendorTestSubscription($this->vendor, 'all');
+
         $cat = Category::create([
             'name' => 'Italian Marble',
             'slug' => 'italian-marble',

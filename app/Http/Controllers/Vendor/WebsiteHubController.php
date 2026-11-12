@@ -61,6 +61,10 @@ class WebsiteHubController extends Controller
     public function switchPreset(Request $request): RedirectResponse
     {
         $vendor = $this->resolveServiceVendor($request);
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_presets');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
+        }
         $validated = $request->validate([
             'preset_key' => 'required|string|max:50',
         ]);
@@ -322,6 +326,13 @@ class WebsiteHubController extends Controller
             \Illuminate\Support\Facades\Cache::forget('sitemap_stores_xml');
 
             return back()->with('success', 'Your personal website is now in private Draft mode.');
+        }
+
+        if ($action !== 'unpublish') {
+            $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+            if (!$authCheck['allowed']) {
+                return back()->with('error', $authCheck['reason']);
+            }
         }
 
         $readiness = $this->presenter->evaluatePublishReadiness($vendor);

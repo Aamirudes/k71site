@@ -26,6 +26,8 @@ class ServicesController extends Controller
         $workMode = $request->query('work_mode');
         $sort = $request->query('sort', 'newest');
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
         // Fetch active service categories with real service count
         $servicesCategories = Category::where('vertical', 'services')
             ->where('is_active', true)
@@ -39,6 +41,7 @@ class ServicesController extends Controller
         $query = Product::with(['images', 'category', 'vendor.settings', 'gigPackages'])
             ->where('vertical', 'services')
             ->where('status', 'active');
+        $visibility->scopeVisibleProducts($query, 'services');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -99,39 +102,40 @@ class ServicesController extends Controller
         $services = $query->paginate(12)->withQueryString();
 
         // Featured Packages (Gigs with 3-tier packages)
-        $featuredPackages = Product::with(['images', 'category', 'vendor', 'gigPackages'])
+        $featuredPackagesQuery = Product::with(['images', 'category', 'vendor', 'gigPackages'])
             ->where('vertical', 'services')
             ->where('status', 'active')
-            ->has('gigPackages')
-            ->take(6)
-            ->get();
+            ->has('gigPackages');
+        $visibility->scopeVisibleProducts($featuredPackagesQuery, 'services');
+        $featuredPackages = $featuredPackagesQuery->take(6)->get();
 
         // Recommended Professionals / Freelancers
-        $topProviders = Vendor::where('status', 'approved')
-            ->where(function ($q) {
+        $topProvidersQuery = Vendor::where(function ($q) {
                 $q->whereIn('vendor_type', ['service', 'services', 'local_services', 'digital_services'])
                   ->orWhereHas('products', fn($pq) => $pq->where('vertical', 'services')->where('status', 'active'));
-            })
+            });
+        $visibility->scopeVisibleVendors($topProvidersQuery, 'services');
+        $topProviders = $topProvidersQuery
             ->withCount(['products' => fn($q) => $q->where('vertical', 'services')->where('status', 'active')])
             ->orderByDesc('rating')
             ->take(8)
             ->get();
 
         // Budget Friendly (< ₹1,500)
-        $budgetFriendly = Product::with(['images', 'vendor', 'category'])
+        $budgetFriendlyQuery = Product::with(['images', 'vendor', 'category'])
             ->where('vertical', 'services')
             ->where('status', 'active')
-            ->where('base_price', '<=', 150000)
-            ->take(4)
-            ->get();
+            ->where('base_price', '<=', 150000);
+        $visibility->scopeVisibleProducts($budgetFriendlyQuery, 'services');
+        $budgetFriendly = $budgetFriendlyQuery->take(4)->get();
 
         // Premium Pro Services (> ₹5,000)
-        $premiumServices = Product::with(['images', 'vendor', 'category', 'gigPackages'])
+        $premiumServicesQuery = Product::with(['images', 'vendor', 'category', 'gigPackages'])
             ->where('vertical', 'services')
             ->where('status', 'active')
-            ->where('base_price', '>=', 500000)
-            ->take(4)
-            ->get();
+            ->where('base_price', '>=', 500000);
+        $visibility->scopeVisibleProducts($premiumServicesQuery, 'services');
+        $premiumServices = $premiumServicesQuery->take(4)->get();
 
         $servicesSettings = \App\Models\Setting::getGroup('services_page');
 
@@ -178,6 +182,11 @@ class ServicesController extends Controller
             ->with(['images', 'category', 'vendor.settings', 'gigPackages', 'reviews.user'])
             ->firstOrFail();
 
+        $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $service->vendor_id || auth()->user()->hasRole('admin'));
+        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isProductPubliclyVisible($service)) {
+            abort(404);
+        }
+
         // Other services by same provider
         $providerServices = Product::with(['images', 'category'])
             ->where('vendor_id', $service->vendor_id)
@@ -207,6 +216,11 @@ class ServicesController extends Controller
         $vendor = Vendor::where('slug', $slug)
             ->with(['settings', 'storefrontConfig'])
             ->firstOrFail();
+
+        $isOwnerOrAdmin = auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        if (!$isOwnerOrAdmin && !app(\App\Services\Monetization\VisibilityService::class)->isVendorPubliclyVisible($vendor, 'services')) {
+            abort(404);
+        }
 
         $services = Product::with(['images', 'category', 'gigPackages'])
             ->where('vendor_id', $vendor->id)
@@ -296,8 +310,10 @@ class ServicesController extends Controller
                     'city' => $validated['city'] ?? 'India',
                     'contact_phone' => $cleanPhone ?: $trashedVendor->contact_phone,
                     'email' => $user->email,
-                    'status' => 'approved',
-                    'approved_at' => $trashedVendor->approved_at ?: now(),
+                    'status' => 'pending',
+                    'verification_status' => 'pending_review',
+                    'operating_sectors' => ['services'],
+                    'approved_at' => null,
                     'vacation_mode' => false,
                 ]);
                 $vendor = $trashedVendor;
@@ -328,8 +344,10 @@ class ServicesController extends Controller
                     'city' => $validated['city'] ?? 'India',
                     'contact_phone' => $cleanPhone,
                     'email' => $user->email,
-                    'status' => 'approved', // Instant onboarding for marketplace agility
-                    'approved_at' => now(),
+                    'status' => 'pending',
+                    'verification_status' => 'pending_review',
+                    'operating_sectors' => ['services'],
+                    'approved_at' => null,
                     'rating' => 5.0,
                     'completed_projects' => 0,
                 ]);

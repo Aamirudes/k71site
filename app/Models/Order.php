@@ -180,4 +180,17 @@ class Order extends Model
     {
         return $this->hasMany(DeliveryAssignment::class);
     }
+
+    public function orderCommission(): HasOne
+    {
+        return $this->hasOne(OrderCommission::class, 'transaction_id')
+            ->where('transaction_type', 'order')
+            ->where('event_type', 'charge');
+    }
+
+    public function orderCommissions(): HasMany
+    {
+        return $this->hasMany(OrderCommission::class, 'transaction_id')
+            ->where('transaction_type', 'order');
+    }
 }

@@ -51,6 +51,8 @@ class FoodAndRestaurantTest extends TestCase
             ],
         ]);
 
+        $this->grantVendorTestSubscription($this->restaurant, 'food');
+
         $this->restaurantSettings = VendorSetting::create([
             'vendor_id' => $this->restaurant->id,
             'is_restaurant' => true,

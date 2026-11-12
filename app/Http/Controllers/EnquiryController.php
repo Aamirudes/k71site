@@ -75,8 +75,10 @@ class EnquiryController extends Controller
 
         $enquiries = $query->latest()->paginate(12)->withQueryString();
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+
         // Fetch strictly recommended B2B & Wholesale products (excluding retail, food, footwear, clothing, services)
-        $b2bProducts = Product::with(['vendor', 'images', 'category'])
+        $b2bQuery = Product::with(['vendor', 'images', 'category'])
             ->where('status', 'active')
             ->where(function($q) {
                 $q->where('vertical', 'enquiry')
@@ -102,20 +104,21 @@ class EnquiryController extends Controller
                    ->orWhere('slug', 'like', '%cloth%')
                    ->orWhere('slug', 'like', '%apparel%')
                    ->orWhere('slug', 'like', '%shirt%');
-            })
-            ->take(8)
-            ->get();
+            });
+        $visibility->scopeVisibleProducts($b2bQuery, 'enquiry');
+        $b2bProducts = $b2bQuery->take(8)->get();
 
         // Fetch verified B2B / Industrial / Marble / Machinery suppliers strictly
-        $verifiedSuppliers = Vendor::where('status', 'approved')
-            ->where(function($q) {
+        $verifiedSuppliersQuery = Vendor::where(function($q) {
                 $q->whereIn('vendor_type', ['marble', 'machinery', 'b2b', 'wholesale', 'industrial', 'manufacturer'])
                   ->orWhereHas('products', function($pq) {
                       $pq->where('vertical', 'enquiry')
                          ->orWhere('listing_type', 'enquiry');
                   });
             })
-            ->whereNotIn('vendor_type', ['food', 'restaurant', 'clothing', 'footwear', 'services'])
+            ->whereNotIn('vendor_type', ['food', 'restaurant', 'clothing', 'footwear', 'services']);
+        $visibility->scopeVisibleVendors($verifiedSuppliersQuery, 'enquiry');
+        $verifiedSuppliers = $verifiedSuppliersQuery
             ->withCount(['products' => fn($q) => $q->where('status', 'active')])
             ->orderByDesc('products_count')
             ->take(6)
@@ -241,11 +244,18 @@ class EnquiryController extends Controller
     /**
      * Vendor enquiries inbox & leads board (/vendor/enquiries).
      */
-    public function vendorIndex(Request $request): View
+    public function vendorIndex(Request $request): View|RedirectResponse
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         if (!$vendor) {
             abort(403, 'Unauthorized vendor account.');
+        }
+
+        $sectorKey = $vendor->isServices() ? 'services' : 'enquiry';
+        $featureKey = $sectorKey === 'services' ? 'allow_enquiry_management' : 'allow_rfq_responses';
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
+        if (!$authCheck['allowed']) {
+            return redirect()->route('vendor.subscription.index')->with('error', $authCheck['reason']);
         }
 
         $tab = $request->query('tab', $vendor->isServices() ? 'direct' : 'all');
@@ -293,6 +303,13 @@ class EnquiryController extends Controller
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         if (!$vendor) {
             abort(403, 'Unauthorized vendor account.');
+        }
+
+        $sectorKey = $vendor->isServices() ? 'services' : 'enquiry';
+        $featureKey = $sectorKey === 'services' ? 'allow_enquiry_management' : 'allow_rfq_responses';
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sectorKey, $featureKey);
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
         }
 
         if ($enquiry->isClosed()) {

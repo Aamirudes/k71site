@@ -90,6 +90,7 @@ class K71FoodEcosystemTest extends TestCase
             'state' => 'Rajasthan',
             'pincode' => '302001',
         ]);
+        $this->grantVendorTestSubscription($this->kitchenA, 'food');
 
         $this->settingsA = VendorSetting::create([
             'vendor_id' => $this->kitchenA->id,
@@ -125,6 +126,7 @@ class K71FoodEcosystemTest extends TestCase
             'state' => 'Delhi',
             'pincode' => '110001',
         ]);
+        $this->grantVendorTestSubscription($this->kitchenB, 'food');
 
         $this->settingsB = VendorSetting::create([
             'vendor_id' => $this->kitchenB->id,
@@ -468,6 +470,7 @@ class K71FoodEcosystemTest extends TestCase
             'status' => 'approved',
         ]);
         VendorSetting::create(['vendor_id' => $retailVendor->id, 'cod_enabled' => true, 'upi_enabled' => true]);
+        $this->grantVendorTestSubscription($retailVendor, 'products');
 
         $retailProd = Product::withoutGlobalScopes()->create([
             'vendor_id' => $retailVendor->id,

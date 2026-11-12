@@ -442,6 +442,47 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'index'])->name('floating_launcher.index');
     Route::post('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'save'])->name('floating_launcher.save');
     Route::post('/floating-launcher/reset', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'resetDefaults'])->name('floating_launcher.reset');
+
+    // Vendor Management: Verification, Manual Subscriptions, Plans, Commissions & Expiry Automation
+    Route::prefix('vendor-management')->name('vendor_management.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\VendorManagementController::class, 'index'])->name('index');
+        Route::get('/vendors/{vendor}', [\App\Http\Controllers\Admin\VendorManagementController::class, 'show'])->name('show');
+        Route::post('/vendors/{vendor}/verification', [\App\Http\Controllers\Admin\VendorManagementController::class, 'updateVerification'])->name('verification.update');
+        Route::post('/vendors/{vendor}/assign-plan', [\App\Http\Controllers\Admin\VendorManagementController::class, 'assignPlan'])->name('assign_plan');
+
+        Route::post('/subscriptions/{subscription}/payment', [\App\Http\Controllers\Admin\VendorManagementController::class, 'recordPayment'])->name('subscriptions.payment');
+        Route::post('/subscriptions/{subscription}/activate', [\App\Http\Controllers\Admin\VendorManagementController::class, 'activateSubscription'])->name('subscriptions.activate');
+        Route::post('/subscriptions/{subscription}/renew', [\App\Http\Controllers\Admin\VendorManagementController::class, 'renewSubscription'])->name('subscriptions.renew');
+        Route::post('/subscriptions/{subscription}/suspend', [\App\Http\Controllers\Admin\VendorManagementController::class, 'suspendSubscription'])->name('subscriptions.suspend');
+        Route::post('/subscriptions/{subscription}/cancel', [\App\Http\Controllers\Admin\VendorManagementController::class, 'cancelSubscription'])->name('subscriptions.cancel');
+        Route::post('/subscriptions/{subscription}/apply-latest-version', [\App\Http\Controllers\Admin\VendorManagementController::class, 'applyLatestVersion'])->name('subscriptions.apply_version');
+
+        Route::get('/leads', [\App\Http\Controllers\Admin\VendorManagementController::class, 'leads'])->name('leads');
+        Route::post('/leads', [\App\Http\Controllers\Admin\VendorManagementController::class, 'storeLead'])->name('leads.store');
+        Route::put('/leads/{lead}', [\App\Http\Controllers\Admin\VendorManagementController::class, 'updateLead'])->name('leads.update');
+
+        Route::get('/plans', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'plans'])->name('plans');
+        Route::post('/plans', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'storePlan'])->name('plans.store');
+        Route::put('/plans/{plan}', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'updatePlan'])->name('plans.update');
+        Route::post('/plans/{plan}/duplicate', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'duplicatePlan'])->name('plans.duplicate');
+        Route::post('/plans/{plan}/archive', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'archivePlan'])->name('plans.archive');
+
+        Route::get('/commissions', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'commissions'])->name('commissions');
+        Route::post('/commission-rules', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'storeCommissionRule'])->name('commission_rules.store');
+        Route::post('/commission-rules/{rule}/toggle', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'toggleCommissionRule'])->name('commission_rules.toggle');
+        Route::post('/order-commissions/{orderCommission}/override', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'overrideOrderCommission'])->name('order_commissions.override');
+        Route::get('/commissions/export', [\App\Http\Controllers\Admin\PlanAndCommissionController::class, 'exportCommissionsCsv'])->name('commissions.export');
+
+        Route::get('/history', [\App\Http\Controllers\Admin\VendorManagementController::class, 'history'])->name('history');
+        Route::post('/renewal-requests/{renewalRequest}/resolve', [\App\Http\Controllers\Admin\VendorManagementController::class, 'resolveRenewalRequest'])->name('renewal_requests.resolve');
+
+        Route::get('/automation', [\App\Http\Controllers\Admin\VendorManagementController::class, 'automation'])->name('automation');
+        Route::post('/automation/settings', [\App\Http\Controllers\Admin\VendorManagementController::class, 'updateAutomationSettings'])->name('automation.settings');
+        Route::post('/automation/run-now', [\App\Http\Controllers\Admin\VendorManagementController::class, 'runExpiryNow'])->name('automation.run_now');
+
+        Route::get('/reports', [\App\Http\Controllers\Admin\VendorManagementController::class, 'reports'])->name('reports');
+        Route::get('/reports/export', [\App\Http\Controllers\Admin\VendorManagementController::class, 'exportReportsCsv'])->name('reports.export');
+    });
 });
 
 // PhonePe Gateway Callback & S2S Webhook
