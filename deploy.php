@@ -601,6 +601,27 @@ if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') 
 
 $tasks['Clear All Stale Caches'] = ['cmd' => 'optimize:clear', 'args' => []];
 
+if (!empty($_GET['grant_temp_bridge'])) {
+    try {
+        $adminUserId = (int) (DB::table('users')->where('email', 'crab.hashir@gmail.com')->value('id') ?: 1);
+        $bridgeVendorIds = DB::table('vendors')
+            ->join('users', 'users.id', '=', 'vendors.user_id')
+            ->whereIn('vendors.slug', ['gaddito', 'smartx'])
+            ->orWhereIn('users.email', ['ahmdsinan590@gmail.com', 'crab.hashir+21@gmail.com'])
+            ->pluck('vendors.id')
+            ->unique()
+            ->values()
+            ->all();
+        if (!empty($bridgeVendorIds)) {
+            $days = max(1, min(30, (int) ($_GET['bridge_days'] ?? 3)));
+            $tasks["Grant {$days}-Day Temporary Bridge Access (Sinan & Rohit)"] = [
+                'cmd' => 'subscriptions:grant-temp-bridge',
+                'args' => ['--vendor' => $bridgeVendorIds, '--days' => $days, '--admin-id' => $adminUserId],
+            ];
+        }
+    } catch (\Throwable $e) {}
+}
+
 if (!empty($_GET['check_monetization'])) {
     $tasks['Process Subscription Expiries Sweep'] = ['cmd' => 'subscriptions:process-expiry', 'args' => ['--trigger' => 'deploy_check']];
     $tasks['Scheduler Task List'] = ['cmd' => 'schedule:list', 'args' => []];

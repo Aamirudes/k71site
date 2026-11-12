@@ -661,4 +661,49 @@ class VendorMonetizationSystemTest extends TestCase
         $this->actingAs($this->admin)->get(route('admin.vendor_management.reports.export'))->assertOk();
         $this->actingAs($this->admin)->get(route('admin.vendor_management.commissions.export'))->assertOk();
     }
+
+    public function test_21_temporary_bridge_grant_restores_all_access_without_fake_payments_and_expires(): void
+    {
+        [$u1, $gaddito] = $this->createRawVendor('electronics', [
+            'shop_name' => 'Gaddito',
+            'slug' => 'gaddito',
+            'can_use_kinetic_scroll' => false,
+        ]);
+
+        [$u2, $smartx] = $this->createRawVendor('electronics', [
+            'shop_name' => 'Smartx',
+            'slug' => 'smartx',
+            'can_use_kinetic_scroll' => true,
+        ]);
+
+        $this->artisan('subscriptions:grant-temp-bridge', [
+            '--vendor' => [$gaddito->id, $smartx->id],
+            '--days' => 3,
+            '--admin-id' => $this->admin->id,
+        ])->assertExitCode(0);
+
+        $sub1 = VendorSubscription::where('vendor_id', $gaddito->id)->firstOrFail();
+        $sub2 = VendorSubscription::where('vendor_id', $smartx->id)->firstOrFail();
+
+        $this->assertSame(VendorSubscription::STATUS_ACTIVE, $sub1->status);
+        $this->assertSame('all', $sub1->sector_key);
+        $this->assertFalse($sub1->external_payment_received);
+        $this->assertSame(0, (int) $sub1->price_amount_snapshot);
+        $this->assertFalse((bool) ($sub1->entitlements_snapshot['allow_kinetic_scroll'] ?? true));
+        $this->assertTrue((bool) ($sub2->entitlements_snapshot['allow_kinetic_scroll'] ?? false));
+
+        // Idempotent second run skips without creating duplicate subscriptions
+        $this->artisan('subscriptions:grant-temp-bridge', [
+            '--vendor' => [$gaddito->id, $smartx->id],
+            '--days' => 3,
+            '--admin-id' => $this->admin->id,
+        ])->assertExitCode(0);
+        $this->assertSame(1, VendorSubscription::where('vendor_id', $gaddito->id)->count());
+
+        // Public storefronts & vendor write endpoints work immediately
+        $this->get('/s/gaddito')->assertOk();
+        $this->get('/s/smartx')->assertOk();
+        $this->actingAs($u2)->postJson(route('vendor.design.activate'), ['preset' => 'kinetic'])->assertOk();
+        $this->actingAs($u1)->postJson(route('vendor.design.activate'), ['preset' => 'kinetic'])->assertStatus(403);
+    }
 }
