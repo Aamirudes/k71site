@@ -242,6 +242,9 @@ class AdminController extends Controller
      */
     public function markSettled(Request $request, Order $order, SettlementService $settlementService)
     {
+        if ($order->status === 'cancelled') {
+            return back()->with('error', "Cannot mark order as settled: Order has already been cancelled.");
+        }
         if ($order->payment_status !== 'paid') {
             return back()->with('error', "Cannot mark order as settled: Order payment has not been marked as paid.");
         }
@@ -256,6 +259,12 @@ class AdminController extends Controller
      */
     public function disbursePayout(Request $request, Order $order, PayoutService $payoutService)
     {
+        if ($order->status === 'cancelled') {
+            return back()->with('error', "Cannot disburse payout: This order has been cancelled.");
+        }
+        if ($order->payment_status !== 'paid') {
+            return back()->with('error', "Cannot disburse payout: Order payment is not in paid status.");
+        }
         if ($order->settlement_status !== 'cleared') {
             return back()->with('error', "Cannot disburse payout: Bank settlement has not cleared yet.");
         }
@@ -274,6 +283,7 @@ class AdminController extends Controller
     public function processBatchSettlements(Request $request, SettlementService $settlementService)
     {
         $orders = Order::where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->where('settlement_status', 'pending')
             ->get();
 
@@ -285,9 +295,10 @@ class AdminController extends Controller
         $totalAmountPaise = 0;
 
         foreach ($orders as $order) {
-            $settlementService->markSettled($order, null, 'master_admin_batch');
-            $clearedCount++;
-            $totalAmountPaise += $order->total_amount;
+            if ($settlementService->markSettled($order, null, 'master_admin_batch')) {
+                $clearedCount++;
+                $totalAmountPaise += $order->total_amount;
+            }
         }
 
         $clearedRupees = number_format($totalAmountPaise / 100, 2);

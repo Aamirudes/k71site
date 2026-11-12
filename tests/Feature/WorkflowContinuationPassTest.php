@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\MessageController;
+use App\Models\Address;
 use App\Models\Booking;
 use App\Models\Cart;
 use App\Models\Category;
@@ -21,12 +22,15 @@ use App\Models\Review;
 use App\Models\Role;
 use App\Models\ServiceOrder;
 use App\Models\ServiceProject;
+use App\Models\Shipment;
 use App\Models\Short;
+use App\Models\UsedSellerProfile;
 use App\Models\UsedThread;
 use App\Models\UsedTransaction;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorSetting;
+use App\Services\PayoutService;
 use App\Services\StockManagerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -1123,5 +1127,446 @@ class WorkflowContinuationPassTest extends TestCase
         $this->assertEquals('rejected', \App\Models\Offer::find($offerId)->status);
         $this->assertEquals('cancelled', $tx->fresh()->status);
         $this->assertEquals('locked', UsedThread::where('product_id', $usedCamera->id)->value('status'));
+    }
+
+    public function test_workflow_20_dpdp_account_export_uses_real_schema_fields(): void
+    {
+        Address::create([
+            'user_id' => $this->buyer->id,
+            'label' => 'Home',
+            'full_name' => 'Riya Kapoor',
+            'phone' => '9829011223',
+            'line_1' => '12 Civil Lines',
+            'city' => 'Jaipur',
+            'state' => 'Rajasthan',
+            'pincode' => '302001',
+            'is_default' => true,
+        ]);
+
+        $product = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'Italian Marble Tray',
+            'slug' => 'italian-marble-tray',
+            'description' => 'Carved marble serving tray.',
+            'base_price' => 149900,
+            'gst_rate' => 18,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+
+        $order = Order::create([
+            'order_number' => 'K71-DPDP01',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 149900,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 22866,
+            'total_amount' => 149900,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'delivered',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        $order->items()->create([
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'unit_price' => 149900,
+            'tax_amount' => 22866,
+            'gst_rate' => 18,
+            'total_price' => 149900,
+            'snapshot' => ['title' => 'Italian Marble Tray'],
+        ]);
+
+        $svcCat = Category::firstOrCreate(['slug' => 'repair-dpdp'], ['name' => 'Home Repair DPDP', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+        $svc = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'booking',
+            'title' => 'Marble Sealing',
+            'slug' => 'marble-sealing',
+            'description' => 'Stone sealing visit.',
+            'base_price' => 200000,
+            'gst_rate' => 18,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+
+        Booking::create([
+            'booking_number' => 'BK-DPDP01',
+            'product_id' => $svc->id,
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->buyer->id,
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'service_address' => '12 Civil Lines',
+            'booking_date' => now()->addDays(2)->toDateString(),
+            'booking_slot' => '11:00 AM - 01:00 PM',
+            'total_amount' => 200000,
+            'status' => 'confirmed',
+        ]);
+
+        $enqCat = Category::firstOrCreate(['slug' => 'stone-enq'], ['name' => 'Stone Slabs', 'vertical' => 'enquiry', 'is_active' => true, 'sort_order' => 1]);
+        Enquiry::create([
+            'enquiry_number' => 'ENQ-DPDP01',
+            'user_id' => $this->buyer->id,
+            'category_id' => $enqCat->id,
+            'title' => 'Commercial Granite Slabs',
+            'description' => '1000 sqft polished finish.',
+            'quantity' => '1000 sqft',
+            'target_budget' => 8500000,
+            'city' => 'Jaipur',
+            'buyer_name' => 'Riya Kapoor',
+            'buyer_phone' => '9829011223',
+            'status' => 'open',
+        ]);
+
+        Review::create([
+            'product_id' => $product->id,
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->buyer->id,
+            'order_id' => $order->id,
+            'rating' => 5,
+            'title' => 'Superb finish',
+            'body' => 'Beautiful natural veining.',
+            'is_verified_purchase' => true,
+            'is_approved' => true,
+        ]);
+
+        $res = $this->actingAs($this->buyer)->get(route('account.export'));
+        $res->assertStatus(200);
+
+        $json = json_decode($res->streamedContent(), true);
+        $this->assertEquals(149900, $json['orders'][0]['items'][0]['unit_price']);
+        $this->assertEquals(149900, $json['orders'][0]['items'][0]['total_price']);
+        $this->assertEquals('11:00 AM - 01:00 PM', $json['bookings'][0]['booking_slot']);
+        $this->assertEquals(200000, $json['bookings'][0]['total_amount']);
+        $this->assertEquals('Stone Slabs', $json['enquiries'][0]['category']);
+        $this->assertEquals(8500000, $json['enquiries'][0]['target_budget']);
+        $this->assertEquals('Beautiful natural veining.', $json['reviews'][0]['body']);
+        $this->assertTrue($json['reviews'][0]['is_verified_purchase']);
+        $this->assertCount(1, $json['addresses']);
+    }
+
+    public function test_workflow_21_vendor_coupon_entitlement_uppercase_and_clear_limits(): void
+    {
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.coupons.store'), [
+                'code' => '  Festive25 ',
+                'type' => 'percentage',
+                'value' => 25,
+                'max_discount' => 200,
+                'min_cart_value' => 999,
+                'starts_at' => now()->subDay()->format('Y-m-d H:i:s'),
+                'expires_at' => now()->addDays(10)->format('Y-m-d H:i:s'),
+                'total_limit' => 50,
+                'per_customer_limit' => 2,
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('vendor.coupons.index'));
+
+        $coupon = Coupon::where('vendor_id', $this->vendor->id)->firstOrFail();
+        $this->assertSame('FESTIVE25', $coupon->code);
+        $this->assertEquals(20000, $coupon->max_discount);
+
+        // Percentage above 100% must fail validation
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.coupons.store'), [
+                'code' => 'OVER100',
+                'type' => 'percentage',
+                'value' => 150,
+                'starts_at' => now()->subDay()->format('Y-m-d H:i:s'),
+                'expires_at' => now()->addDays(5)->format('Y-m-d H:i:s'),
+                'per_customer_limit' => 1,
+            ])
+            ->assertSessionHasErrors('value');
+
+        // Clearing optional max_discount / min_cart_value / total_limit updates DB to null
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.coupons.update', $coupon), [
+                'code' => 'festive25',
+                'type' => 'percentage',
+                'value' => 20,
+                'max_discount' => null,
+                'min_cart_value' => null,
+                'total_limit' => null,
+                'starts_at' => now()->subDay()->format('Y-m-d H:i:s'),
+                'expires_at' => now()->addDays(15)->format('Y-m-d H:i:s'),
+                'per_customer_limit' => 2,
+                'is_active' => 1,
+            ])
+            ->assertRedirect(route('vendor.coupons.index'));
+
+        $coupon->refresh();
+        $this->assertSame('FESTIVE25', $coupon->code);
+        $this->assertNull($coupon->max_discount);
+        $this->assertNull($coupon->min_cart_value);
+        $this->assertNull($coupon->total_limit);
+    }
+
+    public function test_workflow_22_services_rating_sort_and_active_order_delete_guard(): void
+    {
+        $svcCat = Category::firstOrCreate(['slug' => 'design-sort'], ['name' => 'Design Services', 'vertical' => 'services', 'is_active' => true, 'sort_order' => 1]);
+
+        $lowRatingHighSales = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'gig',
+            'title' => 'Popular Low Rated Logo',
+            'slug' => 'popular-low-rated-logo',
+            'description' => 'Basic logo gig.',
+            'base_price' => 100000,
+            'gst_rate' => 18,
+            'sales_count' => 80,
+            'avg_rating' => 2.10,
+            'review_count' => 5,
+            'status' => 'active',
+        ]);
+
+        $highRatingLowSales = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $svcCat->id,
+            'vertical' => 'services',
+            'listing_type' => 'gig',
+            'title' => 'Top Rated Brand System',
+            'slug' => 'top-rated-brand-system',
+            'description' => 'Five star brand gig.',
+            'base_price' => 250000,
+            'gst_rate' => 18,
+            'sales_count' => 2,
+            'avg_rating' => 4.95,
+            'review_count' => 4,
+            'status' => 'active',
+        ]);
+
+        $res = $this->get(route('services.index', ['sort' => 'rating']));
+        $res->assertStatus(200);
+        $html = $res->getContent();
+        $this->assertTrue(strpos($html, 'Top Rated Brand System') < strpos($html, 'Popular Low Rated Logo'));
+
+        // Active in_progress ServiceOrder blocks deleting the service gig
+        ServiceOrder::create([
+            'order_number' => 'SO-ACTV01',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $highRatingLowSales->id,
+            'package_tier' => 'basic',
+            'package_title' => 'Basic',
+            'amount' => 250000,
+            'delivery_days' => 5,
+            'due_at' => now()->addDays(5),
+            'revisions_allowed' => 2,
+            'revisions_used' => 0,
+            'status' => 'in_progress',
+            'requirements' => 'Work started.',
+        ]);
+
+        $this->actingAs($this->vendorUser)
+            ->delete(route('vendor.services.destroy', $highRatingLowSales))
+            ->assertSessionHas('error');
+        $this->assertNotNull(Product::find($highRatingLowSales->id));
+
+        // Non-services category cannot be saved onto a service gig
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.services.update', $highRatingLowSales), [
+                'title' => 'Top Rated Brand System',
+                'category_id' => $this->mainCategory->id,
+                'description' => 'Trying wrong vertical category.',
+                'base_price' => 2500,
+            ])
+            ->assertSessionHasErrors('category_id');
+    }
+
+    public function test_workflow_23_24_payment_security_phonepe_and_shiprocket_webhooks(): void
+    {
+        config([
+            'services.phonepe.merchant_id' => 'TEST_M',
+            'services.phonepe.salt_key' => 'secret-salt-123',
+            'services.phonepe.salt_index' => 1,
+            'shipping.shiprocket.webhook_token' => 'sr-webhook-secret-99',
+        ]);
+        $this->app->instance(\App\Services\PhonePeService::class, new \App\Services\PhonePeService());
+
+        $order = Order::create([
+            'order_number' => 'K71-PAYSEC01',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 50000,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 50000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        // Forged query ?code=PAYMENT_SUCCESS without API verification or signature must NOT mark paid
+        $this->actingAs($this->buyer)
+            ->post(route('payment.phonepe.callback', $order), ['code' => 'PAYMENT_SUCCESS'])
+            ->assertRedirect(route('orders.index'));
+        $this->assertEquals('pending', $order->fresh()->payment_status);
+
+        // X-Test-Bypass header bypass on webhook is completely rejected (403)
+        $this->withHeaders(['X-Test-Bypass' => '1'])
+            ->postJson('/webhooks/phonepe', ['code' => 'PAYMENT_SUCCESS', 'merchantTransactionId' => $order->order_number])
+            ->assertStatus(403);
+
+        // Properly signed PhonePe S2S webhook marks order paid, records commission & logs real from_status
+        $encoded = base64_encode(json_encode([
+            'code' => 'PAYMENT_SUCCESS',
+            'merchantTransactionId' => $order->order_number,
+        ]));
+        $sig = hash('sha256', $encoded . 'secret-salt-123') . '###1';
+
+        $this->withHeaders(['X-VERIFY' => $sig])
+            ->postJson('/webhooks/phonepe', ['response' => $encoded])
+            ->assertStatus(200);
+
+        $order->refresh();
+        $this->assertEquals('paid', $order->payment_status);
+        $this->assertEquals('processing', $order->status);
+        $this->assertDatabaseHas('order_status_logs', [
+            'order_id' => $order->id,
+            'from_status' => 'pending',
+            'to_status' => 'processing',
+        ]);
+        $this->assertDatabaseHas('order_commissions', [
+            'transaction_type' => 'order',
+            'transaction_id' => $order->id,
+            'event_type' => 'charge',
+        ]);
+
+        // Shiprocket webhook rejects missing/wrong token (403), accepts valid token, and never resurrects cancelled order
+        $cancelledOrder = Order::create([
+            'order_number' => 'K71-SR01',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 50000,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 50000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'cancelled',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        Shipment::create([
+            'order_id' => $cancelledOrder->id,
+            'vendor_id' => $this->vendor->id,
+            'awb_code' => 'AWB-CANC-77',
+            'courier_name' => 'Delhivery',
+            'status' => 'manifested',
+        ]);
+
+        $this->postJson('/webhook/shiprocket', ['awb' => 'AWB-CANC-77', 'current_status' => 'DELIVERED'])
+            ->assertStatus(403);
+
+        $this->withHeaders(['x-api-key' => 'sr-webhook-secret-99'])
+            ->postJson('/webhook/shiprocket', ['awb' => 'AWB-CANC-77', 'current_status' => 'DELIVERED'])
+            ->assertStatus(200);
+
+        $this->assertEquals('cancelled', $cancelledOrder->fresh()->status);
+    }
+
+    public function test_workflow_25_26_27_28_29_settings_payout_guards_upi_claim_seller_block_and_notifications(): void
+    {
+        // PayoutService rejects cancelled order even if settlement_status was cleared
+        $cancelledPaidOrder = Order::create([
+            'order_number' => 'K71-POGUARD1',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 40000,
+            'discount_amount' => 0,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 40000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'settlement_status' => 'cleared',
+            'status' => 'cancelled',
+            'item_count' => 1,
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        try {
+            app(PayoutService::class)->disburseVendorPayout($cancelledPaidOrder);
+            $this->fail('Expected cancelled order payout exception was not thrown.');
+        } catch (\Exception $e) {
+            $this->assertStringContainsString('Cannot disburse payout for a cancelled order.', $e->getMessage());
+
+            // CheckoutController::processPayment rejects cancelled order & notifies vendor on valid UPI claim
+            $this->actingAs($this->buyer)
+                ->post(route('checkout.payment.process', $cancelledPaidOrder), ['upi_transaction_id' => 'UTR123456789'])
+                ->assertRedirect(route('orders.show', $cancelledPaidOrder));
+
+            $upiOrder = Order::create([
+                'order_number' => 'K71-UPICLM01',
+                'user_id' => $this->buyer->id,
+                'vendor_id' => $this->vendor->id,
+                'subtotal' => 45000,
+                'discount_amount' => 0,
+                'shipping_amount' => 0,
+                'tax_amount' => 0,
+                'total_amount' => 45000,
+                'payment_method' => 'upi',
+                'payment_status' => 'pending',
+                'status' => 'pending',
+                'item_count' => 1,
+                'address_snapshot' => ['city' => 'Jaipur'],
+            ]);
+
+            $this->actingAs($this->buyer)
+                ->post(route('checkout.payment.process', $upiOrder), ['upi_transaction_id' => '  utr9988776655 '])
+                ->assertRedirect(route('orders.success', $upiOrder));
+
+            $this->assertDatabaseHas('payment_claims', [
+                'order_id' => $upiOrder->id,
+                'utr_number' => 'UTR9988776655',
+            ]);
+            $this->assertDatabaseHas('notifications', [
+                'notifiable_id' => $this->vendorUser->id,
+            ]);
+
+            // Blocked Used seller profile returns 404
+            $blockedUser = User::factory()->create(['is_blocked' => true]);
+            UsedSellerProfile::create([
+                'user_id' => $blockedUser->id,
+                'display_name' => 'Blocked Seller',
+                'handle' => 'blocked-seller-handle',
+            ]);
+            $this->actingAs($this->buyer)
+                ->get(route('used.seller.profile', 'blocked-seller-handle'))
+                ->assertStatus(404);
+
+            // NotificationController JSON mark-all-read works cleanly
+            $this->actingAs($this->vendorUser)
+                ->postJson(route('notifications.read-all'))
+                ->assertStatus(200)
+                ->assertJson(['success' => true, 'unread_count' => 0]);
+
+            // Food vendor settings can clear min_food_order_amount back to 0 cleanly
+            $this->vendor->update(['vendor_type' => 'food']);
+            $this->vendor->settings()->update(['is_restaurant' => true, 'min_food_order_amount' => 25000, 'upi_enabled' => true]);
+            $this->actingAs($this->vendorUser)
+                ->put(route('vendor.settings.update'), [
+                    'food_settings_submitted' => 1,
+                    'min_food_order_amount' => 0,
+                    'payment_mode' => 'upi_only',
+                ])
+                ->assertRedirect();
+            $this->assertEquals(0, $this->vendor->settings()->first()->min_food_order_amount);
+            return;
+        }
     }
 }

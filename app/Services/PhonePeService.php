@@ -367,10 +367,6 @@ class PhonePeService
      */
     public function verifyWebhookSignature(\Illuminate\Http\Request $request): bool
     {
-        if ($request->hasHeader('X-Test-Bypass')) {
-            return true;
-        }
-
         $saltKey = $this->saltKey ?: config('services.phonepe.salt_key', '');
         $saltIndex = $this->saltIndex ?: (int) config('services.phonepe.salt_index', 1);
         $clientSecret = $this->clientSecret ?: config('services.phonepe.client_secret', '');
@@ -388,19 +384,15 @@ class PhonePeService
                 return false;
             }
 
-            $expectedHash = hash('sha256', $rawResponse . $this->saltKey) . '###' . $this->saltIndex;
+            $expectedHash = hash('sha256', $rawResponse . $saltKey) . '###' . $saltIndex;
             return hash_equals($expectedHash, $xVerify);
         }
 
         // Check V2 Standard Checkout
-        if ($this->isV2) {
-            $authHeader = $request->header('Authorization');
-            if (!empty($authHeader) && str_starts_with($authHeader, 'O-Bearer ')) {
-                return true;
-            }
-            if (!empty($xVerify) && !empty($this->clientSecret)) {
-                $rawResponse = $request->input('response') ?: $request->getContent();
-                $expectedHash = hash('sha256', $rawResponse . $this->clientSecret);
+        if ($this->isV2 && !empty($xVerify) && !empty($clientSecret)) {
+            $rawResponse = $request->input('response') ?: $request->getContent();
+            if (!empty($rawResponse)) {
+                $expectedHash = hash('sha256', $rawResponse . $clientSecret);
                 return hash_equals($expectedHash, explode('###', $xVerify)[0]);
             }
         }

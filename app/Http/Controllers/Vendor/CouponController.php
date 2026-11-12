@@ -8,6 +8,20 @@ use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
+    protected function authorizeCouponEntitlement($vendor, Request $request)
+    {
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_coupons');
+
+        if (!$authCheck['allowed']) {
+            return $request->wantsJson()
+                ? response()->json(['success' => false, 'message' => $authCheck['reason']], 403)
+                : back()->withInput()->with('error', $authCheck['reason']);
+        }
+
+        return null;
+    }
+
     public function index()
     {
         $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
@@ -15,26 +29,34 @@ class CouponController extends Controller
         return view('vendor.coupons.index', compact('coupons'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
+        if ($denied = $this->authorizeCouponEntitlement($vendor, $request)) {
+            return $denied;
+        }
         return view('vendor.coupons.create');
     }
 
     public function store(Request $request)
     {
         $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
-        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_coupons');
-        if (!$authCheck['allowed']) {
-            if ($request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
-            }
-            return back()->withInput()->with('error', $authCheck['reason']);
+        if ($denied = $this->authorizeCouponEntitlement($vendor, $request)) {
+            return $denied;
         }
+
+        $request->merge([
+            'code' => strtoupper(trim((string) $request->input('code'))),
+        ]);
 
         $validated = $request->validate([
             'code' => 'required|string|max:30|unique:coupons,code',
             'type' => 'required|in:percentage,flat',
-            'value' => 'required|numeric|min:1',
+            'value' => ['required', 'numeric', 'min:1', function ($attribute, $value, $fail) use ($request) {
+                if ($request->input('type') === 'percentage' && (float) $value > 100) {
+                    $fail('Percentage discount cannot exceed 100%.');
+                }
+            }],
             'max_discount' => 'nullable|numeric|min:1',
             'min_cart_value' => 'nullable|numeric|min:1',
             'starts_at' => 'required|date',
@@ -50,11 +72,11 @@ class CouponController extends Controller
         
         // Convert to cents for flat types
         if ($coupon->type === 'flat') {
-            $coupon->value = $validated['value'] * 100;
+            $coupon->value = (int) round(((float) $validated['value']) * 100);
         }
         
-        if ($coupon->max_discount) $coupon->max_discount *= 100;
-        if ($coupon->min_cart_value) $coupon->min_cart_value *= 100;
+        $coupon->max_discount = !empty($validated['max_discount']) ? (int) round(((float) $validated['max_discount']) * 100) : null;
+        $coupon->min_cart_value = !empty($validated['min_cart_value']) ? (int) round(((float) $validated['min_cart_value']) * 100) : null;
         
         $coupon->first_order_only = $request->has('first_order_only');
         $coupon->is_active = $request->has('is_active');
@@ -78,11 +100,22 @@ class CouponController extends Controller
         if ($coupon->vendor_id !== $vendor->id) {
             abort(403);
         }
+        if ($denied = $this->authorizeCouponEntitlement($vendor, $request)) {
+            return $denied;
+        }
+
+        $request->merge([
+            'code' => strtoupper(trim((string) $request->input('code'))),
+        ]);
 
         $validated = $request->validate([
             'code' => 'required|string|max:30|unique:coupons,code,' . $coupon->id,
             'type' => 'required|in:percentage,flat',
-            'value' => 'required|numeric|min:1',
+            'value' => ['required', 'numeric', 'min:1', function ($attribute, $value, $fail) use ($request) {
+                if ($request->input('type') === 'percentage' && (float) $value > 100) {
+                    $fail('Percentage discount cannot exceed 100%.');
+                }
+            }],
             'max_discount' => 'nullable|numeric|min:1',
             'min_cart_value' => 'nullable|numeric|min:1',
             'starts_at' => 'required|date',
@@ -91,12 +124,13 @@ class CouponController extends Controller
             'per_customer_limit' => 'required|integer|min:1',
         ]);
         
-        // Convert to cents for flat types
+        // Convert to cents for flat types and explicitly allow clearing optional limits
         if ($validated['type'] === 'flat') {
-            $validated['value'] *= 100;
+            $validated['value'] = (int) round(((float) $validated['value']) * 100);
         }
-        if (!empty($validated['max_discount'])) $validated['max_discount'] *= 100;
-        if (!empty($validated['min_cart_value'])) $validated['min_cart_value'] *= 100;
+        $validated['max_discount'] = !empty($validated['max_discount']) ? (int) round(((float) $validated['max_discount']) * 100) : null;
+        $validated['min_cart_value'] = !empty($validated['min_cart_value']) ? (int) round(((float) $validated['min_cart_value']) * 100) : null;
+        $validated['total_limit'] = !empty($validated['total_limit']) ? (int) $validated['total_limit'] : null;
         
         $validated['first_order_only'] = $request->has('first_order_only');
         $validated['is_active'] = $request->has('is_active');
@@ -106,11 +140,14 @@ class CouponController extends Controller
         return redirect()->route('vendor.coupons.index')->with('success', 'Coupon updated successfully.');
     }
 
-    public function destroy(Coupon $coupon)
+    public function destroy(Request $request, Coupon $coupon)
     {
         $vendor = \Illuminate\Support\Facades\Auth::user()->vendor;
         if ($coupon->vendor_id !== $vendor->id) {
             abort(403);
+        }
+        if ($denied = $this->authorizeCouponEntitlement($vendor, $request)) {
+            return $denied;
         }
         
         $coupon->delete();

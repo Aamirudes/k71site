@@ -81,31 +81,69 @@ class PaymentController extends Controller
             'code' => $code,
         ]);
 
-        // Check verification with PhonePe API
+        // Verify transaction authenticity: require either PhonePe API confirmation OR a valid cryptographic X-VERIFY signature
         $check = $transactionId ? $phonePeService->checkStatus($transactionId) : ['success' => false];
-        $isSuccess = ($check['success'] && ($check['status'] ?? null) === 'SUCCESS') 
-            || ($code === 'PAYMENT_SUCCESS');
+        $hasValidSignature = $phonePeService->verifyWebhookSignature($request);
+        $isSuccess = ($check['success'] && ($check['status'] ?? null) === 'SUCCESS')
+            || ($hasValidSignature && $code === 'PAYMENT_SUCCESS');
 
         if ($isSuccess) {
             DB::beginTransaction();
             try {
+                $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with(['user', 'vendor'])->firstOrFail();
+
+                if ($lockedOrder->payment_status === 'paid' || $lockedOrder->payment_status === 'refund_pending') {
+                    DB::commit();
+                    return redirect()->route('orders.success', $lockedOrder->id)->with('success', 'Payment already verified!');
+                }
+
+                // Do not resurrect an already cancelled order into 'processing'; flag it for refund instead
+                if ($lockedOrder->status === 'cancelled') {
+                    $lockedOrder->update([
+                        'payment_status' => 'refund_pending',
+                        'payment_method' => 'phonepe',
+                    ]);
+                    $lockedOrder->paymentClaim()->updateOrCreate(
+                        ['order_id' => $lockedOrder->id],
+                        [
+                            'user_id' => $lockedOrder->user_id,
+                            'utr_number' => $check['data']['transactionId'] ?? $transactionId ?: ('TXN_CANC_' . $lockedOrder->id),
+                            'amount_claimed' => $lockedOrder->total_amount,
+                            'status' => 'verified',
+                            'verified_at' => now(),
+                        ]
+                    );
+                    OrderStatusLog::create([
+                        'order_id' => $lockedOrder->id,
+                        'from_status' => 'cancelled',
+                        'to_status' => 'cancelled',
+                        'actor_type' => 'system',
+                        'note' => 'Late PhonePe confirmation received after order cancellation; flagged for customer refund.',
+                        'ip_address' => $request->ip(),
+                    ]);
+                    DB::commit();
+                    return redirect()->route('orders.show', $lockedOrder->id)
+                        ->with('info', 'Payment received for your cancelled order and has been flagged for refund.');
+                }
+
                 // Calculate commission dynamically using CommissionService hierarchy & record idempotent ledger entry
                 $commissionService = app(\App\Services\Monetization\CommissionService::class);
-                $commissionRecord = $commissionService->recordOrderCommission($order);
+                $commissionRecord = $commissionService->recordOrderCommission($lockedOrder);
                 $productSubtotal = (int) $commissionRecord->commission_base_paise;
                 $platformCommission = (int) $commissionRecord->calculated_commission_paise;
                 $vendorEarnings = (int) $commissionRecord->vendor_net_paise;
                 $appliedRate = number_format((float) $commissionRecord->rate_percent, 2);
-                $platformShippingRetained = (int) ($order->shipping_amount ?? 0);
+                $platformShippingRetained = (int) ($lockedOrder->shipping_amount ?? 0);
 
                 // Keep tracking_number clean for courier AWB tracking
-                $cleanTracking = Str::startsWith($order->tracking_number, 'TXN_') ? null : $order->tracking_number;
+                $cleanTracking = Str::startsWith($lockedOrder->tracking_number, 'TXN_') ? null : $lockedOrder->tracking_number;
 
                 // Calculate expected settlement time (T+1 Indian Banking day, ~11:00 AM)
                 $settlementService = app(\App\Services\SettlementService::class);
                 $expectedSettlementAt = $settlementService->calculateExpectedSettlementTime();
+                $fromStatus = $lockedOrder->status;
 
-                $order->update([
+                $lockedOrder->update([
                     'status' => 'processing',
                     'payment_status' => 'paid',
                     'payment_method' => 'phonepe',
@@ -117,12 +155,12 @@ class PaymentController extends Controller
                 ]);
 
                 // Create verified payment claim record
-                $order->paymentClaim()->updateOrCreate(
-                    ['order_id' => $order->id],
+                $lockedOrder->paymentClaim()->updateOrCreate(
+                    ['order_id' => $lockedOrder->id],
                     [
-                        'user_id' => $order->user_id,
+                        'user_id' => $lockedOrder->user_id,
                         'utr_number' => $check['data']['transactionId'] ?? $transactionId,
-                        'amount_claimed' => $order->total_amount,
+                        'amount_claimed' => $lockedOrder->total_amount,
                         'status' => 'verified',
                         'verified_at' => now(),
                     ]
@@ -130,8 +168,8 @@ class PaymentController extends Controller
 
                 // Audit log with commission and shipping retention breakdown
                 OrderStatusLog::create([
-                    'order_id' => $order->id,
-                    'from_status' => 'pending',
+                    'order_id' => $lockedOrder->id,
+                    'from_status' => $fromStatus,
                     'to_status' => 'processing',
                     'actor_type' => 'system',
                     'note' => "PhonePe Auto-Verified. Product: ₹" . number_format($productSubtotal / 100, 2) . " | Fee ({$appliedRate}% / {$commissionRecord->rule_source}): ₹" . number_format($platformCommission / 100, 2) . " | Vendor Payout: ₹" . number_format($vendorEarnings / 100, 2) . " | Settlement Scheduled: " . $expectedSettlementAt->format('M d, Y h:i A') . " | Shipping Retained: ₹" . number_format($platformShippingRetained / 100, 2),
@@ -139,16 +177,28 @@ class PaymentController extends Controller
                 ]);
 
                 // Clear customer's cart items for this vendor
-                $cart = Cart::where('user_id', $order->user_id)->first();
-                if ($cart) {
-                    $cart->items()->where('vendor_id', $order->vendor_id)->delete();
+                if ($lockedOrder->user_id) {
+                    $cart = Cart::where('user_id', $lockedOrder->user_id)->first();
+                    if ($cart) {
+                        $cart->items()->where('vendor_id', $lockedOrder->vendor_id)->delete();
+                    }
                 }
 
                 DB::commit();
+                $order = $lockedOrder->fresh(['user', 'vendor']);
 
-                // Send confirmation notification
+                // Send confirmation notifications
                 try {
-                    $order->user->notify(new OrderStatusUpdated($order));
+                    $order->user?->notify(new OrderStatusUpdated($order));
+                    app(\App\Services\NotificationCenterService::class)->notifyUser(
+                        $order->vendor?->user_id,
+                        '💳',
+                        "Payment Confirmed: #{$order->order_number}",
+                        'Online PhonePe payment verified for ₹' . number_format($order->total_amount / 100, 2) . '.',
+                        route('vendor.orders.show', $order->id),
+                        'payment_verified',
+                        'phonepe_paid_' . $order->id
+                    );
                 } catch (\Throwable $e) {}
 
                 if ($request->header('referer') && Str::contains($request->header('referer'), '/vendor/orders')) {

@@ -94,8 +94,11 @@ class SettingsController extends Controller
                 $validated['enforce_operating_hours'] = $request->boolean('enforce_operating_hours');
             }
 
-            if ($request->filled('food_delivery_fee')) {
-                $validated['food_delivery_fee'] = (int) round(((float) $request->input('food_delivery_fee')) * 100);
+            if ($request->has('food_delivery_fee')) {
+                $rawDelFee = $request->input('food_delivery_fee');
+                $validated['food_delivery_fee'] = ($rawDelFee !== null && $rawDelFee !== '')
+                    ? (int) round(((float) $rawDelFee) * 100)
+                    : 0;
             }
             if ($request->has('food_packaging_fee')) {
                 $rawPack = $request->input('food_packaging_fee');
@@ -107,8 +110,11 @@ class SettingsController extends Controller
                     ? (int) round(((float) $rawFree) * 100)
                     : null;
             }
-            if ($request->filled('min_food_order_amount')) {
-                $validated['min_food_order_amount'] = (int) round(((float) $request->input('min_food_order_amount')) * 100);
+            if ($request->has('min_food_order_amount')) {
+                $rawMin = $request->input('min_food_order_amount');
+                $validated['min_food_order_amount'] = ($rawMin !== null && $rawMin !== '' && (float) $rawMin > 0)
+                    ? (int) round(((float) $rawMin) * 100)
+                    : 0;
             }
             if ($request->filled('cuisine_types')) {
                 $validated['cuisine_types'] = array_values(array_filter(array_map('trim', explode(',', $request->input('cuisine_types')))));
@@ -169,10 +175,20 @@ class SettingsController extends Controller
         }
 
         if ($request->hasFile('upi_qr_image')) {
-            if ($settings->upi_qr_image) Storage::disk('public')->delete($settings->upi_qr_image);
+            if ($settings->upi_qr_image) {
+                k71_delete_public_storage($settings->upi_qr_image);
+            }
             
             $filename = $request->file('upi_qr_image')->store('vendors/' . $vendor->id, 'public');
+            k71_sync_public_storage($filename);
             $validated['upi_qr_image'] = $filename;
+        }
+
+        if (!empty($validated['bank_ifsc'])) {
+            $validated['bank_ifsc'] = strtoupper(trim((string) $validated['bank_ifsc']));
+        }
+        if (array_key_exists('upi_id', $validated) && $validated['upi_id'] !== null) {
+            $validated['upi_id'] = trim((string) $validated['upi_id']) ?: null;
         }
 
         $validated['shipping_flat_rate'] = (isset($validated['shipping_flat_rate']) && $validated['shipping_flat_rate'] !== null && $validated['shipping_flat_rate'] !== '') ? (int) ($validated['shipping_flat_rate'] * 100) : 5000;
@@ -195,6 +211,7 @@ class SettingsController extends Controller
 
         unset($validated['payment_mode'], $validated['pickup_address']);
         $settings->update($validated);
+        $vendor->bumpWebsiteCache();
 
         return back()->with('success', 'Operations & shipping pickup address updated successfully.');
     }

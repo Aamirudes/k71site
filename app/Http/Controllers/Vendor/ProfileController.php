@@ -98,7 +98,13 @@ class ProfileController extends Controller
         $social['website'] = $request->input('website');
         $validated['social_links'] = $social;
 
+        if (!empty($validated['gstin'])) {
+            $validated['gstin'] = strtoupper(trim((string) $validated['gstin']));
+        }
+
         $vendor->update($validated);
+        $vendor->bumpWebsiteCache();
+        \App\Http\Controllers\SitemapController::clearCache();
 
         // If valid shop address & pincode provided, register pickup location in Shiprocket
         if (!empty($validated['pickup_address']['line_1']) && !empty($validated['pickup_address']['pincode']) && strlen($validated['pickup_address']['pincode']) === 6) {

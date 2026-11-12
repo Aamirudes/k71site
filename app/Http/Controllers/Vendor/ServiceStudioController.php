@@ -11,6 +11,7 @@ use App\Models\ServiceOrder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ServiceStudioController extends Controller
@@ -73,7 +74,7 @@ class ServiceStudioController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => ['required', Rule::exists('categories', 'id')->where('vertical', 'services')],
             'description' => 'required|string|min:20',
             'requirements_prompt' => 'nullable|string|max:1000',
 
@@ -234,7 +235,7 @@ class ServiceStudioController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => ['required', Rule::exists('categories', 'id')->where('vertical', 'services')],
             'description' => 'required|string|max:5000',
             'base_price' => 'required|numeric|min:10',
             'status' => 'nullable|in:active,paused,draft',
@@ -359,8 +360,16 @@ class ServiceStudioController extends Controller
     {
         $vendor = $this->authorizeProduct($request, $product);
 
+        $hasActiveOrders = ServiceOrder::where('product_id', $product->id)
+            ->whereIn('status', ['in_progress', 'delivered', 'revision_requested', 'disputed'])
+            ->exists();
+        if ($hasActiveOrders) {
+            return back()->with('error', 'Cannot delete a service with active client orders. Pause the service instead.');
+        }
+
         $product->delete();
         $vendor->bumpWebsiteCache();
+        \App\Http\Controllers\SitemapController::clearCache();
 
         return back()->with('success', 'Service deleted successfully.');
     }

@@ -8,6 +8,7 @@ use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ServicesController extends Controller
@@ -98,7 +99,7 @@ class ServicesController extends Controller
                 $query->orderBy('base_price', 'desc');
                 break;
             case 'rating':
-                $query->orderByDesc('sales_count');
+                $query->orderByDesc('avg_rating')->orderByDesc('review_count')->orderByDesc('sales_count');
                 break;
             case 'newest':
             default:
@@ -432,7 +433,7 @@ class ServicesController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:150',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => ['required', Rule::exists('categories', 'id')->where('vertical', 'services')],
             'description' => 'required|string|max:5000',
             'base_price' => 'required|numeric|min:10',
             'packages' => 'nullable|array',
@@ -481,6 +482,7 @@ class ServicesController extends Controller
         }
 
         $product->vendor?->bumpWebsiteCache();
+        SitemapController::clearCache();
 
         return redirect()->route('services.show', $product->slug)->with('success', 'Service Gig updated successfully!');
     }
@@ -497,9 +499,17 @@ class ServicesController extends Controller
             abort(403, 'Unauthorized to delete this service.');
         }
 
+        $hasActiveOrders = \App\Models\ServiceOrder::where('product_id', $product->id)
+            ->whereIn('status', ['in_progress', 'delivered', 'revision_requested', 'disputed'])
+            ->exists();
+        if ($hasActiveOrders) {
+            return back()->with('error', 'This service has active in-progress orders and cannot be deleted yet. Pause it instead so active workspaces remain intact.');
+        }
+
         $vendor = $product->vendor;
         $product->delete();
         $vendor?->bumpWebsiteCache();
+        SitemapController::clearCache();
 
         return redirect()->route('account.listings', ['tab' => 'services'])->with('success', 'Service gig removed.');
     }

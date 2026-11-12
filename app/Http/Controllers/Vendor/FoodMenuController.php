@@ -101,6 +101,8 @@ class FoodMenuController extends Controller
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : true,
         ]);
 
+        $vendor->bumpWebsiteCache();
+
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['success' => true, 'category' => $category], 201);
         }
@@ -113,6 +115,13 @@ class FoodMenuController extends Controller
         $vendor = Auth::user()->vendor;
         if ((int) $category->vendor_id !== (int) $vendor->id) {
             abort(403, 'Unauthorized menu category.');
+        }
+
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'food');
+        if (!$authCheck['allowed']) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $authCheck['reason']], 403)
+                : back()->with('error', $authCheck['reason']);
         }
 
         $validated = $request->validate([
@@ -129,6 +138,8 @@ class FoodMenuController extends Controller
             'is_active' => $request->has('is_active') ? $request->boolean('is_active') : $category->is_active,
         ]);
 
+        $vendor->bumpWebsiteCache();
+
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['success' => true, 'category' => $category->fresh()]);
         }
@@ -143,6 +154,13 @@ class FoodMenuController extends Controller
             abort(403, 'Unauthorized menu category.');
         }
 
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'food');
+        if (!$authCheck['allowed']) {
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $authCheck['reason']], 403)
+                : back()->with('error', $authCheck['reason']);
+        }
+
         Product::withoutGlobalScopes()
             ->where('vendor_id', $vendor->id)
             ->where('food_menu_category_id', $category->id)
@@ -150,6 +168,7 @@ class FoodMenuController extends Controller
 
         $name = $category->name;
         $category->delete();
+        $vendor->bumpWebsiteCache();
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['success' => true]);
@@ -161,6 +180,10 @@ class FoodMenuController extends Controller
     public function reorderCategories(Request $request)
     {
         $vendor = Auth::user()->vendor;
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'food');
+        if (!$authCheck['allowed']) {
+            return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
+        }
 
         $validated = $request->validate([
             'order' => 'required|array|min:1',
@@ -172,6 +195,8 @@ class FoodMenuController extends Controller
                 ->where('id', (int) $categoryId)
                 ->update(['sort_order' => $index + 1]);
         }
+
+        $vendor->bumpWebsiteCache();
 
         return response()->json(['success' => true]);
     }
@@ -200,6 +225,7 @@ class FoodMenuController extends Controller
             'is_accepting_food_orders' => $newState,
             'paused_reason' => $newState ? null : ($validated['paused_reason'] ?? $settings->paused_reason ?: 'Kitchen temporarily paused accepting new orders.'),
         ]);
+        $vendor->bumpWebsiteCache();
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([

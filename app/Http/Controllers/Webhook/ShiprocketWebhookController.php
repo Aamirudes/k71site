@@ -9,6 +9,7 @@ use App\Models\Shipment;
 use App\Notifications\OrderStatusUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ShiprocketWebhookController extends Controller
@@ -18,6 +19,14 @@ class ShiprocketWebhookController extends Controller
      */
     public function handle(Request $request): JsonResponse
     {
+        $configuredToken = (string) config('shipping.shiprocket.webhook_token', '');
+        if ($configuredToken !== '') {
+            $providedToken = (string) ($request->header('x-api-key') ?? $request->header('X-Api-Key') ?? '');
+            if ($providedToken === '' || !hash_equals($configuredToken, $providedToken)) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized webhook request'], 403);
+            }
+        }
+
         $payload = $request->all();
         Log::info('Shiprocket Webhook Received', ['payload' => $payload]);
 
@@ -48,8 +57,7 @@ class ShiprocketWebhookController extends Controller
             return response()->json(['message' => 'Shipment not found'], 200);
         }
 
-        $order = $shipment->order;
-        if (!$order) {
+        if (!$shipment->order_id) {
             return response()->json(['message' => 'Associated order not found'], 200);
         }
 
@@ -63,53 +71,76 @@ class ShiprocketWebhookController extends Controller
             default => 'in_transit',
         };
 
-        $shipment->update([
-            'status' => $mappedShipmentStatus,
-            'metadata' => array_merge($shipment->metadata ?? [], [
-                'last_webhook_status' => $rawStatus,
-                'last_webhook_at' => now()->toIso8601String(),
-            ]),
-        ]);
+        $transitionResult = DB::transaction(function () use ($shipment, $mappedShipmentStatus, $rawStatus, $request) {
+            $lockedShipment = Shipment::whereKey($shipment->id)->lockForUpdate()->firstOrFail();
+            $lockedOrder = Order::whereKey($lockedShipment->order_id)->lockForUpdate()->with(['user', 'vendor'])->first();
 
-        $oldOrderStatus = $order->status;
-        $newOrderStatus = null;
+            if (!$lockedOrder) {
+                return null;
+            }
 
-        if ($mappedShipmentStatus === 'delivered' && $oldOrderStatus !== 'delivered') {
-            $newOrderStatus = 'delivered';
-            $order->update([
-                'status' => 'delivered',
-                'delivered_at' => now(),
+            $lockedShipment->update([
+                'status' => $mappedShipmentStatus,
+                'metadata' => array_merge($lockedShipment->metadata ?? [], [
+                    'last_webhook_status' => $rawStatus,
+                    'last_webhook_at' => now()->toIso8601String(),
+                ]),
             ]);
-        } elseif (in_array($mappedShipmentStatus, ['in_transit', 'out_for_delivery']) && !in_array($oldOrderStatus, ['shipped', 'delivered'])) {
-            $newOrderStatus = 'shipped';
-            $order->update([
-                'status' => 'shipped',
-                'shipped_at' => $order->shipped_at ?? now(),
+
+            $oldOrderStatus = $lockedOrder->status;
+            $newOrderStatus = null;
+
+            // Never resurrect cancelled orders on late courier webhook scans
+            if ($oldOrderStatus !== 'cancelled') {
+                if ($mappedShipmentStatus === 'delivered' && $oldOrderStatus !== 'delivered') {
+                    $newOrderStatus = 'delivered';
+                    $lockedOrder->update([
+                        'status' => 'delivered',
+                        'delivered_at' => now(),
+                    ]);
+                } elseif (in_array($mappedShipmentStatus, ['in_transit', 'out_for_delivery'], true) && !in_array($oldOrderStatus, ['shipped', 'delivered'], true)) {
+                    $newOrderStatus = 'shipped';
+                    $lockedOrder->update([
+                        'status' => 'shipped',
+                        'shipped_at' => $lockedOrder->shipped_at ?? now(),
+                    ]);
+                }
+            }
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => $oldOrderStatus,
+                'to_status' => $newOrderStatus ?? $oldOrderStatus,
+                'actor_type' => 'system',
+                'actor_id' => null,
+                'note' => "Shiprocket Live Scan: {$rawStatus} (AWB: {$lockedShipment->awb_code})",
+                'ip_address' => $request->ip(),
             ]);
+
+            return [
+                'order' => $lockedOrder->fresh(['user', 'vendor']),
+                'new_status' => $newOrderStatus,
+                'awb' => $lockedShipment->awb_code,
+            ];
+        });
+
+        if (!$transitionResult) {
+            return response()->json(['message' => 'Associated order not found'], 200);
         }
 
-        // Record status log
-        OrderStatusLog::create([
-            'order_id' => $order->id,
-            'from_status' => $oldOrderStatus,
-            'to_status' => $newOrderStatus ?? $oldOrderStatus,
-            'actor_type' => 'system',
-            'actor_id' => null,
-            'note' => "Shiprocket Live Scan: {$rawStatus} (AWB: {$shipment->awb_code})",
-            'ip_address' => $request->ip(),
-        ]);
+        $order = $transitionResult['order'];
+        $newOrderStatus = $transitionResult['new_status'];
 
-        // Send customer notification if order marked delivered
-        if ($newOrderStatus === 'delivered') {
+        if (in_array($newOrderStatus, ['shipped', 'delivered'], true)) {
             try {
-                $order->user->notify(new OrderStatusUpdated($order));
+                $order->user?->notify(new OrderStatusUpdated($order));
             } catch (\Throwable $e) {}
         }
 
         return response()->json([
             'success' => true,
             'order_id' => $order->order_number,
-            'awb' => $shipment->awb_code,
+            'awb' => $transitionResult['awb'],
             'status' => $mappedShipmentStatus,
         ]);
     }

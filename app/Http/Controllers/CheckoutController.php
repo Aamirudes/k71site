@@ -908,8 +908,18 @@ class CheckoutController extends Controller
     public function processPayment(Request $request, Order $order)
     {
         if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) abort(403);
+        if ($order->status === 'cancelled') {
+            return redirect()->route('orders.show', $order->id)
+                ->with('error', 'This order has already been cancelled and can no longer accept payment proof.');
+        }
         if ($order->payment_method !== 'upi' || !in_array($order->payment_status, ['pending', 'pending_verification', 'processing', 'unpaid', 'failed'])) {
             return redirect()->route('orders.success', $order->id);
+        }
+
+        if ($request->filled('upi_transaction_id')) {
+            $request->merge([
+                'upi_transaction_id' => strtoupper(trim((string) $request->input('upi_transaction_id'))),
+            ]);
         }
 
         $request->validate([
@@ -937,20 +947,52 @@ class CheckoutController extends Controller
             }
         }
 
-        $claim = $order->paymentClaim()->updateOrCreate(
-            ['order_id' => $order->id],
-            [
-                'user_id' => $order->user_id,
-                'utr_number' => $request->upi_transaction_id ?: ('PROOF_' . strtoupper(Str::random(10))),
-                'screenshot' => $screenshotPath ?? $order->paymentClaim?->screenshot,
-                'amount_claimed' => $order->total_amount,
-                'status' => 'submitted', // Payment submitted pending verification
-            ]
-        );
+        $claimUtr = DB::transaction(function () use ($order, $request, $screenshotPath) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->with('paymentClaim')->firstOrFail();
+            if ($lockedOrder->status === 'cancelled') {
+                throw new \RuntimeException('This order was cancelled while submitting your payment proof.');
+            }
+            if (!in_array($lockedOrder->payment_status, ['pending', 'pending_verification', 'processing', 'unpaid', 'failed'])) {
+                return null;
+            }
 
-        $order->update([
-            'payment_status' => 'processing',
-        ]);
+            $existingUtr = $lockedOrder->paymentClaim?->utr_number;
+            $utrToSave = $request->upi_transaction_id
+                ?: ($existingUtr ?: ('PROOF_' . strtoupper(Str::random(10))));
+
+            $lockedOrder->paymentClaim()->updateOrCreate(
+                ['order_id' => $lockedOrder->id],
+                [
+                    'user_id' => $lockedOrder->user_id,
+                    'utr_number' => $utrToSave,
+                    'screenshot' => $screenshotPath ?? $lockedOrder->paymentClaim?->screenshot,
+                    'amount_claimed' => $lockedOrder->total_amount,
+                    'status' => 'submitted', // Payment submitted pending verification
+                ]
+            );
+
+            $lockedOrder->update([
+                'payment_status' => 'processing',
+            ]);
+
+            return $utrToSave;
+        });
+
+        if ($claimUtr === null) {
+            return redirect()->route('orders.success', $order->id);
+        }
+
+        try {
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                $order->vendor?->user_id,
+                '🧾',
+                "UPI Payment Proof Submitted: #{$order->order_number}",
+                "Buyer submitted payment proof (Ref: {$claimUtr}) for ₹" . number_format($order->total_amount / 100, 2) . ". Please verify and approve.",
+                route('vendor.orders.show', $order->id),
+                'payment_claim',
+                'upi_claim_' . $order->id
+            );
+        } catch (\Throwable $e) {}
 
         return redirect()->route('orders.success', $order->id)->with('success', 'Payment proof submitted successfully! Your order is pending verification by the vendor.');
     }

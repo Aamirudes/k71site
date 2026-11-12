@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,11 +23,23 @@ class NotificationController extends Controller
     /**
      * Mark a single notification as read.
      */
-    public function markAsRead(string $id): RedirectResponse
+    public function markAsRead(Request $request, string $id): RedirectResponse|JsonResponse
     {
         $notification = auth()->user()->notifications()->where('id', $id)->first();
         if ($notification) {
             $notification->markAsRead();
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => (bool) $notification,
+                'unread_count' => auth()->user()->unreadNotifications()->count(),
+            ], $notification ? 200 : 404);
+        }
+
+        $redirectTo = $request->query('redirect');
+        if (is_string($redirectTo) && str_starts_with($redirectTo, '/') && !str_starts_with($redirectTo, '//')) {
+            return redirect($redirectTo);
         }
 
         return back()->with('success', 'Notification marked as read.');
@@ -35,9 +48,16 @@ class NotificationController extends Controller
     /**
      * Mark all unread notifications as read.
      */
-    public function markAllRead(): RedirectResponse
+    public function markAllRead(Request $request): RedirectResponse|JsonResponse
     {
-        auth()->user()->unreadNotifications->markAsRead();
+        auth()->user()->unreadNotifications()->update(['read_at' => now()]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'unread_count' => 0,
+            ]);
+        }
 
         return back()->with('success', 'All notifications marked as read.');
     }

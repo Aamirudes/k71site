@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\Booking;
 use App\Models\Enquiry;
@@ -9,8 +10,10 @@ use App\Models\Bid;
 use App\Models\Offer;
 use App\Models\Review;
 use App\Models\Message;
+use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AccountController extends Controller
 {
@@ -56,10 +59,12 @@ class AccountController extends Controller
                     'created_at' => $order->created_at?->toIso8601String(),
                     'items' => $order->items->map(function ($item) {
                         return [
-                            'product_title' => $item->product?->title ?? 'Item',
+                            'product_title' => $item->snapshot['title'] ?? $item->product?->title ?? 'Item',
                             'quantity' => $item->quantity,
-                            'price' => $item->price,
-                            'total' => $item->total,
+                            'unit_price' => $item->unit_price,
+                            'total_price' => $item->total_price,
+                            'tax_amount' => $item->tax_amount,
+                            'gst_rate' => $item->gst_rate,
                         ];
                     }),
                 ];
@@ -74,27 +79,33 @@ class AccountController extends Controller
                 return [
                     'booking_number' => $b->booking_number,
                     'service' => $b->product?->title ?? 'Service',
-                    'scheduled_at' => $b->scheduled_at?->toIso8601String(),
+                    'booking_date' => $b->booking_date?->toDateString(),
+                    'booking_slot' => $b->booking_slot,
                     'status' => $b->status,
-                    'quoted_price' => $b->quoted_price,
+                    'total_amount' => $b->total_amount,
                     'address' => $b->service_address,
+                    'created_at' => $b->created_at?->toIso8601String(),
                 ];
             });
 
         // 4. Custom Enquiries & Quotes
         $enquiries = Enquiry::where('user_id', $user->id)
-            ->with('quotes')
+            ->with(['category', 'quotes'])
             ->latest()
             ->get()
             ->map(function ($e) {
                 return [
                     'enquiry_number' => $e->enquiry_number,
-                    'category' => $e->category,
+                    'title' => $e->title,
+                    'category' => $e->category?->name,
                     'description' => $e->description,
-                    'budget_min' => $e->budget_min,
-                    'budget_max' => $e->budget_max,
+                    'quantity' => $e->quantity,
+                    'target_budget' => $e->target_budget,
+                    'city' => $e->city,
+                    'urgency' => $e->urgency,
                     'status' => $e->status,
                     'quotes_count' => $e->quotes->count(),
+                    'created_at' => $e->created_at?->toIso8601String(),
                 ];
             });
 
@@ -135,19 +146,51 @@ class AccountController extends Controller
                 return [
                     'product' => $r->product?->title ?? 'Product',
                     'rating' => $r->rating,
-                    'review_text' => $r->review_text,
-                    'is_verified_buyer' => $r->is_verified_buyer,
+                    'title' => $r->title,
+                    'body' => $r->body,
+                    'is_verified_purchase' => (bool) $r->is_verified_purchase,
                     'created_at' => $r->created_at?->toIso8601String(),
                 ];
             });
+
+        // 8. Saved Addresses & Freelance Service Orders
+        $addresses = Address::where('user_id', $user->id)
+            ->latest()
+            ->get()
+            ->map(fn ($addr) => [
+                'label' => $addr->label,
+                'full_name' => $addr->full_name,
+                'phone' => $addr->phone,
+                'line_1' => $addr->line_1,
+                'line_2' => $addr->line_2,
+                'city' => $addr->city,
+                'state' => $addr->state,
+                'pincode' => $addr->pincode,
+                'is_default' => (bool) $addr->is_default,
+            ]);
+
+        $serviceOrders = ServiceOrder::where('buyer_id', $user->id)
+            ->with('product')
+            ->latest()
+            ->get()
+            ->map(fn ($so) => [
+                'order_number' => $so->order_number,
+                'service' => $so->product?->title ?? 'Service',
+                'package_tier' => $so->package_tier,
+                'amount' => $so->amount,
+                'status' => $so->status,
+                'created_at' => $so->created_at?->toIso8601String(),
+            ]);
 
         $exportData = [
             'compliance' => 'Digital Personal Data Protection Act (DPDP), 2023 - Republic of India',
             'exported_at' => now()->toIso8601String(),
             'platform' => 'K71 Marketplace (k71.in)',
             'user' => $profile,
+            'addresses' => $addresses,
             'orders' => $orders,
             'bookings' => $bookings,
+            'service_orders' => $serviceOrders,
             'enquiries' => $enquiries,
             'bids' => $bids,
             'offers' => $offers,
@@ -174,38 +217,40 @@ class AccountController extends Controller
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
-        // If user operates a vendor store, suspend vendor and pull active public listings
-        if ($user->vendor) {
-            \App\Models\Product::withoutGlobalScopes()
-                ->where('vendor_id', $user->vendor->id)
-                ->where('status', 'active')
-                ->update(['status' => 'inactive']);
+        DB::transaction(function () use ($user) {
+            // If user operates a vendor store, suspend vendor and pull active public listings
+            if ($user->vendor) {
+                \App\Models\Product::withoutGlobalScopes()
+                    ->where('vendor_id', $user->vendor->id)
+                    ->where('status', 'active')
+                    ->update(['status' => 'inactive']);
 
-            $user->vendor->update([
-                'status' => 'suspended',
-                'vacation_mode' => true,
-                'vacation_message' => 'Store closed by account owner.',
+                $user->vendor->update([
+                    'status' => 'suspended',
+                    'vacation_mode' => true,
+                    'vacation_message' => 'Store closed by account owner.',
+                ]);
+
+                \App\Http\Controllers\SitemapController::clearCache();
+            }
+
+            // Anonymize personal identifiable information (PII) before soft-deleting (username <= 20 chars)
+            $anonymizedUsername = substr('del_' . $user->id . '_' . base_convert((string) time(), 10, 36), 0, 20);
+            $anonymizedEmailTag = 'deleted_' . $user->id . '_' . time();
+            $user->update([
+                'first_name' => 'Deleted',
+                'last_name' => 'User',
+                'username' => $anonymizedUsername,
+                'email' => $anonymizedEmailTag . '@erased.k71.in',
+                'phone' => null,
+                'avatar' => null,
+                'two_factor_secret' => null,
+                'two_factor_enabled' => false,
             ]);
 
-            \App\Http\Controllers\SitemapController::clearCache();
-        }
-
-        // Anonymize personal identifiable information (PII) before soft-deleting (username <= 20 chars)
-        $anonymizedUsername = substr('del_' . $user->id . '_' . base_convert((string) time(), 10, 36), 0, 20);
-        $anonymizedEmailTag = 'deleted_' . $user->id . '_' . time();
-        $user->update([
-            'first_name' => 'Deleted',
-            'last_name' => 'User',
-            'username' => $anonymizedUsername,
-            'email' => $anonymizedEmailTag . '@erased.k71.in',
-            'phone' => null,
-            'avatar' => null,
-            'two_factor_secret' => null,
-            'two_factor_enabled' => false,
-        ]);
-
-        // Soft delete the user record
-        $user->delete();
+            // Soft delete the user record
+            $user->delete();
+        });
 
         // Terminate session
         Auth::logout();

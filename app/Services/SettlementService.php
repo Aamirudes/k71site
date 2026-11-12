@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderStatusLog;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SettlementService
@@ -69,31 +70,42 @@ class SettlementService
      */
     public function markSettled(Order $order, ?string $batchRef = null, ?string $actor = 'system'): bool
     {
-        if ($order->settlement_status === 'cleared') {
+        return DB::transaction(function () use ($order, $batchRef, $actor) {
+            $lockedOrder = Order::whereKey($order->id)->lockForUpdate()->first();
+            if (!$lockedOrder) {
+                return false;
+            }
+
+            if ($lockedOrder->settlement_status === 'cleared') {
+                return true;
+            }
+
+            if ($lockedOrder->payment_status !== 'paid' || $lockedOrder->status === 'cancelled') {
+                return false;
+            }
+
+            $batch = $batchRef ?: ('SETTLE_BATCH_' . date('Ymd') . '_' . strtoupper(substr(md5($lockedOrder->id . time()), 0, 8)));
+
+            $lockedOrder->update([
+                'settlement_status' => 'cleared',
+                'settled_at' => now(),
+                'settlement_batch_ref' => $batch,
+                'vendor_payout_status' => $lockedOrder->vendor_payout_status === 'paid' ? 'paid' : 'ready',
+            ]);
+
+            OrderStatusLog::create([
+                'order_id' => $lockedOrder->id,
+                'from_status' => $lockedOrder->status,
+                'to_status' => $lockedOrder->status,
+                'actor_type' => $actor,
+                'note' => "PhonePe Payment Settlement Cleared & Credited to K71 Current Account (Batch Ref: {$batch}). Order unlocked for vendor acceptance & instant payout.",
+                'ip_address' => request()->ip(),
+            ]);
+
+            Log::info("Order #{$lockedOrder->order_number} settlement marked as cleared. Batch: {$batch}");
+
             return true;
-        }
-
-        $batch = $batchRef ?: ('SETTLE_BATCH_' . date('Ymd') . '_' . strtoupper(substr(md5($order->id . time()), 0, 8)));
-
-        $order->update([
-            'settlement_status' => 'cleared',
-            'settled_at' => now(),
-            'settlement_batch_ref' => $batch,
-            'vendor_payout_status' => $order->vendor_payout_status === 'paid' ? 'paid' : 'ready',
-        ]);
-
-        OrderStatusLog::create([
-            'order_id' => $order->id,
-            'from_status' => $order->status,
-            'to_status' => $order->status,
-            'actor_type' => $actor,
-            'note' => "PhonePe Payment Settlement Cleared & Credited to K71 Current Account (Batch Ref: {$batch}). Order unlocked for vendor acceptance & instant payout.",
-            'ip_address' => request()->ip(),
-        ]);
-
-        Log::info("Order #{$order->order_number} settlement marked as cleared. Batch: {$batch}");
-
-        return true;
+        });
     }
 
     /**
@@ -111,6 +123,7 @@ class SettlementService
     public function autoClearDueOrders(): int
     {
         $dueOrders = Order::where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
             ->where('settlement_status', 'pending')
             ->where(function ($q) {
                 $q->whereNull('settlement_expected_at')
@@ -120,8 +133,9 @@ class SettlementService
 
         $clearedCount = 0;
         foreach ($dueOrders as $order) {
-            $this->markSettled($order, null, 'automated_system');
-            $clearedCount++;
+            if ($this->markSettled($order, null, 'automated_system')) {
+                $clearedCount++;
+            }
         }
 
         return $clearedCount;

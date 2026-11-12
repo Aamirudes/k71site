@@ -32,6 +32,9 @@ class UsedSellerController extends Controller
             ->firstOrFail();
 
         $sellerUser = $profile->user;
+        if (!$sellerUser || ($sellerUser->is_blocked && !auth()->user()?->hasRole('admin'))) {
+            abort(404);
+        }
         $vendorId = $sellerUser->vendor?->id;
 
         $activeListings = Product::withoutGlobalScopes()
