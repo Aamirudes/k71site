@@ -13,27 +13,50 @@ class ImageOptimizerController extends Controller
      */
     public function render(Request $request, $width, $path)
     {
-        $width = min(max((int)$width, 32), 1600);
-        $fullOriginalPath = storage_path('app/public/' . $path);
+        $width = min(max((int) $width, 32), 1600);
+        $normalized = ltrim(str_replace('\\', '/', (string) $path), '/');
 
-        if (!file_exists($fullOriginalPath) || !is_file($fullOriginalPath)) {
-            // Check public/images fallback
-            $publicPath = public_path($path);
-            if (file_exists($publicPath) && is_file($publicPath)) {
-                $fullOriginalPath = $publicPath;
-            } else {
-                $placeholder = public_path('images/product-placeholder.svg');
-                if (file_exists($placeholder)) {
-                    return response()->file($placeholder, [
-                        'Content-Type' => 'image/svg+xml',
-                        'Cache-Control' => 'public, max-age=86400',
-                    ]);
-                }
-                return response('Image not found', 404);
+        if ($normalized === '' || str_contains($normalized, "\0") || str_contains($normalized, '..') || preg_match('#(^|/)\.#', $normalized)) {
+            abort(404);
+        }
+
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif', 'svg'];
+        $fullOriginalPath = null;
+
+        $storageRoot = realpath(storage_path('app/public'));
+        if ($storageRoot) {
+            $candidate = realpath($storageRoot . DIRECTORY_SEPARATOR . $normalized);
+            if ($candidate && is_file($candidate) && str_starts_with($candidate, $storageRoot . DIRECTORY_SEPARATOR)) {
+                $fullOriginalPath = $candidate;
             }
         }
 
+        if (!$fullOriginalPath) {
+            $imagesRoot = realpath(public_path('images'));
+            $relImagesPath = str_starts_with($normalized, 'images/') ? substr($normalized, 7) : $normalized;
+            if ($imagesRoot) {
+                $candidate = realpath($imagesRoot . DIRECTORY_SEPARATOR . $relImagesPath);
+                if ($candidate && is_file($candidate) && str_starts_with($candidate, $imagesRoot . DIRECTORY_SEPARATOR)) {
+                    $fullOriginalPath = $candidate;
+                }
+            }
+        }
+
+        if (!$fullOriginalPath) {
+            $placeholder = public_path('images/product-placeholder.svg');
+            if (file_exists($placeholder)) {
+                return response()->file($placeholder, [
+                    'Content-Type' => 'image/svg+xml',
+                    'Cache-Control' => 'public, max-age=86400',
+                ]);
+            }
+            return response('Image not found', 404);
+        }
+
         $extension = strtolower(pathinfo($fullOriginalPath, PATHINFO_EXTENSION));
+        if (!in_array($extension, $allowedExtensions, true)) {
+            abort(404);
+        }
 
         // SVG files are vectors, serve directly
         if ($extension === 'svg') {

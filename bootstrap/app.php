@@ -28,8 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         $middleware->validateCsrfTokens(except: [
-            'admin*',
-            'admin/*',
             'payment/phonepe/callback*',
             'webhooks/phonepe*',
             'api/webhooks/phonepe*',
@@ -40,7 +38,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin-ajax.php*',
             'api/chat*',
             'chat/api*',
-            'api/user*',
         ]);
         
         $middleware->web(append: [

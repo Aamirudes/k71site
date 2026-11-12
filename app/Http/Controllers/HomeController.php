@@ -100,22 +100,24 @@ class HomeController extends Controller
 
         foreach ($categories as $cat) {
             $categoryIds = $cat->children->pluck('id')->push($cat->id);
-            $cat->products_count = Product::whereIn('category_id', $categoryIds)
+            $catCountQuery = Product::whereIn('category_id', $categoryIds)
                 ->where('status', 'active')
-                ->excludeUsed()
-                ->count();
+                ->excludeUsed();
+            $visibility->scopeVisibleProducts($catCountQuery);
+            $cat->products_count = $catCountQuery->count();
 
             if (!empty($cat->image)) {
                 $cat->sample_image = $cat->image;
             } else {
-                // Automatically fetch the latest real product image from this category
-                $sampleProduct = Product::whereIn('category_id', $categoryIds)
+                // Automatically fetch the latest visible product image from this category
+                $sampleQuery = Product::whereIn('category_id', $categoryIds)
                     ->where('status', 'active')
                     ->excludeUsed()
                     ->whereHas('images')
                     ->with(['images' => fn($q) => $q->orderBy('sort_order')])
-                    ->latest('updated_at')
-                    ->first();
+                    ->latest('updated_at');
+                $visibility->scopeVisibleProducts($sampleQuery);
+                $sampleProduct = $sampleQuery->first();
 
                 $cat->sample_image = $sampleProduct?->images->first()?->path ?? null;
             }

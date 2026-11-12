@@ -144,14 +144,24 @@ class ShortsStudioController extends Controller
             return response()->json(['success' => false, 'message' => 'Uploaded file is not valid: ' . $file->getErrorMessage()], 422);
         }
 
-        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'mp4');
-        $allowedExts = ['mp4', 'webm', 'mov', 'quicktime', 'm4v', 'mkv', 'avi', '3gp'];
-        if (!in_array($ext, $allowedExts)) {
+        $videoMimeMap = [
+            'video/mp4' => 'mp4',
+            'video/webm' => 'webm',
+            'video/quicktime' => 'mov',
+            'video/x-m4v' => 'm4v',
+            'video/x-matroska' => 'mkv',
+            'video/x-msvideo' => 'avi',
+            'video/3gpp' => '3gp',
+        ];
+        $mime = (string) $file->getMimeType();
+        if (!isset($videoMimeMap[$mime])) {
+            $ext = htmlspecialchars((string) $file->getClientOriginalExtension(), ENT_QUOTES, 'UTF-8');
             return response()->json([
                 'success' => false,
-                'message' => "Unsupported video format (.{$ext}). Please upload an MP4, WebM, or MOV video reel."
+                'message' => "Unsupported video format ({$mime} / .{$ext}). Please upload an MP4, WebM, or MOV video reel."
             ], 422);
         }
+        $ext = $videoMimeMap[$mime];
 
         if ($file->getSize() > 200 * 1024 * 1024) { // 200MB limit
             return response()->json([

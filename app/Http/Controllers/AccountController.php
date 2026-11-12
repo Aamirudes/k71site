@@ -227,7 +227,13 @@ class AccountController extends Controller
         }
 
         $file = $request->file('avatar');
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $avatarMimeMap = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ];
+        $ext = $avatarMimeMap[(string) $file->getMimeType()] ?? 'jpg';
         $filename = 'avatar_' . $user->id . '_' . time() . '.' . $ext;
         
         $storageDir = storage_path('app/public/avatars');

@@ -56,11 +56,14 @@ class OtpController extends Controller
                     $user->vendor->update(['slug_reserved_at' => null]);
                 }
 
-                // Merge guest cart before session regenerate
-                \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
-                
-                // Persistent login across browser sessions
+                $preLoginSessionId = $request->session()->getId();
+
+                // Persistent login across browser sessions + regenerate session against fixation
                 Auth::login($user, true);
+                $request->session()->regenerate();
+
+                // Merge guest cart using pre-regeneration session ID
+                \App\Models\Cart::mergeGuestCart($user->id, $preLoginSessionId);
                 
                 $loginRole = $request->session()->get('login_role');
                 $request->session()->forget(['verify_email', 'verify_purpose', 'dev_otp_code', 'login_role']);

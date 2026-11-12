@@ -4,12 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Short;
 use App\Models\Vendor;
+use App\Services\Monetization\VisibilityService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
 class SitemapController extends Controller
 {
+    public static function clearCache(): void
+    {
+        Cache::forget('sitemap_products_xml');
+        Cache::forget('sitemap_categories_xml');
+        Cache::forget('sitemap_stores_xml');
+        Cache::forget('google_merchant_feed_xml');
+    }
     /**
      * Resolve Base URL for sitemap generation
      */
@@ -67,8 +76,9 @@ class SitemapController extends Controller
         $baseUrl = $this->getBaseUrl();
 
         $xml = Cache::remember('sitemap_products_xml', 3600, function () use ($baseUrl) {
-            $products = Product::with(['images' => fn($q) => $q->orderBy('sort_order')])
-                ->where('status', 'active')
+            $visibility = app(VisibilityService::class);
+            $query = Product::with(['images' => fn($q) => $q->orderBy('sort_order'), 'vendor'])
+                ->where('products.status', 'active')
                 ->where(function ($q) {
                     $q->where(function ($nonUsed) {
                         $nonUsed->whereNull('vertical')
@@ -88,7 +98,14 @@ class SitemapController extends Controller
                         });
                     });
                 })
-                ->latest('updated_at')
+                ->where(function ($owner) {
+                    $owner->whereNotNull('products.vendor_id')
+                          ->orWhere('products.vertical', 'used')
+                          ->orWhere('products.listing_type', 'classified');
+                });
+            $visibility->scopeVisibleProducts($query, null, true);
+
+            $products = $query->latest('products.updated_at')
                 ->take(10000)
                 ->get();
 
@@ -97,7 +114,14 @@ class SitemapController extends Controller
 
             foreach ($products as $product) {
                 $isUsed = $product->isUsedListing();
-                $loc = $baseUrl . ($isUsed ? '/used/' : '/product/') . $product->slug;
+                $isService = $product->vertical === 'services' || in_array($product->listing_type, ['gig', 'service'], true);
+                if ($isUsed) {
+                    $loc = $baseUrl . '/used/' . $product->slug;
+                } elseif ($isService) {
+                    $loc = $baseUrl . '/services/' . $product->slug;
+                } else {
+                    $loc = $baseUrl . '/product/' . $product->slug;
+                }
                 $lastmod = ($product->updated_at ?? now())->toAtomString();
 
                 $out .= "    <url>\n";
@@ -171,9 +195,12 @@ class SitemapController extends Controller
     public function stores(): Response
     {
         $xml = Cache::remember('sitemap_stores_xml', 3600, function () {
-            $vendors = Vendor::with('storefrontConfig')
-                ->whereIn('status', ['approved', 'active'])
-                ->latest('updated_at')
+            $visibility = app(VisibilityService::class);
+            $vendorsQuery = Vendor::with('storefrontConfig');
+            $visibility->scopeVisibleVendors($vendorsQuery);
+
+            $vendors = $vendorsQuery
+                ->latest('vendors.updated_at')
                 ->get()
                 ->filter(fn ($vendor) => !$vendor->isServices() || $vendor->isWebsitePublished());
 
@@ -263,11 +290,14 @@ class SitemapController extends Controller
         $baseUrl = $this->getBaseUrl();
 
         $xml = Cache::remember('google_merchant_feed_xml', 3600, function () use ($baseUrl) {
-            $products = Product::with(['images' => fn($q) => $q->orderBy('sort_order'), 'vendor', 'category'])
-                ->where('status', 'active')
-                ->where('total_stock', '>', 0)
-                ->excludeUsed()
-                ->latest('updated_at')
+            $visibility = app(VisibilityService::class);
+            $feedQuery = Product::with(['images' => fn($q) => $q->orderBy('sort_order'), 'vendor', 'category'])
+                ->where('products.status', 'active')
+                ->where('products.total_stock', '>', 0)
+                ->excludeUsed();
+            $visibility->scopeVisibleProducts($feedQuery);
+
+            $products = $feedQuery->latest('products.updated_at')
                 ->take(5000)
                 ->get();
 
@@ -344,9 +374,15 @@ class SitemapController extends Controller
         $baseUrl = $this->getBaseUrl();
 
         $xml = Cache::remember('sitemap_shorts_' . md5($baseUrl), 3600, function () use ($baseUrl) {
-            $shorts = \App\Models\Short::with('vendor')
-                ->where('status', 'published')
-                ->latest()
+            $visibility = app(VisibilityService::class);
+            $shortsQuery = Short::with('vendor')
+                ->whereIn('shorts.status', ['published', 'approved'])
+                ->where(function ($q) use ($visibility) {
+                    $q->whereNull('shorts.vendor_id')
+                      ->orWhereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq));
+                });
+
+            $shorts = $shortsQuery->latest()
                 ->take(500)
                 ->get();
 

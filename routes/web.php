@@ -40,8 +40,8 @@ Route::get('/img-optimized/{width}/{path}', [\App\Http\Controllers\ImageOptimize
     ->name('image.optimized');
 
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
-Route::get('/catalog/suggest', [CatalogController::class, 'suggest'])->name('catalog.suggest');
-Route::get('/api/search/suggest', [CatalogController::class, 'suggest'])->name('api.search.suggest');
+Route::get('/catalog/suggest', [CatalogController::class, 'suggest'])->middleware('throttle:90,1')->name('catalog.suggest');
+Route::get('/api/search/suggest', [CatalogController::class, 'suggest'])->middleware('throttle:90,1')->name('api.search.suggest');
 Route::get('/category/{slug}', [CatalogController::class, 'category'])->name('category.show');
 Route::get('/product/{slug}', [ProductViewController::class, 'show'])->name('product.show');
 Route::get('/catalog/product/{slug}', [ProductViewController::class, 'show'])->name('catalog.product');
@@ -86,8 +86,8 @@ Route::post('/shorts/spin/result', [ShortsSpinController::class, 'result'])->nam
 
 // Food & Restaurants Vertical Routes
 Route::get('/food', [FoodController::class, 'index'])->name('food.index');
-Route::post('/food/location', [FoodController::class, 'setLocation'])->name('food.location.set');
-Route::get('/food/suggest', [FoodController::class, 'suggest'])->name('food.suggest');
+Route::post('/food/location', [FoodController::class, 'setLocation'])->middleware('throttle:60,1')->name('food.location.set');
+Route::get('/food/suggest', [FoodController::class, 'suggest'])->middleware('throttle:90,1')->name('food.suggest');
 Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('food.restaurant');
 Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middleware('auth')->name('food.reorder');
 Route::post('/food/orders/{order}/review', [\App\Http\Controllers\ReviewController::class, 'storeFoodReview'])->middleware('auth')->name('food.orders.review');
@@ -130,8 +130,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/used/{slug}', [\App\Http\Controllers\UsedController::class, 'show'])->name('used.show');
-Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('offers.store');
-Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->name('classifieds.offer');
+Route::post('/offers/product/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->middleware('throttle:30,1')->name('offers.store');
+Route::post('/classifieds/offer/{product}', [\App\Http\Controllers\OfferController::class, 'store'])->middleware('throttle:30,1')->name('classifieds.offer');
 
 // K71 Services & Freelance Marketplace Routes
 Route::get('/services', [\App\Http\Controllers\ServicesController::class, 'index'])->name('services.index');
@@ -188,7 +188,7 @@ Route::middleware('auth')->group(function () {
 });
 
 // Preserved In-Person / Doorstep Bookings
-Route::post('/services/book/{product}', [\App\Http\Controllers\BookingController::class, 'store'])->name('services.book');
+Route::post('/services/book/{product}', [\App\Http\Controllers\BookingController::class, 'store'])->middleware('throttle:30,1')->name('services.book');
 Route::get('/bookings/{booking_number}', [\App\Http\Controllers\BookingController::class, 'show'])->name('bookings.show');
 
 // Enquiry Marketplace & Quotes Routes (Phase 8)
@@ -196,14 +196,14 @@ Route::get('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'index']
 Route::get('/b2b', [\App\Http\Controllers\EnquiryController::class, 'index'])->name('b2b.index');
 Route::get('/enquiry/create', [\App\Http\Controllers\EnquiryController::class, 'create'])->name('enquiry.create');
 Route::get('/b2b/create', [\App\Http\Controllers\EnquiryController::class, 'create'])->name('b2b.create');
-Route::post('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'store'])->name('enquiry.store');
-Route::post('/rfq/submit/{product}', [\App\Http\Controllers\EnquiryController::class, 'submitRfq'])->name('rfq.submit');
+Route::post('/enquiry', [\App\Http\Controllers\EnquiryController::class, 'store'])->middleware('throttle:30,1')->name('enquiry.store');
+Route::post('/rfq/submit/{product}', [\App\Http\Controllers\EnquiryController::class, 'submitRfq'])->middleware('throttle:30,1')->name('rfq.submit');
 Route::get('/enquiry/{enquiry_number}', [\App\Http\Controllers\EnquiryController::class, 'show'])->name('enquiry.show');
-Route::post('/quotes/{quote}/accept', [\App\Http\Controllers\EnquiryController::class, 'acceptQuote'])->name('quotes.accept');
+Route::post('/quotes/{quote}/accept', [\App\Http\Controllers\EnquiryController::class, 'acceptQuote'])->middleware('throttle:30,1')->name('quotes.accept');
 
 // Auctions & Bidding Routes (Phase 9)
 Route::get('/auctions/{product:slug}', [\App\Http\Controllers\AuctionController::class, 'show'])->name('auctions.show');
-Route::post('/auctions/{product}/bid', [\App\Http\Controllers\AuctionController::class, 'placeBid'])->name('auctions.bid');
+Route::post('/auctions/{product}/bid', [\App\Http\Controllers\AuctionController::class, 'placeBid'])->middleware('throttle:30,1')->name('auctions.bid');
 
 // Customer Direct Messaging & Notifications Routes (Phase 9)
 Route::middleware('auth')->group(function () {
@@ -256,15 +256,15 @@ Route::middleware('web')->group(function () {
 // Guest Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:20,1');
     
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store']);
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:15,1');
 
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:10,1')->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->middleware('throttle:10,1')->name('password.update');
 
     Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [GoogleController::class, 'callback']);
@@ -272,15 +272,15 @@ Route::middleware('guest')->group(function () {
 
 // Vendor Onboarding (Guest or Authenticated Customer)
 Route::get('/sell', [RegisterController::class, 'vendorShow'])->name('vendor.register');
-Route::post('/sell', [RegisterController::class, 'vendorStore']);
+Route::post('/sell', [RegisterController::class, 'vendorStore'])->middleware('throttle:15,1');
 Route::get('/vendor/register', [RegisterController::class, 'vendorShow']);
-Route::post('/vendor/register', [RegisterController::class, 'vendorStore']);
+Route::post('/vendor/register', [RegisterController::class, 'vendorStore'])->middleware('throttle:15,1');
 Route::get('/vendor/onboarding', fn() => redirect()->route('vendor.register'))->name('vendor.onboarding');
 
 // OTP Routes (Needs session, but not necessarily fully authenticated)
 Route::get('/verify-otp', [OtpController::class, 'show'])->name('otp.show');
-Route::post('/verify-otp', [OtpController::class, 'verify'])->name('otp.verify');
-Route::post('/resend-otp', [OtpController::class, 'resend'])->name('otp.resend');
+Route::post('/verify-otp', [OtpController::class, 'verify'])->middleware('throttle:20,1')->name('otp.verify');
+Route::post('/resend-otp', [OtpController::class, 'resend'])->middleware('throttle:10,1')->name('otp.resend');
 
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
@@ -345,8 +345,8 @@ Route::post('/checkout/{vendor}', [\App\Http\Controllers\CheckoutController::cla
 Route::post('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'applyCoupon'])->name('checkout.coupon.apply');
 Route::delete('/checkout/{vendor}/coupon', [\App\Http\Controllers\CheckoutController::class, 'removeCoupon'])->name('checkout.coupon.remove');
 Route::post('/checkout/{vendor}/shipping-rate', [\App\Http\Controllers\CheckoutController::class, 'calculateShippingRate'])->name('checkout.shipping_rate');
-Route::post('/checkout/otp/send', [\App\Http\Controllers\CheckoutController::class, 'sendOtp'])->name('checkout.otp.send');
-Route::post('/checkout/otp/verify', [\App\Http\Controllers\CheckoutController::class, 'verifyOtp'])->name('checkout.otp.verify');
+Route::post('/checkout/otp/send', [\App\Http\Controllers\CheckoutController::class, 'sendOtp'])->middleware('throttle:10,1')->name('checkout.otp.send');
+Route::post('/checkout/otp/verify', [\App\Http\Controllers\CheckoutController::class, 'verifyOtp'])->middleware('throttle:20,1')->name('checkout.otp.verify');
 
 Route::get('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'payment'])->name('checkout.payment');
 Route::post('/checkout/{order}/payment', [\App\Http\Controllers\CheckoutController::class, 'processPayment'])->name('checkout.payment.process');
@@ -368,10 +368,10 @@ Route::middleware('auth')->group(function () {
 // Master Admin Authentication Routes (Guest accessible)
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/login', [\App\Http\Controllers\Admin\AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [\App\Http\Controllers\Admin\AuthController::class, 'login'])->name('login.submit');
+    Route::post('/login', [\App\Http\Controllers\Admin\AuthController::class, 'login'])->middleware('throttle:20,1')->name('login.submit');
     Route::get('/verify-otp', [\App\Http\Controllers\Admin\AuthController::class, 'showOtp'])->name('otp.show');
-    Route::post('/verify-otp', [\App\Http\Controllers\Admin\AuthController::class, 'verifyOtp'])->name('otp.verify');
-    Route::post('/resend-otp', [\App\Http\Controllers\Admin\AuthController::class, 'resendOtp'])->name('otp.resend');
+    Route::post('/verify-otp', [\App\Http\Controllers\Admin\AuthController::class, 'verifyOtp'])->middleware('throttle:20,1')->name('otp.verify');
+    Route::post('/resend-otp', [\App\Http\Controllers\Admin\AuthController::class, 'resendOtp'])->middleware('throttle:10,1')->name('otp.resend');
     Route::post('/logout', [\App\Http\Controllers\Admin\AuthController::class, 'logout'])->name('logout');
 });
 
@@ -505,10 +505,22 @@ Route::post('/webhook/shiprocket', [\App\Http\Controllers\Webhook\ShiprocketWebh
 
 // Dynamic Fallback Storage Route for environments where symlink() is disabled
 Route::get('/storage/{path}', function ($path) {
-    // 1. Check if the file exists in storage/app/public
-    $source = storage_path('app/public/' . $path);
-    if (file_exists($source) && is_file($source)) {
-        k71_sync_public_storage($path);
+    $normalized = ltrim(str_replace('\\', '/', (string) $path), '/');
+    if ($normalized === '' || str_contains($normalized, "\0") || str_contains($normalized, '..') || preg_match('#(^|/)\.#', $normalized)) {
+        abort(404);
+    }
+
+    $ext = strtolower(pathinfo($normalized, PATHINFO_EXTENSION));
+    $blockedExts = ['php', 'phtml', 'phar', 'env', 'htaccess', 'sh', 'bat', 'exe', 'sql', 'sqlite'];
+    if (in_array($ext, $blockedExts, true)) {
+        abort(404);
+    }
+
+    $storageRoot = realpath(storage_path('app/public'));
+    $source = $storageRoot ? realpath($storageRoot . DIRECTORY_SEPARATOR . $normalized) : false;
+
+    if ($source && is_file($source) && str_starts_with($source, $storageRoot . DIRECTORY_SEPARATOR)) {
+        k71_sync_public_storage($normalized);
         return response()->file($source);
     }
 

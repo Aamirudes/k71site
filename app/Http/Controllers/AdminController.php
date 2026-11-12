@@ -387,6 +387,7 @@ class AdminController extends Controller
         ]);
 
         $vendor->update(['status' => $validated['status']]);
+        \App\Http\Controllers\SitemapController::clearCache();
 
         return back()->with('success', "Boutique {$vendor->shop_name} status updated to " . strtoupper($validated['status']) . ".");
     }
@@ -563,6 +564,7 @@ class AdminController extends Controller
             k71_delete_public_storage($product->video_path);
         }
         $product->forceDelete();
+        \App\Http\Controllers\SitemapController::clearCache();
 
         return back()->with('success', "Product '{$title}' has been completely removed from site.");
     }
@@ -613,10 +615,11 @@ class AdminController extends Controller
                 $updates['used_status'] = 'paused';
             }
             $reportable->update($updates);
-            \Illuminate\Support\Facades\Cache::forget('sitemap_products_xml');
+            \App\Http\Controllers\SitemapController::clearCache();
         } elseif ($action === 'warn_vendor') {
             if ($reportable instanceof Vendor) {
                 $reportable->update(['status' => 'suspended']);
+                \App\Http\Controllers\SitemapController::clearCache();
             } elseif ($reportable instanceof UsedSellerProfile) {
                 $reportable->user?->update([
                     'is_blocked' => true,

@@ -433,6 +433,12 @@ class StorefrontDesignController extends Controller
         }
 
         try {
+            $request->validate([
+                'logo' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,avif|max:8192',
+                'banner' => 'nullable|image|mimes:jpeg,jpg,png,webp,gif,avif|max:12288',
+                'new_hc_media_file' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime,video/x-m4v|max:20480',
+            ]);
+
             $mirrorToPublic = function (string $relativePath): void {
                 k71_sync_public_storage($relativePath);
             };
@@ -512,7 +518,7 @@ class StorefrontDesignController extends Controller
                 // Check if file uploaded for this slide index
                 if ($request->hasFile("slide_{$idx}_file")) {
                     $sFile = $request->file("slide_{$idx}_file");
-                    if ($sFile && $sFile->isValid()) {
+                    if ($sFile && $sFile->isValid() && str_starts_with((string) $sFile->getMimeType(), 'image/')) {
                         $sPath = $sFile->store('vendors/' . $vendor->id . '/slides', 'public');
                         $mirrorToPublic($sPath);
                         $slideImg = '/storage/' . $sPath;
@@ -657,13 +663,16 @@ class StorefrontDesignController extends Controller
             if ($request->hasFile('new_hc_media_file')) {
                 $file = $request->file('new_hc_media_file');
                 if ($file && $file->isValid()) {
-                    $mime = $file->getMimeType() ?: '';
-                    $ext = strtolower($file->getClientOriginalExtension());
-                    if (str_starts_with($mime, 'video/') || in_array($ext, ['mp4', 'webm', 'mov', 'm4v'])) {
-                        $hcType = 'video';
-                    } else {
-                        $hcType = 'image';
+                    $mime = (string) ($file->getMimeType() ?: '');
+                    $allowedVideoMimes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
+                    $allowedImageMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                    if (!in_array($mime, array_merge($allowedVideoMimes, $allowedImageMimes), true)) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Unsupported media format. Please upload JPG, PNG, WebP, GIF, MP4, MOV, or WebM.',
+                        ], 422);
                     }
+                    $hcType = in_array($mime, $allowedVideoMimes, true) ? 'video' : 'image';
                     $savedPath = $file->store('vendors/' . $vendor->id . '/happy_customers', 'public');
                     $mirrorToPublic($savedPath);
                     $mediaUrl = '/storage/' . $savedPath;

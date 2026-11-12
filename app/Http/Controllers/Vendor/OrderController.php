@@ -17,38 +17,11 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    public function index(Request $request)
+    protected function buildFilteredOrdersQuery($vendor, string $status, string $search)
     {
-        $vendor = auth()->user()->vendor;
-        if (!$vendor) abort(403);
-
-        \App\Services\StockManagerService::releaseExpiredOrders(45);
-        app(\App\Services\SettlementService::class)->autoClearDueOrders();
-
-        $status = $request->query('status', 'all');
-        $search = trim($request->query('search', ''));
-
-        // Counts for pipeline filter tabs
-        $counts = [
-            'all' => Order::where('vendor_id', $vendor->id)->count(),
-            'pending_payment' => Order::where('vendor_id', $vendor->id)
-                ->where(function($q) {
-                    $q->whereHas('paymentClaim', function($cq) {
-                        $cq->whereIn('status', ['submitted', 'pending']);
-                    })->orWhere(function($oq) {
-                        $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
-                    });
-                })->count(),
-            'to_pack' => Order::where('vendor_id', $vendor->id)->whereIn('status', ['pending', 'processing'])->count(),
-            'shipped' => Order::where('vendor_id', $vendor->id)->where('status', 'shipped')->count(),
-            'delivered' => Order::where('vendor_id', $vendor->id)->where('status', 'delivered')->count(),
-            'cancelled' => Order::where('vendor_id', $vendor->id)->where('status', 'cancelled')->count(),
-        ];
-
         $query = Order::with(['user', 'vendor', 'items.product.images', 'items.variant', 'paymentClaim', 'deliveryAssignment.deliveryPartner'])
             ->where('vendor_id', $vendor->id);
 
-        // Apply status filter
         if ($status === 'pending_payment') {
             $query->where(function($q) {
                 $q->whereHas('paymentClaim', function($cq) {
@@ -67,23 +40,115 @@ class OrderController extends Controller
             $query->where('status', 'cancelled');
         }
 
-        // Apply search filter (order number, courier tracking, customer name, email, phone)
-        if (!empty($search)) {
+        if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('order_number', 'LIKE', "%{$search}%")
                   ->orWhere('tracking_number', 'LIKE', "%{$search}%")
                   ->orWhere('courier_name', 'LIKE', "%{$search}%")
                   ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'LIKE', "%{$search}%")
+                      $uq->where('first_name', 'LIKE', "%{$search}%")
+                         ->orWhere('last_name', 'LIKE', "%{$search}%")
+                         ->orWhere('username', 'LIKE', "%{$search}%")
                          ->orWhere('email', 'LIKE', "%{$search}%")
                          ->orWhere('phone', 'LIKE', "%{$search}%");
                   });
             });
         }
 
-        $orders = $query->latest()->paginate(20)->withQueryString();
+        return $query;
+    }
+
+    public function index(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        \App\Services\StockManagerService::releaseExpiredOrders(45);
+        app(\App\Services\SettlementService::class)->autoClearDueOrders();
+
+        $status = (string) $request->query('status', 'all');
+        $search = trim((string) $request->query('search', ''));
+
+        // Counts for pipeline filter tabs
+        $counts = [
+            'all' => Order::where('vendor_id', $vendor->id)->count(),
+            'pending_payment' => Order::where('vendor_id', $vendor->id)
+                ->where(function($q) {
+                    $q->whereHas('paymentClaim', function($cq) {
+                        $cq->whereIn('status', ['submitted', 'pending']);
+                    })->orWhere(function($oq) {
+                        $oq->where('payment_method', 'upi')->whereIn('payment_status', ['processing', 'pending']);
+                    });
+                })->count(),
+            'to_pack' => Order::where('vendor_id', $vendor->id)->whereIn('status', ['pending', 'processing'])->count(),
+            'shipped' => Order::where('vendor_id', $vendor->id)->where('status', 'shipped')->count(),
+            'delivered' => Order::where('vendor_id', $vendor->id)->where('status', 'delivered')->count(),
+            'cancelled' => Order::where('vendor_id', $vendor->id)->where('status', 'cancelled')->count(),
+        ];
+
+        $orders = $this->buildFilteredOrdersQuery($vendor, $status, $search)
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
             
         return view('vendor.orders.index', compact('orders', 'counts', 'status', 'search'));
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $status = (string) $request->query('status', 'all');
+        $search = trim((string) $request->query('search', ''));
+        $orders = $this->buildFilteredOrdersQuery($vendor, $status, $search)->latest()->get();
+        $filename = 'k71-orders-' . $vendor->slug . '-' . now()->format('Y-m-d') . '.csv';
+
+        $sanitizeCsv = static function ($value): string {
+            $str = str_replace(["\r", "\n"], ' ', (string) $value);
+            if ($str !== '' && in_array($str[0], ['=', '+', '-', '@', "\t"], true)) {
+                return "'" . $str;
+            }
+            return $str;
+        };
+
+        return response()->streamDownload(function () use ($orders, $sanitizeCsv) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'Order Number', 'Order Date', 'Customer Name', 'Customer Email', 'Customer Phone',
+                'Status', 'Order Type', 'Payment Method', 'Payment Status',
+                'Items', 'Subtotal (INR)', 'Shipping (INR)', 'Discount (INR)', 'Total (INR)',
+                'Courier', 'Tracking Number',
+            ]);
+
+            foreach ($orders as $order) {
+                $snap = is_array($order->address_snapshot) ? $order->address_snapshot : [];
+                $buyerName = trim((string) ($order->user?->name ?: ($snap['name'] ?? 'Guest Customer')));
+                $buyerPhone = $snap['phone'] ?? $order->user?->phone ?? '';
+                fputcsv($out, [
+                    $sanitizeCsv($order->order_number),
+                    optional($order->created_at)->format('Y-m-d H:i:s'),
+                    $sanitizeCsv($buyerName),
+                    $sanitizeCsv($order->user?->email ?? ''),
+                    $sanitizeCsv($buyerPhone),
+                    $sanitizeCsv($order->status),
+                    $sanitizeCsv($order->order_type ?? 'standard'),
+                    $sanitizeCsv($order->payment_method),
+                    $sanitizeCsv($order->payment_status),
+                    (int) $order->item_count,
+                    number_format(((int) $order->subtotal) / 100, 2, '.', ''),
+                    number_format(((int) $order->shipping_amount) / 100, 2, '.', ''),
+                    number_format(((int) $order->discount_amount) / 100, 2, '.', ''),
+                    number_format(((int) $order->total_amount) / 100, 2, '.', ''),
+                    $sanitizeCsv($order->courier_name ?? ''),
+                    $sanitizeCsv($order->tracking_number ?? ''),
+                ]);
+            }
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function show(Order $order, ShiprocketService $shiprocket)

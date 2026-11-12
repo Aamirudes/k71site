@@ -65,24 +65,30 @@
             </a>
         </div>
 
-        <!-- Search Box -->
-        <form method="GET" action="{{ route('vendor.orders.index') }}" class="flex items-center gap-2">
-            <input type="hidden" name="status" value="{{ $status }}">
-            <div class="relative flex-1 max-w-md">
-                <input type="text" name="search" value="{{ $search }}" 
-                       placeholder="Search by Order #, Customer Name, Phone, or AWB..." 
-                       class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-brand-sage focus:ring-brand-sage shadow-2xs">
-                @if(!empty($search))
-                    <a href="{{ route('vendor.orders.index', ['status' => $status]) }}" 
-                       class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 text-xs font-bold">
-                        ✕
-                    </a>
-                @endif
-            </div>
-            <button type="submit" class="px-4 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl shadow-xs transition-colors">
-                Search
-            </button>
-        </form>
+        <!-- Search Box & Export -->
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <form method="GET" action="{{ route('vendor.orders.index') }}" class="flex items-center gap-2 flex-1 min-w-[260px]">
+                <input type="hidden" name="status" value="{{ $status }}">
+                <div class="relative flex-1 max-w-md">
+                    <input type="text" name="search" value="{{ $search }}" 
+                           placeholder="Search by Order #, Customer Name, Phone, or AWB..." 
+                           class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-xs text-gray-900 placeholder:text-gray-400 focus:border-brand-sage focus:ring-brand-sage shadow-2xs">
+                    @if(!empty($search))
+                        <a href="{{ route('vendor.orders.index', ['status' => $status]) }}" 
+                           class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 text-xs font-bold">
+                            ✕
+                        </a>
+                    @endif
+                </div>
+                <button type="submit" class="px-4 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-2xl shadow-xs transition-colors cursor-pointer">
+                    Search
+                </button>
+            </form>
+            <a href="{{ route('vendor.orders.export', ['status' => $status, 'search' => $search]) }}"
+               class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-bold text-gray-700 shadow-2xs transition-colors">
+                <span>⬇ Export Orders CSV</span>
+            </a>
+        </div>
     </div>
 
     @if($orders->isEmpty())

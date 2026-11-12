@@ -288,17 +288,39 @@
                 </button>
             </div>
 
-            <!-- FORM 2: FULL SEARCH BAR WITH AUTOCOMPLETE -->
+            <!-- FORM 2: FULL SEARCH BAR WITH MULTI-SECTOR AUTOCOMPLETE & RECENT SEARCHES -->
             <div class="relative w-full"
                  x-data="{
-                    q: '',
+                    q: '{{ addslashes((string) request('search', request('q', ''))) }}',
                     suggestions: [],
+                    recentSearches: [],
                     loading: false,
                     open: false,
+                    init() {
+                        try {
+                            const raw = localStorage.getItem('k71_recent_searches');
+                            this.recentSearches = raw ? JSON.parse(raw) : [];
+                            if (!Array.isArray(this.recentSearches)) this.recentSearches = [];
+                        } catch (e) { this.recentSearches = []; }
+                    },
+                    saveSearchTerm(term) {
+                        const t = (term || this.q || '').trim();
+                        if (t.length < 2) return;
+                        try {
+                            let list = this.recentSearches.filter(x => x.toLowerCase() !== t.toLowerCase());
+                            list.unshift(t);
+                            this.recentSearches = list.slice(0, 6);
+                            localStorage.setItem('k71_recent_searches', JSON.stringify(this.recentSearches));
+                        } catch (e) {}
+                    },
+                    clearRecent() {
+                        this.recentSearches = [];
+                        try { localStorage.removeItem('k71_recent_searches'); } catch (e) {}
+                    },
                     fetchSuggest() {
                         if(this.q.trim().length < 2) {
                             this.suggestions = [];
-                            this.open = false;
+                            this.open = this.recentSearches.length > 0;
                             return;
                         }
                         this.loading = true;
@@ -313,12 +335,12 @@
                     }
                  }"
                  @click.away="open = false">
-                <form action="{{ route('catalog.index') }}" method="GET" class="w-full relative">
+                <form action="{{ route('catalog.index') }}" method="GET" @submit="saveSearchTerm()" class="w-full relative">
                     <input type="text" name="search" x-model="q"
                            @input.debounce.250ms="fetchSuggest()"
-                           @focus="if(suggestions.length > 0) open = true"
+                           @focus="if(suggestions.length > 0 || (q.trim().length < 2 && recentSearches.length > 0)) open = true"
                            autocomplete="off"
-                           placeholder="Search products, verified stores, brands..." 
+                           placeholder="Search products, verified stores, food, services, used items..." 
                            class="w-full pl-10 pr-24 py-2.5 rounded-full border {{ $grailTheme ? 'border-white/15 bg-white/5 text-white placeholder:text-white/40 focus:bg-white/10 focus:border-[#ECD2F3] focus:ring-2 focus:ring-[#ECD2F3]/20' : 'border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 placeholder:text-slate-400' }} text-xs sm:text-sm outline-none transition-all font-medium">
                     <div class="absolute left-3.5 top-3 {{ $grailTheme ? 'text-white/60' : 'text-slate-400' }}">
                         <svg class="w-4 h-4 {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-700' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path></svg>
@@ -328,26 +350,48 @@
                     </button>
                 </form>
 
-                <!-- Autocomplete Dropdown -->
-                <div x-show="open && (suggestions.length > 0 || loading)" 
+                <!-- Recent Searches & Multi-Sector Autocomplete Dropdown -->
+                <div x-show="open && (suggestions.length > 0 || loading || (q.trim().length < 2 && recentSearches.length > 0))" 
                      x-transition:enter="transition ease-out duration-150"
                      x-transition:enter-start="opacity-0 translate-y-1"
                      x-transition:enter-end="opacity-100 translate-y-0"
-                     class="absolute top-full left-0 right-0 mt-2 {{ $grailTheme ? 'bg-[#161616]/98 border-white/15 text-[#EFE9F2] divide-white/10' : 'bg-white/95 border-slate-200/80 divide-slate-100' }} backdrop-blur-xl border rounded-2xl shadow-xl overflow-hidden z-50 divide-y"
+                     class="absolute top-full left-0 right-0 mt-2 {{ $grailTheme ? 'bg-[#161616]/98 border-white/15 text-[#EFE9F2] divide-white/10' : 'bg-white/95 border-slate-200/80 divide-slate-100' }} backdrop-blur-xl border rounded-2xl shadow-xl overflow-hidden z-50 divide-y max-h-[380px] overflow-y-auto"
                      style="display: none;">
                     
                     <div x-show="loading" class="p-3 text-center text-xs {{ $grailTheme ? 'text-white/50' : 'text-slate-400' }} flex items-center justify-center gap-2">
-                        <span>Searching marketplace...</span>
+                        <span>Searching across stores, catalog, food &amp; services...</span>
+                    </div>
+
+                    <!-- Recent Searches when query is short -->
+                    <div x-show="!loading && q.trim().length < 2 && recentSearches.length > 0" class="p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider {{ $grailTheme ? 'text-[#C9A24A]' : 'text-slate-400' }}">Recent Searches</span>
+                            <button type="button" @click="clearRecent(); open = false;" class="text-[10px] font-semibold {{ $grailTheme ? 'text-white/50 hover:text-white' : 'text-slate-400 hover:text-slate-800' }} cursor-pointer">Clear</button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <template x-for="term in recentSearches" :key="term">
+                                <a :href="'{{ route('catalog.index') }}?search=' + encodeURIComponent(term)"
+                                   @click="saveSearchTerm(term)"
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium {{ $grailTheme ? 'bg-white/10 text-[#EFE9F2] hover:bg-[#ECD2F3] hover:text-[#1A1018]' : 'bg-slate-100 text-slate-700 hover:bg-slate-900 hover:text-white' }} transition">
+                                    <span>🕒</span>
+                                    <span x-text="term"></span>
+                                </a>
+                            </template>
+                        </div>
                     </div>
 
                     <template x-for="item in suggestions" :key="item.id">
-                        <a :href="item.url" class="flex items-center gap-3 p-2.5 {{ $grailTheme ? 'hover:bg-white/5' : 'hover:bg-slate-50' }} transition group">
+                        <a :href="item.url" @click="saveSearchTerm(item.title)" class="flex items-center gap-3 p-2.5 {{ $grailTheme ? 'hover:bg-white/5' : 'hover:bg-slate-50' }} transition group">
                             <img :src="item.thumb" :alt="item.title" class="w-10 h-10 rounded-lg object-cover border {{ $grailTheme ? 'border-white/10' : 'border-slate-200' }} shrink-0">
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-bold {{ $grailTheme ? 'text-white group-hover:text-[#FFCDFF]' : 'text-slate-900 group-hover:text-black' }} truncate" x-text="item.title"></p>
                                 <div class="flex items-center gap-2 text-[10px] {{ $grailTheme ? 'text-white/55' : 'text-slate-500' }} mt-0.5">
                                     <span class="font-mono font-bold {{ $grailTheme ? 'text-[#ECD2F3]' : 'text-slate-900' }}" x-text="item.price"></span>
-                                    <span class="uppercase px-1.5 py-0.2 rounded {{ $grailTheme ? 'bg-white/10 text-white/80' : 'bg-slate-100 text-slate-600' }} font-bold" x-text="item.vertical"></span>
+                                    <span class="uppercase px-1.5 py-0.2 rounded font-bold"
+                                          :class="item.vertical === 'store'
+                                            ? '{{ $grailTheme ? 'bg-[#ECD2F3]/20 text-[#FFCDFF]' : 'bg-emerald-100 text-emerald-800' }}'
+                                            : '{{ $grailTheme ? 'bg-white/10 text-white/80' : 'bg-slate-100 text-slate-600' }}'"
+                                          x-text="item.vertical"></span>
                                     <span class="truncate {{ $grailTheme ? 'text-white/40' : 'text-slate-400' }}" x-text="item.vendor"></span>
                                 </div>
                             </div>

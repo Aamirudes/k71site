@@ -157,9 +157,26 @@ class CheckoutController extends Controller
                 ->first();
 
             if ($appliedCoupon) {
-                // Calculate discount
-                if ($appliedCoupon->min_cart_value && $subtotal < $appliedCoupon->min_cart_value) {
-                    // Min cart value not met
+                $couponValid = true;
+                if ($appliedCoupon->total_limit && $appliedCoupon->usage_count >= $appliedCoupon->total_limit) {
+                    $couponValid = false;
+                }
+                if ($couponValid && $appliedCoupon->min_cart_value && $subtotal < $appliedCoupon->min_cart_value) {
+                    $couponValid = false;
+                }
+                if ($couponValid && Auth::check()) {
+                    if ($appliedCoupon->first_order_only && Order::where('user_id', Auth::id())->where('vendor_id', $vendor->id)->exists()) {
+                        $couponValid = false;
+                    }
+                    if ($couponValid && $appliedCoupon->per_customer_limit) {
+                        $userUsage = \App\Models\CouponUsage::where('coupon_id', $appliedCoupon->id)->where('user_id', Auth::id())->count();
+                        if ($userUsage >= $appliedCoupon->per_customer_limit) {
+                            $couponValid = false;
+                        }
+                    }
+                }
+
+                if (!$couponValid) {
                     $appliedCoupon = null;
                     session()->forget("applied_coupon_{$vendor->id}");
                 } else {

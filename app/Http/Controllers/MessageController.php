@@ -1380,16 +1380,24 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Uploaded photo is invalid.'], 400);
         }
 
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
-        if (!in_array($file->getMimeType(), $allowedMimes)) {
-            return response()->json(['success' => false, 'error' => 'Only JPG, PNG, WEBP, or GIF images are supported.'], 400);
+        $mimeMap = [
+            'image/jpeg' => 'jpg',
+            'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+            'image/avif' => 'avif',
+        ];
+        $mime = (string) $file->getMimeType();
+        if (!isset($mimeMap[$mime])) {
+            return response()->json(['success' => false, 'error' => 'Only JPG, PNG, WEBP, GIF, or AVIF images are supported.'], 400);
         }
 
         if ($file->getSize() > 10 * 1024 * 1024) {
             return response()->json(['success' => false, 'error' => 'Photo size exceeds maximum limit of 10MB.'], 400);
         }
 
-        $ext = $file->getClientOriginalExtension() ?: 'jpg';
+        $ext = $mimeMap[$mime];
         $fileName = 'chat_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
 
         $targetDir = public_path('storage/chat_attachments');
@@ -1476,15 +1484,19 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Uploaded video is invalid.'], 400);
         }
 
-        $allowedMimes = [
-            'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime', 'video/x-msvideo', 
-            'video/3gpp', 'video/x-matroska', 'video/x-m4v'
+        $videoMimeMap = [
+            'video/mp4' => 'mp4',
+            'video/webm' => 'webm',
+            'video/ogg' => 'ogg',
+            'video/quicktime' => 'mov',
+            'video/x-msvideo' => 'avi',
+            'video/3gpp' => '3gp',
+            'video/x-matroska' => 'mkv',
+            'video/x-m4v' => 'm4v',
         ];
-        $mime = $file->getMimeType();
-        $ext = strtolower($file->getClientOriginalExtension() ?: 'mp4');
-        $validExts = ['mp4', 'webm', 'mov', 'ogg', 'ogv', 'avi', 'mkv', '3gp', 'm4v'];
+        $mime = (string) $file->getMimeType();
 
-        if (!in_array($mime, $allowedMimes) && !in_array($ext, $validExts)) {
+        if (!isset($videoMimeMap[$mime])) {
             return response()->json(['success' => false, 'error' => 'Only MP4, WebM, MOV, and standard video formats are supported.'], 400);
         }
 
@@ -1492,6 +1504,7 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Video size exceeds maximum limit of 60MB.'], 400);
         }
 
+        $ext = $videoMimeMap[$mime];
         $fileName = 'chat_video_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
 
         $targetDir = public_path('storage/chat_videos');
@@ -1582,10 +1595,24 @@ class MessageController extends Controller
             return response()->json(['success' => false, 'error' => 'Audio file exceeds limit of 25MB.'], 400);
         }
 
-        $ext = $file->getClientOriginalExtension() ?: 'webm';
-        if (!in_array(strtolower($ext), ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'aac', 'mp4'])) {
-            $ext = 'webm';
+        $voiceMimeMap = [
+            'audio/webm' => 'webm',
+            'video/webm' => 'webm',
+            'audio/ogg' => 'ogg',
+            'application/ogg' => 'ogg',
+            'audio/mpeg' => 'mp3',
+            'audio/mp3' => 'mp3',
+            'audio/wav' => 'wav',
+            'audio/x-wav' => 'wav',
+            'audio/aac' => 'aac',
+            'audio/mp4' => 'm4a',
+            'audio/x-m4a' => 'm4a',
+        ];
+        $voiceMime = (string) $file->getMimeType();
+        if (!isset($voiceMimeMap[$voiceMime])) {
+            return response()->json(['success' => false, 'error' => 'Only WebM, OGG, MP3, WAV, AAC, or M4A audio recordings are supported.'], 400);
         }
+        $ext = $voiceMimeMap[$voiceMime];
         $fileName = 'voice_' . $userId . '_' . time() . '_' . \Illuminate\Support\Str::random(8) . '.' . $ext;
 
         $targetDir = public_path('storage/chat_voice');

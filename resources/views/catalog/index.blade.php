@@ -2,6 +2,7 @@
     :title="$seoTitle ?? 'Shop All Products'"
     :metaDescription="$seoDescription ?? null"
     :canonicalUrl="$canonicalUrl ?? null"
+    :robots="$robotsMeta ?? null"
     :schemaJson="$catalogSchema ?? null"
     :fullWidth="true"
 >

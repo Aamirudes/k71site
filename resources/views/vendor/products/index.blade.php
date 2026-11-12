@@ -25,13 +25,93 @@
                 Manage live {{ strtolower($sec['catalog_name']) }}, track inventory stock, set trade pricing, and configure warranty or specifications.
             </p>
         </div>
-        <div class="mt-4 sm:mt-0">
+        <div class="mt-4 sm:mt-0 flex flex-wrap items-center gap-2.5">
+            <a href="{{ route('vendor.products.export', request()->only(['search', 'status', 'stock', 'category_id'])) }}"
+               class="inline-flex items-center justify-center rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-bold text-gray-700 shadow-2xs hover:bg-gray-50 transition-all">
+                <span>⬇ Export CSV</span>
+            </a>
             <a href="{{ route('vendor.products.create') }}" class="btn-primary inline-flex items-center justify-center text-sm shadow-sm hover:shadow transition-all">
                 <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                 <span>Add {{ $sec['item_singular'] }}</span>
             </a>
         </div>
     </div>
+
+    @php
+        $counts = $counts ?? ['all' => $products->total(), 'active' => 0, 'draft' => 0, 'low_stock' => 0];
+        $status = $status ?? 'all';
+        $stockFilter = $stockFilter ?? 'all';
+        $search = $search ?? '';
+        $categoryId = $categoryId ?? 0;
+        $categories = $categories ?? collect();
+        $pageProductIds = $products->pluck('id')->values()->all();
+    @endphp
+
+    <!-- Filter & Bulk Operations Toolbar -->
+    <div x-data="{
+            selectedIds: [],
+            allPageIds: @js($pageProductIds),
+            toggleAll(checked) {
+                this.selectedIds = checked ? [...this.allPageIds] : [];
+            }
+         }" class="space-y-4">
+
+        <div class="bg-white/75 backdrop-blur-xl border border-gray-100 rounded-3xl p-4 shadow-2xs space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('vendor.products.index', array_filter(['search' => $search, 'category_id' => $categoryId ?: null])) }}"
+                   class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all {{ $status === 'all' && $stockFilter === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50' }}">
+                    All ({{ $counts['all'] ?? 0 }})
+                </a>
+                <a href="{{ route('vendor.products.index', array_filter(['status' => 'active', 'search' => $search, 'category_id' => $categoryId ?: null])) }}"
+                   class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all {{ $status === 'active' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-emerald-700 border-emerald-200 hover:bg-emerald-50' }}">
+                    ● Live ({{ $counts['active'] ?? 0 }})
+                </a>
+                <a href="{{ route('vendor.products.index', array_filter(['status' => 'draft', 'search' => $search, 'category_id' => $categoryId ?: null])) }}"
+                   class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all {{ $status === 'draft' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50' }}">
+                    ○ Draft ({{ $counts['draft'] ?? 0 }})
+                </a>
+                <a href="{{ route('vendor.products.index', array_filter(['stock' => 'low', 'search' => $search, 'category_id' => $categoryId ?: null])) }}"
+                   class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all {{ $stockFilter === 'low' ? 'bg-rose-600 text-white border-rose-600' : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50' }}">
+                    ⚠ Low Stock ({{ $counts['low_stock'] ?? 0 }})
+                </a>
+            </div>
+
+            <form method="GET" action="{{ route('vendor.products.index') }}" class="flex flex-wrap items-center gap-2">
+                @if($status !== 'all') <input type="hidden" name="status" value="{{ $status }}"> @endif
+                @if($stockFilter !== 'all') <input type="hidden" name="stock" value="{{ $stockFilter }}"> @endif
+                <input type="text" name="search" value="{{ $search }}"
+                       placeholder="Search title, SKU, brand, category..."
+                       class="flex-1 min-w-[200px] rounded-2xl border border-gray-200 bg-white px-4 py-2 text-xs text-gray-900 placeholder:text-gray-400">
+                @if($categories->isNotEmpty())
+                    <select name="category_id" class="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700">
+                        <option value="">All Categories</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}" {{ (int)$categoryId === (int)$cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                @endif
+                <button type="submit" class="px-4 py-2 rounded-2xl bg-gray-900 text-white text-xs font-bold hover:bg-black transition-colors cursor-pointer">Filter</button>
+                @if($search !== '' || $status !== 'all' || $stockFilter !== 'all' || $categoryId > 0)
+                    <a href="{{ route('vendor.products.index') }}" class="px-3 py-2 rounded-2xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50">Reset</a>
+                @endif
+            </form>
+        </div>
+
+        <!-- Bulk Action Sticky Strip (Hidden Table Selection State) -->
+        <div x-show="selectedIds.length > 0" x-cloak
+             class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-zinc-900 text-white px-4 py-3 shadow-lg">
+            <span class="text-xs font-bold"><span x-text="selectedIds.length"></span> listing(s) selected</span>
+            <form method="POST" action="{{ route('vendor.products.bulk_action') }}" class="flex flex-wrap items-center gap-2 m-0">
+                @csrf
+                <template x-for="pid in selectedIds" :key="pid">
+                    <input type="hidden" name="product_ids[]" :value="pid">
+                </template>
+                <button type="submit" name="action" value="activate" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold cursor-pointer">Publish Selected</button>
+                <button type="submit" name="action" value="draft" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-bold cursor-pointer">Move to Draft</button>
+                <button type="submit" name="action" value="delete" onclick="return confirm('Permanently delete selected products? This cannot be undone.');" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer">Delete Selected</button>
+                <button type="button" @click="selectedIds = []" class="px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold cursor-pointer">Clear</button>
+            </form>
+        </div>
 
     @if($products->isEmpty())
         <div class="bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl border border-gray-100 dark:border-zinc-800 rounded-3xl shadow-sm p-12 text-center">
@@ -153,7 +233,14 @@
             <table class="min-w-full divide-y divide-gray-100">
                 <thead class="bg-gray-50/50">
                     <tr>
-                        <th scope="col" class="py-4 pl-6 pr-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{{ ($targetVertical ?? '') === 'food' ? 'Dish / Menu Item' : (($targetVertical ?? '') === 'services' ? 'Service Package' : (($targetVertical ?? '') === 'used' ? 'Item / Device' : 'Product')) }}</th>
+                        <th scope="col" class="py-4 pl-6 pr-2 w-8">
+                            <input type="checkbox"
+                                   @change="toggleAll($event.target.checked)"
+                                   :checked="allPageIds.length > 0 && selectedIds.length === allPageIds.length"
+                                   class="rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                                   aria-label="Select all listings on this page">
+                        </th>
+                        <th scope="col" class="py-4 pl-2 pr-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">{{ ($targetVertical ?? '') === 'food' ? 'Dish / Menu Item' : (($targetVertical ?? '') === 'services' ? 'Service Package' : (($targetVertical ?? '') === 'used' ? 'Item / Device' : 'Product')) }}</th>
                         <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Category</th>
                         <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Price</th>
                         <th scope="col" class="px-3 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Stock</th>
@@ -166,7 +253,10 @@
                 <tbody class="divide-y divide-gray-100 bg-white/40">
                     @foreach($products as $product)
                     <tr class="hover:bg-white/80 transition-colors group">
-                        <td class="whitespace-nowrap py-4 pl-6 pr-3">
+                        <td class="whitespace-nowrap py-4 pl-6 pr-2">
+                            <input type="checkbox" value="{{ $product->id }}" x-model="selectedIds" class="rounded border-gray-300 text-black focus:ring-black cursor-pointer" aria-label="Select {{ $product->title }}">
+                        </td>
+                        <td class="whitespace-nowrap py-4 pl-2 pr-3">
                             <div class="flex items-center">
                                 <div class="w-1.5 h-10 rounded-full mr-4
                                     {{ $product->status === 'active' ? 'bg-green-400' : '' }}
@@ -270,4 +360,5 @@
             {{ $products->links() }}
         </div>
     @endif
+    </div>
 </x-layouts.vendor>

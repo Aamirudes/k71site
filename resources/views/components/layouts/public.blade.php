@@ -46,8 +46,22 @@
         <meta name="keywords" content="{{ $metaKeywords }}">
     @endif
     <link rel="canonical" href="{{ $canonicalUrl ?? url()->current() }}">
-    @if($robots)
-        <meta name="robots" content="{{ $robots }}">
+    @php
+        $resolvedRobots = $robots;
+        if (!$resolvedRobots) {
+            if (request()->routeIs(
+                'login', 'register', 'password.*', 'otp.*', 'vendor.register', 'vendor.onboarding',
+                'account', 'account.*', 'addresses.*', 'cart.*', 'checkout.*', 'orders.*',
+                'wishlist.*', 'messages.*', 'notifications.*', 'delivery.*',
+                'services.workspace*', 'services.contracts.*', 'services.orders.*', 'services.order.*',
+                'used.dashboard', 'used.sell', 'used.edit', 'used.item.edit', 'used.threads.*'
+            )) {
+                $resolvedRobots = 'noindex, nofollow';
+            }
+        }
+    @endphp
+    @if($resolvedRobots)
+        <meta name="robots" content="{{ $resolvedRobots }}">
     @endif
     <meta property="og:title" content="{{ $ogTitle ?? ($title ?? config('marketplace.name')) }}">
     @if($ogDescription ?? $metaDescription)

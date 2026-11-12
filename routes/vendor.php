@@ -51,6 +51,8 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::middleware(['vendor.approved'])->group(function () {
         Route::middleware(['sector.sub:product_item'])->group(function () {
             Route::get('/products/category-fields', [ProductController::class, 'getCategoryFields'])->name('products.category_fields');
+            Route::get('/products/export', [ProductController::class, 'exportCsv'])->name('products.export');
+            Route::post('/products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk_action');
             Route::resource('products', ProductController::class)->except(['show']);
             Route::patch('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle_status');
             Route::patch('/products/{product}/toggle-availability', [ProductController::class, 'toggleAvailability'])->name('products.toggle_availability');
@@ -72,6 +74,7 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
         });
         
         Route::get('/orders/check-new', [\App\Http\Controllers\Vendor\OrderController::class, 'checkNewOrders'])->name('orders.check_new');
+        Route::get('/orders/export', [\App\Http\Controllers\Vendor\OrderController::class, 'exportCsv'])->name('orders.export');
         Route::get('/orders', [\App\Http\Controllers\Vendor\OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [\App\Http\Controllers\Vendor\OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{order}/shipping-label', [\App\Http\Controllers\Vendor\OrderController::class, 'shippingLabel'])->name('orders.shipping_label');

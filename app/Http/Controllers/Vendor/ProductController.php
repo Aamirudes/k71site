@@ -80,14 +80,187 @@ class ProductController extends Controller
         ];
     }
 
-    public function index()
+    protected function buildFilteredProductsQuery($vendor, Request $request)
+    {
+        $query = Product::where('vendor_id', $vendor->id)
+            ->with(['category', 'foodMenuCategory', 'images', 'variants']);
+
+        $search = trim((string) $request->query('search', ''));
+        if ($search !== '') {
+            $wildcard = '%' . $search . '%';
+            $query->where(function ($q) use ($wildcard) {
+                $q->where('title', 'LIKE', $wildcard)
+                  ->orWhere('sku', 'LIKE', $wildcard)
+                  ->orWhere('brand', 'LIKE', $wildcard)
+                  ->orWhereHas('category', fn ($cq) => $cq->where('name', 'LIKE', $wildcard));
+            });
+        }
+
+        $status = (string) $request->query('status', 'all');
+        if (in_array($status, ['active', 'draft', 'archived'], true)) {
+            $query->where('status', $status);
+        }
+
+        $stockFilter = (string) $request->query('stock', 'all');
+        if ($stockFilter === 'low') {
+            $query->where('total_stock', '>', 0)->where('total_stock', '<', 5);
+        } elseif ($stockFilter === 'out') {
+            $query->where('total_stock', '<=', 0);
+        }
+
+        $categoryId = (int) $request->query('category_id', 0);
+        if ($categoryId > 0) {
+            $query->where('category_id', $categoryId);
+        }
+
+        return $query;
+    }
+
+    public function index(Request $request)
     {
         $vendor = auth()->user()->vendor;
         if (!$vendor) abort(403);
 
         $targetVertical = $vendor->getVerticalKey();
-        $products = Product::where('vendor_id', $vendor->id)->with(['category', 'foodMenuCategory'])->latest()->paginate(15);
-        return view('vendor.products.index', compact('products', 'vendor', 'targetVertical'));
+        $search = trim((string) $request->query('search', ''));
+        $status = (string) $request->query('status', 'all');
+        $stockFilter = (string) $request->query('stock', 'all');
+        $categoryId = (int) $request->query('category_id', 0);
+
+        $counts = [
+            'all' => Product::where('vendor_id', $vendor->id)->count(),
+            'active' => Product::where('vendor_id', $vendor->id)->where('status', 'active')->count(),
+            'draft' => Product::where('vendor_id', $vendor->id)->where('status', 'draft')->count(),
+            'low_stock' => Product::where('vendor_id', $vendor->id)->where('total_stock', '<', 5)->count(),
+        ];
+
+        $categories = Category::whereIn('id', Product::where('vendor_id', $vendor->id)->distinct()->pluck('category_id')->filter())
+            ->orderBy('name')
+            ->get();
+
+        $products = $this->buildFilteredProductsQuery($vendor, $request)
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('vendor.products.index', compact(
+            'products', 'vendor', 'targetVertical', 'search', 'status', 'stockFilter', 'categoryId', 'counts', 'categories'
+        ));
+    }
+
+    public function exportCsv(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $products = $this->buildFilteredProductsQuery($vendor, $request)->latest()->get();
+        $filename = 'k71-catalog-' . $vendor->slug . '-' . now()->format('Y-m-d') . '.csv';
+
+        $sanitizeCsv = static function ($value): string {
+            $str = str_replace(["\r", "\n"], ' ', (string) $value);
+            if ($str !== '' && in_array($str[0], ['=', '+', '-', '@', "\t"], true)) {
+                return "'" . $str;
+            }
+            return $str;
+        };
+
+        return response()->streamDownload(function () use ($products, $sanitizeCsv) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'ID', 'Title', 'SKU', 'Vertical', 'Listing Type', 'Category',
+                'Price (INR)', 'Compare At (INR)', 'Stock', 'GST %', 'Status', 'Created At',
+            ]);
+
+            foreach ($products as $product) {
+                fputcsv($out, [
+                    $product->id,
+                    $sanitizeCsv($product->title),
+                    $sanitizeCsv($product->sku ?? ''),
+                    $sanitizeCsv($product->vertical ?? 'marketplace'),
+                    $sanitizeCsv($product->listing_type ?? 'purchase'),
+                    $sanitizeCsv($product->category?->name ?? 'Uncategorized'),
+                    number_format(((int) $product->base_price) / 100, 2, '.', ''),
+                    $product->compare_at_price ? number_format(((int) $product->compare_at_price) / 100, 2, '.', '') : '',
+                    (int) $product->total_stock,
+                    (float) ($product->gst_rate ?? 0),
+                    $sanitizeCsv($product->status),
+                    optional($product->created_at)->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($out);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    public function bulkAction(Request $request)
+    {
+        $vendor = auth()->user()->vendor;
+        if (!$vendor) abort(403);
+
+        $validated = $request->validate([
+            'action' => 'required|in:activate,draft,delete',
+            'product_ids' => 'required|array|min:1',
+            'product_ids.*' => 'integer',
+        ]);
+
+        $products = Product::where('vendor_id', $vendor->id)
+            ->whereIn('id', $validated['product_ids'])
+            ->get();
+
+        if ($products->isEmpty()) {
+            return back()->with('error', 'No matching products found in your catalog.');
+        }
+
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+        $action = $validated['action'];
+        $succeeded = 0;
+        $skipped = [];
+
+        foreach ($products as $product) {
+            if ($action === 'activate') {
+                $sector = $product->vertical ?: $vendor->getCanonicalSectorKey();
+                $check = $entitlements->validateListingWrite($vendor, $sector, true, 0, 0, $product->id);
+                if (!$check['allowed']) {
+                    $skipped[] = "{$product->title}: {$check['reason']}";
+                    continue;
+                }
+                $product->update([
+                    'status' => 'active',
+                    'published_at' => $product->published_at ?? now(),
+                ]);
+                $succeeded++;
+            } elseif ($action === 'draft') {
+                $product->update(['status' => 'draft']);
+                $succeeded++;
+            } elseif ($action === 'delete') {
+                $product->variants()->forceDelete();
+                if (method_exists($product, 'images')) {
+                    foreach ($product->images as $img) {
+                        if ($img->path) {
+                            k71_delete_public_storage($img->path);
+                        }
+                    }
+                    $product->images()->delete();
+                }
+                if ($product->video_path) {
+                    k71_delete_public_storage($product->video_path);
+                }
+                $product->forceDelete();
+                $succeeded++;
+            }
+        }
+
+        \App\Http\Controllers\SitemapController::clearCache();
+
+        $summary = "{$succeeded} listing(s) updated (" . ucfirst($action) . ").";
+        if (!empty($skipped)) {
+            $summary .= ' Skipped ' . count($skipped) . ': ' . implode(' | ', array_slice($skipped, 0, 2));
+            return back()->with($succeeded > 0 ? 'success' : 'error', $summary);
+        }
+
+        return back()->with('success', $summary);
     }
 
     public function create()
@@ -692,6 +865,8 @@ class ProductController extends Controller
                 }
             }
 
+            \App\Http\Controllers\SitemapController::clearCache();
+
             return redirect()->route('vendor.products.index')->with('success', 'Product created successfully.');
         });
     } catch (\Throwable $e) {
@@ -1265,6 +1440,8 @@ class ProductController extends Controller
                 }
             }
 
+            \App\Http\Controllers\SitemapController::clearCache();
+
             return redirect()->route('vendor.products.index')->with('success', 'Product updated successfully.');
         });
     } catch (\Throwable $e) {
@@ -1299,6 +1476,7 @@ class ProductController extends Controller
                 k71_delete_public_storage($product->video_path);
             }
             $product->forceDelete();
+            \App\Http\Controllers\SitemapController::clearCache();
             return redirect()->route('vendor.products.index')->with('success', "Product '{$productTitle}' has been completely removed from site.");
         } catch (\Throwable $e) {
             return redirect()->route('vendor.products.index')->with('error', 'Could not delete product: ' . $e->getMessage());
@@ -1330,6 +1508,7 @@ class ProductController extends Controller
             'status' => $newStatus,
             'published_at' => $newStatus === 'active' ? ($product->published_at ?? now()) : $product->published_at,
         ]);
+        \App\Http\Controllers\SitemapController::clearCache();
 
         $label = $newStatus === 'active' ? 'Published live' : 'Moved to draft (Hidden from store)';
         return back()->with('success', "Product status changed: {$label}.");

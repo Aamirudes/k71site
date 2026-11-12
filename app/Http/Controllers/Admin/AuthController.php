@@ -13,17 +13,6 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
-    protected const MASTER_ADMIN_EMAIL = 'crab.hashir@gmail.com';
-
-    /**
-     * Pre-authorized master passwords for unbreakable self-healing access.
-     */
-    protected const MASTER_PASSWORDS = [
-        'Hashir1284@0',
-        'UsM&FWf&%DlqMi7GB!2UpMj2Ag#mZUIB',
-        '12345678',
-    ];
-
     public function __construct(protected OtpService $otpService) {}
 
     public function showLogin()
@@ -37,25 +26,17 @@ class AuthController extends Controller
     }
 
     /**
-     * Determine if given password matches the DB hash or any master system password.
+     * Validate admin password strictly against stored DB bcrypt hash (plus optional strong env recovery secret).
      */
-    protected function isValidMasterPassword(string $input, ?string $userPasswordHash): bool
+    protected function isValidAdminPassword(string $input, ?string $userPasswordHash): bool
     {
-        // 1. Check against DB hash if present
         if ($userPasswordHash && Hash::check($input, $userPasswordHash)) {
             return true;
         }
 
-        // 2. Check against predefined master passwords
-        $allowed = self::MASTER_PASSWORDS;
-        if ($envPass = env('ADMIN_MASTER_PASSWORD')) {
-            $allowed[] = (string) $envPass;
-        }
-
-        foreach ($allowed as $validPass) {
-            if (hash_equals((string) $validPass, $input)) {
-                return true;
-            }
+        $envPass = (string) env('ADMIN_MASTER_PASSWORD', '');
+        if (strlen($envPass) >= 16 && hash_equals($envPass, $input)) {
+            return true;
         }
 
         return false;
@@ -64,11 +45,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'string'],
-            'password' => ['required', 'string'],
+            'email' => ['required', 'string', 'max:255'],
+            'password' => ['required', 'string', 'max:255'],
         ]);
 
         $throttleKey = 'admin-login:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'email' => "Too many failed admin login attempts. Please wait {$seconds} seconds before retrying.",
+            ])->onlyInput('email');
+        }
+
         $inputEmailOrUsername = strtolower(trim($credentials['email']));
 
         $allowedAdminEmails = [
@@ -84,8 +72,9 @@ class AuthController extends Controller
             ->orWhere('username', $inputEmailOrUsername)
             ->first();
 
-        // Check if user has admin role or is an authorized admin identifier
-        $isAuthorizedEmail = in_array($inputEmailOrUsername, $allowedAdminEmails, true) || ($user && $user->hasRole('admin'));
+        // Check if user has admin role and is not blocked
+        $isAuthorizedEmail = ($user && $user->hasRole('admin'))
+            || (!$user && in_array($inputEmailOrUsername, $allowedAdminEmails, true));
 
         if (!$isAuthorizedEmail) {
             RateLimiter::hit($throttleKey, 300);
@@ -94,9 +83,16 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
+        if ($user && $user->is_blocked) {
+            RateLimiter::hit($throttleKey, 300);
+            return back()->withErrors([
+                'email' => 'Access Denied: This administrator account is suspended.'
+            ])->onlyInput('email');
+        }
+
         $inputPassword = trim($credentials['password']);
 
-        if (!$this->isValidMasterPassword($inputPassword, $user?->password)) {
+        if (!$this->isValidAdminPassword($inputPassword, $user?->password)) {
             RateLimiter::hit($throttleKey, 300);
             return back()->withErrors([
                 'password' => 'Access Denied: Invalid master administrator credentials.'
@@ -106,7 +102,7 @@ class AuthController extends Controller
         // Credentials are valid! Clear rate limiter immediately
         RateLimiter::clear($throttleKey);
 
-        // Self-healing: Ensure user exists in database and password is sync'd to the input password
+        // Bootstrap first admin only if record does not exist yet
         if (!$user) {
             $user = User::create([
                 'first_name' => 'Master',
@@ -118,20 +114,10 @@ class AuthController extends Controller
                 'terms_accepted_at' => now(),
                 'is_blocked' => false,
             ]);
-        } else {
-            $user->password = Hash::make($inputPassword);
-            $user->is_blocked = false;
-            $user->blocked_reason = null;
-            if (!$user->email_verified_at) {
-                $user->email_verified_at = now();
-            }
-            $user->save();
+            $adminRole = Role::firstOrCreate(['name' => 'admin']);
+            $custRole = Role::firstOrCreate(['name' => 'customer']);
+            $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
         }
-
-        // Self-healing: Guarantee 'admin' AND 'customer' role assignment
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $custRole = Role::firstOrCreate(['name' => 'customer']);
-        $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
         $user->load('roles');
 
         // Store intermediate auth session for 2FA OTP verification
@@ -188,20 +174,21 @@ class AuthController extends Controller
             return redirect()->route('admin.login')->with('error', 'Authentication session expired. Please sign in again.');
         }
 
+        $otpThrottleKey = 'admin-otp-verify:' . $userId . ':' . $request->ip();
+        if (RateLimiter::tooManyAttempts($otpThrottleKey, 5)) {
+            $seconds = RateLimiter::availableIn($otpThrottleKey);
+            return back()->withErrors(['code' => "Too many invalid OTP attempts. Please try again in {$seconds} seconds."]);
+        }
+
         try {
-            // Master emergency override code or standard OTP verification
-            if (strtolower(trim($email)) === strtolower(self::MASTER_ADMIN_EMAIL) && trim($request->code) === '777777') {
-                // Emergency bypass code accepted for master administrator
-            } else {
-                $this->otpService->verify($email, $request->code, 'admin_login');
-            }
+            $this->otpService->verify($email, trim($request->code), 'admin_login');
+            RateLimiter::clear($otpThrottleKey);
 
             $user = User::findOrFail($userId);
-
-            // Guarantee both admin and customer role assignment
-            $adminRole = Role::firstOrCreate(['name' => 'admin']);
-            $custRole = Role::firstOrCreate(['name' => 'customer']);
-            $user->roles()->syncWithoutDetaching([$adminRole->id, $custRole->id]);
+            if ($user->is_blocked || !$user->hasRole('admin')) {
+                $request->session()->invalidate();
+                return redirect()->route('admin.login')->withErrors(['email' => 'Administrator access denied.']);
+            }
 
             // Log the user in with persistent remember token
             Auth::login($user, true);
@@ -229,6 +216,7 @@ class AuthController extends Controller
             return redirect()->intended(route('admin.dashboard'))->with('success', 'Two-factor authentication verified. Welcome, Master Administrator.');
 
         } catch (\Exception $e) {
+            RateLimiter::hit($otpThrottleKey, 300);
             return back()->withErrors(['code' => $e->getMessage()]);
         }
     }
@@ -241,6 +229,13 @@ class AuthController extends Controller
         if (!$userId || !$email) {
             return response()->json(['error' => 'Authentication session expired.'], 400);
         }
+
+        $resendKey = 'admin-otp-resend:' . $userId . ':' . $request->ip();
+        if (RateLimiter::tooManyAttempts($resendKey, 3)) {
+            $seconds = RateLimiter::availableIn($resendKey);
+            return response()->json(['error' => "Please wait {$seconds} seconds before requesting another verification code."], 429);
+        }
+        RateLimiter::hit($resendKey, 120);
 
         try {
             $this->otpService->generateAndSend($email, 'admin_login', $userId);
