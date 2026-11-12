@@ -383,109 +383,133 @@
                                     ]);
                                 @endphp
 
-                                <div x-show="shouldShowDish('{{ addslashes(strtolower($dish->title)) }}', {{ $isVeg ? 'true' : 'false' }})"
-                                     class="p-4 sm:p-5 grail-card hover:border-[#623562]/35 transition-all duration-200 flex flex-col sm:flex-row justify-between gap-4 group {{ !$dishAvailable ? 'opacity-70 bg-[#FAFAF8]' : '' }}">
+                                @php
+                                    $dishPricePaise = (int) ($dish->base_price ?? 0);
+                                    $dishComparePaise = (int) ($dish->compare_at_price ?? 0);
+                                    $dishPriceLabel = ($dishPricePaise % 100 === 0)
+                                        ? number_format($dishPricePaise / 100, 0)
+                                        : number_format($dishPricePaise / 100, 2);
+                                    $dishCompareLabel = ($dishComparePaise % 100 === 0)
+                                        ? number_format($dishComparePaise / 100, 0)
+                                        : number_format($dishComparePaise / 100, 2);
+                                    $dishDiscount = ($dishComparePaise > $dishPricePaise && $dishComparePaise > 0)
+                                        ? (int) round((($dishComparePaise - $dishPricePaise) / $dishComparePaise) * 100)
+                                        : 0;
+                                    $dishRating = ((float) ($dish->avg_rating ?? 0) > 0 && (int) ($dish->review_count ?? 0) > 0)
+                                        ? (float) $dish->avg_rating
+                                        : null;
+                                @endphp
+                                <article x-show="shouldShowDish('{{ addslashes(strtolower($dish->title)) }}', {{ $isVeg ? 'true' : 'false' }})"
+                                     class="p-4 sm:p-5 rounded-[22px] bg-white border border-black/8 hover:border-[#623562]/30 shadow-[0_8px_24px_-14px_rgba(26,16,24,0.12)] hover:shadow-[0_16px_36px_-14px_rgba(98,53,98,0.18)] transition-all duration-200 flex justify-between items-stretch gap-4 group {{ !$dishAvailable ? 'opacity-75 bg-[#FAFAF8]' : '' }}">
                                     
                                     <!-- Dish Details (Left) -->
-                                    <div class="flex-1 space-y-2">
-                                        <!-- Dietary / Spice / Time Pills -->
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            @if($isVeg)
-                                                <span class="w-4 h-4 rounded-xs border-2 border-emerald-600 flex items-center justify-center p-0.5" title="{{ $dish->dietary_label_resolved }}">
-                                                    <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
-                                                </span>
-                                            @else
-                                                <span class="w-4 h-4 rounded-xs border-2 border-rose-600 flex items-center justify-center p-0.5" title="{{ $dish->dietary_label_resolved }}">
-                                                    <span class="w-2 h-2 rounded-full bg-rose-600"></span>
-                                                </span>
-                                            @endif
+                                    <div class="flex-1 min-w-0 flex flex-col justify-between gap-2">
+                                        <div class="space-y-1.5">
+                                            <!-- Dietary / Spice / Time Pills -->
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                @if($isVeg)
+                                                    <span class="w-4 h-4 rounded-[3px] border-2 border-emerald-600 flex items-center justify-center shrink-0" title="{{ $dish->dietary_label_resolved }}">
+                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                                                    </span>
+                                                @else
+                                                    <span class="w-4 h-4 rounded-[3px] border-2 border-rose-600 flex items-center justify-center shrink-0" title="{{ $dish->dietary_label_resolved }}">
+                                                        <span class="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-rose-600"></span>
+                                                    </span>
+                                                @endif
 
-                                            @if($dish->prep_time_mins)
-                                                <span class="text-[10px] font-bold text-[#623562] bg-[#ECD2F3]/35 px-2 py-0.5 rounded-full">
-                                                    {{ $dish->prep_time_mins }}m prep
-                                                </span>
-                                            @endif
+                                                @if($dishRating !== null)
+                                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                        ★ {{ number_format($dishRating, 1) }} ({{ $dish->review_count }})
+                                                    </span>
+                                                @endif
 
-                                            @if($spiceLevel)
-                                                <span class="text-[10px] font-bold uppercase text-[#5F5138] bg-[#FAF5EB] border border-[#C9A24A]/35 px-2 py-0.5 rounded-full">
-                                                    🌶️ {{ $spiceLevel }}
-                                                </span>
-                                            @endif
+                                                @if($dish->prep_time_mins)
+                                                    <span class="text-[10px] font-bold text-[#623562] bg-[#F8EFFA] px-2 py-0.5 rounded-full">
+                                                        ~{{ $dish->prep_time_mins }}m
+                                                    </span>
+                                                @endif
 
-                                            @if($servingSize)
-                                                <span class="text-[11px] text-[#1A1018]/55 font-medium">
-                                                    Serves {{ $servingSize }}
-                                                </span>
-                                            @endif
+                                                @if($spiceLevel)
+                                                    <span class="text-[10px] font-bold uppercase text-[#5F5138] bg-[#FAF5EB] border border-[#C9A24A]/30 px-2 py-0.5 rounded-full">
+                                                        🌶️ {{ $spiceLevel }}
+                                                    </span>
+                                                @endif
 
-                                            @if(!$dishAvailable)
-                                                <span class="text-[10px] font-bold uppercase text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                                                    {{ ($dish->available_from && $dish->available_until) ? ('Available ' . $dish->available_from . '-' . $dish->available_until) : 'Sold Out' }}
+                                                @if($servingSize)
+                                                    <span class="text-[11px] text-[#1A1018]/55 font-medium">
+                                                        Serves {{ $servingSize }}
+                                                    </span>
+                                                @endif
+
+                                                @if(!$dishAvailable)
+                                                    <span class="text-[10px] font-bold uppercase text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                                                        {{ ($dish->available_from && $dish->available_until) ? ('Available ' . $dish->available_from . '-' . $dish->available_until) : 'Sold Out' }}
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Dish Name -->
+                                            <h3 class="text-base font-bold text-[#1A1018] group-hover:text-[#623562] transition leading-snug">
+                                                {{ $dish->title }}
+                                            </h3>
+
+                                            <!-- Price Tag -->
+                                            <div class="flex items-baseline gap-2 flex-wrap">
+                                                <span class="text-base sm:text-lg font-extrabold text-[#1A1018] tabular-nums">
+                                                    ₹{{ $dishPriceLabel }}
                                                 </span>
+                                                @if($dishDiscount > 0)
+                                                    <span class="text-xs text-[#1A1018]/40 line-through tabular-nums">
+                                                        ₹{{ $dishCompareLabel }}
+                                                    </span>
+                                                    <span class="text-[10.5px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                                                        {{ $dishDiscount }}% OFF
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Description -->
+                                            @if($dish->description)
+                                                <p class="text-xs text-[#1A1018]/60 line-clamp-2 leading-relaxed">
+                                                    {{ Str::limit(strip_tags($dish->description), 110) }}
+                                                </p>
                                             @endif
                                         </div>
-
-                                        <!-- Dish Name -->
-                                        <h3 class="text-base font-bold text-[#1A1018] group-hover:text-[#623562] transition leading-snug">
-                                            {{ $dish->title }}
-                                        </h3>
-
-                                        <!-- Price Tag -->
-                                        <div class="flex items-baseline gap-2">
-                                            <span class="text-base font-black text-[#1A1018]">
-                                                ₹{{ number_format($dish->base_price / 100, 2) }}
-                                            </span>
-                                            @if($dish->compare_at_price && $dish->compare_at_price > $dish->base_price)
-                                                <span class="text-xs text-[#1A1018]/40 line-through">
-                                                    ₹{{ number_format($dish->compare_at_price / 100, 2) }}
-                                                </span>
-                                                <span class="text-[11px] font-bold text-emerald-700">
-                                                    {{ round((($dish->compare_at_price - $dish->base_price) / $dish->compare_at_price) * 100) }}% OFF
-                                                </span>
-                                            @endif
-                                        </div>
-
-                                        <!-- Description -->
-                                        @if($dish->description)
-                                            <p class="text-xs text-[#1A1018]/60 line-clamp-2 leading-relaxed">
-                                                {{ Str::limit(strip_tags($dish->description), 110) }}
-                                            </p>
-                                        @endif
 
                                         @if($needsCustomization)
-                                            <div class="text-[11px] font-bold text-[#623562] flex items-center gap-1">
-                                                <span>✨ Customizable{{ $hasOptionGroups ? (' • ' . $activeOptionGroups->count() . ' ' . Str::plural('option', $activeOptionGroups->count())) : '' }}</span>
+                                            <div class="text-[11px] font-semibold text-[#623562] pt-1">
+                                                Customisable{{ $hasOptionGroups ? (' • ' . $activeOptionGroups->count() . ' ' . Str::plural('option', $activeOptionGroups->count())) : '' }}
                                             </div>
                                         @endif
                                     </div>
 
-                                    <!-- Dish Image & Action Button (Right) -->
-                                    <div class="relative w-full sm:w-32 h-28 shrink-0 flex flex-col items-center justify-between">
-                                        <div class="w-full h-full rounded-2xl overflow-hidden bg-[#FAFAF8] border border-black/8">
-                                            <img src="{{ $dish->primary_image_url }}" 
+                                    <!-- Dish Thumbnail + Tactile CTA Below (Zero Clipping) -->
+                                    <div class="w-28 sm:w-32 shrink-0 flex flex-col items-center justify-between gap-2.5">
+                                        <div class="relative w-full h-24 sm:h-28 rounded-2xl overflow-hidden bg-[#141115] border border-black/8 shadow-xs">
+                                            <img src="{{ $dish->primary_image_url ?: asset('images/product-placeholder.svg') }}" 
                                                  alt="{{ $dish->title }}" 
-                                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                                 loading="lazy"
+                                                 class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                                 onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                                         </div>
 
-                                        <!-- Add Button or Customizer Trigger -->
-                                        <div class="absolute -bottom-2.5 w-24">
+                                        <div class="w-full">
                                             @if(!$acceptingOrders)
                                                 <button type="button" disabled
-                                                        class="w-full py-1.5 rounded-full bg-stone-300 text-stone-600 text-[10px] font-bold text-center cursor-not-allowed">
+                                                        class="w-full py-2 rounded-full bg-stone-200 text-stone-600 text-[11px] font-bold text-center cursor-not-allowed">
                                                     PAUSED
                                                 </button>
                                             @elseif(!$dishAvailable)
                                                 <button type="button" disabled
-                                                        class="w-full py-1.5 rounded-full bg-rose-100 border border-rose-300 text-rose-700 text-[10px] font-bold text-center cursor-not-allowed">
+                                                        class="w-full py-2 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold text-center cursor-not-allowed">
                                                     UNAVAILABLE
                                                 </button>
                                             @elseif($needsCustomization)
                                                 <button type="button" 
                                                         @click='openCustomizer(@json(json_decode($dishJson)))'
-                                                        class="w-full py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-md transition active:scale-95 cursor-pointer">
+                                                        class="w-full py-2 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-sm transition active:scale-95 cursor-pointer">
                                                     ADD +
                                                 </button>
-                                                <div class="text-[9px] text-[#623562] text-center font-bold mt-0.5">customisable</div>
                                             @else
                                                 <form action="{{ route('cart.add') }}" method="POST" class="w-full" onsubmit="event.preventDefault(); window.k71AddToCart(this);">
                                                     @csrf
@@ -493,14 +517,14 @@
                                                     <input type="hidden" name="variant_id" value="{{ $dish->variants->first()?->id }}">
                                                     <input type="hidden" name="quantity" value="1">
                                                     <button type="submit" 
-                                                            class="w-full py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-md transition active:scale-95 cursor-pointer">
+                                                            class="w-full py-2 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#ECD2F3] text-xs font-bold text-center shadow-sm transition active:scale-95 cursor-pointer">
                                                         + ADD
                                                     </button>
                                                 </form>
                                             @endif
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             @endforeach
                         </div>
                     </section>

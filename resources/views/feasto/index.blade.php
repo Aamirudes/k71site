@@ -163,12 +163,12 @@
                                     </h1>
                                     <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/70 text-[#1A1018] border border-[#623562]/15 text-[10px] font-mono font-bold" x-text="`${filteredProducts.length} items`"></span>
                                 </div>
-                                <p class="text-xs text-[#1A1018]/60 mt-1">Dispatched within 2 minutes from nearest K71 dark store hub</p>
+                                <p class="text-xs text-[#1A1018]/60 mt-1">Freshly prepared items from verified partner kitchens</p>
                             </div>
 
-                            <!-- 10-Min Speed Micro Banner -->
+                            <!-- Live Dispatch Badge -->
                             <div class="flex items-center gap-2 bg-[#FAF5EB] border border-[#C9A24A]/35 px-3.5 py-2 rounded-full text-xs font-bold text-[#5F5138]">
-                                <span>⚡ Delivery in 10-12 mins guaranteed</span>
+                                <span>⚡ Live Kitchen Availability</span>
                             </div>
                         </div>
 
@@ -182,11 +182,13 @@
                                     <div class="relative aspect-square rounded-2xl overflow-hidden bg-[#FAFAF8] border border-black/5 mb-1.5 p-1 sm:p-2 flex items-center justify-center">
                                         <img :src="product.featured_image" :alt="product.title" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200">
                                         
-                                        <!-- 10 MINS Pill Badge -->
-                                        <div class="absolute top-1.5 left-1.5 bg-[#0C831F] text-white px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold tracking-tight uppercase flex items-center gap-0.5 shadow-xs">
-                                            <span>⚡</span>
-                                            <span x-text="product.delivery_minutes || '10m'">10m</span>
-                                        </div>
+                                        <!-- Prep Pill Badge (Only if configured) -->
+                                        <template x-if="product.delivery_minutes">
+                                            <div class="absolute top-1.5 left-1.5 bg-[#0C831F] text-white px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-bold tracking-tight uppercase flex items-center gap-0.5 shadow-xs">
+                                                <span>⚡</span>
+                                                <span x-text="product.delivery_minutes"></span>
+                                            </div>
+                                        </template>
 
                                         <!-- Discount Pill -->
                                         <template x-if="product.compare_at_price > product.base_price">
@@ -534,11 +536,13 @@
                                 </div>
                             </template>
 
-                            <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full border border-black/10 text-[11px] font-bold text-[#1A1018] flex items-center gap-1 shadow-2xs">
-                                <span>⭐</span>
-                                <span x-text="selectedProduct?.rating || '4.9'"></span>
-                                <span class="text-[#1A1018]/50 font-normal">(Verified)</span>
-                            </div>
+                            <template x-if="selectedProduct && selectedProduct.rating">
+                                <div class="absolute bottom-3 right-3 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-full border border-black/10 text-[11px] font-bold text-[#1A1018] flex items-center gap-1 shadow-2xs">
+                                    <span>⭐</span>
+                                    <span x-text="selectedProduct.rating"></span>
+                                    <span class="text-[#1A1018]/50 font-normal">(Verified)</span>
+                                </div>
+                            </template>
                         </div>
 
                         <!-- Product Title & Pack Info -->
@@ -587,45 +591,51 @@
                             </div>
                         </div>
 
-                        <!-- 10-Minute Delivery Assurance -->
+                        <!-- Live Kitchen Dispatch Notice -->
                         <div class="bg-[#F0FDF4] border border-emerald-200 rounded-2xl p-3.5 flex items-start gap-3">
                             <div class="w-8 h-8 rounded-xl bg-[#0C831F] text-white flex items-center justify-center font-bold text-base shrink-0">
                                 ⚡
                             </div>
                             <div class="text-xs">
-                                <span class="font-bold text-emerald-950 block">Instant Doorstep Dispatch</span>
-                                <span class="text-emerald-800">Assigned immediately to the nearest active K71 delivery boy. Freshly picked, safely packed and delivered in 10-12 minutes.</span>
+                                <span class="font-bold text-emerald-950 block">Direct Kitchen Dispatch</span>
+                                <span class="text-emerald-800">Prepared fresh by <span x-text="selectedProduct?.brand || 'Partner Kitchen'"></span> upon order confirmation.</span>
                             </div>
                         </div>
 
                         <!-- Authentic Product Specifications -->
                         <div class="space-y-3 pt-2">
-                            <h3 class="grail-eyebrow !text-[#623562]">Product Specifications</h3>
+                            <h3 class="grail-eyebrow !text-[#623562]">Item Specifications</h3>
                             
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
                                 <div class="bg-white p-3 rounded-xl border border-black/8">
-                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">Shelf Life</span>
-                                    <span class="font-bold text-[#1A1018]" x-text="selectedProduct?.shelf_life || 'Fresh batch direct from brand'"></span>
+                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">Dietary / Kitchen</span>
+                                    <span class="font-bold text-[#1A1018]" x-text="selectedProduct?.shelf_life || 'Freshly Prepared'"></span>
                                 </div>
+                                <template x-if="selectedProduct?.storage_info">
+                                    <div class="bg-white p-3 rounded-xl border border-black/8">
+                                        <span class="text-[10px] text-[#623562] font-bold uppercase block">City</span>
+                                        <span class="font-bold text-[#1A1018]" x-text="selectedProduct.storage_info"></span>
+                                    </div>
+                                </template>
+                                <template x-if="selectedProduct?.fssai_license">
+                                    <div class="bg-white p-3 rounded-xl border border-black/8">
+                                        <span class="text-[10px] text-[#623562] font-bold uppercase block">FSSAI License</span>
+                                        <span class="font-mono font-bold text-[#1A1018] truncate block" x-text="selectedProduct.fssai_license"></span>
+                                    </div>
+                                </template>
                                 <div class="bg-white p-3 rounded-xl border border-black/8">
-                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">Storage Instructions</span>
-                                    <span class="font-bold text-[#1A1018]" x-text="selectedProduct?.storage_info || 'Store in cool and dry place'"></span>
-                                </div>
-                                <div class="bg-white p-3 rounded-xl border border-black/8">
-                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">FSSAI / Safety License</span>
-                                    <span class="font-mono font-bold text-[#1A1018] truncate block" x-text="selectedProduct?.fssai_license || '10014021000854 (Verified)'"></span>
-                                </div>
-                                <div class="bg-white p-3 rounded-xl border border-black/8">
-                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">Country of Origin</span>
+                                    <span class="text-[10px] text-[#623562] font-bold uppercase block">Origin</span>
                                     <span class="font-bold text-[#1A1018]" x-text="selectedProduct?.origin || 'India'"></span>
                                 </div>
                             </div>
 
                             <!-- Full Description -->
-                            <div class="bg-white p-3.5 rounded-xl border border-black/8 text-xs">
-                                <span class="text-[10px] text-[#623562] font-bold uppercase block mb-1">Description</span>
-                                <p class="text-[#1A1018]/75 leading-relaxed font-medium" x-text="selectedProduct?.description || 'Authentic quality product from verified manufacturer, dispatched with seal intact.'"></p>
-                            </div>
+                            <template x-if="selectedProduct?.description">
+                                <div class="bg-white p-3.5 rounded-xl border border-black/8 text-xs">
+                                    <span class="text-[10px] text-[#623562] font-bold uppercase block mb-1">Description</span>
+                                    <p class="text-[#1A1018]/75 leading-relaxed font-medium" x-text="selectedProduct.description"></p>
+                                </div>
+                            </template>
                         </div>
 
                     </div>

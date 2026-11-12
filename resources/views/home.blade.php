@@ -40,19 +40,19 @@
             'btn1_link' => $hp['slide1_btn1_link'] ?? ($hp['hero_cta_primary_link'] ?? '#latest-products'),
             'btn2_text' => $hp['slide1_btn2_text'] ?? '₹199 Budget Store',
             'btn2_link' => $hp['slide1_btn2_link'] ?? '/catalog?sort=price_low',
-            'image' => !empty($hp['slide1_image']) ? format_image_url($hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1400&q=80'),
+            'image' => !empty($hp['slide1_image']) ? format_image_url($hp['slide1_image']) : (!empty($hp['slide1_image_url']) ? $hp['slide1_image_url'] : null),
             'kicker' => 'Chapter 01 • Direct Mart',
         ],
         [
-            'badge' => $hp['slide2_badge'] ?? 'Cloud Kitchen Dining • 30 Min Express',
-            'title' => $hp['slide2_title'] ?? 'Authentic Flavors. Delivered Hot & Fresh.',
-            'subtitle' => $hp['slide2_subtitle'] ?? 'Experience royal Nawabi thalis, aromatic dum biryanis, gourmet chef treats, and hygienic contactless doorstep delivery.',
+            'badge' => $hp['slide2_badge'] ?? 'Cloud Kitchen Dining • Live Menus',
+            'title' => $hp['slide2_title'] ?? 'Authentic Flavors. Fresh Local Kitchens.',
+            'subtitle' => $hp['slide2_subtitle'] ?? 'Order fresh meals from local restaurants and cloud kitchens with transparent delivery and pickup options.',
             'btn1_text' => $hp['slide2_btn1_text'] ?? 'Order Food Online',
             'btn1_link' => $hp['slide2_btn1_link'] ?? '/food',
             'btn2_text' => $hp['slide2_btn2_text'] ?? 'View Restaurants',
-            'btn2_link' => $hp['slide2_btn2_link'] ?? '/food',
-            'image' => !empty($hp['slide2_image']) ? format_image_url($hp['slide2_image']) : (!empty($hp['slide2_image_url']) ? $hp['slide2_image_url'] : 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1400&q=80'),
-            'kicker' => 'Chapter 02 • Feasto Dining',
+            'btn2_link' => $hp['slide2_btn2_link'] ?? '/food#restaurants',
+            'image' => !empty($hp['slide2_image']) ? format_image_url($hp['slide2_image']) : (!empty($hp['slide2_image_url']) ? $hp['slide2_image_url'] : null),
+            'kicker' => 'Chapter 02 • K71 Food',
         ],
         [
             'badge' => $hp['slide3_badge'] ?? 'Artisanal Craft & Certified Home Pro',
@@ -62,7 +62,7 @@
             'btn1_link' => $hp['slide3_btn1_link'] ?? '/services',
             'btn2_text' => $hp['slide3_btn2_text'] ?? 'Submit B2B Enquiry',
             'btn2_link' => $hp['slide3_btn2_link'] ?? '/enquiry',
-            'image' => !empty($hp['slide3_image']) ? format_image_url($hp['slide3_image']) : (!empty($hp['slide3_image_url']) ? $hp['slide3_image_url'] : 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1400&q=80'),
+            'image' => !empty($hp['slide3_image']) ? format_image_url($hp['slide3_image']) : (!empty($hp['slide3_image_url']) ? $hp['slide3_image_url'] : null),
             'kicker' => 'Chapter 03 • Pro & Quarry',
         ]
     ];
@@ -279,10 +279,15 @@
                              class="relative min-h-[430px] sm:min-h-[520px] px-5 pt-7 pb-14 sm:px-16 sm:py-11 lg:px-18 lg:py-12 flex flex-col justify-between"
                              style="{{ $idx > 0 ? 'display: none;' : '' }}">
 
-                            <!-- Soft Backdrop Photography with Obsidian Gradient Scrim -->
-                            <img src="{{ $slide['image'] }}"
-                                 alt="{{ $slide['title'] }}"
-                                 class="absolute inset-0 w-full h-full object-cover object-center opacity-35 pointer-events-none">
+                            @if(!empty($slide['image']))
+                                <!-- Backdrop Photography with Obsidian Gradient Scrim -->
+                                <img src="{{ $slide['image'] }}"
+                                     alt="{{ $slide['title'] }}"
+                                     class="absolute inset-0 w-full h-full object-cover object-center opacity-35 pointer-events-none">
+                            @else
+                                <!-- Dark Studio Orchid/Gold Atmospheric Canvas (No Stock Image Fallback) -->
+                                <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_25%,rgba(236,210,243,0.16),transparent_48%),radial-gradient(circle_at_20%_80%,rgba(201,162,74,0.10),transparent_52%)] pointer-events-none"></div>
+                            @endif
                             <div class="absolute inset-0 bg-gradient-to-r from-[#000000] via-[#000000]/85 to-[#060606]/55 pointer-events-none"></div>
                             <div class="absolute inset-0 bg-gradient-to-t from-[#000000] via-transparent to-[#000000]/60 pointer-events-none"></div>
 
@@ -830,12 +835,12 @@
                     @if($hasVisibleFood)
                     @php
                         $foodHomeTitle = trim((string) ($hp['food_section_title'] ?? '')) ?: 'Artisan Kitchens';
-                        $foodHomeSub = trim((string) ($hp['food_section_subtitle'] ?? '')) ?: 'Hygiene-certified cloud kitchens with fresh 30–45 min doorstep dispatch.';
+                        $foodHomeSub = trim((string) ($hp['food_section_subtitle'] ?? '')) ?: 'Verified local restaurants and cloud kitchens with live menus.';
                     @endphp
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Feasto Dining</span>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">K71 Food</span>
                                 <h2 class="grail-display text-3xl sm:text-4xl text-black">{{ $foodHomeTitle }}</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
@@ -844,39 +849,62 @@
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
                                 <p class="text-xs sm:text-sm text-black/65">{{ $foodHomeSub }}</p>
                                 <a href="{{ k71_vertical_url('food') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
-                                    <span>All Menus</span>
+                                    <span>Explore All Menus</span>
                                     <span>&rarr;</span>
                                 </a>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" data-grail-reveal>
-                            @foreach(($foodRestaurants->isNotEmpty() ? $foodRestaurants : $featuredFood)->take(4) as $fIdx => $item)
+                            @foreach(($featuredFood->isNotEmpty() ? $featuredFood : $foodRestaurants)->take(4) as $fIdx => $item)
                                 @php
                                     $isVendor = $item instanceof \App\Models\Vendor;
                                     $rTitle = $isVendor ? $item->shop_name : $item->title;
-                                    $rImg = $isVendor ? ($item->logo_url ?: $item->cover_url) : $item->primary_image_url;
+                                    $rImg = $isVendor ? ($item->banner_url ?: $item->logo_url) : $item->primary_image_url;
                                     $rUrl = $isVendor ? route('food.restaurant', $item->slug) : ($item->vendor ? route('food.restaurant', $item->vendor->slug) : k71_vertical_url('food'));
+                                    $rVendor = $isVendor ? $item : $item->vendor;
+                                    $rPrep = $isVendor ? ($item->settings?->avg_prep_time_mins) : ($item->prep_time_mins ?: $item->vendor?->settings?->avg_prep_time_mins);
+                                    $rIsVeg = $isVendor ? (bool) ($item->settings?->is_pure_veg) : $item->isVeg();
+                                    $rSub = $isVendor
+                                        ? ($item->city ?: (is_array($item->cuisine_list ?? null) ? implode(' · ', array_slice($item->cuisine_list, 0, 2)) : 'Live Menu'))
+                                        : ($rVendor?->shop_name ?: 'Fresh Dish');
                                 @endphp
                                 <a href="{{ $rUrl }}"
                                    class="grail-card-reveal group bg-white rounded-2xl border border-black/8 hover:border-[#623562]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
                                    style="--delay: {{ $fIdx * 65 }}ms;">
-                                    <div class="relative aspect-video overflow-hidden bg-[#F4F1EC]">
+                                    <div class="relative aspect-[4/3] overflow-hidden bg-[#141115]">
                                         @if($rImg)
                                             <img src="{{ format_image_url($rImg) }}" alt="{{ $rTitle }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                         @else
                                             <div class="w-full h-full flex items-center justify-center text-3xl">🍲</div>
                                         @endif
-                                        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] text-[9px] font-bold uppercase tracking-wider">Fresh</span>
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                        <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                                            <span class="w-4 h-4 rounded bg-white/95 flex items-center justify-center shadow-xs">
+                                                <span class="w-2.5 h-2.5 rounded-xs border {{ $rIsVeg ? 'border-emerald-600' : 'border-rose-600' }} flex items-center justify-center">
+                                                    <span class="w-1.5 h-1.5 rounded-full {{ $rIsVeg ? 'bg-emerald-600' : 'bg-rose-600' }}"></span>
+                                                </span>
+                                            </span>
+                                            @if($rPrep)
+                                                <span class="px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-sm text-white text-[9.5px] font-bold">
+                                                    ~{{ $rPrep }}m
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if(!$isVendor && $item->base_price)
+                                            <span class="absolute bottom-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white text-[#1A1018] text-[11px] font-black shadow-sm">
+                                                ₹{{ number_format($item->base_price / 100, 0) }}
+                                            </span>
+                                        @endif
                                     </div>
                                     <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                                         <div>
-                                            <h3 class="font-semibold text-xs sm:text-sm text-black group-hover:text-[#623562] transition truncate">{{ $rTitle }}</h3>
-                                            <p class="text-[11px] text-black/50 mt-0.5">Express delivery in 30-45 mins</p>
+                                            <h3 class="font-bold text-xs sm:text-sm text-black group-hover:text-[#623562] transition line-clamp-1">{{ $rTitle }}</h3>
+                                            <p class="text-[11px] text-[#623562]/80 font-medium mt-0.5 truncate">{{ $rSub }}</p>
                                         </div>
-                                        <div class="pt-2.5 mt-2.5 border-t border-black/8 flex items-center justify-between text-xs font-semibold text-black">
-                                            <span>View Menu</span>
-                                            <span>&rarr;</span>
+                                        <div class="pt-2.5 mt-2.5 border-t border-black/8 flex items-center justify-between text-xs font-bold text-[#1A1018]">
+                                            <span>{{ $isVendor ? 'View Menu' : 'Order Dish' }}</span>
+                                            <span class="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                                         </div>
                                     </div>
                                 </a>

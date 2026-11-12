@@ -141,14 +141,22 @@
                             <a href="{{ route('services.category', $cat->slug) }}" 
                                class="rounded-2xl relative overflow-hidden group aspect-[4/3] sm:aspect-[16/11] border transition-all duration-300 shadow-2xs {{ $isSelected ? 'border-[#623562] ring-2 ring-[#ECD2F3] shadow-md' : 'border-[#E6E2E8] hover:border-[#623562]/40 hover:shadow-md' }}">
                                 
-                                <!-- Category Photography Cover -->
-                                <img src="{{ $categoryImg }}" 
-                                     alt="{{ $cat->name }}" 
-                                     loading="lazy"
-                                     class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
-                                
-                                <!-- Dark Gradient Overlay for Readability -->
-                                <div class="k71-photo-scrim"></div>
+                                @if($categoryImg)
+                                    <!-- Category Photography Cover -->
+                                    <img src="{{ $categoryImg }}" 
+                                         alt="{{ $cat->name }}" 
+                                         loading="lazy"
+                                         class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out">
+                                    
+                                    <!-- Dark Gradient Overlay for Readability -->
+                                    <div class="k71-photo-scrim"></div>
+                                @else
+                                    <!-- Editorial Studio Monogram Fallback (Zero Stock Fallbacks) -->
+                                    <div class="absolute inset-0 bg-gradient-to-br from-[#1A1018] via-[#2B172B] to-[#0D0D0D]"></div>
+                                    <div class="absolute top-3 left-3 w-8 h-8 rounded-lg bg-[#ECD2F3]/15 border border-[#ECD2F3]/30 text-[#ECD2F3] flex items-center justify-center text-xs font-bold">
+                                        {{ strtoupper(substr($cat->name, 0, 2)) }}
+                                    </div>
+                                @endif
 
                                 <!-- Active Indicator Ribbon -->
                                 @if($isSelected)

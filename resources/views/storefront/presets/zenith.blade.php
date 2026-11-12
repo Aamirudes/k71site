@@ -9,7 +9,7 @@
         $flagship = $featuredProducts->first() ?? $products->first();
         $flagshipImg = $flagship?->images->first()?->path
             ? \App\Services\ImageService::url($flagship->images->first()->path, 1200)
-            : ($storeBanner ?: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1600&q=80');
+            : ($storeBanner ?: asset('images/brand-banner.jpg'));
         if (auth()->check()) {
             $cart = \App\Models\Cart::where('user_id', auth()->id())->first();
             $cartCount = $cart ? $cart->items()->sum('quantity') : 0;

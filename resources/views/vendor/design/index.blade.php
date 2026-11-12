@@ -690,8 +690,8 @@
                         @php
                             $cfgSlides = $currentConfig['hero']['slides'] ?? [];
                             $s1 = $cfgSlides[0] ?? ['title' => $vendor->shop_name, 'subtitle' => $vendor->tagline ?? 'Handcrafted atelier collections', 'button_text' => 'Explore Boutique', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => $currentConfig['brand']['banner_url'] ?? $vendor->banner_url];
-                            $s2 = $cfgSlides[1] ?? ['title' => 'Artisan Editions 2026', 'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery.', 'button_text' => 'Discover New Drops', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80'];
-                            $s3 = $cfgSlides[2] ?? ['title' => 'Signature Heritage', 'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection.', 'button_text' => 'Shop Collection', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80'];
+                            $s2 = $cfgSlides[1] ?? ['title' => $vendor->shop_name . ' Showcase', 'subtitle' => $vendor->tagline ?? '', 'button_text' => 'Discover New Drops', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => null];
+                            $s3 = $cfgSlides[2] ?? ['title' => $vendor->shop_name . ' Signature', 'subtitle' => $vendor->tagline ?? '', 'button_text' => 'Shop Collection', 'link' => '#catalog', 'text_color' => '#ffffff', 'image' => null];
                             $allThree = [$s1, $s2, $s3];
                         @endphp
 

@@ -116,6 +116,9 @@ if ($syncRequested) {
         if ($zip->open($tempZip) === TRUE) {
             $extractDir = $baseDir . '/storage/github_extract_' . time();
             $removeTree($baseDir . '/storage/github_extract');
+            foreach (glob($baseDir . '/storage/github_extract_*') ?: [] as $oldExtDir) {
+                $removeTree($oldExtDir);
+            }
             if (!is_dir($extractDir)) {
                 @mkdir($extractDir, 0775, true);
             }
@@ -571,13 +574,25 @@ try {
     }
 } catch (\Throwable $e) {}
 
-// Ensure all 15 Indian Category Demo Vendors exist on live site (auto-seed if less than 10 or requested)
-try {
-    $existingVendorsCount = Schema::hasTable('vendors') ? DB::table('vendors')->count() : 0;
-    if ($existingVendorsCount < 10 || !empty($_GET['seed_vendors'])) {
-        $tasks['Seed All 15 Indian Demo Category Vendors'] = ['cmd' => 'db:seed', 'args' => ['--class' => 'DemoIndianCategoryVendorsSeeder', '--force' => true]];
+// One-time selective prune: preview with ?prune_except=1, execute ONLY with ?prune_except=1&confirm=KEEP_FOUR_ONLY
+if (!empty($_GET['prune_except'])) {
+    $pruneArgs = ['--clean-storage' => true];
+    if (($_GET['confirm'] ?? '') === 'KEEP_FOUR_ONLY') {
+        $pruneArgs['--force'] = true;
+    } else {
+        $pruneArgs['--dry-run'] = true;
     }
-} catch (\Throwable $e) {}
+    if (!empty($_GET['vendor_ids'])) {
+        $pruneArgs['--vendor-ids'] = (string) $_GET['vendor_ids'];
+    }
+    if (!empty($_GET['user_ids'])) {
+        $pruneArgs['--user-ids'] = (string) $_GET['user_ids'];
+    }
+    if (!empty($_GET['include_admin_vendors'])) {
+        $pruneArgs['--include-admin-vendors'] = true;
+    }
+    $tasks['Selective Prune (Keep Admin Hashir, Safiya, Smartx, Gaddito)'] = ['cmd' => 'marketplace:prune-except', 'args' => $pruneArgs];
+}
 
 // One-time manual reset trigger: ONLY executed if ?reset_marketplace=yes is explicitly passed in URL
 if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') {
@@ -637,16 +652,124 @@ echo "</div>";
 // 11b. Active Vendors In Database Verification
 echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
 try {
-    $allVendors = DB::table('vendors')->select('id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
-    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\nDefault Password for Demo Vendors: Vendor@123#K71\n\n";
+    $allVendors = DB::table('vendors')->select('id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
+    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\n\n";
     foreach ($allVendors as $v) {
-        echo "• ID {$v->id} | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
+        echo "• ID {$v->id} (User #{$v->user_id}) | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
     }
     echo "</pre>";
 } catch (\Throwable $e) {
     echo "<pre class='error'>Vendors query error: " . htmlspecialchars($e->getMessage()) . "</pre>";
 }
 echo "</div>";
+
+// 11c. Optional Read-Only Full User, Data & Storage Audit (?inspect_users=1)
+if (!empty($_GET['inspect_users'])) {
+    echo "<div class='step'><div class='step-title'>🔍 Live Database & Storage Inspection:</div><pre style='color:#e2e8f0;max-height:600px;overflow-y:auto;'>";
+    try {
+        $rolesByUser = Schema::hasTable('role_user') && Schema::hasTable('roles')
+            ? DB::table('role_user')
+                ->join('roles', 'roles.id', '=', 'role_user.role_id')
+                ->get(['role_user.user_id', 'roles.name'])
+                ->groupBy('user_id')
+                ->map(fn ($g) => $g->pluck('name')->implode(', '))
+            : collect();
+
+        $allUsers = DB::table('users')->orderBy('id')->get(['id', 'first_name', 'last_name', 'username', 'email', 'phone']);
+        echo "USERS (" . $allUsers->count() . "):\n";
+        foreach ($allUsers as $u) {
+            $r = $rolesByUser->get($u->id, 'customer');
+            $ordersCnt = Schema::hasTable('orders') ? DB::table('orders')->where('user_id', $u->id)->count() : 0;
+            echo "  User #{$u->id} [{$r}]: {$u->first_name} {$u->last_name} (@{$u->username}) <{$u->email}> | orders={$ordersCnt}\n";
+        }
+
+        echo "\nVENDORS (" . DB::table('vendors')->count() . "):\n";
+        foreach (DB::table('vendors')->orderBy('id')->get(['id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'status', 'logo', 'banner']) as $v) {
+            $prodCnt = Schema::hasTable('products') ? DB::table('products')->where('vendor_id', $v->id)->count() : 0;
+            $ordCnt = Schema::hasTable('orders') ? DB::table('orders')->where('vendor_id', $v->id)->count() : 0;
+            echo "  Vendor #{$v->id} (User #{$v->user_id}): {$v->shop_name} [/s/{$v->slug}] | type={$v->vendor_type} | status={$v->status} | products={$prodCnt} | orders={$ordCnt}\n";
+        }
+
+        if (Schema::hasTable('chat_conversations')) {
+            echo "\nCHAT_CONVERSATIONS (" . DB::table('chat_conversations')->count() . "):\n";
+            foreach (DB::table('chat_conversations')->orderBy('id')->get() as $c) {
+                $msgCnt = Schema::hasTable('chat_messages') ? DB::table('chat_messages')->where('conversation_id', $c->id)->count() : 0;
+                echo "  Conv #{$c->id}: user_one={$c->user_one_id}, user_two={$c->user_two_id}, msgs={$msgCnt}\n";
+            }
+        }
+
+        echo "\nSTORAGE FILES (storage/app/public):\n";
+        $pubRoot = $baseDir . '/storage/app/public';
+        if (is_dir($pubRoot)) {
+            $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($pubRoot, FilesystemIterator::SKIP_DOTS));
+            $fileCount = 0;
+            foreach ($it as $f) {
+                if ($f->isFile()) {
+                    $fileCount++;
+                    echo "  - " . ltrim(str_replace('\\', '/', substr($f->getPathname(), strlen($pubRoot))), '/') . " (" . $f->getSize() . " B)\n";
+                }
+            }
+            echo "Total files in storage/app/public: {$fileCount}\n";
+        }
+    } catch (\Throwable $e) {
+        echo "Inspect Error: " . $e->getMessage();
+    }
+    echo "</pre></div>";
+}
+
+// 11d. Clean obsolete host junk files/folders when ?clean_host_junk=1 is passed
+if (!empty($_GET['clean_host_junk'])) {
+    echo "<div class='step'><div class='step-title'>🧹 Cleaning Obsolete Hostinger Files & Demo Assets:</div><pre class='success'>";
+    $deleteRecursive = function (string $target) use (&$deleteRecursive): int {
+        if (!file_exists($target)) {
+            return 0;
+        }
+        if (is_file($target) || is_link($target)) {
+            return @unlink($target) ? 1 : 0;
+        }
+        $count = 0;
+        $it = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($target, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST
+        );
+        foreach ($it as $item) {
+            if ($item->isDir() && !$item->isLink()) {
+                @rmdir($item->getPathname());
+            } elseif (@unlink($item->getPathname())) {
+                $count++;
+            }
+        }
+        @rmdir($target);
+        return $count;
+    };
+    $junkTargets = [
+        $baseDir . '/public/videos/shorts',
+        $baseDir . '/public/videos/sample1.mp4',
+        $baseDir . '/public/videos/sample2.mp4',
+        $baseDir . '/videos/shorts',
+        $baseDir . '/videos/sample1.mp4',
+        $baseDir . '/videos/sample2.mp4',
+        $baseDir . '/legacy',
+        $baseDir . '/referencepic',
+        $baseDir . '/refzip',
+        $baseDir . '/scratch',
+        $baseDir . '/ui-audit',
+        $baseDir . '/heroscroll',
+        $baseDir . '/referencecard.avif',
+        $baseDir . '/referencecard.png',
+        $baseDir . '/dash_output.html',
+        $baseDir . '/sql/restore_chat_17_to_28.sql',
+        $baseDir . '/database/seeders/DemoIndianCategoryVendorsSeeder.php',
+        $baseDir . '/public/api/setup',
+    ];
+    foreach ($junkTargets as $jt) {
+        $removed = $deleteRecursive($jt);
+        if ($removed > 0) {
+            echo "✓ Removed {$jt} ({$removed} file(s))\n";
+        }
+    }
+    echo "Hostinger obsolete asset cleanup finished.\n</pre></div>";
+}
 
 // 12. Optional SMTP Email Test Runner
 if (isset($_GET['test_mail'])) {
@@ -704,7 +827,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
-    echo "<a href='?token={$secretToken}&sync=1&seed_vendors=1' class='btn btn-purple'>🌱 Pull & Seed Demo Vendors</a>";
+    echo "<a href='?token={$secretToken}&inspect_users=1' class='btn btn-blue'>🔍 Inspect Users & Storage</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
     echo "</div>";

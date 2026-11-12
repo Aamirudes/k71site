@@ -67,23 +67,28 @@ class FeastoController extends Controller
 
             $categorySlugsPresent[$catSlug] = ($categorySlugsPresent[$catSlug] ?? 0) + 1;
 
+            $prepMins = $dp->prep_time_mins ?: $dp->vendor?->settings?->avg_prep_time_mins;
+            $realRating = ((float) ($dp->avg_rating ?? 0) > 0 && (int) ($dp->review_count ?? 0) > 0)
+                ? (float) round($dp->avg_rating, 1)
+                : null;
+
             $allProducts->push((object)[
                 'id' => $dp->id,
                 'title' => $dp->title,
-                'weight' => $dp->weight_grams ? ($dp->weight_grams >= 1000 ? round($dp->weight_grams / 1000, 1) . ' kg' : $dp->weight_grams . ' g') : 'Portion Pack',
+                'weight' => $dp->weight_grams ? ($dp->weight_grams >= 1000 ? round($dp->weight_grams / 1000, 1) . ' kg' : $dp->weight_grams . ' g') : '1 Portion',
                 'slug' => $dp->slug,
                 'base_price' => (float) round($dp->base_price / 100, 2),
-                'compare_at_price' => $dp->compare_at_price ? (float) round($dp->compare_at_price / 100, 2) : (float) round(($dp->base_price * 1.15) / 100, 2),
-                'featured_image' => $dp->primary_image_url ?: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
-                'brand' => $dp->vendor?->shop_name ?? 'K71 Kitchen',
+                'compare_at_price' => ($dp->compare_at_price && $dp->compare_at_price > $dp->base_price) ? (float) round($dp->compare_at_price / 100, 2) : null,
+                'featured_image' => $dp->primary_image_url ?: asset('images/product-placeholder.svg'),
+                'brand' => $dp->vendor?->shop_name ?? 'Partner Kitchen',
                 'category_slug' => $catSlug,
-                'rating' => 4.9,
-                'delivery_minutes' => '10 MINS',
-                'description' => $dp->description ?: 'Freshly prepared and dispatched directly with 10-minute doorstep guarantee.',
-                'shelf_life' => 'Fresh kitchen dispatch - Best enjoyed hot/chilled',
-                'storage_info' => 'Keep covered / refrigerated as suitable',
-                'fssai_license' => $dp->vendor?->settings?->fssai_number ?? '10019011005821 (FSSAI Verified)',
-                'origin' => 'Local Verified Kitchen',
+                'rating' => $realRating,
+                'delivery_minutes' => $prepMins ? ($prepMins . ' MINS') : null,
+                'description' => $dp->description ?: null,
+                'shelf_life' => $dp->vendor?->settings?->is_pure_veg ? 'Pure Veg Kitchen' : ($dp->dietary_label_resolved ?? 'Freshly Prepared'),
+                'storage_info' => $dp->vendor?->city ?: null,
+                'fssai_license' => $dp->vendor?->isFssaiVerified() ? ($dp->vendor->settings->fssai_number . ' (Verified)') : ($dp->vendor?->settings?->fssai_number ?: null),
+                'origin' => $dp->country_of_origin ?: 'India',
             ]);
         }
 

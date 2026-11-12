@@ -76,22 +76,13 @@ class HomeController extends Controller
                 ->get();
         }
 
-        // Dedicated 20 Latest Products for Homepage
+        // Dedicated 20 Latest Retail Products for Homepage (strictly filtered to active retail items)
         $latestProducts = Product::with(['images', 'vendor', 'category', 'variants'])
             ->where('status', 'active')
             ->where($retailFilter)
             ->latest()
             ->take(20)
             ->get();
-
-        if ($latestProducts->count() < 20) {
-            $fallback = Product::with(['images', 'vendor', 'category', 'variants'])
-                ->where('status', 'active')
-                ->latest()
-                ->take(20)
-                ->get();
-            $latestProducts = $latestProducts->merge($fallback)->unique('id')->take(20);
-        }
 
         // Dedicated Services & Freelancers for Homepage Showcase
         $featuredServices = Product::with(['images', 'vendor', 'category', 'gigPackages'])
@@ -190,16 +181,13 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
-        if ($featuredEnquiryProducts->isEmpty()) {
-            $featuredEnquiryProducts = Product::with(['images', 'vendor', 'category'])
-                ->where('status', 'active')
-                ->where('base_price', '>=', 50000)
-                ->take(4)
-                ->get();
-        }
-
-        $foodRestaurants = \App\Models\Vendor::where('status', 'approved')
-            ->where('vendor_type', 'food')
+        $foodRestaurants = \App\Models\Vendor::whereIn('status', ['approved', 'active'])
+            ->where(function ($q) {
+                $q->where('vendor_type', 'food')
+                  ->orWhereHas('settings', fn ($sq) => $sq->where('is_restaurant', true));
+            })
+            ->with('settings')
+            ->latest()
             ->take(4)
             ->get();
 

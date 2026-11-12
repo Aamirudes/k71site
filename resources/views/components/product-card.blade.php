@@ -82,8 +82,8 @@
     }
 }" class="group flex flex-col h-full relative bg-white rounded-[20px] p-3 border border-black/8 hover:border-[#623562]/30 shadow-[0_6px_24px_-12px_rgba(24,24,27,0.08)] hover:shadow-[0_22px_44px_-14px_rgba(34,24,38,0.14)] hover:-translate-y-1 transition-all duration-300" style="font-family: var(--font-grail-sans);">
     
-    <!-- Image Area with Bulletproof 3:4 Aspect Ratio -->
-    <div class="relative w-full aspect-[3/4] bg-[#F4F1EC] rounded-2xl overflow-hidden mb-3" style="aspect-ratio: 3 / 4; width: 100%;">
+    <!-- Image Area: Landscape 4:3 for Food, 3:4 Portrait for Retail -->
+    <div class="relative w-full {{ $isFood ? 'aspect-[4/3] bg-[#141115]' : 'aspect-[3/4] bg-[#F4F1EC]' }} rounded-2xl overflow-hidden mb-3" style="aspect-ratio: {{ $isFood ? '4 / 3' : '3 / 4' }}; width: 100%;">
         <a href="{{ $cardUrl }}" class="block w-full h-full relative z-0" aria-label="{{ $product->title }}">
             @if($product->images->count() > 0)
                 <img src="{{ \App\Services\ImageService::url($product->images->first()->path, 400) }}" 
@@ -93,7 +93,7 @@
                      width="300"
                      height="400"
                      style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"
-                     class="mix-blend-multiply dark:mix-blend-normal transition-transform duration-700 group-hover:scale-105 {{ $isOutOfStock ? 'opacity-60 grayscale-[40%]' : '' }}"
+                     class="{{ $isFood ? '' : 'mix-blend-multiply dark:mix-blend-normal' }} transition-transform duration-700 group-hover:scale-105 {{ $isOutOfStock ? 'opacity-60 grayscale-[40%]' : '' }}"
                      onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                 @if($product->images->count() > 1)
                     <img src="{{ \App\Services\ImageService::url($product->images[1]->path, 400) }}" 
@@ -103,7 +103,7 @@
                          width="300"
                          height="400"
                          style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;"
-                         class="mix-blend-multiply dark:mix-blend-normal opacity-0 transition-opacity duration-700 group-hover:opacity-100 {{ $isOutOfStock ? 'opacity-60 grayscale-[40%]' : '' }}"
+                         class="{{ $isFood ? '' : 'mix-blend-multiply dark:mix-blend-normal' }} opacity-0 transition-opacity duration-700 group-hover:opacity-100 {{ $isOutOfStock ? 'opacity-60 grayscale-[40%]' : '' }}"
                          onerror="this.onerror=null; this.src='{{ asset('images/product-placeholder.svg') }}';">
                 @endif
             @else
@@ -118,13 +118,28 @@
             @endif
         </a>
         
-        <!-- Top Left: Liquid Bubble Frosted Glass Theme Badge & Stock Pill -->
+        <!-- Top Left: Liquid Bubble Frosted Glass Theme Badge / FSSAI Dietary Marker -->
         <div class="absolute top-2.5 left-2.5 z-10 flex flex-col items-start gap-1.5">
-            <!-- Liquid Bubble Glass Pill Badge -->
-            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ $theme['badge_bg'] }} transition-all group-hover:scale-102">
-                <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-900 dark:bg-white' }} shadow-xs"></span>
-                <span>{{ $theme['label'] }}</span>
-            </span>
+            @if($isFood)
+                @php $isFoodVeg = $product->isVeg(); @endphp
+                <span class="w-5 h-5 rounded-md bg-white/95 backdrop-blur-sm shadow-sm flex items-center justify-center" title="{{ $product->dietary_label_resolved }}">
+                    @if($isFoodVeg)
+                        <span class="w-3.5 h-3.5 border-2 border-emerald-600 rounded-[3px] flex items-center justify-center">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        </span>
+                    @else
+                        <span class="w-3.5 h-3.5 border-2 border-rose-600 rounded-[3px] flex items-center justify-center">
+                            <span class="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-rose-600"></span>
+                        </span>
+                    @endif
+                </span>
+            @else
+                <!-- Liquid Bubble Glass Pill Badge -->
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase {{ $theme['badge_bg'] }} transition-all group-hover:scale-102">
+                    <span class="w-1.5 h-1.5 rounded-full {{ $theme['dot_color'] ?? 'bg-slate-900 dark:bg-white' }} shadow-xs"></span>
+                    <span>{{ $theme['label'] }}</span>
+                </span>
+            @endif
 
             @if($isOutOfStock)
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase bg-black/80 text-white backdrop-blur-md border border-white/20 shadow-sm">

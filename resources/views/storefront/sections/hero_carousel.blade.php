@@ -14,26 +14,26 @@
     $buttonText = $heroCfg['button_text'] ?? 'Explore Boutique';
     $buttonLink = $heroCfg['link'] ?? '#catalog';
 
-    // 3 Curated Luxury Slides by default (customizable per vendor)
+    // 3 Curated Slides by default (customizable per vendor; uses store banner when present)
     $defaultSlides = [
         [
-            'image' => $bannerUrl ?: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80',
+            'image' => $bannerUrl ?: null,
             'title' => $headline,
             'subtitle' => $subtitle,
             'button_text' => $buttonText,
             'link' => $buttonLink,
         ],
         [
-            'image' => 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=2000&q=80',
-            'title' => 'Artisan Editions 2026',
-            'subtitle' => 'Handcrafted creations packaged directly from our workshop with doorstep insured delivery across India.',
-            'button_text' => 'Discover New Drops',
+            'image' => $bannerUrl ?: null,
+            'title' => $headline,
+            'subtitle' => $subtitle,
+            'button_text' => 'Discover Collection',
             'link' => '#catalog',
         ],
         [
-            'image' => 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=2000&q=80',
-            'title' => 'Signature Heritage',
-            'subtitle' => 'Verified authentic craftsmanship backed by K71 Buyer Protection and direct merchant support.',
+            'image' => $bannerUrl ?: null,
+            'title' => $vendor->shop_name,
+            'subtitle' => $subtitle,
             'button_text' => 'Shop Collection',
             'link' => '#catalog',
         ],
@@ -120,7 +120,7 @@
     <!-- Carousel Slides Track -->
     @foreach($slides as $idx => $slide)
         @php
-            $slideImg = !empty($slide['image']) ? $slide['image'] : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=2000&q=80';
+            $slideImg = !empty($slide['image']) ? $slide['image'] : ($bannerUrl ?: null);
             $slideTextColor = $slide['text_color'] ?? '#ffffff';
         @endphp
         <div x-show="activeSlide === {{ $idx }}"
@@ -133,12 +133,17 @@
              class="absolute inset-0 w-full h-full"
              style="{{ $idx === 0 ? 'display: block;' : 'display: none;' }} position: absolute; inset: 0; width: 100%; height: 100%;">
 
-            <!-- High-Res Background Image with Fast Loading & Preload -->
-            <img src="{{ $slideImg }}" 
-                 alt="{{ $slide['title'] ?? $headline }}" 
-                 class="w-full h-full object-cover object-center filter contrast-[1.03]"
-                 style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
-                 {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>
+            @if($slideImg)
+                <!-- High-Res Background Image with Fast Loading & Preload -->
+                <img src="{{ $slideImg }}" 
+                     alt="{{ $slide['title'] ?? $headline }}" 
+                     class="w-full h-full object-cover object-center filter contrast-[1.03]"
+                     style="width: 100%; height: 100%; object-fit: cover; object-position: center;"
+                     {{ $idx === 0 ? 'loading=eager fetchpriority=high' : 'loading=lazy' }}>
+            @else
+                <div class="w-full h-full"
+                     style="width: 100%; height: 100%; background: radial-gradient(circle at 25% 25%, #2B1B26 0%, #141115 55%, #09090b 100%);"></div>
+            @endif
 
             <!-- Top Header Protection Gradient (Ensures Transparent Header Is Razor Sharp) -->
             <div class="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/75 via-black/35 to-transparent pointer-events-none z-10"></div>

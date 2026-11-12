@@ -233,6 +233,7 @@ class FoodController extends Controller
         }
 
         $visibleVendorIds = $filteredRestaurants->pluck('id')->all();
+        $restaurantMap = $filteredRestaurants->keyBy('id');
 
         // 3. Query Trending / Available Food Dishes
         $dishesQuery = Product::with(['images', 'vendor.settings', 'category', 'foodMenuCategory', 'variants', 'optionGroups.modifiers', 'modifiers'])
@@ -241,7 +242,7 @@ class FoodController extends Controller
             ->where('is_dish_available', true)
             ->whereHas('vendor', fn ($vq) => $vq->whereIn('status', ['approved', 'active']));
 
-        if (($selectedCity || $selectedPincode)) {
+        if ($selectedCity || $selectedPincode || $openNowOnly || $takeawayOnly || $deliveryTime === 'under_30' || $rating === '4plus') {
             $dishesQuery->whereIn('vendor_id', !empty($visibleVendorIds) ? $visibleVendorIds : [-1]);
         }
 
@@ -263,6 +264,8 @@ class FoodController extends Controller
         if ($cuisine) {
             $dishesQuery->where(function ($q) use ($cuisine) {
                 $q->where('custom_fields->cuisine', 'like', "%{$cuisine}%")
+                  ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$cuisine}%")->orWhere('slug', 'like', "%{$cuisine}%"))
+                  ->orWhereHas('foodMenuCategory', fn ($mq) => $mq->where('name', 'like', "%{$cuisine}%"))
                   ->orWhereHas('vendor.settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$cuisine}%"));
             });
         }
@@ -281,15 +284,39 @@ class FoodController extends Controller
             $dishesQuery->where('base_price', '<=', 20000);
         }
 
-        $trendingDishes = $dishesQuery->latest()->take(24)->get()->filter(function (Product $dish) use ($pureVegOnly) {
+        if ($sort === 'cost_low') {
+            $dishesQuery->orderBy('base_price');
+        } elseif ($sort === 'rating') {
+            $dishesQuery->orderByDesc('avg_rating')->latest();
+        } else {
+            $dishesQuery->orderByDesc('is_featured')->latest();
+        }
+
+        $trendingDishes = $dishesQuery->take(40)->get()->filter(function (Product $dish) use ($pureVegOnly, $openNowOnly, $restaurantMap) {
             if (!$this->foodService->isDishAvailableForOrder($dish)) {
                 return false;
             }
             if ($pureVegOnly && !$dish->isVeg()) {
                 return false;
             }
+            $vendorOp = $restaurantMap->get($dish->vendor_id)?->getAttribute('operational_status')
+                ?? ($dish->vendor ? $this->foodService->getRestaurantOperationalStatus($dish->vendor) : ['accepting_orders' => true, 'label' => 'Open']);
+            if ($openNowOnly && !($vendorOp['accepting_orders'] ?? false)) {
+                return false;
+            }
+            $dish->setAttribute('kitchen_operational_status', $vendorOp);
             return true;
-        })->values();
+        });
+
+        if ($sort === 'delivery_time') {
+            $trendingDishes = $trendingDishes->sortBy(fn (Product $d) => (int) ($d->prep_time_mins ?: ($d->vendor?->settings?->avg_prep_time_mins ?? 35)));
+        } elseif ($sort === 'recommended') {
+            $trendingDishes = $trendingDishes->sortByDesc(function (Product $d) {
+                $op = $d->getAttribute('kitchen_operational_status');
+                return (($op['accepting_orders'] ?? true) ? 10000 : 0) + (int) round(((float) ($d->avg_rating ?? 0)) * 100);
+            });
+        }
+        $trendingDishes = $trendingDishes->values();
 
         // 4. Real Active Restaurant Coupons / Offers only (no fake hardcoded coupons)
         $activeDeals = Coupon::where('is_active', true)
