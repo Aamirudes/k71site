@@ -311,26 +311,34 @@ class PruneExceptPreservedUsers extends Command
             }
 
             // Notifications & user metadata
-            $pruneLog['notifications'] = Schema::hasTable('notifications')
+            $pruneLog['notifications'] = (Schema::hasTable('notifications') && Schema::hasColumn('notifications', 'notifiable_id'))
                 ? DB::table('notifications')->whereNotIn('notifiable_id', $keepUserIds)->delete()
                 : 0;
             $pruneLog['addresses'] = $this->deleteWhereNotIn('addresses', 'user_id', $keepUserIds);
-            $pruneLog['wishlists'] = Schema::hasTable('wishlists')
+            $pruneLog['wishlists'] = (Schema::hasTable('wishlists') && Schema::hasColumn('wishlists', 'user_id'))
                 ? DB::table('wishlists')->where(function ($q) use ($keepUserIds, $keepProductIds) {
                     $q->whereNotIn('user_id', $keepUserIds);
-                    if (!empty($keepProductIds)) {
+                    if (!empty($keepProductIds) && Schema::hasColumn('wishlists', 'product_id')) {
                         $q->orWhereNotIn('product_id', $keepProductIds);
                     }
                 })->delete()
                 : 0;
-            $pruneLog['user_follows'] = Schema::hasTable('user_follows')
-                ? DB::table('user_follows')->where(function ($q) use ($keepUserIds, $keepVendorIds) {
-                    $q->whereNotIn('user_id', $keepUserIds);
-                    if (!empty($keepVendorIds) && Schema::hasColumn('user_follows', 'vendor_id')) {
-                        $q->orWhereNotIn('vendor_id', $keepVendorIds);
-                    }
-                })->delete()
-                : 0;
+            $pruneLog['user_follows'] = 0;
+            if (Schema::hasTable('user_follows')) {
+                $ufQuery = DB::table('user_follows');
+                if (Schema::hasColumn('user_follows', 'follower_id') && Schema::hasColumn('user_follows', 'following_id')) {
+                    $pruneLog['user_follows'] = $ufQuery->whereNotIn('follower_id', $keepUserIds)
+                        ->orWhereNotIn('following_id', $keepUserIds)
+                        ->delete();
+                } elseif (Schema::hasColumn('user_follows', 'user_id')) {
+                    $pruneLog['user_follows'] = $ufQuery->where(function ($q) use ($keepUserIds, $keepVendorIds) {
+                        $q->whereNotIn('user_id', $keepUserIds);
+                        if (!empty($keepVendorIds) && Schema::hasColumn('user_follows', 'vendor_id')) {
+                            $q->orWhereNotIn('vendor_id', $keepVendorIds);
+                        }
+                    })->delete();
+                }
+            }
             $pruneLog['user_consents'] = $this->deleteWhereNotIn('user_consents', 'user_id', $keepUserIds);
 
             // Carts & Checkout
@@ -347,34 +355,50 @@ class PruneExceptPreservedUsers extends Command
             $pruneLog['orders'] = $this->deleteWhereNotIn('orders', 'id', $keepOrderIds);
 
             // Reviews, Offers, Bids, Bookings, Reports, Disputes
-            $pruneLog['reviews'] = Schema::hasTable('reviews')
+            $pruneLog['reviews'] = (Schema::hasTable('reviews') && Schema::hasColumn('reviews', 'user_id'))
                 ? DB::table('reviews')->where(function ($q) use ($keepUserIds, $keepProductIds) {
-                    $q->whereNotIn('user_id', $keepUserIds)
-                      ->orWhereNotIn('product_id', !empty($keepProductIds) ? $keepProductIds : [-1]);
+                    $q->whereNotIn('user_id', $keepUserIds);
+                    if (Schema::hasColumn('reviews', 'product_id')) {
+                        $q->orWhereNotIn('product_id', !empty($keepProductIds) ? $keepProductIds : [-1]);
+                    }
                 })->delete()
                 : 0;
             $pruneLog['offers'] = Schema::hasTable('offers')
                 ? DB::table('offers')->where(function ($q) use ($keepUserIds, $keepProductIds, $keepVendorIds) {
-                    $q->whereNotIn('product_id', !empty($keepProductIds) ? $keepProductIds : [-1])
-                      ->orWhereNotIn('vendor_id', !empty($keepVendorIds) ? $keepVendorIds : [-1])
-                      ->orWhere(function ($uq) use ($keepUserIds) {
-                          $uq->whereNotNull('user_id')->whereNotIn('user_id', $keepUserIds);
-                      });
+                    if (Schema::hasColumn('offers', 'product_id')) {
+                        $q->whereNotIn('product_id', !empty($keepProductIds) ? $keepProductIds : [-1]);
+                    }
+                    if (Schema::hasColumn('offers', 'vendor_id')) {
+                        $q->orWhereNotIn('vendor_id', !empty($keepVendorIds) ? $keepVendorIds : [-1]);
+                    }
+                    if (Schema::hasColumn('offers', 'user_id')) {
+                        $q->orWhere(function ($uq) use ($keepUserIds) {
+                            $uq->whereNotNull('user_id')->whereNotIn('user_id', $keepUserIds);
+                        });
+                    }
                 })->delete()
                 : 0;
-            $pruneLog['bids'] = Schema::hasTable('bids')
-                ? DB::table('bids')->whereNotIn('user_id', $keepUserIds)->delete()
-                : 0;
+            $pruneLog['bids'] = $this->deleteWhereNotIn('bids', 'user_id', $keepUserIds);
             $pruneLog['bookings'] = Schema::hasTable('bookings')
                 ? DB::table('bookings')->where(function ($q) use ($keepUserIds, $keepVendorIds) {
-                    $q->whereNotIn('vendor_id', !empty($keepVendorIds) ? $keepVendorIds : [-1])
-                      ->orWhere(function ($uq) use ($keepUserIds) {
-                          $uq->whereNotNull('user_id')->whereNotIn('user_id', $keepUserIds);
-                      });
+                    if (Schema::hasColumn('bookings', 'vendor_id')) {
+                        $q->whereNotIn('vendor_id', !empty($keepVendorIds) ? $keepVendorIds : [-1]);
+                    }
+                    if (Schema::hasColumn('bookings', 'user_id')) {
+                        $q->orWhere(function ($uq) use ($keepUserIds) {
+                            $uq->whereNotNull('user_id')->whereNotIn('user_id', $keepUserIds);
+                        });
+                    }
                 })->delete()
                 : 0;
             $pruneLog['reports'] = Schema::hasTable('reports')
-                ? DB::table('reports')->whereNotIn('user_id', $keepUserIds)->delete()
+                ? DB::table('reports')->where(function ($q) use ($keepUserIds) {
+                    if (Schema::hasColumn('reports', 'reporter_id')) {
+                        $q->whereNotIn('reporter_id', $keepUserIds);
+                    } elseif (Schema::hasColumn('reports', 'user_id')) {
+                        $q->whereNotIn('user_id', $keepUserIds);
+                    }
+                })->delete()
                 : 0;
             $pruneLog['disputes'] = $this->deleteWhereNotIn('disputes', 'id', $keepDisputeIds);
 
@@ -391,7 +415,7 @@ class PruneExceptPreservedUsers extends Command
             $pruneLog['used_threads'] = $this->deleteWhereNotIn('used_threads', 'id', $keepUsedThreadIds);
             $pruneLog['used_saved_searches'] = $this->deleteWhereNotIn('used_saved_searches', 'user_id', $keepUserIds);
             $pruneLog['used_seller_profiles'] = $this->deleteWhereNotIn('used_seller_profiles', 'user_id', $keepUserIds);
-            $pruneLog['used_transactions'] = Schema::hasTable('used_transactions')
+            $pruneLog['used_transactions'] = (Schema::hasTable('used_transactions') && Schema::hasColumn('used_transactions', 'buyer_id') && Schema::hasColumn('used_transactions', 'seller_id'))
                 ? DB::table('used_transactions')->whereNotIn('buyer_id', $keepUserIds)->whereNotIn('seller_id', $keepUserIds)->delete()
                 : 0;
 
@@ -402,7 +426,9 @@ class PruneExceptPreservedUsers extends Command
             $pruneLog['project_contracts'] = $this->deleteWhereNotIn('project_contracts', 'id', $keepContractIds);
             $pruneLog['project_proposals'] = Schema::hasTable('project_proposals')
                 ? DB::table('project_proposals')->where(function ($q) use ($keepServiceProjectIds, $keepVendorIds) {
-                    $q->whereNotIn('project_id', $keepServiceProjectIds);
+                    if (Schema::hasColumn('project_proposals', 'project_id')) {
+                        $q->whereNotIn('project_id', !empty($keepServiceProjectIds) ? $keepServiceProjectIds : [-1]);
+                    }
                     if (!empty($keepVendorIds) && Schema::hasColumn('project_proposals', 'vendor_id')) {
                         $q->whereNotIn('vendor_id', $keepVendorIds);
                     }
