@@ -179,10 +179,10 @@ class UsedListingController extends Controller
             return back()->withInput()->withErrors(['min_offer_amount' => $msg]);
         }
 
-        // Resolve category
+        // Resolve category (must belong to used vertical)
         $category = null;
         if (!empty($validated['category_id'])) {
-            $category = Category::find($validated['category_id']);
+            $category = Category::where('vertical', 'used')->find($validated['category_id']);
         } elseif (!empty($validated['category'])) {
             $catNeedle = $validated['category'];
             $category = Category::where('vertical', 'used')
@@ -480,7 +480,10 @@ class UsedListingController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|min:4|max:180',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => [
+                'required',
+                \Illuminate\Validation\Rule::exists('categories', 'id')->where(fn ($q) => $q->where('vertical', 'used')),
+            ],
             'description' => 'required|string|max:5000',
             'brand' => 'nullable|string|max:100',
             'model_name' => 'nullable|string|max:120',
@@ -522,11 +525,41 @@ class UsedListingController extends Controller
             (string) ($validated['defect_notes'] ?? '')
         );
         if ($prohibitedHit !== null) {
-            return back()->withInput()->withErrors(['title' => "Listing blocked: restricted term \"{$prohibitedHit}\" is not permitted."]);
+            $msg = "Listing blocked: restricted term \"{$prohibitedHit}\" is not permitted.";
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg, 'errors' => ['title' => [$msg]]], 422);
+            }
+            return back()->withInput()->withErrors(['title' => $msg]);
         }
 
         if (!empty($validated['min_offer_amount']) && (float) $validated['min_offer_amount'] > (float) $validated['price']) {
-            return back()->withInput()->withErrors(['min_offer_amount' => 'Minimum acceptable offer cannot exceed your asking price.']);
+            $msg = 'Minimum acceptable offer cannot exceed your asking price.';
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg, 'errors' => ['min_offer_amount' => [$msg]]], 422);
+            }
+            return back()->withInput()->withErrors(['min_offer_amount' => $msg]);
+        }
+
+        // Enforce category-required custom specs when publishing live
+        if ($action === 'publish') {
+            $targetCategory = Category::find($validated['category_id']);
+            if ($targetCategory) {
+                $catIds = array_values(array_unique(array_filter([$targetCategory->id, $targetCategory->parent_id])));
+                $requiredFields = CategoryField::whereIn('category_id', $catIds)
+                    ->where('is_required', true)
+                    ->get();
+                $mergedSpecs = array_merge($product->custom_fields['specs'] ?? [], $validated['specs'] ?? []);
+                foreach ($requiredFields as $reqField) {
+                    $val = $mergedSpecs[$reqField->name] ?? null;
+                    if ($val === null || $val === '') {
+                        $msg = "Please complete required field: {$reqField->label}.";
+                        if ($request->wantsJson()) {
+                            return response()->json(['success' => false, 'message' => $msg, 'errors' => ["specs.{$reqField->name}" => [$msg]]], 422);
+                        }
+                        return back()->withInput()->withErrors(["specs.{$reqField->name}" => $msg]);
+                    }
+                }
+            }
         }
 
         $conditionGrade = $this->usedService->normalizeConditionGrade(

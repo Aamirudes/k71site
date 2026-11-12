@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Short;
 use App\Models\ShortBoost;
 use App\Models\ShortCoin;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -227,6 +228,10 @@ class ShortsStudioController extends Controller
             return response()->json(['success' => false, 'message' => 'Title and video URL are required.'], 422);
         }
 
+        if ($catId > 0 && !Category::where('id', $catId)->exists()) {
+            return response()->json(['success' => false, 'message' => 'Invalid category selected.'], 422);
+        }
+
         // Process base64 frame thumbnail if provided
         if (!empty($thumbDataUri) && str_starts_with($thumbDataUri, 'data:image')) {
             $thumbUrl = $this->saveBase64Thumbnail($thumbDataUri);
@@ -261,11 +266,15 @@ class ShortsStudioController extends Controller
             ]);
         }
 
-        // Sync tagged products
+        // Sync tagged products (strictly scoped to products owned by this vendor)
         if (is_string($rawProductIds)) {
             $productIds = array_filter(array_map('intval', explode(',', $rawProductIds)));
         } else {
             $productIds = array_filter(array_map('intval', (array) $rawProductIds));
+        }
+        if (!empty($productIds)) {
+            $ownedIds = $vendor->products()->whereIn('id', $productIds)->pluck('id')->all();
+            $productIds = array_values(array_intersect($productIds, $ownedIds));
         }
 
         if (!empty($productIds)) {
@@ -333,9 +342,15 @@ class ShortsStudioController extends Controller
 
         $short = Short::where('vendor_id', $vendor->id)->find($shortId);
         if ($short) {
-            // Delete video and thumbnail if local
-            if ($short->video_path) {
-                Storage::disk('public')->delete($short->video_path);
+            foreach ([$short->video_path, $short->video_url, $short->thumb_url, $short->thumb_b_url] as $asset) {
+                if (!empty($asset) && is_string($asset)) {
+                    $rel = ltrim(str_replace(['/storage/', 'storage/'], '', parse_url($asset, PHP_URL_PATH) ?: $asset), '/');
+                    if ($rel !== '' && str_starts_with($rel, 'shorts')) {
+                        k71_delete_public_storage($rel);
+                    } elseif (!empty($short->video_path) && $asset === $short->video_path) {
+                        k71_delete_public_storage($short->video_path);
+                    }
+                }
             }
             $short->products()->detach();
             $short->delete();
@@ -393,7 +408,7 @@ class ShortsStudioController extends Controller
             return response()->json(['success' => false, 'message' => $boostAuth['reason']], 403);
         }
         $shortId = (int) $request->input('short_id', 0);
-        $tier = $request->input('tier', 'standard'); // standard, prime, elite
+        $tier = strtolower(trim((string) $request->input('tier', 'standard'))); // standard, prime, elite
 
         $tierCosts = [
             'standard' => ['coins' => 199, 'days' => 1],
@@ -401,7 +416,11 @@ class ShortsStudioController extends Controller
             'elite' => ['coins' => 999, 'days' => 7],
         ];
 
-        $selectedTier = $tierCosts[$tier] ?? $tierCosts['standard'];
+        if (!isset($tierCosts[$tier])) {
+            return response()->json(['success' => false, 'message' => 'Invalid boost tier selected.'], 422);
+        }
+
+        $selectedTier = $tierCosts[$tier];
         $coinsRequired = $selectedTier['coins'];
         $durationDays = $selectedTier['days'];
 
@@ -410,18 +429,24 @@ class ShortsStudioController extends Controller
             return response()->json(['success' => false, 'message' => 'Short not found.'], 404);
         }
 
-        // Check user coin balance
-        $latestCoin = ShortCoin::where('user_id', $user->id)->orderByDesc('id')->first();
-        $currentBalance = $latestCoin?->balance ?? 100; // Starter coins
+        $insufficientResponse = null;
 
-        if ($currentBalance < $coinsRequired) {
-            return response()->json([
-                'success' => false,
-                'message' => "Insufficient coin balance. You need {$coinsRequired} coins for {$tier} boost, but have {$currentBalance}.",
-            ], 422);
-        }
+        DB::transaction(function () use ($user, $vendor, $short, $tier, $coinsRequired, $durationDays, &$insufficientResponse) {
+            // Lock user row to prevent concurrent coin double-spend race conditions
+            User::whereKey($user->id)->lockForUpdate()->first();
+            $lockedShort = Short::whereKey($short->id)->lockForUpdate()->first();
 
-        DB::transaction(function () use ($user, $vendor, $short, $tier, $coinsRequired, $durationDays, $currentBalance) {
+            $latestCoin = ShortCoin::where('user_id', $user->id)->orderByDesc('id')->first();
+            $currentBalance = $latestCoin?->balance ?? 100; // Starter coins
+
+            if ($currentBalance < $coinsRequired) {
+                $insufficientResponse = response()->json([
+                    'success' => false,
+                    'message' => "Insufficient coin balance. You need {$coinsRequired} coins for {$tier} boost, but have {$currentBalance}.",
+                ], 422);
+                return;
+            }
+
             $newBalance = $currentBalance - $coinsRequired;
 
             // Deduct coins in ledger
@@ -429,13 +454,13 @@ class ShortsStudioController extends Controller
                 'user_id' => $user->id,
                 'delta' => -$coinsRequired,
                 'balance' => $newBalance,
-                'reason' => "Short Boost: {$tier} tier for Short #{$short->id}",
-                'ref_id' => $short->id,
+                'reason' => "Short Boost: {$tier} tier for Short #{$lockedShort->id}",
+                'ref_id' => $lockedShort->id,
             ]);
 
             // Create or update boost entry
             ShortBoost::create([
-                'short_id' => $short->id,
+                'short_id' => $lockedShort->id,
                 'vendor_id' => $vendor->id,
                 'boost_type' => $tier,
                 'coins_spent' => $coinsRequired,
@@ -447,11 +472,15 @@ class ShortsStudioController extends Controller
             ]);
 
             // Update short flags
-            $short->update([
+            $lockedShort->update([
                 'is_boosted' => true,
                 'boost_type' => $tier,
             ]);
         });
+
+        if ($insufficientResponse !== null) {
+            return $insufficientResponse;
+        }
 
         return response()->json([
             'success' => true,

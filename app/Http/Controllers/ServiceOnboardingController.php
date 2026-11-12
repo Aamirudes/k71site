@@ -193,13 +193,14 @@ class ServiceOnboardingController extends Controller
                 'years_experience' => $validated['years_experience'] ?? $vendor->years_experience,
                 'contact_email' => ($validated['contact_email'] ?? null) ?: ($vendor->contact_email ?: $user->email),
                 'contact_phone' => $cleanPhone ?? $vendor->contact_phone,
-                'status' => in_array($vendor->status, ['approved', 'active'], true) ? $vendor->status : 'approved',
-                'approved_at' => $vendor->approved_at ?: now(),
                 'onboarding_step' => max((int) ($vendor->onboarding_step ?? 1), 2),
             ]);
         }
 
         if ($request->hasFile('logo')) {
+            if ($vendor->logo) {
+                k71_delete_public_storage($vendor->logo);
+            }
             $path = $request->file('logo')->store('vendors/' . $vendor->id . '/logo', 'public');
             k71_sync_public_storage($path);
             $vendor->update(['logo' => $path]);
@@ -293,6 +294,9 @@ class ServiceOnboardingController extends Controller
         ]);
 
         if ($request->hasFile('banner')) {
+            if ($vendor->banner) {
+                k71_delete_public_storage($vendor->banner);
+            }
             $path = $request->file('banner')->store('vendors/' . $vendor->id . '/banner', 'public');
             k71_sync_public_storage($path);
             $vendor->banner = $path;
@@ -383,6 +387,13 @@ class ServiceOnboardingController extends Controller
                 ->with('info', 'Your website has been saved as a Private Draft. Only you can view it via preview mode until you publish.');
         }
 
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+        if (!$authCheck['allowed']) {
+            return redirect()->route('services.onboarding', ['step' => 5])
+                ->with('error', $authCheck['reason']);
+        }
+
         $readiness = $this->presenter->evaluatePublishReadiness($vendor);
         if (!$readiness['can_publish']) {
             return redirect()->route('services.onboarding', ['step' => 5])
@@ -411,8 +422,6 @@ class ServiceOnboardingController extends Controller
         );
 
         $vendor->update([
-            'status' => 'approved',
-            'approved_at' => $vendor->approved_at ?: now(),
             'website_status' => 'published',
             'website_published_at' => now(),
             'onboarding_step' => 5,

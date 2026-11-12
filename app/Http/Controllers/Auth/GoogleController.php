@@ -93,7 +93,13 @@ class GoogleController extends Controller
             return redirect()->route('login')->withErrors(['login' => 'This account has been blocked.']);
         }
 
+        $preLoginSessionId = $request->session()->getId();
         Auth::login($user, true);
+        $request->session()->regenerate();
+
+        if (class_exists(\App\Models\Cart::class) && method_exists(\App\Models\Cart::class, 'mergeGuestCart')) {
+            \App\Models\Cart::mergeGuestCart($user->id, $preLoginSessionId);
+        }
 
         $user->update([
             'last_login_at' => now(),

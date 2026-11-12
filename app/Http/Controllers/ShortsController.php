@@ -107,8 +107,13 @@ class ShortsController extends Controller
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $visibleVendorScope = fn($vq) => $visibility->scopeVisibleVendors($vq);
 
-        // Fetch SEO short if openId is provided
-        $seoShort = $openId > 0 ? Short::with(['vendor', 'category', 'products.images'])->whereHas('vendor', $visibleVendorScope)->find($openId) : null;
+        // Fetch SEO short if openId is provided (published/active and from visible vendor only)
+        $seoShort = $openId > 0
+            ? Short::with(['vendor', 'category', 'products.images'])
+                ->whereIn('status', ['published', 'approved', 'active'])
+                ->whereHas('vendor', $visibleVendorScope)
+                ->find($openId)
+            : null;
 
         $featuredShorts = Short::with(['vendor', 'category', 'products.images'])
             ->whereIn('status', ['published', 'approved', 'active'])
@@ -184,8 +189,8 @@ class ShortsController extends Controller
                     'discount_pct' => $discountPct,
                     'image' => $p->primary_image_url,
                     'in_stock' => $p->total_stock > 0,
-                    'rating' => (float) ($p->avg_rating ?? 4.8),
-                    'reviews_count' => (int) ($p->review_count ?? 18),
+                    'rating' => ((int) ($p->review_count ?? 0) > 0 && $p->avg_rating !== null) ? round((float) $p->avg_rating, 1) : null,
+                    'reviews_count' => (int) ($p->review_count ?? 0),
                     'url' => route('product.show', $p->slug),
                     'vendor_name' => $p->vendor?->shop_name ?? 'K71 Verified Partner',
                 ];

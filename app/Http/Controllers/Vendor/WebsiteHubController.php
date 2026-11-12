@@ -98,6 +98,10 @@ class WebsiteHubController extends Controller
     public function updateIdentity(Request $request): RedirectResponse
     {
         $vendor = $this->resolveServiceVendor($request);
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
+        }
 
         $validated = $request->validate([
             'shop_name' => 'required|string|max:120',
@@ -175,9 +179,9 @@ class WebsiteHubController extends Controller
             'availability_status' => $validated['availability_status'],
             'response_time' => ($validated['response_time'] ?? null) ?: $vendor->response_time,
             'years_experience' => $validated['years_experience'] ?? $vendor->years_experience,
-            'hourly_rate' => $validated['hourly_rate'] ?? $vendor->hourly_rate,
-            'skills_json' => !empty($skills) ? $skills : ($vendor->skills_json ?? []),
-            'languages_json' => !empty($languages) ? $languages : ($vendor->languages_json ?? []),
+            'hourly_rate' => $request->has('hourly_rate') ? ($validated['hourly_rate'] ?? null) : $vendor->hourly_rate,
+            'skills_json' => $request->has('skills_input') ? $skills : ($vendor->skills_json ?? []),
+            'languages_json' => $request->has('languages_input') ? $languages : ($vendor->languages_json ?? []),
             'city' => $validated['city'] ?? $vendor->city,
             'state' => $validated['state'] ?? $vendor->state,
             'external_links' => $externalLinks,
@@ -210,6 +214,10 @@ class WebsiteHubController extends Controller
     public function updateSections(Request $request): RedirectResponse
     {
         $vendor = $this->resolveServiceVendor($request);
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
+        }
 
         $validated = $request->validate([
             'vis_hero' => 'nullable|boolean',
@@ -261,6 +269,10 @@ class WebsiteHubController extends Controller
     public function updateContactPrivacy(Request $request): RedirectResponse
     {
         $vendor = $this->resolveServiceVendor($request);
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
+        }
 
         $validated = $request->validate([
             'contact_email' => 'nullable|email|max:150',
@@ -292,6 +304,10 @@ class WebsiteHubController extends Controller
     public function updateSubdomain(Request $request): RedirectResponse
     {
         $vendor = $this->resolveServiceVendor($request);
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, 'services', 'allow_service_profile');
+        if (!$authCheck['allowed']) {
+            return back()->with('error', $authCheck['reason']);
+        }
         $validated = $request->validate([
             'slug' => 'required|string|min:3|max:63',
         ]);

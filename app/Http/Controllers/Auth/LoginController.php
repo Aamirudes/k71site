@@ -87,6 +87,13 @@ class LoginController extends Controller
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This account has been blocked.',
+                        'errors' => ['login' => ['This account has been blocked.']],
+                    ], 403);
+                }
                 return back()->withErrors(['login' => 'This account has been blocked.']);
             }
 

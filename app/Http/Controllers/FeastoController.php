@@ -24,12 +24,6 @@ class FeastoController extends Controller
                   ->orWhereHas('vendor', function ($vq) {
                       $vq->whereIn('vendor_type', ['food', 'feasto', 'groceries', 'kirana']);
                   });
-            })
-            ->where(function ($q) {
-                $q->where('title', 'NOT LIKE', '%dummy%')
-                  ->where('title', 'NOT LIKE', '%test%')
-                  ->where('title', 'NOT LIKE', '%sample%')
-                  ->where('title', 'NOT LIKE', '%fake%');
             });
         app(\App\Services\Monetization\VisibilityService::class)->scopeVisibleProducts($feastoQuery, 'food');
         $dbProducts = $feastoQuery

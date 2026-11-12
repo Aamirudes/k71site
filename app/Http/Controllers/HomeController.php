@@ -184,7 +184,8 @@ class HomeController extends Controller
         $seoSettings = \App\Models\Setting::getGroup('seo');
 
         $latestShorts = \App\Models\Short::with(['vendor'])
-            ->where('status', 'approved')
+            ->whereIn('status', ['published', 'approved', 'active'])
+            ->whereHas('vendor', fn ($vq) => $visibility->scopeVisibleVendors($vq))
             ->latest('trending_score')
             ->take(12)
             ->get();

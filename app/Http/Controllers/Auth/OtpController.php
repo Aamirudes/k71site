@@ -47,6 +47,11 @@ class OtpController extends Controller
                 $request->session()->forget(['verify_email', 'verify_purpose', 'dev_otp_code', 'login_role']);
                 return redirect()->route('login')->withErrors(['login' => 'Account not found. Please register or sign in again.']);
             }
+
+            if ($user->is_blocked) {
+                $request->session()->forget(['verify_email', 'verify_purpose', 'dev_otp_code', 'login_role']);
+                return redirect()->route('login')->withErrors(['login' => 'This account has been blocked.']);
+            }
             
             if ($purpose === 'registration') {
                 $user->update(['email_verified_at' => now()]);

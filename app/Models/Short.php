@@ -92,6 +92,11 @@ class Short extends Model
         return $this->hasMany(ShortShare::class);
     }
 
+    public function getThumbnailUrlAttribute(): ?string
+    {
+        return $this->thumb_url ? format_image_url($this->thumb_url) : null;
+    }
+
     public function scopePublished($query)
     {
         return $query->whereIn('status', ['published', 'approved', 'active']);

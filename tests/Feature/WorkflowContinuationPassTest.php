@@ -7,6 +7,7 @@ use App\Models\Address;
 use App\Models\Booking;
 use App\Models\Cart;
 use App\Models\Category;
+use App\Models\CategoryField;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\DeliveryAssignment;
@@ -24,12 +25,15 @@ use App\Models\ServiceOrder;
 use App\Models\ServiceProject;
 use App\Models\Shipment;
 use App\Models\Short;
+use App\Models\ShortBoost;
+use App\Models\ShortCoin;
 use App\Models\UsedSellerProfile;
 use App\Models\UsedThread;
 use App\Models\UsedTransaction;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorSetting;
+use App\Models\Wishlist;
 use App\Services\PayoutService;
 use App\Services\StockManagerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -1568,5 +1572,378 @@ class WorkflowContinuationPassTest extends TestCase
             $this->assertEquals(0, $this->vendor->settings()->first()->min_food_order_amount);
             return;
         }
+    }
+
+    public function test_workflow_30_31_32_shorts_home_visibility_admin_notifications_and_studio_hardening(): void
+    {
+        $product = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'Zero Review Marble Lamp',
+            'slug' => 'zero-review-marble-lamp',
+            'description' => 'Carved lamp with zero reviews.',
+            'base_price' => 120000,
+            'gst_rate' => 18,
+            'total_stock' => 6,
+            'status' => 'active',
+        ]);
+
+        // Unrelated vendor product must not be taggable by this vendor
+        $otherUser = User::factory()->create();
+        $otherVendor = Vendor::create([
+            'user_id' => $otherUser->id,
+            'shop_name' => 'Other Store',
+            'slug' => 'other-store-shorts',
+            'email' => $otherUser->email,
+            'vendor_type' => 'retail',
+            'status' => 'approved',
+        ]);
+        $foreignProduct = Product::create([
+            'vendor_id' => $otherVendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'Foreign Product',
+            'slug' => 'foreign-product-shorts',
+            'description' => 'Should not be tagged.',
+            'base_price' => 99000,
+            'gst_rate' => 18,
+            'total_stock' => 4,
+            'status' => 'active',
+        ]);
+
+        // Vendor ShortsStudio save scopes product_ids to own vendor only & validates category_id
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.shorts.save'), [
+                'title' => 'Bad Category Short',
+                'video_url' => 'https://example.com/v.mp4',
+                'category_id' => 999999,
+            ])
+            ->assertStatus(422);
+
+        $saveRes = $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.shorts.save'), [
+                'title' => 'Real Craft Short',
+                'video_url' => 'https://example.com/craft.mp4',
+                'thumb_url' => 'shorts/thumbs/craft.jpg',
+                'category_id' => $this->mainCategory->id,
+                'product_ids' => [$product->id, $foreignProduct->id],
+            ])
+            ->assertStatus(200);
+
+        $shortId = (int) $saveRes->json('short_id');
+        $short = Short::findOrFail($shortId);
+        $this->assertEquals([$product->id], $short->products()->pluck('products.id')->all());
+        $this->assertStringContainsString('shorts/thumbs/craft.jpg', (string) $short->thumbnail_url);
+
+        // Homepage now renders published shorts & ShortsController returns nullable real ratings (not 4.8 / 18)
+        $homeRes = $this->get('/');
+        $homeRes->assertStatus(200)->assertSee('Real Craft Short');
+
+        $shortsRes = $this->get('/shorts');
+        $shortsRes->assertStatus(200);
+        $shortsRes->assertViewHas('clientShorts', function ($clientShorts) {
+            $first = collect($clientShorts)->firstWhere('title', 'Real Craft Short');
+            return $first && isset($first['products_detail'][0])
+                && $first['products_detail'][0]['rating'] === null
+                && $first['products_detail'][0]['reviews_count'] === 0;
+        });
+
+        // Unpublished/pending Short is NOT exposed via /shorts?v={id} seoShort
+        $pendingShort = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Secret Pending Reel',
+            'slug' => 'secret-pending-reel',
+            'description' => 'Pending review.',
+            'video_url' => 'https://example.com/pending.mp4',
+            'status' => 'pending',
+        ]);
+        $pendingShortsRes = $this->get('/shorts?v=' . $pendingShort->id);
+        $pendingShortsRes->assertStatus(200)->assertViewHas('seoShort', null);
+
+        // Admin approve/reject notify vendor cleanly
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $this->actingAs($adminUser)
+            ->postJson(route('admin.shorts.reject', $pendingShort), ['reason' => 'Low audio quality'])
+            ->assertStatus(200);
+        $this->assertEquals('rejected', $pendingShort->fresh()->status);
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $this->vendorUser->id,
+        ]);
+
+        // Shorts boost rejects invalid tier & checks atomic balance inside transaction
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.shorts.boost'), ['short_id' => $short->id, 'tier' => 'ultra_bogus'])
+            ->assertStatus(422);
+
+        ShortCoin::create([
+            'user_id' => $this->vendorUser->id,
+            'delta' => 500,
+            'balance' => 500,
+            'reason' => 'Promo coins',
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.shorts.boost'), ['short_id' => $short->id, 'tier' => 'standard'])
+            ->assertStatus(200);
+        $this->assertEquals(301, ShortCoin::where('user_id', $this->vendorUser->id)->orderByDesc('id')->first()->balance);
+        $this->assertEquals(1, ShortBoost::where('short_id', $short->id)->count());
+    }
+
+    public function test_workflow_33_34_35_feasto_title_wishlist_stock_onboarding_gate_and_auth_blocks(): void
+    {
+        // Workflow 33: Feasto shows dishes whose titles contain 'Greatest'/'Latest' and Wishlist JSON reports real stock
+        $foodCat = Category::firstOrCreate(['slug' => 'feasto-mains'], ['name' => 'Feasto Mains', 'vertical' => 'food', 'is_active' => true, 'sort_order' => 1]);
+        $foodUser = User::factory()->create();
+        $foodVendor = Vendor::create([
+            'user_id' => $foodUser->id,
+            'shop_name' => 'Saffron Kitchen',
+            'slug' => 'saffron-kitchen-wf33',
+            'email' => $foodUser->email,
+            'vendor_type' => 'food',
+            'status' => 'approved',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+            'is_accepting_food_orders' => true,
+        ]);
+        $dish = Product::create([
+            'vendor_id' => $foodVendor->id,
+            'category_id' => $foodCat->id,
+            'title' => 'Greatest Kashmiri Biryani',
+            'slug' => 'greatest-kashmiri-biryani',
+            'description' => 'Rich aromatic saffron biryani.',
+            'vertical' => 'food',
+            'listing_type' => 'food',
+            'base_price' => 32000,
+            'total_stock' => 10,
+            'is_dish_available' => true,
+            'status' => 'active',
+        ]);
+
+        $this->get('/feasto')->assertStatus(200)->assertSee('Greatest Kashmiri Biryani');
+
+        Wishlist::create(['user_id' => $this->buyer->id, 'product_id' => $dish->id]);
+        $this->actingAs($this->buyer)
+            ->getJson('/wishlist/json')
+            ->assertStatus(200)
+            ->assertJsonPath('items.0.in_stock', true);
+
+        // Workflow 34: Service onboarding Step 1/Step 5 never self-approve pending vendor & Step 5 requires Services subscription
+        $pendingUser = User::factory()->create(['email_verified_at' => now()]);
+        $this->actingAs($pendingUser)
+            ->post(route('services.onboarding.save'), [
+                'step' => 1,
+                'provider_mode' => 'individual',
+                'shop_name' => 'Pending Craft Studio',
+                'headline' => 'Craft & Interior Design',
+                'description' => 'Pending studio waiting for manual admin review.',
+                'skills' => 'Interior, CAD',
+                'work_mode' => 'remote',
+            ])
+            ->assertRedirect(route('services.onboarding', ['step' => 2]));
+
+        $pendingVendor = $pendingUser->fresh()->vendor;
+        $this->assertEquals('pending', $pendingVendor->status);
+
+        // Resubmitting Step 1 must NOT escalate pending -> approved
+        $this->actingAs($pendingUser)
+            ->post(route('services.onboarding.save'), [
+                'step' => 1,
+                'provider_mode' => 'individual',
+                'shop_name' => 'Pending Craft Studio V2',
+                'headline' => 'Craft & Interior Design Studio',
+                'description' => 'Updated pending studio waiting for manual admin review.',
+                'skills' => 'Interior, CAD, 3D',
+                'work_mode' => 'hybrid',
+            ])
+            ->assertRedirect(route('services.onboarding', ['step' => 2]));
+        $this->assertEquals('pending', $pendingVendor->fresh()->status);
+
+        // Step 5 publish is blocked without admin-activated Services subscription
+        $this->actingAs($pendingUser)
+            ->post(route('services.onboarding.save'), [
+                'step' => 5,
+                'publish_action' => 'publish',
+            ])
+            ->assertRedirect(route('services.onboarding', ['step' => 5]))
+            ->assertSessionHas('error');
+        $this->assertFalse($pendingVendor->fresh()->isWebsitePublished());
+
+        // Workflow 35: Blocked user receives JSON 403 on modal login
+        auth()->logout();
+        $blockedUser = User::factory()->create([
+            'password' => bcrypt('Secret123!'),
+            'is_blocked' => true,
+        ]);
+        $this->postJson(route('login'), [
+            'login' => $blockedUser->email,
+            'password' => 'Secret123!',
+            'role' => 'customer',
+        ])->assertStatus(403)->assertJson(['success' => false]);
+    }
+
+    public function test_workflow_36_37_38_39_sku_validation_storefront_gates_self_message_guard_and_used_update(): void
+    {
+        // Workflow 36: Two SKU-less products succeed & duplicate SKU triggers clean validation error (not 500)
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.store'), [
+                'title' => 'Blank SKU Item One',
+                'category_id' => $this->mainCategory->id,
+                'description' => 'Product without SKU.',
+                'base_price' => 500,
+                'gst_rate' => 18,
+                'sku' => '   ',
+                'total_stock' => 5,
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('vendor.products.index'));
+
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.store'), [
+                'title' => 'Unique SKU Item Two',
+                'category_id' => $this->mainCategory->id,
+                'description' => 'Second product with empty SKU and then reused SKU.',
+                'base_price' => 600,
+                'gst_rate' => 18,
+                'sku' => 'K71-DUP-SKU',
+                'total_stock' => 5,
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('vendor.products.index'));
+
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.store'), [
+                'title' => 'Duplicate SKU Item Three',
+                'category_id' => $this->mainCategory->id,
+                'description' => 'Should fail validation cleanly.',
+                'base_price' => 700,
+                'gst_rate' => 18,
+                'sku' => 'K71-DUP-SKU',
+                'total_stock' => 5,
+                'status' => 'active',
+            ])
+            ->assertSessionHasErrors('sku');
+
+        // Workflow 37: WebsiteHub updateIdentity allows clearing skills & hourly_rate when authenticated & subscribed
+        $this->vendor->update([
+            'vendor_type' => 'services',
+            'skills_json' => ['Laravel', 'React'],
+            'hourly_rate' => 2500,
+        ]);
+        $this->grantVendorTestSubscription($this->vendor->fresh(), 'services');
+
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.website.identity'), [
+                'shop_name' => $this->vendor->shop_name,
+                'provider_mode' => 'individual',
+                'headline' => 'Updated Studio Headline',
+                'description' => 'Updated clean studio biography ready for client engagements.',
+                'work_mode' => 'remote',
+                'availability_status' => 'available',
+                'skills_input' => '',
+                'hourly_rate' => '',
+            ])
+            ->assertSessionHas('success');
+
+        $this->vendor->refresh();
+        $this->assertSame([], $this->vendor->skills_json);
+        $this->assertNull($this->vendor->hourly_rate);
+
+        // Workflow 38: MessageController blocks self-messaging own store & notifies vendor on buyer inquiry
+        $this->actingAs($this->vendorUser)
+            ->postJson('/messages', [
+                'vendor_id' => $this->vendor->id,
+                'body' => 'Testing self chat',
+            ])
+            ->assertStatus(422);
+
+        $this->actingAs($this->buyer)
+            ->postJson('/messages', [
+                'vendor_id' => $this->vendor->id,
+                'body' => 'Is custom polishing available?',
+            ])
+            ->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $this->vendorUser->id,
+        ]);
+
+        // Workflow 39: UsedListingController::update validates required category fields & rejects wrong vertical category
+        $usedCat = Category::firstOrCreate(['slug' => 'used-laptops-wf39'], ['name' => 'Used Laptops', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        CategoryField::create([
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'name' => 'ram_size',
+            'label' => 'RAM Capacity',
+            'field_type' => 'text',
+            'is_required' => true,
+            'sort_order' => 1,
+        ]);
+
+        $usedDraft = Product::create([
+            'vendor_id' => null,
+            'user_id' => $this->buyer->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'ThinkPad T14 Gen 3',
+            'slug' => 'thinkpad-t14-gen3-wf39',
+            'description' => 'Mint condition business ultrabook.',
+            'base_price' => 5200000,
+            'total_stock' => 1,
+            'quantity_available' => 1,
+            'status' => 'draft',
+            'used_status' => 'draft',
+            'city' => 'Bengaluru',
+        ]);
+
+        // Reject non-used category_id on update
+        $this->actingAs($this->buyer)
+            ->putJson(route('used.update', $usedDraft), [
+                'title' => 'ThinkPad T14 Gen 3',
+                'category_id' => $this->mainCategory->id,
+                'description' => 'Mint condition business ultrabook.',
+                'price' => 52000,
+                'city' => 'Bengaluru',
+                'action' => 'publish',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('category_id');
+
+        // Reject missing required category field when publishing
+        $this->actingAs($this->buyer)
+            ->putJson(route('used.update', $usedDraft), [
+                'title' => 'ThinkPad T14 Gen 3',
+                'category_id' => $usedCat->id,
+                'description' => 'Mint condition business ultrabook.',
+                'price' => 52000,
+                'city' => 'Bengaluru',
+                'action' => 'publish',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('specs.ram_size');
+
+        // Succeeds once required spec provided
+        $this->actingAs($this->buyer)
+            ->putJson(route('used.update', $usedDraft), [
+                'title' => 'ThinkPad T14 Gen 3',
+                'category_id' => $usedCat->id,
+                'description' => 'Mint condition business ultrabook.',
+                'price' => 52000,
+                'city' => 'Bengaluru',
+                'specs' => ['ram_size' => '16GB'],
+                'action' => 'publish',
+            ])
+            ->assertStatus(200);
+        $this->assertEquals('active', $usedDraft->fresh()->status);
     }
 }

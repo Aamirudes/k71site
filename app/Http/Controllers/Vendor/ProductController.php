@@ -13,6 +13,7 @@ use App\Services\Catalog\ListingCompletenessService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -241,6 +242,9 @@ class ProductController extends Controller
                 $product->update(['status' => 'draft']);
                 $succeeded++;
             } elseif ($action === 'delete') {
+                $product->modifiers()->delete();
+                $product->optionGroups()->delete();
+                $product->gigPackages()->delete();
                 $product->variants()->forceDelete();
                 if (method_exists($product, 'images')) {
                     foreach ($product->images as $img) {
@@ -487,6 +491,11 @@ class ProductController extends Controller
             abort(403, 'Vendor store required.');
         }
 
+        if ($request->has('sku')) {
+            $trimmedSku = trim((string) $request->input('sku'));
+            $request->merge(['sku' => $trimmedSku !== '' ? $trimmedSku : null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
@@ -509,7 +518,7 @@ class ProductController extends Controller
             'gender' => ['nullable', 'string', 'max:20'],
             'age_group' => ['nullable', 'string', 'max:20'],
             'description' => ['required', 'string'],
-            'sku' => ['nullable', 'string', 'max:191'],
+            'sku' => ['nullable', 'string', 'max:191', Rule::unique('products', 'sku')],
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
@@ -982,6 +991,11 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
+        if ($request->has('sku')) {
+            $trimmedSku = trim((string) $request->input('sku'));
+            $request->merge(['sku' => $trimmedSku !== '' ? $trimmedSku : null]);
+        }
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'category_id' => ['required', 'exists:categories,id'],
@@ -1004,7 +1018,7 @@ class ProductController extends Controller
             'gender' => ['nullable', 'string', 'max:20'],
             'age_group' => ['nullable', 'string', 'max:20'],
             'description' => ['required', 'string'],
-            'sku' => ['nullable', 'string', 'max:191'],
+            'sku' => ['nullable', 'string', 'max:191', Rule::unique('products', 'sku')->ignore($product->id)],
             'total_stock' => ['required', 'integer', 'min:0'],
             'status' => ['required', 'in:draft,active,archived'],
             'variants' => ['nullable', 'array'],
@@ -1468,7 +1482,10 @@ class ProductController extends Controller
 
         try {
             $productTitle = $product->title;
-            // Cleanly delete associated variants, images, and permanently remove product from site
+            // Cleanly delete associated variants, add-ons, gig packages, images, and permanently remove product from site
+            $product->modifiers()->delete();
+            $product->optionGroups()->delete();
+            $product->gigPackages()->delete();
             $product->variants()->forceDelete();
             if (method_exists($product, 'images')) {
                 foreach ($product->images as $img) {
@@ -1653,6 +1670,15 @@ class ProductController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor || $product->vendor_id !== $vendor->id) {
             abort(403, 'Unauthorized access to product.');
+        }
+
+        $sector = $product->vertical ?: $vendor->getCanonicalSectorKey();
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sector);
+        if (!$authCheck['allowed']) {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $authCheck['reason']], 403);
+            }
+            return back()->with('error', $authCheck['reason']);
         }
 
         $newState = !$product->is_dish_available;

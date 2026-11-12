@@ -243,6 +243,11 @@ class StorefrontDesignController extends Controller
             $draftConfig = $configRecord->draft_config;
         }
 
+        $draftPreset = strtolower(trim((string) ($draftConfig['preset'] ?? ($configRecord->preset_key ?? ''))));
+        if ($this->presetService->normalizePresetKey($draftPreset) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
+        }
+
         // Validate and sanitize before publishing
         $sanitizedConfig = $this->presetService->sanitizeConfig($draftConfig, $vendor);
 
@@ -456,6 +461,9 @@ class StorefrontDesignController extends Controller
 
         // Store Logo File Upload
         if ($request->hasFile('logo')) {
+            if ($vendor->logo) {
+                k71_delete_public_storage($vendor->logo);
+            }
             $path = $request->file('logo')->store('vendors/' . $vendor->id . '/logo', 'public');
             $mirrorToPublic($path);
             $logoUrl = '/storage/' . $path;
@@ -465,6 +473,9 @@ class StorefrontDesignController extends Controller
 
         // Store Banner File Upload
         if ($request->hasFile('banner')) {
+            if ($vendor->banner) {
+                k71_delete_public_storage($vendor->banner);
+            }
             $path = $request->file('banner')->store('vendors/' . $vendor->id . '/banner', 'public');
             $mirrorToPublic($path);
             $bannerUrl = '/storage/' . $path;
@@ -769,12 +780,18 @@ class StorefrontDesignController extends Controller
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
+        }
 
         $configRecord = $vendor->storefrontConfig;
-        $presetKey = $configRecord?->preset_key ?? 'atelier';
+        $presetKey = $this->presetService->normalizePresetKeyForVendor((string) ($configRecord?->preset_key ?? 'atelier'), $vendor);
         $freshConfig = $this->presetService->getDefaultConfig($presetKey, $vendor);
 
         $configRecord?->update([
+            'preset_key' => $presetKey,
             'draft_config' => $freshConfig,
             'last_saved_at' => now(),
         ]);
@@ -794,6 +811,11 @@ class StorefrontDesignController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
         $revisions = VendorStorefrontRevision::where('vendor_id', $vendor->id)
@@ -816,22 +838,33 @@ class StorefrontDesignController extends Controller
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
         }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
+        }
 
         $revisionId = $request->input('revision_id');
         $revision = VendorStorefrontRevision::where('vendor_id', $vendor->id)->findOrFail($revisionId);
 
+        if ($this->presetService->normalizePresetKey((string) $revision->preset_key) === 'kinetic' && !$vendor->hasKineticScrollAccess()) {
+            return response()->json(['status' => 'error', 'message' => 'Scroll Motion is not enabled for your boutique.'], 403);
+        }
+
+        $sanitizedConfig = $this->presetService->sanitizeConfig((array) $revision->config_data, $vendor);
+
         $configRecord = $vendor->storefrontConfig()->firstOrCreate(
             ['vendor_id' => $vendor->id],
             [
-                'preset_key' => $revision->preset_key,
+                'preset_key' => $sanitizedConfig['preset'],
                 'schema_version' => 2,
-                'draft_config' => $revision->config_data,
-                'published_config' => $revision->config_data,
+                'draft_config' => $sanitizedConfig,
+                'published_config' => $sanitizedConfig,
             ]
         );
         $configRecord->update([
-            'preset_key' => $revision->preset_key,
-            'draft_config' => $revision->config_data,
+            'preset_key' => $sanitizedConfig['preset'],
+            'draft_config' => $sanitizedConfig,
             'last_saved_at' => now(),
         ]);
         $vendor->bumpWebsiteCache();
@@ -839,7 +872,7 @@ class StorefrontDesignController extends Controller
         return response()->json([
             'status' => 'success',
             'message' => 'Restored revision from ' . $revision->created_at->format('M d, Y h:i A') . ' to draft.',
-            'config' => $revision->config_data,
+            'config' => $sanitizedConfig,
         ]);
     }
 
@@ -851,6 +884,11 @@ class StorefrontDesignController extends Controller
         $vendor = auth()->user()->vendor;
         if (!$vendor) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);
+        }
+        $authCheck = app(\App\Services\Monetization\EntitlementService::class)
+            ->authorizeSectorWrite($vendor, $vendor->getCanonicalSectorKey(), 'allow_storefront_customization');
+        if (!$authCheck['allowed']) {
+            return response()->json(['status' => 'error', 'message' => $authCheck['reason']], 403);
         }
 
         $request->validate([

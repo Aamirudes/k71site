@@ -74,7 +74,7 @@ class MessageController extends Controller
     /**
      * Customer initiate a new conversation or send initial message.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
             'vendor_id' => 'required|exists:vendors,id',
@@ -84,6 +84,35 @@ class MessageController extends Controller
         ]);
 
         $user = auth()->user();
+        $vendor = Vendor::with('user')->findOrFail($validated['vendor_id']);
+
+        if ((int) $vendor->user_id === (int) $user->id) {
+            $msg = 'You cannot start a customer inquiry chat with your own store.';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->withInput()->with('error', $msg);
+        }
+
+        if ($vendor->user?->is_blocked || in_array($vendor->status, ['suspended', 'rejected', 'banned'], true)) {
+            $msg = 'This vendor store is currently unavailable for direct messaging.';
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+            return back()->withInput()->with('error', $msg);
+        }
+
+        $product = null;
+        if (!empty($validated['product_id'])) {
+            $product = Product::find($validated['product_id']);
+            if ($product && (int) $product->vendor_id !== (int) $vendor->id) {
+                $msg = 'Selected product does not belong to this vendor store.';
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $msg], 422);
+                }
+                return back()->withInput()->with('error', $msg);
+            }
+        }
 
         // Check if conversation already exists for user and vendor (and optionally product)
         $conversationQuery = Conversation::where('user_id', $user->id)
@@ -97,9 +126,8 @@ class MessageController extends Controller
 
         if (!$conversation) {
             $subject = $validated['subject'] ?? null;
-            if (!$subject && !empty($validated['product_id'])) {
-                $product = Product::find($validated['product_id']);
-                $subject = 'Inquiry about: ' . ($product ? $product->title : 'Product');
+            if (!$subject && $product) {
+                $subject = 'Inquiry about: ' . $product->title;
             }
 
             $conversation = Conversation::create([
@@ -121,10 +149,20 @@ class MessageController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
+        if ($vendor->user_id) {
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                (int) $vendor->user_id,
+                '💬',
+                'New Buyer Message',
+                "{$user->name}: " . Str::limit($validated['body'], 90),
+                route('vendor.messages.show', $conversation->id),
+                'messages'
+            );
+        }
+
         // Seamless Mirror to Instagram Direct DM Chat Engine
         try {
-            $vendor = Vendor::find($validated['vendor_id']);
-            if ($vendor && $vendor->user_id) {
+            if ($vendor->user_id) {
                 self::ensureChatSchema();
                 $u1 = min($user->id, (int)$vendor->user_id);
                 $u2 = max($user->id, (int)$vendor->user_id);
@@ -156,10 +194,26 @@ class MessageController extends Controller
                     'created_at' => $nowStr,
                 ]);
 
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'conversation_id' => $conversation->id,
+                        'redirect' => route('messages.index', ['chat_with' => $vendor->user_id]),
+                    ]);
+                }
+
                 return redirect()->route('messages.index', ['chat_with' => $vendor->user_id])
                     ->with('success', 'Message sent successfully.');
             }
         } catch (\Throwable $e) {}
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'conversation_id' => $conversation->id,
+                'redirect' => route('messages.show', $conversation->id),
+            ]);
+        }
 
         return redirect()->route('messages.show', $conversation->id)
             ->with('success', 'Message sent successfully.');

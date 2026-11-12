@@ -173,7 +173,11 @@ class WishlistController extends Controller
                 'price_formatted' => '₹' . number_format($product->base_price / 100, 2),
                 'image_url' => $imageUrl,
                 'url' => $url,
-                'in_stock' => $product->stock_quantity > 0,
+                'in_stock' => $product->isUsedListing()
+                    ? (!$product->isSold() && (int) $product->total_stock > 0)
+                    : ($product->variants->isNotEmpty()
+                        ? (int) $product->variants->sum('stock') > 0
+                        : (int) $product->total_stock > 0),
             ];
         })->values();
 
