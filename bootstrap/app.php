@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'storefront' => \App\Http\Middleware\ResolveStorefront::class,
             'vendor.own' => \App\Http\Middleware\EnsureVendorOwnership::class,
             'vendor.approved' => \App\Http\Middleware\EnsureVendorApproved::class,
+            'sector.sub' => \App\Http\Middleware\EnsureSectorSubscriptionActive::class,
             'admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
         

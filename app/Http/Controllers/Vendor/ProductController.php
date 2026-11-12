@@ -1342,6 +1342,13 @@ class ProductController extends Controller
             abort(403, 'Unauthorized access to product.');
         }
 
+        $sectorKey = app(\App\Services\Monetization\SectorRegistryService::class)->resolveProductSector($product);
+        $dupFeature = $sectorKey === 'used' ? 'allow_used_renewal' : null;
+        $dupAuth = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($vendor, $sectorKey, $dupFeature);
+        if (!$dupAuth['allowed']) {
+            return back()->with('error', $dupAuth['reason']);
+        }
+
         // Replicate product model
         $clone = $product->replicate([
             'slug',

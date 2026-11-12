@@ -34,6 +34,71 @@ class VendorManagementController extends Controller
     ) {}
 
     /**
+     * Tab 1: Overview — Active Vendors, Expired Plans, Pending Renewals, Expiring Soon & Revenue Summaries.
+     */
+    public function overview()
+    {
+        $metrics = [
+            'active_vendors' => VendorSubscription::whereIn('status', [VendorSubscription::STATUS_ACTIVE, VendorSubscription::STATUS_GRACE_PERIOD])->distinct('vendor_id')->count('vendor_id'),
+            'active_subs' => VendorSubscription::where('status', VendorSubscription::STATUS_ACTIVE)->count(),
+            'expired_subs' => VendorSubscription::where('status', VendorSubscription::STATUS_EXPIRED)->count(),
+            'pending_renewals' => SubscriptionRenewalRequest::where('status', 'pending')->count(),
+            'expiring_7d' => VendorSubscription::where('status', VendorSubscription::STATUS_ACTIVE)
+                ->whereNotNull('ends_at')
+                ->whereBetween('ends_at', [now(), now()->addDays(7)])
+                ->count(),
+            'pending_activation' => VendorSubscription::where('status', VendorSubscription::STATUS_PENDING_ACTIVATION)->count(),
+            'sub_revenue_paise' => (int) VendorSubscription::where('external_payment_received', true)->sum('external_payment_amount'),
+            'total_vendors' => Vendor::count(),
+        ];
+
+        $upcomingExpirations = VendorSubscription::with(['vendor', 'plan'])
+            ->where('status', VendorSubscription::STATUS_ACTIVE)
+            ->whereNotNull('ends_at')
+            ->whereBetween('ends_at', [now(), now()->addDays(14)])
+            ->orderBy('ends_at')
+            ->take(12)
+            ->get();
+
+        $expiredList = VendorSubscription::with(['vendor', 'plan'])
+            ->where('status', VendorSubscription::STATUS_EXPIRED)
+            ->orderByDesc('expired_at')
+            ->take(10)
+            ->get();
+
+        $pendingRenewalList = SubscriptionRenewalRequest::with(['vendor', 'requestedPlan', 'subscription'])
+            ->where('status', 'pending')
+            ->latest('id')
+            ->take(10)
+            ->get();
+
+        $sectorHealth = [];
+        foreach ($this->sectors->getAllSectors() as $sec) {
+            $subs = VendorSubscription::where('sector_key', $sec->key)->get();
+            $sectorHealth[] = [
+                'sector' => $sec,
+                'active' => $subs->where('status', VendorSubscription::STATUS_ACTIVE)->count(),
+                'expired' => $subs->where('status', VendorSubscription::STATUS_EXPIRED)->count(),
+                'pending' => $subs->where('status', VendorSubscription::STATUS_PENDING_ACTIVATION)->count(),
+                'revenue_paise' => (int) $subs->where('external_payment_received', true)->sum('external_payment_amount'),
+            ];
+        }
+
+        $strictEnforcement = $this->entitlements->isStrictEnforcementEnabled();
+        $lastSweepAt = MonetizationSetting::getValue('last_expiry_run_at');
+
+        return view('admin.vendor-management.overview', compact(
+            'metrics',
+            'upcomingExpirations',
+            'expiredList',
+            'pendingRenewalList',
+            'sectorHealth',
+            'strictEnforcement',
+            'lastSweepAt'
+        ));
+    }
+
+    /**
      * Main Vendor Management Directory & Status Queues.
      */
     public function index(Request $request)
@@ -560,6 +625,8 @@ class VendorManagementController extends Controller
      */
     public function history(Request $request)
     {
+        $statusFilter = $request->query('status', '');
+
         $events = SubscriptionEvent::with(['vendor', 'subscription', 'actor'])
             ->latest('id')
             ->paginate(25, ['*'], 'events_page');
@@ -570,17 +637,24 @@ class VendorManagementController extends Controller
             ->paginate(15, ['*'], 'payments_page');
 
         $renewalRequests = SubscriptionRenewalRequest::with(['vendor', 'currentSubscription', 'requestedPlan', 'handledBy'])
+            ->when($statusFilter !== '', fn ($q) => $q->where('status', $statusFilter))
             ->orderByRaw("CASE status WHEN 'pending' THEN 0 WHEN 'reviewed' THEN 1 ELSE 2 END")
             ->latest('id')
-            ->paginate(15, ['*'], 'requests_page');
+            ->paginate(15, ['*'], 'requests_page')
+            ->withQueryString();
 
-        return view('admin.vendor-management.history', compact('events', 'manualPayments', 'renewalRequests'));
+        $activePlans = SubscriptionPlan::where('status', 'active')
+            ->orderBy('sector_key')
+            ->orderBy('sort_order')
+            ->get();
+
+        return view('admin.vendor-management.history', compact('events', 'manualPayments', 'renewalRequests', 'activePlans', 'statusFilter'));
     }
 
     public function resolveRenewalRequest(Request $request, SubscriptionRenewalRequest $renewalRequest)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,reviewed,fulfilled,dismissed',
+            'status' => 'required|in:pending,reviewed,fulfilled,dismissed,rejected,approved',
             'admin_notes' => 'nullable|string|max:1000',
         ]);
 
@@ -592,6 +666,73 @@ class VendorManagementController extends Controller
         ]);
 
         return back()->with('success', "Renewal request #{$renewalRequest->id} marked as '{$validated['status']}'.");
+    }
+
+    public function replyRenewalRequest(Request $request, SubscriptionRenewalRequest $renewalRequest)
+    {
+        $validated = $request->validate([
+            'admin_reply' => 'required|string|max:2000',
+            'status' => 'nullable|in:pending,reviewed,approved',
+        ]);
+
+        $this->lifecycle->replyToRenewalRequest(
+            $renewalRequest,
+            $validated['admin_reply'],
+            auth()->id(),
+            $validated['status'] ?? null,
+            $request->ip()
+        );
+
+        return back()->with('success', "Reply sent to vendor for renewal request #{$renewalRequest->id}.");
+    }
+
+    public function rejectRenewalRequest(Request $request, SubscriptionRenewalRequest $renewalRequest)
+    {
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:1000',
+        ]);
+
+        $this->lifecycle->rejectRenewalRequest(
+            $renewalRequest,
+            $validated['rejection_reason'],
+            auth()->id(),
+            $request->ip()
+        );
+
+        return back()->with('success', "Renewal request #{$renewalRequest->id} rejected with explanation.");
+    }
+
+    public function approveRenewRenewalRequest(Request $request, SubscriptionRenewalRequest $renewalRequest)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'nullable|exists:subscription_plans,id',
+            'duration_days' => 'nullable|integer|min:1|max:3650',
+            'external_payment_received' => 'nullable|boolean',
+            'external_payment_amount_rupees' => 'nullable|numeric|min:0',
+            'external_payment_method' => 'nullable|string|max:100',
+            'external_payment_ref' => 'nullable|string|max:150',
+            'admin_reply' => 'nullable|string|max:2000',
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $sub = $this->lifecycle->approveAndRenewFromRequest($renewalRequest, [
+                'plan_id' => $validated['plan_id'] ?? null,
+                'duration_days' => $validated['duration_days'] ?? null,
+                'external_payment_received' => $request->boolean('external_payment_received'),
+                'external_payment_amount' => isset($validated['external_payment_amount_rupees']) && $validated['external_payment_amount_rupees'] !== ''
+                    ? (int) round(((float) $validated['external_payment_amount_rupees']) * 100)
+                    : null,
+                'external_payment_method' => $validated['external_payment_method'] ?? 'whatsapp_upi',
+                'external_payment_ref' => $validated['external_payment_ref'] ?? null,
+                'admin_reply' => $validated['admin_reply'] ?? null,
+                'reason' => $validated['reason'] ?? null,
+            ], auth()->id(), $request->ip());
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Renewal request #{$renewalRequest->id} approved! Subscription #{$sub->id} ({$sub->sector_key}) is now ACTIVE until " . ($sub->ends_at?->format('d M Y') ?? 'renewed term') . '.');
     }
 
     /**

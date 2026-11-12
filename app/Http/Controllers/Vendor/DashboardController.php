@@ -17,6 +17,34 @@ class DashboardController extends Controller
         $vendor = Auth::user()->vendor;
         if (!$vendor) abort(403);
 
+        $sectors = app(\App\Services\Monetization\SectorRegistryService::class);
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+
+        if ($entitlements->isStrictEnforcementEnabled() && $vendor->isVerifiedMerchant()) {
+            $explicitSector = $request->filled('sector') ? $sectors->normalizeSectorKey((string) $request->query('sector')) : null;
+            $targetSector = $explicitSector ?: $sectors->resolveVendorPrimarySector($vendor);
+            $lockState = $entitlements->resolveSectorLockState($vendor, $targetSector);
+
+            if ($lockState['locked'] && !$explicitSector && !empty($lockState['active_other_sectors'])) {
+                $targetSector = $lockState['active_other_sectors'][0];
+                $lockState = $entitlements->resolveSectorLockState($vendor, $targetSector);
+            }
+
+            if ($lockState['locked']) {
+                $renewalRequests = \App\Models\SubscriptionRenewalRequest::with(['requestedPlan', 'subscription'])
+                    ->where('vendor_id', $vendor->id)
+                    ->orderByDesc('id')
+                    ->take(10)
+                    ->get();
+
+                return response()->view('vendor.partials.expired-sector-lock', [
+                    'vendor' => $vendor,
+                    'lockState' => $lockState,
+                    'renewalRequests' => $renewalRequests,
+                ], 200);
+            }
+        }
+
         $period = $request->query('period', 'all');
         $startDateInput = $request->query('start_date');
         $endDateInput = $request->query('end_date');

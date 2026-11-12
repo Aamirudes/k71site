@@ -15,12 +15,18 @@ class SubscriptionRenewalRequest extends Model
         'message',
         'status',
         'admin_notes',
+        'admin_reply',
+        'replied_at',
+        'replied_by',
+        'rejection_reason',
+        'renewed_subscription_id',
         'reviewed_by',
         'reviewed_at',
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'replied_at' => 'datetime',
     ];
 
     public function vendor(): BelongsTo

@@ -200,6 +200,15 @@ class OfferController extends Controller
             abort(403, 'Unauthorized access to offer.');
         }
 
+        if ($user->vendor) {
+            $offerAuth = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite($user->vendor, 'used', 'allow_offer_negotiation');
+            if (!$offerAuth['allowed']) {
+                return $request->expectsJson()
+                    ? response()->json(['success' => false, 'message' => $offerAuth['reason']], 403)
+                    : back()->with('error', $offerAuth['reason']);
+            }
+        }
+
         $validated = $request->validate([
             'action' => 'required|in:accept,reject,counter',
             'counter_amount' => 'required_if:action,counter|nullable|numeric|min:1|max:500000000',

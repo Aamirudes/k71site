@@ -93,7 +93,7 @@ class CommissionService
             }
         }
 
-        // 4. Plan-specific rule (explicit commission_rule_id on subscription OR plan-scoped rule)
+        // 4. Plan-specific rule (explicit commission_rule_id, plan-scoped rule, OR inline plan commission terms)
         if ($sub) {
             if ($sub->commission_rule_id) {
                 $assignedRule = $activeRuleQuery()->where('id', $sub->commission_rule_id)->first();
@@ -110,6 +110,34 @@ class CommissionService
                 if ($planRule) {
                     return $this->formatRuleResult($planRule, 'plan');
                 }
+            }
+
+            $planCommType = $sub->commission_type_snapshot ?: $sub->plan?->commission_type;
+            if ($planCommType && $planCommType !== 'default') {
+                $planRate = $sub->commission_rate_snapshot ?? $sub->plan?->commission_rate ?? 0;
+                $planFixed = $sub->commission_fixed_snapshot ?? $sub->plan?->commission_fixed_paise ?? 0;
+
+                if ($planCommType === 'zero') {
+                    return [
+                        'rule' => null,
+                        'rule_id' => null,
+                        'rule_version' => (int) ($sub->plan_version_number ?? 1),
+                        'source' => 'plan',
+                        'rate_percent' => 0.00,
+                        'fixed_fee_paise' => 0,
+                        'name' => ($sub->plan_name_snapshot ?: 'Plan') . ' (Zero Commission)',
+                    ];
+                }
+
+                return [
+                    'rule' => null,
+                    'rule_id' => null,
+                    'rule_version' => (int) ($sub->plan_version_number ?? 1),
+                    'source' => 'plan',
+                    'rate_percent' => $planCommType === 'fixed' ? 0.00 : round((float) $planRate, 2),
+                    'fixed_fee_paise' => in_array($planCommType, ['fixed', 'hybrid'], true) ? (int) $planFixed : 0,
+                    'name' => ($sub->plan_name_snapshot ?: 'Plan') . ' Terms (' . ucfirst($planCommType) . ')',
+                ];
             }
         }
 

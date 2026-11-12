@@ -202,8 +202,135 @@ class EntitlementService
                 ->where('vertical', 'enquiry')
                 ->where('status', 'active')
                 ->count(),
+            'max_active_shorts' => Short::where('vendor_id', $vendor->id)
+                ->whereIn('status', ['published', 'active'])
+                ->count(),
             default => 0,
         };
+    }
+
+    /**
+     * Resolve exact lock state for a vendor within a sector (used for Vendor Lock Screen & sector middleware).
+     */
+    public function resolveSectorLockState(Vendor $vendor, string $sectorKey): array
+    {
+        $sectorKey = $this->sectors->normalizeSectorKey($sectorKey);
+        $sectorLabel = match ($sectorKey) {
+            'food' => 'Food & Dining',
+            'services' => 'Services & Freelance',
+            'used' => 'Used Marketplace',
+            'enquiry' => 'B2B & Enquiry',
+            default => 'Products & Marketplace',
+        };
+
+        $this->syncJustInTimeExpiry($vendor);
+
+        $vendorSectors = $this->sectors->resolveVendorSectors($vendor);
+        $activeOtherSectors = [];
+        foreach ($vendorSectors as $otherKey) {
+            if ($otherKey !== $sectorKey && $this->resolveEffectiveSubscription($vendor, $otherKey)) {
+                $activeOtherSectors[] = $otherKey;
+            }
+        }
+
+        if (in_array($vendor->status, ['suspended', 'closed'], true) || in_array($vendor->verification_status, ['rejected', 'suspended'], true)) {
+            return [
+                'locked' => true,
+                'state' => 'suspended',
+                'sector_key' => $sectorKey,
+                'sector_label' => $sectorLabel,
+                'effective_sub' => null,
+                'latest_sub' => $this->findLatestSectorSubscription($vendor, $sectorKey),
+                'plan_name' => 'Merchant Account Suspended',
+                'expired_at' => null,
+                'reason' => $vendor->rejection_reason ?: 'Your merchant verification is suspended or closed. Please contact the K71 administrator.',
+                'active_other_sectors' => $activeOtherSectors,
+            ];
+        }
+
+        if (!$vendor->isVerifiedMerchant()) {
+            return [
+                'locked' => true,
+                'state' => 'verification_pending',
+                'sector_key' => $sectorKey,
+                'sector_label' => $sectorLabel,
+                'effective_sub' => null,
+                'latest_sub' => $this->findLatestSectorSubscription($vendor, $sectorKey),
+                'plan_name' => 'Verification Pending',
+                'expired_at' => null,
+                'reason' => 'Your merchant profile is awaiting K71 admin verification via WhatsApp before a plan can be activated.',
+                'active_other_sectors' => [],
+            ];
+        }
+
+        $effectiveSub = $this->resolveEffectiveSubscription($vendor, $sectorKey);
+        if ($effectiveSub || !$this->isStrictEnforcementEnabled()) {
+            return [
+                'locked' => false,
+                'state' => 'active',
+                'sector_key' => $sectorKey,
+                'sector_label' => $sectorLabel,
+                'effective_sub' => $effectiveSub,
+                'latest_sub' => $effectiveSub ?: $this->findLatestSectorSubscription($vendor, $sectorKey),
+                'plan_name' => $effectiveSub?->plan_name_snapshot ?: 'Active Access',
+                'expired_at' => $effectiveSub?->ends_at,
+                'reason' => null,
+                'active_other_sectors' => $activeOtherSectors,
+            ];
+        }
+
+        $latestSub = $this->findLatestSectorSubscription($vendor, $sectorKey);
+        if (!$latestSub) {
+            return [
+                'locked' => true,
+                'state' => 'unsubscribed',
+                'sector_key' => $sectorKey,
+                'sector_label' => $sectorLabel,
+                'effective_sub' => null,
+                'latest_sub' => null,
+                'plan_name' => 'No Active Plan',
+                'expired_at' => null,
+                'reason' => "No active K71 subscription is assigned for {$sectorLabel}. Contact admin to activate your plan.",
+                'active_other_sectors' => $activeOtherSectors,
+            ];
+        }
+
+        $expiredAt = $latestSub->ends_at ?? $latestSub->expired_at;
+        $state = match ($latestSub->status) {
+            VendorSubscription::STATUS_GRACE_PERIOD => 'grace_locked',
+            VendorSubscription::STATUS_PENDING_ACTIVATION => 'pending_activation',
+            VendorSubscription::STATUS_SUSPENDED, VendorSubscription::STATUS_CANCELLED => 'suspended',
+            default => 'expired',
+        };
+
+        $reason = match ($state) {
+            'grace_locked' => "Your {$sectorLabel} plan entered grace period on " . ($expiredAt?->format('d M Y') ?? 'recently') . ' and operational editing is paused until renewal.',
+            'pending_activation' => "Your assigned plan ({$latestSub->plan_name_snapshot}) is awaiting manual payment confirmation and activation by the K71 administrator.",
+            'suspended' => $latestSub->admin_reason ?: "Your {$sectorLabel} subscription has been paused or cancelled by the K71 administrator.",
+            default => "Your {$latestSub->plan_name_snapshot} plan for {$sectorLabel} expired" . ($expiredAt ? ' on ' . $expiredAt->format('d M Y') : '') . '. Send a renewal request to the K71 administrator to restore storefront visibility and editing.',
+        };
+
+        return [
+            'locked' => true,
+            'state' => $state,
+            'sector_key' => $sectorKey,
+            'sector_label' => $sectorLabel,
+            'effective_sub' => null,
+            'latest_sub' => $latestSub,
+            'plan_name' => $latestSub->plan_name_snapshot ?: ($latestSub->plan?->name ?? 'Sector Plan'),
+            'expired_at' => $expiredAt,
+            'reason' => $reason,
+            'active_other_sectors' => $activeOtherSectors,
+        ];
+    }
+
+    protected function findLatestSectorSubscription(Vendor $vendor, string $sectorKey): ?VendorSubscription
+    {
+        return VendorSubscription::with('plan')
+            ->where('vendor_id', $vendor->id)
+            ->orderByDesc('id')
+            ->get()
+            ->first(fn ($sub) => $sub->coversSector($sectorKey));
     }
 
     /**

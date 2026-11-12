@@ -110,7 +110,22 @@ class SubscriptionLifecycleService
             $isCrossSector = (bool) ($data['is_cross_sector'] ?? ($sectorKey === 'all' || count($applicableSectors) > 1));
             $isFree = (bool) ($data['is_free'] ?? false);
             $priceAmount = $isFree ? 0 : max(0, (int) ($data['price_amount'] ?? 0));
-            $durationDays = max(1, (int) ($data['duration_days'] ?? 30));
+            $durationUnit = in_array(($data['duration_unit'] ?? 'days'), ['days', 'months'], true) ? $data['duration_unit'] : 'days';
+            $durationValue = max(1, (int) ($data['duration_value'] ?? ($data['duration_days'] ?? 30)));
+            $durationDays = $durationUnit === 'months'
+                ? max(1, (int) ($durationValue * 30))
+                : max(1, (int) ($data['duration_days'] ?? $durationValue));
+
+            $commissionType = $data['commission_type'] ?? ($plan?->commission_type ?? 'default');
+            if (!in_array($commissionType, ['default', 'percentage', 'fixed', 'hybrid', 'zero'], true)) {
+                $commissionType = 'default';
+            }
+            $commissionRate = $commissionType === 'zero'
+                ? 0.00
+                : ($commissionType === 'fixed' ? 0.00 : ($commissionType === 'default' ? null : max(0, min(100, (float) ($data['commission_rate'] ?? 5.0)))));
+            $commissionFixedPaise = in_array($commissionType, ['fixed', 'hybrid'], true)
+                ? max(0, (int) ($data['commission_fixed_paise'] ?? 0))
+                : ($commissionType === 'zero' ? 0 : null);
 
             $slugBase = Str::slug($data['slug'] ?? $data['name'] ?? 'plan') ?: 'plan';
             $slug = $isNew ? $slugBase : ($plan->slug ?: $slugBase);
@@ -127,13 +142,21 @@ class SubscriptionLifecycleService
 
             $nextVersion = $isNew ? 1 : ((int) $plan->current_version + 1);
             $status = $data['status'] ?? ($plan?->status ?? 'active');
+            $applyToExisting = (bool) ($data['apply_to_existing'] ?? false);
+
+            $benefits = array_values(array_filter(array_map(
+                fn ($b) => trim((string) $b),
+                is_array($data['benefits'] ?? null) ? $data['benefits'] : []
+            )));
 
             $planPayload = [
                 'code' => $code,
                 'name' => trim((string) $data['name']),
+                'badge_text' => !empty($data['badge_text']) ? trim((string) $data['badge_text']) : null,
                 'slug' => $slug,
                 'description' => $data['description'] ?? null,
                 'sector_key' => $sectorKey,
+                'tier_key' => $data['tier_key'] ?? ($plan?->tier_key),
                 'applicable_sectors' => array_values(array_unique($applicableSectors)),
                 'is_cross_sector' => $isCrossSector,
                 'is_free' => $isFree,
@@ -141,14 +164,21 @@ class SubscriptionLifecycleService
                 'price_monthly' => $priceAmount,
                 'currency' => $data['currency'] ?? 'INR',
                 'duration_days' => $durationDays,
+                'duration_unit' => $durationUnit,
+                'duration_value' => $durationValue,
                 'custom_duration_allowed' => (bool) ($data['custom_duration_allowed'] ?? true),
                 'default_commission_rule_id' => $data['default_commission_rule_id'] ?? null,
+                'commission_type' => $commissionType,
+                'commission_rate' => $commissionRate,
+                'commission_fixed_paise' => $commissionFixedPaise,
                 'status' => $status,
                 'is_active' => $status === 'active',
                 'is_public_display' => (bool) ($data['is_public_display'] ?? false),
                 'sort_order' => (int) ($data['sort_order'] ?? 0),
                 'features' => $data['entitlements'] ?? [],
+                'benefits_json' => $benefits,
                 'current_version' => $nextVersion,
+                'auto_apply_to_existing' => $applyToExisting,
                 'admin_notes' => $data['admin_notes'] ?? null,
                 'updated_by' => $adminId,
             ];
@@ -163,22 +193,37 @@ class SubscriptionLifecycleService
             $defaultExpiry = $this->sectors->getDefaultExpiryPolicy();
             $expiryPolicy = array_merge($defaultExpiry, $data['expiry_policy'] ?? []);
 
-            SubscriptionPlanVersion::create([
+            $version = SubscriptionPlanVersion::create([
                 'plan_id' => $plan->id,
                 'version_number' => $nextVersion,
                 'name' => $plan->name,
+                'badge_text' => $plan->badge_text,
                 'description' => $plan->description,
                 'is_free' => $plan->is_free,
                 'price_amount' => $plan->price_amount,
                 'currency' => $plan->currency,
                 'duration_days' => $plan->duration_days,
                 'default_commission_rule_id' => $plan->default_commission_rule_id,
+                'commission_type' => $commissionType,
+                'commission_rate' => $commissionRate,
+                'commission_fixed_paise' => $commissionFixedPaise,
                 'entitlements_json' => $data['entitlements'] ?? [],
                 'expiry_policy_json' => $expiryPolicy,
-                'promotional_benefits_json' => $data['promotional_benefits'] ?? null,
+                'promotional_benefits_json' => $data['promotional_benefits'] ?? $benefits,
+                'benefits_json' => $benefits,
                 'change_notes' => $changeNotes ?: ($isNew ? 'Initial plan version created by admin' : 'Updated plan terms by admin'),
                 'created_by' => $adminId,
             ]);
+
+            if (!$isNew && $applyToExisting) {
+                $activeSubs = VendorSubscription::where('plan_id', $plan->id)
+                    ->whereIn('status', [VendorSubscription::STATUS_ACTIVE, VendorSubscription::STATUS_GRACE_PERIOD])
+                    ->get();
+
+                foreach ($activeSubs as $activeSub) {
+                    $this->applyPlanVersion($activeSub, $version, $adminId, "Auto-applied plan v{$version->version_number} update by admin", $ip);
+                }
+            }
 
             AuditLog::create([
                 'user_id' => $adminId,
@@ -256,6 +301,9 @@ class SubscriptionLifecycleService
                 'commission_rule_id' => $options['commission_rule_id'] ?? $plan->default_commission_rule_id,
                 'commission_rate_override' => $options['commission_rate_override'] ?? null,
                 'commission_fixed_override' => $options['commission_fixed_override'] ?? null,
+                'commission_type_snapshot' => $version?->commission_type ?? $plan->commission_type,
+                'commission_rate_snapshot' => $version?->commission_rate ?? $plan->commission_rate,
+                'commission_fixed_snapshot' => $version?->commission_fixed_paise ?? $plan->commission_fixed_paise,
                 'reminder_days_before' => $reminderDays,
                 'auto_reminder_enabled' => (bool) ($options['auto_reminder_enabled'] ?? true),
                 'external_payment_received' => false,
@@ -592,6 +640,13 @@ class SubscriptionLifecycleService
                 'plan_version_id' => $version->id,
                 'plan_version_number' => $version->version_number,
                 'plan_name_snapshot' => $version->name,
+                'price_amount_snapshot' => $version->price_amount,
+                'is_free_snapshot' => $version->is_free,
+                'duration_days' => $version->duration_days,
+                'commission_rule_id' => $version->default_commission_rule_id ?? $subscription->commission_rule_id,
+                'commission_type_snapshot' => $version->commission_type,
+                'commission_rate_snapshot' => $version->commission_rate,
+                'commission_fixed_snapshot' => $version->commission_fixed_paise,
                 'entitlements_snapshot' => $version->entitlements_json,
                 'expiry_policy_snapshot' => $version->expiry_policy_json,
             ]);
@@ -847,5 +902,205 @@ class SubscriptionLifecycleService
             'payload_json' => $payload ?: null,
             'created_at' => now(),
         ]);
+    }
+
+    public function replyToRenewalRequest(
+        \App\Models\SubscriptionRenewalRequest $renewalRequest,
+        string $reply,
+        ?int $adminId = null,
+        ?string $status = null,
+        ?string $ip = null
+    ): \App\Models\SubscriptionRenewalRequest {
+        return DB::transaction(function () use ($renewalRequest, $reply, $adminId, $status, $ip) {
+            $old = $renewalRequest->only(['status', 'admin_reply']);
+            $updates = [
+                'admin_reply' => trim($reply),
+                'replied_at' => now(),
+                'replied_by' => $adminId,
+                'reviewed_by' => $adminId,
+                'reviewed_at' => $renewalRequest->reviewed_at ?? now(),
+            ];
+            if ($status !== null) {
+                $updates['status'] = $status;
+            } elseif ($renewalRequest->status === 'pending') {
+                $updates['status'] = 'reviewed';
+            }
+
+            $renewalRequest->update($updates);
+
+            SubscriptionNotification::create([
+                'vendor_subscription_id' => $renewalRequest->vendor_subscription_id,
+                'vendor_id' => $renewalRequest->vendor_id,
+                'sector_key' => $renewalRequest->sector_key,
+                'recipient_type' => 'vendor',
+                'event_key' => 'renewal_request_reply',
+                'title' => "Admin Reply on Renewal Request ({$renewalRequest->sector_key})",
+                'message' => trim($reply),
+                'channel' => 'in_app',
+                'dedupe_key' => 'renewal_reply:' . $renewalRequest->id . ':' . now()->timestamp,
+                'sent_at' => now(),
+            ]);
+
+            AuditLog::create([
+                'user_id' => $adminId,
+                'vendor_id' => $renewalRequest->vendor_id,
+                'sector_key' => $renewalRequest->sector_key,
+                'auditable_type' => \App\Models\SubscriptionRenewalRequest::class,
+                'auditable_id' => $renewalRequest->id,
+                'action' => 'renewal_request_replied',
+                'old_values' => $old,
+                'new_values' => $renewalRequest->fresh()->only(['status', 'admin_reply']),
+                'ip_address' => $ip,
+            ]);
+
+            return $renewalRequest->fresh();
+        });
+    }
+
+    public function rejectRenewalRequest(
+        \App\Models\SubscriptionRenewalRequest $renewalRequest,
+        string $reason,
+        ?int $adminId = null,
+        ?string $ip = null
+    ): \App\Models\SubscriptionRenewalRequest {
+        return DB::transaction(function () use ($renewalRequest, $reason, $adminId, $ip) {
+            $old = $renewalRequest->only(['status', 'rejection_reason']);
+            $renewalRequest->update([
+                'status' => 'rejected',
+                'rejection_reason' => trim($reason),
+                'admin_reply' => trim($reason),
+                'replied_at' => now(),
+                'replied_by' => $adminId,
+                'reviewed_by' => $adminId,
+                'reviewed_at' => now(),
+            ]);
+
+            SubscriptionNotification::create([
+                'vendor_subscription_id' => $renewalRequest->vendor_subscription_id,
+                'vendor_id' => $renewalRequest->vendor_id,
+                'sector_key' => $renewalRequest->sector_key,
+                'recipient_type' => 'vendor',
+                'event_key' => 'renewal_request_rejected',
+                'title' => "Renewal Request Update ({$renewalRequest->sector_key})",
+                'message' => trim($reason),
+                'channel' => 'in_app',
+                'dedupe_key' => 'renewal_reject:' . $renewalRequest->id . ':' . now()->timestamp,
+                'sent_at' => now(),
+            ]);
+
+            AuditLog::create([
+                'user_id' => $adminId,
+                'vendor_id' => $renewalRequest->vendor_id,
+                'sector_key' => $renewalRequest->sector_key,
+                'auditable_type' => \App\Models\SubscriptionRenewalRequest::class,
+                'auditable_id' => $renewalRequest->id,
+                'action' => 'renewal_request_rejected',
+                'reason' => $reason,
+                'old_values' => $old,
+                'new_values' => $renewalRequest->fresh()->only(['status', 'rejection_reason']),
+                'ip_address' => $ip,
+            ]);
+
+            return $renewalRequest->fresh();
+        });
+    }
+
+    /**
+     * One-click Approve & Renew/Activate right from a vendor's Renewal Request.
+     */
+    public function approveAndRenewFromRequest(
+        \App\Models\SubscriptionRenewalRequest $renewalRequest,
+        array $options = [],
+        ?int $adminId = null,
+        ?string $ip = null
+    ): VendorSubscription {
+        return DB::transaction(function () use ($renewalRequest, $options, $adminId, $ip) {
+            $vendor = $renewalRequest->vendor()->firstOrFail();
+            if (!$vendor->isVerifiedMerchant()) {
+                $this->updateVerificationStatus($vendor, 'verified', $adminId, 'Verified during manual renewal approval', $ip);
+                $vendor = $vendor->fresh();
+            }
+
+            $plan = !empty($options['plan_id'])
+                ? SubscriptionPlan::findOrFail((int) $options['plan_id'])
+                : ($renewalRequest->requestedPlan ?: $renewalRequest->subscription?->plan);
+
+            if (!$plan) {
+                $plan = SubscriptionPlan::where('sector_key', $renewalRequest->sector_key)
+                    ->where('status', 'active')
+                    ->orderBy('sort_order')
+                    ->first()
+                    ?? SubscriptionPlan::where('status', 'active')->orderBy('sort_order')->first();
+            }
+
+            if (!$plan) {
+                throw new \InvalidArgumentException('No active subscription plan available to fulfill this renewal request.');
+            }
+
+            $durationDays = max(1, (int) ($options['duration_days'] ?? $plan->duration_days ?? 30));
+            $targetSub = $renewalRequest->subscription;
+            $switchingPlan = $targetSub && (int) $targetSub->plan_id !== (int) $plan->id;
+
+            if ($targetSub && !$switchingPlan && in_array($targetSub->status, [VendorSubscription::STATUS_ACTIVE, VendorSubscription::STATUS_GRACE_PERIOD, VendorSubscription::STATUS_EXPIRED], true)) {
+                $renewed = $this->renewSubscription($targetSub, [
+                    'duration_days' => $durationDays,
+                    'external_payment_received' => !empty($options['external_payment_received']),
+                    'external_payment_amount' => $options['external_payment_amount'] ?? $plan->price_amount,
+                    'external_payment_method' => $options['external_payment_method'] ?? 'whatsapp_upi',
+                    'external_payment_ref' => $options['external_payment_ref'] ?? null,
+                    'sync_to_latest_plan_version' => true,
+                    'reset_from_now' => $targetSub->ends_at?->isPast() ?? true,
+                    'reason' => $options['reason'] ?? ("Approved & renewed from renewal request #{$renewalRequest->id}"),
+                ], $adminId, $ip);
+            } else {
+                $assigned = $this->assignSubscription($vendor, $plan, $renewalRequest->sector_key, [
+                    'duration_days' => $durationDays,
+                    'admin_reason' => $options['reason'] ?? ("Approved from renewal request #{$renewalRequest->id}"),
+                ], $adminId, $ip);
+
+                if (!empty($options['external_payment_received'])) {
+                    $this->recordExternalPayment($assigned, [
+                        'external_payment_received' => true,
+                        'external_payment_amount' => $options['external_payment_amount'] ?? $plan->price_amount,
+                        'external_payment_method' => $options['external_payment_method'] ?? 'whatsapp_upi',
+                        'external_payment_ref' => $options['external_payment_ref'] ?? null,
+                    ], $adminId, $ip);
+                }
+
+                $renewed = $this->activateSubscription($assigned, [
+                    'duration_days' => $durationDays,
+                    'replace_existing' => true,
+                    'reason' => $options['reason'] ?? ("Activated via renewal request #{$renewalRequest->id}"),
+                ], $adminId, $ip);
+            }
+
+            $replyMsg = trim((string) ($options['admin_reply'] ?? 'Your renewal has been approved and activated by K71 Admin. Access is now live until ' . ($renewed->ends_at?->format('d M Y') ?? 'renewed term') . '.'));
+
+            $renewalRequest->update([
+                'status' => 'fulfilled',
+                'renewed_subscription_id' => $renewed->id,
+                'admin_reply' => $replyMsg,
+                'admin_notes' => $options['admin_notes'] ?? $renewalRequest->admin_notes,
+                'replied_at' => now(),
+                'replied_by' => $adminId,
+                'reviewed_by' => $adminId,
+                'reviewed_at' => now(),
+            ]);
+
+            SubscriptionNotification::create([
+                'vendor_subscription_id' => $renewed->id,
+                'vendor_id' => $vendor->id,
+                'sector_key' => $renewed->sector_key,
+                'recipient_type' => 'vendor',
+                'event_key' => 'renewal_fulfilled',
+                'title' => "Plan Renewed & Activated ({$renewed->sector_key})",
+                'message' => $replyMsg,
+                'channel' => 'in_app',
+                'dedupe_key' => 'renewal_fulfilled:' . $renewalRequest->id . ':' . $renewed->id,
+                'sent_at' => now(),
+            ]);
+
+            return $renewed;
+        });
     }
 }

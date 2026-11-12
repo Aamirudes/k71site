@@ -29,6 +29,8 @@ class TenantIsolationTest extends TestCase
             'email' => $email,
         ]);
 
+        $this->grantVendorTestSubscription($vendor, 'all');
+
         return [$user, $vendor];
     }
 

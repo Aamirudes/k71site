@@ -41,6 +41,8 @@ class VendorDashboardPaymentClaimsTest extends TestCase
             'shipping_flat_rate' => 5000,
         ]);
 
+        $this->grantVendorTestSubscription($vendor, 'all');
+
         return [$user, $vendor];
     }
 

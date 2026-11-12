@@ -52,25 +52,31 @@
 
     <!-- Organized Queue Tabs -->
     <div class="bg-white border border-zinc-200/80 rounded-2xl p-4 space-y-4">
-        <div class="flex flex-wrap items-center gap-1.5 border-b border-zinc-100 pb-3">
-            @php
-                $tabs = [
-                    'all' => 'All Vendors (' . $stats['all'] . ')',
-                    'pending' => 'Pending Verification (' . $stats['pending'] . ')',
-                    'verified' => 'Verified (' . $stats['verified'] . ')',
-                    'active' => 'Active Subscribers',
-                    'expiring' => 'Expiring Soon (' . $stats['expiring_7d'] . ')',
-                    'expired' => 'Expired (' . $stats['expired_subs'] . ')',
-                    'suspended' => 'Suspended / Rejected (' . $stats['suspended'] . ')',
-                    'unsubscribed' => 'Verified Without Sub (' . $stats['verified_without_sub'] . ')',
-                ];
-            @endphp
-            @foreach($tabs as $tKey => $tLabel)
-                <a href="{{ route('admin.vendor_management.index', array_merge(request()->except('page'), ['tab' => $tKey])) }}"
-                   class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $tab === $tKey ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' }}">
-                    {{ $tLabel }}
-                </a>
-            @endforeach
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 pb-3">
+            <div class="flex flex-wrap items-center gap-1.5">
+                @php
+                    $tabs = [
+                        'all' => 'All Vendors (' . $stats['all'] . ')',
+                        'pending' => 'Pending Verification (' . $stats['pending'] . ')',
+                        'verified' => 'Verified (' . $stats['verified'] . ')',
+                        'active' => 'Active Subscribers',
+                        'expiring' => 'Expiring Soon (' . $stats['expiring_7d'] . ')',
+                        'expired' => 'Expired (' . $stats['expired_subs'] . ')',
+                        'suspended' => 'Suspended / Rejected (' . $stats['suspended'] . ')',
+                        'unsubscribed' => 'Verified Without Sub (' . $stats['verified_without_sub'] . ')',
+                    ];
+                @endphp
+                @foreach($tabs as $tKey => $tLabel)
+                    <a href="{{ route('admin.vendor_management.index', array_merge(request()->except('page'), ['tab' => $tKey])) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-semibold transition {{ $tab === $tKey ? 'bg-zinc-950 text-white' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' }}">
+                        {{ $tLabel }}
+                    </a>
+                @endforeach
+            </div>
+            <a href="{{ route('admin.vendor_management.leads') }}"
+               class="px-3 py-1.5 rounded-lg border border-zinc-200 text-xs font-bold text-zinc-800 hover:bg-zinc-50 transition shrink-0">
+                WhatsApp Onboarding Leads ({{ $stats['leads_count'] ?? 0 }}) →
+            </a>
         </div>
 
         <!-- Search & Filters -->

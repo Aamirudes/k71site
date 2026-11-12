@@ -151,9 +151,14 @@
                     <div class="pt-3 border-t border-zinc-100 space-y-2">
                         <p class="text-[11px] font-bold uppercase text-zinc-500">Your Recent Requests</p>
                         @foreach($renewalRequests as $rr)
-                            <div class="flex items-center justify-between text-xs">
-                                <span>{{ ucfirst($rr->sector_key) }} — {{ $rr->requestedPlan?->name ?? 'Renewal' }}</span>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-zinc-100">{{ $rr->status }}</span>
+                            <div class="rounded-lg border border-zinc-100 bg-zinc-50 p-2.5 space-y-1 text-xs">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-semibold">{{ ucfirst($rr->sector_key) }} — {{ $rr->requestedPlan?->name ?? 'Renewal' }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-zinc-200 text-zinc-900">{{ $rr->status }}</span>
+                                </div>
+                                @if($rr->admin_reply || $rr->rejection_reason)
+                                    <p class="text-[11px] text-zinc-700"><strong>Admin Reply:</strong> {{ $rr->admin_reply ?: $rr->rejection_reason }}</p>
+                                @endif
                             </div>
                         @endforeach
                     </div>

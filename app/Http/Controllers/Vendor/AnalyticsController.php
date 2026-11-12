@@ -22,6 +22,18 @@ class AnalyticsController extends Controller
             abort(403, 'Vendor account required.');
         }
 
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+        $sectorKey = $request->attributes->get('current_sector_key') ?? $vendor->getCanonicalSectorKey();
+        $authCheck = $entitlements->authorizeSectorWrite($vendor, $sectorKey, 'allow_analytics');
+        if (!$authCheck['allowed']) {
+            return view('vendor.partials.feature-locked', [
+                'vendor' => $vendor,
+                'featureTitle' => 'Analytics Not Included in Current Plan',
+                'reason' => $authCheck['reason'],
+                'sectorKey' => $sectorKey,
+            ]);
+        }
+
         $days = in_array((int) $request->query('days', 30), [7, 14, 30], true) ? (int) $request->query('days', 30) : 30;
         $since = Carbon::now()->subDays($days - 1)->startOfDay();
 

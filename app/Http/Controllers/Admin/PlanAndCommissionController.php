@@ -28,21 +28,37 @@ class PlanAndCommissionController extends Controller
      */
     public function plans(Request $request)
     {
-        $sectorFilter = $request->query('sector', '');
-        $statusFilter = $request->query('status', '');
-        $editPlan = $request->filled('edit') ? SubscriptionPlan::with('versions')->find((int) $request->query('edit')) : null;
+        $this->sectors->ensureDefaultThreeTierPlans();
 
-        $plans = SubscriptionPlan::with(['versions', 'defaultCommissionRule'])
+        $sectorFilter = $request->query('sector', 'products');
+        if ($sectorFilter === 'all_list') {
+            $sectorFilter = '';
+        }
+        $statusFilter = $request->query('status', '');
+
+        $allPlans = SubscriptionPlan::with(['versions', 'defaultCommissionRule'])
             ->withCount([
                 'subscriptions',
                 'subscriptions as active_subscriptions_count' => fn($q) => $q->where('status', 'active'),
             ])
-            ->when($sectorFilter !== '', fn($q) => $q->where('sector_key', $sectorFilter))
             ->when($statusFilter !== '', fn($q) => $q->where('status', $statusFilter))
             ->orderBy('sector_key')
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
+
+        $plans = $sectorFilter !== ''
+            ? $allPlans->where('sector_key', $sectorFilter)->values()
+            : $allPlans;
+
+        $sectorTierPlans = $allPlans->where('sector_key', $sectorFilter ?: 'products')
+            ->sortBy('sort_order')
+            ->take(3)
+            ->values();
+
+        $editPlan = $request->filled('edit')
+            ? SubscriptionPlan::with('versions')->find((int) $request->query('edit'))
+            : ($request->boolean('new') ? null : $sectorTierPlans->first());
 
         $sectors = $this->sectors->getAllSectors();
         $entitlementCatalog = $this->sectors->getEntitlementCatalog();
@@ -50,6 +66,8 @@ class PlanAndCommissionController extends Controller
 
         return view('admin.vendor-management.plans', compact(
             'plans',
+            'allPlans',
+            'sectorTierPlans',
             'editPlan',
             'sectors',
             'entitlementCatalog',
@@ -63,25 +81,42 @@ class PlanAndCommissionController extends Controller
     {
         $validated = $this->validatePlanPayload($request);
         $entitlements = $this->buildEntitlementsArray($request, $validated['sector_key']);
+        $benefits = $this->parseBenefitsLines((string) ($validated['benefits_text'] ?? ''));
+
+        $durationUnit = $validated['duration_unit'] ?? 'days';
+        $durationValue = (int) ($validated['duration_value'] ?? ($validated['duration_days'] ?? 30));
+        $durationDays = $durationUnit === 'months'
+            ? max(1, $durationValue * 30)
+            : max(1, (int) ($validated['duration_days'] ?? $durationValue));
 
         $plan = $this->lifecycle->createOrUpdatePlan([
             'code' => $validated['code'] ?? null,
             'name' => $validated['name'],
+            'badge_text' => $validated['badge_text'] ?? null,
             'description' => $validated['description'] ?? null,
             'sector_key' => $validated['sector_key'],
+            'tier_key' => $validated['tier_key'] ?? null,
             'applicable_sectors' => $validated['applicable_sectors'] ?? [$validated['sector_key']],
             'is_cross_sector' => $request->boolean('is_cross_sector'),
             'is_free' => $request->boolean('is_free'),
             'price_amount' => $request->boolean('is_free') ? 0 : (int) round(((float) ($validated['price_rupees'] ?? 0)) * 100),
             'currency' => 'INR',
-            'duration_days' => (int) $validated['duration_days'],
+            'duration_days' => $durationDays,
+            'duration_unit' => $durationUnit,
+            'duration_value' => $durationValue,
             'custom_duration_allowed' => $request->boolean('custom_duration_allowed', true),
             'default_commission_rule_id' => $validated['default_commission_rule_id'] ?? null,
+            'commission_type' => $validated['commission_type'] ?? 'default',
+            'commission_rate' => $validated['commission_rate'] ?? null,
+            'commission_fixed_paise' => isset($validated['commission_fixed_rupees']) && $validated['commission_fixed_rupees'] !== ''
+                ? (int) round(((float) $validated['commission_fixed_rupees']) * 100)
+                : 0,
             'status' => $validated['status'] ?? 'active',
             'is_public_display' => $request->boolean('is_public_display', false),
             'sort_order' => (int) ($validated['sort_order'] ?? 0),
             'admin_notes' => $validated['admin_notes'] ?? null,
             'entitlements' => $entitlements,
+            'benefits' => $benefits,
             'expiry_policy' => [
                 'hide_storefront' => $request->boolean('hide_storefront', true),
                 'hide_listings' => $request->boolean('hide_listings', true),
@@ -93,7 +128,7 @@ class PlanAndCommissionController extends Controller
             ],
         ], null, auth()->id(), $validated['change_notes'] ?? 'Initial plan created', $request->ip());
 
-        return redirect()->route('admin.vendor_management.plans')
+        return redirect()->route('admin.vendor_management.plans', ['sector' => $plan->sector_key, 'edit' => $plan->id])
             ->with('success', "Plan '{$plan->name}' (v{$plan->current_version}) created for sector '{$plan->sector_key}'.");
     }
 
@@ -101,25 +136,47 @@ class PlanAndCommissionController extends Controller
     {
         $validated = $this->validatePlanPayload($request, $plan->id);
         $entitlements = $this->buildEntitlementsArray($request, $validated['sector_key']);
+        $benefits = $request->has('benefits_text')
+            ? $this->parseBenefitsLines((string) ($validated['benefits_text'] ?? ''))
+            : ($plan->benefits_json ?? []);
+
+        $durationUnit = $validated['duration_unit'] ?? ($plan->duration_unit ?? 'days');
+        $durationValue = (int) ($validated['duration_value'] ?? ($validated['duration_days'] ?? ($plan->duration_value ?? 30)));
+        $durationDays = $durationUnit === 'months'
+            ? max(1, $durationValue * 30)
+            : max(1, (int) ($validated['duration_days'] ?? $durationValue));
+
+        $applyToExisting = $request->boolean('apply_to_existing', false);
 
         $updated = $this->lifecycle->createOrUpdatePlan([
             'code' => $validated['code'] ?? $plan->code,
             'name' => $validated['name'],
+            'badge_text' => $validated['badge_text'] ?? $plan->badge_text,
             'description' => $validated['description'] ?? null,
             'sector_key' => $validated['sector_key'],
+            'tier_key' => $validated['tier_key'] ?? $plan->tier_key,
             'applicable_sectors' => $validated['applicable_sectors'] ?? [$validated['sector_key']],
             'is_cross_sector' => $request->boolean('is_cross_sector'),
             'is_free' => $request->boolean('is_free'),
             'price_amount' => $request->boolean('is_free') ? 0 : (int) round(((float) ($validated['price_rupees'] ?? 0)) * 100),
             'currency' => 'INR',
-            'duration_days' => (int) $validated['duration_days'],
+            'duration_days' => $durationDays,
+            'duration_unit' => $durationUnit,
+            'duration_value' => $durationValue,
             'custom_duration_allowed' => $request->boolean('custom_duration_allowed', true),
             'default_commission_rule_id' => $validated['default_commission_rule_id'] ?? null,
+            'commission_type' => $validated['commission_type'] ?? ($plan->commission_type ?? 'default'),
+            'commission_rate' => $validated['commission_rate'] ?? $plan->commission_rate,
+            'commission_fixed_paise' => isset($validated['commission_fixed_rupees']) && $validated['commission_fixed_rupees'] !== ''
+                ? (int) round(((float) $validated['commission_fixed_rupees']) * 100)
+                : ($plan->commission_fixed_paise ?? 0),
             'status' => $validated['status'] ?? $plan->status,
             'is_public_display' => $request->boolean('is_public_display', false),
-            'sort_order' => (int) ($validated['sort_order'] ?? 0),
+            'sort_order' => (int) ($validated['sort_order'] ?? $plan->sort_order),
             'admin_notes' => $validated['admin_notes'] ?? null,
             'entitlements' => $entitlements,
+            'benefits' => $benefits,
+            'apply_to_existing' => $applyToExisting,
             'expiry_policy' => [
                 'hide_storefront' => $request->boolean('hide_storefront', true),
                 'hide_listings' => $request->boolean('hide_listings', true),
@@ -131,8 +188,12 @@ class PlanAndCommissionController extends Controller
             ],
         ], $plan, auth()->id(), $validated['change_notes'] ?? 'Plan updated by admin', $request->ip());
 
-        return redirect()->route('admin.vendor_management.plans')
-            ->with('success', "Plan '{$updated->name}' updated as v{$updated->current_version}. Existing vendor subscriptions retain their immutable snapshot unless upgraded manually.");
+        $msg = $applyToExisting
+            ? "Plan '{$updated->name}' updated as v{$updated->current_version} and pushed to existing active subscribers."
+            : "Plan '{$updated->name}' updated as v{$updated->current_version}. Existing vendor subscriptions retain their immutable snapshot unless upgraded manually.";
+
+        return redirect()->route('admin.vendor_management.plans', ['sector' => $updated->sector_key, 'edit' => $updated->id])
+            ->with('success', $msg);
     }
 
     public function duplicatePlan(Request $request, SubscriptionPlan $plan)
@@ -322,19 +383,35 @@ class PlanAndCommissionController extends Controller
         return $request->validate([
             'code' => 'nullable|string|max:60',
             'name' => 'required|string|max:120',
+            'badge_text' => 'nullable|string|max:60',
             'description' => 'nullable|string|max:1000',
             'sector_key' => 'required|string|in:products,food,services,used,enquiry,all',
+            'tier_key' => 'nullable|string|in:starter,professional,elite',
             'applicable_sectors' => 'nullable|array',
             'applicable_sectors.*' => 'string|in:products,food,services,used,enquiry,all',
             'price_rupees' => 'nullable|numeric|min:0|max:10000000',
-            'duration_days' => 'required|integer|min:1|max:3650',
+            'duration_days' => 'nullable|integer|min:1|max:3650',
+            'duration_unit' => 'nullable|in:days,months',
+            'duration_value' => 'nullable|integer|min:1|max:3650',
             'default_commission_rule_id' => 'nullable|exists:commission_rules,id',
+            'commission_type' => 'nullable|in:default,percentage,fixed,hybrid,zero',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
+            'commission_fixed_rupees' => 'nullable|numeric|min:0|max:100000',
             'status' => 'nullable|in:draft,active,archived',
             'sort_order' => 'nullable|integer|min:0|max:999',
             'grace_days' => 'nullable|integer|min:0|max:90',
+            'benefits_text' => 'nullable|string|max:3000',
             'admin_notes' => 'nullable|string|max:2000',
             'change_notes' => 'nullable|string|max:500',
         ]);
+    }
+
+    protected function parseBenefitsLines(string $raw): array
+    {
+        return array_values(array_filter(array_map(
+            fn ($line) => trim($line),
+            preg_split('/\r\n|\r|\n/', $raw) ?: []
+        )));
     }
 
     protected function buildEntitlementsArray(Request $request, string $sectorKey): array

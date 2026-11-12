@@ -446,6 +446,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     // Vendor Management: Verification, Manual Subscriptions, Plans, Commissions & Expiry Automation
     Route::prefix('vendor-management')->name('vendor_management.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\VendorManagementController::class, 'index'])->name('index');
+        Route::get('/overview', [\App\Http\Controllers\Admin\VendorManagementController::class, 'overview'])->name('overview');
         Route::get('/vendors/{vendor}', [\App\Http\Controllers\Admin\VendorManagementController::class, 'show'])->name('show');
         Route::post('/vendors/{vendor}/verification', [\App\Http\Controllers\Admin\VendorManagementController::class, 'updateVerification'])->name('verification.update');
         Route::post('/vendors/{vendor}/assign-plan', [\App\Http\Controllers\Admin\VendorManagementController::class, 'assignPlan'])->name('assign_plan');
@@ -475,6 +476,9 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/history', [\App\Http\Controllers\Admin\VendorManagementController::class, 'history'])->name('history');
         Route::post('/renewal-requests/{renewalRequest}/resolve', [\App\Http\Controllers\Admin\VendorManagementController::class, 'resolveRenewalRequest'])->name('renewal_requests.resolve');
+        Route::post('/renewal-requests/{renewalRequest}/reply', [\App\Http\Controllers\Admin\VendorManagementController::class, 'replyRenewalRequest'])->name('renewal_requests.reply');
+        Route::post('/renewal-requests/{renewalRequest}/reject', [\App\Http\Controllers\Admin\VendorManagementController::class, 'rejectRenewalRequest'])->name('renewal_requests.reject');
+        Route::post('/renewal-requests/{renewalRequest}/approve-renew', [\App\Http\Controllers\Admin\VendorManagementController::class, 'approveRenewRenewalRequest'])->name('renewal_requests.approve_renew');
 
         Route::get('/automation', [\App\Http\Controllers\Admin\VendorManagementController::class, 'automation'])->name('automation');
         Route::post('/automation/settings', [\App\Http\Controllers\Admin\VendorManagementController::class, 'updateAutomationSettings'])->name('automation.settings');

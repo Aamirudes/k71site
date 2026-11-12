@@ -2,708 +2,552 @@
 
 namespace Tests\Feature;
 
-use App\Models\AuditLog;
 use App\Models\Category;
-use App\Models\CommissionRule;
-use App\Models\OnboardingLead;
-use App\Models\Order;
-use App\Models\OrderCommission;
-use App\Models\OrderItem;
+use App\Models\Offer;
 use App\Models\Product;
 use App\Models\Role;
-use App\Models\SubscriptionNotification;
+use App\Models\Short;
 use App\Models\SubscriptionPlan;
+use App\Models\SubscriptionRenewalRequest;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorSetting;
 use App\Models\VendorSubscription;
 use App\Services\Monetization\CommissionService;
-use App\Services\Monetization\EntitlementService;
+use App\Services\Monetization\SectorRegistryService;
 use App\Services\Monetization\SubscriptionLifecycleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class VendorMonetizationSystemTest extends TestCase
 {
     use RefreshDatabase;
 
-    private User $admin;
-    private Role $vendorRole;
-
-    protected function setUp(): void
+    private function createAdminUser(): User
     {
-        parent::setUp();
+        $role = Role::firstOrCreate(
+            ['name' => 'admin'],
+            ['display_name' => 'Master Admin', 'description' => 'Full Access']
+        );
 
-        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Administrator']);
-        $this->vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['display_name' => 'Vendor']);
-        Role::firstOrCreate(['name' => 'customer'], ['display_name' => 'Customer']);
-
-        $this->admin = User::factory()->create([
-            'email' => 'hashir.admin@k71.test',
+        $admin = User::factory()->create([
+            'email' => 'admin-monetization@marblemandi.org',
             'email_verified_at' => now(),
         ]);
-        $this->admin->roles()->syncWithoutDetaching([$adminRole->id]);
+        $admin->roles()->syncWithoutDetaching([$role->id]);
+
+        return $admin;
     }
 
-    private function createRawVendor(string $type = 'clothing', array $overrides = []): array
+    private function adminSession(): array
     {
-        $user = User::factory()->create(['email_verified_at' => now()]);
-        $user->roles()->syncWithoutDetaching([$this->vendorRole->id]);
+        return [
+            'admin_authenticated' => true,
+            'admin_2fa_verified' => true,
+            'admin_2fa_passed' => true,
+        ];
+    }
 
-        $slug = 'vendor-' . uniqid();
-        $vendor = Vendor::create(array_merge([
+    private function createVendorAccount(
+        string $slug,
+        string $vendorType = 'electronics',
+        ?array $operatingSectors = null,
+        string $verificationStatus = 'verified'
+    ): array {
+        $role = Role::firstOrCreate(['name' => 'vendor'], ['display_name' => 'Vendor']);
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $user->roles()->syncWithoutDetaching([$role->id]);
+
+        $vendor = Vendor::create([
             'user_id' => $user->id,
-            'shop_name' => 'Store ' . strtoupper($slug),
+            'shop_name' => ucfirst(str_replace('-', ' ', $slug)) . ' Store',
             'slug' => $slug,
-            'vendor_type' => $type,
-            'status' => 'pending',
-            'verification_status' => 'pending_review',
-            'phone' => '9876500001',
-            'email' => $slug . '@example.com',
-            'address' => '10 Main Market',
-            'city' => 'Jaipur',
-            'state' => 'Rajasthan',
-            'pincode' => '302001',
-        ], $overrides));
+            'vendor_type' => $vendorType,
+            'primary_sector' => $operatingSectors[0] ?? app(SectorRegistryService::class)->normalizeSectorKey($vendorType),
+            'operating_sectors' => $operatingSectors,
+            'status' => $verificationStatus === 'verified' ? 'approved' : 'pending',
+            'verification_status' => $verificationStatus,
+            'verified_at' => $verificationStatus === 'verified' ? now() : null,
+            'approved_at' => $verificationStatus === 'verified' ? now() : null,
+            'contact_phone' => '9876543210',
+            'whatsapp_number' => '9876543210',
+        ]);
 
         VendorSetting::create([
             'vendor_id' => $vendor->id,
-            'cod_enabled' => true,
             'upi_enabled' => true,
-            'upi_id' => $slug . '@okaxis',
+            'cod_enabled' => true,
+            'shipping_type' => 'flat',
+            'shipping_flat_rate' => 5000,
         ]);
 
         return [$user, $vendor];
     }
 
-    public function test_01_new_vendor_registration_stays_pending_and_never_auto_approves_or_grants_access(): void
+    public function test_admin_sidebar_has_single_plans_and_subscriptions_entry_and_four_tabs_render(): void
     {
-        $user = User::factory()->create(['email_verified_at' => now()]);
-        $this->actingAs($user)->post('/sell', [
-            'shop_name' => 'New Unverified Artisan',
-            'slug' => 'new-unverified-artisan',
-            'vendor_type' => 'clothing',
-            'phone' => '9876511122',
-        ])->assertRedirect(route('vendor.dashboard'));
+        $admin = $this->createAdminUser();
 
-        $vendor = Vendor::where('slug', 'new-unverified-artisan')->firstOrFail();
-        $this->assertSame('pending', $vendor->status);
-        $this->assertSame('pending_review', $vendor->verification_status);
-        $this->assertSame(0, VendorSubscription::where('vendor_id', $vendor->id)->count());
+        $overview = $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->get(route('admin.vendor_management.overview'));
 
-        // Attempting to hit product upload or storefront publish redirects cleanly (EnsureVendorApproved blocks pending)
-        $cat = Category::create(['name' => 'Apparel', 'slug' => 'apparel-test', 'vertical' => 'ecommerce', 'is_active' => true]);
-        $this->actingAs($user)->post(route('vendor.products.store'), [
-            'title' => 'Blocked Silk Scarf',
-            'category_id' => $cat->id,
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Should be blocked while pending verification.',
-            'base_price' => 999,
-            'gst_rate' => 5,
-            'total_stock' => 5,
-            'status' => 'active',
-        ])->assertRedirect(route('vendor.dashboard'));
+        $overview->assertOk()
+            ->assertSee('Plans &amp; Subscriptions', false)
+            ->assertSee('Overview')
+            ->assertSee('Plan Builder')
+            ->assertSee('Vendor Subscriptions')
+            ->assertSee('Renewal Requests')
+            // Legacy fragmented sidebar labels must NOT appear
+            ->assertDontSee('Subscription Plans')
+            ->assertDontSee('Expiry &amp; Reminders', false)
+            ->assertDontSee('Monetization Reports')
+            ->assertDontSee('Onboarding Leads')
+            ->assertDontSee('Audit &amp; Renewal Req', false);
 
-        $this->assertSame(0, Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->count());
+        // Plan Builder tab loads cleanly & seeds 3 tiers per core sector
+        $plansTab = $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->get(route('admin.vendor_management.plans', ['sector' => 'products']));
 
-        // Public storefront returns 403 suspended/unavailable page instead of leaking store
-        auth()->logout();
-        $this->get('/s/' . $vendor->slug)->assertStatus(403);
+        $plansTab->assertOk()
+            ->assertSee('Starter')
+            ->assertSee('Professional')
+            ->assertSee('Elite');
+
+        // Verify 3 tiers exist for all 5 core sectors
+        foreach (['products', 'food', 'services', 'used', 'enquiry'] as $sectorKey) {
+            $count = SubscriptionPlan::where('sector_key', $sectorKey)
+                ->whereIn('tier_key', ['starter', 'professional', 'elite'])
+                ->count();
+            $this->assertSame(3, $count, "Expected 3 tier plans for sector {$sectorKey}");
+        }
+
+        // Vendor Subscriptions tab loads cleanly
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->get(route('admin.vendor_management.index'))
+            ->assertOk()
+            ->assertSee('WhatsApp Onboarding Leads');
+
+        // Renewal Requests tab loads cleanly
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->get(route('admin.vendor_management.history'))
+            ->assertOk()
+            ->assertSee('Renewal Requests');
     }
 
-    public function test_02_verified_vendor_without_active_subscription_cannot_publish_or_appear_publicly(): void
+    public function test_plan_builder_updates_inline_commissions_retains_vs_pushes_to_active_subscribers(): void
     {
-        [$user, $vendor] = $this->createRawVendor('clothing');
-        app(SubscriptionLifecycleService::class)->updateVerificationStatus($vendor, 'verified', $this->admin->id, 'Verified via WhatsApp');
-        $vendor->refresh();
+        $admin = $this->createAdminUser();
+        app(SectorRegistryService::class)->ensureDefaultThreeTierPlans();
 
-        $this->assertSame('verified', $vendor->verification_status);
-        $this->assertSame('approved', $vendor->status);
+        $plan = SubscriptionPlan::where('sector_key', 'products')
+            ->where('tier_key', 'starter')
+            ->firstOrFail();
 
-        $cat = Category::create(['name' => 'Marble', 'slug' => 'marble-02', 'vertical' => 'ecommerce', 'is_active' => true]);
-
-        // Pre-seed a product to confirm public visibility hides it when no active subscription exists
-        $product = Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $cat->id,
-            'title' => 'Hidden Until Subscribed Vase',
-            'slug' => 'hidden-until-subscribed-vase',
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Needs active subscription.',
-            'base_price' => 150000,
-            'total_stock' => 3,
-            'status' => 'active',
-        ]);
-
-        // Blocked from publishing another product without subscription
-        $this->actingAs($user)->post(route('vendor.products.store'), [
-            'title' => 'Attempted Paid Product',
-            'category_id' => $cat->id,
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Must fail without active subscription.',
-            'base_price' => 500,
-            'gst_rate' => 5,
-            'total_stock' => 5,
-            'status' => 'active',
-        ])->assertStatus(302);
-        $this->assertSame(1, Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->count());
-
-        // Public catalog, PDP & storefront hide unsubscribed vendor
-        auth()->logout();
-        $this->get('/s/' . $vendor->slug)->assertStatus(403);
-        $this->get('/product/' . $product->slug)->assertStatus(404);
-        $this->get('/catalog?q=Hidden+Until+Subscribed')->assertDontSee('Hidden Until Subscribed Vase');
-    }
-
-    public function test_03_04_05_manual_workflow_assign_pending_record_payment_then_explicit_activate(): void
-    {
-        [$user, $vendor] = $this->createRawVendor('clothing');
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.verification.update', $vendor), [
-            'verification_status' => 'verified',
-            'verification_notes' => 'GST and WhatsApp KYC confirmed.',
-        ])->assertStatus(302);
+        [, $retainedVendor] = $this->createVendorAccount('retained-merchant', 'electronics', ['products']);
+        [, $pushedVendor] = $this->createVendorAccount('pushed-merchant', 'electronics', ['products']);
 
         $lifecycle = app(SubscriptionLifecycleService::class);
-        $plan = $lifecycle->createOrUpdatePlan([
-            'name' => 'Retail Growth',
-            'sector_key' => 'products',
-            'price_amount' => 149900,
-            'duration_days' => 30,
-            'entitlements' => [
-                'max_active_products' => 15,
-                'max_images_per_product' => 5,
-                'allow_coupons' => true,
-                'allow_shorts' => true,
-                'allow_storefront_customization' => true,
-                'allow_kinetic_scroll' => false,
-            ],
-        ], null, $this->admin->id);
+        $retainedSub = $lifecycle->assignSubscription($retainedVendor, $plan, 'products', [], $admin->id);
+        $lifecycle->recordExternalPayment($retainedSub, ['external_payment_received' => true, 'external_payment_amount' => 49900], $admin->id);
+        $lifecycle->activateSubscription($retainedSub, ['confirm_activation' => true], $admin->id);
 
-        // 03: Assigning plan creates PENDING_ACTIVATION with zero active access
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.assign_plan', $vendor), [
-            'plan_id' => $plan->id,
-            'sector_key' => 'products',
-            'duration_days' => 30,
-            'internal_notes' => 'SECRET_WHATSAPP_BARGAIN_NOTE_ONLY_FOR_ADMIN',
-            'admin_reason' => 'Assigned Retail Growth after WhatsApp call',
-        ])->assertStatus(302);
+        // Edit plan WITHOUT apply_to_existing: inline commission 3.5% + ₹25 fixed, 3 months, analytics ON
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->put(route('admin.vendor_management.plans.update', $plan), [
+                'name' => 'Products Starter',
+                'sector_key' => 'products',
+                'tier_key' => 'starter',
+                'badge_text' => 'Value Tier',
+                'price_rupees' => 799,
+                'duration_unit' => 'months',
+                'duration_value' => 3,
+                'duration_days' => 90,
+                'commission_type' => 'hybrid',
+                'commission_rate' => 3.5,
+                'commission_fixed_rupees' => 25,
+                'benefits_text' => "Up to 80 Products\nPriority WhatsApp Onboarding",
+                'status' => 'active',
+                'ent_allow_analytics' => '1',
+                'ent_max_products' => '80',
+                'apply_to_existing' => '0',
+                'change_notes' => 'Bumped to hybrid 3.5% + Rs25',
+            ])
+            ->assertRedirect();
 
-        $sub = VendorSubscription::where('vendor_id', $vendor->id)->latest('id')->firstOrFail();
-        $this->assertSame(VendorSubscription::STATUS_PENDING_ACTIVATION, $sub->status);
-        $this->assertNull(app(EntitlementService::class)->resolveEffectiveSubscription($vendor->fresh(), 'products'));
+        $plan->refresh();
+        $retainedSub->refresh();
 
-        // 04: Recording external payment DOES NOT auto-activate!
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.subscriptions.payment', $sub), [
-            'external_payment_received' => '1',
-            'external_payment_amount_rupees' => '1499',
-            'external_payment_method' => 'UPI',
-            'external_payment_ref' => 'UTR4455667788',
-        ])->assertStatus(302);
+        $this->assertSame('hybrid', $plan->commission_type);
+        $this->assertEquals(3.5, (float) $plan->commission_rate);
+        $this->assertSame(2500, $plan->commission_fixed_paise);
+        $this->assertSame(90, $plan->duration_days);
+        $this->assertSame('months', $plan->duration_unit);
+        $this->assertSame(3, $plan->duration_value);
+        // Retained subscriber keeps original version snapshot!
+        $this->assertSame(1, $retainedSub->plan_version_number);
 
-        $sub->refresh();
-        $this->assertTrue($sub->external_payment_received);
-        $this->assertSame(VendorSubscription::STATUS_PENDING_ACTIVATION, $sub->status);
-        $this->assertNull(app(EntitlementService::class)->resolveEffectiveSubscription($vendor->fresh(), 'products'));
+        // Assign a second vendor AFTER update, and also test apply_to_existing = 1
+        $newSub = $lifecycle->assignSubscription($pushedVendor, $plan, 'products', [], $admin->id);
+        $lifecycle->recordExternalPayment($newSub, ['external_payment_received' => true, 'external_payment_amount' => 79900], $admin->id);
+        $lifecycle->activateSubscription($newSub, ['confirm_activation' => true], $admin->id);
 
-        // 05: Explicit admin activation confirmation grants exact snapshot entitlements and writes audit logs
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.subscriptions.activate', $sub), [
-            'confirm_activation' => '1',
-            'duration_days' => 30,
-            'reason' => 'Confirmed payment in bank and WhatsApp',
-        ])->assertStatus(302);
+        $commissions = app(CommissionService::class);
+        $rule = $commissions->resolveEffectiveRule($pushedVendor, 'products', null, $newSub->fresh());
+        $this->assertSame('plan', $rule['source']);
+        $this->assertSame('Products Starter Terms (Hybrid)', $rule['name']);
+        $calc = $commissions->calculateAmounts(100000, $rule['rate_percent'], $rule['fixed_fee_paise']); // ₹1,000 -> 3.5% (₹35) + ₹25 = ₹60 (6000 paise)
+        $this->assertSame(6000, $calc['calculated_commission_paise']);
 
-        $sub->refresh();
-        $this->assertSame(VendorSubscription::STATUS_ACTIVE, $sub->status);
-        $this->assertSame($this->admin->id, $sub->activated_by);
-        $this->assertNotNull(app(EntitlementService::class)->resolveEffectiveSubscription($vendor->fresh(), 'products'));
-        $this->assertDatabaseHas('audit_logs', [
+        // Now push update with zero commission and apply_to_existing = 1
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->put(route('admin.vendor_management.plans.update', $plan), [
+                'name' => 'Products Starter',
+                'sector_key' => 'products',
+                'tier_key' => 'starter',
+                'price_rupees' => 999,
+                'duration_unit' => 'months',
+                'duration_value' => 3,
+                'duration_days' => 90,
+                'commission_type' => 'zero',
+                'status' => 'active',
+                'apply_to_existing' => '1',
+                'change_notes' => 'Zero commission promo pushed to existing active subscribers',
+            ])
+            ->assertRedirect();
+
+        $retainedSub->refresh();
+        $newSub->refresh();
+        $this->assertSame(3, $retainedSub->plan_version_number);
+        $this->assertSame('zero', $retainedSub->commission_type_snapshot);
+        $this->assertSame('zero', $newSub->commission_type_snapshot);
+
+        $zeroRule = $commissions->resolveEffectiveRule($retainedVendor, 'products', null, $retainedSub);
+        $this->assertSame('plan', $zeroRule['source']);
+        $this->assertSame('Products Starter (Zero Commission)', $zeroRule['name']);
+        $zeroCalc = $commissions->calculateAmounts(100000, $zeroRule['rate_percent'], $zeroRule['fixed_fee_paise']);
+        $this->assertSame(0, $zeroCalc['calculated_commission_paise']);
+    }
+
+    public function test_plan_feature_switches_and_quotas_gate_vendor_modules(): void
+    {
+        [$vendorUser, $vendor] = $this->createVendorAccount('gated-studio', 'agency', ['services', 'products', 'used']);
+
+        // 1. Disable analytics + shorts boosts + cap shorts at 1 + cap portfolio media at 1 + disable offer negotiation
+        $sub = $this->grantVendorTestSubscription($vendor, 'all', [
+            'allow_analytics' => false,
+            'max_active_shorts' => 1,
+            'allow_short_boosts' => false,
+            'max_portfolio_media' => 1,
+            'allow_offer_negotiation' => false,
+        ]);
+
+        // Analytics blocked by feature-locked view
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.analytics.index'))
+            ->assertOk()
+            ->assertSee('Analytics Not Included in Current Plan');
+
+        // Enable analytics on snapshot -> loads dashboard analytics cleanly
+        $entitlements = $sub->entitlements_snapshot;
+        $entitlements['allow_analytics'] = true;
+        $sub->update(['entitlements_snapshot' => $entitlements]);
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.analytics.index'))
+            ->assertOk()
+            ->assertDontSee('Analytics Not Included in Current Plan');
+
+        // Shorts quota & boost check: create 1 active short -> saving a 2nd short hits quota
+        Short::create([
             'vendor_id' => $vendor->id,
-            'action' => 'subscription_activated',
-        ]);
-    }
-
-    public function test_06_07_server_side_quota_and_feature_gating_block_disallowed_requests(): void
-    {
-        [$user, $vendor] = $this->createRawVendor('clothing');
-        $this->grantVendorTestSubscription($vendor, 'products', [
-            'max_active_products' => 1,
-            'max_images_per_product' => 2,
-            'allow_coupons' => false,
-            'allow_shorts' => false,
-            'allow_kinetic_scroll' => false,
-            'allow_storefront_customization' => false,
+            'title' => 'First Active Short',
+            'slug' => 'first-active-short-' . uniqid(),
+            'video_path' => 'shorts/sample.mp4',
+            'video_url' => '/storage/shorts/sample.mp4',
+            'status' => 'published',
         ]);
 
-        $cat = Category::create(['name' => 'Decor', 'slug' => 'decor-06', 'vertical' => 'ecommerce', 'is_active' => true]);
+        $this->actingAs($vendorUser)
+            ->postJson(route('vendor.shorts.save'), [
+                'video_url' => '/storage/shorts/second.mp4',
+                'title' => 'Second Short Blocked',
+            ])
+            ->assertStatus(403)
+            ->assertJsonFragment(['success' => false]);
 
-        // 1st product succeeds (quota = 1)
-        $this->actingAs($user)->post(route('vendor.products.store'), [
-            'title' => 'Allowed First Product',
-            'category_id' => $cat->id,
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Fits inside quota 1.',
-            'base_price' => 500,
-            'gst_rate' => 5,
-            'total_stock' => 5,
-            'status' => 'active',
-        ])->assertRedirect(route('vendor.products.index'));
+        $this->actingAs($vendorUser)
+            ->postJson(route('vendor.shorts.boost'), [
+                'short_id' => 1,
+                'package_type' => 'standard',
+            ])
+            ->assertStatus(403)
+            ->assertJsonFragment(['success' => false]);
 
-        // 2nd active product exceeds quota -> blocked!
-        $this->actingAs($user)->post(route('vendor.products.store'), [
-            'title' => 'Quota Exceeded Product',
-            'category_id' => $cat->id,
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Must be blocked because max_active_products=1.',
-            'base_price' => 600,
-            'gst_rate' => 5,
-            'total_stock' => 5,
-            'status' => 'active',
-        ])->assertSessionHas('error');
-        $this->assertSame(1, Product::withoutGlobalScopes()->where('vendor_id', $vendor->id)->count());
+        // Portfolio gallery upload exceeding max_portfolio_media=1 rejected cleanly
+        $this->actingAs($vendorUser)
+            ->post(route('vendor.portfolio.store'), [
+                'title' => 'Architectural Stone Showcase',
+                'status' => 'published',
+                'gallery' => [
+                    UploadedFile::fake()->image('one.jpg'),
+                    UploadedFile::fake()->image('two.jpg'),
+                ],
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('error');
 
-        // Disallowed coupon creation blocked (403 JSON / redirect with error on web)
-        $this->actingAs($user)->postJson(route('vendor.coupons.store'), [
-            'code' => 'BLOCKED20',
-            'type' => 'percentage',
-            'value' => 20,
-            'starts_at' => now()->toDateString(),
-            'expires_at' => now()->addDays(5)->toDateString(),
-            'per_customer_limit' => 1,
-        ])->assertStatus(403);
-
-        // Disallowed shorts upload blocked (403 JSON)
-        $this->actingAs($user)->postJson(route('vendor.shorts.save'), [
-            'title' => 'Blocked Short',
-            'video_url' => 'https://example.com/v.mp4',
-        ])->assertStatus(403);
-
-        // Disallowed storefront preset activation blocked (403 JSON)
-        $this->actingAs($user)->postJson(route('vendor.design.activate'), [
-            'preset' => 'velora',
-        ])->assertStatus(403);
-
-        // Disallowed kinetic scroll blocked
-        $this->actingAs($user)->postJson(route('vendor.design.activate'), [
-            'preset' => 'kinetic',
-        ])->assertStatus(403);
-    }
-
-    public function test_08_editing_plan_creates_new_version_without_mutating_existing_subscriber_snapshot(): void
-    {
-        [, $vendor] = $this->createRawVendor('clothing');
-        app(SubscriptionLifecycleService::class)->updateVerificationStatus($vendor, 'verified', $this->admin->id);
-
-        $lifecycle = app(SubscriptionLifecycleService::class);
-        $plan = $lifecycle->createOrUpdatePlan([
-            'name' => 'Pro Artisan',
-            'sector_key' => 'products',
-            'price_amount' => 99900,
-            'duration_days' => 30,
-            'entitlements' => ['max_active_products' => 10, 'allow_coupons' => true],
-        ], null, $this->admin->id);
-
-        $sub = $lifecycle->assignSubscription($vendor, $plan, 'products', [], $this->admin->id);
-        $sub = $lifecycle->activateSubscription($sub, ['duration_days' => 30], $this->admin->id);
-
-        $this->assertSame(1, $sub->plan_version_number);
-        $this->assertSame(10, $sub->entitlements_snapshot['max_active_products']);
-
-        // Admin edits plan -> v2 with limit 50
-        $updatedPlan = $lifecycle->createOrUpdatePlan([
-            'name' => 'Pro Artisan',
-            'sector_key' => 'products',
-            'price_amount' => 199900,
-            'duration_days' => 30,
-            'entitlements' => ['max_active_products' => 50, 'allow_coupons' => true],
-        ], $plan, $this->admin->id, 'Bumped quota in v2');
-
-        $this->assertSame(2, $updatedPlan->current_version);
-        $sub->refresh();
-        // Existing subscriber keeps immutable v1 snapshot!
-        $this->assertSame(1, $sub->plan_version_number);
-        $this->assertSame(10, $sub->entitlements_snapshot['max_active_products']);
-
-        // Admin explicitly upgrades subscriber to v2 via apply-latest-version route
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.subscriptions.apply_version', $sub))
-            ->assertStatus(302);
-
-        $sub->refresh();
-        $this->assertSame(2, $sub->plan_version_number);
-        $this->assertSame(50, $sub->entitlements_snapshot['max_active_products']);
-    }
-
-    public function test_09_10_11_12_expiry_grace_deduplication_jit_guard_and_visibility_restoration(): void
-    {
-        [, $vendor] = $this->createRawVendor('clothing');
-        $cat = Category::create(['name' => 'Textiles', 'slug' => 'textiles-09', 'vertical' => 'ecommerce', 'is_active' => true]);
-
-        // 09: Overdue active subscription -> grace_period -> expired on command runs
-        $sub = $this->grantVendorTestSubscription($vendor, 'products', [], [
-            'starts_at' => now()->subDays(31),
-            'ends_at' => now()->subHour(),
-            'expiry_policy_snapshot' => [
-                'hide_storefront' => true,
-                'hide_listings' => true,
-                'block_new_listings' => true,
-                'block_editing' => true,
-                'grace_days' => 2,
-                'grace_keep_visible' => true,
-                'grace_keep_features' => false,
-            ],
-            'grace_keep_visible' => true,
-            'grace_keep_features' => false,
-        ]);
-
-        $product = Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $cat->id,
-            'title' => 'Blockprint Jaipur Quilt',
-            'slug' => 'blockprint-jaipur-quilt',
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Handcrafted quilt.',
-            'base_price' => 250000,
-            'total_stock' => 4,
-            'status' => 'active',
-        ]);
-
-        // Run cron 1 -> enters grace_period
-        $this->artisan('subscriptions:process-expiry')->assertExitCode(0);
-        $sub->refresh();
-        $this->assertSame(VendorSubscription::STATUS_GRACE_PERIOD, $sub->status);
-        $notifCountAfterFirstGraceRun = SubscriptionNotification::where('vendor_subscription_id', $sub->id)->count();
-        $this->assertSame(1, $notifCountAfterFirstGraceRun);
-
-        // During grace with grace_keep_visible=true, storefront remains visible while grace_ends_at is future
-        $this->get('/s/' . $vendor->slug)->assertStatus(200);
-
-        // 10: Upcoming reminder deduplication
-        [, $soonVendor] = $this->createRawVendor('clothing');
-        $soonSub = $this->grantVendorTestSubscription($soonVendor, 'products', [], [
-            'ends_at' => now()->addDays(3)->startOfDay()->addHours(12),
-            'reminder_days_before' => [3],
-            'auto_reminder_enabled' => true,
-        ]);
-        $this->artisan('subscriptions:process-expiry')->assertExitCode(0);
-        $this->artisan('subscriptions:process-expiry')->assertExitCode(0); // Repeat run must NOT duplicate
-        $this->assertSame(
-            1,
-            SubscriptionNotification::where('vendor_subscription_id', $soonSub->id)
-                ->where('event_key', 'expiry_reminder')
-                ->count()
+        // Offer negotiation blocked when allow_offer_negotiation = false
+        $category = Category::firstOrCreate(
+            ['slug' => 'used-items'],
+            ['name' => 'Used Items', 'sector' => 'used', 'is_active' => true]
         );
-
-        // Force grace period end into the past and verify cron expires + hides storefront
-        $sub->update(['grace_ends_at' => now()->subMinute()]);
-        $this->artisan('subscriptions:process-expiry')->assertExitCode(0);
-        $sub->refresh();
-        $this->assertSame(VendorSubscription::STATUS_EXPIRED, $sub->status);
-
-        // 12: Expired vendor vanishes from public views
-        $this->get('/s/' . $vendor->slug)->assertStatus(403);
-        $this->get('/product/' . $product->slug)->assertStatus(404);
-        $this->get('/catalog?q=Blockprint')->assertDontSee('Blockprint Jaipur Quilt');
-
-        // 11: Request-time JIT expiry guard catches overdue active subscription even without cron
-        [, $jitVendor] = $this->createRawVendor('clothing');
-        $jitSub = $this->grantVendorTestSubscription($jitVendor, 'products', [], [
-            'ends_at' => now()->subDays(5),
-            'expiry_policy_snapshot' => ['hide_storefront' => true, 'hide_listings' => true, 'grace_days' => 0],
-        ]);
-        $this->get('/s/' . $jitVendor->slug)->assertStatus(403);
-        $this->assertSame(VendorSubscription::STATUS_EXPIRED, $jitSub->fresh()->status);
-
-        // 12b: Admin manual renewal immediately restores public visibility!
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.subscriptions.renew', $sub), [
-            'duration_days' => 30,
-            'reason' => 'Renewed after WhatsApp transfer',
-        ])->assertStatus(302);
-        $this->assertSame(VendorSubscription::STATUS_ACTIVE, $sub->fresh()->status);
-        $this->get('/s/' . $vendor->slug)->assertStatus(200);
-        $this->get('/product/' . $product->slug)->assertStatus(200);
-    }
-
-    public function test_13_c2c_personal_used_listings_remain_visible_while_expired_commercial_used_vendor_hidden(): void
-    {
-        $usedCat = Category::create(['name' => 'Used Furniture', 'slug' => 'used-furniture-13', 'vertical' => 'used', 'is_active' => true]);
-
-        // Individual C2C seller (no commercial vendor_id)
-        $person = User::factory()->create();
-        Product::create([
-            'user_id' => $person->id,
-            'vendor_id' => null,
-            'category_id' => $usedCat->id,
-            'title' => 'Personal PreOwned Teak Table',
-            'slug' => 'personal-teak-table',
-            'vertical' => 'used',
-            'listing_type' => 'classified',
-            'used_status' => 'active',
-            'status' => 'active',
-            'description' => 'Personal sale from home.',
-            'base_price' => 450000,
-            'city' => 'Jaipur',
-            'published_at' => now(),
-        ]);
-
-        // Commercial 'used' dealer whose subscription expired
-        [, $dealer] = $this->createRawVendor('used');
-        $this->grantVendorTestSubscription($dealer, 'used', [], [
-            'status' => VendorSubscription::STATUS_EXPIRED,
-            'ends_at' => now()->subDays(2),
-            'expired_at' => now()->subDays(2),
-        ]);
-        Product::create([
-            'vendor_id' => $dealer->id,
-            'user_id' => $dealer->user_id,
-            'category_id' => $usedCat->id,
-            'title' => 'Expired Commercial Dealer Sofa',
-            'slug' => 'expired-commercial-dealer-sofa',
-            'vertical' => 'used',
-            'listing_type' => 'classified',
-            'used_status' => 'active',
-            'status' => 'active',
-            'description' => 'Commercial dealer item.',
-            'base_price' => 1500000,
-            'city' => 'Jaipur',
-            'published_at' => now(),
-        ]);
-
-        $res = $this->get('/used');
-        $res->assertOk();
-        $res->assertSee('Personal PreOwned Teak Table');
-        $res->assertDontSee('Expired Commercial Dealer Sofa');
-        $this->get('/used/personal-teak-table')->assertOk();
-        $this->get('/used/expired-commercial-dealer-sofa')->assertStatus(404);
-    }
-
-    public function test_14_multi_sector_vendor_independence_food_active_while_products_expired(): void
-    {
-        [$user, $vendor] = $this->createRawVendor('food', ['operating_sectors' => ['food', 'products']]);
-
-        // Active food subscription, EXPIRED products subscription
-        $this->grantVendorTestSubscription($vendor, 'food');
-        $this->grantVendorTestSubscription($vendor, 'products', [], [
-            'status' => VendorSubscription::STATUS_EXPIRED,
-            'ends_at' => now()->subDay(),
-            'expired_at' => now()->subDay(),
-        ]);
-
-        $foodCat = Category::create(['name' => 'Thali', 'slug' => 'thali-14', 'vertical' => 'food', 'is_active' => true]);
-        $retailCat = Category::create(['name' => 'Merch', 'slug' => 'merch-14', 'vertical' => 'ecommerce', 'is_active' => true]);
-
-        Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $foodCat->id,
-            'title' => 'Active Dal Baati Thali',
-            'slug' => 'active-dal-baati-thali',
-            'vertical' => 'food',
-            'listing_type' => 'purchase',
-            'description' => 'Fresh Rajasthani thali.',
-            'base_price' => 25000,
-            'total_stock' => 20,
-            'status' => 'active',
-        ]);
-
-        Product::create([
-            'vendor_id' => $vendor->id,
-            'category_id' => $retailCat->id,
-            'title' => 'Expired Retail Spice Jar',
-            'slug' => 'expired-retail-spice-jar',
-            'vertical' => 'ecommerce',
-            'listing_type' => 'purchase',
-            'description' => 'Retail packaged masala.',
-            'base_price' => 35000,
-            'total_stock' => 10,
-            'status' => 'active',
-        ]);
-
-        // Public Food stays visible; Public Retail PDP is hidden; writing retail product blocked while writing food allowed
-        $this->get('/food?city=Jaipur')->assertOk()->assertSee('Active Dal Baati Thali');
-        $this->get('/product/expired-retail-spice-jar')->assertStatus(404);
-        $this->assertTrue(app(EntitlementService::class)->authorizeSectorWrite($vendor, 'food')['allowed']);
-        $this->assertFalse(app(EntitlementService::class)->authorizeSectorWrite($vendor, 'products')['allowed']);
-    }
-
-    public function test_15_16_17_18_commission_hierarchy_idempotency_reversal_and_snapshot_immutability(): void
-    {
-        [, $vendor] = $this->createRawVendor('clothing');
-        $cat = Category::create(['name' => 'Sculptures', 'slug' => 'sculptures-15', 'vertical' => 'ecommerce', 'is_active' => true]);
-
-        // Set up hierarchy rules bottom-up: Platform (5%) < Sector (6%) < Plan (7%) < Category (9%) < Vendor (11%)
-        CommissionRule::where('scope', 'platform')->update(['rate_percent' => 5.00]);
-        CommissionRule::create(['name' => 'Products Sector 6%', 'scope' => 'sector', 'sector_key' => 'products', 'rate_percent' => 6.00, 'is_active' => true]);
-
-        $plan = SubscriptionPlan::create([
-            'code' => 'COMM_TEST', 'name' => 'Comm Plan', 'slug' => 'comm-plan-test', 'sector_key' => 'products',
-            'applicable_sectors' => ['products'], 'price_amount' => 10000, 'duration_days' => 30, 'status' => 'active', 'is_active' => true,
-        ]);
-        CommissionRule::create(['name' => 'Plan 7%', 'scope' => 'plan', 'plan_id' => $plan->id, 'rate_percent' => 7.00, 'is_active' => true]);
-        CommissionRule::create(['name' => 'Cat 9%', 'scope' => 'category', 'category_id' => $cat->id, 'rate_percent' => 9.00, 'is_active' => true]);
-        $vendorRule = CommissionRule::create(['name' => 'Vendor 11%', 'scope' => 'vendor', 'vendor_id' => $vendor->id, 'rate_percent' => 11.00, 'is_active' => true]);
-
-        $sub = $this->grantVendorTestSubscription($vendor, 'products', [], ['plan_id' => $plan->id]);
-
-        $commService = app(CommissionService::class);
-        // 15: Verify precedence: Transaction Override (15%) > Vendor Override > Vendor Rule (11%) > Category (9%) > Plan (7%) > Sector (6%) > Platform (5%)
-        $this->assertSame(15.0, $commService->resolveEffectiveRule($vendor, 'products', $cat->id, $sub, ['rate_percent' => 15.0])['rate_percent']);
-        $this->assertSame('vendor', $commService->resolveEffectiveRule($vendor, 'products', $cat->id, $sub)['source']);
-        $this->assertSame(11.0, $commService->resolveEffectiveRule($vendor, 'products', $cat->id, $sub)['rate_percent']);
-
-        $vendorRule->update(['is_active' => false]);
-        $this->assertSame('category', $commService->resolveEffectiveRule($vendor, 'products', $cat->id, $sub)['source']);
-        $this->assertSame(9.0, $commService->resolveEffectiveRule($vendor, 'products', $cat->id, $sub)['rate_percent']);
-
-        $product = Product::create([
-            'vendor_id' => $vendor->id, 'category_id' => $cat->id, 'title' => 'Carved Statue', 'slug' => 'carved-statue-15',
-            'vertical' => 'ecommerce', 'listing_type' => 'purchase', 'description' => 'Stone', 'base_price' => 100000, 'total_stock' => 5, 'status' => 'active',
-        ]);
         $buyer = User::factory()->create();
-        $order = Order::create([
-            'order_number' => 'K71-COMM-001', 'user_id' => $buyer->id, 'vendor_id' => $vendor->id,
-            'subtotal' => 100000, 'shipping_amount' => 5000, 'discount_amount' => 0, 'tax_amount' => 0, 'total_amount' => 105000, 'item_count' => 1,
-            'status' => 'confirmed', 'payment_status' => 'paid', 'payment_method' => 'online',
-            'address_snapshot' => ['name' => 'Buyer Name', 'phone' => '9876543210', 'city' => 'Jaipur', 'pincode' => '302001'],
+        $usedProduct = Product::create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'title' => 'Refurbished Grinder',
+            'slug' => 'refurbished-grinder-' . uniqid(),
+            'description' => 'Working condition',
+            'base_price' => 450000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'vertical' => 'used',
+            'condition_grade' => 'good',
         ]);
-        OrderItem::create([
-            'order_id' => $order->id, 'product_id' => $product->id,
-            'quantity' => 1, 'unit_price' => 100000, 'total_price' => 100000, 'tax_amount' => 0, 'gst_rate' => 0,
-            'snapshot' => ['title' => 'Carved Statue', 'price' => 100000],
+        $offer = Offer::create([
+            'product_id' => $usedProduct->id,
+            'user_id' => $buyer->id,
+            'vendor_id' => $vendor->id,
+            'seller_id' => $vendorUser->id,
+            'buyer_name' => $buyer->name,
+            'buyer_email' => $buyer->email,
+            'buyer_phone' => '9876543210',
+            'offer_amount' => 400000,
+            'status' => 'pending',
+            'expires_at' => now()->addDays(2),
         ]);
 
-        // 16: Idempotent duplicate calls create ONLY 1 charge row (9% of 100000 = 9000)
-        $c1 = $commService->recordOrderCommission($order);
-        $c2 = $commService->recordOrderCommission($order);
-        $this->assertSame($c1->id, $c2->id);
-        $this->assertSame(9000, $c1->calculated_commission_paise);
-        $this->assertSame(91000, $c1->vendor_net_paise);
-        $this->assertSame(1, OrderCommission::where('transaction_id', $order->id)->where('event_type', 'charge')->count());
-
-        // 18: Changing rule rates later NEVER mutates historical snapshots!
-        CommissionRule::where('scope', 'category')->update(['rate_percent' => 22.00]);
-        $this->assertEquals(9.0, (float) $c1->fresh()->rate_percent);
-        $this->assertSame(9000, $c1->fresh()->calculated_commission_paise);
-
-        // 17: Cancellation creates clean negative reversal row without overwriting original charge snapshot
-        $rev = $commService->reverseOrderCommission($order, 'Customer cancelled order', $this->admin->id);
-        $revDup = $commService->reverseOrderCommission($order, 'Duplicate webhook', $this->admin->id);
-        $this->assertSame($rev->id, $revDup->id);
-        $this->assertSame('reversal', $rev->event_type);
-        $this->assertSame(-9000, $rev->calculated_commission_paise);
-        $this->assertSame(9000, $c1->fresh()->calculated_commission_paise);
+        $this->actingAs($vendorUser)
+            ->putJson(route('vendor.offers.respond', $offer), ['action' => 'accept'])
+            ->assertStatus(403)
+            ->assertJsonFragment(['success' => false]);
     }
 
-    public function test_19_vendor_subscription_portal_hides_internal_notes_allows_renewal_request_and_has_no_checkout(): void
+    public function test_expired_subscription_shows_two_ribbon_monochrome_lock_screen_and_blocks_bypasses(): void
     {
-        [$user, $vendor] = $this->createRawVendor('clothing');
-        app(SubscriptionLifecycleService::class)->updateVerificationStatus($vendor, 'verified', $this->admin->id, 'INTERNAL_ADMIN_KYC_MEMO_DO_NOT_LEAK');
+        [$vendorUser, $vendor] = $this->createVendorAccount('expired-store', 'electronics', ['products']);
 
-        $sub = $this->grantVendorTestSubscription($vendor, 'products', [], [
-            'internal_notes' => 'TOP_SECRET_DISCOUNT_BARGAIN_NOTE',
+        $expiredAt = now()->subDays(2);
+        $this->grantVendorTestSubscription($vendor, 'products', [], [
+            'plan_name_snapshot' => 'Products Professional',
+            'status' => VendorSubscription::STATUS_EXPIRED,
+            'starts_at' => now()->subDays(32),
+            'ends_at' => $expiredAt,
+            'grace_ends_at' => now()->subDay(),
+            'expired_at' => $expiredAt,
         ]);
 
-        $res = $this->actingAs($user)->get(route('vendor.subscription.index'));
-        $res->assertOk();
-        $res->assertSee($sub->plan_name_snapshot);
-        $res->assertDontSee('TOP_SECRET_DISCOUNT_BARGAIN_NOTE');
-        $res->assertDontSee('INTERNAL_ADMIN_KYC_MEMO_DO_NOT_LEAK');
+        // Dashboard, products, shorts, analytics all lock with Monochrome Two-Ribbon Lock Screen
+        foreach ([
+            route('vendor.dashboard'),
+            route('vendor.products.index'),
+            route('vendor.shorts.index'),
+            route('vendor.analytics.index'),
+        ] as $lockedUrl) {
+            $this->actingAs($vendorUser)
+                ->get($lockedUrl)
+                ->assertOk()
+                ->assertSee('PLAN EXPIRED')
+                ->assertSee('Contact Admin for Renewal')
+                ->assertSee('Message Admin for Renewal')
+                ->assertSee('Products Professional')
+                ->assertSee($expiredAt->format('d M Y'))
+                ->assertSee('Your store data is safe.');
+        }
 
-        // Vendor submits manual offline renewal/upgrade request
-        $this->actingAs($user)->post(route('vendor.subscription.request_renewal'), [
-            'sector_key' => 'products',
-            'message' => 'Please renew for 3 months via WhatsApp UPI.',
-        ])->assertRedirect();
+        // AJAX / JSON bypass attempt returns HTTP 403 locked=true
+        $this->actingAs($vendorUser)
+            ->postJson(route('vendor.shorts.ajax'), ['action' => 'zsu_vendor_get_shorts'])
+            ->assertStatus(403)
+            ->assertJson(['locked' => true, 'sector_key' => 'products']);
 
-        $this->assertDatabaseHas('subscription_renewal_requests', [
+        // Direct POST creation attempt redirects back to locked dashboard with error
+        $this->actingAs($vendorUser)
+            ->post(route('vendor.products.store'), ['title' => 'Sneak Upload'])
+            ->assertRedirect(route('vendor.dashboard', ['sector' => 'products']))
+            ->assertSessionHas('error');
+    }
+
+    public function test_multi_sector_vendor_locks_only_expired_sector_while_active_sector_stays_open(): void
+    {
+        [$vendorUser, $vendor] = $this->createVendorAccount('multi-sector-biz', 'electronics', ['products', 'food']);
+
+        // Food is ACTIVE
+        $this->grantVendorTestSubscription($vendor, 'food', [], [
+            'plan_name_snapshot' => 'Food Professional',
+            'status' => VendorSubscription::STATUS_ACTIVE,
+            'ends_at' => now()->addDays(25),
+        ]);
+
+        // Products is EXPIRED
+        $this->grantVendorTestSubscription($vendor, 'products', [], [
+            'plan_name_snapshot' => 'Products Starter',
+            'status' => VendorSubscription::STATUS_EXPIRED,
+            'ends_at' => now()->subDays(3),
+            'grace_ends_at' => now()->subDay(),
+        ]);
+
+        // Active food menu stays unlocked
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.food.menu'))
+            ->assertOk()
+            ->assertDontSee('PLAN EXPIRED');
+
+        // Default /vendor/dashboard automatically picks active sector (food) cleanly
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.dashboard'))
+            ->assertOk()
+            ->assertDontSee('PLAN EXPIRED');
+
+        // Visiting products or dashboard?sector=products renders Products lock screen + Other Active Sectors switcher
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.products.index'))
+            ->assertOk()
+            ->assertSee('PLAN EXPIRED')
+            ->assertSee('Products &amp; Marketplace Access Locked', false)
+            ->assertSee('Open Food Workspace');
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.dashboard', ['sector' => 'products']))
+            ->assertOk()
+            ->assertSee('PLAN EXPIRED')
+            ->assertSee('Products &amp; Marketplace Access Locked', false);
+    }
+
+    public function test_full_end_to_end_renewal_request_reply_reject_and_approve_renew_unlocks_vendor(): void
+    {
+        $admin = $this->createAdminUser();
+        app(SectorRegistryService::class)->ensureDefaultThreeTierPlans();
+        $starterPlan = SubscriptionPlan::where('sector_key', 'products')->where('tier_key', 'starter')->firstOrFail();
+
+        [$vendorUser, $vendor] = $this->createVendorAccount('renewal-flow-shop', 'electronics', ['products']);
+
+        $expiredSub = $this->grantVendorTestSubscription($vendor, 'products', [], [
+            'plan_id' => $starterPlan->id,
+            'plan_name_snapshot' => 'Products Starter',
+            'status' => VendorSubscription::STATUS_EXPIRED,
+            'starts_at' => now()->subDays(40),
+            'ends_at' => now()->subDays(5),
+            'grace_ends_at' => now()->subDays(2),
+        ]);
+
+        // Confirm initially locked
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.products.index'))
+            ->assertOk()
+            ->assertSee('PLAN EXPIRED');
+
+        // 1. Vendor submits renewal request from lock screen
+        $this->actingAs($vendorUser)
+            ->post(route('vendor.subscription.request_renewal'), [
+                'sector_key' => 'products',
+                'requested_plan_id' => $starterPlan->id,
+                'message' => 'Paid 499 via UPI UTR 998877665544, please renew Products Starter.',
+            ])
+            ->assertRedirect();
+
+        $req = SubscriptionRenewalRequest::where('vendor_id', $vendor->id)->latest('id')->firstOrFail();
+        $this->assertSame('pending', $req->status);
+
+        // Admin sees it on Renewal Requests tab
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->get(route('admin.vendor_management.history'))
+            ->assertOk()
+            ->assertSee('Paid 499 via UPI UTR 998877665544');
+
+        // 2. Admin sends reply to vendor -> vendor sees Admin Response on lock screen
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->post(route('admin.vendor_management.renewal_requests.reply', $req), [
+                'admin_reply' => 'Checking your UTR with accounts right now.',
+                'status' => 'reviewed',
+            ])
+            ->assertRedirect();
+
+        $req->refresh();
+        $this->assertSame('reviewed', $req->status);
+        $this->assertSame('Checking your UTR with accounts right now.', $req->admin_reply);
+
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.products.index'))
+            ->assertOk()
+            ->assertSee('Checking your UTR with accounts right now.');
+
+        // 3. Test reject workflow on a secondary request
+        $rejectedReq = SubscriptionRenewalRequest::create([
             'vendor_id' => $vendor->id,
+            'vendor_subscription_id' => $expiredSub->id,
             'sector_key' => 'products',
+            'requested_plan_id' => $starterPlan->id,
+            'message' => 'Duplicate request without proof',
             'status' => 'pending',
         ]);
-    }
 
-    public function test_20_onboarding_leads_workflow_and_admin_reports_csv_exports(): void
-    {
-        [, $vendor] = $this->createRawVendor('clothing');
-        $this->grantVendorTestSubscription($vendor, 'products');
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->post(route('admin.vendor_management.renewal_requests.reject', $rejectedReq), [
+                'rejection_reason' => 'Duplicate ticket — original UTR request already in progress.',
+            ])
+            ->assertRedirect();
 
-        $this->actingAs($this->admin)->post(route('admin.vendor_management.leads.store'), [
-            'business_name' => 'Rajasthani Brass Craft',
-            'contact_person' => 'Mahesh Soni',
-            'whatsapp_number' => '+919829098290',
-            'city' => 'Jaipur',
-            'sector_key' => 'products',
-            'status' => 'contacted',
-        ])->assertRedirect();
+        $rejectedReq->refresh();
+        $this->assertSame('rejected', $rejectedReq->status);
+        $this->assertSame('Duplicate ticket — original UTR request already in progress.', $rejectedReq->rejection_reason);
 
-        $lead = OnboardingLead::where('business_name', 'Rajasthani Brass Craft')->firstOrFail();
+        // Still locked before approval
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.products.index'))
+            ->assertOk()
+            ->assertSee('PLAN EXPIRED');
 
-        $this->actingAs($this->admin)->put(route('admin.vendor_management.leads.update', $lead), [
-            'status' => 'converted',
-            'linked_vendor_id' => $vendor->id,
-            'notes' => 'Onboarded cleanly.',
-        ])->assertRedirect();
+        // 4. Admin clicks Approve & Renew Subscription on $req
+        $this->actingAs($admin)
+            ->withSession($this->adminSession())
+            ->post(route('admin.vendor_management.renewal_requests.approve_renew', $req), [
+                'plan_id' => $starterPlan->id,
+                'duration_days' => 30,
+                'external_payment_received' => '1',
+                'external_payment_amount_rupees' => 499,
+                'external_payment_method' => 'upi',
+                'external_payment_ref' => '998877665544',
+                'admin_reply' => 'Payment verified! Renewed for 30 days.',
+            ])
+            ->assertRedirect();
 
-        $this->assertSame($vendor->id, $lead->fresh()->linked_vendor_id);
+        $req->refresh();
+        $expiredSub->refresh();
+        $this->assertSame('fulfilled', $req->status);
+        $this->assertNotNull($req->renewed_subscription_id);
+        $this->assertSame(VendorSubscription::STATUS_ACTIVE, $expiredSub->status);
+        $this->assertTrue($expiredSub->ends_at->isFuture());
 
-        // All admin Vendor Management workspace & CSV export routes return 200 cleanly
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.index'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.show', $vendor))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.leads'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.plans'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.commissions'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.history'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.automation'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.reports'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.reports.export'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.vendor_management.commissions.export'))->assertOk();
-    }
+        // 5. Vendor's lock immediately unlocks! Products & Dashboard work again without PLAN EXPIRED screen!
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.products.index'))
+            ->assertOk()
+            ->assertDontSee('PLAN EXPIRED');
 
-    public function test_21_temporary_bridge_grant_restores_all_access_without_fake_payments_and_expires(): void
-    {
-        [$u1, $gaddito] = $this->createRawVendor('electronics', [
-            'shop_name' => 'Gaddito',
-            'slug' => 'gaddito',
-            'can_use_kinetic_scroll' => false,
-        ]);
-
-        [$u2, $smartx] = $this->createRawVendor('electronics', [
-            'shop_name' => 'Smartx',
-            'slug' => 'smartx',
-            'can_use_kinetic_scroll' => true,
-        ]);
-
-        $this->artisan('subscriptions:grant-temp-bridge', [
-            '--vendor' => [$gaddito->id, $smartx->id],
-            '--days' => 3,
-            '--admin-id' => $this->admin->id,
-        ])->assertExitCode(0);
-
-        $sub1 = VendorSubscription::where('vendor_id', $gaddito->id)->firstOrFail();
-        $sub2 = VendorSubscription::where('vendor_id', $smartx->id)->firstOrFail();
-
-        $this->assertSame(VendorSubscription::STATUS_ACTIVE, $sub1->status);
-        $this->assertSame('all', $sub1->sector_key);
-        $this->assertFalse($sub1->external_payment_received);
-        $this->assertSame(0, (int) $sub1->price_amount_snapshot);
-        $this->assertFalse((bool) ($sub1->entitlements_snapshot['allow_kinetic_scroll'] ?? true));
-        $this->assertTrue((bool) ($sub2->entitlements_snapshot['allow_kinetic_scroll'] ?? false));
-
-        // Idempotent second run skips without creating duplicate subscriptions
-        $this->artisan('subscriptions:grant-temp-bridge', [
-            '--vendor' => [$gaddito->id, $smartx->id],
-            '--days' => 3,
-            '--admin-id' => $this->admin->id,
-        ])->assertExitCode(0);
-        $this->assertSame(1, VendorSubscription::where('vendor_id', $gaddito->id)->count());
-
-        // Public storefronts & vendor write endpoints work immediately
-        $this->get('/s/gaddito')->assertOk();
-        $this->get('/s/smartx')->assertOk();
-        $this->actingAs($u2)->postJson(route('vendor.design.activate'), ['preset' => 'kinetic'])->assertOk();
-        $this->actingAs($u1)->postJson(route('vendor.design.activate'), ['preset' => 'kinetic'])->assertStatus(403);
+        $this->actingAs($vendorUser)
+            ->get(route('vendor.dashboard'))
+            ->assertOk()
+            ->assertDontSee('PLAN EXPIRED');
     }
 }

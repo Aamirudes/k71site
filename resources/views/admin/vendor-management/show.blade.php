@@ -129,7 +129,7 @@
                             <select name="plan_id" required class="w-full rounded-xl border border-zinc-200 px-3 py-2 text-xs font-semibold">
                                 @foreach($plans as $p)
                                     <option value="{{ $p->id }}">
-                                        [{{ strtoupper($p->sector_key) }}] {{ $p->name }} (v{{ $p->current_version }}) — {{ $p->is_free ? 'FREE' : '₹' . number_format($p->price_amount / 100, 0) }} / {{ $p->duration_days }}d
+                                        [{{ strtoupper($p->sector_key) }}@if($p->tier_key) • {{ strtoupper($p->tier_key) }}@endif] {{ $p->name }} (v{{ $p->current_version }}) — {{ $p->is_free ? 'FREE' : '₹' . number_format($p->price_amount / 100, 0) }} / {{ $p->duration_value && $p->duration_unit ? $p->duration_value . ' ' . $p->duration_unit : $p->duration_days . 'd' }}
                                     </option>
                                 @endforeach
                             </select>

@@ -192,6 +192,17 @@ class ShortsStudioController extends Controller
         }
 
         $shortId = (int) $request->input('short_id', 0);
+        if ($shortId <= 0) {
+            $quotaCheck = app(\App\Services\Monetization\EntitlementService::class)->checkNumericQuota(
+                $vendor,
+                $vendor->getCanonicalSectorKey(),
+                'max_active_shorts',
+                1
+            );
+            if (!$quotaCheck['allowed']) {
+                return response()->json(['success' => false, 'message' => $quotaCheck['reason']], 403);
+            }
+        }
         $title = trim($request->input('title', ''));
         $description = trim($request->input('description', ''));
         $videoUrl = $request->input('video_url', '');
@@ -361,6 +372,15 @@ class ShortsStudioController extends Controller
         $user = auth()->user();
         if (!$vendor || !$user) {
             return response()->json(['success' => false, 'message' => 'Vendor store required.'], 403);
+        }
+
+        $boostAuth = app(\App\Services\Monetization\EntitlementService::class)->authorizeSectorWrite(
+            $vendor,
+            $vendor->getCanonicalSectorKey(),
+            'allow_short_boosts'
+        );
+        if (!$boostAuth['allowed']) {
+            return response()->json(['success' => false, 'message' => $boostAuth['reason']], 403);
         }
         $shortId = (int) $request->input('short_id', 0);
         $tier = $request->input('tier', 'standard'); // standard, prime, elite

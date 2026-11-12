@@ -81,6 +81,14 @@ class PortfolioController extends Controller
             }
         }
 
+        $galleryUploadCount = $request->hasFile('gallery') ? count(array_filter((array) $request->file('gallery'))) : 0;
+        if ($galleryUploadCount > 0) {
+            $mediaLimit = $entitlements->getNumericLimit($vendor, 'services', 'max_portfolio_media');
+            if ($mediaLimit !== null && $galleryUploadCount > $mediaLimit) {
+                return back()->withInput()->with('error', "Your current services plan allows up to {$mediaLimit} gallery photo(s) per portfolio case study.");
+            }
+        }
+
         $coverPath = null;
         if ($request->hasFile('cover_image') && $request->file('cover_image')->isValid()) {
             $coverPath = $request->file('cover_image')->store('portfolio/' . $vendor->id, 'public');
@@ -186,6 +194,18 @@ class PortfolioController extends Controller
         }
 
         $galleryPaths = is_array($portfolio->gallery_json) ? $portfolio->gallery_json : [];
+        $entitlements = app(\App\Services\Monetization\EntitlementService::class);
+        $authCheck = $entitlements->authorizeSectorWrite($vendor, 'services');
+        if (!$authCheck['allowed']) {
+            return back()->withInput()->with('error', $authCheck['reason']);
+        }
+        $galleryUploadCount = $request->hasFile('gallery') ? count(array_filter((array) $request->file('gallery'))) : 0;
+        if ($galleryUploadCount > 0) {
+            $mediaLimit = $entitlements->getNumericLimit($vendor, 'services', 'max_portfolio_media');
+            if ($mediaLimit !== null && (count($galleryPaths) + $galleryUploadCount) > $mediaLimit) {
+                return back()->withInput()->with('error', "Your current services plan allows up to {$mediaLimit} gallery photo(s) per portfolio case study.");
+            }
+        }
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $file) {
                 if ($file && $file->isValid()) {

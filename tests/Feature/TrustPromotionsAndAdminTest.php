@@ -85,6 +85,9 @@ class TrustPromotionsAndAdminTest extends TestCase
             'pincode' => '302002',
         ]);
 
+        $this->grantVendorTestSubscription($this->vendor, 'all');
+        $this->grantVendorTestSubscription($this->otherVendor, 'all');
+
         // Admin User (conforming to IsAdmin middleware)
         $this->adminUser = User::factory()->create([
             'first_name' => 'Master',
