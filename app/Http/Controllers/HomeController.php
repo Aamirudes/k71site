@@ -158,9 +158,7 @@ class HomeController extends Controller
         // Dedicated B2B & Wholesale Enquiries & Products
         $featuredEnquiries = \App\Models\Enquiry::with(['category', 'vendor', 'quotes'])
             ->whereIn('status', ['open', 'quoted'])
-            ->where(function ($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
-            })
+            ->where('created_at', '>=', now()->subDays(90))
             ->latest()
             ->take(4)
             ->get();
