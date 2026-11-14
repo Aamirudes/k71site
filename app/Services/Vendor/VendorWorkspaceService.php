@@ -331,13 +331,13 @@ class VendorWorkspaceService
         $subEvents = SubscriptionEvent::where('vendor_id', $vendor->id)
             ->latest('created_at')
             ->take(4)
-            ->get(['id', 'event_type', 'sector_key', 'summary', 'created_at']);
+            ->get(['id', 'event_type', 'sector_key', 'reason', 'created_at']);
         foreach ($subEvents as $se) {
             $events->push([
                 'icon' => '🛡️',
                 'category' => 'Plan',
                 'title' => ucwords(str_replace('_', ' ', (string) $se->event_type)),
-                'subtitle' => (string) ($se->summary ?: strtoupper((string) $se->sector_key)),
+                'subtitle' => (string) ($se->reason ?: strtoupper((string) $se->sector_key)),
                 'url' => route('vendor.subscription.index'),
                 'timestamp' => $se->created_at,
             ]);

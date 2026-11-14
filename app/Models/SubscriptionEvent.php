@@ -19,9 +19,15 @@ class SubscriptionEvent extends Model
         'actor_id',
         'actor_type',
         'reason',
+        'summary',
         'payload_json',
         'created_at',
     ];
+
+    public function getSummaryAttribute(): ?string
+    {
+        return $this->attributes['summary'] ?? ($this->attributes['reason'] ?? null);
+    }
 
     protected $casts = [
         'payload_json' => 'array',
