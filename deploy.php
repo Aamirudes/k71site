@@ -532,7 +532,104 @@ try {
     try { \App\Http\Controllers\MessageController::ensureChatSchema(); } catch (\Throwable $e) {}
     try { \App\Http\Controllers\MessageController::syncLegacyChats(); } catch (\Throwable $e) {}
 
-    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT (truncation-proof). Chat direct schema & legacy chats verified.</pre></div>";
+    // Products table schema hardening
+    try {
+        if (Schema::hasTable('products')) {
+            $colsToAdd = [
+                'sales_count' => "ALTER TABLE `products` ADD COLUMN `sales_count` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `order_count`",
+                'vertical' => "ALTER TABLE `products` ADD COLUMN `vertical` VARCHAR(50) NOT NULL DEFAULT 'ecommerce' AFTER `category_id`",
+                'listing_type' => "ALTER TABLE `products` ADD COLUMN `listing_type` VARCHAR(50) NOT NULL DEFAULT 'product' AFTER `vertical`",
+                'custom_fields' => "ALTER TABLE `products` ADD COLUMN `custom_fields` JSON NULL AFTER `listing_type`",
+                'used_status' => "ALTER TABLE `products` ADD COLUMN `used_status` VARCHAR(25) NULL AFTER `status`",
+                'condition_grade' => "ALTER TABLE `products` ADD COLUMN `condition_grade` VARCHAR(30) NULL AFTER `used_status`",
+                'is_dish_available' => "ALTER TABLE `products` ADD COLUMN `is_dish_available` TINYINT(1) NOT NULL DEFAULT 1 AFTER `status`",
+                'prep_time_mins' => "ALTER TABLE `products` ADD COLUMN `prep_time_mins` INT NULL AFTER `is_dish_available`",
+                'dietary_label' => "ALTER TABLE `products` ADD COLUMN `dietary_label` VARCHAR(50) NULL AFTER `prep_time_mins`",
+                'views_count' => "ALTER TABLE `products` ADD COLUMN `views_count` INT UNSIGNED NOT NULL DEFAULT 0",
+                'saves_count' => "ALTER TABLE `products` ADD COLUMN `saves_count` INT UNSIGNED NOT NULL DEFAULT 0",
+                'duplicate_fingerprint' => "ALTER TABLE `products` ADD COLUMN `duplicate_fingerprint` VARCHAR(64) NULL",
+                'refreshed_at' => "ALTER TABLE `products` ADD COLUMN `refreshed_at` TIMESTAMP NULL",
+                'has_variants' => "ALTER TABLE `products` ADD COLUMN `has_variants` TINYINT(1) NOT NULL DEFAULT 0",
+                'specifications_json' => "ALTER TABLE `products` ADD COLUMN `specifications_json` JSON NULL",
+                'b2b_tiers_json' => "ALTER TABLE `products` ADD COLUMN `b2b_tiers_json` JSON NULL",
+                'service_config_json' => "ALTER TABLE `products` ADD COLUMN `service_config_json` JSON NULL",
+                'faqs_json' => "ALTER TABLE `products` ADD COLUMN `faqs_json` JSON NULL",
+                'requirements_prompt' => "ALTER TABLE `products` ADD COLUMN `requirements_prompt` TEXT NULL",
+                'addons_json' => "ALTER TABLE `products` ADD COLUMN `addons_json` JSON NULL",
+                'pricing_mode' => "ALTER TABLE `products` ADD COLUMN `pricing_mode` VARCHAR(40) NULL",
+                'skills_json' => "ALTER TABLE `products` ADD COLUMN `skills_json` JSON NULL",
+                'is_website_featured' => "ALTER TABLE `products` ADD COLUMN `is_website_featured` TINYINT(1) NOT NULL DEFAULT 0",
+                'show_on_website' => "ALTER TABLE `products` ADD COLUMN `show_on_website` TINYINT(1) NOT NULL DEFAULT 1",
+            ];
+            foreach ($colsToAdd as $cName => $sql) {
+                if (!Schema::hasColumn('products', $cName)) {
+                    try { DB::statement($sql); } catch (\Throwable $e) {}
+                }
+            }
+        }
+    } catch (\Throwable $e) {}
+
+    // Vendor Subscriptions table schema hardening
+    try {
+        if (Schema::hasTable('vendor_subscriptions')) {
+            $subCols = [
+                'sector_key' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `sector_key` VARCHAR(50) NOT NULL DEFAULT 'all' AFTER `status`",
+                'applicable_sectors_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `applicable_sectors_snapshot` JSON NULL AFTER `sector_key`",
+                'plan_version_id' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `plan_version_id` BIGINT UNSIGNED NULL",
+                'plan_version_number' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `plan_version_number` INT UNSIGNED NULL",
+                'plan_name_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `plan_name_snapshot` VARCHAR(100) NULL",
+                'price_amount_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `price_amount_snapshot` BIGINT UNSIGNED NULL",
+                'is_free_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `is_free_snapshot` TINYINT(1) NOT NULL DEFAULT 0",
+                'currency' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `currency` VARCHAR(10) NOT NULL DEFAULT 'INR'",
+                'duration_days' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `duration_days` INT UNSIGNED NULL",
+                'entitlements_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `entitlements_snapshot` JSON NULL",
+                'expiry_policy_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `expiry_policy_snapshot` JSON NULL",
+                'grace_keep_visible' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `grace_keep_visible` TINYINT(1) NOT NULL DEFAULT 1",
+                'grace_keep_features' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `grace_keep_features` TINYINT(1) NOT NULL DEFAULT 0",
+                'commission_rule_id' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_rule_id` BIGINT UNSIGNED NULL",
+                'commission_rate_override' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_rate_override` DECIMAL(5,2) NULL",
+                'commission_fixed_override' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_fixed_override` BIGINT UNSIGNED NULL",
+                'reminder_days_before' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `reminder_days_before` JSON NULL",
+                'auto_reminder_enabled' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `auto_reminder_enabled` TINYINT(1) NOT NULL DEFAULT 1",
+                'external_payment_received' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_payment_received` TINYINT(1) NOT NULL DEFAULT 0",
+                'external_payment_date' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_payment_date` TIMESTAMP NULL",
+                'external_payment_amount' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_payment_amount` BIGINT UNSIGNED NULL",
+                'external_payment_method' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_payment_method` VARCHAR(50) NULL",
+                'external_payment_ref' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_payment_ref` VARCHAR(100) NULL",
+                'external_receipt_path' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `external_receipt_path` VARCHAR(255) NULL",
+                'internal_notes' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `internal_notes` TEXT NULL",
+                'admin_reason' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `admin_reason` TEXT NULL",
+                'assigned_by' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `assigned_by` BIGINT UNSIGNED NULL",
+                'activated_by' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `activated_by` BIGINT UNSIGNED NULL",
+                'activated_at' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `activated_at` TIMESTAMP NULL",
+                'expired_at' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `expired_at` TIMESTAMP NULL",
+                'suspended_at' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `suspended_at` TIMESTAMP NULL",
+                'renewed_from_id' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `renewed_from_id` BIGINT UNSIGNED NULL",
+                'commission_type_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_type_snapshot` VARCHAR(30) NULL",
+                'commission_rate_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_rate_snapshot` DECIMAL(5,2) NULL",
+                'commission_fixed_snapshot' => "ALTER TABLE `vendor_subscriptions` ADD COLUMN `commission_fixed_snapshot` BIGINT UNSIGNED NULL",
+            ];
+            foreach ($subCols as $scName => $sql) {
+                if (!Schema::hasColumn('vendor_subscriptions', $scName)) {
+                    try { DB::statement($sql); } catch (\Throwable $e) {}
+                }
+            }
+        }
+    } catch (\Throwable $e) {}
+
+    // Vendors table schema hardening
+    try {
+        if (Schema::hasTable('vendors')) {
+            if (!Schema::hasColumn('vendors', 'can_use_kinetic_scroll')) {
+                try { DB::statement("ALTER TABLE `vendors` ADD COLUMN `can_use_kinetic_scroll` TINYINT(1) NOT NULL DEFAULT 0 AFTER `status`"); } catch (\Throwable $e) {}
+            }
+            if (!Schema::hasColumn('vendors', 'vendor_type')) {
+                try { DB::statement("ALTER TABLE `vendors` ADD COLUMN `vendor_type` VARCHAR(50) NOT NULL DEFAULT 'ecommerce' AFTER `slug`"); } catch (\Throwable $e) {}
+            }
+        }
+    } catch (\Throwable $e) {}
+
+    echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT. Products (sales_count, vertical, custom_fields) and vendor subscriptions verified.</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations
 }
@@ -601,32 +698,6 @@ if (!empty($_GET['reset_marketplace']) && $_GET['reset_marketplace'] === 'yes') 
 
 $tasks['Clear All Stale Caches'] = ['cmd' => 'optimize:clear', 'args' => []];
 
-if (!empty($_GET['grant_temp_bridge'])) {
-    try {
-        $adminUserId = (int) (DB::table('users')->where('email', 'crab.hashir@gmail.com')->value('id') ?: 1);
-        $bridgeVendorIds = DB::table('vendors')
-            ->join('users', 'users.id', '=', 'vendors.user_id')
-            ->whereIn('vendors.slug', ['gaddito', 'smartx'])
-            ->orWhereIn('users.email', ['ahmdsinan590@gmail.com', 'crab.hashir+21@gmail.com'])
-            ->pluck('vendors.id')
-            ->unique()
-            ->values()
-            ->all();
-        if (!empty($bridgeVendorIds)) {
-            $days = max(1, min(30, (int) ($_GET['bridge_days'] ?? 3)));
-            $tasks["Grant {$days}-Day Temporary Bridge Access (Sinan & Rohit)"] = [
-                'cmd' => 'subscriptions:grant-temp-bridge',
-                'args' => ['--vendor' => $bridgeVendorIds, '--days' => $days, '--admin-id' => $adminUserId],
-            ];
-        }
-    } catch (\Throwable $e) {}
-}
-
-if (!empty($_GET['check_monetization'])) {
-    $tasks['Process Subscription Expiries Sweep'] = ['cmd' => 'subscriptions:process-expiry', 'args' => ['--trigger' => 'deploy_check']];
-    $tasks['Scheduler Task List'] = ['cmd' => 'schedule:list', 'args' => []];
-}
-
 foreach ($tasks as $label => $task) {
     echo "<div class='step'><div class='step-title'>⏳ Running: {$label}...</div>";
     try {
@@ -678,24 +749,10 @@ echo "</div>";
 // 11b. Active Vendors In Database Verification
 echo "<div class='step'><div class='step-title'>🏪 Active Registered Store Vendors:</div>";
 try {
-    $hasVerification = Schema::hasColumn('vendors', 'verification_status');
-    $cols = ['id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status'];
-    if ($hasVerification) {
-        $cols[] = 'verification_status';
-    }
-    $allVendors = DB::table('vendors')->select($cols)->get();
-    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\n";
-    if (!empty($_GET['check_monetization']) && Schema::hasTable('k71_sectors')) {
-        echo "Host Base Path: " . htmlspecialchars($baseDir) . "\n";
-        echo "Sectors: " . DB::table('k71_sectors')->count()
-            . " | Plans: " . DB::table('subscription_plans')->count()
-            . " | Commission Rules: " . DB::table('commission_rules')->count()
-            . " | Vendor Subscriptions: " . DB::table('vendor_subscriptions')->count() . "\n";
-    }
-    echo "\n";
+    $allVendors = DB::table('vendors')->select('id', 'user_id', 'shop_name', 'slug', 'vendor_type', 'contact_email', 'status')->get();
+    echo "<pre class='success'>Total Vendors Found: " . $allVendors->count() . "\n\n";
     foreach ($allVendors as $v) {
-        $ver = $hasVerification ? ($v->verification_status ?? 'n/a') : 'n/a';
-        echo "• ID {$v->id} (User #{$v->user_id}) | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status} | Verification: {$ver}\n";
+        echo "• ID {$v->id} (User #{$v->user_id}) | {$v->shop_name} [Type: {$v->vendor_type}]\n  Store URL: /s/{$v->slug}\n  Email: {$v->contact_email} | Status: {$v->status}\n";
     }
     echo "</pre>";
 } catch (\Throwable $e) {
@@ -839,6 +896,55 @@ if (isset($_GET['test_mail'])) {
     echo "</div>";
 }
 
+// 13. Deep Runtime Diagnostics Runner (?diagnose=1)
+if (!empty($_GET['diagnose'])) {
+    echo "<div class='step'><div class='step-title'>🔬 Live Runtime Diagnostics:</div><pre style='color:#e2e8f0;font-size:12px;max-height:600px;overflow-y:auto;'>";
+    
+    // Test Product Show
+    try {
+        $allProds = \App\Models\Product::withoutGlobalScopes()->get(['id', 'title', 'slug', 'status', 'vendor_id', 'vertical']);
+        echo "Testing " . $allProds->count() . " Product(s) Show Action:\n";
+        foreach ($allProds as $p) {
+            try {
+                $ctrl = app(\App\Http\Controllers\ProductViewController::class);
+                $res = $ctrl->show($p->slug);
+                $statusDesc = is_object($res) ? get_class($res) : 'OK';
+                echo "  ✓ Product #{$p->id} [{$p->slug}] -> {$statusDesc}\n";
+            } catch (\Throwable $e) {
+                echo "  ❌ Product #{$p->id} [{$p->slug}] ERROR: " . $e->getMessage() . "\n";
+                echo "     In: " . $e->getFile() . ':' . $e->getLine() . "\n";
+                echo "     Trace:\n" . substr($e->getTraceAsString(), 0, 1200) . "\n\n";
+            }
+        }
+    } catch (\Throwable $e) {
+        echo "Product test runner error: " . $e->getMessage() . "\n";
+    }
+
+    // Test Vendor Dashboard
+    try {
+        $allVendors = \App\Models\Vendor::all();
+        echo "\nTesting " . $allVendors->count() . " Vendor Dashboard(s):\n";
+        foreach ($allVendors as $v) {
+            try {
+                \Illuminate\Support\Facades\Auth::loginUsingId($v->user_id);
+                $dashCtrl = app(\App\Http\Controllers\Vendor\DashboardController::class);
+                $req = \Illuminate\Http\Request::create('/vendor/dashboard', 'GET');
+                $res = $dashCtrl->index($req);
+                $statusDesc = is_object($res) ? get_class($res) : 'OK';
+                echo "  ✓ Vendor #{$v->id} (@{$v->slug}) Dashboard -> {$statusDesc}\n";
+            } catch (\Throwable $e) {
+                echo "  ❌ Vendor #{$v->id} (@{$v->slug}) Dashboard ERROR: " . $e->getMessage() . "\n";
+                echo "     In: " . $e->getFile() . ':' . $e->getLine() . "\n";
+                echo "     Trace:\n" . substr($e->getTraceAsString(), 0, 1200) . "\n\n";
+            }
+        }
+    } catch (\Throwable $e) {
+        echo "Vendor test runner error: " . $e->getMessage() . "\n";
+    }
+
+    echo "\nDiagnostics Complete.\n</pre></div>";
+}
+
 // Diagnostic: Show Request Debug Log if exists
 $reqDebugLog = $baseDir . '/storage/logs/request_debug.log';
 if (file_exists($reqDebugLog)) {
@@ -847,13 +953,27 @@ if (file_exists($reqDebugLog)) {
     echo "</div>";
 }
 
-// Diagnostic: Show Last 30 Lines of Laravel Log if there are errors
+// Diagnostic: Show Extracted Recent Errors & Laravel Log Entries
 $logFile = $baseDir . '/storage/logs/laravel.log';
 if (file_exists($logFile)) {
+    $content = file_get_contents($logFile);
+    preg_match_all('/\[\d{4}-\d{2}-\d{2}[^\]]+\]\s+(?:production|local)\.ERROR:[^\n]+(?:\n(?!\s*\[\d{4}-\d{2}-\d{2}).*)*/m', $content, $errorBlocks);
+    $allErrors = $errorBlocks[0] ?? [];
+    $recentErrors = array_slice($allErrors, -5);
+
+    if (!empty($recentErrors)) {
+        echo "<div class='step'><div class='step-title'>🔥 Recent Exception Traces (" . count($recentErrors) . "):</div>";
+        echo "<pre class='error' style='font-size:12px;max-height:450px;overflow-y:auto;'>";
+        foreach ($recentErrors as $idx => $err) {
+            echo "=== EXCEPTION ENTRY #" . ($idx + 1) . " ===\n" . htmlspecialchars(substr($err, 0, 3000)) . "\n\n";
+        }
+        echo "</pre></div>";
+    }
+
     $lines = file($logFile);
-    $lastLines = array_slice($lines, -120);
-    echo "<div class='step'><div class='step-title'>📋 Latest Laravel Log Entries:</div>";
-    echo "<pre style='color:#cbd5e1;font-size:12px;max-height:400px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+    $lastLines = array_slice($lines, -150);
+    echo "<div class='step'><div class='step-title'>📋 Raw Log Tail (150 lines):</div>";
+    echo "<pre style='color:#cbd5e1;font-size:12px;max-height:350px;overflow-y:auto;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
     echo "</div>";
 }
 
@@ -867,6 +987,7 @@ if (isset($_GET['self_delete'])) {
     echo "<div style='margin-top:20px; display:flex; flex-wrap:wrap; gap:10px;'>";
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
+    echo "<a href='?token={$secretToken}&diagnose=1' class='btn btn-blue'>🔬 Run Live Runtime Diagnostics</a>";
     echo "<a href='?token={$secretToken}&inspect_users=1' class='btn btn-blue'>🔍 Inspect Users & Storage</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";

@@ -197,7 +197,6 @@ class RecommendationService
         $this->visibility->scopeVisibleProducts($query, $vertical);
 
         return $query->orderByDesc('order_count')
-            ->orderByDesc('sales_count')
             ->orderByDesc('is_featured')
             ->orderByDesc('id')
             ->take($limit)

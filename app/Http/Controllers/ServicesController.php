@@ -111,7 +111,7 @@ class ServicesController extends Controller
                 $query->orderBy('base_price', 'desc');
                 break;
             case 'rating':
-                $query->orderByDesc('avg_rating')->orderByDesc('review_count')->orderByDesc('sales_count');
+                $query->orderByDesc('avg_rating')->orderByDesc('review_count')->orderByDesc('order_count');
                 break;
             case 'newest':
             default:
