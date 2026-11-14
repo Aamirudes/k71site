@@ -237,7 +237,7 @@ class Vendor extends Model
 
     public function isFood(): bool
     {
-        return $this->vendor_type === 'food';
+        return $this->vendor_type === 'food' || in_array('food', (array) ($this->operating_sectors ?? []));
     }
 
     public function getIsOpenAttribute(): bool
@@ -376,12 +376,13 @@ class Vendor extends Model
 
     public function isServices(): bool
     {
-        return in_array($this->vendor_type, ['service', 'services', 'local_services', 'digital_services']);
+        return in_array($this->vendor_type, ['service', 'services', 'local_services', 'digital_services'])
+            || in_array('services', (array) ($this->operating_sectors ?? []));
     }
 
     public function isUsed(): bool
     {
-        return $this->vendor_type === 'used';
+        return $this->vendor_type === 'used' || in_array('used', (array) ($this->operating_sectors ?? []));
     }
 
     public function isB2B(): bool

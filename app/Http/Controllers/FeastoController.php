@@ -116,7 +116,7 @@ class FeastoController extends Controller
                 'description' => $dp->description ?: null,
                 'shelf_life' => $dp->vendor?->settings?->is_pure_veg ? 'Pure Veg Kitchen' : ($dp->dietary_label_resolved ?? 'Freshly Prepared'),
                 'storage_info' => $dp->vendor?->city ?: null,
-                'fssai_license' => $dp->vendor?->isFssaiVerified() ? ($dp->vendor->settings->fssai_number . ' (Verified)') : ($dp->vendor?->settings?->fssai_number ?: null),
+                'fssai_license' => $dp->vendor?->isFssaiVerified() ? ($dp->vendor->settings?->fssai_license_number . ' (Verified)') : ($dp->vendor?->settings?->fssai_license_number ?: null),
                 'origin' => $dp->country_of_origin ?: 'India',
             ]);
         }
@@ -158,11 +158,19 @@ class FeastoController extends Controller
             $cart = Cart::where('user_id', Auth::id())->first();
         }
         if (!$cart) {
-            $cart = Cart::where('session_id', Session::getId())->first();
+            $sessionId = Session::getId();
+            if (!empty($sessionId)) {
+                $cart = Cart::where('session_id', $sessionId)
+                    ->when(!Auth::check(), fn ($q) => $q->whereNull('user_id'))
+                    ->first();
+            }
         }
         $cookieCartId = request()->cookie('k71_cart_id');
         if (!$cart && $cookieCartId) {
-            $cart = Cart::where('id', $cookieCartId)->first();
+            $cart = Cart::where('id', $cookieCartId)
+                ->when(!Auth::check(), fn ($q) => $q->whereNull('user_id'))
+                ->when(Auth::check(), fn ($q) => $q->where(fn ($sq) => $sq->where('user_id', Auth::id())->orWhereNull('user_id')))
+                ->first();
         }
 
         $initialCartState = [];

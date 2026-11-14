@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProjectContract;
 use App\Models\Review;
+use App\Services\Monetization\EntitlementService;
+use App\Services\NotificationCenterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -65,16 +67,34 @@ class ReviewHubController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        $validated = $request->validate([
-            'vendor_reply' => 'required|string|max:1000',
-        ]);
+        app(EntitlementService::class)->authorizeSectorWrite($vendor, 'services');
+
+        if (empty($contract->buyer_rating)) {
+            return back()->with('error', 'Cannot reply to a contract without an existing client review.');
+        }
+
+        $replyText = trim((string) ($request->input('vendor_reply') ?? $request->input('reply') ?? ''));
+        if ($replyText === '') {
+            return back()->with('error', 'Reply text is required.');
+        }
 
         $contract->update([
-            'vendor_reply' => $validated['vendor_reply'],
+            'vendor_reply' => $replyText,
             'vendor_replied_at' => now(),
         ]);
 
         $vendor->bumpWebsiteCache();
+
+        if ($contract->buyer_id) {
+            app(NotificationCenterService::class)->notifyUser(
+                (int) $contract->buyer_id,
+                '💬',
+                'Provider Responded to Your Review',
+                "{$vendor->shop_name} posted a response to your review on contract #{$contract->contract_number}.",
+                route('services.contracts.show', $contract),
+                'services_contract'
+            );
+        }
 
         return back()->with('success', 'Official response posted on your website and project record.');
     }

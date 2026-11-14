@@ -263,7 +263,7 @@ class PlanAndCommissionController extends Controller
             if ($simVendor) {
                 $simSector = $request->query('sim_sector') ?: $this->sectors->resolveVendorPrimarySector($simVendor);
                 $simCategoryId = $request->filled('sim_category_id') ? (int) $request->query('sim_category_id') : null;
-                $grossPaise = (int) round(((float) $request->query('sim_amount')) * 100);
+                $grossPaise = max(0, (int) round(((float) $request->query('sim_amount')) * 100));
                 $rule = $this->commissionService->resolveEffectiveRule($simVendor, $simSector, $simCategoryId);
                 $calc = $this->commissionService->calculateAmounts($grossPaise, (float) $rule['rate_percent'], (int) $rule['fixed_fee_paise']);
                 $simulation = array_merge($rule, $calc);
@@ -299,7 +299,7 @@ class PlanAndCommissionController extends Controller
         $rule = CommissionRule::create([
             'name' => $validated['name'],
             'scope' => $validated['scope'],
-            'sector_key' => $validated['sector_key'] ?? null,
+            'sector_key' => in_array($validated['scope'], ['sector', 'plan', 'category', 'vendor'], true) ? ($validated['sector_key'] ?? null) : null,
             'plan_id' => $validated['scope'] === 'plan' ? ($validated['plan_id'] ?? null) : null,
             'vendor_id' => $validated['scope'] === 'vendor' ? ($validated['vendor_id'] ?? null) : null,
             'category_id' => $validated['scope'] === 'category' ? ($validated['category_id'] ?? null) : null,

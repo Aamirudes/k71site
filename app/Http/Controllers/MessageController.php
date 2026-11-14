@@ -621,90 +621,183 @@ class MessageController extends Controller
 
     /**
      * Seamless legacy chat synchronization.
-     * Brings all chats from 'conversations' & 'messages' into 'chat_conversations' & 'chat_messages'.
+     * Brings all chats from 'conversations', 'messages', 'used_threads', and 'used_thread_messages' into 'chat_conversations' & 'chat_messages'.
      */
     public static function syncLegacyChats(?int $forUserId = null): void
     {
         try {
-            if (!Schema::hasTable('conversations') || !Schema::hasTable('messages') || !Schema::hasTable('chat_conversations') || !Schema::hasTable('chat_messages')) {
+            if (!Schema::hasTable('chat_conversations') || !Schema::hasTable('chat_messages')) {
                 return;
             }
 
-            $cacheKey = 'synced_legacy_chats_v2_' . ($forUserId ?: 'all');
+            $cacheKey = 'synced_legacy_chats_v3_' . ($forUserId ?: 'all');
             if (Cache::has($cacheKey)) {
                 return;
             }
-            Cache::put($cacheKey, 1, 180);
+            Cache::put($cacheKey, 1, 90);
 
-            $query = DB::table('conversations as c')
-                ->join('vendors as v', 'v.id', '=', 'c.vendor_id')
-                ->select('c.id as legacy_conv_id', 'c.user_id as customer_id', 'v.user_id as vendor_user_id', 'c.last_message_at');
+            // 1. Sync legacy customer-vendor conversations & messages
+            if (Schema::hasTable('conversations') && Schema::hasTable('messages')) {
+                $query = DB::table('conversations as c')
+                    ->leftJoin('vendors as v', 'v.id', '=', 'c.vendor_id')
+                    ->select(
+                        'c.id as legacy_conv_id',
+                        'c.user_id as customer_id',
+                        'c.vendor_id as raw_vendor_id',
+                        'v.user_id as vendor_user_id',
+                        'c.last_message_at'
+                    );
 
-            if ($forUserId) {
-                $query->where(function($q) use ($forUserId) {
-                    $q->where('c.user_id', $forUserId)->orWhere('v.user_id', $forUserId);
-                });
-            }
-
-            $legacyConvs = $query->get();
-            foreach ($legacyConvs as $lc) {
-                $cId = (int)$lc->customer_id;
-                $vId = (int)$lc->vendor_user_id;
-                if (!$cId || !$vId || $cId === $vId) continue;
-
-                $userOne = min($cId, $vId);
-                $userTwo = max($cId, $vId);
-
-                $chatConv = DB::table('chat_conversations')
-                    ->where('user_one_id', $userOne)
-                    ->where('user_two_id', $userTwo)
-                    ->first();
-
-                if (!$chatConv) {
-                    $chatConvId = DB::table('chat_conversations')->insertGetId([
-                        'user_one_id' => $userOne,
-                        'user_two_id' => $userTwo,
-                        'last_message_at' => $lc->last_message_at ?: now()->toDateTimeString(),
-                        'status' => 'accepted',
-                        'requested_by' => $cId
-                    ]);
-                } else {
-                    $chatConvId = $chatConv->id;
-                    if (!empty($lc->last_message_at) && (empty($chatConv->last_message_at) || strtotime($lc->last_message_at) > strtotime($chatConv->last_message_at))) {
-                        DB::table('chat_conversations')
-                            ->where('id', $chatConvId)
-                            ->update(['last_message_at' => $lc->last_message_at]);
-                    }
+                if ($forUserId) {
+                    $query->where(function($q) use ($forUserId) {
+                        $q->where('c.user_id', $forUserId)
+                          ->orWhere('v.user_id', $forUserId)
+                          ->orWhere('c.vendor_id', $forUserId);
+                    });
                 }
 
-                $legacyMessages = DB::table('messages')
-                    ->where('conversation_id', $lc->legacy_conv_id)
-                    ->orderBy('id', 'asc')
-                    ->get();
+                $legacyConvs = $query->get();
+                foreach ($legacyConvs as $lc) {
+                    $cId = (int)$lc->customer_id;
+                    $vId = (int)($lc->vendor_user_id ?: $lc->raw_vendor_id);
+                    if (!$cId || !$vId || $cId === $vId) continue;
 
-                foreach ($legacyMessages as $lm) {
-                    $senderId = ($lm->sender_type === 'vendor') ? $vId : $cId;
-                    $createdAt = $lm->created_at ?: now()->toDateTimeString();
+                    $userOne = min($cId, $vId);
+                    $userTwo = max($cId, $vId);
+                    $lastAt = $lc->last_message_at ?: now()->toDateTimeString();
 
-                    $alreadyInChat = DB::table('chat_messages')
-                        ->where('conversation_id', $chatConvId)
-                        ->where('sender_id', $senderId)
-                        ->where('created_at', $createdAt)
-                        ->where('body', $lm->body)
-                        ->exists();
+                    $chatConv = DB::table('chat_conversations')
+                        ->where('user_one_id', $userOne)
+                        ->where('user_two_id', $userTwo)
+                        ->first();
 
-                    if (!$alreadyInChat) {
-                        DB::table('chat_messages')->insert([
-                            'conversation_id' => $chatConvId,
-                            'sender_id' => $senderId,
-                            'body' => $lm->body,
-                            'is_read' => $lm->is_read ? 1 : 0,
-                            'created_at' => $createdAt
+                    if (!$chatConv) {
+                        $chatConvId = DB::table('chat_conversations')->insertGetId([
+                            'user_one_id' => $userOne,
+                            'user_two_id' => $userTwo,
+                            'last_message_at' => $lastAt,
+                            'status' => 'accepted',
+                            'requested_by' => $cId
                         ]);
+                    } else {
+                        $chatConvId = $chatConv->id;
+                        $updateData = ['status' => 'accepted'];
+                        if (empty($chatConv->last_message_at) || strtotime($lastAt) > strtotime($chatConv->last_message_at)) {
+                            $updateData['last_message_at'] = $lastAt;
+                        }
+                        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                            $updateData['user_one_hidden_at'] = null;
+                            $updateData['user_two_hidden_at'] = null;
+                        }
+                        DB::table('chat_conversations')->where('id', $chatConvId)->update($updateData);
+                    }
+
+                    $legacyMessages = DB::table('messages')
+                        ->where('conversation_id', $lc->legacy_conv_id)
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                    foreach ($legacyMessages as $lm) {
+                        $senderId = ($lm->sender_type === 'vendor') ? $vId : $cId;
+                        $createdAt = $lm->created_at ?: now()->toDateTimeString();
+
+                        $alreadyInChat = DB::table('chat_messages')
+                            ->where('conversation_id', $chatConvId)
+                            ->where('sender_id', $senderId)
+                            ->where('created_at', $createdAt)
+                            ->where('body', $lm->body)
+                            ->exists();
+
+                        if (!$alreadyInChat) {
+                            DB::table('chat_messages')->insert([
+                                'conversation_id' => $chatConvId,
+                                'sender_id' => $senderId,
+                                'body' => $lm->body,
+                                'is_read' => $lm->is_read ? 1 : 0,
+                                'created_at' => $createdAt
+                            ]);
+                        }
                     }
                 }
             }
-        } catch (\Throwable $e) {}
+
+            // 2. Sync Used Marketplace listing enquiry threads & messages
+            if (Schema::hasTable('used_threads') && Schema::hasTable('used_thread_messages')) {
+                $usedQuery = DB::table('used_threads');
+                if ($forUserId) {
+                    $usedQuery->where(function($q) use ($forUserId) {
+                        $q->where('buyer_id', $forUserId)->orWhere('seller_id', $forUserId);
+                    });
+                }
+                $usedThreads = $usedQuery->get();
+                foreach ($usedThreads as $ut) {
+                    $bId = (int)$ut->buyer_id;
+                    $sId = (int)$ut->seller_id;
+                    if (!$bId || !$sId || $bId === $sId) continue;
+
+                    $userOne = min($bId, $sId);
+                    $userTwo = max($bId, $sId);
+                    $lastAt = $ut->last_message_at ?: $ut->created_at ?: now()->toDateTimeString();
+
+                    $chatConv = DB::table('chat_conversations')
+                        ->where('user_one_id', $userOne)
+                        ->where('user_two_id', $userTwo)
+                        ->first();
+
+                    if (!$chatConv) {
+                        $chatConvId = DB::table('chat_conversations')->insertGetId([
+                            'user_one_id' => $userOne,
+                            'user_two_id' => $userTwo,
+                            'last_message_at' => $lastAt,
+                            'status' => 'accepted',
+                            'requested_by' => $bId,
+                        ]);
+                    } else {
+                        $chatConvId = $chatConv->id;
+                        $updateData = ['status' => 'accepted'];
+                        if (empty($chatConv->last_message_at) || strtotime($lastAt) > strtotime($chatConv->last_message_at)) {
+                            $updateData['last_message_at'] = $lastAt;
+                        }
+                        if (Schema::hasColumn('chat_conversations', 'user_one_hidden_at')) {
+                            $updateData['user_one_hidden_at'] = null;
+                            $updateData['user_two_hidden_at'] = null;
+                        }
+                        DB::table('chat_conversations')->where('id', $chatConvId)->update($updateData);
+                    }
+
+                    if (empty($ut->chat_conversation_id)) {
+                        DB::table('used_threads')->where('id', $ut->id)->update(['chat_conversation_id' => $chatConvId]);
+                    }
+
+                    $usedMsgs = DB::table('used_thread_messages')
+                        ->where('used_thread_id', $ut->id)
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                    foreach ($usedMsgs as $um) {
+                        $senderId = (int)$um->sender_id;
+                        $createdAt = $um->created_at ?: now()->toDateTimeString();
+                        $alreadyInChat = DB::table('chat_messages')
+                            ->where('conversation_id', $chatConvId)
+                            ->where('sender_id', $senderId)
+                            ->where('body', $um->body)
+                            ->exists();
+
+                        if (!$alreadyInChat) {
+                            DB::table('chat_messages')->insert([
+                                'conversation_id' => $chatConvId,
+                                'sender_id' => $senderId,
+                                'body' => $um->body,
+                                'is_read' => $um->is_read ? 1 : 0,
+                                'created_at' => $createdAt,
+                            ]);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('syncLegacyChats warning: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -762,7 +855,8 @@ class MessageController extends Controller
             // 1. Batch fetch all recipients with Eloquent to load vendor details
             $usersMap = [];
             if (!empty($recipientIds)) {
-                $users = \App\Models\User::with(['vendor', 'roles'])
+                $users = \App\Models\User::withTrashed()
+                    ->with(['vendor' => fn($q) => $q->withoutGlobalScopes(), 'roles'])
                     ->whereIn('id', $recipientIds)
                     ->get();
 
@@ -846,13 +940,49 @@ class MessageController extends Controller
             foreach ($rawConversations as $conv) {
                 $recipientId = ($conv->user_one_id == $userId) ? (int)$conv->user_two_id : (int)$conv->user_one_id;
                 $recipientInfo = $usersMap[$recipientId] ?? null;
-                if (!$recipientInfo) continue;
+                if (!$recipientInfo) {
+                    $recipientInfo = [
+                        'id' => $recipientId,
+                        'username' => 'user_' . $recipientId,
+                        'name' => 'Member #' . $recipientId,
+                        'raw_name' => 'Member #' . $recipientId,
+                        'shop_name' => null,
+                        'profile_pic' => $this->formatChatAvatar(null, 'Member #' . $recipientId),
+                        'is_online' => false,
+                        'last_seen_at' => null,
+                        'status_label' => 'Offline',
+                        'is_vendor' => false,
+                        'vendor_slug' => null,
+                        'vendor_city' => 'India',
+                        'vendor_state' => null,
+                        'vendor_rating' => 4.9,
+                        'store_url' => null,
+                        'store_domain' => null,
+                        'banner_url' => null,
+                        'logo_url' => null,
+                        'bio' => 'Member of K71 Direct Commerce community.',
+                        'member_since' => '2026',
+                        'role_label' => 'K71 Member',
+                    ];
+                }
 
                 $latestMsg = $latestMessages[$conv->id] ?? null;
                 $unreadCount = $unreadCounts[$conv->id] ?? 0;
 
+                $userHasSent = \Illuminate\Support\Facades\DB::table('chat_messages')
+                    ->where('conversation_id', $conv->id)
+                    ->where('sender_id', $userId)
+                    ->exists();
+
                 $convStatus = $conv->status ?? 'accepted';
-                $isIncomingRequest = ($convStatus === 'pending' && (int)($conv->requested_by ?? 0) !== $userId);
+                if ($userHasSent && $convStatus !== 'accepted') {
+                    $convStatus = 'accepted';
+                    \Illuminate\Support\Facades\DB::table('chat_conversations')
+                        ->where('id', $conv->id)
+                        ->update(['status' => 'accepted']);
+                }
+
+                $isIncomingRequest = ($convStatus === 'pending' && (int)($conv->requested_by ?? 0) !== $userId && !$userHasSent);
                 if ($isIncomingRequest) {
                     $requestsCount++;
                 }
@@ -860,7 +990,7 @@ class MessageController extends Controller
                 if ($tab === 'requests' && !$isIncomingRequest) {
                     continue;
                 }
-                if ($tab === 'primary' && ($isIncomingRequest || $convStatus === 'declined')) {
+                if ($tab === 'primary' && $isIncomingRequest) {
                     continue;
                 }
 
@@ -1301,7 +1431,7 @@ class MessageController extends Controller
 
         try {
             $tokens = array_values(array_filter(preg_split('/\s+/', $query) ?: []));
-            $matchedQuery = \Illuminate\Support\Facades\DB::table('users')
+            $matchedQuery = DB::table('users')
                 ->leftJoin('vendors', 'vendors.user_id', '=', 'users.id')
                 ->where('users.id', '!=', $userId)
                 ->whereNull('users.deleted_at')
@@ -1309,19 +1439,26 @@ class MessageController extends Controller
                     $q->where('users.is_blocked', false)->orWhereNull('users.is_blocked');
                 });
 
-            foreach ($tokens as $tok) {
-                $like = '%' . $tok . '%';
-                $matchedQuery->where(function ($q) use ($like) {
-                    $q->where('users.username', 'like', $like)
-                      ->orWhere('users.first_name', 'like', $like)
-                      ->orWhere('users.last_name', 'like', $like)
-                      ->orWhere('vendors.shop_name', 'like', $like)
-                      ->orWhere('vendors.slug', 'like', $like);
-                });
+            if (filter_var($query, FILTER_VALIDATE_EMAIL)) {
+                $matchedQuery->where('users.email', $query);
+            } else {
+                foreach ($tokens as $tok) {
+                    $like = '%' . $tok . '%';
+                    $matchedQuery->where(function ($q) use ($like) {
+                        $q->where('users.username', 'like', $like)
+                          ->orWhere('users.first_name', 'like', $like)
+                          ->orWhere('users.last_name', 'like', $like)
+                          ->orWhere('users.email', 'like', $like)
+                          ->orWhere('users.phone', 'like', $like)
+                          ->orWhere('vendors.shop_name', 'like', $like)
+                          ->orWhere('vendors.slug', 'like', $like)
+                          ->orWhere('vendors.contact_person', 'like', $like);
+                    });
+                }
             }
 
             $matched = $matchedQuery
-                ->limit(25)
+                ->limit(30)
                 ->get([
                     'users.id',
                     'users.username',
@@ -1347,7 +1484,7 @@ class MessageController extends Controller
                     $displayName = $u->shop_name . ' (' . $personName . ')';
                 }
 
-                $existingConv = \Illuminate\Support\Facades\DB::table('chat_conversations')
+                $existingConv = DB::table('chat_conversations')
                     ->where(function($q) use ($userId, $targetId) {
                         $q->where('user_one_id', $userId)->where('user_two_id', $targetId);
                     })
@@ -1369,7 +1506,7 @@ class MessageController extends Controller
 
             return response()->json(['success' => true, 'data' => $results]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('apiSearchUsers query error: ' . $e->getMessage());
+            Log::error('apiSearchUsers query error: ' . $e->getMessage());
             return response()->json(['success' => true, 'data' => []]);
         }
     }

@@ -128,11 +128,14 @@ class HomeController extends Controller
             });
         $visibility->scopeVisibleVendors($topVendorsQuery);
         $topVendors = $topVendorsQuery
-            ->withCount(['products' => function($q) {
+            ->withCount(['products' => function($q) use ($visibility) {
                 $q->where('status', 'active')->excludeUsed();
+                $visibility->scopeVisibleProducts($q);
             }])
-            ->with(['products' => function($q) {
-                $q->where('status', 'active')->excludeUsed()->with('images')->latest()->take(3);
+            ->with(['products' => function($q) use ($visibility) {
+                $q->where('status', 'active')->excludeUsed()->with('images')->latest();
+                $visibility->scopeVisibleProducts($q);
+                $q->take(3);
             }])
             ->latest()
             ->take(8)
@@ -155,6 +158,9 @@ class HomeController extends Controller
         // Dedicated B2B & Wholesale Enquiries & Products
         $featuredEnquiries = \App\Models\Enquiry::with(['category', 'vendor', 'quotes'])
             ->whereIn('status', ['open', 'quoted'])
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
             ->latest()
             ->take(4)
             ->get();

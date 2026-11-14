@@ -39,10 +39,11 @@ class ProjectMarketplaceController extends Controller
             ->latest('id');
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%");
+            $escaped = addcslashes($search, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('title', 'like', "%{$escaped}%")
+                    ->orWhere('description', 'like', "%{$escaped}%")
+                    ->orWhere('city', 'like', "%{$escaped}%");
             });
         }
 
@@ -171,6 +172,15 @@ class ProjectMarketplaceController extends Controller
     {
         Gate::authorize('submitProposal', $project);
         $vendor = auth()->user()->vendor;
+
+        if (!in_array($project->status, ['open', 'shortlisting'], true)) {
+            return back()->with('error', 'This project is no longer accepting new proposals.');
+        }
+
+        $deadline = $project->deadline_at ?? $project->expires_at;
+        if ($deadline && \Illuminate\Support\Carbon::parse($deadline)->isPast()) {
+            return back()->with('error', 'This project brief has passed its deadline and cannot accept proposals.');
+        }
 
         if (ProjectProposal::where('project_id', $project->id)->where('vendor_id', $vendor->id)->exists()) {
             return back()->with('error', 'You have already submitted a proposal for this project.');

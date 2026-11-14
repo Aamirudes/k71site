@@ -3061,9 +3061,84 @@
             });
         }
 
+        let sidebarSearchDebounceTimer = null;
         filterInput.addEventListener('input', (e) => {
-            renderConversations(e.target.value.trim());
+            const val = e.target.value.trim();
+            renderConversations(val);
+
+            clearTimeout(sidebarSearchDebounceTimer);
+            if (val.length >= 1) {
+                sidebarSearchDebounceTimer = setTimeout(() => {
+                    fetch(`/chat/api/search?q=${encodeURIComponent(val)}`, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    })
+                    .then(res => res.json())
+                    .then(result => {
+                        if (result.success && Array.isArray(result.data) && result.data.length > 0 && filterInput.value.trim() === val) {
+                            renderSidebarSearchResults(result.data);
+                        }
+                    })
+                    .catch(() => {});
+                }, 250);
+            }
         });
+
+        function renderSidebarSearchResults(users) {
+            if (!users || users.length === 0) return;
+            const currentFilter = filterInput.value.trim();
+            if (!currentFilter) return;
+
+            const displayedUserIds = new Set();
+            conversationsList.querySelectorAll('.glass-conv-item:not(.glass-sidebar-search-item)').forEach(el => {
+                const rId = parseInt(el.getAttribute('data-recipient-id'), 10);
+                if (rId) displayedUserIds.add(rId);
+            });
+
+            const newUsers = users.filter(u => !displayedUserIds.has(u.id));
+            if (newUsers.length === 0) return;
+
+            const existingHeader = document.getElementById('glassSidebarSearchHeader');
+            if (existingHeader) existingHeader.remove();
+            conversationsList.querySelectorAll('.glass-sidebar-search-item').forEach(el => el.remove());
+
+            const emptyNotice = conversationsList.querySelector('li:only-child');
+            if (emptyNotice && emptyNotice.textContent.includes('No matching')) {
+                emptyNotice.remove();
+            }
+
+            const headerLi = document.createElement('li');
+            headerLi.id = 'glassSidebarSearchHeader';
+            headerLi.style.cssText = 'padding: 12px 16px 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); border-top: 1px solid var(--glass-border); list-style: none;';
+            headerLi.textContent = 'Users & Sellers (Tap to Chat)';
+            conversationsList.appendChild(headerLi);
+
+            newUsers.forEach(u => {
+                const li = document.createElement('li');
+                li.className = 'glass-conv-item glass-sidebar-search-item';
+                li.setAttribute('data-user-id', u.id);
+                li.style.cursor = 'pointer';
+                li.innerHTML = `
+                    <div class="glass-avatar-wrap" style="position: relative;">
+                        <img src="${escapeHtml(u.profile_pic)}" alt="${escapeHtml(u.name)}" class="glass-conv-avatar">
+                    </div>
+                    <div class="glass-conv-details">
+                        <div class="glass-conv-top">
+                            <div class="glass-conv-username">&#64;${escapeHtml(u.username)}</div>
+                            <span style="font-size: 10px; font-weight: 700; color: #ECD2F3; background: rgba(236,210,243,0.12); padding: 1px 6px; border-radius: 9999px;">Chat</span>
+                        </div>
+                        <div class="glass-conv-last-msg">
+                            <span>${escapeHtml(u.name || (u.shop_name ? u.shop_name : 'K71 Member'))}</span>
+                        </div>
+                    </div>
+                `;
+                li.addEventListener('click', () => {
+                    startChatWithUser(u.id);
+                });
+                conversationsList.appendChild(li);
+            });
+        }
 
         // ---------------------------------------------------------------------
         // 2. ACTIVE THREAD & MESSAGES ENGINE
@@ -4792,6 +4867,49 @@
             }, 250);
         });
 
+        let isStartingChat = false;
+        function startChatWithUser(targetId) {
+            if (!targetId || isStartingChat) return;
+            isStartingChat = true;
+
+            fetch('/chat/api/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    action: 'start_or_find',
+                    target_user_id: targetId
+                })
+            })
+            .then(async res => {
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data) {
+                    throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
+                }
+                return data;
+            })
+            .then(result => {
+                isStartingChat = false;
+                if (result.success && result.conversation_id) {
+                    closeModal();
+                    loadConversation(result.conversation_id, targetId);
+                    fetchConversations(true);
+                    setTimeout(() => messageInput.focus(), 200);
+                } else {
+                    alert(result.error || 'Failed to start conversation.');
+                }
+            })
+            .catch(err => {
+                isStartingChat = false;
+                console.error('Start chat error:', err);
+                alert(err.message || 'Could not start conversation.');
+            });
+        }
+
         function renderSearchResults(users) {
             if (users.length === 0) {
                 modalUserList.innerHTML = `
@@ -4817,49 +4935,6 @@
                     </div>
                 </li>
             `).join('');
-
-            let isStartingChat = false;
-            const startChatWithUser = (targetId) => {
-                if (!targetId || isStartingChat) return;
-                isStartingChat = true;
-
-                fetch('/chat/api/search', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        action: 'start_or_find',
-                        target_user_id: targetId
-                    })
-                })
-                .then(async res => {
-                    const data = await res.json().catch(() => null);
-                    if (!res.ok || !data) {
-                        throw new Error((data && data.error) ? data.error : `HTTP ${res.status}`);
-                    }
-                    return data;
-                })
-                .then(result => {
-                    isStartingChat = false;
-                    if (result.success && result.conversation_id) {
-                        closeModal();
-                        loadConversation(result.conversation_id, targetId);
-                        fetchConversations(true);
-                        setTimeout(() => messageInput.focus(), 200);
-                    } else {
-                        alert(result.error || 'Failed to start conversation.');
-                    }
-                })
-                .catch(err => {
-                    isStartingChat = false;
-                    console.error('Start chat error:', err);
-                    alert(err.message || 'Could not start conversation.');
-                });
-            };
 
             modalUserList.querySelectorAll('.glass-modal-user-item').forEach(row => {
                 row.addEventListener('click', (e) => {

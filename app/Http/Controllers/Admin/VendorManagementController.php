@@ -115,14 +115,15 @@ class VendorManagementController extends Controller
             ->withCount('products');
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('shop_name', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('contact_person', 'like', "%{$search}%")
-                  ->orWhere('contact_phone', 'like', "%{$search}%")
-                  ->orWhere('whatsapp_number', 'like', "%{$search}%")
-                  ->orWhereHas('user', fn($uq) => $uq->where('email', 'like', "%{$search}%")->orWhere('first_name', 'like', "%{$search}%"));
+            $escaped = addcslashes($search, '%_\\');
+            $query->where(function ($q) use ($escaped) {
+                $q->where('shop_name', 'like', "%{$escaped}%")
+                  ->orWhere('slug', 'like', "%{$escaped}%")
+                  ->orWhere('email', 'like', "%{$escaped}%")
+                  ->orWhere('contact_person', 'like', "%{$escaped}%")
+                  ->orWhere('contact_phone', 'like', "%{$escaped}%")
+                  ->orWhere('whatsapp_number', 'like', "%{$escaped}%")
+                  ->orWhereHas('user', fn($uq) => $uq->where('email', 'like', "%{$escaped}%")->orWhere('first_name', 'like', "%{$escaped}%"));
             });
         }
 
@@ -536,13 +537,14 @@ class VendorManagementController extends Controller
         $statusFilter = $request->query('status', '');
         $search = trim((string) $request->query('search', ''));
 
+        $escaped = addcslashes($search, '%_\\');
         $query = OnboardingLead::with(['linkedVendor', 'proposedPlan', 'creator'])
             ->when($statusFilter !== '', fn($q) => $q->where('status', $statusFilter))
-            ->when($search !== '', fn($q) => $q->where(function ($sq) use ($search) {
-                $sq->where('business_name', 'like', "%{$search}%")
-                   ->orWhere('contact_person', 'like', "%{$search}%")
-                   ->orWhere('whatsapp_number', 'like', "%{$search}%")
-                   ->orWhere('city', 'like', "%{$search}%");
+            ->when($search !== '', fn($q) => $q->where(function ($sq) use ($escaped) {
+                $sq->where('business_name', 'like', "%{$escaped}%")
+                   ->orWhere('contact_person', 'like', "%{$escaped}%")
+                   ->orWhere('whatsapp_number', 'like', "%{$escaped}%")
+                   ->orWhere('city', 'like', "%{$escaped}%");
             }))
             ->latest('id');
 

@@ -356,6 +356,7 @@ class ServiceWorkspaceController extends Controller
         }
 
         $order->vendor?->recomputeServiceMetrics();
+        $order->vendor?->bumpWebsiteCache();
 
         $this->notifications->notifyUser(
             $order->vendor?->user_id,
@@ -386,25 +387,29 @@ class ServiceWorkspaceController extends Controller
             'dispute_reason' => 'required|string|min:15|max:1500',
         ]);
 
-        DB::transaction(function () use ($order, $validated) {
-            $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
-            if (in_array($locked->status, ['completed', 'cancelled', 'disputed'], true)) {
-                throw new \RuntimeException('Dispute already recorded or order finalized.');
-            }
+        try {
+            DB::transaction(function () use ($order, $validated) {
+                $locked = ServiceOrder::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                if (in_array($locked->status, ['completed', 'cancelled', 'disputed'], true)) {
+                    throw new \RuntimeException('Dispute already recorded or order finalized.');
+                }
 
-            $locked->update([
-                'status' => 'disputed',
-                'dispute_reason' => $validated['dispute_reason'],
-            ]);
+                $locked->update([
+                    'status' => 'disputed',
+                    'dispute_reason' => $validated['dispute_reason'],
+                ]);
 
-            ServiceOrderMessage::create([
-                'service_order_id' => $locked->id,
-                'user_id' => auth()->id(),
-                'sender_type' => (int) $locked->buyer_id === (int) auth()->id() ? 'buyer' : 'seller',
-                'message' => "⚠️ **Dispute Raised:**\n\n" . $validated['dispute_reason'] . "\n\nK71 Marketplace Support has been notified for mediation.",
-                'attachments' => [],
-            ]);
-        });
+                ServiceOrderMessage::create([
+                    'service_order_id' => $locked->id,
+                    'user_id' => auth()->id(),
+                    'sender_type' => (int) $locked->buyer_id === (int) auth()->id() ? 'buyer' : 'seller',
+                    'message' => "⚠️ **Dispute Raised:**\n\n" . $validated['dispute_reason'] . "\n\nK71 Marketplace Support has been notified for mediation.",
+                    'attachments' => [],
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         $counterpartId = (int) $order->buyer_id === (int) auth()->id() ? $order->vendor?->user_id : $order->buyer_id;
         $this->notifications->notifyUser(

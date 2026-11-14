@@ -57,14 +57,18 @@ class ShortsAdminController extends Controller
         ]);
 
         if ($short->vendor?->user_id) {
-            app(NotificationCenterService::class)->notifyUser(
-                (int) $short->vendor->user_id,
-                '🎬',
-                'Short Approved & Published',
-                "Your Short '{$short->title}' is now live on K71 Shorts.",
-                route('vendor.shorts.studio'),
-                'shorts'
-            );
+            try {
+                app(NotificationCenterService::class)->notifyUser(
+                    (int) $short->vendor->user_id,
+                    '🎬',
+                    'Short Approved & Published',
+                    "Your Short '{$short->title}' is now live on K71 Shorts.",
+                    route('vendor.shorts.studio'),
+                    'shorts'
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Short approval notification failed: {$e->getMessage()}");
+            }
         }
 
         return response()->json([
@@ -93,14 +97,18 @@ class ShortsAdminController extends Controller
         ]);
 
         if ($short->vendor?->user_id) {
-            app(NotificationCenterService::class)->notifyUser(
-                (int) $short->vendor->user_id,
-                '⚠️',
-                'Short Rejected',
-                "Your Short '{$short->title}' was rejected: {$reason}",
-                route('vendor.shorts.studio'),
-                'shorts'
-            );
+            try {
+                app(NotificationCenterService::class)->notifyUser(
+                    (int) $short->vendor->user_id,
+                    '⚠️',
+                    'Short Rejected',
+                    "Your Short '{$short->title}' was rejected: {$reason}",
+                    route('vendor.shorts.studio'),
+                    'shorts'
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("Short rejection notification failed: {$e->getMessage()}");
+            }
         }
 
         return response()->json([
@@ -143,6 +151,7 @@ class ShortsAdminController extends Controller
             }
         }
 
+        ShortBoost::where('short_id', $short->id)->delete();
         $short->products()->detach();
         $short->forceDelete();
 

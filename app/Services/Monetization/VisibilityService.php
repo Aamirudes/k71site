@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Vendor;
 use App\Models\VendorSubscription;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class VisibilityService
 {
@@ -105,7 +106,7 @@ class VisibilityService
     /**
      * Scope a Vendor query to publicly visible merchants in the optional sector.
      */
-    public function scopeVisibleVendors(Builder $query, ?string $sectorKey = null): Builder
+    public function scopeVisibleVendors(Builder|Relation $query, ?string $sectorKey = null): Builder|Relation
     {
         $query->whereIn('vendors.status', ['approved', 'active'])
             ->where(function ($vq) {
@@ -127,11 +128,11 @@ class VisibilityService
      * Scope a Product query so items belonging to unverified, unsubscribed, suspended, or expired vendors stay hidden.
      * Standalone C2C used listings (`vendor_id IS NULL`) remain visible unless flagged otherwise.
      */
-    public function scopeVisibleProducts(Builder $query, ?string $sectorKey = null, bool $allowNullVendor = false): Builder
+    public function scopeVisibleProducts(Builder|Relation $query, ?string $sectorKey = null, bool $allowNullVendor = false): Builder|Relation
     {
         $query->where('products.status', 'active');
 
-        $applyVendorCheck = function (Builder $vq) use ($sectorKey) {
+        $applyVendorCheck = function ($vq) use ($sectorKey) {
             $this->scopeVisibleVendors($vq, $sectorKey);
         };
 

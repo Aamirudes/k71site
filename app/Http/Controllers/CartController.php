@@ -557,12 +557,20 @@ class CartController extends Controller
         }
 
         if (!$cart) {
-            $cart = Cart::where('session_id', Session::getId())->first();
+            $sessionId = Session::getId();
+            if (!empty($sessionId)) {
+                $cart = Cart::where('session_id', $sessionId)
+                    ->when(!Auth::check(), fn ($q) => $q->whereNull('user_id'))
+                    ->first();
+            }
         }
 
         $cookieCartId = request()->cookie('k71_cart_id');
         if (!$cart && $cookieCartId) {
-            $cart = Cart::where('id', $cookieCartId)->first();
+            $cart = Cart::where('id', $cookieCartId)
+                ->when(!Auth::check(), fn ($q) => $q->whereNull('user_id'))
+                ->when(Auth::check(), fn ($q) => $q->where(fn ($sq) => $sq->where('user_id', Auth::id())->orWhereNull('user_id')))
+                ->first();
             if ($cart && Auth::check() && !$cart->user_id) {
                 $cart->update(['user_id' => Auth::id()]);
             }
@@ -585,7 +593,7 @@ class CartController extends Controller
             Session::put('cart_initialized', true);
             $cookieCartId = request()->cookie('k71_cart_id');
             if ($cookieCartId) {
-                $cart = Cart::where('id', $cookieCartId)->first();
+                $cart = Cart::where('id', $cookieCartId)->whereNull('user_id')->first();
             }
             if (!$cart) {
                 $cart = Cart::firstOrCreate(['session_id' => Session::getId()]);

@@ -6,8 +6,10 @@ use App\Http\Controllers\MessageController;
 use App\Models\Address;
 use App\Models\Booking;
 use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\CategoryField;
+use App\Models\CommissionRule;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\DeliveryAssignment;
@@ -32,6 +34,7 @@ use App\Models\ShortCoin;
 use App\Models\SpinPrize;
 use App\Models\UsedSellerProfile;
 use App\Models\UsedThread;
+use App\Models\UsedThreadMessage;
 use App\Models\UsedTransaction;
 use App\Models\User;
 use App\Models\Vendor;
@@ -3079,5 +3082,317 @@ class WorkflowContinuationPassTest extends TestCase
                 'city' => 'Bengaluru',
             ])
             ->assertStatus(403);
+    }
+
+    public function test_workflow_70_to_79_legacy_and_used_chat_sync_cart_idor_protection_home_visibility_and_services_contracts(): void
+    {
+        // -------------------------------------------------------------
+        // Workflow 70: Legacy and Used Chat Sync & Resilient User Search
+        // -------------------------------------------------------------
+        $usedCat = Category::firstOrCreate(['slug' => 'used-bikes-wf70'], ['name' => 'Used Bikes WF70', 'vertical' => 'used', 'is_active' => true, 'sort_order' => 1]);
+        $usedAd = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->vendorUser->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Vintage Road Bike WF70',
+            'slug' => 'vintage-road-bike-wf70',
+            'description' => 'Test bike for legacy used thread sync',
+            'base_price' => 500000,
+            'total_stock' => 1,
+            'city' => 'Jaipur',
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $usedThread = UsedThread::create([
+            'product_id' => $usedAd->id,
+            'seller_id' => $this->vendorUser->id,
+            'buyer_id' => $this->buyer->id,
+            'status' => 'active',
+            'last_message_at' => now(),
+        ]);
+        UsedThreadMessage::create([
+            'used_thread_id' => $usedThread->id,
+            'sender_id' => $this->buyer->id,
+            'body' => 'Is this vintage bike still available?',
+            'is_read' => false,
+        ]);
+
+        $chatListRes = $this->actingAs($this->buyer)->getJson('/chat/api/conversations?tab=primary');
+        $chatListRes->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertNotEmpty($chatListRes->json('data'));
+        $foundUsedSync = collect($chatListRes->json('data'))->first(function ($c) {
+            return ($c['last_message']['body'] ?? '') === 'Is this vintage bike still available?';
+        });
+        $this->assertNotNull($foundUsedSync);
+
+        // Search by vendor email in chat search
+        $searchRes = $this->actingAs($this->buyer)->getJson('/chat/api/search?q=' . urlencode('workflowvendor.in'));
+        $searchRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $this->vendorUser->id);
+
+        // -------------------------------------------------------------
+        // Workflow 71: Guest Cart Cookie IDOR Protection
+        // -------------------------------------------------------------
+        $buyerCart = Cart::create(['user_id' => $this->buyer->id]);
+        $buyerCart->items()->create([
+            'product_id' => $usedAd->id,
+            'vendor_id' => $this->vendor->id,
+            'quantity' => 1,
+            'price_at_add' => 500000,
+        ]);
+        auth()->logout();
+        session()->flush();
+        $guestCartRes = $this->withCookie('k71_cart_id', (string) $buyerCart->id)
+            ->getJson(route('cart.data'));
+        $guestCartRes->assertOk();
+        $this->assertEquals(0, (int) $guestCartRes->json('count', 0));
+        $this->assertEmpty($guestCartRes->json('items'));
+
+        // -------------------------------------------------------------
+        // Workflow 72: Homepage Enquiry Expiration Filtering
+        // -------------------------------------------------------------
+        $expiredEnquiry = Enquiry::create([
+            'enquiry_number' => 'ENQ-WF72-001',
+            'user_id' => $this->buyer->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Expired Enquiry WF72',
+            'slug' => 'expired-enquiry-wf72',
+            'description' => 'Should not show on homepage',
+            'quantity' => '50 units',
+            'city' => 'Jaipur',
+            'buyer_name' => 'Riya Kapoor',
+            'buyer_phone' => '9829011223',
+            'status' => 'active',
+            'expires_at' => now()->subDay(),
+        ]);
+        $homeRes = $this->get(route('home'));
+        $homeRes->assertOk();
+        $homeFeatured = $homeRes->viewData('featuredEnquiries') ?? collect();
+        $this->assertFalse($homeFeatured->contains('id', $expiredEnquiry->id));
+
+        // -------------------------------------------------------------
+        // Workflow 73: ReviewHub Contract Review Reply & Rating Guard
+        // -------------------------------------------------------------
+        $svcProj = ServiceProject::create([
+            'project_number' => 'PRJ-WF73-001',
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Services Contract WF73',
+            'slug' => 'services-contract-wf73',
+            'description' => 'Test project for review hub',
+            'budget_min' => 100000,
+            'budget_max' => 200000,
+            'work_mode' => 'remote',
+            'status' => 'completed',
+        ]);
+        $svcProp = ProjectProposal::create([
+            'project_id' => $svcProj->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 150000,
+            'delivery_days' => 3,
+            'cover_letter' => 'Will do great work',
+            'status' => 'hired',
+        ]);
+        $contract = ProjectContract::create([
+            'contract_number' => 'CON-WF73-001',
+            'project_id' => $svcProj->id,
+            'proposal_id' => $svcProp->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'agreed_amount' => 150000,
+            'status' => 'completed',
+            'buyer_rating' => 5,
+            'buyer_review' => 'Remarkable service and speed',
+            'reviewed_at' => now(),
+        ]);
+        $this->vendor->update([
+            'operating_sectors' => array_unique(array_merge((array) ($this->vendor->operating_sectors ?? []), ['services'])),
+        ]);
+        $replyRes = $this->actingAs($this->vendorUser)
+            ->post(route('vendor.reviews.contract_reply', $contract), [
+                'reply' => 'Thank you for your generous review!',
+            ]);
+        $replyRes->assertRedirect();
+        $freshContract = $contract->fresh();
+        $this->assertSame('Thank you for your generous review!', $freshContract->vendor_reply);
+        $this->assertNotNull($freshContract->vendor_replied_at);
+
+        // -------------------------------------------------------------
+        // Workflow 74: Project Proposal Status & Expiry Enforcement
+        // -------------------------------------------------------------
+        $closedProj = ServiceProject::create([
+            'project_number' => 'PRJ-WF74-001',
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Closed Project WF74',
+            'slug' => 'closed-project-wf74',
+            'description' => 'Project already closed',
+            'budget_min' => 100000,
+            'budget_max' => 200000,
+            'work_mode' => 'remote',
+            'status' => 'completed',
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('services.proposals.store', $closedProj), [
+                'bid_amount' => 1200,
+                'delivery_days' => 5,
+                'cover_letter' => 'Attempting proposal on closed project',
+            ])
+            ->assertStatus(403);
+
+        $expiredProj = ServiceProject::create([
+            'project_number' => 'PRJ-WF74-002',
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Expired Project WF74',
+            'slug' => 'expired-project-wf74',
+            'description' => 'Project brief has expired',
+            'budget_min' => 100000,
+            'budget_max' => 200000,
+            'work_mode' => 'remote',
+            'status' => 'open',
+            'deadline_at' => now()->subDay(),
+        ]);
+        $this->actingAs($this->vendorUser)
+            ->post(route('services.proposals.store', $expiredProj), [
+                'bid_amount' => 1200,
+                'delivery_days' => 5,
+                'cover_letter' => 'Attempting proposal on expired project with sufficiently long letter',
+            ])
+            ->assertRedirect();
+        $this->assertDatabaseMissing('project_proposals', [
+            'project_id' => $expiredProj->id,
+            'vendor_id' => $this->vendor->id,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 75: Admin Vendor Management Escaped Wildcard Search
+        // -------------------------------------------------------------
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $this->actingAs($adminUser)
+            ->get(route('admin.vendor_management.index', ['search' => '%_wildcard%']))
+            ->assertOk();
+
+        // -------------------------------------------------------------
+        // Workflow 76: Service Workspace Dispute Transaction Handling
+        // -------------------------------------------------------------
+        $svcOrder = ServiceOrder::create([
+            'order_number' => 'SO-WF76-001',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $usedAd->id,
+            'package_tier' => 'basic',
+            'package_title' => 'Basic Services',
+            'amount' => 500000,
+            'delivery_days' => 3,
+            'status' => 'completed',
+            'total_price' => 500000,
+            'subtotal' => 500000,
+        ]);
+        $disputeRes = $this->actingAs($this->buyer)
+            ->post(route('services.workspace.dispute', $svcOrder), [
+                'dispute_reason' => 'Service was incomplete and not up to standard specifications.',
+            ]);
+        $disputeRes->assertRedirect();
+        $disputeRes->assertSessionHas('error');
+        $this->assertSame('completed', $svcOrder->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 77: Admin Shorts Moderation & Cascade Cleanups
+        // -------------------------------------------------------------
+        $short = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'title' => 'Admin Moderate Short WF77',
+            'slug' => 'admin-moderate-short-wf77',
+            'video_url' => 'https://example.com/test.mp4',
+            'status' => 'pending',
+            'duration' => 25,
+        ]);
+        $boost = ShortBoost::create([
+            'short_id' => $short->id,
+            'vendor_id' => $this->vendor->id,
+            'boost_type' => 'trending',
+            'coins_spent' => 250,
+            'starts_at' => now(),
+            'ends_at' => now()->addDays(3),
+            'status' => 'active',
+        ]);
+        $this->actingAs($adminUser)
+            ->postJson(route('admin.shorts.approve', $short))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertSame('published', $short->fresh()->status);
+
+        $this->actingAs($adminUser)
+            ->deleteJson(route('admin.shorts.destroy', $short))
+            ->assertOk();
+        $this->assertDatabaseMissing('shorts', ['id' => $short->id]);
+        $this->assertDatabaseMissing('short_boosts', ['id' => $boost->id]);
+
+        // -------------------------------------------------------------
+        // Workflow 78: Admin Commission Simulator & Platform Scope Rule
+        // -------------------------------------------------------------
+        $simRes = $this->actingAs($adminUser)
+            ->get(route('admin.vendor_management.commissions', [
+                'sim_vendor_id' => $this->vendor->id,
+                'sim_amount' => -250,
+            ]));
+        $simRes->assertOk();
+        $simData = $simRes->viewData('simulation');
+        $this->assertNotNull($simData);
+        $this->assertEquals(0, $simData['commission_base_paise']);
+
+        $ruleRes = $this->actingAs($adminUser)
+            ->post(route('admin.vendor_management.commission_rules.store'), [
+                'name' => 'Platform Wide Commission WF78',
+                'scope' => 'platform',
+                'sector_key' => 'food',
+                'rate_percent' => 5.5,
+                'fixed_fee_rupees' => 0,
+                'priority' => 10,
+            ]);
+        $ruleRes->assertRedirect();
+        $this->assertDatabaseHas('commission_rules', [
+            'name' => 'Platform Wide Commission WF78',
+            'scope' => 'platform',
+            'sector_key' => null,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 79: Cart Quantity Updates with B2B Tier Pricing
+        // -------------------------------------------------------------
+        $b2bProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'Bulk Cotton Fabric Rolls WF79',
+            'slug' => 'bulk-cotton-fabric-rolls-wf79',
+            'description' => 'Premium bulk fabric rolls for B2B wholesale',
+            'base_price' => 50000,
+            'total_stock' => 100,
+            'status' => 'active',
+            'b2b_tiers_json' => [
+                ['min_qty' => 5, 'price' => 350],
+            ],
+        ]);
+        $cart = Cart::create(['user_id' => $this->secondBuyer->id]);
+        $cartItem = $cart->items()->create([
+            'product_id' => $b2bProduct->id,
+            'vendor_id' => $this->vendor->id,
+            'quantity' => 1,
+            'price_at_add' => 50000,
+        ]);
+        $this->actingAs($this->secondBuyer)
+            ->putJson(route('cart.update', $cartItem), ['quantity' => 5])
+            ->assertOk();
+        $this->assertEquals(35000, (int) $cartItem->fresh()->price_at_add);
     }
 }
