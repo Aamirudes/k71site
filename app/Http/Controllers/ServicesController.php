@@ -52,7 +52,7 @@ class ServicesController extends Controller
         $visibility->scopeVisibleProducts($query, 'services');
 
         if ($search) {
-            $searchPattern = '%' . addcslashes((string) $search, '%_\\') . '%';
+            $searchPattern = '%' . addcslashes((string) $search, '%') . '%';
             $query->where(function ($q) use ($searchPattern) {
                 $q->where('title', 'like', $searchPattern)
                   ->orWhere('description', 'like', $searchPattern)
@@ -73,12 +73,23 @@ class ServicesController extends Controller
             $query->whereHas('vendor', fn($q) => $q->where('city', $city));
         }
 
-        if ($minPrice !== null && is_numeric($minPrice)) {
-            $query->where('base_price', '>=', (int) ($minPrice * 100));
-        }
+        if ($minPrice !== null && $maxPrice !== null && is_numeric($minPrice) && is_numeric($maxPrice)) {
+            $minVal = (float) $minPrice;
+            $maxVal = (float) $maxPrice;
+            if ($minVal > $maxVal) {
+                $temp = $minVal;
+                $minVal = $maxVal;
+                $maxVal = $temp;
+            }
+            $query->whereBetween('base_price', [(int) round($minVal * 100), (int) round($maxVal * 100)]);
+        } else {
+            if ($minPrice !== null && is_numeric($minPrice)) {
+                $query->where('base_price', '>=', (int) round(((float) $minPrice) * 100));
+            }
 
-        if ($maxPrice !== null && is_numeric($maxPrice)) {
-            $query->where('base_price', '<=', (int) ($maxPrice * 100));
+            if ($maxPrice !== null && is_numeric($maxPrice)) {
+                $query->where('base_price', '<=', (int) round(((float) $maxPrice) * 100));
+            }
         }
 
         if ($deliveryDays && is_numeric($deliveryDays)) {

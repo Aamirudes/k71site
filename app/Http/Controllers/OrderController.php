@@ -35,12 +35,26 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
-            abort(403);
+        $user = Auth::user();
+        $isBuyer = (int) $order->user_id === (int) $user?->id;
+        $isVendor = $user && $order->vendor && (int) $order->vendor->user_id === (int) $user->id;
+        $isAdmin = (bool) ($user?->is_admin ?? false);
+        $isGuestBuyer = (bool) session("guest_order_{$order->id}");
+
+        if (!$isBuyer && !$isVendor && !$isAdmin && !$isGuestBuyer) {
+            abort(403, 'Unauthorized to view this order.');
         }
 
-        $order->load(['vendor.settings', 'items.product.images', 'items.variant', 'paymentClaim', 'shipment', 'reviews']);
+        $order->load(['vendor.settings', 'items.product.images', 'items.variant', 'paymentClaim', 'shipment', 'reviews', 'statusLogs']);
         $hasFoodOrderReview = $order->reviews->where('review_type', 'food_order')->isNotEmpty();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'order' => $order,
+                'status_logs' => $order->statusLogs,
+            ]);
+        }
 
         return view('orders.show', compact('order', 'hasFoodOrderReview'));
     }

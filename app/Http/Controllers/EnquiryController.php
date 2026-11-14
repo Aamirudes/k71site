@@ -11,6 +11,7 @@ use App\Models\Vendor;
 use App\Services\Monetization\EntitlementService;
 use App\Services\Monetization\VisibilityService;
 use App\Services\NotificationCenterService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +30,7 @@ class EnquiryController extends Controller
     /**
      * Display the public B2B & Custom Requirements Marketplace Hub (enquiry.k71.in).
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $search = trim((string) $request->query('search', ''));
         $selectedCategory = $request->query('cat');
@@ -150,6 +151,17 @@ class EnquiryController extends Controller
             'verified_suppliers' => $visibleSupplierCountQuery->count(),
             'total_categories' => $enquiryCategories->count(),
         ];
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'enquiries' => $enquiries->items(),
+                'total' => $enquiries->total(),
+                'current_page' => $enquiries->currentPage(),
+                'last_page' => $enquiries->lastPage(),
+                'stats' => $stats,
+            ]);
+        }
 
         return view('enquiry.index', compact(
             'enquiryCategories',

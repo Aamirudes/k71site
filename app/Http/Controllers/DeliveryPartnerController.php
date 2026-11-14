@@ -589,5 +589,84 @@ class DeliveryPartnerController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'Delivered successfully! Payout credited.']);
     }
+
+    /**
+     * Fail / Unable to Deliver Assignment
+     */
+    public function failAssignment(Request $request, DeliveryAssignment $assignment)
+    {
+        $partner = $this->getActivePartner();
+        if (!$partner || ($assignment->delivery_partner_id && (int) $assignment->delivery_partner_id !== (int) $partner->id && !auth()->user()?->isAdmin())) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500',
+            'failure_code' => 'nullable|string|in:customer_unavailable,incorrect_address,customer_refused,weather_hazard,vehicle_breakdown,other',
+        ]);
+
+        try {
+            $order = DB::transaction(function () use ($assignment, $partner, $validated) {
+                $locked = DeliveryAssignment::whereKey($assignment->id)->lockForUpdate()->firstOrFail();
+                if (!in_array($locked->status, ['accepted', 'picked_up'], true)) {
+                    throw new \RuntimeException("Only assignments in 'accepted' or 'picked_up' status can be marked as failed (currently '{$locked->status}').");
+                }
+
+                $lockedOrder = $locked->order_id ? Order::whereKey($locked->order_id)->lockForUpdate()->first() : null;
+
+                $updateData = ['status' => 'failed'];
+                if (\Illuminate\Support\Facades\Schema::hasColumn('delivery_assignments', 'failure_reason')) {
+                    $updateData['failure_reason'] = $validated['reason'];
+                }
+                $locked->update($updateData);
+
+                if ($lockedOrder) {
+                    $fromStatus = $lockedOrder->status;
+                    $lockedOrder->update([
+                        'status' => 'delivery_failed',
+                    ]);
+
+                    OrderStatusLog::create([
+                        'order_id' => $lockedOrder->id,
+                        'from_status' => $fromStatus,
+                        'to_status' => 'delivery_failed',
+                        'actor_type' => 'fleet',
+                        'actor_id' => auth()->id(),
+                        'note' => "Delivery attempt failed by {$partner->name}: {$validated['reason']}",
+                    ]);
+                }
+
+                return $lockedOrder;
+            });
+        } catch (\RuntimeException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        if ($order) {
+            $notify = app(NotificationCenterService::class);
+            if ($order->user_id) {
+                $notify->notifyUser(
+                    (int) $order->user_id,
+                    '⚠️',
+                    "Delivery Attempt Unsuccessful — #{$order->order_number}",
+                    "Rider was unable to deliver your order: {$validated['reason']}. We will attempt re-delivery shortly.",
+                    route('orders.show', $order),
+                    'delivery_tracking'
+                );
+            }
+            if ($order->vendor?->user_id) {
+                $notify->notifyUser(
+                    (int) $order->vendor->user_id,
+                    '⚠️',
+                    "Delivery Failed — #{$order->order_number}",
+                    "Fleet rider reported delivery failure: {$validated['reason']}",
+                    route('vendor.orders.show', $order),
+                    'delivery_tracking'
+                );
+            }
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Delivery marked as failed. Dispatch notified.']);
+    }
 }
 

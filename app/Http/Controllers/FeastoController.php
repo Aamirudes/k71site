@@ -193,6 +193,15 @@ class FeastoController extends Controller
             }
         }
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'categories' => $categories,
+                'products' => $allProducts->values(),
+                'total' => $allProducts->count(),
+            ]);
+        }
+
         return view('feasto.index', compact('categories', 'allProducts', 'initialCartState'));
     }
 }

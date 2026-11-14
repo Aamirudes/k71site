@@ -76,6 +76,8 @@ Route::post('/wishlist/toggle', [\App\Http\Controllers\WishlistController::class
 Route::get('/shorts', [ShortsController::class, 'index'])->name('shorts.index');
 Route::match(['get', 'post'], '/shorts/ajax', [ShortsAjaxController::class, 'dispatch'])->name('shorts.ajax');
 Route::post('/shorts/ajax/view', [ShortsAjaxController::class, 'recordView'])->name('shorts.ajax.view');
+Route::post('/shorts/ajax/like', [ShortsAjaxController::class, 'recordLike'])->name('shorts.ajax.like');
+Route::post('/shorts/ajax/comment', [ShortsAjaxController::class, 'postComment'])->name('shorts.ajax.comment');
 Route::match(['get', 'post'], '/admin-ajax.php', [ShortsAjaxController::class, 'dispatch']);
 Route::get('/shorts/v/{id}', [ShortsController::class, 'show'])->name('shorts.show');
 Route::get('/shorts/cat/{slug}', [ShortsController::class, 'category'])->name('shorts.category');
@@ -256,6 +258,7 @@ Route::middleware('web')->group(function () {
     Route::post('/chat/api/delete_conversation', [\App\Http\Controllers\MessageController::class, 'apiDeleteConversation'])->name('chat.api.delete_conversation');
     Route::post('/chat/api/upload_photo', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto'])->name('chat.api.upload_photo');
     Route::post('/chat/api/upload_video', [\App\Http\Controllers\MessageController::class, 'apiUploadVideo'])->name('chat.api.upload_video');
+    Route::post('/chat/api/upload_voice', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice'])->name('chat.api.upload_voice');
     Route::get('/chat/api/unread_count', [\App\Http\Controllers\MessageController::class, 'apiGetUnreadCount'])->name('chat.api.unread_count');
 });
 
@@ -561,6 +564,7 @@ Route::get('/delivery/check-assignments', [\App\Http\Controllers\DeliveryPartner
 Route::post('/delivery/assignments/{assignment}/accept', [\App\Http\Controllers\DeliveryPartnerController::class, 'acceptAssignment'])->name('delivery.assignments.accept');
 Route::post('/delivery/assignments/{assignment}/pickup', [\App\Http\Controllers\DeliveryPartnerController::class, 'pickupAssignment'])->name('delivery.assignments.pickup');
 Route::post('/delivery/assignments/{assignment}/deliver', [\App\Http\Controllers\DeliveryPartnerController::class, 'deliverAssignment'])->name('delivery.assignments.deliver');
+Route::post('/delivery/assignments/{assignment}/fail', [\App\Http\Controllers\DeliveryPartnerController::class, 'failAssignment'])->name('delivery.assignments.fail');
 
 
 

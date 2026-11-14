@@ -4681,4 +4681,281 @@ class WorkflowContinuationPassTest extends TestCase
         $restaurantRes->assertOk();
         $this->assertStringContainsString('Heritage Thali House', $restaurantRes->getContent());
     }
+
+    /**
+     * Batch 15: Workflows 120-129
+     * Feasto JSON API, Instagram voice notes, Fleet delivery failure reporting,
+     * B2B RFQs JSON API, Services price normalization, Multi-role order show & tracking,
+     * Used counter-offer bounds, Food JSON API, Shorts REST endpoints, Restaurant Menu JSON API.
+     */
+    public function test_workflow_120_to_129_feasto_voice_fleet_b2b_services_order_offer_food_and_shorts(): void
+    {
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['slug' => 'vendor']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['slug' => 'admin']);
+        $adminUser = User::factory()->create(['email' => 'admin.wf120@k71.test']);
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        // -------------------------------------------------------------
+        // Workflow 120: Feasto Quick-Commerce JSON API
+        // -------------------------------------------------------------
+        $feastoRes = $this->getJson(route('feasto.index'));
+        $feastoRes->assertOk();
+        $feastoRes->assertJsonStructure(['success', 'categories', 'products', 'total']);
+        $this->assertTrue($feastoRes->json('success'));
+
+        // -------------------------------------------------------------
+        // Workflow 121: Instagram Voice Notes Upload & Validation
+        // -------------------------------------------------------------
+        $senderUser = $this->buyer;
+        $recipientUser = $this->vendorUser;
+
+        \App\Http\Controllers\MessageController::ensureChatSchema();
+        $convId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+            'user_one_id' => min($senderUser->id, $recipientUser->id),
+            'user_two_id' => max($senderUser->id, $recipientUser->id),
+            'status' => 'accepted',
+            'last_message_at' => now()->toDateTimeString(),
+            'requested_by' => $senderUser->id,
+        ]);
+
+        $fakeAudio = UploadedFile::fake()->create('voice-note.webm', 200, 'audio/webm');
+        $voiceRes = $this->actingAs($senderUser)->post(route('chat.api.upload_voice'), [
+            'conversation_id' => $convId,
+            'audio' => $fakeAudio,
+            'duration' => 12,
+        ]);
+        $voiceRes->assertOk();
+        $this->assertTrue($voiceRes->json('success'));
+        $this->assertEquals('voice', $voiceRes->json('data.attachment_type'));
+
+        // -------------------------------------------------------------
+        // Workflow 122: Delivery Fleet Rider Failed Delivery Reporting
+        // -------------------------------------------------------------
+        $riderRole = Role::firstOrCreate(['name' => 'delivery_partner'], ['slug' => 'delivery_partner']);
+        $riderUser = User::factory()->create(['phone' => '9988776655']);
+        $riderUser->roles()->syncWithoutDetaching([$riderRole->id]);
+
+        $deliveryPartner = \App\Models\DeliveryPartner::create([
+            'user_id' => $riderUser->id,
+            'name' => 'K71 Express Rider 122',
+            'phone' => '9988776655',
+            'vehicle_type' => 'bike',
+            'service_city' => 'Jaipur',
+            'status' => 'approved',
+            'is_online' => true,
+        ]);
+
+        $fleetOrder = Order::create([
+            'order_number' => 'K71-FLT-122',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 50000,
+            'item_count' => 1,
+            'shipping_amount' => 4000,
+            'tax_amount' => 0,
+            'total_amount' => 54000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'out_for_delivery',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Aamir Khan',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Plot 4, Malviya Nagar',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302017',
+        ]);
+
+        $assignment = \App\Models\DeliveryAssignment::create([
+            'order_id' => $fleetOrder->id,
+            'delivery_partner_id' => $deliveryPartner->id,
+            'vendor_id' => $this->vendor->id,
+            'status' => 'picked_up',
+            'payout_amount' => 45.00,
+            'assigned_at' => now(),
+            'accepted_at' => now(),
+            'picked_up_at' => now(),
+        ]);
+
+        $failRes = $this->actingAs($riderUser)->postJson(route('delivery.assignments.fail', $assignment), [
+            'reason' => 'Customer phone switched off and door locked.',
+            'failure_code' => 'customer_unavailable',
+        ]);
+        $failRes->assertOk();
+        $this->assertEquals('failed', $assignment->fresh()->status);
+        $this->assertEquals('delivery_failed', $fleetOrder->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 123: IndiaMART B2B RFQs JSON API
+        // -------------------------------------------------------------
+        $b2bRes = $this->getJson(route('enquiry.index'));
+        $b2bRes->assertOk();
+        $b2bRes->assertJsonStructure(['success', 'enquiries', 'total', 'stats']);
+        $this->assertTrue($b2bRes->json('success'));
+
+        // -------------------------------------------------------------
+        // Workflow 124: Services Price Range Normalization
+        // -------------------------------------------------------------
+        $servicesVendorUser = User::factory()->create();
+        $servicesVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $servicesVendor = Vendor::create([
+            'user_id' => $servicesVendorUser->id,
+            'shop_name' => 'Linux Ops Pro',
+            'slug' => 'linux-ops-pro-124',
+            'vendor_type' => 'services',
+            'operating_sectors' => ['services'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($servicesVendor, 'services');
+
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'tech-support-124'],
+            ['name' => 'Tech Support 124', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+        $servProduct = Product::create([
+            'vendor_id' => $servicesVendor->id,
+            'category_id' => $servicesCat->id,
+            'title' => 'Server Migration & Hardening',
+            'slug' => 'server-migration-hardening-124',
+            'description' => 'Complete Linux server setup',
+            'base_price' => 150000, // ₹1,500
+            'vertical' => 'services',
+            'status' => 'active',
+            'total_stock' => 999,
+        ]);
+
+        // Swapped price range min > max: 2000 > 1000 => must normalize to 1000..2000 and find the service
+        $servicesRes = $this->get(route('services.index', ['min_price' => 2000, 'max_price' => 1000]));
+        $servicesRes->assertOk();
+        $this->assertStringContainsString('Server Migration', $servicesRes->getContent());
+
+        // -------------------------------------------------------------
+        // Workflow 125: Order Multi-Role Show & Tracking JSON API
+        // -------------------------------------------------------------
+        $trackingRes = $this->actingAs($this->buyer)->getJson(route('orders.show', $fleetOrder));
+        $trackingRes->assertOk();
+        $this->assertTrue($trackingRes->json('success'));
+        $this->assertArrayHasKey('status_logs', $trackingRes->json());
+
+        // Vendor of order can view it too
+        $vendorOrderRes = $this->actingAs($this->vendorUser)->get(route('orders.show', $fleetOrder));
+        $vendorOrderRes->assertOk();
+
+        // -------------------------------------------------------------
+        // Workflow 126: Used Marketplace Counter-Offer Bounds
+        // -------------------------------------------------------------
+        $usedCat = Category::firstOrCreate(
+            ['slug' => 'cameras-126'],
+            ['name' => 'Cameras 126', 'vertical' => 'used', 'vertical_type' => 'used', 'is_active' => true]
+        );
+        $usedProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $usedCat->id,
+            'title' => 'Fujifilm X-T4 Mirrorless Camera',
+            'slug' => 'fujifilm-xt4-camera-126',
+            'description' => 'Mint condition camera body with box',
+            'base_price' => 8500000, // Asking price ₹85,000
+            'vertical' => 'used',
+            'status' => 'active',
+            'used_status' => 'active',
+            'total_stock' => 1,
+            'is_negotiable' => true,
+        ]);
+
+        $offer = \App\Models\Offer::create([
+            'product_id' => $usedProduct->id,
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'buyer_name' => 'Arjun Verma',
+            'buyer_phone' => '9829011223',
+            'offer_amount' => 7000000, // Buyer offers ₹70,000
+            'status' => 'pending',
+            'expires_at' => now()->addDays(7),
+        ]);
+
+        // Seller counter-offer higher than asking price (₹90,000 > ₹85,000): must be rejected
+        $highCounterRes = $this->actingAs($this->vendorUser)->postJson(route('used.offers.seller_respond', $offer), [
+            'action' => 'counter',
+            'counter_amount' => 90000,
+        ]);
+        $highCounterRes->assertStatus(422);
+
+        // Seller counter-offer lower than buyer's offer (₹65,000 < ₹70,000): must be rejected
+        $lowCounterRes = $this->actingAs($this->vendorUser)->postJson(route('used.offers.seller_respond', $offer), [
+            'action' => 'counter',
+            'counter_amount' => 65000,
+        ]);
+        $lowCounterRes->assertStatus(422);
+
+        // Valid counter-offer (₹78,000 between ₹70,000 and ₹85,000): succeeds
+        $validCounterRes = $this->actingAs($this->vendorUser)->postJson(route('used.offers.seller_respond', $offer), [
+            'action' => 'counter',
+            'counter_amount' => 78000,
+            'vendor_notes' => 'I can do ₹78,000 with extra battery.',
+        ]);
+        $validCounterRes->assertOk();
+        $this->assertEquals('countered', $offer->fresh()->status);
+        $this->assertEquals(7800000, $offer->fresh()->counter_amount);
+
+        // -------------------------------------------------------------
+        // Workflow 127: Food Index JSON API
+        // -------------------------------------------------------------
+        $foodIndexRes = $this->getJson(route('food.index'));
+        $foodIndexRes->assertOk();
+        $this->assertTrue($foodIndexRes->json('success'));
+        $this->assertArrayHasKey('restaurants', $foodIndexRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 128: Shorts REST Endpoints (Comment & Like)
+        // -------------------------------------------------------------
+        $short = \App\Models\Short::create([
+            'vendor_id' => $this->vendor->id,
+            'title' => 'WF128 Jaipur Ceramic Art Reel',
+            'slug' => 'wf128-jaipur-ceramic-art-reel',
+            'video_url' => 'https://storage.k71.in/shorts/ceramic-art.mp4',
+            'status' => 'published',
+            'likes' => 5,
+            'comments_count' => 0,
+        ]);
+
+        $commentRes = $this->actingAs($this->buyer)->postJson(route('shorts.ajax.comment'), [
+            'short_id' => $short->id,
+            'content' => 'Exceptional glaze finish! Really love the craftsmanship.',
+        ]);
+        $commentRes->assertOk();
+        $this->assertTrue($commentRes->json('success'));
+        $this->assertEquals(1, $short->fresh()->comments_count);
+
+        $likeRes = $this->actingAs($this->buyer)->postJson(route('shorts.ajax.like'), [
+            'short_id' => $short->id,
+        ]);
+        $likeRes->assertOk();
+        $this->assertTrue($likeRes->json('success'));
+
+        // -------------------------------------------------------------
+        // Workflow 129: Food Restaurant Menu Storefront JSON API
+        // -------------------------------------------------------------
+        $foodVendorUser = User::factory()->create();
+        $foodVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodVendorUser->id,
+            'shop_name' => 'Royal Rajputana Kitchen',
+            'slug' => 'royal-rajputana-kitchen-129',
+            'vendor_type' => 'food',
+            'operating_sectors' => ['food'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+        ]);
+
+        $menuRes = $this->getJson(route('food.restaurant', $foodVendor->slug));
+        $menuRes->assertOk();
+        $this->assertTrue($menuRes->json('success'));
+        $this->assertArrayHasKey('grouped_menu', $menuRes->json());
+    }
 }

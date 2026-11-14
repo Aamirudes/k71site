@@ -87,7 +87,7 @@ class FoodController extends Controller
     /**
      * Display the Food & Restaurants discovery hub (food.k71.in / food.marblemandi.org).
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $search = trim($request->query('search', ''));
         $dietary = $request->query('dietary');
@@ -387,6 +387,16 @@ class FoodController extends Controller
 
         $foodSettings = \App\Models\Setting::getGroup('food_page');
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'restaurants' => $restaurants->values(),
+                'total' => $restaurants->count(),
+                'available_cities' => $availableCities,
+                'categories' => $foodCategories,
+            ]);
+        }
+
         return view('food.index', compact(
             'foodCategories',
             'restaurants',
@@ -414,7 +424,7 @@ class FoodController extends Controller
     /**
      * Display a specific restaurant's digital menu & ordering storefront.
      */
-    public function restaurant(Request $request, string $slug): View
+    public function restaurant(Request $request, string $slug): View|JsonResponse
     {
         $restaurant = Vendor::where('slug', $slug)
             ->whereIn('status', ['approved', 'active'])
@@ -543,6 +553,22 @@ class FoodController extends Controller
                 ->whereDoesntHave('reviews', fn ($rq) => $rq->where('review_type', 'food_order'))
                 ->latest()
                 ->first();
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'restaurant' => [
+                    'id' => $restaurant->id,
+                    'name' => $restaurant->shop_name,
+                    'slug' => $restaurant->slug,
+                    'operational_status' => $operationalStatus,
+                    'is_serviceable' => $isServiceable,
+                ],
+                'menu_categories' => $menuCategories,
+                'grouped_menu' => $groupedMenu,
+                'total_dishes' => $menuItems->count(),
+            ]);
         }
 
         return view('food.restaurant', compact(

@@ -319,6 +319,13 @@ class OfferController extends Controller
 
             if ($action === 'counter') {
                 $counterPaise = (int) round(((float) $validated['counter_amount']) * 100);
+                if ($product->base_price && $counterPaise > (int) $product->base_price) {
+                    return ['ok' => false, 'msg' => 'Counter-offer cannot exceed the listing asking price of ₹' . number_format($product->base_price / 100, 2) . '.'];
+                }
+                if ($counterPaise <= (int) $lockedOffer->offer_amount) {
+                    return ['ok' => false, 'msg' => 'Counter-offer must be higher than the buyer\'s original offer of ₹' . number_format($lockedOffer->offer_amount / 100, 2) . '.'];
+                }
+
                 $lockedOffer->update([
                     'status' => 'countered',
                     'counter_amount' => $counterPaise,
