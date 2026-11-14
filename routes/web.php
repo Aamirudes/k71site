@@ -304,6 +304,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     
     Route::get('/account', [\App\Http\Controllers\AccountController::class, 'index'])->name('account');
+    Route::get('/account/dashboard', fn() => redirect()->route('account'))->name('account.index');
     Route::get('/account/addresses', [\App\Http\Controllers\AddressController::class, 'index'])->name('addresses.index');
     Route::post('/account/addresses', [\App\Http\Controllers\AddressController::class, 'store'])->name('addresses.store');
     Route::put('/account/addresses/{address}', [\App\Http\Controllers\AddressController::class, 'update'])->name('addresses.update');

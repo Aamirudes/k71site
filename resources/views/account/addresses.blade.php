@@ -4,7 +4,7 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10 sm:pt-9 sm:pb-12">
                 <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
-                        <a href="{{ route('account.index') }}" class="text-xs font-bold text-[#ECD2F3] hover:text-white inline-flex items-center gap-1.5 mb-2.5 transition-colors uppercase tracking-[0.14em]">
+                        <a href="{{ route('account') }}" class="text-xs font-bold text-[#ECD2F3] hover:text-white inline-flex items-center gap-1.5 mb-2.5 transition-colors uppercase tracking-[0.14em]">
                             &larr; Back to Account
                         </a>
                         <h1 class="grail-display text-[clamp(1.85rem,4vw,2.75rem)] font-bold text-white tracking-tight">Saved Delivery Addresses</h1>

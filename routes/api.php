@@ -6,8 +6,11 @@ use App\Http\Controllers\VendorValidationController;
 use App\Http\Controllers\WishlistController;
 
 Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+    if (!Auth::check()) {
+        return response()->json(['message' => 'Unauthenticated.'], 401);
+    }
+    return response()->json($request->user());
+})->middleware('web');
 
 Route::get('/validate-slug', [VendorValidationController::class, 'check'])->name('api.validate.slug');
 Route::get('/validate-username', [VendorValidationController::class, 'checkUsername'])->name('api.validate.username');

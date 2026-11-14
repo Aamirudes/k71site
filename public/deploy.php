@@ -952,6 +952,199 @@ if (!empty($_GET['diagnose'])) {
     echo "\nDiagnostics Complete.\n</pre></div>";
 }
 
+// 14. Full-Site Exhaustive Sweep Across All Pages & User Roles (?exhaustive_sweep=1)
+if (!empty($_GET['exhaustive_sweep'])) {
+    echo "<div class='step'><div class='step-title'>🌐 Live Exhaustive Sweep Across All Pages (Guest, Customer, Vendor, Admin):</div><pre style='color:#e2e8f0;font-size:12px;max-height:800px;overflow-y:auto;'>";
+    
+    $httpKernel = app(\Illuminate\Contracts\Http\Kernel::class);
+    $admin = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'admin'))->first() ?? \App\Models\User::where('email', 'hashir0867@gmail.com')->first();
+    $vendorUser = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'vendor'))->whereHas('vendor')->first();
+    if (!$vendorUser) {
+        $firstVendor = \App\Models\Vendor::first();
+        if ($firstVendor) {
+            $vendorUser = \App\Models\User::find($firstVendor->user_id);
+        }
+    }
+    $customer = \App\Models\User::whereDoesntHave('roles', fn($q) => $q->whereIn('name', ['admin', 'vendor']))->first() ?? \App\Models\User::first();
+
+    $sampleProduct = \App\Models\Product::withoutGlobalScopes()->where('status', 'active')->first() ?? \App\Models\Product::withoutGlobalScopes()->first();
+    $sampleCategory = \App\Models\Category::where('is_active', true)->first() ?? \App\Models\Category::first();
+    $sampleVendor = \App\Models\Vendor::where('status', 'approved')->first() ?? \App\Models\Vendor::first();
+    $sampleOrder = \App\Models\Order::first();
+    $sampleBooking = \App\Models\Booking::first();
+    $sampleEnquiry = \App\Models\Enquiry::first();
+    $sampleCoupon = \App\Models\Coupon::first();
+    $sampleConv = \App\Models\Conversation::first();
+    $sampleProject = \App\Models\PortfolioProject::first();
+    $sampleShort = \App\Models\Short::first();
+    $sampleThread = \App\Models\UsedThread::first();
+    $sampleContract = \App\Models\ProjectContract::first();
+
+    $models = [
+        'product' => $sampleProduct,
+        'category' => $sampleCategory,
+        'vendor' => $sampleVendor,
+        'order' => $sampleOrder,
+        'booking' => $sampleBooking,
+        'enquiry' => $sampleEnquiry,
+        'coupon' => $sampleCoupon,
+        'conv' => $sampleConv,
+        'project' => $sampleProject,
+        'short' => $sampleShort,
+        'thread' => $sampleThread,
+        'contract' => $sampleContract,
+        'customer' => $customer,
+    ];
+
+    $roles = [
+        'guest' => null,
+        'customer' => $customer,
+        'vendor' => $vendorUser,
+        'admin' => $admin,
+    ];
+
+    $router = app('router');
+    $allRoutes = $router->getRoutes();
+    $getRoutes = [];
+    foreach ($allRoutes as $route) {
+        if (in_array('GET', $route->methods())) {
+            $getRoutes[] = $route;
+        }
+    }
+
+    echo "Executing Full Site Sweep over " . count($getRoutes) . " GET routes across 4 roles (" . (count($getRoutes) * 4) . " checks)...\n\n";
+
+    $errors = [];
+    $totalTested = 0;
+    $passedCount = 0;
+
+    $resolveDeployRouteUri = function($uri, $models) {
+        $replacements = [
+            '{slug}' => $models['product']?->slug ?? ($models['category']?->slug ?? ($models['vendor']?->slug ?? 'sample')),
+            '{product}' => (string)($models['product']?->id ?? 1),
+            '{category}' => (string)($models['category']?->id ?? ($models['category']?->slug ?? 'sample-category')),
+            '{vendor}' => (string)($models['vendor']?->id ?? 1),
+            '{order}' => (string)($models['order']?->id ?? 1),
+            '{booking_number}' => (string)($models['booking']?->booking_number ?? 'BKG-TEST-1'),
+            '{enquiry_number}' => (string)($models['enquiry']?->enquiry_number ?? 'ENQ-TEST-1'),
+            '{coupon}' => (string)($models['coupon']?->id ?? 1),
+            '{conversation}' => (string)($models['conv']?->id ?? 1),
+            '{portfolio}' => (string)($models['project']?->id ?? 1),
+            '{project}' => (string)($models['project']?->id ?? 1),
+            '{projectSlug}' => (string)($models['project']?->slug ?? 'sample-project'),
+            '{short}' => (string)($models['short']?->id ?? 1),
+            '{id}' => (string)($models['short']?->id ?? ($models['product']?->id ?? 1)),
+            '{thread}' => (string)($models['thread']?->id ?? 1),
+            '{contract}' => (string)($models['contract']?->id ?? 1),
+            '{handle}' => (string)($models['vendor']?->slug ?? ($models['customer']?->username ?? 'sample-user')),
+            '{token}' => 'sample-test-token-12345',
+            '{width}' => '400',
+            '{path}' => 'sample.jpg',
+            '{item}' => '1',
+            '{filename}' => 'sample.png',
+            '{export}' => '1',
+            '{import}' => '1',
+        ];
+
+        if (str_starts_with($uri, 'category/{slug}')) {
+            return 'category/' . ($models['category']?->slug ?? 'all');
+        }
+        if (str_starts_with($uri, 'product/{slug}') || str_starts_with($uri, 'catalog/product/{slug}') || str_starts_with($uri, 'products/{slug}')) {
+            return 'product/' . ($models['product']?->slug ?? 'sample-product');
+        }
+        if (str_starts_with($uri, 'food/restaurant/{slug}') || str_starts_with($uri, 'food/{slug}/live-status')) {
+            return str_replace('{slug}', $models['vendor']?->slug ?? 'sample-food', $uri);
+        }
+        if (str_starts_with($uri, 'services/provider/{slug}')) {
+            return 'services/provider/' . ($models['vendor']?->slug ?? 'sample-provider');
+        }
+        if (str_starts_with($uri, 'services/{slug}')) {
+            return 'services/' . ($models['product']?->slug ?? 'sample-service');
+        }
+        if (str_starts_with($uri, 'used/{slug}')) {
+            return 'used/' . ($models['product']?->slug ?? 'sample-used');
+        }
+        if (str_starts_with($uri, 's/{slug}')) {
+            return 's/' . ($models['vendor']?->slug ?? 'sample-vendor');
+        }
+
+        $resolved = $uri;
+        foreach ($replacements as $param => $val) {
+            $resolved = str_replace($param, $val, $resolved);
+        }
+        return $resolved;
+    };
+
+    foreach ($getRoutes as $route) {
+        $rawUri = $route->uri();
+        if (str_starts_with($rawUri, 'filament/') || str_starts_with($rawUri, 'livewire/') || str_starts_with($rawUri, 'storage/') || str_starts_with($rawUri, 'img-optimized/')) {
+            continue;
+        }
+
+        $resolvedUri = $resolveDeployRouteUri($rawUri, $models);
+        $url = '/' . ltrim($resolvedUri, '/');
+
+        foreach ($roles as $roleName => $user) {
+            $totalTested++;
+            try {
+                if ($user) {
+                    \Illuminate\Support\Facades\Auth::login($user);
+                } else {
+                    \Illuminate\Support\Facades\Auth::logout();
+                }
+
+                $req = \Illuminate\Http\Request::create($url, 'GET');
+                $req->headers->set('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8');
+
+                $res = $httpKernel->handle($req);
+                $statusCode = $res->getStatusCode();
+                $httpKernel->terminate($req, $res);
+
+                if ($statusCode >= 500) {
+                    $errors[] = [
+                        'url' => $url,
+                        'role' => $roleName,
+                        'status' => $statusCode,
+                        'action' => $route->getActionName(),
+                        'error' => substr(strip_tags($res->getContent()), 0, 300),
+                    ];
+                    echo "❌ [{$statusCode}] {$url} (as {$roleName}) ERROR\n";
+                } else {
+                    $passedCount++;
+                }
+            } catch (\Throwable $e) {
+                $errors[] = [
+                    'url' => $url,
+                    'role' => $roleName,
+                    'status' => 500,
+                    'action' => $route->getActionName(),
+                    'error' => $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine(),
+                ];
+                echo "❌ [EXCEPTION] {$url} (as {$roleName}) - " . $e->getMessage() . "\n";
+            }
+        }
+    }
+
+    echo "\n=============================================\n";
+    echo "SWEEP EXECUTION RESULTS:\n";
+    echo "Total Checks: {$totalTested}\n";
+    echo "Clean Responses (200, 301, 302, 401, 403, 404): {$passedCount}\n";
+    echo "500 Server Errors: " . count($errors) . "\n";
+    echo "=============================================\n";
+
+    if (!empty($errors)) {
+        echo "\nDEFECT DETAILS:\n";
+        foreach ($errors as $idx => $err) {
+            echo ($idx + 1) . ". [{$err['role']}] {$err['url']} ({$err['action']}):\n";
+            echo "   Error: {$err['error']}\n\n";
+        }
+    } else {
+        echo "\n🎉 ZERO 500 INTERNAL SERVER ERRORS DETECTED ON LIVE SERVER!\n";
+    }
+
+    echo "</pre></div>";
+}
+
 // Diagnostic: Show Request Debug Log if exists
 $reqDebugLog = $baseDir . '/storage/logs/request_debug.log';
 if (file_exists($reqDebugLog)) {
@@ -995,6 +1188,7 @@ if (isset($_GET['self_delete'])) {
     echo "<a href='/?t=" . time() . "' class='btn btn-blue'>🚀 Visit Homepage &rarr;</a>";
     echo "<a href='?token={$secretToken}&sync=1' class='btn btn-purple'>🔄 Pull & Sync Latest Code from GitHub</a>";
     echo "<a href='?token={$secretToken}&diagnose=1' class='btn btn-blue'>🔬 Run Live Runtime Diagnostics</a>";
+    echo "<a href='?token={$secretToken}&exhaustive_sweep=1' class='btn btn-blue'>🌐 Run Full-Site Exhaustive Sweep (All Roles)</a>";
     echo "<a href='?token={$secretToken}&inspect_users=1' class='btn btn-blue'>🔍 Inspect Users & Storage</a>";
     echo "<a href='?token={$secretToken}&test_mail=1' class='btn btn-blue'>📧 Send Test SMTP Email</a>";
     echo "<a href='?token={$secretToken}&self_delete=1' class='btn btn-red' onclick='return confirm(\"Are you sure you want to delete deploy.php?\");'>🗑️ Delete This Setup File</a>";
