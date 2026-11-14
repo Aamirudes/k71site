@@ -47,6 +47,9 @@ class PaymentController extends Controller
 
         // Idempotency: if already paid, avoid duplicate deduction/logging
         if ($order->payment_status === 'paid') {
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Payment already verified!', 'order_id' => $order->id]);
+            }
             if ($request->header('referer') && Str::contains($request->header('referer'), '/vendor/orders')) {
                 return redirect()->route('vendor.orders.show', $order)->with('success', 'Payment already verified!');
             }
@@ -201,6 +204,15 @@ class PaymentController extends Controller
                     );
                 } catch (\Throwable $e) {}
 
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Payment successful! Your order has been placed.',
+                        'order_id' => $order->id,
+                        'order_number' => $order->order_number,
+                    ]);
+                }
+
                 if ($request->header('referer') && Str::contains($request->header('referer'), '/vendor/orders')) {
                     return redirect()->route('vendor.orders.show', $order)->with('success', 'Payment verified successfully!');
                 }
@@ -209,11 +221,17 @@ class PaymentController extends Controller
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error('Order update failed after PhonePe success: ' . $e->getMessage());
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'Payment confirmed, but an issue occurred updating the order record.'], 500);
+                }
                 return redirect()->route('orders.index')->with('error', 'Payment confirmed, but an issue occurred updating the order record.');
             }
         }
 
         // If payment failed or was cancelled
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Payment was cancelled or could not be completed.'], 400);
+        }
         return redirect()->route('orders.index')->with('error', 'Payment was cancelled or could not be completed. You can retry paying anytime.');
     }
 }

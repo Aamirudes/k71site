@@ -248,7 +248,9 @@ class SitemapController extends Controller
             ['path' => '/catalog', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/shorts', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/food', 'freq' => 'daily', 'priority' => '0.9'],
+            ['path' => '/feasto', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/services', 'freq' => 'daily', 'priority' => '0.9'],
+            ['path' => '/projects', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/used', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/enquiry', 'freq' => 'daily', 'priority' => '0.9'],
             ['path' => '/sell', 'freq' => 'monthly', 'priority' => '0.7'],
@@ -421,5 +423,41 @@ class SitemapController extends Controller
             'Content-Type' => 'application/xml; charset=UTF-8',
             'Cache-Control' => 'public, max-age=3600',
         ]);
+    }
+
+    /**
+     * Search Engine Crawler Directives (robots.txt)
+     */
+    public function robots(): Response
+    {
+        $baseUrl = $this->getBaseUrl();
+        $seoSettings = \App\Models\Setting::getGroup('seo');
+        $robotsSetting = $seoSettings['seo_robots'] ?? 'index, follow';
+
+        if (file_exists(public_path('robots.txt'))) {
+            $content = file_get_contents(public_path('robots.txt'));
+        } else {
+            $lines = [
+                'User-agent: *',
+            ];
+
+            if (str_contains($robotsSetting, 'noindex')) {
+                $lines[] = 'Disallow: /';
+            } else {
+                $lines[] = 'Allow: /';
+                $lines[] = 'Disallow: /admin/';
+                $lines[] = 'Disallow: /vendor/';
+                $lines[] = 'Disallow: /checkout/';
+                $lines[] = 'Disallow: /cart';
+                $lines[] = 'Disallow: /messages';
+                $lines[] = 'Disallow: /api/';
+                $lines[] = 'Disallow: /webhooks/';
+                $lines[] = 'Sitemap: ' . $baseUrl . '/sitemap.xml';
+            }
+
+            $content = implode("\n", $lines) . "\n";
+        }
+
+        return response($content, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
     }
 }

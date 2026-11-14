@@ -145,7 +145,7 @@ class FoodController extends Controller
         }
 
         if ($search) {
-            $escapedSearch = addcslashes($search, '%_\\');
+            $escapedSearch = addcslashes($search, '%');
             $restaurantsQuery->where(function ($q) use ($escapedSearch) {
                 $q->where('vendors.shop_name', 'like', "%{$escapedSearch}%")
                   ->orWhere('vendors.city', 'like', "%{$escapedSearch}%")
@@ -161,7 +161,7 @@ class FoodController extends Controller
         }
 
         if ($cuisine) {
-            $escapedCuisine = addcslashes((string) $cuisine, '%_\\');
+            $escapedCuisine = addcslashes((string) $cuisine, '%');
             $restaurantsQuery->where(function ($q) use ($escapedCuisine) {
                 $q->where('vendors.description', 'like', "%{$escapedCuisine}%")
                   ->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedCuisine}%"))
@@ -253,7 +253,7 @@ class FoodController extends Controller
         }
 
         if ($search) {
-            $escapedSearch = addcslashes($search, '%_\\');
+            $escapedSearch = addcslashes($search, '%');
             $dishesQuery->where(function ($q) use ($escapedSearch) {
                 $q->where('title', 'like', "%{$escapedSearch}%")
                   ->orWhere('description', 'like', "%{$escapedSearch}%")
@@ -262,7 +262,7 @@ class FoodController extends Controller
         }
 
         if ($dietary) {
-            $escapedDietary = addcslashes((string) $dietary, '%_\\');
+            $escapedDietary = addcslashes((string) $dietary, '%');
             $dishesQuery->where(function ($q) use ($escapedDietary) {
                 $q->where('dietary_label', 'like', "%{$escapedDietary}%")
                   ->orWhere('custom_fields->dietary_type', 'like', "%{$escapedDietary}%");
@@ -270,7 +270,7 @@ class FoodController extends Controller
         }
 
         if ($cuisine) {
-            $escapedCuisine = addcslashes((string) $cuisine, '%_\\');
+            $escapedCuisine = addcslashes((string) $cuisine, '%');
             $dishesQuery->where(function ($q) use ($escapedCuisine) {
                 $q->where('custom_fields->cuisine', 'like', "%{$escapedCuisine}%")
                   ->orWhereHas('category', fn ($cq) => $cq->where('name', 'like', "%{$escapedCuisine}%")->orWhere('slug', 'like', "%{$escapedCuisine}%"))
@@ -457,7 +457,7 @@ class FoodController extends Controller
         }
 
         if ($menuSearch) {
-            $escapedMenuSearch = addcslashes($menuSearch, '%_\\');
+            $escapedMenuSearch = addcslashes($menuSearch, '%');
             $menuQuery->where(function ($q) use ($escapedMenuSearch) {
                 $q->where('title', 'like', "%{$escapedMenuSearch}%")
                   ->orWhere('description', 'like', "%{$escapedMenuSearch}%");
@@ -570,7 +570,7 @@ class FoodController extends Controller
         if (strlen($q) < 2) {
             return response()->json(['restaurants' => [], 'dishes' => []]);
         }
-        $escapedQ = addcslashes($q, '%_\\');
+        $escapedQ = addcslashes($q, '%');
 
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
         $restaurantsSuggestQuery = Vendor::whereIn('status', ['approved', 'active']);

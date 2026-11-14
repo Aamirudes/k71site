@@ -48,10 +48,7 @@ Route::get('/catalog/product/{slug}', [ProductViewController::class, 'show'])->n
 Route::get('/products/{slug}', fn($slug) => redirect()->route('product.show', $slug));
 
 // Robots.txt Handler
-Route::get('/robots.txt', function () {
-    $robots = file_exists(public_path('robots.txt')) ? file_get_contents(public_path('robots.txt')) : ("User-agent: *\nAllow: /\nSitemap: " . url('/sitemap.xml') . "\n");
-    return response($robots, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
-});
+Route::get('/robots.txt', [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
 
 // Session Heartbeat & CSRF Token Refresher (Guarantees Zero 419 Page Expired)
 Route::get('/api/heartbeat', function() {
@@ -264,10 +261,10 @@ Route::middleware('web')->group(function () {
 // Guest Auth Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:20,1');
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:20,1')->name('login.submit');
     
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
-    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:15,1');
+    Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:15,1')->name('register.submit');
 
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:10,1')->name('password.email');

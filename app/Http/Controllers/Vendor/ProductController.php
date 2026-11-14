@@ -207,7 +207,7 @@ class ProductController extends Controller
         if (!$vendor) abort(403);
 
         $validated = $request->validate([
-            'action' => 'required|in:activate,draft,delete',
+            'action' => 'required|in:activate,draft,delete,out_of_stock,in_stock',
             'product_ids' => 'required|array|min:1',
             'product_ids.*' => 'integer',
         ]);
@@ -240,6 +240,19 @@ class ProductController extends Controller
                 $succeeded++;
             } elseif ($action === 'draft') {
                 $product->update(['status' => 'draft']);
+                $succeeded++;
+            } elseif ($action === 'out_of_stock') {
+                $product->variants()->update(['stock' => 0]);
+                $product->update(['total_stock' => 0]);
+                $succeeded++;
+            } elseif ($action === 'in_stock') {
+                foreach ($product->variants as $variant) {
+                    if ($variant->stock <= 0) {
+                        $variant->update(['stock' => 10]);
+                    }
+                }
+                $sumStock = $product->variants()->sum('stock');
+                $product->update(['total_stock' => max(1, (int) $sumStock)]);
                 $succeeded++;
             } elseif ($action === 'delete') {
                 $hasReferences = \App\Models\OrderItem::where('product_id', $product->id)->exists()

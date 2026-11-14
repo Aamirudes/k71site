@@ -33,6 +33,16 @@ class RegisterController extends Controller
         if ($request->filled('username')) {
             $request->merge(['username' => strtolower(trim((string) $request->input('username')))]);
         }
+        if ($request->filled('phone')) {
+            $rawPhone = preg_replace('/[\s\-().]+/', '', trim((string) $request->input('phone')));
+            if (strlen($rawPhone) > 15) {
+                $digits = preg_replace('/[^0-9]/', '', $rawPhone);
+                if (strlen($digits) >= 10) {
+                    $rawPhone = substr($digits, -10);
+                }
+            }
+            $request->merge(['phone' => $rawPhone]);
+        }
 
         // Support single full name input from modal
         if ($request->has('name') && !$request->has('first_name')) {
@@ -71,6 +81,7 @@ class RegisterController extends Controller
             'last_name' => ['required', 'string', 'max:50'],
             'username' => ['required', 'string', 'min:3', 'max:20', 'unique:users,username', 'regex:/^[a-zA-Z0-9_]+$/'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'phone' => ['nullable', 'string', 'min:10', 'max:15'],
             'password' => ['required', Password::defaults()],
         ]);
 
@@ -81,6 +92,7 @@ class RegisterController extends Controller
                 'last_name' => $validated['last_name'],
                 'username' => strtolower($validated['username']),
                 'email' => strtolower($validated['email']),
+                'phone' => !empty($validated['phone']) ? Str::limit($validated['phone'], 15, '') : null,
                 'password' => Hash::make($validated['password']),
                 'email_verified_at' => null, // Enforce 2-step OTP email confirmation
                 'terms_accepted_at' => now(),
@@ -92,6 +104,22 @@ class RegisterController extends Controller
 
             // Merge guest cart
             \App\Models\Cart::mergeGuestCart($createdUser->id, $request->session()->getId());
+
+            // Merge guest wishlist
+            $guestWishlist = (array) $request->session()->get('guest_wishlist', []);
+            if (!empty($guestWishlist) && class_exists(\App\Models\Wishlist::class)) {
+                $visibility = app(\App\Services\Monetization\VisibilityService::class);
+                foreach ($guestWishlist as $pid) {
+                    $candidate = \App\Models\Product::withoutGlobalScopes()->find((int) $pid);
+                    if ($candidate && $visibility->isProductPubliclyVisible($candidate)) {
+                        \App\Models\Wishlist::firstOrCreate([
+                            'user_id' => $createdUser->id,
+                            'product_id' => (int) $pid,
+                        ]);
+                    }
+                }
+                $request->session()->forget('guest_wishlist');
+            }
 
             try {
                 $this->otpService->generateAndSend($createdUser->email, 'registration', $createdUser->id);
@@ -232,6 +260,22 @@ class RegisterController extends Controller
                 $user->unsetRelation('roles');
 
                 \App\Models\Cart::mergeGuestCart($user->id, $request->session()->getId());
+
+                $guestWishlist = (array) $request->session()->get('guest_wishlist', []);
+                if (!empty($guestWishlist) && class_exists(\App\Models\Wishlist::class)) {
+                    $visibility = app(\App\Services\Monetization\VisibilityService::class);
+                    foreach ($guestWishlist as $pid) {
+                        $candidate = \App\Models\Product::withoutGlobalScopes()->find((int) $pid);
+                        if ($candidate && $visibility->isProductPubliclyVisible($candidate)) {
+                            \App\Models\Wishlist::firstOrCreate([
+                                'user_id' => $user->id,
+                                'product_id' => (int) $pid,
+                            ]);
+                        }
+                    }
+                    $request->session()->forget('guest_wishlist');
+                }
+
                 $emailToVerify = $user->email;
             } else {
                 $user = auth()->user();

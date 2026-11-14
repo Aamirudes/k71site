@@ -130,6 +130,8 @@ class ServiceStudioController extends Controller
                     'base_price' => (int) round($validated['basic_price'] * 100),
                     'gst_rate' => 18.00,
                     'status' => 'active',
+                    'published_at' => now(),
+                    'show_on_website' => true,
                     'requirements_prompt' => $validated['requirements_prompt'] ?? 'Please describe your project specifications and attach any reference files.',
                 ]);
 

@@ -4029,4 +4029,331 @@ class WorkflowContinuationPassTest extends TestCase
         $results = collect($suggestRes->json('results'));
         $this->assertTrue($results->contains('title', 'WF99_SpecialEdition Handicraft'));
     }
+
+    public function test_workflow_100_to_109_auth_security_bulk_inventory_webhooks_and_sitemap(): void
+    {
+        // -------------------------------------------------------------
+        // Workflow 100: Auth Login Guest Wishlist & Cart Auto-Merge
+        // -------------------------------------------------------------
+        $user100 = User::factory()->create([
+            'email' => 'wf100_buyer@k71.in',
+            'password' => bcrypt('Secret@12345'),
+        ]);
+        $product100 = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'WF100 Guest Wishlist Item',
+            'slug' => 'wf100-guest-wishlist-item',
+            'description' => 'Product to test guest wishlist merge',
+            'base_price' => 129900,
+            'total_stock' => 10,
+            'status' => 'active',
+            'published_at' => now(),
+        ]);
+
+        $loginRes = $this->withSession(['guest_wishlist' => [$product100->id]])
+            ->post(route('login.submit'), [
+                'login' => 'wf100_buyer@k71.in',
+                'password' => 'Secret@12345',
+                'role' => 'customer',
+            ]);
+        $loginRes->assertRedirect();
+        $this->assertDatabaseHas('wishlists', [
+            'user_id' => $user100->id,
+            'product_id' => $product100->id,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 101: Buyer Registration with Phone & Guest Wishlist Merge
+        // -------------------------------------------------------------
+        $this->app['auth']->logout();
+        $regItem = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'WF101 Reg Wishlist Item',
+            'slug' => 'wf101-reg-wishlist-item',
+            'description' => 'Item for registration wishlist merge',
+            'base_price' => 79900,
+            'total_stock' => 15,
+            'status' => 'active',
+            'published_at' => now(),
+        ]);
+
+        $regRes = $this->withSession(['guest_wishlist' => [$regItem->id]])
+            ->post(route('register.submit'), [
+                'first_name' => 'Meera',
+                'last_name' => 'Sharma',
+                'username' => 'meera_sharma_101',
+                'email' => 'meera101@k71.in',
+                'phone' => '+91 98290 88776',
+                'password' => 'K71Market#2026',
+            ]);
+        $regRes->assertRedirect(route('otp.show'));
+        $createdMeera = User::where('email', 'meera101@k71.in')->first();
+        $this->assertNotNull($createdMeera);
+        $this->assertEquals('9829088776', substr($createdMeera->phone, -10));
+        $this->assertDatabaseHas('wishlists', [
+            'user_id' => $createdMeera->id,
+            'product_id' => $regItem->id,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 102: Password Reset Throttling
+        // -------------------------------------------------------------
+        \Illuminate\Support\Facades\RateLimiter::clear('forgot-password:' . sha1('throttle_test@k71.in|127.0.0.1'));
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson(route('password.email'), ['email' => 'throttle_test@k71.in']);
+        }
+        $throttledRes = $this->postJson(route('password.email'), ['email' => 'throttle_test@k71.in']);
+        $throttledRes->assertStatus(429);
+        $this->assertStringContainsString('Too many password reset requests', $throttledRes->json('message'));
+
+        // -------------------------------------------------------------
+        // Workflow 103: Vendor Product Bulk Stock Toggles (out_of_stock & in_stock)
+        // -------------------------------------------------------------
+        $p1 = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'WF103 Stock Product 1',
+            'slug' => 'wf103-stock-product-1',
+            'description' => 'Test product for inventory toggles',
+            'base_price' => 50000,
+            'total_stock' => 20,
+            'status' => 'active',
+        ]);
+        $v1 = \App\Models\ProductVariant::create([
+            'product_id' => $p1->id,
+            'name' => 'Default',
+            'sku' => 'WF103-SKU-1',
+            'price_override' => 50000,
+            'stock' => 20,
+        ]);
+
+        // Bulk action: out_of_stock
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.bulk_action'), [
+                'action' => 'out_of_stock',
+                'product_ids' => [$p1->id],
+            ])->assertSessionHas('success');
+        $this->assertEquals(0, $p1->fresh()->total_stock);
+        $this->assertEquals(0, $v1->fresh()->stock);
+
+        // Bulk action: in_stock
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.products.bulk_action'), [
+                'action' => 'in_stock',
+                'product_ids' => [$p1->id],
+            ])->assertSessionHas('success');
+        $this->assertEquals(10, $p1->fresh()->total_stock);
+        $this->assertEquals(10, $v1->fresh()->stock);
+
+        // -------------------------------------------------------------
+        // Workflow 104: Service Studio Package Creation & Immediate Publishing
+        // -------------------------------------------------------------
+        $servicesVendorUser = User::factory()->create();
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['display_name' => 'Vendor']);
+        $servicesVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $servicesVendor = Vendor::create([
+            'user_id' => $servicesVendorUser->id,
+            'shop_name' => 'Apex Dev Studios',
+            'slug' => 'apex-dev-studios-104',
+            'vendor_type' => 'services',
+            'operating_sectors' => ['services'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($servicesVendor, 'services');
+
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'web-design-wf104'],
+            ['name' => 'Web Design WF104', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+        $studioRes = $this->actingAs($servicesVendorUser)
+            ->post(route('vendor.services.store'), [
+                'title' => 'Custom Laravel & Vue Web Architecture',
+                'category_id' => $servicesCat->id,
+                'description' => 'High throughput custom enterprise web applications built with precision.',
+                'basic_title' => 'Starter API Setup',
+                'basic_description' => 'Complete clean architecture foundation setup',
+                'basic_price' => 1500,
+                'basic_delivery_days' => 3,
+                'basic_revisions' => 2,
+                'basic_features' => "Database Design\nAPI Endpoints\nTests",
+            ]);
+        $studioRes->assertRedirect(route('vendor.services.index'));
+        $createdGig = Product::where('title', 'Custom Laravel & Vue Web Architecture')->first();
+        $this->assertNotNull($createdGig);
+        $this->assertEquals('active', $createdGig->status);
+        $this->assertNotNull($createdGig->published_at);
+        $this->assertTrue($createdGig->show_on_website);
+
+        // -------------------------------------------------------------
+        // Workflow 105: Platform Settings & COD Controls in HomepageController
+        // -------------------------------------------------------------
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $settingsUpdateRes = $this->actingAs($adminUser)
+            ->put(route('admin.homepage.update'), [
+                'active_tab' => 'homepage',
+                'cod_marketplace_enabled' => 0,
+                'cod_max_amount' => 350000,
+                'cod_fee' => 4900,
+                'maintenance_mode' => 1,
+                'maintenance_message' => 'K71 scheduled core infrastructure upgrade in progress.',
+            ]);
+        $settingsUpdateRes->assertRedirect();
+        $this->assertFalse(\App\Models\Setting::get('cod_marketplace_enabled'));
+        $this->assertEquals(350000, \App\Models\Setting::get('cod_max_amount'));
+        $this->assertEquals(4900, \App\Models\Setting::get('cod_fee'));
+        $this->assertTrue(\App\Models\Setting::get('maintenance_mode'));
+        $this->assertEquals('K71 scheduled core infrastructure upgrade in progress.', \App\Models\Setting::get('maintenance_message'));
+
+        // Reset maintenance mode and COD for remaining tests
+        \App\Models\Setting::set('cod_marketplace_enabled', true, 'commerce', 'boolean');
+        \App\Models\Setting::set('maintenance_mode', false, 'platform', 'boolean');
+
+        // -------------------------------------------------------------
+        // Workflow 106: Category Hierarchy & Icon Upload in Admin Studio
+        // -------------------------------------------------------------
+        $parentCatRes = $this->actingAs($adminUser)
+            ->post(route('admin.homepage.categories.store'), [
+                'name' => 'Artisanal Terracotta Pottery',
+                'vertical' => 'marketplace',
+                'icon' => '🏺',
+                'sort_order' => 15,
+            ]);
+        $parentCatRes->assertRedirect();
+        $parentCat = Category::where('name', 'Artisanal Terracotta Pottery')->first();
+        $this->assertNotNull($parentCat);
+        $this->assertEquals('🏺', $parentCat->icon);
+
+        $subCatRes = $this->actingAs($adminUser)
+            ->post(route('admin.homepage.categories.store'), [
+                'name' => 'Glazed Clay Pitchers',
+                'parent_id' => $parentCat->id,
+                'icon' => '🫖',
+                'sort_order' => 1,
+            ]);
+        $subCatRes->assertRedirect();
+        $subCat = Category::where('name', 'Glazed Clay Pitchers')->first();
+        $this->assertNotNull($subCat);
+        $this->assertEquals($parentCat->id, $subCat->parent_id);
+        $this->assertEquals('marketplace', $subCat->vertical);
+
+        // -------------------------------------------------------------
+        // Workflow 107: Restaurant / Food Dish Search Underscore Tolerance
+        // -------------------------------------------------------------
+        $foodUser = User::factory()->create();
+        $foodUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodUser->id,
+            'shop_name' => 'Royal Dawat Kitchen',
+            'slug' => 'royal-dawat-kitchen-107',
+            'vendor_type' => 'food',
+            'operating_sectors' => ['food'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+        ]);
+
+        $foodCat = Category::firstOrCreate(
+            ['slug' => 'biryani-wf107'],
+            ['name' => 'Biryani Specialties', 'vertical' => 'food', 'vertical_type' => 'food', 'is_active' => true]
+        );
+        $biryaniDish = Product::create([
+            'vendor_id' => $foodVendor->id,
+            'category_id' => $foodCat->id,
+            'vertical' => 'food',
+            'title' => 'Royal_Hyderabadi_Dum_Biryani',
+            'slug' => 'royal-hyderabadi-dum-biryani',
+            'description' => 'Authentic slow-cooked saffron rice with tender mutton',
+            'base_price' => 45000,
+            'total_stock' => 30,
+            'status' => 'active',
+            'is_dish_available' => true,
+            'published_at' => now(),
+        ]);
+        $foodSearchRes = $this->get(route('food.index', ['search' => 'Royal_Hyderabadi']));
+        $foodSearchRes->assertOk();
+        $this->assertStringContainsString('Royal_Hyderabadi_Dum_Biryani', $foodSearchRes->getContent());
+
+        // -------------------------------------------------------------
+        // Workflow 108: PhonePe Webhook Idempotency & Order Matching
+        // -------------------------------------------------------------
+        $webhookOrder = Order::create([
+            'order_number' => 'K71-WH108-ORD',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 200000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 205000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Anil Verma',
+            'customer_phone' => '9829011445',
+            'shipping_address_line_1' => 'Plot 88, C-Scheme',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+
+        $mockPhonePe = $this->createMock(\App\Services\PhonePeService::class);
+        $mockPhonePe->method('verifyWebhookSignature')->willReturn(true);
+        $mockPhonePe->method('checkStatus')->willReturn(['success' => true, 'status' => 'SUCCESS', 'data' => ['transactionId' => 'TXN_K71-WH108-ORD_998877']]);
+        $this->app->instance(\App\Services\PhonePeService::class, $mockPhonePe);
+
+        $payload = [
+            'code' => 'PAYMENT_SUCCESS',
+            'data' => [
+                'merchantTransactionId' => 'TXN_K71-WH108-ORD_998877',
+                'merchantOrderId' => 'TXN_K71-WH108-ORD_998877',
+            ],
+        ];
+        $base64Payload = base64_encode(json_encode($payload));
+
+        $webhookRes = $this->postJson(route('webhook.phonepe'), [
+            'response' => $base64Payload,
+        ]);
+        $webhookRes->assertOk();
+        $this->assertTrue($webhookRes->json('success'));
+        $this->assertEquals('paid', $webhookOrder->fresh()->payment_status);
+        $this->assertEquals('processing', $webhookOrder->fresh()->status);
+
+        // Repeat call: must remain completely idempotent
+        $repeatWebhookRes = $this->postJson(route('webhook.phonepe'), [
+            'response' => $base64Payload,
+        ]);
+        $repeatWebhookRes->assertOk();
+        $this->assertEquals('paid', $webhookOrder->fresh()->payment_status);
+
+        // -------------------------------------------------------------
+        // Workflow 109: Sitemap Sector URLs & Dynamic Robots.txt
+        // -------------------------------------------------------------
+        $pagesSitemapRes = $this->get('/sitemap-pages.xml');
+        $pagesSitemapRes->assertOk();
+        $sitemapContent = $pagesSitemapRes->getContent();
+        $this->assertStringContainsString('/feasto', $sitemapContent);
+        $this->assertStringContainsString('/projects', $sitemapContent);
+
+        $robotsRes = $this->get(route('robots'));
+        $robotsRes->assertOk();
+        $robotsContent = $robotsRes->getContent();
+        $this->assertStringContainsString('User-agent: *', $robotsContent);
+        $this->assertStringContainsString('Disallow: /admin/', $robotsContent);
+        $this->assertStringContainsString('Disallow: /checkout/', $robotsContent);
+        $this->assertStringContainsString('Sitemap:', $robotsContent);
+    }
 }

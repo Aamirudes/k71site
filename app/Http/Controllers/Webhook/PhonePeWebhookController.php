@@ -75,11 +75,24 @@ class PhonePeWebhookController extends Controller
             return response()->json(['success' => true, 'message' => 'Acknowledged, no transaction ID']);
         }
 
-        // Find the corresponding order
-        $order = Order::where('order_number', $merchantTransactionId)
-            ->orWhere('id', (int) str_replace('ORD-', '', $merchantTransactionId))
+        // Find the corresponding order deterministically
+        $order = Order::where('idempotency_key', $merchantTransactionId)
+            ->orWhere('order_number', $merchantTransactionId)
             ->orWhere('tracking_number', $merchantTransactionId)
             ->first();
+
+        // Support standard TXN_{order_number}_{timestamp} pattern
+        if (!$order && preg_match('/^TXN_(.+?)_\d+$/', $merchantTransactionId, $matches)) {
+            $extracted = $matches[1];
+            $order = Order::where('order_number', $extracted)
+                ->orWhere('id', (int) str_replace('ORD-', '', $extracted))
+                ->first();
+        }
+
+        // Support ORD-123 pattern
+        if (!$order && str_starts_with($merchantTransactionId, 'ORD-')) {
+            $order = Order::where('id', (int) str_replace('ORD-', '', $merchantTransactionId))->first();
+        }
 
         if (!$order) {
             // Also search by paymentClaim

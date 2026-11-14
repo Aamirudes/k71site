@@ -204,6 +204,13 @@ class HomepageController extends Controller
             'scroll_seq_beat3_kicker' => ['nullable', 'string', 'max:80'],
             'scroll_seq_beat3_title' => ['nullable', 'string', 'max:140'],
             'scroll_seq_beat3_desc' => ['nullable', 'string', 'max:400'],
+
+            // Platform & Commerce Controls
+            'cod_marketplace_enabled' => ['nullable', 'boolean'],
+            'cod_max_amount' => ['nullable', 'integer', 'min:0'],
+            'cod_fee' => ['nullable', 'integer', 'min:0'],
+            'maintenance_mode' => ['nullable', 'boolean'],
+            'maintenance_message' => ['nullable', 'string', 'max:500'],
         ]);
 
         // File uploads
@@ -456,6 +463,23 @@ class HomepageController extends Controller
             }
         }
 
+        // Platform & Commerce Controls
+        if ($request->has('cod_marketplace_enabled')) {
+            Setting::set('cod_marketplace_enabled', $request->boolean('cod_marketplace_enabled'), 'commerce', 'boolean');
+        }
+        if ($request->has('cod_max_amount')) {
+            Setting::set('cod_max_amount', max(0, (int) $request->input('cod_max_amount')), 'commerce', 'integer');
+        }
+        if ($request->has('cod_fee')) {
+            Setting::set('cod_fee', max(0, (int) $request->input('cod_fee')), 'commerce', 'integer');
+        }
+        if ($request->has('maintenance_mode')) {
+            Setting::set('maintenance_mode', $request->boolean('maintenance_mode'), 'platform', 'boolean');
+        }
+        if ($request->has('maintenance_message')) {
+            Setting::set('maintenance_message', Str::limit(trim((string) $request->input('maintenance_message')), 500, ''), 'platform', 'string');
+        }
+
         $targetTab = $request->input('active_tab', 'homepage');
 
         return redirect()
@@ -470,6 +494,7 @@ class HomepageController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'vertical' => ['nullable', 'string', 'in:marketplace,food,services,enquiry,used'],
             'icon' => ['nullable', 'string', 'max:20'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
@@ -488,7 +513,9 @@ class HomepageController extends Controller
             $slug = $baseSlug . '-' . $counter++;
         }
 
-        $vertical = $validated['vertical'] ?? 'marketplace';
+        $parentId = !empty($validated['parent_id']) ? (int) $validated['parent_id'] : null;
+        $parent = $parentId ? Category::find($parentId) : null;
+        $vertical = $parent ? $parent->vertical : ($validated['vertical'] ?? 'marketplace');
         $imagePath = null;
 
         if ($request->hasFile('image') && $request->file('image')->isValid()) {
@@ -499,7 +526,7 @@ class HomepageController extends Controller
         }
 
         Category::create([
-            'parent_id' => null,
+            'parent_id' => $parentId,
             'vertical' => $vertical,
             'vertical_type' => $vertical === 'marketplace' ? 'retail' : $vertical,
             'name' => $name,

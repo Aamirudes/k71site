@@ -39,6 +39,7 @@ class LoginController extends Controller
         $digitsOnly = preg_replace('/[^0-9]/', '', $rawLogin);
         $inputPassword = trim($credentials['password']);
         $preLoginSessionId = $request->session()->getId();
+        $preLoginWishlist = (array) $request->session()->get('guest_wishlist', []);
 
         $authenticated = false;
 
@@ -109,6 +110,21 @@ class LoginController extends Controller
             // Merge guest cart items captured BEFORE session regeneration
             if (class_exists(\App\Models\Cart::class) && method_exists(\App\Models\Cart::class, 'mergeGuestCart')) {
                 \App\Models\Cart::mergeGuestCart($user->id, $preLoginSessionId);
+            }
+
+            // Merge guest wishlist items captured BEFORE session regeneration
+            if (!empty($preLoginWishlist) && class_exists(\App\Models\Wishlist::class)) {
+                $visibility = app(\App\Services\Monetization\VisibilityService::class);
+                foreach ($preLoginWishlist as $pid) {
+                    $candidate = \App\Models\Product::withoutGlobalScopes()->find((int) $pid);
+                    if ($candidate && $visibility->isProductPubliclyVisible($candidate)) {
+                        \App\Models\Wishlist::firstOrCreate([
+                            'user_id' => $user->id,
+                            'product_id' => (int) $pid,
+                        ]);
+                    }
+                }
+                $request->session()->forget('guest_wishlist');
             }
 
             if (!$user->email_verified_at) {
