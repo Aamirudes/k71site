@@ -603,7 +603,7 @@ class EnquiryController extends Controller
     /**
      * Buyer closes their own open/quoted enquiry when requirement is no longer needed.
      */
-    public function close(Request $request, string $enquiry_number): RedirectResponse
+    public function close(Request $request, string $enquiry_number): RedirectResponse|JsonResponse
     {
         $enquiry = Enquiry::where('enquiry_number', $enquiry_number)->firstOrFail();
         $user = auth()->user();
@@ -619,7 +619,8 @@ class EnquiryController extends Controller
         }
 
         if ($enquiry->isClosed()) {
-            return back()->with('info', 'This enquiry is already closed.');
+            $msg = 'This enquiry is already closed.';
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('info', $msg);
         }
 
         DB::transaction(function () use ($enquiry, $user, $request) {
@@ -641,13 +642,22 @@ class EnquiryController extends Controller
             ]);
         });
 
-        return back()->with('success', "Requirement #{$enquiry->enquiry_number} has been closed.");
+        $msg = "Requirement #{$enquiry->enquiry_number} has been closed.";
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'status' => 'closed',
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
      * Vendor withdraws an active sent quote before it is accepted.
      */
-    public function withdrawQuote(Request $request, Quote $quote): RedirectResponse
+    public function withdrawQuote(Request $request, Quote $quote): RedirectResponse|JsonResponse
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         if (!$vendor || (int) $quote->vendor_id !== (int) $vendor->id) {
@@ -689,7 +699,8 @@ class EnquiryController extends Controller
                 return $lockedEnquiry;
             });
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            $errMsg = $e->getMessage();
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $errMsg], 422) : back()->with('error', $errMsg);
         }
 
         if ($enquiry->user_id) {
@@ -703,7 +714,16 @@ class EnquiryController extends Controller
             );
         }
 
-        return back()->with('success', "Quotation #{$quote->quote_number} withdrawn.");
+        $msg = "Quotation #{$quote->quote_number} withdrawn.";
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'status' => 'withdrawn',
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**

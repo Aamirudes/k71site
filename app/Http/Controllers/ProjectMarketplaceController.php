@@ -501,17 +501,19 @@ class ProjectMarketplaceController extends Controller
         return view('services.contracts.show', compact('contract', 'isBuyer', 'isVendor'));
     }
 
-    public function submitMilestone(Request $request, ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse
+    public function submitMilestone(Request $request, ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse|JsonResponse
     {
         Gate::authorize('submitMilestone', $contract);
         abort_if($milestone->contract_id !== $contract->id, 404);
 
         if ($contract->status !== 'active') {
-            return back()->with('error', 'This contract is no longer active.');
+            $msg = 'This contract is no longer active.';
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
         }
 
         if ($milestone->status === 'approved') {
-            return back()->with('error', 'This milestone is already approved and cannot be re-submitted.');
+            $msg = 'This milestone is already approved and cannot be re-submitted.';
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
         }
 
         $validated = $request->validate([
@@ -571,10 +573,19 @@ class ProjectMarketplaceController extends Controller
             'milestone_submitted_' . $milestone->id . '_' . now()->timestamp
         );
 
-        return back()->with('success', 'Milestone deliverables submitted for buyer review.');
+        $msg = 'Milestone deliverables submitted for buyer review.';
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'milestone' => $milestone->fresh(),
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
-    public function approveMilestone(ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse
+    public function approveMilestone(ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse|JsonResponse
     {
         Gate::authorize('reviewMilestone', $contract);
         abort_if($milestone->contract_id !== $contract->id, 404);
@@ -602,7 +613,8 @@ class ProjectMarketplaceController extends Controller
                 ]);
             });
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            $errMsg = $e->getMessage();
+            return (request()->wantsJson() || request()->expectsJson()) ? response()->json(['success' => false, 'message' => $errMsg], 422) : back()->with('error', $errMsg);
         }
 
         app(NotificationCenterService::class)->notifyUser(
@@ -615,10 +627,19 @@ class ProjectMarketplaceController extends Controller
             'milestone_approved_' . $milestone->id
         );
 
-        return back()->with('success', 'Milestone "' . $milestone->title . '" approved!');
+        $msg = 'Milestone "' . $milestone->title . '" approved!';
+        if (request()->wantsJson() || request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'milestone' => $milestone->fresh(),
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
-    public function requestMilestoneRevision(Request $request, ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse
+    public function requestMilestoneRevision(Request $request, ProjectContract $contract, ProjectMilestone $milestone): RedirectResponse|JsonResponse
     {
         Gate::authorize('reviewMilestone', $contract);
         abort_if($milestone->contract_id !== $contract->id, 404);
@@ -650,7 +671,8 @@ class ProjectMarketplaceController extends Controller
                 ]);
             });
         } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage());
+            $errMsg = $e->getMessage();
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $errMsg], 422) : back()->with('error', $errMsg);
         }
 
         app(NotificationCenterService::class)->notifyUser(
@@ -663,10 +685,19 @@ class ProjectMarketplaceController extends Controller
             'milestone_revision_' . $milestone->id . '_' . now()->timestamp
         );
 
-        return back()->with('info', 'Revision request sent to provider for "' . $milestone->title . '".');
+        $msg = 'Revision request sent to provider for "' . $milestone->title . '".';
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'milestone' => $milestone->fresh(),
+            ]);
+        }
+
+        return back()->with('info', $msg);
     }
 
-    public function completeContract(Request $request, ProjectContract $contract): RedirectResponse
+    public function completeContract(Request $request, ProjectContract $contract): RedirectResponse|JsonResponse
     {
         Gate::authorize('complete', $contract);
 
@@ -704,7 +735,8 @@ class ProjectMarketplaceController extends Controller
                 $lockedContract->project?->update(['status' => 'completed']);
             });
         } catch (\RuntimeException $e) {
-            return back()->with('info', $e->getMessage());
+            $errMsg = $e->getMessage();
+            return ($request->wantsJson() || $request->expectsJson()) ? response()->json(['success' => false, 'message' => $errMsg], 422) : back()->with('info', $errMsg);
         }
 
         $contract->vendor?->recomputeServiceMetrics();
@@ -719,7 +751,16 @@ class ProjectMarketplaceController extends Controller
             'contract_completed_' . $contract->id
         );
 
-        return back()->with('success', 'Contract completed and verified review recorded!');
+        $msg = 'Contract completed and verified review recorded!';
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'contract' => $contract->fresh(),
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**

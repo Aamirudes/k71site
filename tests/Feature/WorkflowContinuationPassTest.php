@@ -5525,4 +5525,254 @@ class WorkflowContinuationPassTest extends TestCase
         $this->assertEquals('processing', $bulkOrder1->fresh()->status);
         $this->assertEquals('processing', $bulkOrder2->fresh()->status);
     }
+
+    public function test_workflow_150_to_159_services_milestones_b2b_used_food_chat(): void
+    {
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['slug' => 'vendor']);
+
+        // -------------------------------------------------------------
+        // Workflows 150 - 153: Services Async Milestones Lifecycle & Completion
+        // -------------------------------------------------------------
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'fullstack-150'],
+            ['name' => 'Fullstack 150', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+        $project = ServiceProject::create([
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $servicesCat->id,
+            'project_number' => 'PRJ-TEST150',
+            'title' => 'E-Commerce Platform Expansion 150',
+            'slug' => 'ecommerce-platform-expansion-150',
+            'description' => 'Laravel multi-tenant marketplace upgrade',
+            'budget_type' => 'fixed',
+            'budget_min' => 1000000,
+            'budget_max' => 2000000,
+            'work_mode' => 'remote',
+            'status' => 'in_progress',
+        ]);
+        $proposal = ProjectProposal::create([
+            'project_id' => $project->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 1500000,
+            'delivery_days' => 10,
+            'cover_letter' => 'Experienced Laravel lead ready to execute.',
+            'status' => 'hired',
+        ]);
+        $contract = ProjectContract::create([
+            'contract_number' => 'CON-TEST150',
+            'project_id' => $project->id,
+            'proposal_id' => $proposal->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'agreed_amount' => 1500000,
+            'payment_status' => 'escrow_funded',
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+        $milestone1 = ProjectMilestone::create([
+            'contract_id' => $contract->id,
+            'title' => 'Phase 1: Architecture & Migrations',
+            'description' => 'Complete schema updates',
+            'amount' => 750000,
+            'due_at' => now()->addDays(5)->toDateString(),
+            'sort_order' => 1,
+            'status' => 'pending',
+        ]);
+        $milestone2 = ProjectMilestone::create([
+            'contract_id' => $contract->id,
+            'title' => 'Phase 2: Full Integration & Tests',
+            'description' => 'Complete test suite and API integrations',
+            'amount' => 750000,
+            'due_at' => now()->addDays(10)->toDateString(),
+            'sort_order' => 2,
+            'status' => 'pending',
+        ]);
+
+        // 150: Provider submits deliverables for Milestone 1 via JSON
+        $submitRes = $this->actingAs($this->vendorUser)->postJson(route('services.milestones.submit', [$contract, $milestone1]), [
+            'submitted_notes' => 'Completed all phase 1 architecture and database migrations successfully.',
+        ]);
+        $submitRes->assertOk();
+        $this->assertTrue($submitRes->json('success'));
+        $this->assertEquals('submitted', $milestone1->fresh()->status);
+
+        // 151: Client approves Milestone 1 via JSON
+        $approveRes = $this->actingAs($this->buyer)->postJson(route('services.milestones.approve', [$contract, $milestone1]));
+        $approveRes->assertOk();
+        $this->assertTrue($approveRes->json('success'));
+        $this->assertEquals('approved', $milestone1->fresh()->status);
+
+        // 152: Provider submits Milestone 2, client requests revision via JSON
+        $this->actingAs($this->vendorUser)->postJson(route('services.milestones.submit', [$contract, $milestone2]), [
+            'submitted_notes' => 'Draft test suite files ready for initial inspection.',
+        ]);
+        $revisionRes = $this->actingAs($this->buyer)->postJson(route('services.milestones.revision', [$contract, $milestone2]), [
+            'revision_notes' => 'Please include stress test results and complete documentation.',
+        ]);
+        $revisionRes->assertOk();
+        $this->assertTrue($revisionRes->json('success'));
+        $this->assertEquals('revision_requested', $milestone2->fresh()->status);
+
+        // 153: Client marks contract complete with verified 5-star review via JSON
+        $completeRes = $this->actingAs($this->buyer)->postJson(route('services.contracts.complete', $contract), [
+            'rating' => 5,
+            'review_text' => 'Outstanding delivery, great communication and code quality!',
+        ]);
+        $completeRes->assertOk();
+        $this->assertTrue($completeRes->json('success'));
+        $this->assertEquals('completed', $contract->fresh()->status);
+        $this->assertEquals('released', $contract->fresh()->payment_status);
+
+        // -------------------------------------------------------------
+        // Workflows 154 & 155: B2B Quote Withdrawal & Requirement Closure JSON API
+        // -------------------------------------------------------------
+        $b2bCat = Category::firstOrCreate(
+            ['slug' => 'packaging-154'],
+            ['name' => 'Packaging 154', 'vertical' => 'enquiry', 'is_active' => true]
+        );
+        $b2bEnquiry = \App\Models\Enquiry::create([
+            'user_id' => $this->buyer->id,
+            'category_id' => $b2bCat->id,
+            'enquiry_number' => 'RFQ-TEST-154',
+            'buyer_name' => 'Kavita Sharma',
+            'buyer_phone' => '9829011224',
+            'buyer_email' => 'kavita@example.com',
+            'title' => 'Need 5000 Eco-friendly Corrugated Boxes',
+            'description' => 'Custom branded packaging boxes for apparel shipping',
+            'quantity' => 5000,
+            'unit' => 'Boxes',
+            'target_price' => 2500,
+            'city' => 'Jaipur',
+            'pincode' => '302017',
+            'status' => 'open',
+            'delivery_timeline_days' => 20,
+        ]);
+
+        $b2bVendor2User = User::factory()->create();
+        $b2bVendor2User->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $b2bVendor2 = Vendor::create([
+            'user_id' => $b2bVendor2User->id,
+            'shop_name' => 'Marwar Pack Sol',
+            'slug' => 'marwar-pack-sol-154',
+            'vendor_type' => 'b2b',
+            'operating_sectors' => ['enquiry'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($b2bVendor2, 'enquiry');
+
+        $quote2 = \App\Models\Quote::create([
+            'enquiry_id' => $b2bEnquiry->id,
+            'vendor_id' => $b2bVendor2->id,
+            'quote_number' => 'QT-TEST-154',
+            'quote_amount' => 12500000,
+            'lead_time_days' => 14,
+            'status' => 'sent',
+        ]);
+
+        // 154: Vendor withdraws quote via JSON
+        $withdrawRes = $this->actingAs($b2bVendor2User)->postJson(route('vendor.quotes.withdraw', $quote2));
+        $withdrawRes->assertOk();
+        $this->assertTrue($withdrawRes->json('success'));
+        $this->assertEquals('withdrawn', $quote2->fresh()->status);
+
+        // 155: Buyer closes enquiry via JSON
+        $closeRes = $this->actingAs($this->buyer)->postJson(route('enquiry.close', $b2bEnquiry->enquiry_number));
+        $closeRes->assertOk();
+        $this->assertTrue($closeRes->json('success'));
+        $this->assertEquals('closed', $b2bEnquiry->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflows 156 & 157: Used Category Fields API & Toggle Sold
+        // -------------------------------------------------------------
+        $usedCat156 = Category::firstOrCreate(
+            ['slug' => 'used-mobiles-156'],
+            ['name' => 'Used Mobiles 156', 'vertical' => 'used', 'vertical_type' => 'used', 'is_active' => true]
+        );
+        $fieldsRes = $this->getJson(route('used.category_fields', $usedCat156));
+        $fieldsRes->assertOk();
+        $this->assertTrue($fieldsRes->json('success'));
+        $this->assertArrayHasKey('fields', $fieldsRes->json());
+
+        $usedPhone = Product::create([
+            'user_id' => $this->buyer->id,
+            'category_id' => $usedCat156->id,
+            'title' => 'iPhone 13 128GB Midnight',
+            'slug' => 'iphone-13-128gb-midnight-157',
+            'description' => 'Mint condition phone with original box',
+            'base_price' => 3800000,
+            'vertical' => 'used',
+            'status' => 'active',
+            'used_status' => 'active',
+            'total_stock' => 1,
+            'is_sold' => false,
+        ]);
+
+        // Toggle to sold
+        $toggleSoldRes = $this->actingAs($this->buyer)->postJson(route('used.toggle-sold', $usedPhone));
+        $toggleSoldRes->assertOk();
+        $this->assertTrue($usedPhone->fresh()->is_sold);
+
+        // -------------------------------------------------------------
+        // Workflow 158: Restaurant Internal Dish Search JSON API
+        // -------------------------------------------------------------
+        $foodVendorUser = User::factory()->create();
+        $foodVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodVendorUser->id,
+            'shop_name' => 'Chokhi Dhani Thali',
+            'slug' => 'chokhi-dhani-thali-158',
+            'vendor_type' => 'food',
+            'operating_sectors' => ['food'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+        ]);
+
+        $foodCat158 = Category::firstOrCreate(
+            ['slug' => 'rajasthani-thali-158'],
+            ['name' => 'Rajasthani Thali 158', 'vertical' => 'food', 'is_active' => true]
+        );
+        Product::create([
+            'vendor_id' => $foodVendor->id,
+            'category_id' => $foodCat158->id,
+            'title' => 'Royal Dal Baati Churma',
+            'slug' => 'royal-dal-baati-churma-158',
+            'description' => 'Authentic Marwari ghee preparation',
+            'base_price' => 35000,
+            'vertical' => 'food',
+            'status' => 'active',
+            'is_dish_available' => true,
+            'total_stock' => 50,
+        ]);
+
+        $dishSearchRes = $this->getJson(route('food.restaurant', ['slug' => $foodVendor->slug, 'search' => 'Baati']));
+        $dishSearchRes->assertOk();
+        $this->assertTrue($dishSearchRes->json('success'));
+        $this->assertEquals(1, $dishSearchRes->json('total_dishes'));
+
+        // -------------------------------------------------------------
+        // Workflow 159: Safe Conversation Hide/Delete
+        // -------------------------------------------------------------
+        \App\Http\Controllers\MessageController::ensureChatSchema();
+        $chatConvId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+            'user_one_id' => min($this->buyer->id, $this->vendorUser->id),
+            'user_two_id' => max($this->buyer->id, $this->vendorUser->id),
+            'status' => 'accepted',
+            'last_message_at' => now()->toDateTimeString(),
+            'requested_by' => $this->buyer->id,
+        ]);
+
+        $hideConvRes = $this->actingAs($this->buyer)->postJson(route('chat.api.delete_conversation'), [
+            'conversation_id' => $chatConvId,
+        ]);
+        $hideConvRes->assertOk();
+        $this->assertTrue($hideConvRes->json('success'));
+        // Conversation row remains in DB (not hard-deleted)
+        $this->assertDatabaseHas('chat_conversations', ['id' => $chatConvId]);
+    }
 }
