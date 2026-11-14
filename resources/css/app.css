@@ -32,12 +32,12 @@
         font-family: var(--font-sans);
         scroll-behavior: smooth;
         -webkit-tap-highlight-color: transparent;
-        color-scheme: light;
+        color-scheme: dark light;
     }
 
     body {
-        background-color: #F8FAFC;
-        color: #0F172A;
+        background-color: var(--grail-void, #000000);
+        color: var(--grail-ivory, #FFFFFF);
         font-family: var(--font-sans);
         line-height: 1.6;
         -webkit-font-smoothing: antialiased;
@@ -47,7 +47,7 @@
 
     h1, h2, h3, h4, h5, h6 {
         font-family: var(--font-sans);
-        color: #0F172A;
+        color: inherit;
         letter-spacing: -0.012em;
         font-weight: 800;
         line-height: 1.25;
@@ -61,18 +61,18 @@
     h4 { line-height: 1.3; }
 
     p {
-        color: #475569;
+        color: inherit;
         line-height: 1.65;
         overflow-wrap: break-word;
     }
 
     :root {
-        color-scheme: light;
-        --color-brand-background: #F8FAFC;
-        --color-brand-surface: #FFFFFF;
-        --color-brand-text: #0F172A;
-        --color-brand-muted: #64748B;
-        --color-brand-sage: #1A1018;
+        color-scheme: dark;
+        --color-brand-background: #000000;
+        --color-brand-surface: #0e0e14;
+        --color-brand-text: #FFFFFF;
+        --color-brand-muted: #94A3B8;
+        --color-brand-sage: #ECD2F3;
     }
 }
 
@@ -306,14 +306,14 @@
        ========================================================================== */
     :root {
         --grail-void: #000000;
-        --grail-obsidian: #010101;
-        --grail-obsidian-soft: #060606;
-        --grail-surface-dark: #161616;
-        --grail-ivory: #EFE9F2;
-        --grail-parchment: #FAFAF8;
-        --grail-stone: #F6F6F6;
-        --grail-warm-cream: #F4F1EC;
-        --grail-shell: #EEEAE3;
+        --grail-obsidian: #08080c;
+        --grail-obsidian-soft: #0e0e14;
+        --grail-surface-dark: #14141a;
+        --grail-ivory: #FFFFFF;
+        --grail-parchment: #0c0c12;
+        --grail-stone: #0f0f15;
+        --grail-warm-cream: #121218;
+        --grail-shell: #161620;
         --grail-orchid-soft: #ECD2F3;
         --grail-orchid-hover: #F6E3FB;
         --grail-orchid-bright: #FFCDFF;
@@ -321,10 +321,10 @@
         --grail-orchid-mid: #E7AFE7;
         --grail-orchid-deep: #D29CE2;
         --grail-orchid-link: #E9B8FF;
-        --grail-plum-ink: #1A1018;
-        --grail-plum-dark: #221826;
-        --grail-plum-text: #623562;
-        --grail-plum-muted: #7C4F74;
+        --grail-plum-ink: #FFFFFF;
+        --grail-plum-dark: #F8FAFC;
+        --grail-plum-text: #E2E8F0;
+        --grail-plum-muted: #94A3B8;
         --grail-gold: #C9A24A;
         --grail-gold-muted: #837052;
         --grail-gold-deep: #5F5138;
@@ -342,9 +342,9 @@
         --grail-surface-dark: #FFFFFF;
         --grail-ivory: #0F172A;
         --grail-parchment: #FFFFFF;
-        --grail-stone: #F8FAFC;
-        --grail-warm-cream: #F1F5F9;
-        --grail-shell: #E2E8F0;
+        --grail-stone: #FFFFFF;
+        --grail-warm-cream: #F8FAFC;
+        --grail-shell: #F1F5F9;
         --grail-plum-ink: #0F172A;
         --grail-plum-dark: #1E293B;
         --grail-plum-text: #475569;
@@ -526,10 +526,11 @@
         will-change: mask-image, -webkit-mask-image;
     }
 
-    /* Grail Peel-Deck Light Sheet (#F6F6F6 rounded 24px) */
+    /* Grail Peel-Deck Sheet (Theme-adaptive rounded 24px) */
     .grail-peel-sheet {
         background-color: var(--grail-stone);
-        color: #000000;
+        color: var(--grail-plum-ink);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 24px;
         transform-origin: 50% 65%;
         transform: rotate(calc(var(--s5off, 0) * 2.2deg)) scale(calc(1 - var(--s5off, 0) * 0.045));
@@ -603,18 +604,33 @@
         transform: translateY(0) scale(1);
     }
 
-    /* Grail Product Card Harmonization inside Light Sheet */
-    .grail-light-sheet .group.flex.flex-col.h-full.relative {
+    /* Grail Product Card Harmonization inside Sheets */
+    html.k71-light-mode .grail-light-sheet .group.flex.flex-col.h-full.relative {
         background-color: #FFFFFF !important;
         border-color: rgba(0, 0, 0, 0.08) !important;
         border-radius: 20px !important;
         box-shadow: 0 6px 24px -12px rgba(24, 24, 27, 0.08) !important;
         transition: transform 0.38s var(--grail-ease), box-shadow 0.38s var(--grail-ease), border-color 0.3s ease !important;
     }
-    .grail-light-sheet .group.flex.flex-col.h-full.relative:hover {
+    html.k71-light-mode .grail-light-sheet .group.flex.flex-col.h-full.relative:hover {
         transform: translateY(-4px);
         border-color: rgba(98, 53, 98, 0.32) !important;
         box-shadow: 0 22px 44px -14px rgba(34, 24, 38, 0.14) !important;
+    }
+    html.k71-dark-mode .grail-light-sheet .group.flex.flex-col.h-full.relative,
+    html:not(.k71-light-mode) .grail-light-sheet .group.flex.flex-col.h-full.relative {
+        background-color: #121217 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 8px 28px -10px rgba(0, 0, 0, 0.8) !important;
+        color: #FFFFFF !important;
+        transition: transform 0.38s var(--grail-ease), box-shadow 0.38s var(--grail-ease), border-color 0.3s ease !important;
+    }
+    html.k71-dark-mode .grail-light-sheet .group.flex.flex-col.h-full.relative:hover,
+    html:not(.k71-light-mode) .grail-light-sheet .group.flex.flex-col.h-full.relative:hover {
+        transform: translateY(-4px);
+        border-color: rgba(236, 210, 243, 0.45) !important;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.95), 0 0 25px rgba(236, 210, 243, 0.18) !important;
     }
     .grail-light-sheet .group button[title="Add to Cart"] {
         background-color: #1A1018 !important;
@@ -998,12 +1014,133 @@
                     box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
 
-    /* --------------------------------------------------------------------------
-       1. SIGNATURE PREMIUM LIGHT GLARE ATMOSPHERE
-       -------------------------------------------------------------------------- */
-    html.k71-light-mode body.grail-marketplace-body,
+    /* ==========================================================================
+       OBSIDIAN DARK CONTRAST ENGINE (Dark Mode: #FFFFFF Headings, Ivory Body, Zero Black-on-Black)
+       ========================================================================== */
+
+    /* 1. Body & Page Atmosphere in Dark Mode */
+    html.k71-dark-mode,
+    html:not(.k71-light-mode) {
+        color-scheme: dark;
+    }
+
+    html.k71-dark-mode body,
+    html:not(.k71-light-mode) body,
+    html.k71-dark-mode .grail-home-root,
+    html:not(.k71-light-mode) .grail-home-root,
+    html.k71-dark-mode body.grail-marketplace-body,
+    html:not(.k71-light-mode) body.grail-marketplace-body {
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* 2. Headings in Dark Mode */
+    html.k71-dark-mode :is(h1, h2, h3, h4, h5, h6, .grail-display),
+    html:not(.k71-light-mode) :is(h1, h2, h3, h4, h5, h6, .grail-display) {
+        color: #FFFFFF !important;
+    }
+
+    /* 3. Paragraphs and General Body Text in Dark Mode */
+    html.k71-dark-mode p:not(
+        button.bg-white *, .badge-white *, [class*="bg-[#ECD2F3]"] *, .btn-primary *, .grail-cta-pill *
+    ),
+    html:not(.k71-light-mode) p:not(
+        button.bg-white *, .badge-white *, [class*="bg-[#ECD2F3]"] *, .btn-primary *, .grail-cta-pill *
+    ) {
+        color: rgba(239, 233, 242, 0.88) !important;
+    }
+
+    /* 4. Elimination of Black-on-Dark Text in Dark Mode */
+    html.k71-dark-mode :is(
+        .text-black,
+        .text-slate-900, .text-slate-950, .text-slate-800,
+        .text-zinc-900, .text-zinc-950, .text-zinc-800,
+        .text-gray-900, .text-gray-800,
+        .text-\[\#1A1018\],
+        .text-\[\#221826\],
+        .text-\[\#0F172A\]
+    ):not(
+        button.bg-white, button.bg-white *,
+        .badge-white, .badge-white *,
+        [class*="bg-[#ECD2F3]"], [class*="bg-[#ECD2F3]"] *,
+        [class*="bg-amber-100"], [class*="bg-amber-100"] *
+    ),
+    html:not(.k71-light-mode) :is(
+        .text-black,
+        .text-slate-900, .text-slate-950, .text-slate-800,
+        .text-zinc-900, .text-zinc-950, .text-zinc-800,
+        .text-gray-900, .text-gray-800,
+        .text-\[\#1A1018\],
+        .text-\[\#221826\],
+        .text-\[\#0F172A\]
+    ):not(
+        button.bg-white, button.bg-white *,
+        .badge-white, .badge-white *,
+        [class*="bg-[#ECD2F3]"], [class*="bg-[#ECD2F3]"] *,
+        [class*="bg-amber-100"], [class*="bg-amber-100"] *
+    ) {
+        color: #FFFFFF !important;
+    }
+
+    /* 5. Muted Dark Text Conversion in Dark Mode */
+    html.k71-dark-mode :is(
+        .text-black\/65, .text-black\/60, .text-black\/55, .text-black\/50, .text-black\/40,
+        .text-\[\#623562\], .text-\[\#7C4F74\],
+        .text-slate-600, .text-slate-700
+    ):not(
+        button.bg-white *, [class*="bg-[#ECD2F3]"] *
+    ),
+    html:not(.k71-light-mode) :is(
+        .text-black\/65, .text-black\/60, .text-black\/55, .text-black\/50, .text-black\/40,
+        .text-\[\#623562\], .text-\[\#7C4F74\],
+        .text-slate-600, .text-slate-700
+    ):not(
+        button.bg-white *, [class*="bg-[#ECD2F3]"] *
+    ) {
+        color: rgba(239, 233, 242, 0.65) !important;
+    }
+
+    /* 6. Sheets and Containers in Dark Mode */
+    html.k71-dark-mode :is(.grail-sheet, .grail-peel-sheet, .grail-light-sheet, div.bg-\[\#FAFAF8\]),
+    html:not(.k71-light-mode) :is(.grail-sheet, .grail-peel-sheet, .grail-light-sheet, div.bg-\[\#FAFAF8\]) {
+        background-color: #0b0b0f !important;
+        color: #FFFFFF !important;
+        border-color: rgba(255, 255, 255, 0.10) !important;
+    }
+
+    /* 7. Product Cards in Dark Mode */
+    html.k71-dark-mode .group.bg-white,
+    html:not(.k71-light-mode) .group.bg-white {
+        background-color: #121217 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        box-shadow: 0 8px 24px -10px rgba(0, 0, 0, 0.75) !important;
+        color: #FFFFFF !important;
+    }
+    html.k71-dark-mode .group.bg-white:hover,
+    html:not(.k71-light-mode) .group.bg-white:hover {
+        border-color: rgba(236, 210, 243, 0.45) !important;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.95), 0 0 25px rgba(236, 210, 243, 0.18) !important;
+    }
+
+    /* 8. Orchid Ink Flood in Dark Mode */
+    html.k71-dark-mode .grail-ink-flood,
+    html:not(.k71-light-mode) .grail-ink-flood {
+        background: radial-gradient(circle at 50% 42%, #221428 0%, #170d1b 36%, #120b16 76%, #0b070e 100%) !important;
+        color: #FFFFFF !important;
+    }
+
+    /* ==========================================================================
+       PREMIUM LIGHT GLARE CONTRAST ENGINE (Light Mode: #0F172A Headings, #334155 Body, Zero White-on-White)
+       ========================================================================== */
+
+    html.k71-light-mode {
+        color-scheme: light;
+    }
+
+    /* 1. Body & Atmosphere */
+    html.k71-light-mode body,
     html.k71-light-mode .grail-home-root,
-    html.k71-light-mode body {
+    html.k71-light-mode body.grail-marketplace-body {
         background-color: #F8FAFC !important;
         color: #0F172A !important;
     }
@@ -1023,12 +1160,103 @@
         filter: blur(35px);
     }
 
-    /* --------------------------------------------------------------------------
-       2. HEADER & NAVIGATION IN LIGHT MODE
-       -------------------------------------------------------------------------- */
+    /* 2. Headings in Light Mode */
+    html.k71-light-mode :is(h1, h2, h3, h4, h5, h6, .grail-display) {
+        color: #0F172A !important;
+    }
+
+    /* 3. Paragraphs in Light Mode */
+    html.k71-light-mode p:not(
+        .btn-primary *, .grail-cta-pill *,
+        [class*="bg-emerald-6"] *, [class*="bg-rose-6"] *, [class*="bg-red-6"] *,
+        [class*="bg-indigo-6"] *, [class*="bg-purple-6"] *
+    ) {
+        color: #334155 !important;
+    }
+
+    /* 4. Elimination of White-on-White Text */
+    html.k71-light-mode :is(
+        .text-white,
+        .text-zinc-100, .text-zinc-200, .text-zinc-300,
+        .text-gray-100, .text-gray-200, .text-gray-300,
+        .text-slate-100, .text-slate-200, .text-slate-300,
+        .text-\[\#EFE9F2\],
+        .text-\[\#EFE9F2\]\/95, .text-\[\#EFE9F2\]\/90, .text-\[\#EFE9F2\]\/85, .text-\[\#EFE9F2\]\/80, .text-\[\#EFE9F2\]\/75, .text-\[\#EFE9F2\]\/70
+    ):not(
+        .btn-primary, .btn-primary *,
+        .grail-cta-pill, .grail-cta-pill *,
+        .badge-override, .badge-override *,
+        button[type="submit"]:is(.bg-black, [class*="bg-slate-900"]), button[type="submit"]:is(.bg-black, [class*="bg-slate-900"]) *,
+        [class*="bg-emerald-5"], [class*="bg-emerald-5"] *,
+        [class*="bg-emerald-6"], [class*="bg-emerald-6"] *,
+        [class*="bg-rose-5"], [class*="bg-rose-5"] *,
+        [class*="bg-rose-6"], [class*="bg-rose-6"] *,
+        [class*="bg-red-5"], [class*="bg-red-5"] *,
+        [class*="bg-red-6"], [class*="bg-red-6"] *,
+        [class*="bg-indigo-6"], [class*="bg-indigo-6"] *,
+        [class*="bg-purple-6"], [class*="bg-purple-6"] *,
+        [class*="bg-amber-6"], [class*="bg-amber-6"] *
+    ) {
+        color: #0F172A !important;
+    }
+
+    /* 5. Muted Light Text Conversion in Light Mode */
+    html.k71-light-mode :is(
+        .text-white\/75, .text-white\/70, .text-white\/65, .text-white\/60, .text-white\/55, .text-white\/50, .text-white\/45, .text-white\/40,
+        .text-\[\#EFE9F2\]\/65, .text-\[\#EFE9F2\]\/60, .text-\[\#EFE9F2\]\/55, .text-\[\#EFE9F2\]\/50, .text-\[\#EFE9F2\]\/45, .text-\[\#EFE9F2\]\/40,
+        .text-zinc-400, .text-zinc-500, .text-slate-400, .text-slate-500
+    ):not(
+        .btn-primary *, .grail-cta-pill *,
+        [class*="bg-emerald-6"] *, [class*="bg-rose-6"] *, [class*="bg-red-6"] *
+    ) {
+        color: #475569 !important;
+    }
+
+    /* 6. Cards and Glare Tiles in Light Mode */
+    html.k71-light-mode :is(
+        .grail-dark-card,
+        .grail-stage-3d,
+        .grail-card,
+        div.bg-\[\#161616\],
+        div.bg-\[\#060606\],
+        div.bg-\[\#0D0D0D\],
+        div.bg-\[\#141419\],
+        .group.bg-white
+    ) {
+        background: #FFFFFF !important;
+        border: 1px solid rgba(15, 23, 42, 0.08) !important;
+        box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05), 0 0 20px rgba(236, 210, 243, 0.20), inset 0 1px 1px #FFFFFF !important;
+        color: #0F172A !important;
+    }
+
+    html.k71-light-mode :is(
+        .grail-dark-card:hover,
+        .grail-stage-3d:hover,
+        .grail-card:hover,
+        div.bg-\[\#161616\]:hover,
+        .group.bg-white:hover
+    ) {
+        border-color: rgba(210, 156, 226, 0.7) !important;
+        box-shadow: 0 20px 48px -12px rgba(98, 53, 98, 0.12), 0 0 30px rgba(236, 210, 243, 0.45), inset 0 1px 2px #FFFFFF !important;
+    }
+
+    /* 7. Sheets in Light Mode */
+    html.k71-light-mode :is(.grail-sheet, .grail-peel-sheet, .grail-light-sheet, div.bg-\[\#FAFAF8\]) {
+        background-color: #FFFFFF !important;
+        color: #0F172A !important;
+        border-color: rgba(15, 23, 42, 0.08) !important;
+    }
+
+    /* 8. Orchid Ink Flood in Light Mode */
+    html.k71-light-mode .grail-ink-flood {
+        background: radial-gradient(circle at 50% 42%, #FDF4FD 0%, #F8E6FA 36%, #F0D4F4 76%, #E7C2ED 100%) !important;
+        color: #0F172A !important;
+    }
+
+    /* 9. Header & Nav in Light Mode */
     html.k71-light-mode header,
     html.k71-light-mode header.sticky {
-        background: rgba(255, 255, 255, 0.88) !important;
+        background: rgba(255, 255, 255, 0.90) !important;
         backdrop-filter: blur(28px) saturate(190%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
         border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
@@ -1036,22 +1264,15 @@
         box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), inset 0 -1px 0 rgba(236, 210, 243, 0.35) !important;
     }
 
-    /* Header Nav items, buttons, links in light mode */
     html.k71-light-mode header a,
     html.k71-light-mode header button:not(.badge-override, .btn-primary, [class*="bg-emerald"], [class*="bg-rose"]) {
         color: #0F172A !important;
-    }
-
-    html.k71-light-mode header a:hover,
-    html.k71-light-mode header button:not(.badge-override, .btn-primary, [class*="bg-emerald"], [class*="bg-rose"]):hover {
-        background-color: rgba(15, 23, 42, 0.05) !important;
     }
 
     html.k71-light-mode header svg:not(.k71-logo-svg) {
         color: #0F172A !important;
     }
 
-    /* Header search expanded accordion & dropdown drawer */
     html.k71-light-mode header [x-show="expandedForms"],
     html.k71-light-mode header div.overflow-hidden.border-t {
         background-color: rgba(255, 255, 255, 0.98) !important;
@@ -1060,20 +1281,7 @@
         box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.08) !important;
     }
 
-    html.k71-light-mode header input[type="text"],
-    html.k71-light-mode header input[type="search"] {
-        background-color: #F1F5F9 !important;
-        border-color: #E2E8F0 !important;
-        color: #0F172A !important;
-    }
-
-    html.k71-light-mode header input::placeholder {
-        color: #94A3B8 !important;
-    }
-
-    /* --------------------------------------------------------------------------
-       3. HERO BAND & HOMEPAGE SECTIONS IN LIGHT MODE
-       -------------------------------------------------------------------------- */
+    /* 10. Hero Band in Light Mode */
     html.k71-light-mode .grail-hero-band {
         background:
             radial-gradient(75% 100% at 50% 0%, rgba(236, 210, 243, 0.50) 0%, rgba(254, 243, 199, 0.22) 40%, transparent 75%),
@@ -1097,101 +1305,26 @@
         color: #0F172A !important;
     }
 
-    html.k71-light-mode section.border-white\/10 {
-        border-color: rgba(15, 23, 42, 0.08) !important;
-    }
-
-    /* --------------------------------------------------------------------------
-       4. CARDS & GLARE TILES IN LIGHT MODE
-       -------------------------------------------------------------------------- */
-    html.k71-light-mode .grail-dark-card,
-    html.k71-light-mode .grail-stage-3d,
-    html.k71-light-mode .grail-card,
-    html.k71-light-mode div.bg-\[\#161616\],
-    html.k71-light-mode div.bg-\[\#060606\],
-    html.k71-light-mode div.bg-\[\#0D0D0D\] {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(253, 249, 254, 0.92) 100%) !important;
-        border: 1px solid rgba(236, 210, 243, 0.5) !important;
-        color: #0F172A !important;
-        box-shadow: 0 12px 35px -10px rgba(15, 23, 42, 0.06), 0 0 20px rgba(236, 210, 243, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 1) !important;
-    }
-
-    html.k71-light-mode .grail-dark-card:hover,
-    html.k71-light-mode .grail-stage-3d:hover,
-    html.k71-light-mode .grail-card:hover,
-    html.k71-light-mode div.bg-\[\#161616\]:hover {
-        border-color: rgba(210, 156, 226, 0.7) !important;
-        box-shadow: 0 20px 48px -12px rgba(98, 53, 98, 0.12), 0 0 30px rgba(236, 210, 243, 0.45), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
-    }
-
-    /* Product card porcelain finish */
-    html.k71-light-mode .group.bg-white {
-        background-color: #FFFFFF !important;
-        border-color: rgba(15, 23, 42, 0.08) !important;
-        box-shadow: 0 6px 24px -12px rgba(24, 24, 27, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
-    }
-    html.k71-light-mode .group.bg-white:hover {
-        border-color: rgba(210, 156, 226, 0.6) !important;
-        box-shadow: 0 20px 44px -14px rgba(34, 24, 38, 0.12), 0 0 20px rgba(236, 210, 243, 0.35) !important;
-    }
-
-    /* --------------------------------------------------------------------------
-       5. TYPOGRAPHY & CONTRAST IN LIGHT MODE
-       -------------------------------------------------------------------------- */
-    html.k71-light-mode h1,
-    html.k71-light-mode h2,
-    html.k71-light-mode h3,
-    html.k71-light-mode h4,
-    html.k71-light-mode h5,
-    html.k71-light-mode h6,
-    html.k71-light-mode .grail-display {
+    /* 11. Inputs & Controls in Light Mode */
+    html.k71-light-mode input:not([type="checkbox"], [type="radio"], [type="submit"]),
+    html.k71-light-mode textarea,
+    html.k71-light-mode select {
+        background-color: #F8FAFC !important;
+        border-color: #CBD5E1 !important;
         color: #0F172A !important;
     }
-
-    /* Primary readable text */
-    html.k71-light-mode :not(button, [role="button"], .btn-primary, .grail-cta-pill, .badge, [class*="bg-black"], [class*="bg-emerald"], [class*="bg-rose"], [class*="bg-indigo"], [class*="bg-amber"], [class*="bg-purple"]) > .text-white,
-    html.k71-light-mode p.text-white,
-    html.k71-light-mode h1.text-white,
-    html.k71-light-mode h2.text-white,
-    html.k71-light-mode h3.text-white,
-    html.k71-light-mode h4.text-white,
-    html.k71-light-mode h5.text-white,
-    html.k71-light-mode span.text-white:not(button span, .badge span),
-    html.k71-light-mode .text-\[\#EFE9F2\],
-    html.k71-light-mode .text-\[\#EFE9F2\]\/90,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/85,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/80,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/75,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/70,
-    html.k71-light-mode .text-zinc-100,
-    html.k71-light-mode .text-zinc-200,
-    html.k71-light-mode .text-zinc-300 {
-        color: #0F172A !important;
+    html.k71-light-mode input::placeholder,
+    html.k71-light-mode textarea::placeholder {
+        color: #94A3B8 !important;
     }
 
-    /* Secondary muted readable text */
-    html.k71-light-mode .text-\[\#EFE9F2\]\/60,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/55,
-    html.k71-light-mode .text-\[\#EFE9F2\]\/50,
-    html.k71-light-mode .text-zinc-400,
-    html.k71-light-mode .text-zinc-500 {
-        color: #475569 !important;
-    }
-
-    /* Paragraph readability */
-    html.k71-light-mode p {
-        color: #475569;
-    }
-
-    /* Gold / accent text contrast tuning in light mode */
-    html.k71-light-mode .text-\[\#C9A24A\] {
-        color: #B45309 !important;
-    }
+    /* 12. Accents in Light Mode */
+    html.k71-light-mode .text-\[\#C9A24A\],
     html.k71-light-mode .grail-eyebrow {
         color: #B45309 !important;
     }
 
-    /* Borders */
+    /* 13. Borders in Light Mode */
     html.k71-light-mode .border-white\/10,
     html.k71-light-mode .border-white\/12,
     html.k71-light-mode .border-white\/14,
@@ -1202,34 +1335,27 @@
         border-color: rgba(15, 23, 42, 0.08) !important;
     }
 
-    /* --------------------------------------------------------------------------
-       6. FOOTER IN LIGHT MODE
-       -------------------------------------------------------------------------- */
+    /* 14. Footer in Light Mode */
     html.k71-light-mode footer {
         background: linear-gradient(180deg, #F8FAFC 0%, #EEF2F6 100%) !important;
         border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
         color: #1E293B !important;
     }
-
     html.k71-light-mode footer h4,
     html.k71-light-mode footer h5,
     html.k71-light-mode footer h6,
     html.k71-light-mode footer .text-white {
         color: #0F172A !important;
     }
-
     html.k71-light-mode footer p,
     html.k71-light-mode footer a {
         color: #475569 !important;
     }
-
     html.k71-light-mode footer a:hover {
         color: #0F172A !important;
     }
 
-    /* --------------------------------------------------------------------------
-       7. BUTTONS & PILLS IN LIGHT MODE
-       -------------------------------------------------------------------------- */
+    /* 15. Buttons & Badges in Light Mode */
     html.k71-light-mode .grail-cta-pill {
         background-color: #1A1018 !important;
         color: #FFFFFF !important;
@@ -1240,14 +1366,11 @@
         background-color: #2E1D2B !important;
         box-shadow: 0 8px 24px rgba(26, 16, 24, 0.3), 0 0 22px rgba(236, 210, 243, 0.5) !important;
     }
-
     html.k71-light-mode .btn-primary {
         background-color: #1A1018 !important;
         color: #FFFFFF !important;
         border: 1px solid rgba(236, 210, 243, 0.5) !important;
     }
-
-    /* Dark switch container inside hamburger */
     html.k71-light-mode .dark-switch-container {
         background: #F1F5F9 !important;
         border-color: #E2E8F0 !important;

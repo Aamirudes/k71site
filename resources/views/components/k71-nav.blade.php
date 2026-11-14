@@ -139,7 +139,7 @@
                                 <img src="{{ asset('images/k71-logo.png') }}?v=3" alt="K71" class="w-full h-full object-cover">
                             </div>
                             <div class="flex items-baseline gap-1.5 leading-none">
-                                <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-white' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black' }} transition-colors">
+                                <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-current' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-current' }} transition-colors">
                                     K71
                                 </span>
                                 <span class="text-[9px] font-semibold uppercase tracking-[0.16em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-slate-400 font-mono' }} hidden sm:inline">
