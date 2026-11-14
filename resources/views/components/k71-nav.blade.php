@@ -164,6 +164,9 @@
                     <span>Catalog</span>
                 </a>
 
+                <!-- Dark / Light Mode Toggle Jewel -->
+                <x-theme-toggle :grailTheme="$grailTheme" />
+
                 <!-- Direct Messages Quick Access -->
                 <a href="{{ route('messages.index') }}" 
                    id="nav-messages-link"

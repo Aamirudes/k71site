@@ -41,6 +41,26 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- Alpine.js (Defer) -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Synchronous K71 Dynamic Theme Bootstrapper (Zero Flash) -->
+    <script>
+        (function() {
+            try {
+                var stored = localStorage.getItem('k71_theme');
+                var theme = stored === 'light' ? 'light' : 'dark';
+                var doc = document.documentElement;
+                if (theme === 'light') {
+                    doc.classList.add('k71-light-mode');
+                    doc.classList.remove('k71-dark-mode');
+                    doc.setAttribute('data-theme', 'light');
+                } else {
+                    doc.classList.add('k71-dark-mode');
+                    doc.classList.remove('k71-light-mode');
+                    doc.setAttribute('data-theme', 'dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body class="grail-marketplace-body bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018] font-sans antialiased flex flex-col min-h-screen overflow-x-clip max-w-full w-full" style="font-family: var(--font-grail-sans);">
 
@@ -71,6 +91,7 @@
                 </nav>
 
                 <div class="flex items-center space-x-4">
+                    <x-theme-toggle :grailTheme="true" />
                     <a href="{{ route('catalog.index') }}" class="text-[#EFE9F2]/75 hover:text-[#FFCDFF] transition-colors">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />

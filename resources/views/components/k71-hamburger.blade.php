@@ -159,6 +159,11 @@
                 @endauth
             </div>
 
+            <!-- Theme Mode Switch -->
+            <div class="pt-1">
+                <x-theme-toggle variant="switch" :grailTheme="$grailTheme" />
+            </div>
+
             <!-- Verticals Menu -->
             <div>
                 <h5 class="text-[11px] uppercase font-semibold tracking-[0.14em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-zinc-400 dark:text-zinc-500' }} mb-2.5">Ecosystem Verticals</h5>
