@@ -473,5 +473,41 @@ class UsedMarketplaceService
             'sold_count' => max($soldCompletedTx, $soldListingsCount),
         ]);
     }
+
+    /**
+     * Sweep stale unrenewed classified ads older than given days into 'expired'.
+     */
+    public function sweepExpiredListings(int $days = 60): int
+    {
+        $cutoff = now()->subDays($days);
+        $expiredCount = 0;
+
+        $staleListings = Product::withoutGlobalScopes()
+            ->where('vertical', 'used')
+            ->where('status', 'active')
+            ->where('is_sold', false)
+            ->where(function ($q) {
+                $q->whereNull('used_status')->orWhere('used_status', 'active');
+            })
+            ->where(function ($q) use ($cutoff) {
+                $q->where(function ($sq) use ($cutoff) {
+                    $sq->whereNotNull('refreshed_at')->where('refreshed_at', '<', $cutoff);
+                })->orWhere(function ($sq) use ($cutoff) {
+                    $sq->whereNull('refreshed_at')->where('created_at', '<', $cutoff);
+                });
+            })
+            ->get();
+
+        foreach ($staleListings as $listing) {
+            $listing->update(['used_status' => 'expired']);
+            $expiredCount++;
+        }
+
+        if ($expiredCount > 0) {
+            Cache::forget('sitemap_products_xml');
+        }
+
+        return $expiredCount;
+    }
 }
 

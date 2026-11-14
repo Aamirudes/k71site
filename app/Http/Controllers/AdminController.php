@@ -284,23 +284,26 @@ class AdminController extends Controller
      */
     public function processBatchSettlements(Request $request, SettlementService $settlementService)
     {
-        $orders = Order::where('payment_status', 'paid')
-            ->where('status', '!=', 'cancelled')
-            ->where('settlement_status', 'pending')
-            ->get();
-
-        if ($orders->isEmpty()) {
-            return back()->with('info', "No pending settlements in queue. All eligible orders are already cleared.");
-        }
-
         $clearedCount = 0;
         $totalAmountPaise = 0;
 
-        foreach ($orders as $order) {
-            if ($settlementService->markSettled($order, null, 'master_admin_batch')) {
-                $clearedCount++;
-                $totalAmountPaise += $order->total_amount;
+        DB::transaction(function () use (&$clearedCount, &$totalAmountPaise, $settlementService) {
+            $orders = Order::where('payment_status', 'paid')
+                ->where('status', '!=', 'cancelled')
+                ->where('settlement_status', 'pending')
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($orders as $order) {
+                if ($settlementService->markSettled($order, null, 'master_admin_batch')) {
+                    $clearedCount++;
+                    $totalAmountPaise += $order->total_amount;
+                }
             }
+        });
+
+        if ($clearedCount === 0) {
+            return back()->with('info', "No pending settlements in queue. All eligible orders are already cleared.");
         }
 
         $clearedRupees = number_format($totalAmountPaise / 100, 2);

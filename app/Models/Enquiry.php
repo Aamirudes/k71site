@@ -66,9 +66,21 @@ class Enquiry extends Model
         return $this->status === 'quoted';
     }
 
+    public function isExpired(): bool
+    {
+        if ($this->status === 'expired') {
+            return true;
+        }
+        if (!$this->created_at) {
+            return false;
+        }
+        $createdAt = is_string($this->created_at) ? \Carbon\Carbon::parse($this->created_at) : $this->created_at;
+        return $createdAt->lt(now()->subDays(90));
+    }
+
     public function isClosed(): bool
     {
-        return in_array($this->status, ['closed', 'cancelled']);
+        return in_array($this->status, ['closed', 'cancelled', 'expired'], true) || $this->isExpired();
     }
 
     public function getFormattedBudgetAttribute(): string

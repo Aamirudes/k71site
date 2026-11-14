@@ -75,6 +75,7 @@ Route::post('/wishlist/toggle', [\App\Http\Controllers\WishlistController::class
 // Shorts (Short-form video commerce)
 Route::get('/shorts', [ShortsController::class, 'index'])->name('shorts.index');
 Route::match(['get', 'post'], '/shorts/ajax', [ShortsAjaxController::class, 'dispatch'])->name('shorts.ajax');
+Route::post('/shorts/ajax/view', [ShortsAjaxController::class, 'recordView'])->name('shorts.ajax.view');
 Route::match(['get', 'post'], '/admin-ajax.php', [ShortsAjaxController::class, 'dispatch']);
 Route::get('/shorts/v/{id}', [ShortsController::class, 'show'])->name('shorts.show');
 Route::get('/shorts/cat/{slug}', [ShortsController::class, 'category'])->name('shorts.category');
@@ -210,6 +211,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dm', fn() => redirect()->route('messages.index'))->name('messages.dm');
     Route::get('/messages.php', fn() => redirect()->route('messages.index'));
     Route::get('/messages', [\App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/unread-count', [\App\Http\Controllers\MessageController::class, 'apiGetUnreadCount'])->name('messages.unread_count');
     Route::get('/messages/{conversation}', [\App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
     Route::post('/messages/{conversation}/reply', [\App\Http\Controllers\MessageController::class, 'reply'])->name('messages.reply');

@@ -405,7 +405,7 @@ class EnquiryController extends Controller
         }
 
         if ($enquiry->isClosed()) {
-            return back()->with('error', 'This enquiry is closed and is no longer accepting quotations.');
+            return back()->with('error', 'This enquiry is closed or has expired and is no longer accepting quotations.');
         }
 
         if ($enquiry->vendor_id && (int) $enquiry->vendor_id !== (int) $vendor->id) {
@@ -422,7 +422,7 @@ class EnquiryController extends Controller
         $quote = DB::transaction(function () use ($enquiry, $vendor, $validated) {
             $lockedEnquiry = Enquiry::whereKey($enquiry->id)->lockForUpdate()->firstOrFail();
             if ($lockedEnquiry->isClosed()) {
-                throw new \RuntimeException('This enquiry is closed and is no longer accepting quotations.');
+                throw new \RuntimeException('This enquiry is closed or has expired and is no longer accepting quotations.');
             }
 
             $existingQuote = Quote::where('enquiry_id', $lockedEnquiry->id)

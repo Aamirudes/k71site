@@ -13,6 +13,7 @@ use App\Models\ShortShare;
 use App\Models\Vendor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -258,27 +259,35 @@ class ShortsAjaxController extends Controller
             return response()->json(['success' => false, 'message' => 'Short not found'], 404);
         }
 
-        $short->increment('views');
+        $userId = auth()->id() ?? 0;
+        $ipHash = hash('sha256', $request->ip() ?: '127.0.0.1');
+        $viewKey = 'short_view:' . $short->id . ':' . ($userId ?: $ipHash);
 
-        ShortEvent::create([
-            'short_id' => $short->id,
-            'event_type' => 'view',
-            'user_id' => auth()->id() ?? 0,
-            'session_id' => session()->getId() ?: '',
-            'device' => $this->detectDevice($request),
-            'browser' => $this->detectBrowser($request),
-            'country' => 'IN',
-            'referrer' => Str::limit($request->header('referer', ''), 500),
-            'ip_hash' => hash('sha256', $request->ip() ?: '127.0.0.1'),
-            'watch_pct' => max(0, min(100, (int) $request->input('watch_pct', 0))),
-            'created_at' => now(),
-        ]);
+        $isDuplicate = Cache::has($viewKey);
+        if (!$isDuplicate) {
+            $short->increment('views');
+            Cache::put($viewKey, true, now()->addMinutes(30));
+
+            ShortEvent::create([
+                'short_id' => $short->id,
+                'event_type' => 'view',
+                'user_id' => $userId,
+                'session_id' => session()->getId() ?: '',
+                'device' => $this->detectDevice($request),
+                'browser' => $this->detectBrowser($request),
+                'country' => 'IN',
+                'referrer' => Str::limit($request->header('referer', ''), 500),
+                'ip_hash' => $ipHash,
+                'watch_pct' => max(0, min(100, (int) $request->input('watch_pct', 0))),
+                'created_at' => now(),
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'recorded' => true,
-            'views' => Short::formatNumber($short->views),
-            'raw' => $short->views,
+            'recorded' => !$isDuplicate,
+            'views' => Short::formatNumber($short->fresh()->views),
+            'raw' => (int) $short->fresh()->views,
         ]);
     }
 

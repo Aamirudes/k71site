@@ -4356,4 +4356,329 @@ class WorkflowContinuationPassTest extends TestCase
         $this->assertStringContainsString('Disallow: /checkout/', $robotsContent);
         $this->assertStringContainsString('Sitemap:', $robotsContent);
     }
+
+    public function test_workflow_110_to_119_rfq_expiry_invoice_access_used_sweep_and_settings(): void
+    {
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['display_name' => 'Vendor']);
+
+        // -------------------------------------------------------------
+        // Workflow 110: Feasto Cart Active Dish State
+        // -------------------------------------------------------------
+        $feastoRes = $this->get(route('feasto.index'));
+        $feastoRes->assertOk();
+        $this->assertNotNull($feastoRes->viewData('allProducts'));
+
+        // -------------------------------------------------------------
+        // Workflow 111: B2B RFQ Expiry & Quote Guard
+        // -------------------------------------------------------------
+        $expiredEnquiry = Enquiry::create([
+            'enquiry_number' => 'ENQ-EXP-111',
+            'user_id' => $this->buyer->id,
+            'title' => 'Bulk Sandstone Pillars',
+            'description' => 'Requirement posted long ago',
+            'quantity' => '50 tons',
+            'city' => 'Jaipur',
+            'buyer_name' => 'Riya Kapoor',
+            'buyer_phone' => '9829011223',
+            'status' => 'open',
+        ]);
+        $expiredEnquiry->timestamps = false;
+        $expiredEnquiry->created_at = now()->subDays(100);
+        $expiredEnquiry->save();
+        $expiredEnquiry->refresh();
+
+        $this->assertTrue($expiredEnquiry->isExpired());
+        $this->assertTrue($expiredEnquiry->isClosed());
+
+        $b2bVendorUser = User::factory()->create();
+        $b2bVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $b2bVendor = Vendor::create([
+            'user_id' => $b2bVendorUser->id,
+            'shop_name' => 'Rajasthan Stone Quarry',
+            'slug' => 'rajasthan-stone-quarry-111',
+            'vendor_type' => 'enquiry',
+            'operating_sectors' => ['enquiry'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($b2bVendor, 'enquiry');
+
+        $quoteAttemptRes = $this->actingAs($b2bVendorUser)
+            ->post(route('vendor.enquiries.quote', $expiredEnquiry), [
+                'quote_amount' => 50000,
+                'lead_time_days' => 14,
+            ]);
+        $quoteAttemptRes->assertSessionHas('error', 'This enquiry is closed or has expired and is no longer accepting quotations.');
+
+        // -------------------------------------------------------------
+        // Workflow 112: Service Contract Milestone Status Guard
+        // -------------------------------------------------------------
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'cloud-dev-112'],
+            ['name' => 'Cloud Dev 112', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+        $project = ServiceProject::create([
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $servicesCat->id,
+            'project_number' => 'PRJ-WF112',
+            'title' => 'Kubernetes Cluster Deployment',
+            'slug' => 'kubernetes-cluster-deployment-112',
+            'description' => 'Deploy multi-region failover cluster on Google Cloud Platform',
+            'budget_type' => 'fixed',
+            'budget_min' => 2500000,
+            'status' => 'awarded',
+        ]);
+        $proposal = \App\Models\ProjectProposal::create([
+            'project_id' => $project->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 2500000,
+            'delivery_days' => 14,
+            'cover_letter' => 'DevOps specialist proposal.',
+            'status' => 'hired',
+        ]);
+        $contract = \App\Models\ProjectContract::create([
+            'project_id' => $project->id,
+            'proposal_id' => $proposal->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'contract_number' => 'CNT-WF112',
+            'title' => 'Kubernetes Cluster Deployment Contract',
+            'agreed_amount' => 2500000,
+            'payment_status' => 'escrow_funded',
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+        $milestone = \App\Models\ProjectMilestone::create([
+            'contract_id' => $contract->id,
+            'title' => 'Architecture & Helm Setup',
+            'amount' => 1250000,
+            'status' => 'pending', // Not yet submitted by provider
+        ]);
+
+        // Buyer attempting revision on pending milestone must be rejected
+        $revAttemptRes = $this->actingAs($this->buyer)
+            ->post(route('services.milestones.revision', [$contract, $milestone]), [
+                'revision_notes' => 'Please redo the infrastructure plan.',
+            ]);
+        $revAttemptRes->assertSessionHas('error', 'Revisions can only be requested after the provider submits deliverables.');
+
+        // -------------------------------------------------------------
+        // Workflow 113: Customer Order Invoice Multi-Role Access
+        // -------------------------------------------------------------
+        $invoiceOrder = Order::create([
+            'order_number' => 'K71-INV-113',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 150000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 155000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'processing',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Civil Lines 12',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+
+        // 1. Buyer accesses invoice
+        $this->actingAs($this->buyer)->get(route('orders.invoice', $invoiceOrder))->assertOk();
+
+        // 2. Vendor of the order accesses invoice
+        $this->actingAs($this->vendorUser)->get(route('orders.invoice', $invoiceOrder))->assertOk();
+
+        // 3. Admin accesses invoice
+        $this->actingAs($adminUser)->get(route('orders.invoice', $invoiceOrder))->assertOk();
+
+        // 4. Stranger cannot access invoice
+        $stranger = User::factory()->create();
+        $this->actingAs($stranger)->get(route('orders.invoice', $invoiceOrder))->assertStatus(403);
+
+        // -------------------------------------------------------------
+        // Workflow 114: Used Marketplace Listing Expiry Auto-Sweep & Bump Renewal
+        // -------------------------------------------------------------
+        $usedCat = Category::firstOrCreate(
+            ['slug' => 'electronics-used-114'],
+            ['name' => 'Used Electronics 114', 'vertical' => 'used', 'vertical_type' => 'used', 'is_active' => true]
+        );
+        $staleUsed = Product::create([
+            'user_id' => $this->buyer->id,
+            'category_id' => $usedCat->id,
+            'vertical' => 'used',
+            'title' => 'Stale DSLR Camera 114',
+            'slug' => 'stale-dslr-camera-114',
+            'description' => 'Camera listed more than two months ago',
+            'base_price' => 2500000,
+            'total_stock' => 1,
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+        $staleUsed->timestamps = false;
+        $staleUsed->created_at = now()->subDays(75);
+        $staleUsed->refreshed_at = now()->subDays(75);
+        $staleUsed->save();
+        $staleUsed->refresh();
+
+        $sweepCount = app(\App\Services\Used\UsedMarketplaceService::class)->sweepExpiredListings(60);
+        $this->assertGreaterThanOrEqual(1, $sweepCount);
+        $this->assertEquals('expired', $staleUsed->fresh()->used_status);
+
+        // Seller bumps/renews the listing
+        $bumpRes = $this->actingAs($this->buyer)
+            ->post(route('used.status', $staleUsed), [
+                'action' => 'bump',
+            ]);
+        $bumpRes->assertSessionHas('success');
+        $this->assertEquals('active', $staleUsed->fresh()->used_status);
+        $this->assertEquals('active', $staleUsed->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 115: Live Chat Unread Badge Route
+        // -------------------------------------------------------------
+        $unreadBadgeRes = $this->actingAs($this->buyer)->get(route('messages.unread_count'));
+        $unreadBadgeRes->assertOk();
+        $this->assertTrue($unreadBadgeRes->json('authenticated'));
+        $this->assertArrayHasKey('unread', $unreadBadgeRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 116: Shorts Video View Count Deduplication
+        // -------------------------------------------------------------
+        $short = Short::create([
+            'vendor_id' => $this->vendor->id,
+            'title' => 'WF116 Handcrafted Marble Vase',
+            'slug' => 'wf116-handcrafted-marble-vase',
+            'video_url' => 'https://storage.k71.in/shorts/marble-vase.mp4',
+            'status' => 'published',
+            'views' => 10,
+        ]);
+
+        \Illuminate\Support\Facades\Cache::forget('short_view:' . $short->id . ':' . $this->buyer->id);
+        $v1Res = $this->actingAs($this->buyer)->postJson(route('shorts.ajax.view'), [
+            'short_id' => $short->id,
+        ]);
+        $v1Res->assertOk();
+        $this->assertTrue($v1Res->json('recorded'));
+        $this->assertEquals(11, $short->fresh()->views);
+
+        // Repeat view from same user within cooldown window: must NOT increment views
+        $v2Res = $this->actingAs($this->buyer)->postJson(route('shorts.ajax.view'), [
+            'short_id' => $short->id,
+        ]);
+        $v2Res->assertOk();
+        $this->assertFalse($v2Res->json('recorded'));
+        $this->assertEquals(11, $short->fresh()->views);
+
+        // -------------------------------------------------------------
+        // Workflow 117: Vendor Profile Bio & Social Media Link Sanitization
+        // -------------------------------------------------------------
+        $settingsUpdateRes = $this->actingAs($this->vendorUser)->put(route('vendor.settings.update'), [
+            'description' => 'Premier artisan workshop specializing in Makrana white marble craftsmanship.',
+            'tagline' => 'Handcrafted Excellence Since 1994',
+            'whatsapp_number' => '+91 (982) 901-1223',
+            'vacation_mode' => 1,
+            'vacation_message' => 'Closed for national holiday. Orders resume Monday.',
+            'social_links' => [
+                'instagram' => 'https://instagram.com/mehtacrafts',
+                'youtube' => 'https://youtube.com/@mehtacrafts',
+            ],
+            'shipping_type' => 'flat',
+            'shipping_flat_rate' => 50,
+            'processing_days' => 2,
+            'return_window_days' => 7,
+            'upi_enabled' => 1,
+            'cod_enabled' => 1,
+        ]);
+        $settingsUpdateRes->assertSessionHas('success');
+        $freshVendor = $this->vendor->fresh();
+        $this->assertEquals('Premier artisan workshop specializing in Makrana white marble craftsmanship.', $freshVendor->description);
+        $this->assertEquals('Handcrafted Excellence Since 1994', $freshVendor->tagline);
+        $this->assertEquals('+919829011223', $freshVendor->whatsapp_number);
+        $this->assertTrue((bool) $freshVendor->vacation_mode);
+        $this->assertEquals('Closed for national holiday. Orders resume Monday.', $freshVendor->vacation_message);
+        $this->assertEquals('https://instagram.com/mehtacrafts', $freshVendor->social_links['instagram'] ?? null);
+
+        // -------------------------------------------------------------
+        // Workflow 118: Admin Settlement Batch Processing Locking
+        // -------------------------------------------------------------
+        $batchOrder1 = Order::create([
+            'order_number' => 'K71-SET-001',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 105000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'processing',
+            'settlement_status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Civil Lines 12',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+        $batchOrder2 = Order::create([
+            'order_number' => 'K71-SET-002',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 200000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 205000,
+            'payment_method' => 'phonepe',
+            'payment_status' => 'paid',
+            'status' => 'processing',
+            'settlement_status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Civil Lines 12',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+
+        $batchRes = $this->actingAs($adminUser)->post(route('admin.orders.batch_settlement'));
+        $batchRes->assertSessionHas('success');
+        $this->assertEquals('cleared', $batchOrder1->fresh()->settlement_status);
+        $this->assertEquals('cleared', $batchOrder2->fresh()->settlement_status);
+
+        // -------------------------------------------------------------
+        // Workflow 119: Food Restaurant Storefront Operational Checks
+        // -------------------------------------------------------------
+        $foodUser = User::factory()->create();
+        $foodUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodUser->id,
+            'shop_name' => 'Heritage Thali House',
+            'slug' => 'heritage-thali-house-119',
+            'vendor_type' => 'food',
+            'operating_sectors' => ['food'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+        ]);
+
+        $restaurantRes = $this->get(route('food.restaurant', $foodVendor->slug));
+        $restaurantRes->assertOk();
+        $this->assertStringContainsString('Heritage Thali House', $restaurantRes->getContent());
+    }
 }

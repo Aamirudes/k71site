@@ -74,6 +74,18 @@ class SettingsController extends Controller
             'service_radius_km' => ['nullable', 'integer', 'min:1', 'max:200'],
             'service_experience_years' => ['nullable', 'integer', 'min:0', 'max:60'],
             'service_working_hours' => ['nullable', 'string', 'max:100'],
+
+            // Vendor Storefront & Bio details
+            'description' => ['nullable', 'string', 'max:2000'],
+            'tagline' => ['nullable', 'string', 'max:150'],
+            'whatsapp_number' => ['nullable', 'string', 'max:20'],
+            'vacation_mode' => ['nullable', 'boolean'],
+            'vacation_message' => ['nullable', 'string', 'max:300'],
+            'social_links' => ['nullable', 'array'],
+            'social_links.instagram' => ['nullable', 'string', 'max:200'],
+            'social_links.youtube' => ['nullable', 'string', 'max:200'],
+            'social_links.facebook' => ['nullable', 'string', 'max:200'],
+            'social_links.twitter' => ['nullable', 'string', 'max:200'],
         ]);
 
         if ($vendor->isFood()) {
@@ -216,7 +228,46 @@ class SettingsController extends Controller
                 $validated['upi_id_changed_at'] = now();
             }
 
-            unset($validated['payment_mode'], $validated['pickup_address']);
+            $vendorUpdates = [];
+            if ($request->has('description')) {
+                $vendorUpdates['description'] = trim((string) $request->input('description')) ?: null;
+            }
+            if ($request->has('tagline')) {
+                $vendorUpdates['tagline'] = trim((string) $request->input('tagline')) ?: null;
+            }
+            if ($request->has('whatsapp_number')) {
+                $rawWa = preg_replace('/[\s\-().]+/', '', trim((string) $request->input('whatsapp_number')));
+                $vendorUpdates['whatsapp_number'] = $rawWa ?: null;
+            }
+            if ($request->has('vacation_mode')) {
+                $isVacation = $request->boolean('vacation_mode');
+                $vendorUpdates['vacation_mode'] = $isVacation;
+                $vendorUpdates['vacation_message'] = $isVacation ? (trim((string) $request->input('vacation_message')) ?: null) : null;
+            }
+            if ($request->has('social_links') && is_array($request->input('social_links'))) {
+                $cleanSocial = [];
+                foreach ($request->input('social_links') as $net => $link) {
+                    $link = trim((string) $link);
+                    if ($link !== '') {
+                        $cleanSocial[$net] = \Illuminate\Support\Str::limit($link, 200, '');
+                    }
+                }
+                $vendorUpdates['social_links'] = !empty($cleanSocial) ? $cleanSocial : null;
+            }
+            if (!empty($vendorUpdates)) {
+                $vendor->update($vendorUpdates);
+            }
+
+            unset(
+                $validated['payment_mode'],
+                $validated['pickup_address'],
+                $validated['description'],
+                $validated['tagline'],
+                $validated['whatsapp_number'],
+                $validated['vacation_mode'],
+                $validated['vacation_message'],
+                $validated['social_links']
+            );
             $settings->update($validated);
         } catch (\Throwable $e) {
             if ($newUpiQr) {

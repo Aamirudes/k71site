@@ -193,8 +193,14 @@ class OrderController extends Controller
 
     public function invoice(Order $order)
     {
-        if ($order->user_id !== Auth::id() && !session("guest_order_{$order->id}")) {
-            abort(403);
+        $user = Auth::user();
+        $isBuyer = $user && (int) $order->user_id === (int) $user->id;
+        $isGuestBuyer = (bool) session("guest_order_{$order->id}");
+        $isAdmin = $user && $user->isAdmin();
+        $isVendor = $user && $user->vendor && (int) $user->vendor->id === (int) $order->vendor_id;
+
+        if (!$isBuyer && !$isGuestBuyer && !$isAdmin && !$isVendor) {
+            abort(403, 'Unauthorized access to this order invoice.');
         }
         
         $order->load(['vendor', 'items.product', 'user']);

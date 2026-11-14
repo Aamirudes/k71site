@@ -825,8 +825,12 @@ class UsedListingController extends Controller
                 break;
 
             case 'bump':
-                $product->update(['refreshed_at' => now()]);
-                $msg = 'Listing refreshed in discovery ordering.';
+                $product->update([
+                    'refreshed_at' => now(),
+                    'used_status' => 'active',
+                    'status' => 'active',
+                ]);
+                $msg = 'Listing refreshed and renewed in discovery ordering.';
                 break;
         }
 
