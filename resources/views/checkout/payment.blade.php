@@ -1,20 +1,20 @@
-<x-layouts.public title="Complete UPI Payment - {{ $vendor->shop_name }}" :fullWidth="true">
+<x-layouts.public title="Complete UPI Payment - {{ $vendor?->shop_name ?? 'K71 Store' }}" :fullWidth="true">
     <div class="min-h-screen grail-hero-band text-[#EFE9F2] py-6 sm:py-10 px-3 sm:px-6">
         
         <div class="max-w-md mx-auto">
             
             <!-- Storefront Style Obsidian Header Bar -->
             <div class="bg-[#161616] rounded-2xl border border-white/15 shadow-lg px-4 py-3.5 mb-4 flex items-center justify-between">
-                <a href="{{ $vendor->storefront_url }}" class="p-1.5 text-white/75 hover:text-[#ECD2F3] transition-colors">
+                <a href="{{ $vendor?->storefront_url ?? route('home') }}" class="p-1.5 text-white/75 hover:text-[#ECD2F3] transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                 </a>
                 
-                <a href="{{ $vendor->storefront_url }}" class="grail-display text-xl font-bold text-white tracking-tight hover:text-[#ECD2F3] transition-colors">
-                    {{ $vendor->shop_name }}
+                <a href="{{ $vendor?->storefront_url ?? route('home') }}" class="grail-display text-xl font-bold text-white tracking-tight hover:text-[#ECD2F3] transition-colors">
+                    {{ $vendor?->shop_name ?? 'K71 Store' }}
                 </a>
 
                 <div class="flex items-center gap-2">
-                    <a href="{{ $vendor->storefront_url }}" class="p-1.5 text-white/70 hover:text-[#ECD2F3] transition-colors">
+                    <a href="{{ $vendor?->storefront_url ?? route('home') }}" class="p-1.5 text-white/70 hover:text-[#ECD2F3] transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </a>
                     <a href="{{ route('cart.index') }}" class="relative p-1.5 text-white/70 hover:text-[#ECD2F3] transition-colors">

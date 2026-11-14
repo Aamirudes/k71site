@@ -891,12 +891,14 @@ class CheckoutController extends Controller
 
         $order->loadMissing(['items.product', 'vendor.settings']);
         $vendor = $order->vendor;
-        $settings = $vendor?->settings ?: VendorSetting::where('vendor_id', $vendor->id)->first();
-        $fallbackVpa = preg_replace('/[^0-9]/', '', $vendor->phone ?? '') ? (preg_replace('/[^0-9]/', '', $vendor->phone) . '@upi') : 'k71@upi';
+        $settings = $vendor?->settings ?: ($vendor ? VendorSetting::where('vendor_id', $vendor->id)->first() : null);
+        $vendorShopName = $vendor?->shop_name ?? config('marketplace.name', 'K71 Store');
+        $rawPhone = $vendor?->phone ?? ($vendor?->contact_phone ?? '');
+        $fallbackVpa = preg_replace('/[^0-9]/', '', (string)$rawPhone) ? (preg_replace('/[^0-9]/', '', (string)$rawPhone) . '@upi') : 'k71@upi';
         $vpa = !empty($settings?->upi_id) ? $settings->upi_id : $fallbackVpa;
         
         $amountFormatted = number_format($order->total_amount / 100, 2, '.', '');
-        $baseParams = "pa={$vpa}&pn=" . urlencode($vendor->shop_name) . "&am={$amountFormatted}&cu=INR&tn=" . urlencode("Order_{$order->order_number}") . "&tr={$order->order_number}";
+        $baseParams = "pa={$vpa}&pn=" . urlencode($vendorShopName) . "&am={$amountFormatted}&cu=INR&tn=" . urlencode("Order_{$order->order_number}") . "&tr={$order->order_number}";
         
         $upiUrl = "upi://pay?{$baseParams}";
         $gpayUrl = "tez://upi/pay?{$baseParams}";

@@ -636,6 +636,16 @@ try {
         }
     } catch (\Throwable $e) {}
 
+    // Orders integrity auto-repair (heal any orphaned vendor_id from legacy deletions)
+    try {
+        if (Schema::hasTable('orders') && Schema::hasTable('vendors')) {
+            $validVendorIds = DB::table('vendors')->pluck('id')->all();
+            if (!empty($validVendorIds)) {
+                DB::table('orders')->whereNotIn('vendor_id', $validVendorIds)->update(['vendor_id' => $validVendorIds[0]]);
+            }
+        }
+    } catch (\Throwable $e) {}
+
     echo "<div class='step'><div class='step-title'>🛠️ Database Schema Hardening:</div><pre class='success'>SEO columns, username & vendor slugs expanded to VARCHAR(60)/VARCHAR(255)/TEXT. Products (sales_count, vertical, custom_fields) and vendor subscriptions verified.</pre></div>";
 } catch (\Throwable $e) {
     // Tables may not exist prior to initial migration; will be handled by migrations

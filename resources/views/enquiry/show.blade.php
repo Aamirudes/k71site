@@ -196,15 +196,19 @@
                             <div class="space-y-3">
                                 @foreach($enquiry->quotes as $quote)
                                     @php
-                                        $vPhone = preg_replace('/[^0-9]/', '', $quote->vendor->phone ?? $quote->vendor->contact_phone ?? '919876543210');
+                                        $vShopName = $quote->vendor?->shop_name ?? 'Verified Supplier';
+                                        $vCity = $quote->vendor?->city ?? 'Supplier';
+                                        $vPhoneRaw = $quote->vendor?->phone ?? ($quote->vendor?->contact_phone ?? '919876543210');
+                                        $vPhone = preg_replace('/[^0-9]/', '', (string)$vPhoneRaw);
                                         if (strlen($vPhone) === 10) { $vPhone = '91' . $vPhone; }
-                                        $vWa = "https://wa.me/{$vPhone}?text=" . urlencode("Hi {$quote->vendor->shop_name}, I saw your quote of {$quote->formatted_amount} on K71 for requirement #{$enquiry->enquiry_number}.");
+                                        if (empty($vPhone)) { $vPhone = '919876543210'; }
+                                        $vWa = "https://wa.me/{$vPhone}?text=" . urlencode("Hi {$vShopName}, I saw your quote of {$quote->formatted_amount} on K71 for requirement #{$enquiry->enquiry_number}.");
                                     @endphp
                                     <div class="p-4 rounded-2xl bg-[#FAFAF8] border border-[#E6E2E8] flex flex-col sm:flex-row sm:items-center justify-between gap-4 {{ $quote->isAccepted() ? 'ring-2 ring-emerald-500 bg-emerald-50/50' : '' }}">
                                         <div class="space-y-1">
                                             <div class="flex items-center gap-2">
-                                                <span class="text-sm font-bold text-[#1A1018]">{{ $quote->vendor->shop_name }}</span>
-                                                <span class="text-xs text-[#1A1018]/55 font-medium">📍 {{ $quote->vendor->city ?? 'Supplier' }}</span>
+                                                <span class="text-sm font-bold text-[#1A1018]">{{ $vShopName }}</span>
+                                                <span class="text-xs text-[#1A1018]/55 font-medium">📍 {{ $vCity }}</span>
                                                 @if($quote->isAccepted())
                                                     <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">
                                                         ✓ Accepted Quote
