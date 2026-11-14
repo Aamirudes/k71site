@@ -344,7 +344,7 @@ class EnquiryController extends Controller
     /**
      * Vendor enquiries inbox & leads board (/vendor/enquiries).
      */
-    public function vendorIndex(Request $request): View|RedirectResponse
+    public function vendorIndex(Request $request): View|RedirectResponse|JsonResponse
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         if (!$vendor) {
@@ -391,6 +391,17 @@ class EnquiryController extends Controller
         }
 
         $enquiries = $query->latest()->paginate(15)->withQueryString();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'enquiries' => $enquiries->items(),
+                'counts' => $counts,
+                'stats' => $counts,
+                'current_page' => $enquiries->currentPage(),
+                'total' => $enquiries->total(),
+            ]);
+        }
 
         return view('vendor.enquiries.index', compact('enquiries', 'counts', 'tab', 'vendor'));
     }

@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\Product;
 use App\Models\Vendor;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -586,6 +587,7 @@ class MessageController extends Controller
                     $table->boolean('is_read')->default(false);
                     $table->boolean('is_edited')->default(false);
                     $table->timestamp('edited_at')->nullable();
+                    $table->text('reactions_json')->nullable();
                     $table->timestamp('created_at')->useCurrent();
                     $table->index('conversation_id');
                     $table->index('sender_id');
@@ -613,6 +615,9 @@ class MessageController extends Controller
                     }
                     if (!Schema::hasColumn('chat_messages', 'edited_at')) {
                         $table->timestamp('edited_at')->nullable();
+                    }
+                    if (!Schema::hasColumn('chat_messages', 'reactions_json')) {
+                        $table->text('reactions_json')->nullable();
                     }
                 });
             }
@@ -2212,6 +2217,70 @@ class MessageController extends Controller
             'data' => $msgPayload,
             'message' => $msgPayload,
             'conversation_status' => $newConvStatus
+        ]);
+    }
+
+    /**
+     * API: React to a message with an emoji (Instagram double-tap / emoji picker).
+     */
+    public function apiReactMessage(Request $request): JsonResponse
+    {
+        $userId = $this->resolveChatUserId();
+        if (!$userId) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized.'], 401);
+        }
+
+        $validated = $request->validate([
+            'message_id' => 'required|integer',
+            'emoji' => 'nullable|string|max:16',
+        ]);
+
+        $this->ensureChatSchema();
+
+        $message = DB::table('chat_messages')->where('id', $validated['message_id'])->first();
+        if (!$message) {
+            return response()->json(['success' => false, 'error' => 'Message not found.'], 404);
+        }
+
+        $conv = DB::table('chat_conversations')
+            ->where('id', $message->conversation_id)
+            ->where(function ($q) use ($userId) {
+                $q->where('user_one_id', $userId)->orWhere('user_two_id', $userId);
+            })
+            ->first();
+
+        if (!$conv) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized action on this conversation.'], 403);
+        }
+
+        $reactions = [];
+        if (!empty($message->reactions_json)) {
+            $decoded = json_decode($message->reactions_json, true);
+            if (is_array($decoded)) {
+                $reactions = $decoded;
+            }
+        }
+
+        $emoji = trim((string) ($validated['emoji'] ?? ''));
+        $userKey = (string) $userId;
+
+        if ($emoji === '' || (isset($reactions[$userKey]) && $reactions[$userKey] === $emoji)) {
+            unset($reactions[$userKey]);
+            $action = 'removed';
+        } else {
+            $reactions[$userKey] = $emoji;
+            $action = 'set';
+        }
+
+        DB::table('chat_messages')->where('id', $message->id)->update([
+            'reactions_json' => !empty($reactions) ? json_encode($reactions) : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message_id' => $message->id,
+            'action' => $action,
+            'reactions' => $reactions,
         ]);
     }
 }

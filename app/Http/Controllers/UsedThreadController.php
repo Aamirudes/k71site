@@ -79,7 +79,7 @@ class UsedThreadController extends Controller
     /**
      * Participant-only view for a listing enquiry thread.
      */
-    public function show(UsedThread $thread): View
+    public function show(UsedThread $thread): View|JsonResponse
     {
         $user = auth()->user();
         if (!$thread->isParticipant($user) && !$user->isAdmin()) {
@@ -94,6 +94,16 @@ class UsedThreadController extends Controller
         $thread->load(['product.images', 'seller.usedSellerProfile', 'buyer', 'messages.sender']);
 
         $isSeller = (int) $thread->seller_id === (int) $user->id;
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'thread' => $thread,
+                'product' => $thread->product,
+                'messages' => $thread->messages,
+                'is_seller' => $isSeller,
+            ]);
+        }
 
         return view('used.thread-show', compact('thread', 'isSeller', 'user'));
     }

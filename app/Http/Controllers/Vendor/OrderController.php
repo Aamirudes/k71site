@@ -414,9 +414,20 @@ class OrderController extends Controller
                 );
             }
 
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order status updated successfully.',
+                    'order' => $order->fresh(),
+                ]);
+            }
+
             return back()->with('success', 'Order status updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Failed to update order: ' . $e->getMessage()], 422);
+            }
             return back()->with('error', 'Failed to update order: ' . $e->getMessage());
         }
     }

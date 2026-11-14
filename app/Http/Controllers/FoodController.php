@@ -756,4 +756,12 @@ class FoodController extends Controller
 
         return redirect()->route('checkout.vendor', $vendor->id)->with('success', $message);
     }
+
+    /**
+     * Canonical routing for category and cuisine URLs (/food/category/{slug}, /food/cuisine/{slug}).
+     */
+    public function category(Request $request, string $slug): \Illuminate\Http\RedirectResponse
+    {
+        return redirect()->route('food.index', ['cuisine' => $slug]);
+    }
 }

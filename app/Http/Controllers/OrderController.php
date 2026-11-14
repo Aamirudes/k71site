@@ -221,4 +221,66 @@ class OrderController extends Controller
         
         return view('orders.invoice', compact('order'));
     }
+
+    /**
+     * Customer requests a return or exchange on a delivered order.
+     */
+    public function requestReturn(Request $request, Order $order): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+    {
+        $user = Auth::user();
+        if ((int) $order->user_id !== (int) $user?->id) {
+            abort(403, 'Unauthorized.');
+        }
+
+        if ($order->status !== 'delivered') {
+            $msg = 'Returns can only be requested on delivered orders.';
+            return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        if ($order->isFoodOrder()) {
+            $msg = 'Fresh food and restaurant deliveries are non-returnable. Please contact support if there was an issue with your meal.';
+            return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|in:defective,wrong_item,damaged_in_transit,not_as_described,size_fit_issue,other',
+            'notes' => 'nullable|string|max:1000',
+        ]);
+
+        $order->update([
+            'status' => 'return_requested',
+        ]);
+
+        \App\Models\OrderStatusLog::create([
+            'order_id' => $order->id,
+            'from_status' => 'delivered',
+            'to_status' => 'return_requested',
+            'actor_type' => 'customer',
+            'actor_id' => $user->id,
+            'note' => "Customer requested return: {$validated['reason']}. Notes: " . ($validated['notes'] ?? 'None'),
+            'ip_address' => $request->ip(),
+        ]);
+
+        if ($order->vendor?->user_id) {
+            app(\App\Services\NotificationCenterService::class)->notifyUser(
+                (int) $order->vendor->user_id,
+                '↩️',
+                "Return Requested — Order #{$order->order_number}",
+                "Customer has requested a return for reason: {$validated['reason']}.",
+                route('vendor.orders.show', $order),
+                'order_returns'
+            );
+        }
+
+        $msg = "Return request for Order #{$order->order_number} has been submitted. The seller has been notified.";
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'status' => 'return_requested',
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
 }

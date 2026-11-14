@@ -71,6 +71,7 @@ Route::get('/shipping-policy', [\App\Http\Controllers\PageController::class, 'sh
 Route::get('/wishlist', [\App\Http\Controllers\WishlistController::class, 'index'])->name('wishlist.index');
 Route::get('/wishlist/json', [\App\Http\Controllers\WishlistController::class, 'getJson'])->name('wishlist.json');
 Route::post('/wishlist/toggle', [\App\Http\Controllers\WishlistController::class, 'toggle'])->name('wishlist.toggle');
+Route::post('/wishlist/{product}/move-to-cart', [\App\Http\Controllers\WishlistController::class, 'moveToCart'])->name('wishlist.move_to_cart');
 
 // Shorts (Short-form video commerce)
 Route::get('/shorts', [ShortsController::class, 'index'])->name('shorts.index');
@@ -88,6 +89,8 @@ Route::post('/shorts/spin/result', [ShortsSpinController::class, 'result'])->nam
 Route::get('/food', [FoodController::class, 'index'])->name('food.index');
 Route::post('/food/location', [FoodController::class, 'setLocation'])->middleware('throttle:60,1')->name('food.location.set');
 Route::get('/food/suggest', [FoodController::class, 'suggest'])->middleware('throttle:90,1')->name('food.suggest');
+Route::get('/food/category/{slug}', [FoodController::class, 'category'])->name('food.category');
+Route::get('/food/cuisine/{slug}', [FoodController::class, 'category'])->name('food.cuisine');
 Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('food.restaurant');
 Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middleware('auth')->name('food.reorder');
 Route::post('/food/orders/{order}/review', [\App\Http\Controllers\ReviewController::class, 'storeFoodReview'])->middleware('auth')->name('food.orders.review');
@@ -159,6 +162,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/services/contracts/{contract}/milestones/{milestone}/approve', [\App\Http\Controllers\ProjectMarketplaceController::class, 'approveMilestone'])->name('services.milestones.approve');
     Route::post('/services/contracts/{contract}/milestones/{milestone}/revision', [\App\Http\Controllers\ProjectMarketplaceController::class, 'requestMilestoneRevision'])->name('services.milestones.revision');
     Route::post('/services/contracts/{contract}/complete', [\App\Http\Controllers\ProjectMarketplaceController::class, 'completeContract'])->name('services.contracts.complete');
+    Route::post('/services/contracts/{contract}/dispute', [\App\Http\Controllers\ProjectMarketplaceController::class, 'disputeContract'])->name('services.contracts.dispute');
 });
 Route::get('/services/projects/{project}', [\App\Http\Controllers\ProjectMarketplaceController::class, 'show'])->name('services.projects.show');
 
@@ -259,6 +263,7 @@ Route::middleware('web')->group(function () {
     Route::post('/chat/api/upload_photo', [\App\Http\Controllers\MessageController::class, 'apiUploadPhoto'])->name('chat.api.upload_photo');
     Route::post('/chat/api/upload_video', [\App\Http\Controllers\MessageController::class, 'apiUploadVideo'])->name('chat.api.upload_video');
     Route::post('/chat/api/upload_voice', [\App\Http\Controllers\MessageController::class, 'apiUploadVoice'])->name('chat.api.upload_voice');
+    Route::post('/chat/api/react', [\App\Http\Controllers\MessageController::class, 'apiReactMessage'])->name('chat.api.react');
     Route::get('/chat/api/unread_count', [\App\Http\Controllers\MessageController::class, 'apiGetUnreadCount'])->name('chat.api.unread_count');
 });
 
@@ -369,6 +374,7 @@ Route::get('/orders/{order}/invoice', [\App\Http\Controllers\OrderController::cl
 Route::get('/orders/{order}', [\App\Http\Controllers\OrderController::class, 'show'])->name('orders.show');
 Route::get('/orders/{order}/cancel', fn(\App\Models\Order $order) => redirect()->route('orders.show', $order));
 Route::post('/orders/{order}/cancel', [\App\Http\Controllers\OrderController::class, 'cancel'])->name('orders.cancel');
+Route::post('/orders/{order}/return', [\App\Http\Controllers\OrderController::class, 'requestReturn'])->middleware('auth')->name('orders.return');
 
 // Authenticated Account Orders History List
 Route::middleware('auth')->group(function () {

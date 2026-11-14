@@ -352,6 +352,11 @@ class ServiceStudioController extends Controller
             return back()->with('error', $check['reason']);
         }
 
+        $quotaCheck = app(\App\Services\Monetization\EntitlementService::class)->validateListingWrite($vendor, 'services', true, 0);
+        if (!$quotaCheck['allowed']) {
+            return back()->with('error', $quotaCheck['reason']);
+        }
+
         $copy = \Illuminate\Support\Facades\DB::transaction(function () use ($product) {
             $copy = $product->replicate();
             $copy->title = $product->title . ' (Copy)';

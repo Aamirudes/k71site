@@ -195,4 +195,49 @@ class WishlistController extends Controller
             'count' => $items->count(),
         ]);
     }
+
+    /**
+     * Move a wishlisted product into active cart and remove from wishlist.
+     */
+    public function moveToCart(Request $request, Product $product)
+    {
+        if (!$product->isPubliclyVisible()) {
+            $msg = 'This item is currently unavailable.';
+            return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        $cart = null;
+        if (Auth::check()) {
+            $cart = \App\Models\Cart::firstOrCreate(['user_id' => Auth::id()]);
+            Wishlist::where('user_id', Auth::id())->where('product_id', $product->id)->delete();
+        } else {
+            $sessionId = session()->getId();
+            $cart = \App\Models\Cart::firstOrCreate(['session_id' => $sessionId]);
+            $guestWishlist = session()->get('guest_wishlist', []);
+            session()->put('guest_wishlist', array_values(array_diff($guestWishlist, [$product->id])));
+        }
+
+        $cartItem = $cart->items()->where('product_id', $product->id)->first();
+        if ($cartItem) {
+            $cartItem->increment('quantity');
+        } else {
+            $cart->items()->create([
+                'product_id' => $product->id,
+                'vendor_id' => $product->vendor_id,
+                'quantity' => 1,
+                'price_at_add' => $product->base_price,
+            ]);
+        }
+
+        $msg = "\"{$product->title}\" moved to your cart!";
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'cart_count' => $cart->items()->sum('quantity'),
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
 }

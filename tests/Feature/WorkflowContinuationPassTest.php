@@ -4958,4 +4958,292 @@ class WorkflowContinuationPassTest extends TestCase
         $this->assertTrue($menuRes->json('success'));
         $this->assertArrayHasKey('grouped_menu', $menuRes->json());
     }
+
+    public function test_workflow_130_to_139_reactions_dispute_thread_b2b_wishlist_return_duplicate(): void
+    {
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['slug' => 'vendor']);
+
+        // -------------------------------------------------------------
+        // Workflow 130: Chat Message Emoji Reaction (Toggle Set / Remove)
+        // -------------------------------------------------------------
+        \App\Http\Controllers\MessageController::ensureChatSchema();
+        $convId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+            'user_one_id' => min($this->buyer->id, $this->vendorUser->id),
+            'user_two_id' => max($this->buyer->id, $this->vendorUser->id),
+            'status' => 'accepted',
+            'last_message_at' => now()->toDateTimeString(),
+            'requested_by' => $this->buyer->id,
+        ]);
+
+        $msgId = \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $convId,
+            'sender_id' => $this->vendorUser->id,
+            'body' => 'Welcome to K71 Direct Support!',
+            'created_at' => now()->toDateTimeString(),
+        ]);
+
+        // Buyer reacts with 🔥
+        $reactRes = $this->actingAs($this->buyer)->postJson(route('chat.api.react'), [
+            'message_id' => $msgId,
+            'emoji' => '🔥',
+        ]);
+        $reactRes->assertOk();
+        $this->assertTrue($reactRes->json('success'));
+        $this->assertEquals('set', $reactRes->json('action'));
+        $this->assertEquals('🔥', $reactRes->json('reactions.' . $this->buyer->id));
+
+        // Buyer reacts with same 🔥 -> toggles off (action: removed)
+        $toggleRes = $this->actingAs($this->buyer)->postJson(route('chat.api.react'), [
+            'message_id' => $msgId,
+            'emoji' => '🔥',
+        ]);
+        $toggleRes->assertOk();
+        $this->assertTrue($toggleRes->json('success'));
+        $this->assertEquals('removed', $toggleRes->json('action'));
+        $this->assertArrayNotHasKey((string)$this->buyer->id, $toggleRes->json('reactions'));
+
+        // Unauthorized outsider receives 403
+        $outsider = User::factory()->create();
+        $unauthReact = $this->actingAs($outsider)->postJson(route('chat.api.react'), [
+            'message_id' => $msgId,
+            'emoji' => '❤️',
+        ]);
+        $unauthReact->assertStatus(403);
+
+        // -------------------------------------------------------------
+        // Workflow 131: Services Contract Formal Dispute Flow
+        // -------------------------------------------------------------
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'tech-support-131'],
+            ['name' => 'Tech Support 131', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+
+        $project = ServiceProject::create([
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $servicesCat->id,
+            'project_number' => 'PRJ-TEST131',
+            'title' => 'Mobile App Optimization Audit',
+            'slug' => 'mobile-app-optimization-audit-131',
+            'description' => 'Complete performance optimization',
+            'budget_type' => 'fixed',
+            'budget_min' => 400000,
+            'budget_max' => 800000,
+            'work_mode' => 'remote',
+            'status' => 'in_progress',
+        ]);
+
+        $proposal = ProjectProposal::create([
+            'project_id' => $project->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 600000,
+            'delivery_days' => 4,
+            'cover_letter' => 'Expert ready to optimize your app.',
+            'status' => 'hired',
+        ]);
+
+        $contract = ProjectContract::create([
+            'contract_number' => 'CON-TEST131',
+            'project_id' => $project->id,
+            'proposal_id' => $proposal->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'agreed_amount' => 600000,
+            'payment_status' => 'escrow_funded',
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+
+        // Buyer opens dispute with valid reason
+        $disputeRes = $this->actingAs($this->buyer)->post(route('services.contracts.dispute', $contract), [
+            'reason' => 'Vendor failed to deliver milestone by agreed deadline without communication.',
+        ]);
+        $disputeRes->assertSessionHas('warning');
+        $this->assertEquals('disputed', $contract->fresh()->status);
+        $this->assertEquals('disputed', $contract->fresh()->payment_status);
+
+        // Cannot dispute an already disputed contract
+        $reDispute = $this->actingAs($this->buyer)->post(route('services.contracts.dispute', $contract), [
+            'reason' => 'Attempting duplicate dispute submission.',
+        ]);
+        $reDispute->assertSessionHas('error');
+
+        // -------------------------------------------------------------
+        // Workflow 132: Used Goods Real-Time Chat Thread JSON API
+        // -------------------------------------------------------------
+        $usedCat = Category::firstOrCreate(
+            ['slug' => 'used-gear-132'],
+            ['name' => 'Used Gear 132', 'vertical' => 'used', 'vertical_type' => 'used', 'is_active' => true]
+        );
+        $usedProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $usedCat->id,
+            'title' => 'Sony A7 IV Full Frame Camera',
+            'slug' => 'sony-a7iv-camera-132',
+            'description' => 'Used with 10k shutter count',
+            'base_price' => 14000000,
+            'vertical' => 'used',
+            'status' => 'active',
+            'used_status' => 'active',
+            'total_stock' => 1,
+        ]);
+
+        $usedThread = \App\Models\UsedThread::create([
+            'product_id' => $usedProduct->id,
+            'seller_id' => $this->vendorUser->id,
+            'buyer_id' => $this->buyer->id,
+            'status' => 'active',
+            'last_message_at' => now(),
+        ]);
+
+        $usedThreadRes = $this->actingAs($this->buyer)->getJson(route('used.threads.show', $usedThread));
+        $usedThreadRes->assertOk();
+        $this->assertTrue($usedThreadRes->json('success'));
+        $this->assertEquals($usedThread->id, $usedThreadRes->json('thread.id'));
+        $this->assertArrayHasKey('product', $usedThreadRes->json());
+        $this->assertArrayHasKey('messages', $usedThreadRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 133: B2B Vendor Inquiries JSON API
+        // -------------------------------------------------------------
+        $b2bVendorRes = $this->actingAs($this->vendorUser)->getJson(route('vendor.enquiries.index'));
+        $b2bVendorRes->assertOk();
+        $this->assertTrue($b2bVendorRes->json('success'));
+        $this->assertArrayHasKey('enquiries', $b2bVendorRes->json());
+        $this->assertArrayHasKey('stats', $b2bVendorRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 134: Food Category SEO Redirect Route
+        // -------------------------------------------------------------
+        $foodCatRes = $this->get(route('food.category', ['slug' => 'rajasthani-thali']));
+        $foodCatRes->assertRedirect(route('food.index', ['cuisine' => 'rajasthani-thali']));
+
+        // -------------------------------------------------------------
+        // Workflow 135: Wishlist Move to Cart Pipeline
+        // -------------------------------------------------------------
+        $wishProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'main',
+            'listing_type' => 'purchase',
+            'title' => 'K71 Handwoven Silk Shawl',
+            'slug' => 'k71-silk-shawl-135',
+            'description' => 'Pure silk handwoven shawl',
+            'base_price' => 250000,
+            'gst_rate' => 12,
+            'total_stock' => 15,
+            'status' => 'active',
+        ]);
+
+        \App\Models\Wishlist::create([
+            'user_id' => $this->buyer->id,
+            'product_id' => $wishProduct->id,
+        ]);
+        $this->assertDatabaseHas('wishlists', ['user_id' => $this->buyer->id, 'product_id' => $wishProduct->id]);
+
+        $moveRes = $this->actingAs($this->buyer)->postJson(route('wishlist.move_to_cart', $wishProduct));
+        $moveRes->assertOk();
+        $this->assertTrue($moveRes->json('success'));
+        $this->assertDatabaseMissing('wishlists', ['user_id' => $this->buyer->id, 'product_id' => $wishProduct->id]);
+        $this->assertDatabaseHas('cart_items', ['product_id' => $wishProduct->id]);
+
+        // -------------------------------------------------------------
+        // Workflow 136: Customer Order Return Request with Food Restriction
+        // -------------------------------------------------------------
+        $deliveredOrder = Order::create([
+            'order_number' => 'K71-RET-136',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 250000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 255000,
+            'payment_method' => 'cod',
+            'payment_status' => 'paid',
+            'status' => 'delivered',
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $returnRes = $this->actingAs($this->buyer)->postJson(route('orders.return', $deliveredOrder), [
+            'reason' => 'defective',
+            'notes' => 'Product arrived with broken seam.',
+        ]);
+        $returnRes->assertOk();
+        $this->assertTrue($returnRes->json('success'));
+        $this->assertEquals('return_requested', $deliveredOrder->fresh()->status);
+        $this->assertDatabaseHas('order_status_logs', [
+            'order_id' => $deliveredOrder->id,
+            'from_status' => 'delivered',
+            'to_status' => 'return_requested',
+        ]);
+
+        // Food order return request is blocked (perishable safety)
+        $foodOrder = Order::create([
+            'order_number' => 'K71-FOD-136',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'order_type' => 'food_delivery',
+            'subtotal' => 45000,
+            'item_count' => 1,
+            'shipping_amount' => 3000,
+            'tax_amount' => 0,
+            'total_amount' => 48000,
+            'payment_method' => 'cod',
+            'payment_status' => 'paid',
+            'status' => 'delivered',
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+        $foodReturnRes = $this->actingAs($this->buyer)->postJson(route('orders.return', $foodOrder), [
+            'reason' => 'not_as_described',
+        ]);
+        $foodReturnRes->assertStatus(422);
+
+        // -------------------------------------------------------------
+        // Workflow 137: Vendor Order Status Update JSON API
+        // -------------------------------------------------------------
+        $vendorOrder = Order::create([
+            'order_number' => 'K71-VORD-137',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 120000,
+            'item_count' => 1,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 120000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $statusUpdateRes = $this->actingAs($this->vendorUser)->putJson(route('vendor.orders.status', $vendorOrder), [
+            'status' => 'processing',
+        ]);
+        $statusUpdateRes->assertOk();
+        $this->assertTrue($statusUpdateRes->json('success'));
+        $this->assertEquals('processing', $vendorOrder->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 138 & 139: Service Gig Duplication Quota Guard
+        // -------------------------------------------------------------
+        $gigProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $servicesCat->id,
+            'title' => 'Original SEO Gig',
+            'slug' => 'original-seo-gig-138',
+            'description' => 'Full site SEO audit',
+            'base_price' => 500000,
+            'vertical' => 'services',
+            'status' => 'active',
+            'total_stock' => 999,
+        ]);
+
+        $duplicateRes = $this->actingAs($this->vendorUser)->post(route('vendor.services.duplicate', $gigProduct));
+        $duplicateRes->assertRedirect();
+        $this->assertDatabaseHas('products', [
+            'vendor_id' => $this->vendor->id,
+            'title' => 'Original SEO Gig (Copy)',
+            'status' => 'paused',
+        ]);
+    }
 }

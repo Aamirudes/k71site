@@ -710,5 +710,58 @@ class ProjectMarketplaceController extends Controller
 
         return back()->with('success', 'Contract completed and verified review recorded!');
     }
+
+    /**
+     * Raise a formal dispute on an active contract.
+     */
+    public function disputeContract(Request $request, ProjectContract $contract): RedirectResponse
+    {
+        $user = auth()->user();
+        $isBuyer = (int) $contract->buyer_id === (int) $user->id;
+        $isVendor = $contract->vendor && (int) $contract->vendor->user_id === (int) $user->id;
+
+        if (!$isBuyer && !$isVendor && !$user->isAdmin()) {
+            abort(403, 'Unauthorized to dispute this contract.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:2000',
+        ]);
+
+        try {
+            DB::transaction(function () use ($contract) {
+                $locked = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
+
+                if (!in_array($locked->status, ['active', 'paused'], true)) {
+                    throw new \RuntimeException("Only active contracts can be placed into dispute (currently '{$locked->status}').");
+                }
+
+                $locked->update([
+                    'status' => 'disputed',
+                    'payment_status' => 'disputed',
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $notify = app(NotificationCenterService::class);
+        $roleTitle = $isBuyer ? 'client' : 'provider';
+
+        $recipientId = $isBuyer ? $contract->vendor?->user_id : $contract->buyer_id;
+        if ($recipientId) {
+            $notify->notifyUser(
+                (int) $recipientId,
+                '⚠️',
+                "Dispute Opened on Contract #{$contract->contract_number}",
+                "The {$roleTitle} has raised a dispute: {$validated['reason']}. Milestone payouts are temporarily on hold.",
+                route('services.contracts.show', $contract),
+                'services_dispute',
+                'contract_disputed_' . $contract->id
+            );
+        }
+
+        return back()->with('warning', 'Dispute registered. Support and both parties have been notified.');
+    }
 }
 
