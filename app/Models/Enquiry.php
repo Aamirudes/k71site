@@ -66,6 +66,16 @@ class Enquiry extends Model
         return $this->status === 'quoted';
     }
 
+    public function isAccepted(): bool
+    {
+        return $this->status === 'accepted';
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === 'cancelled';
+    }
+
     public function isExpired(): bool
     {
         if ($this->status === 'expired') {

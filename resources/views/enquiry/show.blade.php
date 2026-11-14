@@ -40,7 +40,7 @@
                             <span class="px-3.5 py-1 rounded-full bg-[#ECD2F3]/15 border border-[#ECD2F3]/35 text-[#ECD2F3] text-xs font-semibold uppercase tracking-wide">
                                 ● Quotes Received
                             </span>
-                        @elseif($enquiry->isAccepted())
+                        @elseif(method_exists($enquiry, 'isAccepted') ? $enquiry->isAccepted() : ($enquiry->status === 'accepted'))
                             <span class="px-3.5 py-1 rounded-full bg-[#ECD2F3] text-[#1A1018] text-xs font-bold uppercase tracking-wide">
                                 ✓ Deal Finalized
                             </span>
