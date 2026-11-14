@@ -51,26 +51,6 @@
         }
     }
     </script>
-
-    <!-- Synchronous K71 Dynamic Theme Bootstrapper (Zero Flash) -->
-    <script>
-        (function() {
-            try {
-                var stored = localStorage.getItem('k71_theme');
-                var theme = stored === 'light' ? 'light' : 'dark';
-                var doc = document.documentElement;
-                if (theme === 'light') {
-                    doc.classList.add('k71-light-mode');
-                    doc.classList.remove('k71-dark-mode');
-                    doc.setAttribute('data-theme', 'light');
-                } else {
-                    doc.classList.add('k71-dark-mode');
-                    doc.classList.remove('k71-light-mode');
-                    doc.setAttribute('data-theme', 'dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
 </head>
 <body class="grail-marketplace-body min-h-full flex flex-col font-services bg-black text-[#EFE9F2] selection:bg-[#ECD2F3] selection:text-[#1A1018] overflow-x-clip max-w-full w-full" style="font-family: var(--font-grail-sans);">
 
@@ -138,8 +118,6 @@
 
             <!-- Header Quick Actions (Desktop) -->
             <div class="hidden lg:flex items-center gap-3">
-                <x-theme-toggle :grailTheme="true" />
-
                 <a href="{{ route('services.projects.index') }}"
                    class="px-3.5 py-2 rounded-full text-[#EFE9F2]/85 hover:text-[#ECD2F3] text-xs font-semibold transition hover:bg-white/10">
                     Open Projects
@@ -177,7 +155,6 @@
 
             <!-- Mobile Hamburger -->
             <div class="flex lg:hidden items-center gap-2">
-                <x-theme-toggle :grailTheme="true" />
                 <a href="{{ route('services.projects.create') }}"
                    class="px-3.5 py-1.5 rounded-full bg-[#ECD2F3] text-[#1A1018] text-xs font-bold shadow-xs">
                     + Project

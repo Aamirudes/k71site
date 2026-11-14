@@ -49,10 +49,10 @@
                                 </div>
                                 <div>
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <h2 class="grail-display text-xl sm:text-2xl text-current">{{ $currentStore->shop_name }}</h2>
+                                        <h2 class="grail-display text-xl sm:text-2xl text-white">{{ $currentStore->shop_name }}</h2>
                                         <span class="px-2.5 py-0.5 rounded-full bg-[#ECD2F3]/15 text-[#FFCDFF] text-[10px] font-semibold border border-[#ECD2F3]/30">Verified Seller</span>
                                     </div>
-                                    <p class="text-xs text-current opacity-70 mt-1 max-w-xl line-clamp-1">
+                                    <p class="text-xs text-[#EFE9F2]/65 mt-1 max-w-xl line-clamp-1">
                                         {{ $currentStore->description ?: 'Curated fashion collection and verified quality.' }}
                                     </p>
                                 </div>
@@ -77,7 +77,7 @@
                     <div>
                         <p class="grail-eyebrow mb-2">K71 Curated Archive</p>
                         <div class="flex items-baseline gap-3 flex-wrap">
-                            <h1 class="grail-display text-4xl sm:text-5xl lg:text-6xl text-current">
+                            <h1 class="grail-display text-4xl sm:text-5xl lg:text-6xl text-white">
                                 @if(isset($currentCategory) && $currentCategory)
                                     {{ $currentCategory->name }}
                                 @elseif(isset($currentStore) && $currentStore)
@@ -97,11 +97,11 @@
                     </div>
 
                     @if(isset($currentCategory) && $currentCategory && $currentCategory->description)
-                        <p class="text-xs sm:text-sm text-current opacity-70 max-w-md leading-relaxed">
+                        <p class="text-xs sm:text-sm text-[#EFE9F2]/65 max-w-md leading-relaxed">
                             {{ $currentCategory->description }}
                         </p>
                     @else
-                        <p class="text-xs sm:text-sm text-current opacity-65 max-w-md leading-relaxed">
+                        <p class="text-xs sm:text-sm text-[#EFE9F2]/60 max-w-md leading-relaxed">
                             Direct from verified Indian ateliers, independent studios, and trusted sellers — secured with PhonePe escrow.
                         </p>
                     @endif

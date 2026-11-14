@@ -111,23 +111,11 @@
             });
         }
     </script>
-    <!-- Synchronous K71 Dynamic Theme Bootstrapper (Zero Flash) -->
+    <!-- Enforce Pure Clean Light Mode on Marketplace -->
     <script>
         (function() {
-            try {
-                var stored = localStorage.getItem('k71_theme');
-                var theme = stored === 'light' ? 'light' : 'dark';
-                var doc = document.documentElement;
-                if (theme === 'light') {
-                    doc.classList.add('k71-light-mode');
-                    doc.classList.remove('k71-dark-mode');
-                    doc.setAttribute('data-theme', 'light');
-                } else {
-                    doc.classList.add('k71-dark-mode');
-                    doc.classList.remove('k71-light-mode');
-                    doc.setAttribute('data-theme', 'dark');
-                }
-            } catch (e) {}
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
         })();
     </script>
 </head>

@@ -139,7 +139,7 @@
                                 <img src="{{ asset('images/k71-logo.png') }}?v=3" alt="K71" class="w-full h-full object-cover">
                             </div>
                             <div class="flex items-baseline gap-1.5 leading-none">
-                                <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-current' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-current' }} transition-colors">
+                                <span class="{{ $grailTheme ? 'font-bold text-xl sm:text-2xl tracking-[-0.02em] text-white' : 'font-sans text-xl sm:text-2xl font-black tracking-tight text-slate-950 group-hover:text-black' }} transition-colors">
                                     K71
                                 </span>
                                 <span class="text-[9px] font-semibold uppercase tracking-[0.16em] {{ $grailTheme ? 'text-[#C9A24A]' : 'text-slate-400 font-mono' }} hidden sm:inline">
@@ -163,9 +163,6 @@
                 <a href="{{ route('catalog.index') }}" class="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold {{ $grailTheme ? (request()->routeIs('catalog.*') ? 'bg-white/15 text-white' : 'text-[#EFE9F2]/80 hover:text-white hover:bg-white/10') : (request()->routeIs('catalog.*') ? 'bg-slate-100 text-slate-950 font-black' : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100') }} transition">
                     <span>Catalog</span>
                 </a>
-
-                <!-- Dark / Light Mode Toggle Jewel -->
-                <x-theme-toggle :grailTheme="$grailTheme" />
 
                 <!-- Direct Messages Quick Access -->
                 <a href="{{ route('messages.index') }}" 

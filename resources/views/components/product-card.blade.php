@@ -187,20 +187,20 @@
         </div>
 
         <!-- Title -->
-        <h3 class="text-[13px] text-current leading-[1.35] mb-1.5 font-semibold line-clamp-2 min-h-[2.7em]">
-            <a href="{{ $cardUrl }}" class="hover:text-[#623562] dark:hover:text-[#ECD2F3] transition-colors">{{ ucfirst($product->title) }}</a>
+        <h3 class="text-[13px] text-[#1A1018] leading-[1.35] mb-1.5 font-semibold line-clamp-2 min-h-[2.7em]">
+            <a href="{{ $cardUrl }}" class="hover:text-[#623562] transition-colors">{{ ucfirst($product->title) }}</a>
         </h3>
         
         <!-- Price Row -->
         <div class="flex items-baseline gap-1.5 flex-wrap mb-2">
-            <span class="text-sm font-bold text-current tabular-nums">
+            <span class="text-sm font-bold text-[#1A1018] tabular-nums">
                 @if($isService)
-                    <span class="text-[10px] text-[#7C4F74] dark:text-[#ECD2F3]/70 font-semibold block w-full">Starting at</span>
+                    <span class="text-[10px] text-[#7C4F74] font-semibold block w-full">Starting at</span>
                 @endif
                 ₹{{ number_format($product->base_price / 100, 0) }}
             </span>
             @if($discount > 0 && !$isService)
-                <span class="text-[10px] text-zinc-400 dark:text-zinc-500 line-through tabular-nums">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
+                <span class="text-[10px] text-zinc-400 line-through tabular-nums">₹{{ number_format($product->compare_at_price / 100, 0) }}</span>
             @endif
         </div>
 

@@ -304,7 +304,7 @@
                                     </div>
 
                                     @if($idx === 0)
-                                        <h1 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-current tracking-tight">
+                                        <h1 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-white tracking-tight">
                                             @foreach($words as $wIdx => $word)
                                                 <span class="grail-mask">
                                                     <span class="grail-word-rise" style="animation-delay: {{ min($wIdx * 75, 520) }}ms;">{{ $word }}</span>
@@ -312,7 +312,7 @@
                                             @endforeach
                                         </h1>
                                     @else
-                                        <h2 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-current tracking-tight">
+                                        <h2 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-white tracking-tight">
                                             @foreach($words as $wIdx => $word)
                                                 <span class="grail-mask">
                                                     <span class="grail-word-rise" style="animation-delay: {{ min($wIdx * 75, 520) }}ms;">{{ $word }}</span>
@@ -549,21 +549,21 @@
                                 <span class="px-3 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] font-bold text-[10px] uppercase tracking-[0.14em]">
                                     Fresh Arrivals
                                 </span>
-                                <span class="text-xs text-current opacity-70 font-semibold">Direct from Verified Sellers</span>
+                                <span class="text-xs text-[#623562] font-semibold">Direct from Verified Sellers</span>
                             </div>
                             @if($useLatestH1)
-                                <h1 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-current">
+                                <h1 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-black">
                                     {{ $latestSectionTitle }}
                                 </h1>
                             @else
-                                <h2 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-current">
+                                <h2 class="grail-display text-[clamp(2rem,4.6vw,3.8rem)] text-black">
                                     {{ $latestSectionTitle }}
                                 </h2>
                             @endif
                         </div>
 
                         <a href="{{ route('catalog.index') }}"
-                           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 dark:bg-white/10 light:bg-slate-100 border border-current/15 text-xs sm:text-sm font-semibold text-current hover:opacity-80 transition">
+                           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white border border-black/12 hover:border-[#623562] text-xs sm:text-sm font-semibold text-black transition">
                             <span>View Entire Catalog</span>
                             <span>&rarr;</span>
                         </a>
@@ -612,12 +612,12 @@
                     <div class="space-y-3">
                         <span class="text-[11px] uppercase tracking-[0.2em] text-[#C9A24A] font-semibold block">Curated Price Corners</span>
                         @if($useBudgetH1)
-                            <h1 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-current">
+                            <h1 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-white">
                                 <span class="grail-line-mask"><span class="grail-line-rise">Shop by Budget</span></span>
                                 <span class="grail-line-mask"><span class="grail-line-rise" style="transition-delay: 95ms;">&amp; Factory Steals</span></span>
                             </h1>
                         @else
-                            <h2 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-current">
+                            <h2 class="grail-display text-[clamp(2rem,4.5vw,3.75rem)] text-white">
                                 <span class="grail-line-mask"><span class="grail-line-rise">Shop by Budget</span></span>
                                 <span class="grail-line-mask"><span class="grail-line-rise" style="transition-delay: 95ms;">&amp; Factory Steals</span></span>
                             </h2>
@@ -625,10 +625,10 @@
                     </div>
 
                     <div class="flex flex-col sm:items-end gap-3">
-                        <p class="text-xs sm:text-sm text-current opacity-70 max-w-sm leading-relaxed sm:text-right">
+                        <p class="text-xs sm:text-sm text-[#EFE9F2]/60 max-w-sm leading-relaxed sm:text-right">
                             Every price tier is directly sourced from verified workshops, ateliers, and wholesale houses.
                         </p>
-                        <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-[#FFCDFF] dark:text-[#FFCDFF] light:text-[#9333EA] hover:opacity-80 transition">
+                        <a href="{{ route('catalog.index') }}" class="inline-flex items-center gap-2 text-xs font-semibold text-[#FFCDFF] hover:text-white transition">
                             <span>All Price Stores</span>
                             <span>&rarr;</span>
                         </a>
@@ -636,7 +636,7 @@
                 </div>
 
                 <!-- 4-Column Hairline Stat Grid -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 border border-current/15 divide-y sm:divide-y-0 sm:divide-x divide-current/15 rounded-2xl overflow-hidden bg-white/5 dark:bg-[#010101] light:bg-white">
+                <div class="grid grid-cols-2 lg:grid-cols-4 border border-white/12 divide-y sm:divide-y-0 sm:divide-x divide-white/12 rounded-2xl overflow-hidden bg-[#010101]">
 
                     <!-- 1. Under ₹199 -->
                     <a href="{{ route('catalog.index', ['max_price' => 199]) }}"
@@ -644,12 +644,12 @@
                        style="--target-fill: 58%;">
                         <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.16em]">
                             <span class="text-[#C9A24A]">Daily Value</span>
-                            <span class="opacity-50 group-hover:opacity-100 transition">&#8599;</span>
+                            <span class="text-[#EFE9F2]/40 group-hover:text-[#FFCDFF] transition">&#8599;</span>
                         </div>
                         <div class="space-y-1.5 relative z-10">
-                            <div class="grail-display text-3xl sm:text-4xl text-current tabular-nums">Under ₹199</div>
-                            <h3 class="text-xs sm:text-sm font-medium text-current opacity-85 group-hover:opacity-100 transition">Under ₹199 Store</h3>
-                            <p class="text-[11px] text-current opacity-60 line-clamp-1">Everyday essentials &amp; accessories</p>
+                            <div class="grail-display text-3xl sm:text-4xl text-white tabular-nums">Under ₹199</div>
+                            <h3 class="text-xs sm:text-sm font-medium text-[#EFE9F2]/70 group-hover:text-white transition">Under ₹199 Store</h3>
+                            <p class="text-[11px] text-[#EFE9F2]/45 line-clamp-1">Everyday essentials &amp; accessories</p>
                         </div>
                     </a>
 
@@ -658,13 +658,13 @@
                        class="grail-stat-tile group p-5 sm:p-7 flex flex-col justify-between min-h-[168px] sm:min-h-[210px] hover:bg-white/[0.03] border-l border-white/12 sm:border-l-0"
                        style="--target-fill: 72%;">
                         <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.16em]">
-                            <span class="text-[#FFCDFF] dark:text-[#FFCDFF] light:text-[#9333EA]">Popular Picks</span>
-                            <span class="opacity-50 group-hover:opacity-100 transition">&#8599;</span>
+                            <span class="text-[#FFCDFF]">Popular Picks</span>
+                            <span class="text-[#EFE9F2]/40 group-hover:text-[#FFCDFF] transition">&#8599;</span>
                         </div>
                         <div class="space-y-1.5 relative z-10">
-                            <div class="grail-display text-3xl sm:text-4xl text-current tabular-nums">Under ₹499</div>
-                            <h3 class="text-xs sm:text-sm font-medium text-current opacity-85 group-hover:opacity-100 transition">Under ₹499 Store</h3>
-                            <p class="text-[11px] text-current opacity-60 line-clamp-1">Trending fashion &amp; gadget picks</p>
+                            <div class="grail-display text-3xl sm:text-4xl text-white tabular-nums">Under ₹499</div>
+                            <h3 class="text-xs sm:text-sm font-medium text-[#EFE9F2]/70 group-hover:text-white transition">Under ₹499 Store</h3>
+                            <p class="text-[11px] text-[#EFE9F2]/45 line-clamp-1">Trending fashion &amp; gadget picks</p>
                         </div>
                     </a>
 
@@ -674,12 +674,12 @@
                        style="--target-fill: 84%;">
                         <div class="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.16em]">
                             <span class="text-[#C9A24A]">Boutiques</span>
-                            <span class="opacity-50 group-hover:opacity-100 transition">&#8599;</span>
+                            <span class="text-[#EFE9F2]/40 group-hover:text-[#FFCDFF] transition">&#8599;</span>
                         </div>
                         <div class="space-y-1.5 relative z-10">
-                            <div class="grail-display text-3xl sm:text-4xl text-current tabular-nums">Under ₹999</div>
-                            <h3 class="text-xs sm:text-sm font-medium text-current opacity-85 group-hover:opacity-100 transition">Under ₹999 Store</h3>
-                            <p class="text-[11px] text-current opacity-60 line-clamp-1">Marble handicrafts &amp; ethnic wear</p>
+                            <div class="grail-display text-3xl sm:text-4xl text-white tabular-nums">Under ₹999</div>
+                            <h3 class="text-xs sm:text-sm font-medium text-[#EFE9F2]/70 group-hover:text-white transition">Under ₹999 Store</h3>
+                            <p class="text-[11px] text-[#EFE9F2]/45 line-clamp-1">Marble handicrafts &amp; ethnic wear</p>
                         </div>
                     </a>
 
@@ -706,13 +706,13 @@
              ACT 3: ORCHID INK-FLOOD TRANSITION (RADIAL BLOOM + SCRUB WORDS)
              ========================================================= -->
         <section class="relative bg-[#000000] py-4 sm:py-8 overflow-hidden" data-pill-zone="orchid">
-            <div class="grail-ink-flood text-current rounded-[24px] mx-0 sm:mx-3 lg:mx-6 px-4 sm:px-8 lg:px-12 py-14 sm:py-20 relative shadow-[0_30px_90px_rgba(233,184,255,0.22)]"
+            <div class="grail-ink-flood text-[#221826] rounded-[24px] mx-0 sm:mx-3 lg:mx-6 px-4 sm:px-8 lg:px-12 py-14 sm:py-20 relative shadow-[0_30px_90px_rgba(233,184,255,0.22)]"
                  data-grail-ink>
 
                 <div class="max-w-7xl mx-auto space-y-10 sm:space-y-12">
 
                     <!-- Colontitle Header on Orchid -->
-                    <div class="flex items-center justify-between text-[11px] font-medium text-current opacity-75 tracking-wide uppercase">
+                    <div class="flex items-center justify-between text-[11px] font-medium text-[#623562]/85 tracking-wide uppercase">
                         <span>Act III • Verified Indian Ecosystem</span>
                         <span class="hidden sm:inline">Scroll-Triggered Motion</span>
                     </div>
@@ -722,7 +722,7 @@
                         @php
                             $scrubWords = ['Six', 'verticals,', 'one', 'trusted', 'network', 'for', 'makers,', 'kitchens', '&', 'buyers.'];
                         @endphp
-                        <h2 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-current leading-[0.92]">
+                        <h2 class="grail-display grail-heading-flex text-[clamp(2.25rem,5.2vw,4.5rem)] text-[#221826] leading-[0.92]">
                             @foreach($scrubWords as $sIdx => $sWord)
                                 <span class="grail-scrub-word" style="--i: {{ $sIdx }};">{{ $sWord }}</span>
                             @endforeach
@@ -743,7 +743,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <span class="px-2.5 py-0.5 rounded-full bg-[#221826] text-[#FFCDFF] text-[10px] font-bold uppercase tracking-wider">LIVE REELS</span>
-                                        <h3 class="text-lg sm:text-2xl font-bold text-current tracking-tight">Latest Shorts in Motion</h3>
+                                        <h3 class="text-lg sm:text-2xl font-bold text-[#221826] tracking-tight">Latest Shorts in Motion</h3>
                                     </div>
                                     <p class="text-xs sm:text-sm text-[#623562] mt-1">Watch products firsthand with instant 1-tap checkout</p>
                                 </div>
@@ -840,15 +840,15 @@
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] dark:text-[#C9A24A] block mb-1">K71 Food</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-current">{{ $foodHomeTitle }}</h2>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">K71 Food</span>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">{{ $foodHomeTitle }}</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
-                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-white/10 border border-current/10 flex items-center justify-center text-2xl">🍲</div>
+                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">🍲</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-current opacity-70">{{ $foodHomeSub }}</p>
-                                <a href="{{ k71_vertical_url('food') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-current hover:opacity-75 transition">
+                                <p class="text-xs sm:text-sm text-black/65">{{ $foodHomeSub }}</p>
+                                <a href="{{ k71_vertical_url('food') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>Explore All Menus</span>
                                     <span>&rarr;</span>
                                 </a>
@@ -899,10 +899,10 @@
                                     </div>
                                     <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                                         <div>
-                                            <h3 class="font-bold text-xs sm:text-sm text-current group-hover:text-[#ECD2F3] transition line-clamp-1">{{ $rTitle }}</h3>
-                                            <p class="text-[11px] opacity-75 font-medium mt-0.5 truncate">{{ $rSub }}</p>
+                                            <h3 class="font-bold text-xs sm:text-sm text-black group-hover:text-[#623562] transition line-clamp-1">{{ $rTitle }}</h3>
+                                            <p class="text-[11px] text-[#623562]/80 font-medium mt-0.5 truncate">{{ $rSub }}</p>
                                         </div>
-                                        <div class="pt-2.5 mt-2.5 border-t border-current/10 flex items-center justify-between text-xs font-bold text-current">
+                                        <div class="pt-2.5 mt-2.5 border-t border-black/8 flex items-center justify-between text-xs font-bold text-[#1A1018]">
                                             <span>{{ $isVendor ? 'View Menu' : 'Order Dish' }}</span>
                                             <span class="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
                                         </div>
@@ -922,15 +922,15 @@
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] dark:text-[#C9A24A] block mb-1">Pro Network</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-current">{{ $servicesHomeTitle }}</h2>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Pro Network</span>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">{{ $servicesHomeTitle }}</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
-                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-white/10 border border-current/10 flex items-center justify-center text-2xl">⚡</div>
+                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">⚡</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-current opacity-70">{{ $servicesHomeSub }}</p>
-                                <a href="{{ k71_vertical_url('services') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-current hover:opacity-75 transition">
+                                <p class="text-xs sm:text-sm text-black/65">{{ $servicesHomeSub }}</p>
+                                <a href="{{ k71_vertical_url('services') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>All Services</span>
                                     <span>&rarr;</span>
                                 </a>
@@ -944,20 +944,20 @@
                                     $startingPrice = $basicPkg ? $basicPkg->price : ($service->base_price / 100);
                                 @endphp
                                 <a href="{{ route('services.show', $service->slug) }}"
-                                   class="grail-card-reveal group bg-white/5 dark:bg-[#141419] rounded-2xl border border-current/10 hover:border-[#ECD2F3]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                                   class="grail-card-reveal group bg-white rounded-2xl border border-black/8 hover:border-[#623562]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
                                    style="--delay: {{ $svIdx * 65 }}ms;">
-                                    <div class="relative aspect-video overflow-hidden bg-black/20">
+                                    <div class="relative aspect-video overflow-hidden bg-[#F4F1EC]">
                                         <img src="{{ $service->primary_image_url }}" alt="{{ $service->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                         <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-[#1A1018] text-[#ECD2F3] text-[9px] font-bold uppercase tracking-wider">Vetted</span>
                                     </div>
                                     <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
                                         <div>
-                                            <span class="text-[10px] font-semibold text-[#837052] dark:text-[#C9A24A] block truncate">{{ $service->vendor?->shop_name ?? 'Specialist' }}</span>
-                                            <h3 class="font-semibold text-xs sm:text-sm text-current group-hover:text-[#ECD2F3] transition truncate mt-0.5">{{ $service->title }}</h3>
+                                            <span class="text-[10px] font-semibold text-[#837052] block truncate">{{ $service->vendor?->shop_name ?? 'Specialist' }}</span>
+                                            <h3 class="font-semibold text-xs sm:text-sm text-black group-hover:text-[#623562] transition truncate mt-0.5">{{ $service->title }}</h3>
                                         </div>
-                                        <div class="pt-2.5 mt-2.5 border-t border-current/10 flex items-center justify-between">
-                                            <span class="text-xs font-bold text-current tabular-nums">From ₹{{ number_format($startingPrice) }}</span>
-                                            <span class="text-[11px] font-semibold text-[#ECD2F3] dark:text-[#ECD2F3] light:text-[#9333EA]">Book &rarr;</span>
+                                        <div class="pt-2.5 mt-2.5 border-t border-black/8 flex items-center justify-between">
+                                            <span class="text-xs font-bold text-black tabular-nums">From ₹{{ number_format($startingPrice) }}</span>
+                                            <span class="text-[11px] font-semibold text-[#623562]">Book &rarr;</span>
                                         </div>
                                     </div>
                                 </a>
@@ -971,15 +971,15 @@
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] dark:text-[#C9A24A] block mb-1">Re-Commerce</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-current">Inspected Pre-Owned</h2>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Re-Commerce</span>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">Inspected Pre-Owned</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
-                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-white/10 border border-current/10 flex items-center justify-center text-2xl">♻️</div>
+                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">♻️</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right space-y-2">
-                                <p class="text-xs sm:text-sm text-current opacity-70">Pre-owned smartphones, laptops, studio gear &amp; local marketplace finds.</p>
-                                <a href="{{ k71_vertical_url('used') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-current hover:opacity-75 transition">
+                                <p class="text-xs sm:text-sm text-black/65">Pre-owned smartphones, laptops, studio gear &amp; local marketplace finds.</p>
+                                <a href="{{ k71_vertical_url('used') }}" class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">
                                     <span>All Used Deals</span>
                                     <span>&rarr;</span>
                                 </a>
@@ -989,13 +989,13 @@
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-5" data-grail-reveal>
                             @foreach($featuredUsed->take(4) as $uIdx => $item)
                                 <a href="{{ route('used.show', $item->slug) }}"
-                                   class="grail-card-reveal group bg-white/5 dark:bg-[#141419] rounded-2xl border border-current/10 hover:border-[#ECD2F3]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
+                                   class="grail-card-reveal group bg-white rounded-2xl border border-black/8 hover:border-[#623562]/40 hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col justify-between"
                                    style="--delay: {{ $uIdx * 65 }}ms;">
-                                    <div class="relative aspect-square overflow-hidden bg-black/20">
+                                    <div class="relative aspect-square overflow-hidden bg-[#F4F1EC]">
                                         @if($item->hasUploadedImages())
                                             <img src="{{ $item->primary_image_url }}" alt="{{ $item->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                         @else
-                                            <div class="w-full h-full flex flex-col items-center justify-center text-current opacity-40 bg-white/5">
+                                            <div class="w-full h-full flex flex-col items-center justify-center text-black/35 bg-[#EFECE6]">
                                                 <span class="text-3xl">📷</span>
                                                 <span class="text-[10px] font-semibold mt-1">No photo uploaded</span>
                                             </div>
@@ -1005,9 +1005,9 @@
                                         </span>
                                     </div>
                                     <div class="p-3.5">
-                                        <h4 class="text-xs sm:text-sm font-semibold text-current truncate group-hover:text-[#ECD2F3] transition">{{ $item->title }}</h4>
-                                        <div class="text-sm font-bold text-current mt-1 tabular-nums">{{ $item->formatted_base_price }}</div>
-                                        <span class="text-[10px] text-current opacity-60 block mt-0.5">📍 {{ $item->city_label }}</span>
+                                        <h4 class="text-xs sm:text-sm font-semibold text-black truncate group-hover:text-[#623562] transition">{{ $item->title }}</h4>
+                                        <div class="text-sm font-bold text-black mt-1 tabular-nums">{{ $item->formatted_base_price }}</div>
+                                        <span class="text-[10px] text-black/50 block mt-0.5">📍 {{ $item->city_label }}</span>
                                     </div>
                                 </a>
                             @endforeach
@@ -1020,39 +1020,39 @@
                     <div class="space-y-6">
                         <div class="grail-split-row pt-6 grid grid-cols-1 md:grid-cols-12 gap-4 items-center" data-grail-split>
                             <div class="grail-split-left md:col-span-5">
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] dark:text-[#C9A24A] block mb-1">Wholesale Desk</span>
-                                <h2 class="grail-display text-3xl sm:text-4xl text-current">Live B2B Enquiries</h2>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#837052] block mb-1">Wholesale Desk</span>
+                                <h2 class="grail-display text-3xl sm:text-4xl text-black">Live B2B Enquiries</h2>
                             </div>
                             <div class="hidden md:flex md:col-span-2 justify-center">
-                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-white/10 border border-current/10 flex items-center justify-center text-2xl">📋</div>
+                                <div class="grail-split-media w-14 h-14 rounded-2xl bg-[#F4F1EC] border border-black/10 flex items-center justify-center text-2xl">📋</div>
                             </div>
                             <div class="grail-split-right md:col-span-5 md:text-right flex flex-col md:items-end gap-2">
-                                <p class="text-xs sm:text-sm text-current opacity-70">Post factory requirements or quote directly on wholesale buyer leads.</p>
+                                <p class="text-xs sm:text-sm text-black/65">Post factory requirements or quote directly on wholesale buyer leads.</p>
                                 <div class="flex items-center gap-2.5">
                                     <a href="{{ route('enquiry.create') }}" class="px-4 py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#EFE9F2] text-xs font-semibold transition">+ Post RFQ</a>
-                                    <a href="{{ k71_vertical_url('enquiry') }}" class="text-xs sm:text-sm font-semibold text-current hover:opacity-75 transition">All RFQs &rarr;</a>
+                                    <a href="{{ k71_vertical_url('enquiry') }}" class="text-xs sm:text-sm font-semibold text-black hover:text-[#623562] transition">All RFQs &rarr;</a>
                                 </div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" data-grail-reveal>
                             @foreach($featuredEnquiries->take(4) as $eIdx => $enq)
-                                <div class="grail-card-reveal p-4 sm:p-5 rounded-2xl bg-white/5 dark:bg-[#141419] border border-current/10 flex flex-col justify-between space-y-3"
+                                <div class="grail-card-reveal p-4 sm:p-5 rounded-2xl bg-white border border-black/8 flex flex-col justify-between space-y-3"
                                      style="--delay: {{ $eIdx * 65 }}ms;">
                                     <div>
-                                        <div class="flex items-center justify-between text-[10px] text-current opacity-60 font-mono">
+                                        <div class="flex items-center justify-between text-[10px] text-black/50 font-mono">
                                             <span>#{{ $enq->enquiry_number }}</span>
-                                            <span class="px-2 py-0.5 rounded-full bg-white/10 text-current font-bold uppercase">{{ $enq->status }}</span>
+                                            <span class="px-2 py-0.5 rounded-full bg-[#F4F1EC] text-[#221826] font-bold uppercase">{{ $enq->status }}</span>
                                         </div>
-                                        <h4 class="text-xs sm:text-sm font-semibold text-current mt-2 line-clamp-2">{{ $enq->title }}</h4>
-                                        <div class="mt-2 text-[11px] text-current opacity-70 flex items-center gap-2">
-                                            <span>Qty: <strong class="text-current">{{ $enq->quantity }}</strong></span>
+                                        <h4 class="text-xs sm:text-sm font-semibold text-black mt-2 line-clamp-2">{{ $enq->title }}</h4>
+                                        <div class="mt-2 text-[11px] text-black/60 flex items-center gap-2">
+                                            <span>Qty: <strong class="text-black">{{ $enq->quantity }}</strong></span>
                                             <span>•</span>
                                             <span>📍 {{ $enq->city }}</span>
                                         </div>
                                     </div>
-                                    <div class="pt-3 border-t border-current/10 flex items-center justify-between text-xs">
-                                        <span class="font-bold text-current tabular-nums">{{ $enq->formatted_budget }}</span>
+                                    <div class="pt-3 border-t border-black/8 flex items-center justify-between text-xs">
+                                        <span class="font-bold text-black tabular-nums">{{ $enq->formatted_budget }}</span>
                                         <a href="{{ route('enquiry.show', $enq->enquiry_number) }}" class="px-3.5 py-1.5 rounded-full bg-[#1A1018] hover:bg-[#623562] text-[#EFE9F2] font-semibold text-[11px] transition">
                                             Quote &rarr;
                                         </a>

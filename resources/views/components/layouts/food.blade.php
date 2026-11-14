@@ -64,26 +64,6 @@
       "currenciesAccepted": "INR"
     }
     </script>
-
-    <!-- Synchronous K71 Dynamic Theme Bootstrapper (Zero Flash) -->
-    <script>
-        (function() {
-            try {
-                var stored = localStorage.getItem('k71_theme');
-                var theme = stored === 'light' ? 'light' : 'dark';
-                var doc = document.documentElement;
-                if (theme === 'light') {
-                    doc.classList.add('k71-light-mode');
-                    doc.classList.remove('k71-dark-mode');
-                    doc.setAttribute('data-theme', 'light');
-                } else {
-                    doc.classList.add('k71-dark-mode');
-                    doc.classList.remove('k71-light-mode');
-                    doc.setAttribute('data-theme', 'dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
 </head>
 
 <body class="grail-marketplace-body bg-black text-[#EFE9F2] font-sans antialiased flex flex-col min-h-screen selection:bg-[#ECD2F3] selection:text-[#1A1018] pb-20 md:pb-0 overflow-x-clip max-w-full w-full"
@@ -197,9 +177,6 @@
                         <span>🏷️</span>
                         <span>Offers</span>
                     </a>
-
-                    <!-- Theme Toggle -->
-                    <x-theme-toggle :grailTheme="true" />
 
                     <!-- User Account / Login -->
                     @auth
