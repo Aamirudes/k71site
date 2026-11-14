@@ -25,6 +25,7 @@ use App\Models\ProjectContract;
 use App\Models\ProjectMilestone;
 use App\Models\ProjectProposal;
 use App\Models\Quote;
+use App\Models\Report;
 use App\Models\Review;
 use App\Models\Role;
 use App\Models\ServiceOrder;
@@ -3716,5 +3717,316 @@ class WorkflowContinuationPassTest extends TestCase
             ->getJson(route('notifications.unread_count'));
         $countAfterRead->assertOk()
             ->assertJsonPath('unread_count', 0);
+    }
+
+    public function test_workflow_90_to_99_trust_reports_reviews_coupons_and_search_suggestions(): void
+    {
+        // -------------------------------------------------------------
+        // Workflow 90: Trust & Safety Report Self Block & Pending Dupe
+        // -------------------------------------------------------------
+        // Self target report blocked
+        $this->actingAs($this->buyer)
+            ->postJson(route('reports.store'), [
+                'reportable_type' => 'user',
+                'reportable_id' => $this->buyer->id,
+                'reason' => 'Self test',
+            ])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'You cannot report your own account or content.');
+
+        // Report another vendor succeeds
+        $reportRes = $this->actingAs($this->buyer)
+            ->postJson(route('reports.store'), [
+                'reportable_type' => 'vendor',
+                'reportable_id' => $this->vendor->id,
+                'reason' => 'Suspicious communication',
+                'details' => 'Vendor asked for direct external payment.',
+            ]);
+        $reportRes->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertDatabaseHas('reports', [
+            'user_id' => $this->buyer->id,
+            'reportable_id' => $this->vendor->id,
+            'status' => 'pending',
+        ]);
+
+        // Duplicate report while pending informs user
+        $dupReportRes = $this->actingAs($this->buyer)
+            ->postJson(route('reports.store'), [
+                'reportable_type' => 'vendor',
+                'reportable_id' => $this->vendor->id,
+                'reason' => 'Suspicious communication again',
+            ]);
+        $dupReportRes->assertOk()
+            ->assertJsonPath('already_reported', true);
+
+        // -------------------------------------------------------------
+        // Workflow 91: Product Reviews Self Block & Rating Updates
+        // -------------------------------------------------------------
+        $reviewProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'Pure Wool Winter Shawl WF91',
+            'slug' => 'pure-wool-winter-shawl-wf91',
+            'description' => 'Authentic handmade shawl',
+            'base_price' => 250000,
+            'total_stock' => 25,
+            'status' => 'active',
+        ]);
+
+        // Seller cannot review own product
+        $this->actingAs($this->vendorUser)
+            ->post(route('reviews.store', $reviewProduct), [
+                'rating' => 5,
+                'body' => 'Self praise review',
+            ])
+            ->assertStatus(403);
+
+        // Buyer leaves valid review
+        $reviewRes = $this->actingAs($this->buyer)
+            ->post(route('reviews.store', $reviewProduct), [
+                'rating' => 5,
+                'title' => 'Stunning craftsmanship',
+                'body' => 'Exceptional warmth and weave quality. Highly recommended!',
+            ]);
+        $reviewRes->assertRedirect();
+        $freshProduct = $reviewProduct->fresh();
+        $this->assertEquals(1, $freshProduct->review_count);
+        $this->assertEquals(5.0, (float) $freshProduct->avg_rating);
+
+        // -------------------------------------------------------------
+        // Workflow 92: Vendor Coupon Creation Constraints & Validation
+        // -------------------------------------------------------------
+        $this->vendor->update([
+            'operating_sectors' => array_unique(array_merge((array) ($this->vendor->operating_sectors ?? []), ['products'])),
+        ]);
+
+        // Percentage over 100 rejected
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.coupons.store'), [
+                'code' => 'SUPER150',
+                'type' => 'percentage',
+                'value' => 150,
+                'starts_at' => now()->toDateString(),
+                'expires_at' => now()->addDays(7)->toDateString(),
+                'per_customer_limit' => 1,
+            ])
+            ->assertSessionHasErrors(['value']);
+
+        // Expiry before start rejected
+        $this->actingAs($this->vendorUser)
+            ->post(route('vendor.coupons.store'), [
+                'code' => 'BACKIN_TIME',
+                'type' => 'percentage',
+                'value' => 10,
+                'starts_at' => now()->addDays(5)->toDateString(),
+                'expires_at' => now()->addDays(2)->toDateString(),
+                'per_customer_limit' => 1,
+            ])
+            ->assertSessionHasErrors(['expires_at']);
+
+        // Valid coupon stored with uppercase code
+        $validCouponRes = $this->actingAs($this->vendorUser)
+            ->post(route('vendor.coupons.store'), [
+                'code' => 'k71fest20',
+                'type' => 'percentage',
+                'value' => 20,
+                'starts_at' => now()->toDateString(),
+                'expires_at' => now()->addDays(30)->toDateString(),
+                'per_customer_limit' => 2,
+            ]);
+        $validCouponRes->assertRedirect();
+        $this->assertDatabaseHas('coupons', [
+            'vendor_id' => $this->vendor->id,
+            'code' => 'K71FEST20',
+            'value' => 20,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 93: Service Workspace Dispute Raising
+        // -------------------------------------------------------------
+        $activeSvcOrder = ServiceOrder::create([
+            'order_number' => 'SO-WF93-DISPUTE',
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'product_id' => $reviewProduct->id,
+            'package_tier' => 'standard',
+            'package_title' => 'Full Brand Identity',
+            'amount' => 300000,
+            'delivery_days' => 7,
+            'status' => 'in_progress',
+            'total_price' => 300000,
+            'subtotal' => 300000,
+        ]);
+
+        $disputeRes = $this->actingAs($this->buyer)
+            ->post(route('services.workspace.dispute', $activeSvcOrder), [
+                'dispute_reason' => 'Vendor stopped responding and missed the agreed final delivery deadline.',
+            ]);
+        $disputeRes->assertRedirect();
+        $this->assertSame('disputed', $activeSvcOrder->fresh()->status);
+        $this->assertDatabaseHas('service_order_messages', [
+            'service_order_id' => $activeSvcOrder->id,
+            'user_id' => $this->buyer->id,
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 94: Account Avatar Upload
+        // -------------------------------------------------------------
+        Storage::fake('public');
+        $avatarFile = UploadedFile::fake()->image('customer_avatar_wf94.jpg', 200, 200);
+        $avatarRes = $this->actingAs($this->buyer)
+            ->post(route('account.avatar'), [
+                'avatar' => $avatarFile,
+            ]);
+        $avatarRes->assertRedirect();
+        $this->assertNotNull($this->buyer->fresh()->avatar);
+
+        // -------------------------------------------------------------
+        // Workflow 95: Used Marketplace Offer Creation & Counter
+        // -------------------------------------------------------------
+        $usedItem = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->vendorUser->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'used',
+            'listing_type' => 'classified',
+            'title' => 'Sony Mirrorless Camera WF95',
+            'slug' => 'sony-mirrorless-camera-wf95',
+            'description' => 'Gently used camera in box',
+            'base_price' => 4500000,
+            'total_stock' => 1,
+            'city' => 'Jaipur',
+            'status' => 'active',
+            'used_status' => 'active',
+        ]);
+
+        $offer = Offer::create([
+            'product_id' => $usedItem->id,
+            'user_id' => $this->buyer->id,
+            'buyer_name' => 'Riya Kapoor',
+            'buyer_phone' => '9829011223',
+            'offer_amount' => 4000000,
+            'status' => 'pending',
+        ]);
+        $this->assertEquals('pending', $offer->status);
+
+        // -------------------------------------------------------------
+        // Workflow 96: Service Project Milestone Flow
+        // -------------------------------------------------------------
+        $milestoneProj = ServiceProject::create([
+            'project_number' => 'PRJ-WF96-001',
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $this->mainCategory->id,
+            'title' => 'Web App Modernization WF96',
+            'slug' => 'web-app-modernization-wf96',
+            'description' => 'Complete overhaul of frontend architecture',
+            'budget_min' => 1000000,
+            'budget_max' => 2000000,
+            'work_mode' => 'remote',
+            'status' => 'in_progress',
+        ]);
+        $milestoneProp = ProjectProposal::create([
+            'project_id' => $milestoneProj->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 1500000,
+            'delivery_days' => 14,
+            'cover_letter' => 'Senior full-stack team ready to start.',
+            'status' => 'hired',
+        ]);
+        $milestoneContract = ProjectContract::create([
+            'contract_number' => 'CON-WF96-001',
+            'project_id' => $milestoneProj->id,
+            'proposal_id' => $milestoneProp->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'agreed_amount' => 1500000,
+            'status' => 'in_progress',
+        ]);
+        $milestone = ProjectMilestone::create([
+            'contract_id' => $milestoneContract->id,
+            'title' => 'Phase 1: Backend APIs',
+            'amount' => 750000,
+            'status' => 'pending',
+            'due_date' => now()->addDays(7),
+        ]);
+        $this->assertEquals('pending', $milestone->status);
+
+        // -------------------------------------------------------------
+        // Workflow 97: Delivery Assignment Lifecycle
+        // -------------------------------------------------------------
+        $fleetRole = Role::firstOrCreate(['name' => 'fleet'], ['display_name' => 'Fleet Rider']);
+        $riderUser = User::factory()->create();
+        $riderUser->roles()->syncWithoutDetaching([$fleetRole->id]);
+        $rider = DeliveryPartner::create([
+            'user_id' => $riderUser->id,
+            'name' => 'Vikram Rider',
+            'phone' => '9829011999',
+            'email' => $riderUser->email,
+            'vehicle_type' => 'bike',
+            'city' => 'Jaipur',
+            'is_verified' => true,
+            'is_online' => true,
+        ]);
+        $deliveryOrder = Order::create([
+            'order_number' => 'K71-WF97-DELV',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 100000,
+            'item_count' => 1,
+            'shipping_amount' => 5000,
+            'tax_amount' => 0,
+            'total_amount' => 105000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'processing',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Plot 44, Civil Lines',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+        $assignment = DeliveryAssignment::create([
+            'order_id' => $deliveryOrder->id,
+            'delivery_partner_id' => $rider->id,
+            'status' => 'assigned',
+            'fare_amount' => 15000,
+        ]);
+        $this->assertEquals('assigned', $assignment->status);
+
+        // -------------------------------------------------------------
+        // Workflow 98: Admin History & Event Logging
+        // -------------------------------------------------------------
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $historyRes = $this->actingAs($adminUser)
+            ->get(route('admin.vendor_management.history'));
+        $historyRes->assertOk();
+        $this->assertNotNull($historyRes->viewData('events'));
+        $this->assertNotNull($historyRes->viewData('renewalRequests'));
+
+        // -------------------------------------------------------------
+        // Workflow 99: Catalog Suggest with Underscores
+        // -------------------------------------------------------------
+        $specialItem = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'WF99_SpecialEdition Handicraft',
+            'slug' => 'wf99-special-edition-handicraft',
+            'description' => 'Rare artisanal item',
+            'base_price' => 89900,
+            'total_stock' => 5,
+            'status' => 'active',
+        ]);
+        $suggestRes = $this->getJson(route('api.search.suggest', ['q' => 'WF99_SpecialEdition']));
+        $suggestRes->assertOk();
+        $results = collect($suggestRes->json('results'));
+        $this->assertTrue($results->contains('title', 'WF99_SpecialEdition Handicraft'));
     }
 }

@@ -525,7 +525,7 @@ class CatalogController extends Controller
         }
 
         $visibility = app(\App\Services\Monetization\VisibilityService::class);
-        $escapedTerm = addcslashes($term, '%_\\');
+        $escapedTerm = str_replace(['%', '\\'], '', $term);
         $wildcard = '%' . $escapedTerm . '%';
 
         // 1. Matching Verified Stores
