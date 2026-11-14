@@ -40,6 +40,9 @@ class NavigationController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
+            if (!empty($item->image_url) && str_starts_with($item->image_url, '/storage/nav_icons/')) {
+                k71_delete_public_storage(str_replace('/storage/', '', $item->image_url));
+            }
             $path = $request->file('image_file')->store('nav_icons', 'public');
             k71_sync_public_storage($path);
             $validated['image_url'] = '/storage/' . $path;
@@ -78,6 +81,9 @@ class NavigationController extends Controller
         ]);
 
         if ($request->hasFile('image_file')) {
+            if (!empty($item->image_url) && str_starts_with($item->image_url, '/storage/nav_icons/')) {
+                k71_delete_public_storage(str_replace('/storage/', '', $item->image_url));
+            }
             $path = $request->file('image_file')->store('nav_icons', 'public');
             k71_sync_public_storage($path);
             $validated['image_url'] = '/storage/' . $path;
@@ -97,6 +103,9 @@ class NavigationController extends Controller
     {
         $title = $item->title;
         $group = $item->group;
+        if (!empty($item->image_url) && str_starts_with($item->image_url, '/storage/nav_icons/')) {
+            k71_delete_public_storage(str_replace('/storage/', '', $item->image_url));
+        }
         $item->delete();
         NavigationItem::clearAllNavigationCache();
 

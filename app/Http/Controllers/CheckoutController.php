@@ -305,13 +305,16 @@ class CheckoutController extends Controller
         // 1. Capture pre-login session and cart references BEFORE Auth::login() regenerates session
         $preLoginSessionId = session()->getId();
         $cookieCartId = request()->cookie('k71_cart_id');
-        $preLoginCart = Cart::where('session_id', $preLoginSessionId)
-            ->orWhere(function($q) use ($cookieCartId) {
-                if ($cookieCartId) {
-                    $q->where('id', $cookieCartId);
-                }
-            })
-            ->first();
+        $preLoginCart = Cart::where(function ($q) use ($preLoginSessionId, $cookieCartId) {
+            if (!empty($preLoginSessionId)) {
+                $q->where('session_id', $preLoginSessionId);
+            }
+            if ($cookieCartId) {
+                $q->orWhere('id', $cookieCartId);
+            }
+        })
+        ->when(!Auth::check(), fn ($q) => $q->whereNull('user_id'))
+        ->first();
 
         // Seamless Guest Checkout User Resolution:
         if (!Auth::check()) {

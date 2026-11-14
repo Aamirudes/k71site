@@ -37,13 +37,13 @@ class AddressController extends Controller
         $validated = $request->validate([
             'label' => 'required|string|max:30',
             'recipient_name' => 'required|string|max:100',
-            'phone' => 'required|string|max:15',
+            'phone' => ['required', 'string', 'regex:/^[0-9+ -]{10,15}$/'],
             'address_line_1' => 'required|string|max:200',
             'address_line_2' => 'nullable|string|max:200',
             'landmark' => 'nullable|string|max:200',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:50',
-            'pincode' => 'required|string|max:6',
+            'pincode' => ['required', 'string', 'regex:/^[1-9][0-9]{5}$/'],
             'is_default' => 'nullable|boolean',
         ]);
 
@@ -97,13 +97,13 @@ class AddressController extends Controller
         $validated = $request->validate([
             'label' => 'required|string|max:30',
             'recipient_name' => 'required|string|max:100',
-            'phone' => 'required|string|max:15',
+            'phone' => ['required', 'string', 'regex:/^[0-9+ -]{10,15}$/'],
             'address_line_1' => 'required|string|max:200',
             'address_line_2' => 'nullable|string|max:200',
             'landmark' => 'nullable|string|max:200',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:50',
-            'pincode' => 'required|string|max:6',
+            'pincode' => ['required', 'string', 'regex:/^[1-9][0-9]{5}$/'],
             'is_default' => 'nullable|boolean',
         ]);
 

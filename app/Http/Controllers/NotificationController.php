@@ -61,4 +61,16 @@ class NotificationController extends Controller
 
         return back()->with('success', 'All notifications marked as read.');
     }
+
+    /**
+     * Get real-time unread notifications count for nav bell badge.
+     */
+    public function unreadCount(Request $request): JsonResponse
+    {
+        $count = auth()->check() ? auth()->user()->unreadNotifications()->count() : 0;
+        return response()->json([
+            'success' => true,
+            'unread_count' => $count,
+        ]);
+    }
 }

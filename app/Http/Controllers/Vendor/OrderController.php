@@ -232,6 +232,13 @@ class OrderController extends Controller
             return back()->with('error', 'Delivered orders cannot be moved back to an earlier fulfillment status.');
         }
 
+        // Guard: Prevent skipping fulfillment steps for standard retail orders
+        if (!$order->isFoodOrder() && $order->order_type !== 'takeaway' && $order->order_type !== 'food_takeaway') {
+            if ($oldStatus === 'pending' && $newStatus === 'delivered') {
+                return back()->with('error', 'Orders must be processed or dispatched before marking as delivered.');
+            }
+        }
+
         if ($order->isFoodOrder()) {
             $foodService = app(FoodMarketplaceService::class);
             if (!$foodService->canTransitionFoodOrderStatus($oldStatus, $newStatus)) {

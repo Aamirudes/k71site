@@ -15,6 +15,8 @@ use App\Models\CouponUsage;
 use App\Models\DeliveryAssignment;
 use App\Models\DeliveryPartner;
 use App\Models\Enquiry;
+use App\Models\FoodMenuCategory;
+use App\Models\NavigationItem;
 use App\Models\Offer;
 use App\Models\Order;
 use App\Models\PortfolioProject;
@@ -48,6 +50,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class WorkflowContinuationPassTest extends TestCase
@@ -2460,6 +2463,7 @@ class WorkflowContinuationPassTest extends TestCase
             'user_id' => $this->buyer->id,
             'vendor_id' => $this->vendor->id,
             'subtotal' => 120000,
+            'item_count' => 1,
             'shipping_amount' => 0,
             'tax_amount' => 0,
             'total_amount' => 120000,
@@ -3394,5 +3398,323 @@ class WorkflowContinuationPassTest extends TestCase
             ->putJson(route('cart.update', $cartItem), ['quantity' => 5])
             ->assertOk();
         $this->assertEquals(35000, (int) $cartItem->fresh()->price_at_add);
+    }
+
+    public function test_workflow_80_to_89_checkout_guest_cart_address_pincode_order_transition_and_nav_notifications(): void
+    {
+        // -------------------------------------------------------------
+        // Workflow 80: Checkout Idempotency & Guest Cart Scoping
+        // -------------------------------------------------------------
+        $cartProduct = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'products',
+            'title' => 'Jaipuri Printed Bed Sheet WF80',
+            'slug' => 'jaipuri-printed-bed-sheet-wf80',
+            'description' => 'Pure cotton traditional sheet',
+            'base_price' => 120000,
+            'total_stock' => 50,
+            'status' => 'active',
+        ]);
+        $buyerCart = Cart::create(['user_id' => $this->buyer->id]);
+        $buyerCart->items()->create([
+            'product_id' => $cartProduct->id,
+            'vendor_id' => $this->vendor->id,
+            'quantity' => 1,
+            'price_at_add' => 120000,
+        ]);
+
+        $orderPayload = [
+            'name' => 'Riya Kapoor',
+            'phone' => '9829011223',
+            'address_line_1' => 'Plot 44, Civil Lines',
+            'city' => 'Jaipur',
+            'state' => 'Rajasthan',
+            'pincode' => '302001',
+            'payment_method' => 'cod',
+            'idempotency_key' => 'WF80_IDEMP_TOKEN_' . Str::random(10),
+        ];
+
+        $checkoutRes = $this->actingAs($this->buyer)
+            ->post(route('checkout.process', $this->vendor), $orderPayload);
+        $checkoutRes->assertRedirect();
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'payment_method' => 'cod',
+        ]);
+
+        // -------------------------------------------------------------
+        // Workflow 81: Customer Address Indian PIN & Phone Regex Validation
+        // -------------------------------------------------------------
+        // Invalid pincode with 5 digits or letters rejected
+        $this->actingAs($this->secondBuyer)
+            ->postJson(route('addresses.store'), [
+                'label' => 'Home',
+                'recipient_name' => 'Arjun Verma',
+                'phone' => '9829011223',
+                'address_line_1' => 'Flat 201, Residency Road',
+                'city' => 'Jaipur',
+                'state' => 'Rajasthan',
+                'pincode' => '01234', // invalid
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pincode']);
+
+        // Valid 6-digit pincode stored as default
+        $addrRes = $this->actingAs($this->secondBuyer)
+            ->postJson(route('addresses.store'), [
+                'label' => 'Home',
+                'recipient_name' => 'Arjun Verma',
+                'phone' => '9829011223',
+                'address_line_1' => 'Flat 201, Residency Road',
+                'city' => 'Jaipur',
+                'state' => 'Rajasthan',
+                'pincode' => '302001',
+                'is_default' => true,
+            ]);
+        $addrRes->assertStatus(201);
+        $addrId = $addrRes->json('address.id');
+
+        // Other customer cannot update this address (IDOR guard)
+        $this->actingAs($this->buyer)
+            ->putJson(route('addresses.update', $addrId), [
+                'label' => 'Hacked',
+                'recipient_name' => 'Attacker',
+                'phone' => '9829011223',
+                'address_line_1' => 'Attacker Address',
+                'city' => 'Jaipur',
+                'state' => 'Rajasthan',
+                'pincode' => '302001',
+            ])
+            ->assertStatus(403);
+
+        // -------------------------------------------------------------
+        // Workflow 82: Admin Navigation Storage Asset Management
+        // -------------------------------------------------------------
+        Storage::fake('public');
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['display_name' => 'Admin']);
+        $adminUser = User::factory()->create();
+        $adminUser->roles()->syncWithoutDetaching([$adminRole->id]);
+
+        $navFile = UploadedFile::fake()->image('nav_icon_wf82.png');
+        $this->actingAs($adminUser)
+            ->post(route('admin.navigation.store'), [
+                'group' => 'mobile_bottom',
+                'title' => 'Explore WF82',
+                'url' => '/explore',
+                'icon_type' => 'image',
+                'image_file' => $navFile,
+                'is_active' => true,
+            ])
+            ->assertRedirect();
+        $navItem = NavigationItem::where('title', 'Explore WF82')->first();
+        $this->assertNotNull($navItem);
+        $this->assertStringStartsWith('/storage/nav_icons/', (string) $navItem->image_url);
+
+        // Destroy deletes item cleanly
+        $this->actingAs($adminUser)
+            ->delete(route('admin.navigation.destroy', $navItem))
+            ->assertRedirect();
+        $this->assertDatabaseMissing('navigation_items', ['id' => $navItem->id]);
+
+        // -------------------------------------------------------------
+        // Workflow 83: Vendor Retail Order Fulfillment Jump Prevention
+        // -------------------------------------------------------------
+        $retailOrder = Order::create([
+            'order_number' => 'K71-WF83-TEST',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 120000,
+            'item_count' => 1,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 120000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Plot 44, Civil Lines',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+
+        // Moving directly from pending to delivered on a retail order is rejected
+        $jumpRes = $this->actingAs($this->vendorUser)
+            ->put(route('vendor.orders.status', $retailOrder), [
+                'status' => 'delivered',
+            ]);
+        $jumpRes->assertRedirect();
+        $jumpRes->assertSessionHas('error');
+        $this->assertSame('pending', $retailOrder->fresh()->status);
+
+        // Moving to processing succeeds
+        $this->actingAs($this->vendorUser)
+            ->put(route('vendor.orders.status', $retailOrder), [
+                'status' => 'processing',
+            ])
+            ->assertRedirect();
+        $this->assertSame('processing', $retailOrder->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 84: Vendor Food Menu Category Lifecycle & Toggle
+        // -------------------------------------------------------------
+        $this->vendor->update([
+            'operating_sectors' => array_unique(array_merge((array) ($this->vendor->operating_sectors ?? []), ['food'])),
+        ]);
+        $foodCatRes = $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.food.categories.store'), [
+                'name' => 'Chef Specials WF84',
+                'description' => 'Signature regional curries',
+                'sort_order' => 1,
+                'is_active' => true,
+            ]);
+        $foodCatRes->assertStatus(201);
+        $foodCatId = $foodCatRes->json('category.id');
+
+        // Toggle kitchen orders
+        $toggleRes = $this->actingAs($this->vendorUser)
+            ->postJson(route('vendor.food.toggle_orders'), [
+                'is_accepting_food_orders' => false,
+                'paused_reason' => 'Kitchen busy preparing evening catering orders.',
+            ]);
+        $toggleRes->assertOk()
+            ->assertJsonPath('is_accepting_food_orders', false);
+
+        // -------------------------------------------------------------
+        // Workflow 85: Unified Customer Listings Hub
+        // -------------------------------------------------------------
+        $listingsRes = $this->actingAs($this->buyer)
+            ->get(route('account.listings'));
+        $listingsRes->assertOk();
+        $this->assertNotNull($listingsRes->viewData('usedAds'));
+        $this->assertNotNull($listingsRes->viewData('services'));
+
+        // -------------------------------------------------------------
+        // Workflow 86: Service Booking Double Booking Slot Guard
+        // -------------------------------------------------------------
+        $serviceListing = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $this->mainCategory->id,
+            'vertical' => 'services',
+            'listing_type' => 'booking',
+            'title' => 'Home Interior Consultation WF86',
+            'slug' => 'home-interior-consultation-wf86',
+            'description' => 'One-on-one architectural planning',
+            'base_price' => 200000,
+            'total_stock' => 10,
+            'status' => 'active',
+        ]);
+
+        Booking::create([
+            'booking_number' => 'BK-WF86-001',
+            'product_id' => $serviceListing->id,
+            'vendor_id' => $this->vendor->id,
+            'user_id' => $this->buyer->id,
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'service_address' => 'Plot 44, Civil Lines, Jaipur',
+            'booking_date' => now()->toDateString(),
+            'booking_slot' => '10:00 AM - 11:00 AM',
+            'total_amount' => 200000,
+            'status' => 'confirmed',
+        ]);
+
+        // Attempting another booking on the same service slot throws error
+        $dupBookingRes = $this->actingAs($this->secondBuyer)
+            ->post(route('services.book', $serviceListing), [
+                'customer_name' => 'Arjun Verma',
+                'customer_phone' => '9829011223',
+                'service_address' => 'Residency Road, Jaipur',
+                'booking_date' => now()->toDateString(),
+                'booking_slot' => '10:00 AM - 11:00 AM',
+            ]);
+        $dupBookingRes->assertRedirect();
+        $dupBookingRes->assertSessionHas('error');
+
+        // -------------------------------------------------------------
+        // Workflow 87: Vendor Payout Lock on Rejection
+        // -------------------------------------------------------------
+        $paidOutOrder = Order::create([
+            'order_number' => 'K71-WF87-PAID',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 150000,
+            'item_count' => 1,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 150000,
+            'payment_method' => 'upi',
+            'payment_status' => 'paid',
+            'vendor_payout_status' => 'paid', // already paid out
+            'status' => 'processing',
+            'address_snapshot' => ['city' => 'Jaipur'],
+            'customer_name' => 'Riya Kapoor',
+            'customer_phone' => '9829011223',
+            'shipping_address_line_1' => 'Civil Lines',
+            'shipping_city' => 'Jaipur',
+            'shipping_state' => 'Rajasthan',
+            'shipping_pincode' => '302001',
+        ]);
+
+        $rejectRes = $this->actingAs($this->vendorUser)
+            ->post(route('vendor.orders.reject', $paidOutOrder), [
+                'rejection_reason' => 'Item defective',
+            ]);
+        $rejectRes->assertRedirect();
+        $rejectRes->assertSessionHas('error');
+        $this->assertSame('processing', $paidOutOrder->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 88: Multi-Vertical Wishlist Toggle & Json Catalog
+        // -------------------------------------------------------------
+        $wishToggle1 = $this->actingAs($this->buyer)
+            ->postJson(route('wishlist.toggle'), ['product_id' => $cartProduct->id]);
+        $wishToggle1->assertOk()
+            ->assertJsonPath('action', 'added')
+            ->assertJsonPath('is_wishlisted', true);
+
+        $wishJsonRes = $this->actingAs($this->buyer)
+            ->getJson(route('wishlist.json'));
+        $wishJsonRes->assertOk()
+            ->assertJsonPath('count', 1);
+
+        $wishToggle2 = $this->actingAs($this->buyer)
+            ->postJson(route('wishlist.toggle'), ['product_id' => $cartProduct->id]);
+        $wishToggle2->assertOk()
+            ->assertJsonPath('action', 'removed')
+            ->assertJsonPath('is_wishlisted', false);
+
+        // -------------------------------------------------------------
+        // Workflow 89: Real-time Unread Notification Count Endpoint
+        // -------------------------------------------------------------
+        $beforeCount = $this->buyer->unreadNotifications()->count();
+        app(\App\Services\NotificationCenterService::class)->notifyUser(
+            (int) $this->buyer->id,
+            '🔔',
+            'Order Status Notification WF89',
+            'Your package is being prepared by the vendor.',
+            route('notifications.index'),
+            'order'
+        );
+
+        $countRes = $this->actingAs($this->buyer)
+            ->getJson(route('notifications.unread_count'));
+        $countRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('unread_count', $beforeCount + 1);
+
+        $readAllRes = $this->actingAs($this->buyer)
+            ->postJson(route('notifications.read-all'));
+        $readAllRes->assertOk()
+            ->assertJsonPath('unread_count', 0);
+
+        $countAfterRead = $this->actingAs($this->buyer)
+            ->getJson(route('notifications.unread_count'));
+        $countAfterRead->assertOk()
+            ->assertJsonPath('unread_count', 0);
     }
 }
