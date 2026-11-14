@@ -1123,5 +1123,98 @@ class OrderController extends Controller
 
         return view('vendor.delivery-partners.index', compact('vendor', 'partners', 'activeOrdersNeedingDispatch'));
     }
+
+    /**
+     * Bulk update order statuses for the authenticated vendor (e.g. bulk pack or mark shipped).
+     */
+    public function bulkUpdateStatus(Request $request): \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
+    {
+        $vendor = auth()->user()?->vendor;
+        if (!$vendor) {
+            abort(403, 'Unauthorized vendor account.');
+        }
+
+        $validated = $request->validate([
+            'order_ids' => 'required|array|min:1|max:50',
+            'order_ids.*' => 'integer|exists:orders,id',
+            'status' => 'required|string|in:processing,ready_for_pickup,shipped,delivered',
+        ]);
+
+        $newStatus = $validated['status'];
+        $orderIds = $validated['order_ids'];
+
+        $orders = Order::where('vendor_id', $vendor->id)
+            ->whereIn('id', $orderIds)
+            ->get();
+
+        $updatedCount = 0;
+        $skippedCount = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($orders as $order) {
+                // Guard: cannot reopen cancelled or change delivered orders
+                if ($order->status === 'cancelled' || $order->status === 'delivered') {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $oldStatus = $order->status;
+                if ($oldStatus === $newStatus) {
+                    $skippedCount++;
+                    continue;
+                }
+
+                $updateData = ['status' => $newStatus];
+                if ($newStatus === 'processing' && !$order->packed_at) {
+                    $updateData['packed_at'] = now();
+                }
+
+                $order->update($updateData);
+
+                OrderStatusLog::create([
+                    'order_id' => $order->id,
+                    'from_status' => $oldStatus,
+                    'to_status' => $newStatus,
+                    'actor_type' => 'vendor',
+                    'actor_id' => auth()->id(),
+                    'note' => "Bulk status updated to {$newStatus}",
+                    'ip_address' => $request->ip(),
+                ]);
+
+                if ($order->user_id) {
+                    app(NotificationCenterService::class)->notifyUser(
+                        (int) $order->user_id,
+                        '📦',
+                        "Order #{$order->order_number} Updated",
+                        'Your order status is now ' . ucfirst(str_replace('_', ' ', $newStatus)) . '.',
+                        route('orders.show', $order),
+                        'order_status'
+                    );
+                }
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            $msg = 'Failed to bulk update orders: ' . $e->getMessage();
+            return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 500) : back()->with('error', $msg);
+        }
+
+        $msg = "{$updatedCount} order(s) updated to " . ucfirst(str_replace('_', ' ', $newStatus)) . ($skippedCount > 0 ? " ({$skippedCount} skipped)." : ".");
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'updated_count' => $updatedCount,
+                'skipped_count' => $skippedCount,
+                'status' => $newStatus,
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
 }
 

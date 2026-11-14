@@ -409,7 +409,7 @@ class EnquiryController extends Controller
     /**
      * Vendor submits or updates a quote on an enquiry.
      */
-    public function vendorQuote(Request $request, Enquiry $enquiry): RedirectResponse
+    public function vendorQuote(Request $request, Enquiry $enquiry): RedirectResponse|JsonResponse
     {
         $vendor = $request->attributes->get('current_vendor') ?? auth()->user()?->vendor;
         if (!$vendor) {
@@ -490,13 +490,22 @@ class EnquiryController extends Controller
             'b2b_quote'
         );
 
-        return back()->with('success', "Your quotation of ₹" . number_format($quote->quote_amount / 100, 2) . " has been submitted to the buyer.");
+        $msg = "Your quotation of ₹" . number_format($quote->quote_amount / 100, 2) . " has been submitted to the buyer.";
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'quote' => $quote,
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
      * Buyer accepts a quotation.
      */
-    public function acceptQuote(Request $request, Quote $quote): RedirectResponse
+    public function acceptQuote(Request $request, Quote $quote): RedirectResponse|JsonResponse
     {
         $enquiry = $quote->enquiry;
         if (!$enquiry || (int) $quote->enquiry_id !== (int) $enquiry->id) {
@@ -579,7 +588,16 @@ class EnquiryController extends Controller
             'b2b_quote'
         );
 
-        return back()->with('success', "You have accepted the quotation from {$quote->vendor->shop_name}. You can now coordinate final fulfillment via WhatsApp or direct call.");
+        $msg = "You have accepted the quotation from {$quote->vendor->shop_name}. You can now coordinate final fulfillment via WhatsApp or direct call.";
+        if ($request->wantsJson() || $request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'quote' => $quote->fresh(),
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**

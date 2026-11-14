@@ -12,6 +12,7 @@ use App\Models\ProjectProposal;
 use App\Models\ServiceProject;
 use App\Services\MediaUploadService;
 use App\Services\NotificationCenterService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -479,13 +480,23 @@ class ProjectMarketplaceController extends Controller
             ->with('success', 'Contract activated! ' . $proposal->vendor->shop_name . ' has been hired and project milestones created.');
     }
 
-    public function showContract(ProjectContract $contract): View
+    public function showContract(Request $request, ProjectContract $contract): View|JsonResponse
     {
         Gate::authorize('view', $contract);
         $contract->load(['project.category', 'proposal', 'buyer', 'vendor', 'milestones']);
 
         $isBuyer = auth()->id() === $contract->buyer_id;
         $isVendor = auth()->user()?->vendor?->id === $contract->vendor_id;
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'contract' => $contract,
+                'milestones' => $contract->milestones,
+                'is_buyer' => $isBuyer,
+                'is_vendor' => $isVendor,
+            ]);
+        }
 
         return view('services.contracts.show', compact('contract', 'isBuyer', 'isVendor'));
     }
@@ -762,6 +773,74 @@ class ProjectMarketplaceController extends Controller
         }
 
         return back()->with('warning', 'Dispute registered. Support and both parties have been notified.');
+    }
+
+    /**
+     * Cancel an active or paused contract before milestones are approved.
+     */
+    public function cancelContract(Request $request, ProjectContract $contract): RedirectResponse|JsonResponse
+    {
+        $user = auth()->user();
+        $isBuyer = (int) $contract->buyer_id === (int) $user->id;
+        $isVendor = $contract->vendor && (int) $contract->vendor->user_id === (int) $user->id;
+
+        if (!$isBuyer && !$isVendor && !$user->isAdmin()) {
+            abort(403, 'Unauthorized to cancel this contract.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:1000',
+        ]);
+
+        try {
+            DB::transaction(function () use ($contract, $validated) {
+                $locked = ProjectContract::whereKey($contract->id)->lockForUpdate()->firstOrFail();
+
+                if (!in_array($locked->status, ['active', 'paused'], true)) {
+                    throw new \RuntimeException("Only active or paused contracts can be cancelled (currently '{$locked->status}').");
+                }
+
+                // Guard: cannot cancel if any milestone is already approved/released
+                $hasApprovedMilestone = $locked->milestones()->where('status', 'approved')->exists();
+                if ($hasApprovedMilestone) {
+                    throw new \RuntimeException("This contract has approved milestones. Please raise a dispute or complete remaining milestones.");
+                }
+
+                $locked->update([
+                    'status' => 'cancelled',
+                    'payment_status' => 'refunded',
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            $msg = $e->getMessage();
+            return $request->wantsJson() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        $notify = app(NotificationCenterService::class);
+        $roleTitle = $isBuyer ? 'client' : 'provider';
+        $recipientId = $isBuyer ? $contract->vendor?->user_id : $contract->buyer_id;
+
+        if ($recipientId) {
+            $notify->notifyUser(
+                (int) $recipientId,
+                '🚫',
+                "Contract #{$contract->contract_number} Cancelled",
+                "The {$roleTitle} cancelled the contract: {$validated['reason']}. Escrow funds will be refunded.",
+                route('services.contracts.show', $contract),
+                'services_contract_cancelled'
+            );
+        }
+
+        $msg = "Contract #{$contract->contract_number} has been cancelled successfully.";
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'status' => 'cancelled',
+            ]);
+        }
+
+        return back()->with('success', $msg);
     }
 }
 

@@ -204,4 +204,73 @@ class FeastoController extends Controller
 
         return view('feasto.index', compact('categories', 'allProducts', 'initialCartState'));
     }
+
+    /**
+     * Feasto Hyperlocal ETA & Delivery Slot Estimator (Blinkit-style 10-25 min delivery).
+     */
+    public function estimateEta(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $pincode = trim((string) $request->query('pincode', ''));
+        $city = trim((string) $request->query('city', 'Jaipur'));
+
+        $isHyperlocalSupported = false;
+        $etaMinutes = 20;
+        $minEta = 15;
+        $maxEta = 25;
+
+        // Jaipur central delivery hubs
+        $hyperlocalPincodes = [
+            '302001', '302002', '302003', '302004', '302005', '302006',
+            '302015', '302016', '302017', '302018', '302019', '302020',
+            '302021', '302022', '302026', '302029', '302033', '302039'
+        ];
+
+        if ($pincode !== '' && in_array($pincode, $hyperlocalPincodes, true)) {
+            $isHyperlocalSupported = true;
+            $minEta = 10;
+            $maxEta = 20;
+            $etaMinutes = 15;
+        } elseif (strtolower($city) === 'jaipur' || $pincode === '') {
+            $isHyperlocalSupported = true;
+            $minEta = 15;
+            $maxEta = 30;
+            $etaMinutes = 20;
+        }
+
+        $now = now()->timezone('Asia/Kolkata');
+        $slots = [];
+
+        if ($isHyperlocalSupported) {
+            $slots[] = [
+                'id' => 'instant',
+                'label' => "Instant ({$minEta}-{$maxEta} mins)",
+                'eta_text' => "Delivery by " . $now->copy()->addMinutes($maxEta)->format('g:i A'),
+                'is_instant' => true,
+                'available' => true,
+            ];
+
+            // Next slot in 1 hour
+            $nextSlotStart = $now->copy()->addHour()->startOfHour();
+            $slots[] = [
+                'id' => 'scheduled_1',
+                'label' => $nextSlotStart->format('g A') . ' - ' . $nextSlotStart->copy()->addHour()->format('g A'),
+                'eta_text' => 'Today, ' . $nextSlotStart->format('g A') . ' - ' . $nextSlotStart->copy()->addHour()->format('g A'),
+                'is_instant' => false,
+                'available' => true,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'serviceable' => $isHyperlocalSupported,
+            'pincode' => $pincode,
+            'city' => $city,
+            'min_eta_mins' => $minEta,
+            'max_eta_mins' => $maxEta,
+            'eta_display' => "{$minEta}–{$maxEta} MINS",
+            'free_delivery_threshold_rupees' => 199,
+            'delivery_fee_rupees' => 25,
+            'slots' => $slots,
+        ]);
+    }
 }

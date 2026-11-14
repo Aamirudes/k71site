@@ -92,6 +92,7 @@ Route::get('/food/suggest', [FoodController::class, 'suggest'])->middleware('thr
 Route::get('/food/category/{slug}', [FoodController::class, 'category'])->name('food.category');
 Route::get('/food/cuisine/{slug}', [FoodController::class, 'category'])->name('food.cuisine');
 Route::get('/food/restaurant/{slug}', [FoodController::class, 'restaurant'])->name('food.restaurant');
+Route::get('/food/{slug}/live-status', [FoodController::class, 'liveStatus'])->name('food.live_status');
 Route::post('/food/reorder/{order}', [FoodController::class, 'reorder'])->middleware('auth')->name('food.reorder');
 Route::post('/food/orders/{order}/review', [\App\Http\Controllers\ReviewController::class, 'storeFoodReview'])->middleware('auth')->name('food.orders.review');
 
@@ -163,6 +164,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/services/contracts/{contract}/milestones/{milestone}/revision', [\App\Http\Controllers\ProjectMarketplaceController::class, 'requestMilestoneRevision'])->name('services.milestones.revision');
     Route::post('/services/contracts/{contract}/complete', [\App\Http\Controllers\ProjectMarketplaceController::class, 'completeContract'])->name('services.contracts.complete');
     Route::post('/services/contracts/{contract}/dispute', [\App\Http\Controllers\ProjectMarketplaceController::class, 'disputeContract'])->name('services.contracts.dispute');
+    Route::post('/services/contracts/{contract}/cancel', [\App\Http\Controllers\ProjectMarketplaceController::class, 'cancelContract'])->name('services.contracts.cancel');
 });
 Route::get('/services/projects/{project}', [\App\Http\Controllers\ProjectMarketplaceController::class, 'show'])->name('services.projects.show');
 
@@ -556,6 +558,7 @@ Route::get('/storage/{path}', function ($path) {
 
 // Feasto 10-Minute Blinkit-Speed Hyperlocal Commerce
 Route::get('/feasto', [\App\Http\Controllers\FeastoController::class, 'index'])->name('feasto.index');
+Route::get('/feasto/eta', [\App\Http\Controllers\FeastoController::class, 'estimateEta'])->name('feasto.eta');
 Route::get('/feato', [\App\Http\Controllers\FeastoController::class, 'index'])->name('feato.index');
 
 // Earn on K71 by Delivery Partner Fleet

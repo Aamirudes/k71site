@@ -1087,6 +1087,13 @@ class MessageController extends Controller
                 $msgQuery->where('id', '<', $beforeId);
             }
 
+            if ($request->filled('search')) {
+                $searchKey = trim((string) $request->input('search'));
+                if ($searchKey !== '') {
+                    $msgQuery->where('body', 'like', '%' . addcslashes($searchKey, '%_') . '%');
+                }
+            }
+
             $rawMessages = $msgQuery->orderBy('id', 'desc')
                 ->limit($limit)
                 ->get()
@@ -1116,6 +1123,7 @@ class MessageController extends Controller
                     'is_read' => (bool) $m->is_read,
                     'is_edited' => !empty($m->is_edited),
                     'edited_at' => $m->edited_at ?? null,
+                    'reactions' => !empty($m->reactions_json) ? (json_decode($m->reactions_json, true) ?: []) : [],
                     'created_at' => $carbonDate->toIso8601String(),
                     'time_formatted' => $carbonDate->format('g:i A'),
                     'date_header' => $carbonDate->format('M j, Y'),

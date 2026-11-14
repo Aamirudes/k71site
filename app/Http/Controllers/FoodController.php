@@ -144,6 +144,28 @@ class FoodController extends Controller
             $restaurantsQuery->whereHas('settings', fn ($sq) => $sq->whereIn('food_delivery_mode', ['takeaway', 'both']));
         }
 
+        if ($dietary) {
+            $escapedDietary = addcslashes((string) $dietary, '%');
+            if (in_array(strtolower($dietary), ['veg', 'pure_veg', 'vegetarian'], true)) {
+                $restaurantsQuery->where(function ($q) {
+                    $q->whereHas('settings', fn ($sq) => $sq->where('is_pure_veg', true))
+                      ->orWhereHas('products', fn ($pq) => $pq->where('vertical', 'food')->where('status', 'active')->where(function($dq) {
+                          $dq->where('is_pure_veg', true)->orWhere('dietary_label_resolved', 'veg');
+                      }));
+                });
+            } else {
+                $restaurantsQuery->where(function ($q) use ($escapedDietary) {
+                    $q->whereHas('products', fn ($pq) => $pq->where('vertical', 'food')
+                        ->where('status', 'active')
+                        ->where(function ($dq) use ($escapedDietary) {
+                            $dq->where('dietary_label_resolved', 'like', "%{$escapedDietary}%")
+                               ->orWhere('custom_fields->dietary', 'like', "%{$escapedDietary}%");
+                        })
+                    )->orWhereHas('settings', fn ($sq) => $sq->where('cuisine_types', 'like', "%{$escapedDietary}%"));
+                });
+            }
+        }
+
         if ($search) {
             $escapedSearch = addcslashes($search, '%');
             $restaurantsQuery->where(function ($q) use ($escapedSearch) {
@@ -763,5 +785,29 @@ class FoodController extends Controller
     public function category(Request $request, string $slug): \Illuminate\Http\RedirectResponse
     {
         return redirect()->route('food.index', ['cuisine' => $slug]);
+    }
+
+    /**
+     * Check real-time restaurant operational status (accepting orders, opening hours, prep time).
+     */
+    public function liveStatus(Request $request, string $slug): JsonResponse
+    {
+        $vendor = Vendor::where('slug', $slug)
+            ->whereIn('status', ['approved', 'active'])
+            ->with('settings')
+            ->firstOrFail();
+
+        $status = $this->foodService->getRestaurantOperationalStatus($vendor);
+
+        return response()->json([
+            'success' => true,
+            'vendor_id' => $vendor->id,
+            'slug' => $vendor->slug,
+            'shop_name' => $vendor->shop_name,
+            'is_restaurant' => (bool) ($vendor->settings?->is_restaurant ?? false),
+            'is_pure_veg' => (bool) ($vendor->settings?->is_pure_veg ?? false),
+            'avg_prep_time_mins' => (int) ($vendor->settings?->avg_prep_time_mins ?? 30),
+            'operational_status' => $status,
+        ]);
     }
 }

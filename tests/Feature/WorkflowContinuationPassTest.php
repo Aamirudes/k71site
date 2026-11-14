@@ -5246,4 +5246,283 @@ class WorkflowContinuationPassTest extends TestCase
             'status' => 'paused',
         ]);
     }
+
+    public function test_workflow_140_to_149_feasto_food_used_services_chat_b2b_bulk_orders(): void
+    {
+        $vendorRole = Role::firstOrCreate(['name' => 'vendor'], ['slug' => 'vendor']);
+
+        // -------------------------------------------------------------
+        // Workflow 140: Feasto Hyperlocal ETA & Slot Estimator API
+        // -------------------------------------------------------------
+        $feastoEtaRes = $this->getJson(route('feasto.eta', ['pincode' => '302017']));
+        $feastoEtaRes->assertOk();
+        $this->assertTrue($feastoEtaRes->json('success'));
+        $this->assertTrue($feastoEtaRes->json('serviceable'));
+        $this->assertEquals(10, $feastoEtaRes->json('min_eta_mins'));
+        $this->assertEquals(20, $feastoEtaRes->json('max_eta_mins'));
+        $this->assertArrayHasKey('slots', $feastoEtaRes->json());
+        $this->assertNotEmpty($feastoEtaRes->json('slots'));
+
+        // -------------------------------------------------------------
+        // Workflow 141: Food Dietary Filtering
+        // -------------------------------------------------------------
+        $foodVendorUser = User::factory()->create();
+        $foodVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $foodVendor = Vendor::create([
+            'user_id' => $foodVendorUser->id,
+            'shop_name' => 'Jaipur Pure Veg Sweets',
+            'slug' => 'jaipur-pure-veg-sweets-141',
+            'vendor_type' => 'food',
+            'operating_sectors' => ['food'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($foodVendor, 'food');
+        VendorSetting::create([
+            'vendor_id' => $foodVendor->id,
+            'is_restaurant' => true,
+            'is_pure_veg' => true,
+            'avg_prep_time_mins' => 20,
+        ]);
+
+        $foodDietaryRes = $this->getJson(route('food.index', ['dietary' => 'veg']));
+        $foodDietaryRes->assertOk();
+        $this->assertTrue($foodDietaryRes->json('success'));
+
+        // -------------------------------------------------------------
+        // Workflow 142: Food Real-Time Restaurant Operational Status Endpoint
+        // -------------------------------------------------------------
+        $liveStatusRes = $this->getJson(route('food.live_status', $foodVendor->slug));
+        $liveStatusRes->assertOk();
+        $this->assertTrue($liveStatusRes->json('success'));
+        $this->assertEquals($foodVendor->id, $liveStatusRes->json('vendor_id'));
+        $this->assertTrue($liveStatusRes->json('is_pure_veg'));
+        $this->assertArrayHasKey('operational_status', $liveStatusRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 143: Used Classifieds Index JSON API
+        // -------------------------------------------------------------
+        $usedCat = Category::firstOrCreate(
+            ['slug' => 'laptops-143'],
+            ['name' => 'Laptops 143', 'vertical' => 'used', 'vertical_type' => 'used', 'is_active' => true]
+        );
+        $usedAd = Product::create([
+            'vendor_id' => $this->vendor->id,
+            'category_id' => $usedCat->id,
+            'title' => 'MacBook Air M2 16GB',
+            'slug' => 'macbook-air-m2-143',
+            'description' => 'Flawless condition with MagSafe charger',
+            'base_price' => 7500000,
+            'vertical' => 'used',
+            'status' => 'active',
+            'used_status' => 'active',
+            'total_stock' => 1,
+            'is_negotiable' => true,
+        ]);
+
+        $usedIndexRes = $this->getJson(route('used.index'));
+        $usedIndexRes->assertOk();
+        $this->assertTrue($usedIndexRes->json('success'));
+        $this->assertArrayHasKey('items', $usedIndexRes->json());
+        $this->assertArrayHasKey('categories', $usedIndexRes->json());
+
+        // -------------------------------------------------------------
+        // Workflow 144: Used Single Ad Detail JSON API
+        // -------------------------------------------------------------
+        $usedShowRes = $this->getJson(route('used.show', $usedAd->slug));
+        $usedShowRes->assertOk();
+        $this->assertTrue($usedShowRes->json('success'));
+        $this->assertEquals($usedAd->id, $usedShowRes->json('product.id'));
+
+        // -------------------------------------------------------------
+        // Workflow 145: Services Contract Cancellation Workflow
+        // -------------------------------------------------------------
+        $servicesCat = Category::firstOrCreate(
+            ['slug' => 'devops-145'],
+            ['name' => 'DevOps 145', 'vertical' => 'services', 'vertical_type' => 'services', 'is_active' => true]
+        );
+        $project = ServiceProject::create([
+            'buyer_id' => $this->buyer->id,
+            'category_id' => $servicesCat->id,
+            'project_number' => 'PRJ-TEST145',
+            'title' => 'Cloud Migration Setup 145',
+            'slug' => 'cloud-migration-setup-145',
+            'description' => 'AWS Kubernetes and Terraform deployment',
+            'budget_type' => 'fixed',
+            'budget_min' => 500000,
+            'budget_max' => 1000000,
+            'work_mode' => 'remote',
+            'status' => 'in_progress',
+        ]);
+        $proposal = ProjectProposal::create([
+            'project_id' => $project->id,
+            'vendor_id' => $this->vendor->id,
+            'bid_amount' => 700000,
+            'delivery_days' => 5,
+            'cover_letter' => 'DevOps engineer ready to start.',
+            'status' => 'hired',
+        ]);
+        $contract = ProjectContract::create([
+            'contract_number' => 'CON-TEST145',
+            'project_id' => $project->id,
+            'proposal_id' => $proposal->id,
+            'buyer_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'agreed_amount' => 700000,
+            'payment_status' => 'escrow_funded',
+            'status' => 'active',
+            'started_at' => now(),
+        ]);
+
+        $cancelRes = $this->actingAs($this->buyer)->postJson(route('services.contracts.cancel', $contract), [
+            'reason' => 'Client scope changed before project kickoff.',
+        ]);
+        $cancelRes->assertOk();
+        $this->assertTrue($cancelRes->json('success'));
+        $this->assertEquals('cancelled', $contract->fresh()->status);
+        $this->assertEquals('refunded', $contract->fresh()->payment_status);
+
+        // -------------------------------------------------------------
+        // Workflow 146: Services Contract Details JSON API
+        // -------------------------------------------------------------
+        $contractShowRes = $this->actingAs($this->buyer)->getJson(route('services.contracts.show', $contract));
+        $contractShowRes->assertOk();
+        $this->assertTrue($contractShowRes->json('success'));
+        $this->assertEquals($contract->id, $contractShowRes->json('contract.id'));
+
+        // -------------------------------------------------------------
+        // Workflow 147: In-Conversation Search & Reactions in apiGetMessages
+        // -------------------------------------------------------------
+        \App\Http\Controllers\MessageController::ensureChatSchema();
+        $convId = \Illuminate\Support\Facades\DB::table('chat_conversations')->insertGetId([
+            'user_one_id' => min($this->buyer->id, $this->vendorUser->id),
+            'user_two_id' => max($this->buyer->id, $this->vendorUser->id),
+            'status' => 'accepted',
+            'last_message_at' => now()->toDateTimeString(),
+            'requested_by' => $this->buyer->id,
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $convId,
+            'sender_id' => $this->vendorUser->id,
+            'body' => 'Special discount code SECRET10 for you.',
+            'reactions_json' => json_encode([(string)$this->buyer->id => '❤️']),
+            'created_at' => now()->toDateTimeString(),
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('chat_messages')->insertGetId([
+            'conversation_id' => $convId,
+            'sender_id' => $this->buyer->id,
+            'body' => 'Thanks, will place the order now.',
+            'created_at' => now()->toDateTimeString(),
+        ]);
+
+        // Search messages matching "SECRET10"
+        $searchRes = $this->actingAs($this->buyer)->getJson(route('chat.api.messages', [
+            'conversation_id' => $convId,
+            'search' => 'SECRET10',
+        ]));
+        $searchRes->assertOk();
+        $this->assertTrue($searchRes->json('success'));
+        $this->assertCount(1, $searchRes->json('messages'));
+        $this->assertEquals('❤️', $searchRes->json('messages.0.reactions.' . $this->buyer->id));
+
+        // -------------------------------------------------------------
+        // Workflow 148: B2B Quote Submission & Acceptance JSON API
+        // -------------------------------------------------------------
+        $b2bCategory = Category::firstOrCreate(
+            ['slug' => 'industrial-148'],
+            ['name' => 'Industrial 148', 'vertical' => 'enquiry', 'is_active' => true]
+        );
+        $enquiry = \App\Models\Enquiry::create([
+            'user_id' => $this->buyer->id,
+            'category_id' => $b2bCategory->id,
+            'enquiry_number' => 'RFQ-TEST-148',
+            'buyer_name' => 'Arjun Verma',
+            'buyer_phone' => '9829011223',
+            'buyer_email' => 'arjun@example.com',
+            'title' => 'Need 1000 Cotton Canvas Bags',
+            'description' => 'Bulk supply of screen printed cotton tote bags for exhibition',
+            'quantity' => 1000,
+            'unit' => 'Pieces',
+            'target_price' => 5000, // ₹50 each
+            'city' => 'Jaipur',
+            'pincode' => '302017',
+            'status' => 'open',
+            'delivery_timeline_days' => 15,
+        ]);
+
+        $b2bVendorUser = User::factory()->create();
+        $b2bVendorUser->roles()->syncWithoutDetaching([$vendorRole->id]);
+        $b2bVendor = Vendor::create([
+            'user_id' => $b2bVendorUser->id,
+            'shop_name' => 'Rajasthan Canvas Mills',
+            'slug' => 'rajasthan-canvas-mills-148',
+            'vendor_type' => 'b2b',
+            'operating_sectors' => ['enquiry'],
+            'status' => 'approved',
+            'verification_status' => 'verified',
+        ]);
+        $this->grantVendorTestSubscription($b2bVendor, 'enquiry');
+
+        $quoteSubmitRes = $this->actingAs($b2bVendorUser)->postJson(route('vendor.enquiries.quote', $enquiry), [
+            'quote_amount' => 45000,
+            'lead_time_days' => 10,
+            'notes' => 'High quality 280 GSM cotton canvas.',
+        ]);
+        $quoteSubmitRes->assertOk();
+        $this->assertTrue($quoteSubmitRes->json('success'));
+
+        $quote = \App\Models\Quote::where('enquiry_id', $enquiry->id)->first();
+        $this->assertNotNull($quote);
+
+        $acceptQuoteRes = $this->actingAs($this->buyer)->postJson(route('quotes.accept', $quote));
+        $acceptQuoteRes->assertOk();
+        $this->assertTrue($acceptQuoteRes->json('success'));
+        $this->assertEquals('accepted', $quote->fresh()->status);
+        $this->assertEquals('closed', $enquiry->fresh()->status);
+
+        // -------------------------------------------------------------
+        // Workflow 149: Core Commerce Vendor Bulk Order Status Update
+        // -------------------------------------------------------------
+        $bulkOrder1 = Order::create([
+            'order_number' => 'K71-BLK-149-A',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 80000,
+            'item_count' => 1,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 80000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $bulkOrder2 = Order::create([
+            'order_number' => 'K71-BLK-149-B',
+            'user_id' => $this->buyer->id,
+            'vendor_id' => $this->vendor->id,
+            'subtotal' => 95000,
+            'item_count' => 1,
+            'shipping_amount' => 0,
+            'tax_amount' => 0,
+            'total_amount' => 95000,
+            'payment_method' => 'cod',
+            'payment_status' => 'pending',
+            'status' => 'pending',
+            'address_snapshot' => ['city' => 'Jaipur'],
+        ]);
+
+        $bulkUpdateRes = $this->actingAs($this->vendorUser)->postJson(route('vendor.orders.bulk_status'), [
+            'order_ids' => [$bulkOrder1->id, $bulkOrder2->id],
+            'status' => 'processing',
+        ]);
+        $bulkUpdateRes->assertOk();
+        $this->assertTrue($bulkUpdateRes->json('success'));
+        $this->assertEquals(2, $bulkUpdateRes->json('updated_count'));
+        $this->assertEquals('processing', $bulkOrder1->fresh()->status);
+        $this->assertEquals('processing', $bulkOrder2->fresh()->status);
+    }
 }

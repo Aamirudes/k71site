@@ -11,6 +11,7 @@ use App\Models\UsedThread;
 use App\Models\Vendor;
 use App\Models\Wishlist;
 use App\Services\Used\UsedMarketplaceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class UsedController extends Controller
     /**
      * Discovery-first Used Marketplace Homepage (/used, /s/used, used.{domain}).
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $search = trim((string) $request->query('search', ''));
         $selectedCategory = trim((string) $request->query('cat', ''));
@@ -377,6 +378,28 @@ class UsedController extends Controller
         $recommendedItems = $featuredItems;
         $activeFilterCategoryFields = $activeCategoryObj ? $activeCategoryObj->fields : collect();
 
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'items' => $items->items(),
+                'total' => $items->total(),
+                'current_page' => $items->currentPage(),
+                'categories' => $usedCategories,
+                'parent_categories' => $parentCategories,
+                'cities' => $availableCities,
+                'filters' => [
+                    'search' => $search,
+                    'cat' => $selectedCategory,
+                    'condition' => $condition,
+                    'city' => $city,
+                    'min_price' => $minPrice,
+                    'max_price' => $maxPrice,
+                    'negotiable' => $negotiableOnly,
+                    'sort' => $sort,
+                ],
+            ]);
+        }
+
         return view('used.index', compact(
             'usedCategories',
             'parentCategories',
@@ -415,7 +438,7 @@ class UsedController extends Controller
     /**
      * Show single Used listing detail page (/used/{slug}).
      */
-    public function show(Request $request, string $slug): View
+    public function show(Request $request, string $slug): View|JsonResponse
     {
         $product = Product::withoutGlobalScopes()
             ->with([
@@ -540,6 +563,17 @@ class UsedController extends Controller
         $robotsContent = ($product->isDraft() || $product->isPaused() || $request->boolean('preview'))
             ? 'noindex,nofollow'
             : 'index,follow';
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'product' => $product,
+                'is_owner' => $isOwner,
+                'seller_profile' => $sellerProfile,
+                'similar_items' => $similarItems,
+                'is_saved' => $isSaved,
+            ]);
+        }
 
         return view('used.show', compact(
             'product',
