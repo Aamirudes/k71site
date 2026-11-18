@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" width="1200" height="1500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#16161a"/><stop offset="100%" stop-color="#09090b"/></linearGradient>
+    <radialGradient id="spot" cx="50%" cy="35%" r="55%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/><stop offset="100%" stop-color="#09090b" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="1500" fill="url(#bg)"/>
+  <rect width="1200" height="1500" fill="url(#spot)"/>
+  <polygon points="360,1420 520,280 680,280 840,1420" fill="#f5f3ef" fill-opacity="0.06"/>
+  <path d="M470 360 Q600 310 730 360 L785 1190 Q600 1230 415 1190 Z" fill="#ebe7e0"/>
+  <path d="M510 355 L600 660 L690 355" fill="#121215"/>
+  <line x1="120" y1="120" x2="1080" y2="120" stroke="#ffffff" stroke-opacity="0.18"/>
+  <text x="120" y="170" font-family="system-ui,sans-serif" font-size="18" letter-spacing="10" fill="#ffffff" opacity="0.55">RUNWAY ARCHIVE · SAMPLE</text>
+</svg>

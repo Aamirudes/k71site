@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#15171e"/><stop offset="100%" stop-color="#090a0f"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ff4d00"/><stop offset="100%" stop-color="#ff8a00"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <g stroke="#ffffff" stroke-opacity="0.07" stroke-width="1">
+    <line x1="0" y1="680" x2="1200" y2="680"/><line x1="0" y1="220" x2="1200" y2="220"/>
+    <line x1="200" y1="0" x2="200" y2="900"/><line x1="1000" y1="0" x2="1000" y2="900"/>
+  </g>
+  <ellipse cx="600" cy="655" rx="370" ry="38" fill="#000000" opacity="0.65"/>
+  <path d="M235 585 Q245 480 355 445 L515 350 Q575 390 650 390 L795 365 Q870 420 945 505 Q975 550 960 595 L235 595 Z" fill="#f4f4f6"/>
+  <path d="M230 580 L965 580 Q970 622 930 632 L265 632 Q225 625 230 580 Z" fill="#d4d4dc"/>
+  <path d="M430 510 L760 445 L790 485 L445 550 Z" fill="url(#accent)"/>
+  <rect x="330" y="596" width="140" height="20" rx="10" fill="#18181b"/>
+  <text x="90" y="110" font-family="monospace" font-size="20" letter-spacing="6" fill="#ffffff" opacity="0.55">PROTO-04 // FOOTWEAR STUDY</text>
+  <text x="90" y="820" font-family="monospace" font-size="16" letter-spacing="4" fill="#ff6b2b" opacity="0.8">SAMPLE PREVIEW SPECIMEN</text>
+</svg>

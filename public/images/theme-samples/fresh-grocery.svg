@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <rect width="1200" height="900" fill="#f3f8f2"/>
+  <circle cx="520" cy="470" r="195" fill="#166534" opacity="0.9"/>
+  <circle cx="715" cy="510" r="145" fill="#ea580c" opacity="0.9"/>
+  <circle cx="620" cy="330" r="95" fill="#eab308" opacity="0.9"/>
+  <text x="600" y="810" text-anchor="middle" font-family="system-ui,sans-serif" font-size="20" font-weight="700" letter-spacing="6" fill="#14532d" opacity="0.7">FRESH MARKET HARVEST · SAMPLE</text>
+</svg>

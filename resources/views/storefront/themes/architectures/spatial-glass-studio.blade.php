@@ -10,7 +10,7 @@
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Sculptural translucent surfaces, layered spatial depth, and effortless tactile shopping.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
 @endphp
 
 {{-- 1. SPATIAL LIQUID GLASS 3D FLOATING STUDIO HERO --}}
@@ -93,7 +93,7 @@
         <div data-k71-stagger-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             @foreach($allProducts->take(12) as $product)
                 @php
-                    $pImg = $product->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                    $pImg = $product->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                     $pLink = $prodUrl($product);
                     $hasVariants = ($product->variants ?? collect())->isNotEmpty();
                 @endphp

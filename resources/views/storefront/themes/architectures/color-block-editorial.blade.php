@@ -16,7 +16,7 @@
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
     $featuredDuo = $allProducts->slice(1, 2)->values();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
 @endphp
 
 {{-- BAND 1: FULL-BLEED BOLD CHROMATIC ART-DIRECTION HERO --}}
@@ -82,7 +82,7 @@
     <div class="max-w-[1440px] mx-auto px-5 sm:px-10 lg:px-14">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             @foreach($featuredDuo as $dIdx => $dItem)
-                @php $dImg = $dItem->images?->first()?->url ?? asset('images/product-placeholder.svg'); @endphp
+                @php $dImg = $dItem->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'); @endphp
                 <a href="{{ $prodUrl($dItem) }}" data-k71-reveal class="block p-5 sm:p-7 group transition hover:-translate-y-1"
                    style="background-color: {{ $dIdx === 0 ? $bandBold : '#111111' }}; color: #ffffff;">
                     <div class="aspect-[16/10] overflow-hidden mb-5">

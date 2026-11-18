@@ -337,6 +337,63 @@
                                     </div>
                                 </div>
                             </div>
+                        @elseif($arch === 'typography-as-architecture')
+                            <div class="my-2 flex-1 flex flex-col justify-between p-1">
+                                <div class="text-xl font-black uppercase leading-none tracking-tighter truncate">{{ $t->name }}</div>
+                                <div class="grid grid-cols-12 gap-1.5 h-14 mt-1">
+                                    <div class="col-span-4 flex flex-col justify-end gap-1">
+                                        <div class="h-1 w-full opacity-40" style="background-color: {{ $pal['text'] }};"></div>
+                                        <div class="h-2.5 w-10" style="background-color: {{ $pal['accent'] }};"></div>
+                                    </div>
+                                    <div class="col-span-5 rounded-xs" style="background-color: {{ $pal['surface_alt'] }}; border: 1px solid {{ $pal['text'] }}18;"></div>
+                                    <div class="col-span-3 rounded-xs mt-2" style="background-color: {{ $pal['accent'] }}33;"></div>
+                                </div>
+                            </div>
+                        @elseif($arch === 'product-first-index')
+                            <div class="my-2 flex-1 flex flex-col justify-between gap-1.5">
+                                <div class="flex items-center justify-between text-[8px] font-mono uppercase opacity-65 pb-1" style="border-bottom: 1px solid {{ $pal['text'] }}18;">
+                                    <span>{{ $t->name }}</span>
+                                    <span>0-Hero Product Wall</span>
+                                </div>
+                                <div class="grid grid-cols-5 gap-1 flex-1">
+                                    @for($k = 0; $k < 5; $k++)
+                                        <div class="flex flex-col gap-0.5">
+                                            <div class="flex-1 rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                            <div class="h-1 w-3/4 opacity-50" style="background-color: {{ $pal['text'] }};"></div>
+                                        </div>
+                                    @endfor
+                                </div>
+                            </div>
+                        @elseif($arch === 'b2b-specimen-ledger')
+                            <div class="my-2 flex-1 flex flex-col justify-between gap-1">
+                                <div class="text-[8px] font-mono uppercase opacity-70">{{ $t->name }} · Spec Rows</div>
+                                @for($k = 0; $k < 3; $k++)
+                                    <div class="flex items-center justify-between gap-1.5 px-1.5 py-1 rounded-xs" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}18;">
+                                        <div class="w-4 h-3 rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                        <div class="flex-1 h-1.5 rounded opacity-35" style="background-color: {{ $pal['text'] }};"></div>
+                                        <div class="w-5 h-2 rounded-xs" style="background-color: {{ $pal['accent'] }};"></div>
+                                    </div>
+                                @endfor
+                            </div>
+                        @elseif($arch === 'horizontal-gallery-wall')
+                            <div class="my-2 flex-1 grid grid-cols-4 gap-1" style="border: 1px solid {{ $pal['text'] }}20;">
+                                @for($k = 1; $k <= 4; $k++)
+                                    <div class="p-1 flex flex-col justify-between" style="border-right: 1px solid {{ $pal['text'] }}14;">
+                                        <span class="text-[8px] font-serif opacity-40">0{{ $k }}</span>
+                                        <div class="h-12 rounded-xs" style="background-color: {{ $k === 2 ? ($pal['accent'] . '33') : $pal['surface_alt'] }};"></div>
+                                        <div class="h-1 w-2/3 opacity-50" style="background-color: {{ $pal['text'] }};"></div>
+                                    </div>
+                                @endfor
+                            </div>
+                        @elseif($arch === 'sculptural-arch-sanctuary')
+                            <div class="my-2 flex-1 flex flex-col justify-between items-center">
+                                <span class="text-xs font-serif font-semibold">{{ $t->name }}</span>
+                                <div class="grid grid-cols-3 gap-2 w-full px-3 flex-1 items-end mt-1">
+                                    <div class="h-12 rounded-t-full" style="background-color: {{ $pal['surface_alt'] }}; border: 1px solid {{ $pal['text'] }}18;"></div>
+                                    <div class="h-16 rounded-t-full" style="background-color: {{ $pal['accent'] }}33; border: 1px solid {{ $pal['accent'] }}66;"></div>
+                                    <div class="h-12 rounded-t-full" style="background-color: {{ $pal['surface_alt'] }}; border: 1px solid {{ $pal['text'] }}18;"></div>
+                                </div>
+                            </div>
                         @else
                             {{-- Editorial Runway Offset Pair Miniature --}}
                             <div class="grid grid-cols-12 gap-2 items-center my-2 flex-1">

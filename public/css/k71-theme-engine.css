@@ -46,6 +46,11 @@
   font-family: var(--t-font-heading);
   font-weight: var(--t-heading-weight);
   letter-spacing: var(--t-heading-tracking);
+  color: inherit;
+}
+
+.k71-sf-theme .text-white {
+  color: #ffffff;
 }
 
 .k71-sf-theme .k71-surface {

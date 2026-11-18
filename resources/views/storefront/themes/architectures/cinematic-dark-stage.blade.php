@@ -10,7 +10,7 @@
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Engineered for dramatic contrast, precision optics, and nocturnal authority.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
 @endphp
 
 {{-- 1. NOCTURNAL SPOTLIGHT THEATER HERO --}}
@@ -75,7 +75,7 @@
         <div data-k71-hscroll-track class="flex gap-5 sm:gap-6 w-max">
             @foreach($allProducts->take(8) as $rIdx => $item)
                 @php
-                    $rImg = $item->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                    $rImg = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                 @endphp
                 <article data-k71-3d-card class="w-[78vw] sm:w-[360px] lg:w-[410px] shrink-0 rounded-xl overflow-hidden border border-white/10 bg-zinc-950/90 group">
                     <a href="{{ $prodUrl($item) }}" class="block aspect-[16/10] overflow-hidden bg-zinc-900">

@@ -146,10 +146,15 @@ class ThemeMarketplaceTest extends TestCase
             $this->assertFileExists(public_path("css/themes/{$themeId}.css"), "Missing per-theme CSS for {$themeId}");
         }
 
-        // Verify Theme Uniqueness Matrix: ZERO duplicate compositional signatures across all 50 themes!
+        // Verify Theme Uniqueness Matrix: ZERO duplicate compositional signatures across all 50 themes
+        // and all 15 genuinely distinct page architectures + 6 distinct PDP architectures!
         $matrix = $registry->getThemeUniquenessMatrix();
         $uniqueSignatures = collect($matrix)->pluck('signature')->unique();
+        $uniqueArchitectures = collect($matrix)->pluck('page_architecture')->unique();
+        $uniquePdpArchs = collect($newThemes)->pluck('layout.pdp_architecture')->unique();
         $this->assertCount(50, $uniqueSignatures, 'Two or more themes share an identical structural signature!');
+        $this->assertCount(15, $uniqueArchitectures, 'All 15 distinct page architectures must be represented across the 50 themes!');
+        $this->assertCount(6, $uniquePdpArchs, 'All 6 distinct PDP architectures must be represented across the 50 themes!');
 
         // Idempotent DB sync
         $service->syncThemesToDatabase();
@@ -330,7 +335,7 @@ class ThemeMarketplaceTest extends TestCase
 
         $this->get(route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $product->slug]))
             ->assertStatus(200)
-            ->assertSee('data-pdp-layout="horology-precision"', false)
+            ->assertSee('data-pdp-layout="technical-spec-lab"', false)
             ->assertSee('8,200');
 
         // 7. Admin revokes entitlement -> preserves draft & product, falls back live safely, blocks re-publish

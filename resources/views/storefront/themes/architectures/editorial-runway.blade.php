@@ -11,7 +11,7 @@
     $heroCta = trim((string) ($heroCfg['cta_label'] ?? '')) ?: 'Explore Collection';
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $leadProduct = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($leadProduct?->images?->first()?->url ?? $vendor->banner_url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($leadProduct?->images?->first()?->url ?? $vendor->banner_url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
     $pair1 = $allProducts->slice(0, 2)->values();
     $pair2 = $allProducts->slice(2, 2)->values();
     $remaining = $allProducts->slice(4)->values();
@@ -81,7 +81,7 @@
                 @php
                     $colSpan = $idx === 0 ? 'lg:col-span-7' : 'lg:col-span-5 lg:mt-20';
                     $aspect = $idx === 0 ? 'aspect-[4/3]' : 'aspect-[3/4]';
-                    $img = $item->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                    $img = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                 @endphp
                 <article class="{{ $colSpan }} group" data-k71-reveal @if($idx === 1) data-k71-parallax="24" @endif>
                     <a href="{{ $prodUrl($item) }}" class="block {{ $aspect }} overflow-hidden" style="background-color: var(--t-surface-alt);">
@@ -104,7 +104,7 @@
                     @php
                         $colSpan = $idx === 0 ? 'lg:col-span-5 lg:mt-14' : 'lg:col-span-7';
                         $aspect = $idx === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]';
-                        $img = $item->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                        $img = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                     @endphp
                     <article class="{{ $colSpan }} group" data-k71-reveal @if($idx === 0) data-k71-parallax="20" @endif>
                         <a href="{{ $prodUrl($item) }}" class="block {{ $aspect }} overflow-hidden" style="background-color: var(--t-surface-alt);">

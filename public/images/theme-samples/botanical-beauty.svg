@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1350" width="1200" height="1350">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f2f4ec"/><stop offset="100%" stop-color="#dfe6d5"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#35483a"/><stop offset="50%" stop-color="#4e6855"/><stop offset="100%" stop-color="#27362b"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1350" fill="url(#bg)"/>
+  <circle cx="600" cy="680" r="360" fill="#ffffff" opacity="0.45"/>
+  <rect x="465" y="450" width="270" height="540" rx="52" fill="url(#glass)"/>
+  <rect x="535" y="340" width="130" height="115" rx="14" fill="#1c241e"/>
+  <rect x="575" y="265" width="50" height="80" rx="22" fill="#1c241e"/>
+  <rect x="500" y="560" width="200" height="250" rx="8" fill="#f7f5ef"/>
+  <line x1="530" y1="620" x2="670" y2="620" stroke="#27362b" stroke-width="2" opacity="0.45"/>
+  <text x="600" y="680" text-anchor="middle" font-family="Georgia,serif" font-size="24" fill="#1c241e">BOTANICAL</text>
+  <text x="600" y="720" text-anchor="middle" font-family="monospace" font-size="14" letter-spacing="4" fill="#4e6855">30ML · SAMPLE</text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" width="1400" height="900">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f2ece3"/><stop offset="100%" stop-color="#e3d9ca"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d8cbb8"/><stop offset="100%" stop-color="#c3b29a"/></linearGradient>
+  </defs>
+  <rect width="1400" height="630" fill="url(#wall)"/>
+  <rect y="630" width="1400" height="270" fill="url(#floor)"/>
+  <path d="M460 150 A240 240 0 0 1 940 150 L940 630 L460 630 Z" fill="#ebe3d7" stroke="#b9a992" stroke-width="2"/>
+  <rect x="440" y="420" width="520" height="175" rx="44" fill="#5e4633"/>
+  <rect x="490" y="340" width="420" height="115" rx="34" fill="#735740"/>
+  <rect x="485" y="595" width="20" height="80" fill="#2e2219"/>
+  <rect x="895" y="595" width="20" height="80" fill="#2e2219"/>
+  <text x="90" y="110" font-family="Georgia,serif" font-size="22" letter-spacing="8" fill="#3a2d22" opacity="0.55">SPATIAL INTERIOR · SAMPLE</text>
+</svg>

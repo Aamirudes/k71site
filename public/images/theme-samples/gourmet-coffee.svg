@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1000" width="1200" height="1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f4eadc"/><stop offset="100%" stop-color="#dfccb3"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1000" fill="url(#bg)"/>
+  <rect x="380" y="190" width="440" height="630" rx="24" fill="#231712"/>
+  <rect x="430" y="310" width="340" height="310" fill="#f7f1e6"/>
+  <circle cx="600" cy="430" r="64" fill="#b45309" opacity="0.88"/>
+  <line x1="470" y1="530" x2="730" y2="530" stroke="#231712" stroke-width="2"/>
+  <text x="600" y="575" text-anchor="middle" font-family="monospace" font-size="18" letter-spacing="6" fill="#231712">SMALL BATCH · SAMPLE</text>
+</svg>

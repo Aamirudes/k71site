@@ -11,7 +11,7 @@
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
     $second = $allProducts->get(1);
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
 @endphp
 
 {{-- 1. 12-COLUMN MODULAR BENTO BOX FLAGSHIP HERO --}}
@@ -49,7 +49,7 @@
             <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4 sm:gap-5">
                 {{-- Cell 2: Live Spotlight Interactive Product Tile --}}
                 @if($lead)
-                    @php $lImg = $lead->images?->first()?->url ?? asset('images/product-placeholder.svg'); @endphp
+                    @php $lImg = $lead->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'); @endphp
                     <div data-k71-3d-card class="rounded-2xl p-5 flex items-center gap-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
                         <a href="{{ $prodUrl($lead) }}" class="w-28 h-28 sm:w-32 sm:h-32 rounded-xl overflow-hidden shrink-0" style="background-color: var(--t-surface-alt);">
                             <img src="{{ $lImg }}" alt="{{ $lead->title }}" class="w-full h-full object-cover">
@@ -93,7 +93,7 @@
                 </div>
 
                 @if($second)
-                    @php $s2Img = $second->images?->first()?->url ?? asset('images/product-placeholder.svg'); @endphp
+                    @php $s2Img = $second->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'); @endphp
                     <a href="{{ $prodUrl($second) }}" class="rounded-2xl p-4 flex items-center justify-between gap-4 hover:opacity-85 transition"
                        style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
                         <div class="flex items-center gap-3 min-w-0">

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500" width="1200" height="1500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8e2d8"/><stop offset="100%" stop-color="#cfc5b6"/></linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0%" stop-color="#272420"/><stop offset="100%" stop-color="#11100e"/></linearGradient>
+  </defs>
+  <rect width="1200" height="1500" fill="url(#bg)"/>
+  <rect x="80" y="80" width="1040" height="1340" fill="none" stroke="#1c1917" stroke-opacity="0.16" stroke-width="2"/>
+  <path d="M430 340 L600 290 L770 340 L840 1260 L645 1260 L600 940 L555 1260 L360 1260 Z" fill="url(#coat)"/>
+  <path d="M515 318 L600 540 L685 318" fill="none" stroke="#e8e2d8" stroke-width="5" stroke-opacity="0.5"/>
+  <line x1="600" y1="540" x2="600" y2="940" stroke="#e8e2d8" stroke-width="2" stroke-opacity="0.28"/>
+  <circle cx="628" cy="640" r="8" fill="#c8a96e"/>
+  <circle cx="628" cy="720" r="8" fill="#c8a96e"/>
+  <text x="120" y="150" font-family="Georgia,serif" font-size="22" letter-spacing="8" fill="#1c1917" opacity="0.55">ATELIER STUDY 01</text>
+  <text x="120" y="1370" font-family="system-ui,sans-serif" font-size="16" letter-spacing="5" fill="#1c1917" opacity="0.45">SAMPLE PREVIEW ARTWORK</text>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" width="1400" height="900">
+  <defs>
+    <linearGradient id="slab" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f5f3ef"/><stop offset="50%" stop-color="#e6e2da"/><stop offset="100%" stop-color="#d7d1c6"/></linearGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#slab)"/>
+  <path d="M-40 220 C260 180 420 420 760 360 C1020 315 1180 180 1440 240" fill="none" stroke="#8a7e6d" stroke-width="5" opacity="0.35"/>
+  <path d="M-40 640 C280 540 520 740 890 610 C1120 530 1260 640 1440 590" fill="none" stroke="#6b6154" stroke-width="8" opacity="0.22"/>
+  <path d="M180 -20 C360 280 580 460 880 920" fill="none" stroke="#a69882" stroke-width="3" opacity="0.35"/>
+  <rect x="70" y="70" width="1260" height="760" fill="none" stroke="#1c1917" stroke-opacity="0.16" stroke-width="1.5"/>
+  <text x="110" y="135" font-family="monospace" font-size="18" letter-spacing="6" fill="#292524" opacity="0.6">ARCHITECTURAL STONE SLAB · 20MM · SAMPLE</text>
+</svg>

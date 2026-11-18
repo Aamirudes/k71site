@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0b101b"/><stop offset="100%" stop-color="#141d2f"/></linearGradient>
+    <linearGradient id="chassis" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2c3548"/><stop offset="100%" stop-color="#141923"/></linearGradient>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <rect x="230" y="190" width="740" height="490" rx="34" fill="url(#chassis)" stroke="#60a5fa" stroke-opacity="0.35" stroke-width="2"/>
+  <circle cx="430" cy="435" r="155" fill="#0d1118" stroke="#94a3b8" stroke-opacity="0.35" stroke-width="3"/>
+  <circle cx="430" cy="435" r="88" fill="#182234" stroke="#38bdf8" stroke-width="2"/>
+  <circle cx="430" cy="435" r="22" fill="#38bdf8"/>
+  <rect x="650" y="295" width="245" height="90" rx="12" fill="#090d14" stroke="#38bdf8" stroke-opacity="0.4"/>
+  <path d="M680 340 L710 340 L725 315 L745 365 L765 325 L785 352 L805 340 L865 340" fill="none" stroke="#38bdf8" stroke-width="3"/>
+  <circle cx="715" cy="505" r="34" fill="#1e293b" stroke="#94a3b8" stroke-opacity="0.45"/>
+  <circle cx="825" cy="505" r="34" fill="#1e293b" stroke="#94a3b8" stroke-opacity="0.45"/>
+  <text x="230" y="140" font-family="monospace" font-size="18" letter-spacing="6" fill="#93c5fd" opacity="0.7">HARDWARE SPECIMEN // 01</text>
+</svg>

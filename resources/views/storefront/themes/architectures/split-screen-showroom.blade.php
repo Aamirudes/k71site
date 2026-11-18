@@ -10,7 +10,7 @@
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Tactile spatial living, honest natural materials, and calm architectural proportion.')), 150);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $splitGallery = $allProducts->take(3);
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($splitGallery->first()?->images?->first()?->url ?? asset('images/product-placeholder.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($splitGallery->first()?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
 @endphp
 
 {{-- 1. TRUE 50/50 STICKY SPLIT-SCREEN ARCHITECTURAL SHOWROOM --}}
@@ -52,7 +52,7 @@
             <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
         </div>
         @foreach($splitGallery->skip(1) as $sIdx => $sItem)
-            @php $sImg = $sItem->images?->first()?->url ?? asset('images/product-placeholder.svg'); @endphp
+            @php $sImg = $sItem->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'); @endphp
             <a href="{{ $prodUrl($sItem) }}" data-k71-reveal class="relative block aspect-[16/10] overflow-hidden group" style="border-top: 1px solid var(--t-border); background-color: var(--t-surface-alt);">
                 <img src="{{ $sImg }}" alt="{{ $sItem->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
                 <div class="absolute inset-x-0 bottom-0 p-5 sm:p-7 bg-gradient-to-t from-black/75 via-black/30 to-transparent text-white flex items-end justify-between gap-4">
@@ -81,7 +81,7 @@
         <div data-k71-stagger-grid class="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10">
             @foreach($allProducts->take(8) as $product)
                 @php
-                    $pImg = $product->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                    $pImg = $product->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                     $pLink = $prodUrl($product);
                     $hasVariants = ($product->variants ?? collect())->isNotEmpty();
                 @endphp

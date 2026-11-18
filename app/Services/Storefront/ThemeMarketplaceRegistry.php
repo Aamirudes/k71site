@@ -78,6 +78,8 @@ class ThemeMarketplaceRegistry
         foreach ($raw as $id => $def) {
             $arch = ThemeArchitectureMap::forTheme($id);
             $def['layout']['page_architecture'] = $arch['page_architecture'];
+            $def['layout']['pdp_architecture'] = $arch['pdp_architecture'];
+            $def['layout']['sample_art'] = $arch['sample_art'];
             $def['layout']['band_colors'] = $arch['band_colors'];
             $def['motion']['choreography'] = $arch['motion_choreography'];
             $def['motion']['depth_3d'] = $arch['depth_3d'];

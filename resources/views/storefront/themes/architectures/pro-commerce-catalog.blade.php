@@ -85,7 +85,7 @@
             <div data-k71-stagger-grid class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-5">
                 @foreach($allProducts->take(16) as $product)
                     @php
-                        $pImg = $product->images?->first()?->url ?? asset('images/product-placeholder.svg');
+                        $pImg = $product->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
                         $pLink = $prodUrl($product);
                         $hasVariants = ($product->variants ?? collect())->isNotEmpty();
                     @endphp

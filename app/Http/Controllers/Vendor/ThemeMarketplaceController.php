@@ -315,7 +315,8 @@ class ThemeMarketplaceController extends Controller
             ->get();
 
         $usingSampleProducts = $realProducts->isEmpty();
-        $productsCollection = $usingSampleProducts ? $this->buildSampleShowcaseProducts($vendor) : $realProducts;
+        $sampleArt = $manifest['layout']['sample_art'] ?? 'fashion-editorial';
+        $productsCollection = $usingSampleProducts ? $this->buildSampleShowcaseProducts($vendor, $sampleArt) : $realProducts;
 
         $vendorCategories = $usingSampleProducts
             ? collect([
@@ -545,9 +546,9 @@ class ThemeMarketplaceController extends Controller
         }
     }
 
-    protected function buildSampleShowcaseProducts(Vendor $vendor)
+    protected function buildSampleShowcaseProducts(Vendor $vendor, string $sampleArt = 'fashion-editorial')
     {
-        $placeholder = asset('images/product-placeholder.svg');
+        $placeholder = asset('images/theme-samples/' . $sampleArt . '.svg');
         $items = [
             ['slug' => 'preview-item-1', 'title' => 'Preview Showcase Piece 01', 'price' => 249900, 'compare' => 299900, 'cat' => 'Featured', 'sku' => 'PRV-01'],
             ['slug' => 'preview-item-2', 'title' => 'Preview Showcase Piece 02', 'price' => 389900, 'compare' => 0, 'cat' => 'New Arrivals', 'sku' => 'PRV-02'],
