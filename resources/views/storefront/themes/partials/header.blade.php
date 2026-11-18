@@ -26,7 +26,7 @@
             <div class="flex items-center justify-between py-2 text-[11px]" style="border-bottom: 1px solid var(--t-border); color: var(--t-muted);">
                 <span class="k71-eyebrow">{{ $vendor->city ?: 'Editorial Commerce' }}</span>
                 <span class="hidden sm:inline font-mono uppercase tracking-widest">{{ now()->format('F Y') }}</span>
-                <a href="{{ route('cart.index') }}" class="inline-flex items-center gap-1.5 font-semibold" style="color: var(--t-text);">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="inline-flex items-center gap-1.5 font-semibold" style="color: var(--t-text);">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-3.5 h-3.5'])
                     <span>Bag (<span data-k71-cart-count>{{ $cartCount }}</span>)</span>
                 </a>
@@ -80,7 +80,7 @@
                             @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-4 h-4'])
                         </button>
                     @endif
-                    <a href="{{ route('cart.index') }}" class="min-h-[44px] px-3 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] font-semibold" style="border: 1px solid var(--t-border);">
+                    <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="min-h-[44px] px-3 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] font-semibold" style="border: 1px solid var(--t-border);">
                         @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-3.5 h-3.5'])
                         <span data-k71-cart-count>{{ $cartCount }}</span>
                     </a>
@@ -134,7 +134,7 @@
                 <a href="{{ auth()->check() ? route('account') : route('login') }}" class="min-w-[44px] min-h-[44px] flex items-center justify-center hover:opacity-75" aria-label="Account">
                     @include('storefront.themes.partials.icon', ['name' => 'user', 'class' => 'w-4 h-4'])
                 </a>
-                <a href="{{ route('cart.index') }}" class="k71-btn k71-btn-primary !py-2 !px-3.5">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="k71-btn k71-btn-primary !py-2 !px-3.5">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-4 h-4'])
                     <span data-k71-cart-count class="text-xs font-bold">{{ $cartCount }}</span>
                 </a>
@@ -170,7 +170,7 @@
                         @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-4 h-4'])
                     </button>
                 @endif
-                <a href="{{ route('cart.index') }}" class="min-h-[40px] px-3.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="min-h-[40px] px-3.5 rounded-full text-xs font-bold inline-flex items-center gap-1.5" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-3.5 h-3.5'])
                     <span data-k71-cart-count>{{ $cartCount }}</span>
                 </a>
@@ -200,7 +200,7 @@
                         @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-4 h-4'])
                     </button>
                 @endif
-                <a href="{{ route('cart.index') }}" class="min-h-[44px] px-4 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="min-h-[44px] px-4 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-4 h-4'])
                     <span data-k71-cart-count>{{ $cartCount }}</span>
                 </a>
@@ -237,7 +237,7 @@
                         @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-4 h-4'])
                     </button>
                 @endif
-                <a href="{{ route('cart.index') }}" class="min-h-[44px] px-2.5 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold hover:opacity-75">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="min-h-[44px] px-2.5 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] font-semibold hover:opacity-75">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-4 h-4'])
                     <span data-k71-cart-count>{{ $cartCount }}</span>
                 </a>
@@ -273,7 +273,7 @@
                         @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-4 h-4'])
                     </button>
                 @endif
-                <a href="{{ route('cart.index') }}" class="min-h-[44px] px-3 inline-flex items-center gap-1.5 text-xs font-semibold rounded" style="border: 1px solid var(--t-border);">
+                <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer" class="min-h-[44px] px-3 inline-flex items-center gap-1.5 text-xs font-semibold rounded" style="border: 1px solid var(--t-border);">
                     @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-4 h-4'])
                     <span data-k71-cart-count style="color: var(--t-accent);">{{ $cartCount }}</span>
                 </a>

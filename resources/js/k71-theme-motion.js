@@ -21,15 +21,28 @@ function initK71ThemeEngine() {
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const speedScale = motionIntensity === 'subtle' ? 0.65 : 1;
 
-    // ── 1. Sticky Header Scrolled State ───────────────────────────────────────
+    // ── 1. Sticky Header Scrolled State + Top Scroll Progress Hairline + Back-to-Top ──
     const header = root.querySelector('.k71-header');
+    const progressEl = document.getElementById('k71-scroll-progress');
+    const backToTopBtn = document.getElementById('k71-back-to-top');
     let onHeaderScroll = null;
-    if (header) {
+    if (header || progressEl || backToTopBtn) {
         let ticking = false;
         onHeaderScroll = () => {
             if (!ticking) {
                 window.requestAnimationFrame(() => {
-                    header.dataset.scrolled = window.scrollY > 24 ? 'true' : 'false';
+                    const sy = window.scrollY || 0;
+                    if (header) {
+                        header.dataset.scrolled = sy > 24 ? 'true' : 'false';
+                    }
+                    if (progressEl) {
+                        const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+                        const ratio = Math.max(0, Math.min(1, sy / maxScroll));
+                        progressEl.style.transform = `scaleX(${ratio.toFixed(4)})`;
+                    }
+                    if (backToTopBtn) {
+                        backToTopBtn.classList.toggle('is-visible', sy > 480);
+                    }
                     ticking = false;
                 });
                 ticking = true;
@@ -37,6 +50,13 @@ function initK71ThemeEngine() {
         };
         window.addEventListener('scroll', onHeaderScroll, { passive: true });
         onHeaderScroll();
+    }
+
+    const onBackToTopClick = () => {
+        window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    };
+    if (backToTopBtn) {
+        backToTopBtn.addEventListener('click', onBackToTopClick);
     }
 
     // ── 2. GSAP Context + MatchMedia Choreography Engine ──────────────────────
@@ -320,7 +340,24 @@ function initK71ThemeEngine() {
         }
     }
 
-    // ── 4. Accessible Dialogs, Lightbox & Mobile Drawers ──────────────────────
+    // ── 4. Accessible Dialogs, GSAP Animated Drawers, Wishlist & Quick-View ───
+    const wishKey = 'k71_wishlist_' + (root.dataset.k71Theme || 'store');
+    let wishSet = new Set();
+    try {
+        wishSet = new Set(JSON.parse(localStorage.getItem(wishKey) || '[]').map(String));
+    } catch {
+        wishSet = new Set();
+    }
+    const syncWishUI = () => {
+        root.querySelectorAll('[data-k71-wish-btn]').forEach((btn) => {
+            const id = String(btn.dataset.wishId || '');
+            const active = wishSet.has(id);
+            btn.dataset.wished = active ? 'true' : 'false';
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+    };
+    syncWishUI();
+
     let lastTrigger = null;
     function openModal(id, trigger) {
         const el = document.getElementById(id);
@@ -329,6 +366,18 @@ function initK71ThemeEngine() {
         el.classList.remove('hidden');
         el.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+
+        if (!reduced) {
+            const panel = el.querySelector('.k71-modal-panel, .relative.z-10');
+            if (panel) {
+                if (id === 'k71-cart-drawer') {
+                    gsap.fromTo(panel, { x: 48, opacity: 0.4 }, { x: 0, opacity: 1, duration: 0.36, ease: 'expo.out', clearProps: 'transform,opacity' });
+                } else {
+                    gsap.fromTo(panel, { y: 18, scale: 0.96, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: 0.32, ease: 'power3.out', clearProps: 'transform,opacity' });
+                }
+            }
+        }
+
         const focusable = el.querySelector('input, button, a, select, textarea, [tabindex]:not([tabindex="-1"])');
         if (focusable) focusable.focus();
     }
@@ -344,6 +393,42 @@ function initK71ThemeEngine() {
     }
 
     const onDocClick = (e) => {
+        const wishBtn = e.target.closest('[data-k71-wish-btn]');
+        if (wishBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = String(wishBtn.dataset.wishId || '');
+            if (!id) return;
+            const title = wishBtn.dataset.wishTitle || 'Item';
+            if (wishSet.has(id)) {
+                wishSet.delete(id);
+                showToast(`Removed "${title}" from shortlist.`, false);
+            } else {
+                wishSet.add(id);
+                showToast(`Saved "${title}" to your shortlist.`, false);
+                if (!reduced) {
+                    gsap.fromTo(wishBtn, { scale: 0.8 }, { scale: 1.15, duration: 0.24, ease: 'back.out(2.5)', yoyo: true, repeat: 1, clearProps: 'transform' });
+                }
+            }
+            try {
+                localStorage.setItem(wishKey, JSON.stringify(Array.from(wishSet)));
+            } catch {}
+            syncWishUI();
+            return;
+        }
+
+        const qtyStep = e.target.closest('[data-k71-qty-step]');
+        if (qtyStep) {
+            e.preventDefault();
+            const qtyInput = document.getElementById('k71-qv-qty');
+            if (qtyInput) {
+                const delta = parseInt(qtyStep.dataset.k71QtyStep || '0', 10);
+                const next = Math.max(1, Math.min(99, (parseInt(qtyInput.value || '1', 10) || 1) + delta));
+                qtyInput.value = String(next);
+            }
+            return;
+        }
+
         const openBtn = e.target.closest('[data-k71-open]');
         if (openBtn) {
             e.preventDefault();
@@ -381,6 +466,7 @@ function initK71ThemeEngine() {
             const qPrice = document.getElementById('k71-qv-price');
             const qDesc = document.getElementById('k71-qv-desc');
             const qPid = document.getElementById('k71-qv-pid');
+            const qQty = document.getElementById('k71-qv-qty');
             const qLink = document.getElementById('k71-qv-link');
             if (qImg) { qImg.src = qvBtn.dataset.qvImg || ''; qImg.alt = qvBtn.dataset.qvTitle || ''; }
             if (qCat) qCat.textContent = qvBtn.dataset.qvCat || '';
@@ -388,6 +474,7 @@ function initK71ThemeEngine() {
             if (qPrice) qPrice.textContent = qvBtn.dataset.qvPrice || '';
             if (qDesc) qDesc.textContent = qvBtn.dataset.qvDesc || '';
             if (qPid) qPid.value = qvBtn.dataset.qvId || '';
+            if (qQty) qQty.value = '1';
             if (qLink) qLink.href = qvBtn.dataset.qvUrl || '#';
             openModal('k71-quickview-modal', qvBtn);
         }
@@ -630,6 +717,7 @@ function initK71ThemeEngine() {
         shaderCleanups.forEach((fn) => fn());
         countdownIntervals.forEach((id) => clearInterval(id));
         if (onHeaderScroll) window.removeEventListener('scroll', onHeaderScroll);
+        if (backToTopBtn) backToTopBtn.removeEventListener('click', onBackToTopClick);
         document.removeEventListener('click', onDocClick);
         document.removeEventListener('keydown', onDocKeydown);
         document.removeEventListener('submit', onDocSubmit);

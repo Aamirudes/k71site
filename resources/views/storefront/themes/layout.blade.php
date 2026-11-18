@@ -59,9 +59,9 @@
     <link href="https://fonts.googleapis.com/css2?family={{ $googleFontsParam }}&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/k71-theme-motion.js'])
-    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v={{ $manifest['version'] ?? '3.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v=4.0.0">
     {{-- Per-theme scoped stylesheet: ONLY loads the active theme's CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v={{ $manifest['version'] ?? '3.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v=4.0.0">
 </head>
 <body class="m-0 p-0 antialiased">
 <div class="k71-sf-theme flex flex-col min-h-screen"
@@ -97,6 +97,7 @@
         --t-motion-duration: {{ (int) ($motion['duration_ms'] ?? 480) }}ms;
         --t-motion-ease: {{ $motion['easing'] ?? 'cubic-bezier(0.22, 1, 0.36, 1)' }};
      ">
+    <div id="k71-scroll-progress" aria-hidden="true"></div>
 
     @if($pageArchitecture === 'left-rail-gallery')
         {{-- Persistent Left Gallery Rail Architecture (Desktop Vertical Sidebar + Mobile Top Bar) --}}
@@ -147,7 +148,7 @@
                             @include('storefront.themes.partials.icon', ['name' => 'search', 'class' => 'w-3.5 h-3.5'])
                             <span>Search</span>
                         </button>
-                        <a href="{{ route('cart.index') }}"
+                        <a href="{{ route('cart.index') }}" data-k71-open="k71-cart-drawer"
                            class="flex-1 min-h-[42px] px-3 text-xs font-semibold inline-flex items-center justify-center gap-2"
                            style="background-color: var(--t-accent); color: var(--t-accent-contrast); border-radius: var(--t-radius);">
                             @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-3.5 h-3.5'])

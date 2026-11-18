@@ -439,8 +439,240 @@
   .k71-sf-theme [data-k71-3d-card],
   .k71-sf-theme [data-k71-magnetic],
   .k71-sf-theme [data-k71-marquee],
-  .k71-sf-theme [data-k71-hscroll-track] {
+  .k71-sf-theme [data-k71-hscroll-track],
+  .k71-sf-theme .k71-ticker-track {
     transform: none !important;
     transition: none !important;
+    animation: none !important;
   }
+}
+
+/* ==========================================================================
+   FLAGSHIP LUXURY ELEVATION LAYER (ALL 50 THEMES)
+   Micro-materiality, scroll progress hairline, glass scroll headers,
+   hover quick-action trays, wishlist heart micro-interactions, kinetic tickers.
+   ========================================================================== */
+
+/* 1. Top 2px GPU Scroll Progress Hairline */
+.k71-sf-theme #k71-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 60;
+  background: linear-gradient(90deg, var(--t-accent), color-mix(in srgb, var(--t-accent) 65%, var(--t-text)));
+  transform-origin: left center;
+  transform: scaleX(0);
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* 2. Architectural Micro-Materiality Surface Layer (Paper Grain / Technical Dot Grid / Dark Cinema Vignette) */
+.k71-sf-theme {
+  position: relative;
+  isolation: isolate;
+}
+
+.k71-sf-theme::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.k71-sf-theme[data-k71-architecture="swiss-manifesto"]::before,
+.k71-sf-theme[data-k71-architecture="b2b-specimen-ledger"]::before,
+.k71-sf-theme[data-k71-architecture="bento-modular-flagship"]::before {
+  opacity: 0.045;
+  background-image: radial-gradient(circle, var(--t-text) 0.75px, transparent 0.75px);
+  background-size: 24px 24px;
+}
+
+.k71-sf-theme[data-k71-architecture="cinematic-dark-stage"]::before {
+  opacity: 0.22;
+  background-image: radial-gradient(ellipse 80% 55% at 50% 0%, color-mix(in srgb, var(--t-accent) 18%, transparent), transparent 72%);
+}
+
+/* 3. Scrolled Sticky Header Luxury Frosted Glass Transition */
+.k71-sf-theme .k71-header[data-scrolled="true"] {
+  background-color: color-mix(in srgb, var(--t-bg) 82%, transparent) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 10px 36px -12px rgba(0, 0, 0, 0.14);
+}
+
+/* 4. Interactive Product Card Elevation, Specular Hover Sheen & Quick-Action Tray */
+.k71-sf-theme .k71-product-card {
+  position: relative;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 320ms ease, border-color 280ms ease;
+}
+
+@media (hover: hover) {
+  .k71-sf-theme .k71-product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 44px -22px rgba(0, 0, 0, 0.22);
+    border-color: color-mix(in srgb, var(--t-accent) 42%, var(--t-border));
+  }
+}
+
+.k71-sf-theme .k71-card-actions-bar {
+  position: absolute;
+  left: 0.65rem;
+  right: 0.65rem;
+  bottom: 0.65rem;
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem;
+  border-radius: calc(var(--t-radius) * 0.75);
+  background: color-mix(in srgb, var(--t-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid color-mix(in srgb, var(--t-text) 12%, transparent);
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 240ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .k71-sf-theme .k71-product-card:hover .k71-card-actions-bar,
+  .k71-sf-theme .k71-product-card:focus-within .k71-card-actions-bar {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+
+/* Wishlist Heart Pill */
+.k71-sf-theme .k71-wish-pill {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  z-index: 16;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--t-surface) 84%, transparent);
+  color: var(--t-text);
+  border: 1px solid color-mix(in srgb, var(--t-text) 14%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease, color 200ms ease;
+}
+
+.k71-sf-theme .k71-wish-pill:hover {
+  transform: scale(1.1);
+}
+
+.k71-sf-theme .k71-wish-pill[data-wished="true"] {
+  background-color: var(--t-accent);
+  color: var(--t-accent-contrast);
+  border-color: var(--t-accent);
+  transform: scale(1.08);
+}
+
+.k71-sf-theme .k71-wish-pill[data-wished="true"] svg {
+  fill: currentColor;
+}
+
+/* 5. Tactile Button Sheen & Press Feel */
+.k71-sf-theme .k71-btn-primary {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px -10px color-mix(in srgb, var(--t-accent) 60%, transparent);
+}
+
+.k71-sf-theme .k71-btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.24) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .k71-sf-theme .k71-btn-primary:hover::after {
+    transform: translateX(120%);
+  }
+}
+
+.k71-sf-theme .k71-btn:active {
+  transform: scale(0.97);
+}
+
+/* 6. Seamless Kinetic Flagship Editorial Marquee */
+@keyframes k71-ticker-flow {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.k71-sf-theme .k71-ticker-viewport {
+  overflow: hidden;
+  width: 100%;
+  user-select: none;
+}
+
+.k71-sf-theme .k71-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: k71-ticker-flow 32s linear infinite;
+  will-change: transform;
+}
+
+.k71-sf-theme .k71-ticker-viewport:hover .k71-ticker-track {
+  animation-play-state: paused;
+}
+
+/* 7. Ambient Interactive Hero Spotlight Glow */
+.k71-sf-theme [data-k71-hero-stage] {
+  position: relative;
+}
+
+/* 8. Floating Back-to-Top Capsule */
+.k71-sf-theme #k71-back-to-top {
+  position: fixed;
+  bottom: 1.35rem;
+  left: 1.35rem;
+  z-index: 45;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--t-surface) 88%, transparent);
+  color: var(--t-text);
+  border: 1px solid var(--t-border);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 28px -8px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 260ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1), border-color 200ms ease;
+}
+
+.k71-sf-theme #k71-back-to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.k71-sf-theme #k71-back-to-top:hover {
+  border-color: var(--t-accent);
+  transform: translateY(-2px);
 }

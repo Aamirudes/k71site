@@ -8,6 +8,7 @@
 
 @if(view()->exists($archView))
     @include($archView)
+    @include('storefront.themes.partials.flagship_band')
 @else
     @include('storefront.themes.partials.sections')
 @endif

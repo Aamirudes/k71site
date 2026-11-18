@@ -109,18 +109,27 @@
                 <p class="text-xs py-4" style="color: var(--t-muted);">Items added to your K71 bag appear here with live inventory verification.</p>
             </div>
         </div>
-        <div class="pt-5 space-y-2.5" style="border-top: 1px solid var(--t-border);">
+        <div class="pt-5 space-y-3" style="border-top: 1px solid var(--t-border);">
+            <div class="flex items-center justify-between text-[11px] px-3 py-2 rounded-lg" style="background-color: var(--t-bg); border: 1px solid var(--t-border); color: var(--t-muted);">
+                <span>✓ Verified K71 Merchant Checkout</span>
+                <span class="font-mono font-bold" style="color: var(--t-accent);">SECURE</span>
+            </div>
             <a href="{{ route('checkout.index') }}" class="k71-btn k71-btn-primary w-full">Proceed to Checkout</a>
             <a href="{{ route('cart.index') }}" class="k71-btn k71-btn-outline w-full">Open Full Bag</a>
         </div>
     </div>
 </div>
 
+{{-- Floating Back-to-Top Capsule --}}
+<button type="button" id="k71-back-to-top" aria-label="Scroll back to top" title="Back to top">
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+</button>
+
 {{-- Instant Product Quick-View Modal (WoodMart / Flatsome / Prestige Hotspot Pattern) --}}
 <div id="k71-quickview-modal" data-k71-modal aria-hidden="true" role="dialog" aria-modal="true" aria-label="Quick view product"
      class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-black/70 backdrop-blur-xs" data-k71-close="k71-quickview-modal"></div>
-    <div class="relative z-10 w-full max-w-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2"
+    <div class="k71-modal-panel relative z-10 w-full max-w-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2"
          style="background-color: var(--t-surface); color: var(--t-text); border: 1px solid var(--t-border); border-radius: var(--t-radius);">
         <div class="aspect-[4/4] md:aspect-auto md:min-h-[380px] overflow-hidden" style="background-color: var(--t-surface-alt);">
             <img id="k71-qv-img" src="" alt="" class="w-full h-full object-cover">
@@ -139,11 +148,18 @@
                 <p id="k71-qv-price" class="text-2xl font-extrabold font-mono"></p>
                 <p id="k71-qv-desc" class="text-xs sm:text-sm leading-relaxed line-clamp-4" style="color: var(--t-muted);"></p>
             </div>
-            <div class="space-y-2.5 pt-4" style="border-top: 1px solid var(--t-border);">
-                <form id="k71-qv-form" action="{{ route('cart.add') }}" method="POST" data-k71-cart-form>
+            <div class="space-y-3 pt-4" style="border-top: 1px solid var(--t-border);">
+                <form id="k71-qv-form" action="{{ route('cart.add') }}" method="POST" data-k71-cart-form class="space-y-3">
                     @csrf
                     <input type="hidden" id="k71-qv-pid" name="product_id" value="">
-                    <input type="hidden" name="quantity" value="1">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-xs font-mono uppercase tracking-wider" style="color: var(--t-muted);">Quantity</span>
+                        <div class="inline-flex items-center overflow-hidden" style="border: 1px solid var(--t-border); border-radius: var(--t-radius);">
+                            <button type="button" data-k71-qty-step="-1" class="w-9 h-9 flex items-center justify-center font-bold cursor-pointer hover:opacity-70" aria-label="Decrease quantity">&minus;</button>
+                            <input type="number" id="k71-qv-qty" name="quantity" value="1" min="1" max="99" class="w-12 h-9 text-center font-mono text-xs font-bold bg-transparent focus:outline-none">
+                            <button type="button" data-k71-qty-step="1" class="w-9 h-9 flex items-center justify-center font-bold cursor-pointer hover:opacity-70" aria-label="Increase quantity">+</button>
+                        </div>
+                    </div>
                     @if(!empty($isCataloguePreview))
                         <button type="button" disabled class="k71-btn k71-btn-primary w-full opacity-75 cursor-not-allowed">Preview Mode (Checkout Disabled)</button>
                     @else
