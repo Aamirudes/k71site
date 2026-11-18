@@ -66,13 +66,26 @@ class ThemeMarketplaceRegistry
             return $this->cachedNewThemes;
         }
 
-        $this->cachedNewThemes = array_merge(
+        $raw = array_merge(
             CategoryALuxuryFashionThemes::definitions(),
             CategoryBCFootwearJewelryThemes::definitions(),
             CategoryDETechFurnitureThemes::definitions(),
             CategoryFGBeautyFoodThemes::definitions(),
             CategoryHContemporaryConceptsThemes::definitions()
         );
+
+        $enriched = [];
+        foreach ($raw as $id => $def) {
+            $arch = ThemeArchitectureMap::forTheme($id);
+            $def['layout']['page_architecture'] = $arch['page_architecture'];
+            $def['layout']['band_colors'] = $arch['band_colors'];
+            $def['motion']['choreography'] = $arch['motion_choreography'];
+            $def['motion']['depth_3d'] = $arch['depth_3d'];
+            $def['signature_moment'] = $arch['signature_moment'];
+            $enriched[$id] = $def;
+        }
+
+        $this->cachedNewThemes = $enriched;
 
         return $this->cachedNewThemes;
     }
@@ -189,11 +202,13 @@ class ThemeMarketplaceRegistry
             $typo = $m['typography'];
             $sectionOrder = implode('>', array_map(fn ($s) => ($s['type'] ?? '') . ':' . ($s['style'] ?? 'std'), $m['default_sections'] ?? []));
             $signature = implode('|', [
+                $layout['page_architecture'] ?? 'editorial-runway',
                 $layout['header_template'],
                 $layout['hero_template'],
                 $layout['card_template'],
                 $layout['pdp_template'],
                 $layout['footer_template'],
+                $m['motion']['choreography'] ?? 'quiet-editorial',
                 $typo['heading_font'],
                 $sectionOrder,
             ]);
@@ -201,13 +216,15 @@ class ThemeMarketplaceRegistry
                 'id' => $id,
                 'name' => $m['name'],
                 'category' => $m['category'],
+                'page_architecture' => $layout['page_architecture'] ?? 'editorial-runway',
                 'header' => $layout['header_template'],
                 'hero' => $layout['hero_template'],
                 'card' => $layout['card_template'],
                 'pdp' => $layout['pdp_template'],
                 'footer' => $layout['footer_template'],
                 'font' => $typo['heading_font'] . ' / ' . $typo['body_font'],
-                'motion' => $m['motion']['profile'],
+                'motion' => $m['motion']['choreography'] ?? $m['motion']['profile'],
+                'depth_3d' => $m['motion']['depth_3d'] ?? 'none',
                 'section_order' => $sectionOrder,
                 'signature' => hash('sha256', $signature),
             ];

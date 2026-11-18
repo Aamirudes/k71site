@@ -167,8 +167,10 @@
                     $t = $entry['theme'];
                     $m = $entry['manifest'];
                     $pal = $m['palette'] ?? ['bg' => '#fafaf9', 'surface' => '#ffffff', 'surface_alt' => '#ececec', 'text' => '#18181b', 'accent' => '#18181b', 'accent_contrast' => '#ffffff'];
-                    $lay = $m['layout'] ?? ['hero_template' => 'asymmetric-campaign', 'header_template' => 'couture-centered'];
-                    $heroT = $lay['hero_template'] ?? 'asymmetric-campaign';
+                    $lay = $m['layout'] ?? ['hero_template' => 'asymmetric-campaign', 'header_template' => 'couture-centered', 'page_architecture' => 'editorial-runway'];
+                    $arch = $lay['page_architecture'] ?? 'editorial-runway';
+                    $choreo = $m['motion']['choreography'] ?? ($m['motion']['profile'] ?? 'quiet-editorial');
+                    $bands = $lay['band_colors'] ?? [$pal['bg'], $pal['accent'], $pal['surface_alt']];
                     $state = $entry['state'];
                     $req = $entry['request'];
                     $attrs = is_array($t->design_attributes) && !empty($t->design_attributes) ? $t->design_attributes : ($m['design_attributes'] ?? []);
@@ -201,11 +203,99 @@
                             </div>
                         </div>
 
-                        {{-- Mini Architectural Wireframe reflecting THIS theme's exact hero composition --}}
-                        @if($heroT === 'bento-modular-hero')
+                        {{-- Mini Architectural Wireframe reflecting THIS theme's exact Page Architecture --}}
+                        @if($arch === 'left-rail-gallery')
+                            <div class="grid grid-cols-12 gap-2 my-2 flex-1">
+                                <div class="col-span-4 rounded p-2 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border-right: 1px solid {{ $pal['text'] }}24;">
+                                    <span class="text-[8px] font-mono uppercase opacity-65">Left Rail</span>
+                                    <div class="space-y-1">
+                                        <div class="h-1 w-full rounded" style="background-color: {{ $pal['accent'] }};"></div>
+                                        <div class="h-1 w-3/4 rounded opacity-35" style="background-color: {{ $pal['text'] }};"></div>
+                                        <div class="h-1 w-2/3 rounded opacity-25" style="background-color: {{ $pal['text'] }};"></div>
+                                    </div>
+                                </div>
+                                <div class="col-span-8 flex flex-col justify-between p-2 rounded" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}16;">
+                                    <span class="text-xs font-bold leading-tight">{{ $t->name }}</span>
+                                    <div class="grid grid-cols-3 gap-1 mt-1.5 flex-1">
+                                        <div class="rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                        <div class="rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                        <div class="rounded-xs" style="background-color: {{ $pal['accent'] }}33;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @elseif($arch === 'split-screen-showroom')
+                            <div class="grid grid-cols-12 rounded-lg overflow-hidden my-2 flex-1" style="border: 1px solid {{ $pal['text'] }}18;">
+                                <div class="col-span-6 p-2.5 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border-right: 1px solid {{ $pal['text'] }}14;">
+                                    <span class="text-[8px] uppercase tracking-wider opacity-60">50/50 Sticky</span>
+                                    <span class="text-sm font-bold leading-tight">{{ $t->name }}</span>
+                                    <span class="w-10 h-1.5 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
+                                </div>
+                                <div class="col-span-6 p-1.5 flex flex-col gap-1" style="background-color: {{ $pal['surface_alt'] }};">
+                                    <div class="flex-1 rounded-xs" style="background-color: {{ $pal['text'] }}18;"></div>
+                                    <div class="h-5 rounded-xs" style="background-color: {{ $pal['accent'] }}33;"></div>
+                                </div>
+                            </div>
+                        @elseif($arch === 'brutalist-poster')
+                            <div class="my-2 flex-1 flex flex-col justify-between gap-1.5">
+                                <div class="grid grid-cols-12 flex-1" style="border: 2px solid {{ $pal['text'] }}; background-color: {{ $pal['surface'] }};">
+                                    <div class="col-span-7 p-2 flex flex-col justify-between" style="border-right: 2px solid {{ $pal['text'] }};">
+                                        <span class="text-[7px] font-black uppercase px-1 py-0.5 w-fit" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">BRUTALIST</span>
+                                        <span class="text-sm font-black uppercase leading-none">{{ $t->name }}</span>
+                                    </div>
+                                    <div class="col-span-5" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                </div>
+                                <div class="px-2 py-0.5 text-[7px] font-mono font-black uppercase truncate" style="background-color: {{ $pal['text'] }}; color: {{ $pal['bg'] }};">/// MARQUEE TICKER /// {{ strtoupper($t->name) }} ///</div>
+                            </div>
+                        @elseif($arch === 'swiss-manifesto')
+                            <div class="my-2 flex-1 flex flex-col" style="border: 1px solid {{ $pal['text'] }}30;">
+                                <div class="px-2 py-0.5 flex justify-between text-[7px] font-mono uppercase" style="border-bottom: 1px solid {{ $pal['text'] }}25;">
+                                    <span>[00/SWISS]</span>
+                                    <span>GRID MATRIX</span>
+                                </div>
+                                <div class="grid grid-cols-12 flex-1">
+                                    <div class="col-span-4 p-1.5 space-y-1 text-[7px] font-mono" style="border-right: 1px solid {{ $pal['text'] }}25;">
+                                        <div class="font-bold">01 ALL</div>
+                                        <div class="opacity-60">02 INDEX</div>
+                                    </div>
+                                    <div class="col-span-8 p-2 flex flex-col justify-between">
+                                        <span class="text-xs font-extrabold leading-tight">{{ $t->name }}</span>
+                                        <div class="grid grid-cols-3 gap-1 h-7">
+                                            <div style="border: 1px solid {{ $pal['text'] }}22; background: {{ $pal['surface_alt'] }};"></div>
+                                            <div style="border: 1px solid {{ $pal['text'] }}22; background: {{ $pal['surface_alt'] }};"></div>
+                                            <div style="border: 1px solid {{ $pal['text'] }}22; background: {{ $pal['accent'] }}33;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @elseif($arch === 'cinematic-dark-stage')
+                            <div class="my-2 flex-1 rounded-lg p-2.5 flex flex-col justify-between" style="background: radial-gradient(circle at 75% 25%, {{ $pal['accent'] }}33, #070709 70%); border: 1px solid rgba(255,255,255,0.14); color: #fff;">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[8px] font-mono uppercase" style="color: {{ $pal['accent'] }};">Cinema Stage</span>
+                                    <span class="text-[8px] font-mono opacity-60">3D Reel &rarr;</span>
+                                </div>
+                                <span class="text-sm font-extrabold leading-tight">{{ $t->name }}</span>
+                                <div class="flex gap-1.5 h-7">
+                                    <div class="flex-1 rounded-xs bg-white/10 border border-white/15"></div>
+                                    <div class="flex-1 rounded-xs bg-white/10 border border-white/15"></div>
+                                    <div class="w-8 rounded-xs" style="background-color: {{ $pal['accent'] }}44;"></div>
+                                </div>
+                            </div>
+                        @elseif($arch === 'spatial-glass-studio')
+                            <div class="my-2 flex-1 rounded-xl p-2.5 flex flex-col justify-between" style="background: linear-gradient(135deg, {{ $pal['accent'] }}22, {{ $pal['surface'] }}); border: 1px solid {{ $pal['text'] }}1c;">
+                                <div class="flex items-center justify-between">
+                                    <span class="px-2 py-0.5 rounded-full text-[7px] font-bold" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}18;">Glass 3D</span>
+                                    <span class="w-6 h-1.5 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
+                                </div>
+                                <span class="text-sm font-bold leading-tight">{{ $t->name }}</span>
+                                <div class="flex gap-1.5">
+                                    <span class="px-2 py-0.5 rounded-full text-[7px]" style="background-color: {{ $pal['surface'] }};">Capsule</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[7px]" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">Spatial</span>
+                                </div>
+                            </div>
+                        @elseif($arch === 'bento-modular-flagship')
                             <div class="grid grid-cols-12 gap-1.5 my-2 flex-1">
                                 <div class="col-span-7 rounded-lg p-2.5 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}14;">
-                                    <span class="text-[8px] font-mono uppercase opacity-60">Bento Modular</span>
+                                    <span class="text-[8px] font-mono uppercase opacity-60">Bento 12-Col</span>
                                     <span class="text-sm font-extrabold leading-tight">{{ $t->name }}</span>
                                     <span class="inline-block w-12 h-2 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
                                 </div>
@@ -215,51 +305,45 @@
                                     <div class="rounded-lg" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}15;"></div>
                                 </div>
                             </div>
-                        @elseif($heroT === 'color-block-duet')
-                            <div class="grid grid-cols-12 rounded-lg overflow-hidden my-2 flex-1" style="border: 1.5px solid {{ $pal['text'] }};">
-                                <div class="col-span-6 p-2.5 flex flex-col justify-between" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">
-                                    <span class="text-[8px] uppercase font-bold opacity-80">Color Block</span>
+                        @elseif($arch === 'color-block-editorial')
+                            <div class="grid grid-cols-12 rounded-lg overflow-hidden my-2 flex-1" style="border: 1.5px solid {{ $pal['text'] }}44;">
+                                <div class="col-span-7 p-2.5 flex flex-col justify-between" style="background-color: {{ $bands[1] ?? $pal['accent'] }}; color: #ffffff;">
+                                    <span class="text-[8px] uppercase font-black opacity-85">Color-Block</span>
                                     <span class="text-sm font-black leading-tight">{{ $t->name }}</span>
                                 </div>
-                                <div class="col-span-6 p-2 flex items-end justify-end" style="background-color: {{ $pal['surface'] }};">
-                                    <div class="w-10 h-14 rounded" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                <div class="col-span-5 p-2 flex flex-col justify-between" style="background-color: {{ $bands[2] ?? $pal['surface_alt'] }};">
+                                    <div class="h-2 w-8 bg-black/80"></div>
+                                    <div class="h-10 rounded-xs bg-white/90"></div>
                                 </div>
                             </div>
-                        @elseif($heroT === 'diagonal-performance')
-                            <div class="relative rounded-lg overflow-hidden my-2 flex-1 p-3 flex items-center justify-between" style="background-color: {{ $pal['surface_alt'] }}; color: #ffffff;">
-                                <div class="space-y-1 z-10">
-                                    <span class="text-[8px] font-mono uppercase" style="color: {{ $pal['accent'] }};">Performance Spec</span>
-                                    <div class="text-sm font-black uppercase leading-none">{{ $t->name }}</div>
-                                </div>
-                                <div class="w-14 h-14 rounded-md rotate-3" style="background-color: {{ $pal['accent'] }}44; border: 1px solid {{ $pal['accent'] }};"></div>
-                            </div>
-                        @elseif($heroT === 'compact-catalog-banner')
+                        @elseif($arch === 'pro-commerce-catalog')
                             <div class="my-2 flex-1 flex flex-col justify-between gap-1.5">
-                                <div class="rounded px-2.5 py-1.5 flex items-center justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}18;">
+                                <div class="rounded px-2.5 py-1 flex items-center justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}18;">
                                     <span class="text-xs font-extrabold">{{ $t->name }}</span>
                                     <span class="px-2 py-0.5 rounded text-[8px] font-bold" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">Search</span>
                                 </div>
-                                <div class="grid grid-cols-4 gap-1.5 flex-1">
-                                    @for($k = 0; $k < 4; $k++)
-                                        <div class="rounded p-1 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}12;">
-                                            <div class="h-7 rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
-                                            <div class="h-1.5 w-3/4 rounded-full" style="background-color: {{ $pal['accent'] }}88;"></div>
-                                        </div>
-                                    @endfor
+                                <div class="grid grid-cols-12 gap-1.5 flex-1">
+                                    <div class="col-span-3 rounded p-1 space-y-1" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}14;">
+                                        <div class="h-1.5 rounded" style="background-color: {{ $pal['accent'] }};"></div>
+                                        <div class="h-1 rounded opacity-30" style="background-color: {{ $pal['text'] }};"></div>
+                                    </div>
+                                    <div class="col-span-9 grid grid-cols-3 gap-1">
+                                        @for($k = 0; $k < 3; $k++)
+                                            <div class="rounded p-1 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}12;">
+                                                <div class="h-6 rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                                <div class="h-1.5 w-3/4 rounded-full" style="background-color: {{ $pal['accent'] }}88;"></div>
+                                            </div>
+                                        @endfor
+                                    </div>
                                 </div>
                             </div>
-                        @elseif(in_array($heroT, ['white-plinth-gallery', 'tech-product-centerpiece'], true))
-                            <div class="my-2 flex-1 flex flex-col items-center justify-center text-center gap-1.5">
-                                <span class="text-[8px] uppercase tracking-[0.22em] opacity-65">{{ $m['typography']['heading_font'] ?? 'Gallery' }}</span>
-                                <div class="text-base font-semibold leading-none">{{ $t->name }}</div>
-                                <div class="w-28 h-12 rounded mt-1" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}22;"></div>
-                            </div>
                         @else
+                            {{-- Editorial Runway Offset Pair Miniature --}}
                             <div class="grid grid-cols-12 gap-2 items-center my-2 flex-1">
                                 <div class="col-span-6 space-y-1.5">
-                                    <span class="inline-block w-8 h-0.5" style="background-color: {{ $pal['accent'] }};"></span>
+                                    <span class="text-[8px] uppercase tracking-[0.2em] opacity-65">Editorial Runway</span>
                                     <div class="text-base font-bold leading-tight">{{ $t->name }}</div>
-                                    <div class="text-[9px] opacity-70 truncate">{{ $m['typography']['heading_font'] ?? 'Editorial' }} · {{ str_replace('-', ' ', $lay['pdp_template'] ?? 'Bespoke') }}</div>
+                                    <div class="text-[9px] opacity-70 truncate">{{ $m['typography']['heading_font'] ?? 'Editorial' }}</div>
                                 </div>
                                 <div class="col-span-6 grid grid-cols-3 gap-1.5 h-20">
                                     <div class="col-span-2 rounded" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}1a;"></div>
@@ -287,7 +371,11 @@
 
                             @if(!empty($attrs))
                                 <div class="flex flex-wrap gap-1.5">
-                                    @foreach(array_slice($attrs, 0, 3) as $attr)
+                                    @if(!$t->is_legacy)
+                                        <span class="px-2 py-0.5 rounded-md bg-zinc-900 text-white text-[10px] font-bold">{{ ucwords(str_replace('-', ' ', $arch)) }}</span>
+                                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[10px] font-bold">GSAP: {{ ucwords(str_replace('-', ' ', $choreo)) }}</span>
+                                    @endif
+                                    @foreach(array_slice($attrs, 0, 2) as $attr)
                                         <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold">{{ $attr }}</span>
                                     @endforeach
                                 </div>

@@ -342,3 +342,100 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   AWWWARDS-LEVEL 10 PAGE ARCHITECTURES & 3D SPECULAR / GLASS / SWISS PRIMITIVES
+   ========================================================================== */
+
+/* Prevent accidental horizontal overflow across all mobile viewports */
+.k71-sf-theme {
+  overflow-x: clip;
+}
+
+/* Desktop 3D Perspective + Cursor-Tracked Specular Sheen */
+.k71-sf-theme [data-k71-3d-card] {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 280ms ease;
+  will-change: transform;
+}
+
+.k71-sf-theme[data-depth-3d="specular-vault"] [data-k71-3d-card]::after,
+.k71-sf-theme[data-depth-3d="floating-glass"] [data-k71-3d-card]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, 0.22), transparent 60%);
+}
+
+@media (hover: hover) {
+  .k71-sf-theme[data-depth-3d="specular-vault"] [data-k71-3d-card]:hover::after,
+  .k71-sf-theme[data-depth-3d="floating-glass"] [data-k71-3d-card]:hover::after {
+    opacity: 1;
+  }
+}
+
+.k71-sf-theme [data-k71-magnetic] {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Spatial Glass Studio ambient depth canvas */
+.k71-sf-theme[data-k71-architecture="spatial-glass-studio"] {
+  background-image:
+    radial-gradient(ellipse 60% 45% at 15% 10%, color-mix(in srgb, var(--t-accent) 16%, transparent), transparent 65%),
+    radial-gradient(ellipse 50% 45% at 88% 22%, color-mix(in srgb, var(--t-accent) 10%, transparent), transparent 60%);
+}
+
+.k71-sf-theme .k71-glass-panel {
+  background: color-mix(in srgb, var(--t-surface) 74%, transparent);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  border: 1px solid color-mix(in srgb, var(--t-text) 14%, transparent);
+  box-shadow: 0 18px 48px -20px rgba(0, 0, 0, 0.22);
+}
+
+/* Brutalist Poster hard architectural borders */
+.k71-sf-theme[data-k71-architecture="brutalist-poster"] .k71-brutal-box {
+  border: 2px solid var(--t-text);
+  border-radius: 0;
+}
+
+.k71-sf-theme[data-k71-architecture="brutalist-poster"] .k71-brutal-shadow {
+  border: 2px solid var(--t-text);
+  box-shadow: 6px 6px 0 var(--t-text);
+  border-radius: 0;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+@media (hover: hover) {
+  .k71-sf-theme[data-k71-architecture="brutalist-poster"] .k71-brutal-shadow:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 9px 9px 0 var(--t-accent);
+  }
+}
+
+/* Swiss Manifesto hairline structural grid */
+.k71-sf-theme .k71-swiss-cell {
+  border-top: 1px solid var(--t-border);
+  border-right: 1px solid var(--t-border);
+}
+
+/* Cinematic Dark Stage atmospheric rim glow */
+.k71-sf-theme[data-k71-architecture="cinematic-dark-stage"] .k71-cinema-glow {
+  background: radial-gradient(ellipse 70% 55% at 50% 0%, color-mix(in srgb, var(--t-accent) 20%, transparent), transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k71-sf-theme [data-k71-3d-card],
+  .k71-sf-theme [data-k71-magnetic],
+  .k71-sf-theme [data-k71-marquee],
+  .k71-sf-theme [data-k71-hscroll-track] {
+    transform: none !important;
+    transition: none !important;
+  }
+}

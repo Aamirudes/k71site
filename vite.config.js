@@ -6,7 +6,7 @@ export default defineConfig({
     root: __dirname,
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: ['resources/css/app.css', 'resources/js/app.js', 'resources/js/k71-theme-motion.js'],
             refresh: true,
         }),
         tailwindcss(),
