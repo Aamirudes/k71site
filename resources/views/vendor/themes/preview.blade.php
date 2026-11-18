@@ -11,12 +11,17 @@
     <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="m-0 p-0 bg-zinc-950 text-zinc-100 h-screen overflow-hidden antialiased"
+      data-frame-base="{{ $signedFrameBase }}"
       x-data="{
           viewport: 'desktop',
           page: '{{ $initialPage }}',
           fullscreen: false,
-          base: '{{ $signedFrameBase }}',
+          base: '',
+          init() {
+              this.base = this.$el.dataset.frameBase || '';
+          },
           get frameUrl() {
+              if (!this.base) return 'about:blank';
               const sep = this.base.includes('?') ? '&' : '?';
               return this.base + sep + 'page=' + this.page;
           },

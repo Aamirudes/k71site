@@ -210,6 +210,18 @@ class ThemeMarketplaceTest extends TestCase
         $res->assertSee('Vendor One');
         $res->assertHeader('X-Robots-Tag', 'noindex, nofollow');
 
+        // Relative signed iframe URL works cleanly when page/category/search/sort/product params are appended
+        $signedFrameBase = URL::temporarySignedRoute('vendor.themes.preview_frame', now()->addHours(6), [
+            'themeId' => 'maison-elite',
+            'v' => $vendorA->id,
+        ], absolute: false);
+
+        $this->actingAs($userA)->get($signedFrameBase . '&page=home')->assertStatus(200)->assertSee('Exclusive Coat A');
+        $this->actingAs($userA)->get($signedFrameBase . '&page=collection&search=Exclusive&sort=price_low')->assertStatus(200)->assertSee('Exclusive Coat A');
+        $this->actingAs($userA)->get($signedFrameBase . '&page=product')->assertStatus(200)->assertSee('Exclusive Coat A');
+        $this->actingAs($userA)->get($signedFrameBase . 'tampered&page=home')->assertStatus(403);
+        $this->actingAs($userB)->get($signedFrameBase . '&page=home')->assertStatus(403);
+
         // Vendor B CANNOT use Vendor A's signed preview URL
         $this->actingAs($userB)->get($validSignedUrl)->assertStatus(403);
 

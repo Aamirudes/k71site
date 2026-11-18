@@ -19,10 +19,26 @@ use Illuminate\Support\Str;
 
 class ThemeMarketplaceController extends Controller
 {
+    private const PREVIEW_IGNORED_QUERY_PARAMS = ['page', 'category', 'search', 'sort', 'product'];
+
     public function __construct(
         protected ThemeMarketplaceRegistry $registry,
         protected ThemeMarketplaceService $service
     ) {}
+
+    private function makeSignedPreviewUrl(string $routeName, string $themeId, int $vendorId): string
+    {
+        return URL::temporarySignedRoute($routeName, now()->addHours(6), [
+            'themeId' => $themeId,
+            'v' => $vendorId,
+        ], absolute: false);
+    }
+
+    private function hasValidPreviewSignature(Request $request): bool
+    {
+        return $request->hasValidRelativeSignatureWhileIgnoring(self::PREVIEW_IGNORED_QUERY_PARAMS)
+            || $request->hasValidSignatureWhileIgnoring(self::PREVIEW_IGNORED_QUERY_PARAMS);
+    }
 
     /**
      * Dedicated Vendor Theme Marketplace Page (61 themes: 11 Classic + 50 Bespoke Studio Themes).
@@ -117,12 +133,9 @@ class ThemeMarketplaceController extends Controller
                 $state = 'pending';
             }
 
-            // Expiring server-signed vendor-scoped preview URL (safe to open in a new tab directly on click)
+            // Expiring server-signed vendor-scoped preview URL (relative for proxy/HTTPS safety)
             $previewUrl = $theme->canBePreviewed()
-                ? URL::temporarySignedRoute('vendor.themes.preview', now()->addHours(2), [
-                    'themeId' => $id,
-                    'v' => $vendor->id,
-                ])
+                ? $this->makeSignedPreviewUrl('vendor.themes.preview', $id, (int) $vendor->id)
                 : null;
 
             return [
@@ -180,7 +193,7 @@ class ThemeMarketplaceController extends Controller
         if ($request->filled('v') && (int) $request->input('v') !== (int) $vendor->id) {
             abort(403, 'Unauthorized preview scope: you may only preview themes against your own storefront.');
         }
-        if ($request->has('signature') && !$request->hasValidSignature()) {
+        if ($request->has('signature') && !$this->hasValidPreviewSignature($request)) {
             abort(403, 'This theme preview session has expired. Please reopen Preview from the Theme Marketplace.');
         }
 
@@ -204,10 +217,7 @@ class ThemeMarketplaceController extends Controller
         $whatsappUrl = $activeRequest ? $this->service->buildWhatsAppRequestUrl($activeRequest) : null;
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
 
-        $signedFrameBase = URL::temporarySignedRoute('vendor.themes.preview_frame', now()->addHours(2), [
-            'themeId' => $cleanId,
-            'v' => $vendor->id,
-        ]);
+        $signedFrameBase = $this->makeSignedPreviewUrl('vendor.themes.preview_frame', $cleanId, (int) $vendor->id);
 
         return response()
             ->view('vendor.themes.preview', [
@@ -240,7 +250,7 @@ class ThemeMarketplaceController extends Controller
         if ($request->filled('v') && (int) $request->input('v') !== (int) $vendor->id) {
             abort(403, 'Cross-vendor preview access denied.');
         }
-        if ($request->has('signature') && !$request->hasValidSignature()) {
+        if ($request->has('signature') && !$this->hasValidPreviewSignature($request)) {
             abort(403, 'Preview session expired.');
         }
 
@@ -255,10 +265,7 @@ class ThemeMarketplaceController extends Controller
             abort(403, 'Preview disabled for this theme.');
         }
 
-        $frameBase = URL::temporarySignedRoute('vendor.themes.preview_frame', now()->addHours(2), [
-            'themeId' => $cleanId,
-            'v' => $vendor->id,
-        ]);
+        $frameBase = $this->makeSignedPreviewUrl('vendor.themes.preview_frame', $cleanId, (int) $vendor->id);
 
         return $this->renderIsolatedPreviewFrame($request, $vendor, $manifest, $frameBase, $this->service->isVendorEntitled($vendor, $cleanId));
     }
@@ -441,10 +448,7 @@ class ThemeMarketplaceController extends Controller
 
         $draftConfig = $this->service->getDraftConfigForTheme($vendor, $cleanId);
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
-        $previewUrl = URL::temporarySignedRoute('vendor.themes.preview', now()->addHours(2), [
-            'themeId' => $cleanId,
-            'v' => $vendor->id,
-        ]);
+        $previewUrl = $this->makeSignedPreviewUrl('vendor.themes.preview', $cleanId, (int) $vendor->id);
 
         return view('vendor.themes.customize', [
             'vendor' => $vendor,
