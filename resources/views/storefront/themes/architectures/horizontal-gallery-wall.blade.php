@@ -5,7 +5,7 @@
     $storeCollectionUrl = $storeCollectionUrl ?? ($frameBase ? ($frameBase . $frameGlue . 'page=collection') : route('storefront.collection', ['slug' => $vendor->slug]));
     $prodUrl = fn ($p) => $frameBase ? ($frameBase . $frameGlue . 'page=product&product=' . urlencode($p->slug)) : route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $p->slug]);
 
-    $fallbackArt = asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'marble-stone') . '.svg');
+    $fallbackArt = asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'marble-stone') . '.jpg');
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $heroCfg = $themeConfig['hero'] ?? [];
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;

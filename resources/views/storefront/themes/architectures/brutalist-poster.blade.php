@@ -10,7 +10,7 @@
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'RAW GRAPHIC COMMERCE · LIMITED RELEASES · ZERO COMPROMISE.')), 120);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
 {{-- 1. RAW BRUTALIST POSTER HERO WITH THICK ARCHITECTURAL INK BORDERS --}}
@@ -92,7 +92,7 @@
         <div data-k71-stagger-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             @foreach($allProducts->take(12) as $pIdx => $product)
                 @php
-                    $pImg = $product->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+                    $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     $pLink = $prodUrl($product);
                     $hasVariants = ($product->variants ?? collect())->isNotEmpty();
                 @endphp

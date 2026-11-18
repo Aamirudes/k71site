@@ -369,6 +369,27 @@ function initK71ThemeEngine() {
             }
             if (caption) caption.textContent = lightboxBtn.dataset.k71LightboxAlt || '';
             openModal('k71-lightbox-modal', lightboxBtn);
+            return;
+        }
+
+        const qvBtn = e.target.closest('[data-k71-quickview]');
+        if (qvBtn) {
+            e.preventDefault();
+            const qImg = document.getElementById('k71-qv-img');
+            const qCat = document.getElementById('k71-qv-cat');
+            const qTitle = document.getElementById('k71-qv-title');
+            const qPrice = document.getElementById('k71-qv-price');
+            const qDesc = document.getElementById('k71-qv-desc');
+            const qPid = document.getElementById('k71-qv-pid');
+            const qLink = document.getElementById('k71-qv-link');
+            if (qImg) { qImg.src = qvBtn.dataset.qvImg || ''; qImg.alt = qvBtn.dataset.qvTitle || ''; }
+            if (qCat) qCat.textContent = qvBtn.dataset.qvCat || '';
+            if (qTitle) qTitle.textContent = qvBtn.dataset.qvTitle || '';
+            if (qPrice) qPrice.textContent = qvBtn.dataset.qvPrice || '';
+            if (qDesc) qDesc.textContent = qvBtn.dataset.qvDesc || '';
+            if (qPid) qPid.value = qvBtn.dataset.qvId || '';
+            if (qLink) qLink.href = qvBtn.dataset.qvUrl || '#';
+            openModal('k71-quickview-modal', qvBtn);
         }
     };
 
@@ -432,6 +453,23 @@ function initK71ThemeEngine() {
                         badge.classList.remove('hidden');
                     });
                 }
+                const drawerItems = document.getElementById('k71-cart-drawer-items');
+                if (drawerItems && !form.dataset.k71BuyNow) {
+                    const cardTitle = form.closest('article')?.querySelector('h2,h3')?.textContent?.trim()
+                        || document.getElementById('k71-qv-title')?.textContent?.trim()
+                        || document.querySelector('h1')?.textContent?.trim()
+                        || 'Store Item';
+                    const row = document.createElement('div');
+                    row.className = 'p-3.5 rounded-lg flex items-center justify-between gap-3';
+                    row.style.border = '1px solid var(--t-border)';
+                    row.style.backgroundColor = 'var(--t-bg)';
+                    row.innerHTML = `<div class="min-w-0"><p class="text-xs font-bold truncate"></p><p class="text-[11px] opacity-70">Added to bag</p></div><span class="text-xs font-mono font-bold shrink-0">✓</span>`;
+                    row.querySelector('p').textContent = cardTitle;
+                    drawerItems.prepend(row);
+                    const qv = document.getElementById('k71-quickview-modal');
+                    if (qv && !qv.classList.contains('hidden')) closeModal(qv);
+                    openModal('k71-cart-drawer', submitBtn);
+                }
                 if (form.dataset.k71BuyNow === 'true' && form.dataset.k71CheckoutUrl) {
                     window.location.href = form.dataset.k71CheckoutUrl;
                 }
@@ -483,11 +521,113 @@ function initK71ThemeEngine() {
         countdownIntervals.push(setInterval(tick, 1000));
     });
 
+    // ── 7B. Lightweight Procedural WebGL Atmospheric Shader Stage (Desktop Only) ──
+    const shaderCleanups = [];
+    if (!reduced && !isTouch && window.innerWidth >= 1024) {
+        root.querySelectorAll('canvas[data-k71-shader]').forEach((canvas) => {
+            const gl = canvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'low-power' });
+            if (!gl) return;
+
+            const vsSource = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+            const fsSource = `
+                precision mediump float;
+                uniform float u_t;
+                uniform vec2 u_res;
+                uniform vec2 u_mouse;
+                uniform vec3 u_accent;
+                void main() {
+                    vec2 uv = gl_FragCoord.xy / u_res;
+                    vec2 m = u_mouse / u_res;
+                    float wave = sin(uv.x * 3.2 + u_t * 0.45) * cos(uv.y * 2.8 - u_t * 0.35);
+                    float glow = smoothstep(0.75, 0.0, length(uv - vec2(0.5 + 0.15 * sin(u_t * 0.25), 0.42)));
+                    float ptr = smoothstep(0.45, 0.0, length(uv - m));
+                    vec3 col = u_accent * (0.14 * glow + 0.12 * ptr + 0.04 * (wave * 0.5 + 0.5));
+                    gl_FragColor = vec4(col, 0.55 * glow + 0.35 * ptr + 0.08);
+                }
+            `;
+
+            const compile = (type, src) => {
+                const s = gl.createShader(type);
+                gl.shaderSource(s, src);
+                gl.compileShader(s);
+                return s;
+            };
+            const prog = gl.createProgram();
+            gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSource));
+            gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+            gl.linkProgram(prog);
+            if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+            gl.useProgram(prog);
+
+            const buf = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+            const loc = gl.getAttribLocation(prog, 'p');
+            gl.enableVertexAttribArray(loc);
+            gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+            const uT = gl.getUniformLocation(prog, 'u_t');
+            const uRes = gl.getUniformLocation(prog, 'u_res');
+            const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+            const uAccent = gl.getUniformLocation(prog, 'u_accent');
+
+            // Parse CSS accent hex into normalized RGB
+            const hex = (getComputedStyle(root).getPropertyValue('--t-accent') || '#c8a45d').trim().replace('#', '');
+            const rgb = hex.length === 6
+                ? [parseInt(hex.slice(0, 2), 16) / 255, parseInt(hex.slice(2, 4), 16) / 255, parseInt(hex.slice(4, 6), 16) / 255]
+                : [0.78, 0.64, 0.36];
+
+            let mx = 0.5, my = 0.5, visible = true, rafId = 0;
+            const resize = () => {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = Math.max(2, Math.floor(rect.width * 0.5));
+                canvas.height = Math.max(2, Math.floor(rect.height * 0.5));
+                gl.viewport(0, 0, canvas.width, canvas.height);
+            };
+            resize();
+
+            const onMouse = (e) => {
+                const r = canvas.getBoundingClientRect();
+                mx = Math.max(0, Math.min(1, (e.clientX - r.left) / Math.max(1, r.width)));
+                my = Math.max(0, Math.min(1, 1 - (e.clientY - r.top) / Math.max(1, r.height)));
+            };
+            window.addEventListener('mousemove', onMouse, { passive: true });
+            window.addEventListener('resize', resize, { passive: true });
+
+            const io = new IntersectionObserver((entries) => {
+                visible = entries[0]?.isIntersecting ?? true;
+            });
+            io.observe(canvas);
+
+            const start = performance.now();
+            const render = (now) => {
+                if (visible) {
+                    gl.uniform1f(uT, (now - start) * 0.001);
+                    gl.uniform2f(uRes, canvas.width, canvas.height);
+                    gl.uniform2f(uMouse, mx * canvas.width, my * canvas.height);
+                    gl.uniform3f(uAccent, rgb[0], rgb[1], rgb[2]);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                }
+                rafId = requestAnimationFrame(render);
+            };
+            rafId = requestAnimationFrame(render);
+
+            shaderCleanups.push(() => {
+                cancelAnimationFrame(rafId);
+                io.disconnect();
+                window.removeEventListener('mousemove', onMouse);
+                window.removeEventListener('resize', resize);
+                gl.getExtension('WEBGL_lose_context')?.loseContext();
+            });
+        });
+    }
+
     // ── 8. Clean Teardown on Unload (Zero Stale ScrollTriggers / Listeners) ───
     const teardown = () => {
         if (gsapCtx) gsapCtx.revert();
         ScrollTrigger.getAll().forEach((st) => st.kill());
         pointerCleanups.forEach((fn) => fn());
+        shaderCleanups.forEach((fn) => fn());
         countdownIntervals.forEach((id) => clearInterval(id));
         if (onHeaderScroll) window.removeEventListener('scroll', onHeaderScroll);
         document.removeEventListener('click', onDocClick);

@@ -169,6 +169,10 @@
                     $pal = $m['palette'] ?? ['bg' => '#fafaf9', 'surface' => '#ffffff', 'surface_alt' => '#ececec', 'text' => '#18181b', 'accent' => '#18181b', 'accent_contrast' => '#ffffff'];
                     $lay = $m['layout'] ?? ['hero_template' => 'asymmetric-campaign', 'header_template' => 'couture-centered', 'page_architecture' => 'editorial-runway'];
                     $arch = $lay['page_architecture'] ?? 'editorial-runway';
+                    $pdpArch = $lay['pdp_architecture'] ?? 'editorial-fullbleed';
+                    $thumbPhoto = !$t->is_legacy
+                        ? asset('images/theme-editorial/' . ($lay['sample_art'] ?? 'fashion-editorial') . '.jpg')
+                        : null;
                     $choreo = $m['motion']['choreography'] ?? ($m['motion']['profile'] ?? 'quiet-editorial');
                     $bands = $lay['band_colors'] ?? [$pal['bg'], $pal['accent'], $pal['surface_alt']];
                     $state = $entry['state'];
@@ -178,11 +182,16 @@
                 @endphp
                 <article class="rounded-2xl border transition-all overflow-hidden flex flex-col justify-between bg-white {{ $entry['is_live'] ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'border-slate-200 hover:border-slate-300 hover:shadow-lg' }}">
 
-                    {{-- Bespoke Miniature Architectural Theme Preview (Unique per Hero/Header/Palette) --}}
-                    <div class="relative p-4 h-52 flex flex-col justify-between overflow-hidden"
+                    {{-- Photorealistic Architectural Theme Thumbnail Preview --}}
+                    <div class="relative p-3.5 h-56 flex flex-col justify-between overflow-hidden group"
                          style="background-color: {{ $pal['bg'] }}; color: {{ $pal['text'] }}; border-bottom: 1px solid rgba(0,0,0,0.08);">
+                        @if($thumbPhoto)
+                            <img src="{{ $thumbPhoto }}" alt="{{ $t->name }} preview" loading="lazy"
+                                 class="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-25 group-hover:scale-105 transition-transform duration-700">
+                            <div class="pointer-events-none absolute inset-0" style="background: linear-gradient(180deg, {{ $pal['bg'] }}cc 0%, {{ $pal['bg'] }}99 45%, {{ $pal['bg'] }}ee 100%);"></div>
+                        @endif
                         {{-- Mini Header Bar reflecting theme header architecture --}}
-                        <div class="flex items-center justify-between gap-2 pb-2" style="border-bottom: 1px solid {{ $pal['text'] }}18;">
+                        <div class="relative z-10 flex items-center justify-between gap-2 pb-2" style="border-bottom: 1px solid {{ $pal['text'] }}22;">
                             <div class="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-wider opacity-85">
                                 <span class="w-2 h-2 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
                                 <span>{{ $t->is_legacy ? 'Classic 11' : ('#' . str_pad((string)($m['number'] ?? ''), 2, '0', STR_PAD_LEFT)) }}</span>
@@ -204,6 +213,7 @@
                         </div>
 
                         {{-- Mini Architectural Wireframe reflecting THIS theme's exact Page Architecture --}}
+                        <div class="relative z-10 flex-1 flex flex-col">
                         @if($arch === 'left-rail-gallery')
                             <div class="grid grid-cols-12 gap-2 my-2 flex-1">
                                 <div class="col-span-4 rounded p-2 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border-right: 1px solid {{ $pal['text'] }}24;">
@@ -408,8 +418,9 @@
                                 </div>
                             </div>
                         @endif
+                        </div>
 
-                        <div class="flex items-center justify-between text-[10px] pt-1 opacity-85">
+                        <div class="relative z-10 flex items-center justify-between text-[10px] pt-1 opacity-90">
                             <span class="truncate">{{ $categories[$t->category] ?? ucfirst($t->category) }}</span>
                             <span class="font-extrabold px-2 py-0.5 rounded shrink-0" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">
                                 {{ $t->formatted_price }}

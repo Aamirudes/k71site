@@ -11,7 +11,7 @@
         : route('storefront.collection', ['slug' => $vendor->slug]) . (!empty($isPreview) ? '?preview=1' : ''));
 
     $pdpArch = $manifest['layout']['pdp_architecture'] ?? 'editorial-fullbleed';
-    $fallbackArt = asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+    $fallbackArt = asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
     $images = ($product->images ?? collect())->map(fn ($img) => $img->url)->filter()->values();
     if ($images->isEmpty()) {
         $images = collect([$fallbackArt]);

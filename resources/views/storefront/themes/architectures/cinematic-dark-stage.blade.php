@@ -10,11 +10,12 @@
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Engineered for dramatic contrast, precision optics, and nocturnal authority.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $lead = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. NOCTURNAL SPOTLIGHT THEATER HERO --}}
+{{-- 1. NOCTURNAL SPOTLIGHT THEATER HERO + REAL PROCEDURAL WEBGL ATMOSPHERIC SHADER --}}
 <section data-k71-hero-stage class="relative w-full min-h-[82vh] flex items-center overflow-hidden k71-cinema-glow" style="background-color: #070709; color: #f4f4f5;">
+    <canvas data-k71-shader="obsidian" aria-hidden="true" class="pointer-events-none absolute inset-0 w-full h-full opacity-90"></canvas>
     <div class="max-w-[1440px] mx-auto w-full px-5 sm:px-10 lg:px-14 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
         <div class="lg:col-span-6 space-y-6 relative z-10">
             <div data-k71-hero-meta class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.24em]"
@@ -75,7 +76,7 @@
         <div data-k71-hscroll-track class="flex gap-5 sm:gap-6 w-max">
             @foreach($allProducts->take(8) as $rIdx => $item)
                 @php
-                    $rImg = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+                    $rImg = $item->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                 @endphp
                 <article data-k71-3d-card class="w-[78vw] sm:w-[360px] lg:w-[410px] shrink-0 rounded-xl overflow-hidden border border-white/10 bg-zinc-950/90 group">
                     <a href="{{ $prodUrl($item) }}" class="block aspect-[16/10] overflow-hidden bg-zinc-900">

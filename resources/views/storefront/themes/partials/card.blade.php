@@ -4,7 +4,7 @@
     $contentAlign = $themeConfig['grid']['content_align'] ?? 'left';
     $ratioClass = match($aspect) { '1/1' => 'aspect-square', '4/5' => 'aspect-[4/5]', '4/3' => 'aspect-[4/3]', default => 'aspect-[3/4]' };
 
-    $fallbackArt = asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+    $fallbackArt = asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
     $primaryImg = $product->images?->first()?->url ?? $fallbackArt;
     $secondaryImg = $product->images?->skip(1)?->first()?->url ?? null;
     $pricePaise = (int) ($product->base_price ?? 0);

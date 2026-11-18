@@ -91,7 +91,7 @@ class ThemeMarketplaceController extends Controller
             'price_low' => $query->orderByRaw('CASE WHEN price_paise IS NULL THEN 1 ELSE 0 END, price_paise ASC, sort_order ASC'),
             'price_high' => $query->orderByRaw('CASE WHEN price_paise IS NULL THEN 1 ELSE 0 END, price_paise DESC, sort_order ASC'),
             'newest' => $query->orderBy('is_legacy', 'asc')->orderByDesc('id'),
-            default => $query->orderByDesc('is_featured')->orderBy('sort_order', 'asc'),
+            default => $query->orderBy('is_legacy', 'asc')->orderByDesc('is_featured')->orderBy('sort_order', 'asc'),
         };
 
         $themes = $query->get();
@@ -548,7 +548,14 @@ class ThemeMarketplaceController extends Controller
 
     protected function buildSampleShowcaseProducts(Vendor $vendor, string $sampleArt = 'fashion-editorial')
     {
-        $placeholder = asset('images/theme-samples/' . $sampleArt . '.svg');
+        $galleryCycle = [
+            $sampleArt,
+            $sampleArt === 'fashion-editorial' ? 'fashion-runway' : ($sampleArt === 'horology-watch' ? 'jewelry-macro' : ($sampleArt === 'furniture-interior' ? 'marble-stone' : $sampleArt)),
+            $sampleArt === 'tech-hardware' ? 'horology-watch' : ($sampleArt === 'fresh-grocery' ? 'gourmet-coffee' : 'graphic-art'),
+            $sampleArt,
+            $sampleArt === 'botanical-beauty' ? 'furniture-interior' : 'fashion-editorial',
+            $sampleArt,
+        ];
         $items = [
             ['slug' => 'preview-item-1', 'title' => 'Preview Showcase Piece 01', 'price' => 249900, 'compare' => 299900, 'cat' => 'Featured', 'sku' => 'PRV-01'],
             ['slug' => 'preview-item-2', 'title' => 'Preview Showcase Piece 02', 'price' => 389900, 'compare' => 0, 'cat' => 'New Arrivals', 'sku' => 'PRV-02'],
@@ -558,7 +565,8 @@ class ThemeMarketplaceController extends Controller
             ['slug' => 'preview-item-6', 'title' => 'Preview Showcase Piece 06', 'price' => 429900, 'compare' => 499900, 'cat' => 'New Arrivals', 'sku' => 'PRV-06'],
         ];
 
-        return collect($items)->map(function ($it, $idx) use ($placeholder) {
+        return collect($items)->map(function ($it, $idx) use ($galleryCycle) {
+            $imgPlate = asset('images/theme-editorial/' . ($galleryCycle[$idx % count($galleryCycle)]) . '.jpg');
             $p = new Product();
             $p->id = 99000 + $idx;
             $p->slug = $it['slug'];
@@ -570,7 +578,7 @@ class ThemeMarketplaceController extends Controller
             $p->sku = $it['sku'];
             $p->material = 'Sample Material';
             $p->listing_type = 'purchase';
-            $p->setRelation('images', collect([(object) ['url' => $placeholder]]));
+            $p->setRelation('images', collect([(object) ['url' => $imgPlate]]));
             $p->setRelation('category', (object) ['slug' => Str::slug($it['cat']), 'name' => $it['cat']]);
             $p->setRelation('variants', collect([
                 (object) ['id' => 1, 'size' => 'S', 'color' => '', 'sku' => $it['sku'] . '-S', 'stock' => 4, 'price_override' => null],

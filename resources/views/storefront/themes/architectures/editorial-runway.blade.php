@@ -11,7 +11,7 @@
     $heroCta = trim((string) ($heroCfg['cta_label'] ?? '')) ?: 'Explore Collection';
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $leadProduct = $allProducts->first();
-    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($leadProduct?->images?->first()?->url ?? $vendor->banner_url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg'));
+    $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($leadProduct?->images?->first()?->url ?? $vendor->banner_url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
     $pair1 = $allProducts->slice(0, 2)->values();
     $pair2 = $allProducts->slice(2, 2)->values();
     $remaining = $allProducts->slice(4)->values();
@@ -21,8 +21,26 @@
 <section data-k71-hero-stage class="relative w-full min-h-[78vh] lg:min-h-[90vh] flex items-end overflow-hidden" style="background-color: #0b0b0d;">
     <div class="absolute inset-0 overflow-hidden">
         <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" data-k71-hero-media data-k71-hero-scrub
-             class="w-full h-full object-cover object-center opacity-80">
-        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(8,8,10,0.18) 0%, rgba(8,8,10,0.35) 52%, rgba(8,8,10,0.88) 100%);"></div>
+             class="w-full h-full object-cover object-center opacity-85">
+        <div class="absolute inset-0" style="background: linear-gradient(180deg, rgba(8,8,10,0.14) 0%, rgba(8,8,10,0.28) 52%, rgba(8,8,10,0.88) 100%);"></div>
+
+        {{-- Interactive Shop-the-Look Hotspot (Shopify Prestige Pattern) --}}
+        @if($leadProduct)
+            <button type="button"
+                    data-k71-quickview
+                    data-qv-id="{{ $leadProduct->id }}"
+                    data-qv-title="{{ $leadProduct->title }}"
+                    data-qv-cat="{{ $leadProduct->category?->name ?? 'Runway Look' }}"
+                    data-qv-price="₹{{ number_format(($leadProduct->base_price ?? 0) / 100, 0) }}"
+                    data-qv-desc="{{ \Illuminate\Support\Str::limit(strip_tags((string) ($leadProduct->description ?? '')), 200) }}"
+                    data-qv-img="{{ $heroImg }}"
+                    data-qv-url="{{ $prodUrl($leadProduct) }}"
+                    aria-label="Shop featured look: {{ $leadProduct->title }}"
+                    class="hidden sm:inline-flex items-center gap-2.5 absolute top-[38%] right-[22%] z-20 px-3.5 py-2 rounded-full bg-white/92 backdrop-blur-md text-zinc-950 text-[11px] font-bold shadow-2xl hover:scale-105 transition cursor-pointer">
+                <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-950 opacity-60"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-zinc-950"></span></span>
+                <span>Shop the Look · ₹{{ number_format(($leadProduct->base_price ?? 0) / 100, 0) }}</span>
+            </button>
+        @endif
     </div>
 
     <div class="relative z-10 w-full max-w-[1440px] mx-auto px-5 sm:px-10 lg:px-14 pb-12 sm:pb-16 pt-28 flex flex-col lg:flex-row lg:items-end justify-between gap-8 text-white">
@@ -81,7 +99,7 @@
                 @php
                     $colSpan = $idx === 0 ? 'lg:col-span-7' : 'lg:col-span-5 lg:mt-20';
                     $aspect = $idx === 0 ? 'aspect-[4/3]' : 'aspect-[3/4]';
-                    $img = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+                    $img = $item->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                 @endphp
                 <article class="{{ $colSpan }} group" data-k71-reveal @if($idx === 1) data-k71-parallax="24" @endif>
                     <a href="{{ $prodUrl($item) }}" class="block {{ $aspect }} overflow-hidden" style="background-color: var(--t-surface-alt);">
@@ -104,7 +122,7 @@
                     @php
                         $colSpan = $idx === 0 ? 'lg:col-span-5 lg:mt-14' : 'lg:col-span-7';
                         $aspect = $idx === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]';
-                        $img = $item->images?->first()?->url ?? asset('images/theme-samples/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.svg');
+                        $img = $item->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     @endphp
                     <article class="{{ $colSpan }} group" data-k71-reveal @if($idx === 0) data-k71-parallax="20" @endif>
                         <a href="{{ $prodUrl($item) }}" class="block {{ $aspect }} overflow-hidden" style="background-color: var(--t-surface-alt);">

@@ -88,3 +88,70 @@
      style="background-color: var(--t-text); color: var(--t-bg);">
     <span id="k71-theme-toast-text"></span>
 </div>
+
+{{-- Slide-Out Theme-Matched AJAX Mini-Cart Drawer (Shopify Prestige / WoodMart Pattern) --}}
+<div id="k71-cart-drawer" data-k71-modal aria-hidden="true" role="dialog" aria-modal="true" aria-label="Shopping bag"
+     class="hidden fixed inset-0 z-50 flex justify-end">
+    <div class="fixed inset-0 bg-black/55 backdrop-blur-xs" data-k71-close="k71-cart-drawer"></div>
+    <div class="relative z-10 w-[92vw] max-w-md h-full flex flex-col justify-between p-6 shadow-2xl overflow-y-auto"
+         style="background-color: var(--t-surface); color: var(--t-text); border-left: 1px solid var(--t-border);">
+        <div class="space-y-5">
+            <div class="flex items-center justify-between pb-4" style="border-bottom: 1px solid var(--t-border);">
+                <div>
+                    <p class="k71-eyebrow text-[10px]" style="color: var(--t-accent);">{{ $storeName }}</p>
+                    <h2 class="k71-heading text-xl">Your Bag (<span data-k71-cart-count>{{ $cartCount }}</span>)</h2>
+                </div>
+                <button type="button" data-k71-close="k71-cart-drawer" class="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg cursor-pointer hover:opacity-70" aria-label="Close bag">
+                    @include('storefront.themes.partials.icon', ['name' => 'close', 'class' => 'w-5 h-5'])
+                </button>
+            </div>
+            <div id="k71-cart-drawer-items" class="space-y-3 text-sm">
+                <p class="text-xs py-4" style="color: var(--t-muted);">Items added to your K71 bag appear here with live inventory verification.</p>
+            </div>
+        </div>
+        <div class="pt-5 space-y-2.5" style="border-top: 1px solid var(--t-border);">
+            <a href="{{ route('checkout.index') }}" class="k71-btn k71-btn-primary w-full">Proceed to Checkout</a>
+            <a href="{{ route('cart.index') }}" class="k71-btn k71-btn-outline w-full">Open Full Bag</a>
+        </div>
+    </div>
+</div>
+
+{{-- Instant Product Quick-View Modal (WoodMart / Flatsome / Prestige Hotspot Pattern) --}}
+<div id="k71-quickview-modal" data-k71-modal aria-hidden="true" role="dialog" aria-modal="true" aria-label="Quick view product"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-xs" data-k71-close="k71-quickview-modal"></div>
+    <div class="relative z-10 w-full max-w-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2"
+         style="background-color: var(--t-surface); color: var(--t-text); border: 1px solid var(--t-border); border-radius: var(--t-radius);">
+        <div class="aspect-[4/4] md:aspect-auto md:min-h-[380px] overflow-hidden" style="background-color: var(--t-surface-alt);">
+            <img id="k71-qv-img" src="" alt="" class="w-full h-full object-cover">
+        </div>
+        <div class="p-6 sm:p-8 flex flex-col justify-between gap-5">
+            <div class="space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p id="k71-qv-cat" class="k71-eyebrow text-[10px]" style="color: var(--t-accent);"></p>
+                        <h2 id="k71-qv-title" class="k71-heading text-2xl leading-tight mt-1"></h2>
+                    </div>
+                    <button type="button" data-k71-close="k71-quickview-modal" class="min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer hover:opacity-70" aria-label="Close quick view">
+                        @include('storefront.themes.partials.icon', ['name' => 'close', 'class' => 'w-5 h-5'])
+                    </button>
+                </div>
+                <p id="k71-qv-price" class="text-2xl font-extrabold font-mono"></p>
+                <p id="k71-qv-desc" class="text-xs sm:text-sm leading-relaxed line-clamp-4" style="color: var(--t-muted);"></p>
+            </div>
+            <div class="space-y-2.5 pt-4" style="border-top: 1px solid var(--t-border);">
+                <form id="k71-qv-form" action="{{ route('cart.add') }}" method="POST" data-k71-cart-form>
+                    @csrf
+                    <input type="hidden" id="k71-qv-pid" name="product_id" value="">
+                    <input type="hidden" name="quantity" value="1">
+                    @if(!empty($isCataloguePreview))
+                        <button type="button" disabled class="k71-btn k71-btn-primary w-full opacity-75 cursor-not-allowed">Preview Mode (Checkout Disabled)</button>
+                    @else
+                        <button type="submit" class="k71-btn k71-btn-primary w-full cursor-pointer">Add to Bag</button>
+                    @endif
+                </form>
+                <a id="k71-qv-link" href="#" class="k71-btn k71-btn-outline w-full">Inspect Full Product Page &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
