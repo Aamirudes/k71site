@@ -145,12 +145,22 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item class="group flex flex-col gap-4">
-                    <a href="{{ $pLink }}" class="block aspect-[16/10] w-full overflow-hidden" style="background-color: var(--t-surface-alt); border-radius: var(--t-radius);">
-                        <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                    </a>
+                <article data-k71-card-item class="k71-product-card group flex flex-col gap-4">
+                    <div class="relative">
+                        <a href="{{ $pLink }}" class="k71-card-media block aspect-[16/10] w-full overflow-hidden" style="background-color: var(--t-surface-alt); border-radius: var(--t-radius);">
+                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                        </a>
+                        @include('storefront.themes.partials._card_media_controls')
+                    </div>
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="text-[11px] uppercase tracking-[0.18em] mb-1" style="color: var(--t-muted);">{{ $product->category?->name ?? 'Collection' }}</p>

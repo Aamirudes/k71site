@@ -19,16 +19,28 @@
     $isDark = !empty($palette['is_dark']);
 
     $cartCount = 0;
+    $cartDrawerItems = collect();
+    $cartSubtotalPaise = 0;
     try {
-        if (auth()->check()) {
-            $userCart = \App\Models\Cart::where('user_id', auth()->id())->first();
-            $cartCount = $userCart ? (int) $userCart->items()->sum('quantity') : 0;
-        } else {
-            $sessCart = \App\Models\Cart::where('session_id', session()->getId())->first();
-            $cartCount = $sessCart ? (int) $sessCart->items()->sum('quantity') : 0;
+        $activeCart = auth()->check()
+            ? \App\Models\Cart::where('user_id', auth()->id())->first()
+            : \App\Models\Cart::where('session_id', session()->getId())->first();
+        if ($activeCart) {
+            $cartDrawerItems = $activeCart->items()
+                ->with(['product.images', 'variant'])
+                ->latest('id')
+                ->take(20)
+                ->get();
+            $cartCount = (int) $cartDrawerItems->sum('quantity');
+            $cartSubtotalPaise = (int) $cartDrawerItems->sum(function ($ci) {
+                $unit = (int) ($ci->price_at_add ?: ($ci->variant?->price_override ?: ($ci->product?->base_price ?? 0)));
+                return $unit * max(1, (int) $ci->quantity);
+            });
         }
     } catch (\Throwable $e) {
         $cartCount = 0;
+        $cartDrawerItems = collect();
+        $cartSubtotalPaise = 0;
     }
 
     $storeHomeUrl = $storeHomeUrl ?? (!empty($previewFrameBaseUrl)

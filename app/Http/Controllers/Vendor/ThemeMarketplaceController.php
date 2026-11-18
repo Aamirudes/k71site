@@ -477,6 +477,7 @@ class ThemeMarketplaceController extends Controller
         $draftConfig = $this->service->getDraftConfigForTheme($vendor, $cleanId);
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
         $previewUrl = $this->makeSignedPreviewUrl('vendor.themes.preview', $cleanId, (int) $vendor->id);
+        $signedFrameBase = $this->makeSignedPreviewUrl('vendor.themes.preview_frame', $cleanId, (int) $vendor->id);
 
         return view('vendor.themes.customize', [
             'vendor' => $vendor,
@@ -485,6 +486,7 @@ class ThemeMarketplaceController extends Controller
             'draftConfig' => $draftConfig,
             'isLive' => ($liveThemeId === $cleanId),
             'previewUrl' => $previewUrl,
+            'signedFrameBase' => $signedFrameBase,
             'headingFonts' => ThemeMarketplaceRegistry::ALLOWED_HEADING_FONTS,
             'bodyFonts' => ThemeMarketplaceRegistry::ALLOWED_BODY_FONTS,
         ]);

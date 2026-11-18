@@ -130,14 +130,42 @@
                     Shortlist (<span data-k71-wish-count>0</span>)
                 </button>
             </div>
-            <div id="k71-cart-drawer-items" class="space-y-3 text-sm">
-                <p class="text-xs py-4" style="color: var(--t-muted);">Items added to your K71 bag appear here with live inventory verification.</p>
+            <div id="k71-cart-drawer-items" class="space-y-2.5 text-sm">
+                @if(($cartDrawerItems ?? collect())->isNotEmpty())
+                    @foreach($cartDrawerItems as $ci)
+                        @php
+                            $ciProd = $ci->product;
+                            $ciImg = $ciProd?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
+                            $ciUnit = (int) ($ci->price_at_add ?: ($ci->variant?->price_override ?: ($ciProd?->base_price ?? 0)));
+                            $ciLine = $ciUnit * max(1, (int) $ci->quantity);
+                            $ciVarLbl = trim(implode(' / ', array_filter([$ci->variant?->size ?? '', $ci->variant?->color ?? ''])));
+                        @endphp
+                        <div class="p-3 rounded-lg flex items-center gap-3" style="border: 1px solid var(--t-border); background-color: var(--t-bg);">
+                            <img src="{{ $ciImg }}" alt="{{ $ciProd?->title ?? 'Item' }}" class="w-12 h-14 rounded object-cover shrink-0" style="background-color: var(--t-surface-alt);">
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold truncate">{{ $ciProd?->title ?? 'Store Item' }}</p>
+                                <p class="text-[11px] truncate" style="color: var(--t-muted);">
+                                    Qty {{ (int) $ci->quantity }}{{ $ciVarLbl !== '' ? (' · ' . $ciVarLbl) : '' }}
+                                </p>
+                            </div>
+                            <span class="font-mono text-xs font-extrabold shrink-0">₹{{ number_format($ciLine / 100, 0) }}</span>
+                        </div>
+                    @endforeach
+                @else
+                    <p id="k71-cart-empty-msg" class="text-xs py-4" style="color: var(--t-muted);">Items added to your K71 bag appear here with live inventory verification.</p>
+                @endif
             </div>
             <div id="k71-shortlist-drawer-items" class="hidden space-y-2.5 text-sm">
                 <p class="text-xs py-4" style="color: var(--t-muted);">Tap the heart icon on any piece to save it to your personal shortlist.</p>
             </div>
         </div>
         <div class="pt-5 space-y-3" style="border-top: 1px solid var(--t-border);">
+            @if(($cartSubtotalPaise ?? 0) > 0)
+                <div class="flex items-baseline justify-between text-sm">
+                    <span class="text-xs uppercase tracking-wider font-semibold" style="color: var(--t-muted);">Estimated Subtotal</span>
+                    <span class="font-mono text-base font-extrabold">₹{{ number_format($cartSubtotalPaise / 100, 0) }}</span>
+                </div>
+            @endif
             <div class="flex items-center justify-between text-[11px] px-3 py-2 rounded-lg" style="background-color: var(--t-bg); border: 1px solid var(--t-border); color: var(--t-muted);">
                 <span>✓ Verified K71 Merchant Checkout</span>
                 <span class="font-mono font-bold" style="color: var(--t-accent);">SECURE</span>

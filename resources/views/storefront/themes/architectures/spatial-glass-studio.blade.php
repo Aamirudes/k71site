@@ -112,16 +112,26 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item data-k71-3d-card class="k71-glass-panel rounded-[1.75rem] p-4 flex flex-col justify-between gap-4 group">
+                <article data-k71-card-item data-k71-3d-card class="k71-product-card k71-glass-panel rounded-[1.75rem] p-4 flex flex-col justify-between gap-4 group">
                     <div>
-                        <a href="{{ $pLink }}" class="block aspect-[4/4] rounded-[1.25rem] overflow-hidden relative mb-4" style="background-color: var(--t-surface-alt);">
-                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                            <span class="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold k71-glass-panel">
-                                ₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}
-                            </span>
-                        </a>
+                        <div class="relative mb-4">
+                            <a href="{{ $pLink }}" class="k71-card-media block aspect-[4/4] rounded-[1.25rem] overflow-hidden relative" style="background-color: var(--t-surface-alt);">
+                                <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                                <span class="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold k71-glass-panel">
+                                    ₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}
+                                </span>
+                            </a>
+                            @include('storefront.themes.partials._card_media_controls')
+                        </div>
                         <div class="px-1.5 space-y-1">
                             <p class="text-[11px] uppercase tracking-wider" style="color: var(--t-muted);">{{ $product->category?->name ?? 'Studio' }}</p>
                             <h3 class="k71-heading text-lg leading-snug"><a href="{{ $pLink }}">{{ $product->title }}</a></h3>

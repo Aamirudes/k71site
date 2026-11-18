@@ -1,5 +1,5 @@
 <x-layouts.vendor title="Customize {{ $theme->name }}">
-<div class="py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto space-y-6">
+<div class="py-5 sm:py-7 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto space-y-6">
 
     {{-- Top Bar --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
@@ -7,18 +7,19 @@
             <div class="flex items-center gap-2 text-xs text-slate-500 mb-1">
                 <a href="{{ route('vendor.themes.index') }}" class="hover:underline font-semibold">&larr; Theme Marketplace</a>
                 <span>/</span>
-                <span>{{ $theme->name }} (v{{ $theme->version }})</span>
+                <span class="font-mono">{{ $theme->name }} (v{{ $theme->version }})</span>
+                <span class="px-2 py-0.5 rounded-full bg-zinc-900 text-white text-[10px] font-bold">Visual Studio</span>
             </div>
             <h1 class="text-2xl font-extrabold text-slate-900">Customize Draft: {{ $theme->name }}</h1>
             <p class="text-xs text-slate-500 mt-0.5">
-                Saving updates only your private draft. Your live storefront stays unchanged until you click <strong>Publish to Live Storefront</strong>.
+                Saving updates only your private draft &amp; refreshes the live studio canvas. Your public storefront stays unchanged until you click <strong>Publish to Live Storefront</strong>.
             </p>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ $previewUrl ?? route('vendor.themes.preview', $theme->theme_id) }}" target="_blank" rel="noopener"
                class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50">
-                Preview Draft &nearr;
+                Fullscreen Preview &nearr;
             </a>
 
             <form action="{{ route('vendor.themes.draft.reset', $theme->theme_id) }}" method="POST" onsubmit="return confirm('Reset draft to {{ $theme->name }} theme defaults? Your live storefront will not change until you publish.');">
@@ -44,30 +45,62 @@
         <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold">{{ session('error') }}</div>
     @endif
 
-    {{-- Draft Configuration Form --}}
-    <form action="{{ route('vendor.themes.draft.save', $theme->theme_id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+    {{-- SPLIT-SCREEN LIVE VISUAL THEME STUDIO (Left Inspector + Right Live Draft Preview Canvas) --}}
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+    {{-- Draft Configuration Form (Left 5 Columns on Desktop) --}}
+    <form action="{{ route('vendor.themes.draft.save', $theme->theme_id) }}" method="POST" enctype="multipart/form-data" class="xl:col-span-5 space-y-5">
         @csrf
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 gap-5">
             {{-- 1. Palette & Typography --}}
             <div class="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-                <h2 class="text-sm font-extrabold text-slate-900">1. Palette &amp; Typography</h2>
+                <div class="flex items-center justify-between gap-2">
+                    <h2 class="text-sm font-extrabold text-slate-900">1. Palette &amp; Typography</h2>
+                    <span class="text-[10px] font-mono uppercase text-slate-400">1-Click Presets</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                    @php
+                        $studioPresets = [
+                            ['label' => 'Obsidian Gold', 'accent' => '#c9a96e', 'bg' => '#09090b', 'surface' => '#141417', 'text' => '#f4f4f5'],
+                            ['label' => 'Parisian Ivory', 'accent' => '#18181b', 'bg' => '#f8f5ef', 'surface' => '#ffffff', 'text' => '#18181b'],
+                            ['label' => 'Swiss Cobalt', 'accent' => '#1d4ed8', 'bg' => '#f8fafc', 'surface' => '#ffffff', 'text' => '#0f172a'],
+                            ['label' => 'Botanical Sage', 'accent' => '#2f5d46', 'bg' => '#f4f6f1', 'surface' => '#ffffff', 'text' => '#1e2b22'],
+                            ['label' => 'Terracotta', 'accent' => '#b45309', 'bg' => '#faf6f0', 'surface' => '#ffffff', 'text' => '#261b14'],
+                            ['label' => 'Midnight Cyan', 'accent' => '#22d3ee', 'bg' => '#090d16', 'surface' => '#111827', 'text' => '#f1f5f9'],
+                        ];
+                    @endphp
+                    @foreach($studioPresets as $sp)
+                        <button type="button"
+                                onclick="
+                                    document.getElementById('k71-pal-accent').value='{{ $sp['accent'] }}';
+                                    document.getElementById('k71-pal-bg').value='{{ $sp['bg'] }}';
+                                    document.getElementById('k71-pal-surface').value='{{ $sp['surface'] }}';
+                                    document.getElementById('k71-pal-text').value='{{ $sp['text'] }}';
+                                "
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[10px] font-bold text-slate-700 cursor-pointer transition">
+                            <span class="w-2.5 h-2.5 rounded-full border border-black/15" style="background-color: {{ $sp['bg'] }};"></span>
+                            <span class="w-2.5 h-2.5 rounded-full -ml-1 border border-black/15" style="background-color: {{ $sp['accent'] }};"></span>
+                            <span>{{ $sp['label'] }}</span>
+                        </button>
+                    @endforeach
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Accent Color</label>
-                        <input type="color" name="config[palette][accent]" value="{{ $draftConfig['palette']['accent'] ?? $manifest['palette']['accent'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
+                        <input id="k71-pal-accent" type="color" name="config[palette][accent]" value="{{ $draftConfig['palette']['accent'] ?? $manifest['palette']['accent'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Page Background</label>
-                        <input type="color" name="config[palette][bg]" value="{{ $draftConfig['palette']['bg'] ?? $manifest['palette']['bg'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
+                        <input id="k71-pal-bg" type="color" name="config[palette][bg]" value="{{ $draftConfig['palette']['bg'] ?? $manifest['palette']['bg'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Card Surface</label>
-                        <input type="color" name="config[palette][surface]" value="{{ $draftConfig['palette']['surface'] ?? $manifest['palette']['surface'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
+                        <input id="k71-pal-surface" type="color" name="config[palette][surface]" value="{{ $draftConfig['palette']['surface'] ?? $manifest['palette']['surface'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-600 mb-1">Primary Text</label>
-                        <input type="color" name="config[palette][text]" value="{{ $draftConfig['palette']['text'] ?? $manifest['palette']['text'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
+                        <input id="k71-pal-text" type="color" name="config[palette][text]" value="{{ $draftConfig['palette']['text'] ?? $manifest['palette']['text'] }}" class="w-full h-10 rounded-lg border border-slate-200 p-1 cursor-pointer">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
@@ -288,11 +321,61 @@
             </div>
         </div>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <button type="submit" class="px-6 py-3 rounded-xl bg-zinc-900 text-white text-xs sm:text-sm font-bold hover:bg-zinc-800 shadow-sm cursor-pointer">
-                Save Draft Changes (Does Not Publish)
+        <div class="sticky bottom-4 z-20 p-3 rounded-2xl bg-white/95 backdrop-blur-md border border-slate-200 shadow-lg flex items-center justify-between gap-3">
+            <span class="text-[11px] text-slate-500 font-medium pl-1">Private draft only</span>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-extrabold hover:bg-zinc-800 shadow-sm cursor-pointer">
+                Save Draft Changes
             </button>
         </div>
     </form>
+
+    {{-- Live Interactive Draft Preview Canvas (Right 7 Columns on Desktop) --}}
+    @if(!empty($signedFrameBase))
+        <aside class="hidden xl:flex xl:col-span-7 flex-col sticky top-6 rounded-2xl border border-slate-200 bg-zinc-950 overflow-hidden shadow-xl"
+               style="height: calc(100vh - 5rem);"
+               data-frame-base="{{ $signedFrameBase }}"
+               x-data="{
+                   page: 'home',
+                   device: 'desktop',
+                   base: '',
+                   init() { this.base = this.$el.dataset.frameBase || ''; },
+                   get src() {
+                       if (!this.base) return 'about:blank';
+                       const sep = this.base.includes('?') ? '&' : '?';
+                       return this.base + sep + 'page=' + this.page;
+                   },
+                   reload() {
+                       const f = this.$refs.canvasFrame;
+                       if (f) f.src = this.src + '&_t=' + Date.now();
+                   }
+               }">
+            <div class="px-4 py-2.5 bg-zinc-900 border-b border-white/10 flex items-center justify-between gap-3 text-xs text-zinc-200">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400/80"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                    <span class="ml-2 font-mono text-[11px] text-zinc-400">Live Draft Canvas · {{ $theme->name }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="inline-flex rounded-lg bg-white/5 border border-white/10 p-0.5 text-[11px] font-bold">
+                        <button type="button" @click="page = 'home'" :class="page === 'home' ? 'bg-white text-zinc-950' : 'text-zinc-300'" class="px-2.5 py-1 rounded-md cursor-pointer">Home</button>
+                        <button type="button" @click="page = 'collection'" :class="page === 'collection' ? 'bg-white text-zinc-950' : 'text-zinc-300'" class="px-2.5 py-1 rounded-md cursor-pointer">Collection</button>
+                        <button type="button" @click="page = 'product'" :class="page === 'product' ? 'bg-white text-zinc-950' : 'text-zinc-300'" class="px-2.5 py-1 rounded-md cursor-pointer">Product</button>
+                    </div>
+                    <div class="inline-flex rounded-lg bg-white/5 border border-white/10 p-0.5 text-[11px] font-bold">
+                        <button type="button" @click="device = 'desktop'" :class="device === 'desktop' ? 'bg-white text-zinc-950' : 'text-zinc-300'" class="px-2.5 py-1 rounded-md cursor-pointer">Desktop</button>
+                        <button type="button" @click="device = 'mobile'" :class="device === 'mobile' ? 'bg-white text-zinc-950' : 'text-zinc-300'" class="px-2.5 py-1 rounded-md cursor-pointer">Mobile</button>
+                    </div>
+                    <button type="button" @click="reload()" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold cursor-pointer" title="Reload preview">&#x21bb;</button>
+                </div>
+            </div>
+            <div class="flex-1 flex items-center justify-center bg-zinc-900 overflow-hidden" :class="device === 'mobile' ? 'p-4' : 'p-0'">
+                <iframe x-ref="canvasFrame" :src="src" title="Live draft studio preview"
+                        class="bg-white border-0 transition-all duration-300"
+                        :class="device === 'mobile' ? 'w-[390px] h-full rounded-[2rem] border-4 border-zinc-800 shadow-2xl' : 'w-full h-full'"></iframe>
+            </div>
+        </aside>
+    @endif
+    </div>
 </div>
 </x-layouts.vendor>

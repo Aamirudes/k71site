@@ -730,15 +730,23 @@ function initK71ThemeEngine() {
                 }
                 const drawerItems = document.getElementById('k71-cart-drawer-items');
                 if (drawerItems && !form.dataset.k71BuyNow) {
-                    const cardTitle = form.closest('article')?.querySelector('h2,h3')?.textContent?.trim()
+                    const emptyMsg = document.getElementById('k71-cart-empty-msg');
+                    if (emptyMsg) emptyMsg.remove();
+                    const cardEl = form.closest('article');
+                    const cardTitle = cardEl?.querySelector('h2,h3')?.textContent?.trim()
                         || document.getElementById('k71-qv-title')?.textContent?.trim()
                         || document.querySelector('h1')?.textContent?.trim()
                         || 'Store Item';
+                    const cardImgSrc = cardEl?.querySelector('img')?.src
+                        || document.getElementById('k71-qv-img')?.src
+                        || document.getElementById('k71-pdp-main-img')?.src
+                        || '';
+                    const qtyAdded = formData.get('quantity') || '1';
                     const row = document.createElement('div');
-                    row.className = 'p-3.5 rounded-lg flex items-center justify-between gap-3';
+                    row.className = 'p-3 rounded-lg flex items-center gap-3';
                     row.style.border = '1px solid var(--t-border)';
                     row.style.backgroundColor = 'var(--t-bg)';
-                    row.innerHTML = `<div class="min-w-0"><p class="text-xs font-bold truncate"></p><p class="text-[11px] opacity-70">Added to bag</p></div><span class="text-xs font-mono font-bold shrink-0">✓</span>`;
+                    row.innerHTML = `${cardImgSrc ? `<img src="${cardImgSrc}" alt="" class="w-12 h-14 rounded object-cover shrink-0">` : ''}<div class="min-w-0 flex-1"><p class="text-xs font-bold truncate"></p><p class="text-[11px] opacity-70">Qty ${qtyAdded} · Added just now</p></div><span class="text-xs font-mono font-bold shrink-0" style="color: var(--t-accent);">✓</span>`;
                     row.querySelector('p').textContent = cardTitle;
                     drawerItems.prepend(row);
                     const qv = document.getElementById('k71-quickview-modal');

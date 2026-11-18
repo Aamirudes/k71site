@@ -86,7 +86,7 @@
                     <h2 class="k71-eyebrow mb-3" style="color: var(--t-muted);">Departments</h2>
                     <div class="flex lg:flex-col gap-1.5 overflow-x-auto k71-no-scrollbar">
                         <a href="{{ $storeCollectionUrl }}"
-                           class="shrink-0 px-3 py-2 text-xs font-bold rounded-md flex items-center justify-between"
+                           class="shrink-0 px-3 py-2 text-xs font-bold rounded-md flex items-center justify-between gap-2"
                            style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
                             <span>All Products</span>
                             <span>{{ $allProducts->count() }}</span>

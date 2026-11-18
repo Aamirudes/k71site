@@ -129,18 +129,28 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item data-k71-3d-card class="group flex flex-col">
+                <article data-k71-card-item data-k71-3d-card class="k71-product-card group flex flex-col">
                     <div class="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] mb-2.5" style="color: var(--t-muted);">
                         <span>NO. {{ str_pad((string)($pIdx + 1), 2, '0', STR_PAD_LEFT) }}</span>
                         <span class="truncate max-w-[140px]">{{ $product->category?->name ?? 'Object' }}</span>
                     </div>
-                    <a href="{{ $pLink }}" class="block p-4 mb-4 transition" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
-                        <div class="aspect-[4/5] w-full overflow-hidden" style="background-color: var(--t-surface-alt);">
-                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                        </div>
-                    </a>
+                    <div class="relative mb-4">
+                        <a href="{{ $pLink }}" class="k71-card-media block p-4 transition" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+                            <div class="aspect-[4/5] w-full overflow-hidden" style="background-color: var(--t-surface-alt);">
+                                <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            </div>
+                        </a>
+                        @include('storefront.themes.partials._card_media_controls')
+                    </div>
                     <h3 class="k71-heading text-base font-medium leading-snug mb-1">
                         <a href="{{ $pLink }}" class="hover:opacity-70">{{ $product->title }}</a>
                     </h3>
