@@ -12,6 +12,22 @@
 
     <div class="py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-10">
 
+        <!-- 61-Theme Marketplace Launchpad Banner -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+            <div class="space-y-0.5">
+                <div class="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-emerald-700">
+                    <span>✦ New</span>
+                    <span>·</span>
+                    <span>50 Individually Art-Directed Studio Themes</span>
+                </div>
+                <h2 class="text-sm sm:text-base font-extrabold text-slate-900">Explore the K71 Storefront Theme Marketplace (61 Themes)</h2>
+                <p class="text-xs text-slate-500">Preview all 50 new luxury, fashion, beauty, tech, spatial &amp; flagship themes in Desktop/Tablet/Mobile modes without changing your live store.</p>
+            </div>
+            <a href="{{ route('vendor.themes.index') }}" class="shrink-0 px-4 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition text-center">
+                Open Theme Marketplace &rarr;
+            </a>
+        </div>
+
         <!-- Notification Toast -->
         <div id="design-toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
             <div class="px-5 py-3.5 rounded-2xl bg-stone-900 text-white text-xs sm:text-sm font-semibold shadow-2xl border border-white/15 flex items-center gap-3">

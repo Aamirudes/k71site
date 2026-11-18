@@ -28,7 +28,13 @@
             <a href="{{ route('vendor.design.index') }}"
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.design.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
                 <span class="flex items-center gap-2.5"><span class="text-base">🎨</span><span>Design &amp; Presets</span></span>
-                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700">10</span>
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700">11</span>
+            </a>
+
+            <a href="{{ route('vendor.themes.index') }}"
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition {{ request()->routeIs('vendor.themes.*') ? 'bg-stone-900 text-white shadow-sm font-bold' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+                <span class="flex items-center gap-2.5"><span class="text-base">✦</span><span>Theme Marketplace</span></span>
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700">61</span>
             </a>
 
             <a href="{{ route('vendor.portfolio.index') }}"
@@ -255,6 +261,17 @@
             Storefront Settings
         </div>
         <div class="space-y-1">
+            <a href="{{ route('vendor.themes.index') }}" 
+               class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.themes.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
+                <span class="flex items-center gap-2.5">
+                    <span class="text-base">✦</span>
+                    <span>Theme Marketplace</span>
+                </span>
+                <span class="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    61
+                </span>
+            </a>
+
             <a href="{{ route('vendor.design.index') }}" 
                class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('vendor.design.*') ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900 shadow-sm font-bold' : 'text-slate-600 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white' }}">
                 <span class="flex items-center gap-2.5">

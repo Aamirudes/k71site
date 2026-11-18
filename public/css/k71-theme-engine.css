@@ -1,0 +1,344 @@
+/* ==========================================================================
+   K71 STOREFRONT THEME ENGINE (SCOPED TO .k71-sf-theme)
+   Zero leakage into admin or vendor dashboards.
+   Supports all 50 individually art-directed storefront themes.
+   ========================================================================== */
+
+.k71-sf-theme {
+  --t-bg: #fafaf9;
+  --t-surface: #ffffff;
+  --t-surface-alt: #f0f0ed;
+  --t-text: #18181b;
+  --t-muted: #64748b;
+  --t-accent: #18181b;
+  --t-accent-contrast: #ffffff;
+  --t-border: rgba(24, 24, 27, 0.12);
+  --t-radius: 12px;
+  --t-font-heading: 'Playfair Display', Georgia, serif;
+  --t-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --t-heading-weight: 600;
+  --t-heading-tracking: -0.02em;
+  --t-glass-bg: rgba(255, 255, 255, 0.78);
+  --t-glass-border: rgba(255, 255, 255, 0.25);
+  --t-glass-blur: 14px;
+  --t-motion-duration: 500ms;
+  --t-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background-color: var(--t-bg);
+  color: var(--t-text);
+  font-family: var(--t-font-body);
+  min-height: 100vh;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+.k71-sf-theme *,
+.k71-sf-theme *::before,
+.k71-sf-theme *::after {
+  box-sizing: border-box;
+}
+
+.k71-sf-theme h1,
+.k71-sf-theme h2,
+.k71-sf-theme h3,
+.k71-sf-theme h4,
+.k71-sf-theme .k71-heading {
+  font-family: var(--t-font-heading);
+  font-weight: var(--t-heading-weight);
+  letter-spacing: var(--t-heading-tracking);
+}
+
+.k71-sf-theme .k71-surface {
+  background-color: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: var(--t-radius);
+}
+
+.k71-sf-theme .k71-surface-alt {
+  background-color: var(--t-surface-alt);
+  border-radius: var(--t-radius);
+}
+
+/* Liquid Glass with safe contrast & unsupported backdrop fallback */
+.k71-sf-theme .k71-glass {
+  background-color: var(--t-surface);
+  border: 1px solid var(--t-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .k71-sf-theme[data-glass-strength="normal"] .k71-glass {
+    background-color: var(--t-glass-bg);
+    border-color: var(--t-glass-border);
+    -webkit-backdrop-filter: blur(var(--t-glass-blur)) saturate(140%);
+    backdrop-filter: blur(var(--t-glass-blur)) saturate(140%);
+  }
+  .k71-sf-theme[data-glass-strength="subtle"] .k71-glass {
+    background-color: var(--t-glass-bg);
+    border-color: var(--t-glass-border);
+    -webkit-backdrop-filter: blur(calc(var(--t-glass-blur) * 0.5)) saturate(120%);
+    backdrop-filter: blur(calc(var(--t-glass-blur) * 0.5)) saturate(120%);
+  }
+}
+
+/* Mobile performance: restrain blur radius on small viewports */
+@media (max-width: 767px) {
+  .k71-sf-theme .k71-glass {
+    -webkit-backdrop-filter: blur(8px) !important;
+    backdrop-filter: blur(8px) !important;
+  }
+}
+
+/* Flagship liquid specular edge sheen */
+.k71-sf-theme[data-glass-mode="flagship-liquid"] .k71-glass,
+.k71-sf-theme[data-glass-mode="dark-layered"] .k71-glass,
+.k71-sf-theme[data-glass-mode="spatial-panel"] .k71-glass {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.01) 52%, rgba(255, 255, 255, 0.05) 100%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
+/* Buttons & Accessible Touch Targets (>= 44px) */
+.k71-sf-theme .k71-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.65rem 1.35rem;
+  border-radius: var(--t-radius);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  transition: transform 200ms var(--t-motion-ease), background-color 200ms ease, opacity 200ms ease, border-color 200ms ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.k71-sf-theme .k71-btn-primary {
+  background-color: var(--t-accent);
+  color: var(--t-accent-contrast);
+  border: 1px solid var(--t-accent);
+}
+
+.k71-sf-theme .k71-btn-primary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.k71-sf-theme .k71-btn-outline {
+  background-color: transparent;
+  color: var(--t-text);
+  border: 1px solid var(--t-border);
+}
+
+.k71-sf-theme .k71-btn-outline:hover {
+  border-color: var(--t-text);
+}
+
+.k71-sf-theme :focus-visible {
+  outline: 2px solid var(--t-accent);
+  outline-offset: 2px;
+}
+
+/* Header sticky scroll transition */
+.k71-sf-theme .k71-header {
+  transition: background-color 260ms ease, border-color 260ms ease, padding 260ms ease, box-shadow 260ms ease;
+}
+
+.k71-sf-theme .k71-header[data-scrolled="true"] {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* Label Styles */
+.k71-sf-theme[data-label-style="uppercase-spaced"] .k71-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.k71-sf-theme[data-label-style="mono"] .k71-eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.6875rem;
+}
+
+.k71-sf-theme[data-label-style="editorial-italic"] .k71-eyebrow {
+  font-family: var(--t-font-heading);
+  font-style: italic;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+}
+
+.k71-sf-theme[data-label-style="bold-condensed"] .k71-eyebrow {
+  font-family: var(--t-font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8125rem;
+  font-weight: 800;
+}
+
+.k71-sf-theme[data-label-style="clean"] .k71-eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Motion Reveal System (Non-blocking, graceful fallback if JS off) */
+.k71-sf-theme.k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity var(--t-motion-duration) var(--t-motion-ease),
+              transform var(--t-motion-duration) var(--t-motion-ease);
+}
+
+.k71-sf-theme.k71-js-ready[data-motion-profile="sharp-wipe"]:not([data-motion-intensity="reduced"]) [data-k71-reveal] {
+  transform: translateY(8px);
+}
+
+.k71-sf-theme.k71-js-ready[data-motion-profile="asymmetric-shift"]:not([data-motion-intensity="reduced"]) [data-k71-reveal] {
+  transform: translate3d(-14px, 16px, 0);
+}
+
+.k71-sf-theme.k71-js-ready[data-motion-profile="specular-depth"]:not([data-motion-intensity="reduced"]) [data-k71-reveal],
+.k71-sf-theme.k71-js-ready[data-motion-profile="signature-71"]:not([data-motion-intensity="reduced"]) [data-k71-reveal] {
+  transform: translateY(22px) scale(0.985);
+}
+
+.k71-sf-theme.k71-js-ready [data-k71-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Subtle image hover scale (never hides touch info) */
+.k71-sf-theme .k71-card-media img {
+  transition: transform 550ms var(--t-motion-ease);
+}
+
+@media (hover: hover) {
+  .k71-sf-theme .k71-product-card:hover .k71-card-media img {
+    transform: scale(1.045);
+  }
+}
+
+/* Secondary image crossfade when real second image exists */
+.k71-sf-theme .k71-card-media .k71-img-secondary {
+  opacity: 0;
+  transition: opacity 380ms ease;
+}
+
+@media (hover: hover) {
+  .k71-sf-theme .k71-product-card:hover .k71-card-media .k71-img-secondary {
+    opacity: 1;
+  }
+}
+
+/* Desktop-only 3D tilt container */
+.k71-sf-theme [data-k71-tilt] {
+  transform-style: preserve-3d;
+  transition: transform 240ms ease-out;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   DISTINCT VISUAL SIGNATURES FOR INDIVIDUAL THEMES (01–50)
+   ========================================================================== */
+
+/* 01 Maison Noir & 16 Contemporary Couture: hairlines & gilded luxury framing */
+.k71-sf-theme[data-k71-theme="maison-noir"] .k71-section-divider,
+.k71-sf-theme[data-k71-theme="contemporary-couture"] .k71-section-divider {
+  border-top: 1px solid rgba(200, 169, 110, 0.25);
+}
+
+/* 04 Editorial Journal: double masthead rule & column dividers */
+.k71-sf-theme[data-k71-theme="editorial-journal"] .k71-masthead-rule {
+  border-top: 3px double var(--t-text);
+  border-bottom: 1px solid var(--t-text);
+}
+
+/* 08 Monochrome Studio: crisp brutalist inversion on focus/hover */
+.k71-sf-theme[data-k71-theme="monochrome-studio"] .k71-product-card {
+  border: 1.5px solid #09090b;
+}
+.k71-sf-theme[data-k71-theme="monochrome-studio"] .k71-btn-outline:hover {
+  background-color: #09090b;
+  color: #ffffff;
+}
+
+/* 12 Sneaker District & 13 Drop Culture & 19 Sport Motion: angled kinetic badge */
+.k71-sf-theme[data-k71-theme="sneaker-district"] .k71-card-badge,
+.k71-sf-theme[data-k71-theme="drop-culture"] .k71-card-badge,
+.k71-sf-theme[data-k71-theme="sport-motion"] .k71-card-badge {
+  font-style: italic;
+  letter-spacing: 0.08em;
+}
+
+/* 21 Beauty Ritual, 25 Glow Atelier, 09 Soft Luxury: soft tactile elevation */
+.k71-sf-theme[data-k71-theme="beauty-ritual"] .k71-product-card,
+.k71-sf-theme[data-k71-theme="glow-atelier"] .k71-product-card,
+.k71-sf-theme[data-k71-theme="soft-luxury"] .k71-product-card {
+  box-shadow: 0 10px 30px rgba(45, 36, 30, 0.05);
+}
+
+/* 31 Tech Precision, 34 Digital Supply, 39 Industrial Supply: crisp spec borders */
+.k71-sf-theme[data-k71-theme="industrial-supply"] .k71-product-card {
+  border: 1.5px solid rgba(22, 26, 32, 0.22);
+}
+.k71-sf-theme[data-k71-theme="camera-house"] .k71-viewfinder-corner {
+  border-color: var(--t-accent);
+}
+
+/* 41 Liquid Motion, 42 Orbital 3D, 32 Future Interface, 03 Obsidian Glass: subtle ambient aura */
+.k71-sf-theme[data-k71-theme="liquid-motion"] .k71-hero-ambient,
+.k71-sf-theme[data-k71-theme="orbital-3d"] .k71-hero-ambient,
+.k71-sf-theme[data-k71-theme="future-interface"] .k71-hero-ambient,
+.k71-sf-theme[data-k71-theme="obsidian-glass"] .k71-hero-ambient {
+  background: radial-gradient(circle at 20% 25%, rgba(165, 180, 252, 0.16), transparent 55%),
+              radial-gradient(circle at 80% 75%, rgba(56, 189, 248, 0.12), transparent 55%);
+}
+
+/* 45 Chromatic Studio & 47 Pop Studio: confident graphic offset shadow */
+.k71-sf-theme[data-k71-theme="chromatic-studio"] .k71-graphic-card {
+  border: 2px solid #141720;
+  box-shadow: 5px 5px 0 #141720;
+}
+.k71-sf-theme[data-k71-theme="pop-studio"] .k71-graphic-card {
+  border: 1.5px solid rgba(30, 27, 46, 0.16);
+  box-shadow: 0 8px 0 rgba(249, 115, 22, 0.16);
+}
+
+/* 50 Signature 71: K71 obsidian-orchid signature radial glow */
+.k71-sf-theme[data-k71-theme="signature-71"] .k71-hero-ambient {
+  background: radial-gradient(ellipse 65% 50% at 50% 0%, rgba(236, 210, 243, 0.16), transparent 65%),
+              radial-gradient(circle at 85% 80%, rgba(236, 210, 243, 0.08), transparent 50%);
+}
+
+/* Accessibility: Respect prefers-reduced-motion strictly */
+@media (prefers-reduced-motion: reduce) {
+  .k71-sf-theme [data-k71-reveal],
+  .k71-sf-theme [data-k71-tilt],
+  .k71-sf-theme [data-k71-parallax],
+  .k71-sf-theme .k71-card-media img,
+  .k71-sf-theme .k71-btn {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Safe area padding for notched mobile devices */
+.k71-sf-theme .k71-safe-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Scrollbar hide helper for category pills */
+.k71-sf-theme .k71-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.k71-sf-theme .k71-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

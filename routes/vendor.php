@@ -17,6 +17,19 @@ Route::middleware(['auth', 'vendor.own'])->prefix('vendor')->name('vendor.')->gr
     Route::get('/settings', [SettingsController::class, 'edit'])->name('settings');
     Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
+    // Storefront Theme Marketplace (61 Themes: 11 Classic + 50 New, Previews, WhatsApp Requests, Drafts & Explicit Publication)
+    Route::prefix('themes')->name('themes.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'index'])->name('index');
+        Route::get('/{themeId}/preview', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'preview'])->name('preview');
+        Route::get('/{themeId}/preview-frame', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'previewFrame'])->name('preview_frame');
+        Route::post('/{themeId}/request', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'requestAccess'])->name('request');
+        Route::post('/requests/{themeRequest}/cancel', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'cancelRequest'])->name('request.cancel');
+        Route::get('/{themeId}/customize', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'customize'])->name('customize');
+        Route::post('/{themeId}/draft', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'saveDraft'])->name('draft.save');
+        Route::post('/{themeId}/reset', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'resetDraft'])->name('draft.reset');
+        Route::post('/{themeId}/publish', [\App\Http\Controllers\Vendor\ThemeMarketplaceController::class, 'publish'])->name('publish');
+    });
+
     // Store Design 2.0 Visual Storefront Builder & Presets
     Route::middleware(['sector.sub:primary'])->group(function () {
         Route::get('/design', [\App\Http\Controllers\Vendor\StorefrontDesignController::class, 'index'])->name('design.index');

@@ -15,6 +15,9 @@ class VendorStorefrontConfig extends Model
     protected $fillable = [
         'vendor_id',
         'preset_key',
+        'draft_theme_id',
+        'published_theme_id',
+        'published_theme_version',
         'schema_version',
         'draft_config',
         'published_config',
@@ -39,6 +42,7 @@ class VendorStorefrontConfig extends Model
 
     /**
      * Get active configuration for display.
+     * Strict separation: public storefront ($preview=false) NEVER leaks unpublished draft_config.
      */
     public function getEffectiveConfig(bool $preview = false): array
     {
@@ -48,10 +52,6 @@ class VendorStorefrontConfig extends Model
 
         if (!empty($this->published_config)) {
             return $this->published_config;
-        }
-
-        if (!empty($this->draft_config)) {
-            return $this->draft_config;
         }
 
         return [];

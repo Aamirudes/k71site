@@ -119,6 +119,15 @@
                             </div>
                             <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded {{ request()->routeIs('admin.floating_launcher*') ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-500' }}">Radial</span>
                         </a>
+
+                        <a href="{{ route('admin.themes.index') }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-colors {{ request()->routeIs('admin.themes*') ? 'bg-zinc-950 text-white shadow-xs' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950' }}">
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                                <span>Theme Marketplace</span>
+                            </div>
+                            <span class="text-[9px] uppercase font-mono px-1.5 py-0.5 rounded {{ request()->routeIs('admin.themes*') ? 'bg-zinc-800 text-zinc-300' : 'bg-amber-100 text-amber-800 font-bold' }}">61</span>
+                        </a>
                     </div>
                 </div>
 

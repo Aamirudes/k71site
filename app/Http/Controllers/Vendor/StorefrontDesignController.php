@@ -268,6 +268,8 @@ class StorefrontDesignController extends Controller
             // Atomic publish update
             $configRecord->update([
                 'preset_key' => $sanitizedConfig['preset'],
+                'draft_theme_id' => $sanitizedConfig['preset'],
+                'published_theme_id' => $sanitizedConfig['preset'],
                 'published_config' => $sanitizedConfig,
                 'draft_config' => $sanitizedConfig,
                 'is_published' => true,
@@ -394,6 +396,8 @@ class StorefrontDesignController extends Controller
 
         $configRecord->update([
             'preset_key' => $requestedPreset,
+            'draft_theme_id' => $requestedPreset,
+            'published_theme_id' => $requestedPreset,
             'draft_config' => $sanitizedConfig,
             'published_config' => $sanitizedConfig,
             'is_published' => true,

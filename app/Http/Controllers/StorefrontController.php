@@ -291,6 +291,45 @@ class StorefrontController extends Controller
             ->take(24)
             ->get();
 
+        $themeRegistry = app(\App\Services\Storefront\ThemeMarketplaceRegistry::class);
+        $themeService = app(\App\Services\Storefront\ThemeMarketplaceService::class);
+        $resolvedThemeId = $isPreview
+            ? ($vendor->storefrontConfig?->draft_theme_id ?: $themeService->resolvePublicThemeId($vendor))
+            : $themeService->resolvePublicThemeId($vendor);
+
+        if ($isPreview && $themeRegistry->isNewTheme($resolvedThemeId) && !$themeService->isVendorEntitled($vendor, $resolvedThemeId)) {
+            $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
+        }
+
+        // Dispatch to the 50-Theme Engine if vendor's active theme is a new marketplace theme (non-service retail stores)
+        if (!$isServiceWebsite && $themeRegistry->isNewTheme($resolvedThemeId)) {
+            $manifest = $themeRegistry->getManifest($resolvedThemeId);
+            $themeConfig = $isPreview
+                ? $themeService->getDraftConfigForTheme($vendor, $resolvedThemeId)
+                : $themeService->getPublishedConfigForTheme($vendor, $resolvedThemeId);
+
+            $response = response()
+                ->view('storefront.themes.home', [
+                    'vendor' => $vendor,
+                    'manifest' => $manifest,
+                    'themeConfig' => $themeConfig,
+                    'products' => $products,
+                    'vendorCategories' => $vendorCategories,
+                    'featuredProducts' => $featuredProducts,
+                    'vendorReviews' => $vendorReviews,
+                    'canonicalUrl' => $vendor->storefront_url,
+                    'isPreview' => $isPreview,
+                ])
+                ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+                ->header('Pragma', 'no-cache');
+
+            if ($isPreview) {
+                $response->header('X-Robots-Tag', 'noindex, nofollow');
+            }
+
+            return $response;
+        }
+
         $config = $vendor->getStorefrontConfig($isPreview);
         $vendorScrollSequence = $vendor->hasKineticScrollAccess()
             ? \App\Services\ScrollSequenceService::resolveVendorSequence($vendor, $config)
@@ -329,6 +368,211 @@ class StorefrontController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * Store-themed Collection / Category / Search Listing Page.
+     */
+    public function collection(Request $request, string $slug, ?string $categorySlug = null)
+    {
+        $cleanSlug = strtolower(trim($slug));
+        $vendor = Vendor::with(['settings', 'storefrontConfig'])->where('slug', $cleanSlug)->firstOrFail();
+
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        if (!$isPreview && !in_array($vendor->status, ['approved', 'active'], true)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
+
+        $visibility = app(\App\Services\Monetization\VisibilityService::class);
+        if (!$isPreview && !$visibility->isVendorVisibleInAnySector($vendor)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
+
+        app()->instance('current_vendor', $vendor);
+
+        $themeRegistry = app(\App\Services\Storefront\ThemeMarketplaceRegistry::class);
+        $themeService = app(\App\Services\Storefront\ThemeMarketplaceService::class);
+        $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
+        if ($isPreview && $vendor->storefrontConfig?->draft_theme_id && $themeService->isVendorEntitled($vendor, $vendor->storefrontConfig->draft_theme_id)) {
+            $resolvedThemeId = $vendor->storefrontConfig->draft_theme_id;
+        }
+
+        if (!$themeRegistry->isNewTheme($resolvedThemeId)) {
+            $params = array_filter([
+                'category' => $categorySlug ?: $request->input('category'),
+                'search' => $request->input('search'),
+                'sort' => $request->input('sort'),
+                'preview' => $isPreview ? 1 : null,
+            ]);
+            return redirect()->to($vendor->storefrontUrl($params, 'catalog'));
+        }
+
+        $activeCategorySlug = $categorySlug ?: trim((string) $request->input('category', ''));
+
+        $query = Product::with(['images', 'category', 'variants'])
+            ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
+            ->where('vendor_id', $vendor->id)
+            ->where('status', 'active');
+
+        if ($vendor->vendor_type !== 'used') {
+            $query->excludeUsed();
+        }
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('material', 'like', "%{$search}%");
+            });
+        }
+
+        if ($activeCategorySlug !== '') {
+            $cat = \App\Models\Category::where('slug', $activeCategorySlug)->first();
+            if ($cat) {
+                $catIds = \App\Models\Category::where('id', $cat->id)->orWhere('parent_id', $cat->id)->pluck('id');
+                $query->whereIn('category_id', $catIds);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        $sort = (string) $request->input('sort', 'newest');
+        if ($sort === 'price_low') {
+            $query->orderBy('base_price', 'asc');
+        } elseif ($sort === 'price_high') {
+            $query->orderBy('base_price', 'desc');
+        } else {
+            $query->latest();
+        }
+
+        $products = $query->paginate(16)->withQueryString();
+
+        $vendorCategories = \App\Models\Category::whereHas('products', function ($q) use ($vendor) {
+            $q->where('vendor_id', $vendor->id)->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $q->excludeUsed();
+            }
+        })->withCount(['products' => function ($q) use ($vendor) {
+            $q->where('vendor_id', $vendor->id)->where('status', 'active');
+            if ($vendor->vendor_type !== 'used') {
+                $q->excludeUsed();
+            }
+        }])->get();
+
+        $manifest = $themeRegistry->getManifest($resolvedThemeId);
+        $themeConfig = $isPreview
+            ? $themeService->getDraftConfigForTheme($vendor, $resolvedThemeId)
+            : $themeService->getPublishedConfigForTheme($vendor, $resolvedThemeId);
+
+        $response = response()->view('storefront.themes.collection', [
+            'vendor' => $vendor,
+            'manifest' => $manifest,
+            'themeConfig' => $themeConfig,
+            'products' => $products,
+            'vendorCategories' => $vendorCategories,
+            'activeCategorySlug' => $activeCategorySlug,
+            'pageTitle' => $activeCategorySlug ? ucwords(str_replace('-', ' ', $activeCategorySlug)) : 'Collection',
+            'isPreview' => $isPreview,
+        ]);
+
+        if ($isPreview) {
+            $response->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        return $response;
+    }
+
+    public function subdomainCollection(Request $request, ?string $categorySlug = null)
+    {
+        $vendor = $request->attributes->get('current_vendor');
+        if (!$vendor) {
+            abort(404);
+        }
+        return $this->collection($request, $vendor->slug, $categorySlug);
+    }
+
+    /**
+     * Store-themed Product Detail Page (uses real K71 product data, variants, reviews & cart endpoints).
+     */
+    public function productDetail(Request $request, string $slug, string $productSlug)
+    {
+        $cleanSlug = strtolower(trim($slug));
+        $vendor = Vendor::with(['settings', 'storefrontConfig'])->where('slug', $cleanSlug)->firstOrFail();
+
+        $isPreview = $request->boolean('preview') && auth()->check() && (auth()->user()->vendor?->id === $vendor->id || auth()->user()->hasRole('admin'));
+        if (!$isPreview && !in_array($vendor->status, ['approved', 'active'], true)) {
+            return response()->view('errors.store-suspended', ['vendor' => $vendor], 403);
+        }
+
+        $product = Product::with(['images', 'variants', 'category', 'vendor.settings'])
+            ->where('vendor_id', $vendor->id)
+            ->where('slug', $productSlug)
+            ->where('status', 'active')
+            ->firstOrFail();
+
+        $themeRegistry = app(\App\Services\Storefront\ThemeMarketplaceRegistry::class);
+        $themeService = app(\App\Services\Storefront\ThemeMarketplaceService::class);
+        $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
+        if ($isPreview && $vendor->storefrontConfig?->draft_theme_id && $themeService->isVendorEntitled($vendor, $vendor->storefrontConfig->draft_theme_id)) {
+            $resolvedThemeId = $vendor->storefrontConfig->draft_theme_id;
+        }
+
+        if (!$themeRegistry->isNewTheme($resolvedThemeId)) {
+            return redirect()->route('product.show', $product->slug);
+        }
+
+        app()->instance('current_vendor', $vendor);
+
+        $vendorCategories = \App\Models\Category::whereHas('products', fn ($q) => $q->where('vendor_id', $vendor->id)->where('status', 'active'))->get();
+        $productReviews = \App\Models\Review::where('product_id', $product->id)
+            ->where('is_approved', true)
+            ->with('user')
+            ->latest()
+            ->take(20)
+            ->get();
+
+        $relatedProducts = Product::with(['images', 'variants', 'category'])
+            ->where('vendor_id', $vendor->id)
+            ->where('id', '!=', $product->id)
+            ->where('status', 'active')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        $manifest = $themeRegistry->getManifest($resolvedThemeId);
+        $themeConfig = $isPreview
+            ? $themeService->getDraftConfigForTheme($vendor, $resolvedThemeId)
+            : $themeService->getPublishedConfigForTheme($vendor, $resolvedThemeId);
+
+        $response = response()->view('storefront.themes.product', [
+            'vendor' => $vendor,
+            'manifest' => $manifest,
+            'themeConfig' => $themeConfig,
+            'product' => $product,
+            'productReviews' => $productReviews,
+            'relatedProducts' => $relatedProducts,
+            'vendorCategories' => $vendorCategories,
+            'pageTitle' => $product->title,
+            'metaDescription' => $product->seo_description ?: $product->short_description ?: $product->title,
+            'canonicalUrl' => route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $product->slug]),
+            'isPreview' => $isPreview,
+        ]);
+
+        if ($isPreview) {
+            $response->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
+        return $response;
+    }
+
+    public function subdomainProductDetail(Request $request, string $productSlug)
+    {
+        $vendor = $request->attributes->get('current_vendor');
+        if (!$vendor) {
+            abort(404);
+        }
+        return $this->productDetail($request, $vendor->slug, $productSlug);
     }
 
     public function subdomainPortfolioDetail(Request $request, string $projectSlug)

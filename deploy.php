@@ -187,8 +187,8 @@ if ($syncRequested) {
                     }
                 }
 
-                // Mirror public/assets and public/build into document root for direct web server static delivery
-                $mirrorDirs = ['assets', 'build', 'images'];
+                // Mirror public/assets, build, images, css and js into document root for direct web server static delivery
+                $mirrorDirs = ['assets', 'build', 'images', 'css', 'js'];
                 foreach ($mirrorDirs as $md) {
                     $srcDir = $baseDir . '/public/' . $md;
                     $dstDir = $baseDir . '/' . $md;

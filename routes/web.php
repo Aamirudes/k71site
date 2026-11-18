@@ -338,11 +338,15 @@ Route::get('/stores', [\App\Http\Controllers\StorefrontController::class, 'index
 Route::get('/vendors', fn() => redirect()->route('stores.index'));
 
 // Public Vendor Storefronts & Personal Service Websites
+Route::get('/s/{slug}/collection/{categorySlug?}', [\App\Http\Controllers\StorefrontController::class, 'collection'])->name('storefront.collection');
+Route::get('/s/{slug}/product/{productSlug}', [\App\Http\Controllers\StorefrontController::class, 'productDetail'])->name('storefront.product');
 Route::get('/s/{slug}/portfolio/{projectSlug}', [\App\Http\Controllers\StorefrontController::class, 'portfolioDetail'])->name('storefront.portfolio.show');
 Route::post('/s/{slug}/enquire', [\App\Http\Controllers\StorefrontController::class, 'submitEnquiry'])->name('storefront.enquire');
 Route::get('/s/{slug}', [\App\Http\Controllers\StorefrontController::class, 'show'])->name('storefront.show');
 
-// Direct Subdomain Portfolio & Enquiry Paths (resolved via ResolveStorefront current_vendor)
+// Direct Subdomain Portfolio, Collection, Product & Enquiry Paths (resolved via ResolveStorefront current_vendor)
+Route::get('/collection/{categorySlug?}', [\App\Http\Controllers\StorefrontController::class, 'subdomainCollection'])->name('subdomain.collection');
+Route::get('/store-product/{productSlug}', [\App\Http\Controllers\StorefrontController::class, 'subdomainProductDetail'])->name('subdomain.product');
 Route::get('/portfolio/{projectSlug}', [\App\Http\Controllers\StorefrontController::class, 'subdomainPortfolioDetail'])->name('subdomain.portfolio.show');
 Route::post('/enquire', [\App\Http\Controllers\StorefrontController::class, 'subdomainEnquire'])->name('subdomain.enquire');
 
@@ -463,6 +467,25 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'index'])->name('floating_launcher.index');
     Route::post('/floating-launcher', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'save'])->name('floating_launcher.save');
     Route::post('/floating-launcher/reset', [\App\Http\Controllers\Admin\FloatingLauncherController::class, 'resetDefaults'])->name('floating_launcher.reset');
+
+    // Storefront Theme Marketplace Administration (61 Themes, Individual Pricing, Manual WhatsApp Payment Verification, Entitlements & Audit)
+    Route::prefix('themes')->name('themes.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'index'])->name('index');
+        Route::put('/catalogue/{theme}', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'updateTheme'])->name('catalogue.update');
+        Route::post('/settings', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'updateSettings'])->name('settings.update');
+
+        Route::get('/requests', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'requests'])->name('requests');
+        Route::post('/requests/{themeRequest}/status', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'updateRequestStatus'])->name('requests.status');
+        Route::post('/requests/{themeRequest}/confirm-payment', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'confirmPayment'])->name('requests.confirm_payment');
+        Route::post('/requests/{themeRequest}/grant', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'grantFromRequest'])->name('requests.grant');
+        Route::post('/requests/{themeRequest}/decline', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'declineRequest'])->name('requests.decline');
+
+        Route::get('/entitlements', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'entitlements'])->name('entitlements');
+        Route::post('/entitlements/direct-grant', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'directGrant'])->name('entitlements.direct_grant');
+        Route::post('/entitlements/{entitlement}/revoke', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'revokeEntitlement'])->name('entitlements.revoke');
+
+        Route::get('/audit', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'auditLogs'])->name('audit');
+    });
 
     // Vendor Management: Verification, Manual Subscriptions, Plans, Commissions & Expiry Automation
     Route::prefix('vendor-management')->name('vendor_management.')->group(function () {
