@@ -59,9 +59,9 @@
     <link href="https://fonts.googleapis.com/css2?family={{ $googleFontsParam }}&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/k71-theme-motion.js'])
-    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v=4.1.0">
+    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v=4.2.0">
     {{-- Per-theme scoped stylesheet: ONLY loads the active theme's CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v=4.1.0">
+    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v=4.2.0">
 </head>
 <body class="m-0 p-0 antialiased">
 <div class="k71-sf-theme flex flex-col min-h-screen"
