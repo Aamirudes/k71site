@@ -78,6 +78,7 @@ class ThemeMarketplaceRegistry
         foreach ($raw as $id => $def) {
             $arch = ThemeArchitectureMap::forTheme($id);
             $def['layout']['page_architecture'] = $arch['page_architecture'];
+            $def['layout']['structural_variant'] = $arch['structural_variant'];
             $def['layout']['pdp_architecture'] = $arch['pdp_architecture'];
             $def['layout']['sample_art'] = $arch['sample_art'];
             $def['layout']['band_colors'] = $arch['band_colors'];
@@ -205,10 +206,11 @@ class ThemeMarketplaceRegistry
             $sectionOrder = implode('>', array_map(fn ($s) => ($s['type'] ?? '') . ':' . ($s['style'] ?? 'std'), $m['default_sections'] ?? []));
             $signature = implode('|', [
                 $layout['page_architecture'] ?? 'editorial-runway',
+                $layout['structural_variant'] ?? 'A',
                 $layout['header_template'],
                 $layout['hero_template'],
                 $layout['card_template'],
-                $layout['pdp_template'],
+                $layout['pdp_architecture'] ?? $layout['pdp_template'],
                 $layout['footer_template'],
                 $m['motion']['choreography'] ?? 'quiet-editorial',
                 $typo['heading_font'],
@@ -219,6 +221,8 @@ class ThemeMarketplaceRegistry
                 'name' => $m['name'],
                 'category' => $m['category'],
                 'page_architecture' => $layout['page_architecture'] ?? 'editorial-runway',
+                'structural_variant' => $layout['structural_variant'] ?? 'A',
+                'pdp_architecture' => $layout['pdp_architecture'] ?? 'editorial-fullbleed',
                 'header' => $layout['header_template'],
                 'hero' => $layout['hero_template'],
                 'card' => $layout['card_template'],

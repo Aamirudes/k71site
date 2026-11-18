@@ -151,9 +151,11 @@ class ThemeMarketplaceTest extends TestCase
         $matrix = $registry->getThemeUniquenessMatrix();
         $uniqueSignatures = collect($matrix)->pluck('signature')->unique();
         $uniqueArchitectures = collect($matrix)->pluck('page_architecture')->unique();
+        $uniqueArchVariants = collect($matrix)->map(fn ($m) => $m['page_architecture'] . ':' . $m['structural_variant'])->unique();
         $uniquePdpArchs = collect($newThemes)->pluck('layout.pdp_architecture')->unique();
         $this->assertCount(50, $uniqueSignatures, 'Two or more themes share an identical structural signature!');
         $this->assertCount(15, $uniqueArchitectures, 'All 15 distinct page architectures must be represented across the 50 themes!');
+        $this->assertCount(50, $uniqueArchVariants, 'All 50 themes must have a unique (page_architecture, structural_variant) DOM composition!');
         $this->assertCount(6, $uniquePdpArchs, 'All 6 distinct PDP architectures must be represented across the 50 themes!');
 
         // Idempotent DB sync

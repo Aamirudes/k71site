@@ -9,11 +9,27 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Sculptural translucent surfaces, layered spatial depth, and effortless tactile shopping.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $lead = $allProducts->first();
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. SPATIAL LIQUID GLASS 3D FLOATING STUDIO HERO --}}
+@if($sv === 'B')
+{{-- VARIANT B (Daily Ritual): CENTERED FLOATING GLASS SANCTUARY OVER SOFT STUDIO BACKDROP --}}
+<section data-k71-hero-stage class="relative w-full min-h-[76vh] flex items-center justify-center py-14 px-4 overflow-hidden">
+    <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="pointer-events-none absolute inset-0 w-full h-full object-cover opacity-35 scale-105 blur-xs">
+    <div class="relative z-10 max-w-2xl w-full k71-glass-panel rounded-[2.25rem] p-8 sm:p-14 text-center space-y-6">
+        <span data-k71-hero-meta class="inline-block px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.2em]" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">{{ $manifest['name'] }}</span>
+        <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl leading-[1.02]">{{ $heroHeadline }}</h1>
+        <p data-k71-hero-meta class="text-sm sm:text-base max-w-lg mx-auto" style="color: var(--t-muted);">{{ $heroSub }}</p>
+        <div class="flex flex-wrap justify-center gap-3 pt-2">
+            <a href="{{ $storeCollectionUrl }}" data-k71-magnetic class="px-8 py-3.5 rounded-full text-xs font-bold" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">Explore Essentials</a>
+            @if($lead)<a href="{{ $prodUrl($lead) }}" class="px-6 py-3.5 rounded-full text-xs font-bold k71-glass-panel">Spotlight · ₹{{ number_format(($lead->base_price ?? 0) / 100, 0) }}</a>@endif
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Future Form): SPATIAL LIQUID GLASS 3D FLOATING STUDIO HERO --}}
 <section data-k71-hero-stage class="w-full py-10 sm:py-16 lg:py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="k71-glass-panel rounded-[2rem] p-6 sm:p-10 lg:p-14 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -81,6 +97,7 @@
         @endif
     </div>
 </section>
+@endif
 
 {{-- 2. SCULPTURAL GLASS PRODUCT GALLERY --}}
 <section class="w-full py-10 sm:py-16">

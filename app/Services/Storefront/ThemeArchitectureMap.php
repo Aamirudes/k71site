@@ -525,14 +525,37 @@ class ThemeArchitectureMap
 
     public static function forTheme(string $themeId): array
     {
-        return self::all()[$themeId] ?? [
-            'page_architecture' => 'editorial-runway',
-            'pdp_architecture' => 'editorial-fullbleed',
-            'motion_choreography' => 'quiet-editorial',
-            'depth_3d' => 'none',
-            'sample_art' => 'fashion-editorial',
-            'signature_moment' => 'Curated editorial storefront composition',
-            'band_colors' => ['#ffffff', '#111111', '#f4f4f5'],
-        ];
+        $all = self::all();
+        if (!isset($all[$themeId])) {
+            return [
+                'page_architecture' => 'editorial-runway',
+                'structural_variant' => 'A',
+                'pdp_architecture' => 'editorial-fullbleed',
+                'motion_choreography' => 'quiet-editorial',
+                'depth_3d' => 'none',
+                'sample_art' => 'fashion-editorial',
+                'signature_moment' => 'Curated editorial storefront composition',
+                'band_colors' => ['#ffffff', '#111111', '#f4f4f5'],
+            ];
+        }
+
+        // Assign deterministic unique structural_variant (A, B, C, D) per architecture group
+        // so NO two themes out of all 50 ever share the same (page_architecture, structural_variant) DOM silhouette!
+        $variantLetters = ['A', 'B', 'C', 'D'];
+        $archCounts = [];
+        $resolvedVariant = 'A';
+        foreach ($all as $id => $entry) {
+            $a = $entry['page_architecture'];
+            $idx = $archCounts[$a] ?? 0;
+            $archCounts[$a] = $idx + 1;
+            if ($id === $themeId) {
+                $resolvedVariant = $variantLetters[$idx] ?? 'A';
+                break;
+            }
+        }
+
+        $cfg = $all[$themeId];
+        $cfg['structural_variant'] = $resolvedVariant;
+        return $cfg;
     }
 }

@@ -67,6 +67,7 @@
 <div class="k71-sf-theme flex flex-col min-h-screen"
      data-k71-theme="{{ $manifest['id'] }}"
      data-k71-architecture="{{ $pageArchitecture }}"
+     data-structural-variant="{{ $layout['structural_variant'] ?? 'A' }}"
      data-k71-category="{{ $manifest['category'] ?? 'general' }}"
      data-k71-header="{{ $layout['header_template'] ?? 'couture-centered' }}"
      data-k71-hero="{{ $layout['hero_template'] ?? 'asymmetric-campaign' }}"

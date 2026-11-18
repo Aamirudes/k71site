@@ -9,11 +9,51 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'RAW GRAPHIC COMMERCE · LIMITED RELEASES · ZERO COMPROMISE.')), 120);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $lead = $allProducts->first();
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. RAW BRUTALIST POSTER HERO WITH THICK ARCHITECTURAL INK BORDERS --}}
+@if($sv === 'C')
+{{-- VARIANT C (The Drop): FULL-WIDTH TOP COUNTDOWN BUNKER BANNER --}}
+<section data-k71-hero-stage class="w-full py-6 sm:py-10">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="k71-brutal-box relative overflow-hidden min-h-[68vh] flex flex-col justify-between p-6 sm:p-12" style="background-color: #09090b; color: #ffffff;">
+            <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" data-k71-hero-media class="absolute inset-0 w-full h-full object-cover opacity-55">
+            <div class="relative z-10 flex flex-wrap items-center justify-between gap-3">
+                <span class="px-3 py-1 text-xs font-mono font-black uppercase" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">LIVE DROP BUNKER // {{ strtoupper($manifest['name']) }}</span>
+                <span class="px-3 py-1 text-xs font-mono font-bold border border-white/40">{{ $allProducts->count() }} LIMITED LOTS</span>
+            </div>
+            <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6 pt-20">
+                <h1 data-k71-hero-title class="k71-heading text-5xl sm:text-7xl xl:text-8xl font-black uppercase leading-[0.86] text-white">{{ $heroHeadline }}</h1>
+                <a href="{{ $storeCollectionUrl }}" class="k71-brutal-shadow px-8 py-4 text-xs font-black uppercase tracking-[0.2em] shrink-0" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">Enter Drop &rarr;</a>
+            </div>
+        </div>
+    </div>
+</section>
+@elseif($sv === 'B')
+{{-- VARIANT B (Sneaker Vault): INVERTED LEFT-VISUAL / RIGHT-COLLECTOR VAULT SPEC STACK --}}
+<section data-k71-hero-stage class="w-full py-6 sm:py-10">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="k71-brutal-box grid grid-cols-1 lg:grid-cols-12 overflow-hidden" style="background-color: var(--t-surface);">
+            <div class="lg:col-span-7 relative lg:border-r-2" style="border-color: var(--t-text); background-color: #0c0d10;">
+                <div data-k71-hero-media data-k71-3d-card class="aspect-[4/3] overflow-hidden">
+                    <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+                </div>
+            </div>
+            <div class="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-between gap-6">
+                <div class="space-y-4">
+                    <span class="inline-block px-3 py-1 text-[10px] font-mono font-black uppercase" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">COLLECTOR VAULT // 01</span>
+                    <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl uppercase font-black leading-[0.9]">{{ $heroHeadline }}</h1>
+                    <p class="text-xs sm:text-sm" style="color: var(--t-muted);">{{ $heroSub }}</p>
+                </div>
+                <a href="{{ $storeCollectionUrl }}" class="k71-brutal-shadow px-6 py-3.5 text-xs font-black uppercase tracking-[0.2em] text-center" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">Browse Vault &rarr;</a>
+            </div>
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Street Culture): RAW BRUTALIST POSTER HERO WITH THICK ARCHITECTURAL INK BORDERS --}}
 <section data-k71-hero-stage class="w-full py-6 sm:py-10">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="k71-brutal-box grid grid-cols-1 lg:grid-cols-12 overflow-hidden" style="background-color: var(--t-surface);">
@@ -64,6 +104,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 2. GSAP SCROLL-SCRUBBED OVERSIZED MARQUEE TICKER --}}
 <section class="w-full overflow-hidden py-4 my-4" style="background-color: var(--t-text); color: var(--t-bg); border-top: 2px solid var(--t-text); border-bottom: 2px solid var(--t-text);">

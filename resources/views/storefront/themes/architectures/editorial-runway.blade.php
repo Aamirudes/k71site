@@ -12,12 +12,60 @@
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
     $leadProduct = $allProducts->first();
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($leadProduct?->images?->first()?->url ?? $vendor->banner_url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $pair1 = $allProducts->slice(0, 2)->values();
     $pair2 = $allProducts->slice(2, 2)->values();
     $remaining = $allProducts->slice(4)->values();
 @endphp
 
-{{-- 1. FULL-BLEED RUNWAY CAMPAIGN HERO --}}
+@if($sv === 'B')
+{{-- VARIANT B (Luxe Objects): CENTERED MONUMENTAL EXHIBITION MONOLITH FLANKED BY SIDE INDEX COLUMNS --}}
+<section data-k71-hero-stage class="w-full py-12 sm:py-16 lg:py-20" style="border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1440px] mx-auto px-5 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-3 space-y-5 order-2 lg:order-1">
+            <p data-k71-hero-meta class="k71-eyebrow" style="color: var(--t-accent);">{{ $manifest['name'] }} · Monolith</p>
+            <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-5xl leading-[0.98]">{{ $heroHeadline }}</h1>
+            <p data-k71-hero-meta class="text-xs sm:text-sm leading-relaxed" style="color: var(--t-muted);">{{ $heroSub }}</p>
+            <a href="{{ $storeCollectionUrl }}" data-k71-magnetic class="k71-btn k71-btn-primary">{{ $heroCta }}</a>
+        </div>
+        <div class="lg:col-span-6 order-1 lg:order-2">
+            <div data-k71-hero-media data-k71-3d-card class="aspect-[4/4] sm:aspect-[5/4] overflow-hidden relative" style="border: 1px solid var(--t-border); background-color: var(--t-surface);">
+                <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+        <div class="lg:col-span-3 space-y-4 order-3">
+            <p class="text-[10px] font-mono uppercase tracking-[0.22em]" style="color: var(--t-muted);">Featured Index</p>
+            @foreach($allProducts->take(3) as $fIdx => $fItem)
+                <a href="{{ $prodUrl($fItem) }}" class="flex items-baseline justify-between gap-2 py-2.5 text-xs hover:opacity-70" style="border-bottom: 1px solid var(--t-border);">
+                    <span class="truncate">0{{ $fIdx + 1 }} · {{ $fItem->title }}</span>
+                    <span class="font-mono font-bold shrink-0">₹{{ number_format(($fItem->base_price ?? 0) / 100, 0) }}</span>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@elseif($sv === 'C')
+{{-- VARIANT C (Velvet Beauty): ASYMMETRIC MAGAZINE COVER SPREAD + HORIZONTAL LOOKBOOK RAIL --}}
+<section data-k71-hero-stage class="w-full" style="border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12">
+        <div class="lg:col-span-5 p-8 sm:p-14 flex flex-col justify-between gap-10" style="background-color: var(--t-surface);">
+            <div class="space-y-4">
+                <span data-k71-hero-meta class="text-[11px] uppercase tracking-[0.28em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Campaign Spread</span>
+                <h1 data-k71-hero-title class="k71-heading text-5xl sm:text-6xl leading-[0.94]">{{ $heroHeadline }}</h1>
+                <p data-k71-hero-meta class="text-sm leading-relaxed" style="color: var(--t-muted);">{{ $heroSub }}</p>
+            </div>
+            <div data-k71-hero-meta class="flex flex-wrap gap-3">
+                <a href="{{ $storeCollectionUrl }}" data-k71-magnetic class="k71-btn k71-btn-primary">{{ $heroCta }}</a>
+                @if($leadProduct)<a href="{{ $prodUrl($leadProduct) }}" class="k71-btn k71-btn-outline">Shop Cover Piece</a>@endif
+            </div>
+        </div>
+        <div class="lg:col-span-7 relative min-h-[60vh] lg:min-h-[80vh] overflow-hidden">
+            <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" data-k71-hero-media class="w-full h-full object-cover">
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Maison Élite): FULL-BLEED RUNWAY CAMPAIGN HERO --}}
 <section data-k71-hero-stage class="relative w-full min-h-[78vh] lg:min-h-[90vh] flex items-end overflow-hidden" style="background-color: #0b0b0d;">
     <div class="absolute inset-0 overflow-hidden">
         <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" data-k71-hero-media data-k71-hero-scrub
@@ -71,6 +119,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 2. MINIMAL EDITORIAL CATEGORY STRIP --}}
 @if(($vendorCategories ?? collect())->isNotEmpty())

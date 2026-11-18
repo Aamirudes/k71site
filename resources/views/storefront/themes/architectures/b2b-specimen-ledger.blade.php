@@ -10,9 +10,118 @@
     $heroCfg = $themeConfig['hero'] ?? [];
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Structured technical catalogue, SKU transparency, and direct procurement workflow.')), 140);
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
 @endphp
 
-{{-- 1. TECHNICAL PROCUREMENT & SPECIFICATION HEADER --}}
+@if($sv === 'B')
+{{-- VARIANT B (Pixel Foundry): 2-COLUMN COMPACT TECHNICAL DATASHEET CARDS --}}
+<section data-k71-hero-stage class="w-full py-7" style="border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-8 flex flex-wrap items-end justify-between gap-4">
+        <div class="space-y-1.5">
+            <span data-k71-hero-meta class="text-[10px] font-mono uppercase tracking-[0.24em]" style="color: var(--t-accent);">&gt;_ {{ strtoupper($manifest['name']) }} // DATASHEET INDEX</span>
+            <h1 data-k71-hero-title class="k71-heading text-3xl sm:text-5xl tracking-tight">{{ $heroHeadline }}</h1>
+        </div>
+        <div data-k71-hero-meta class="flex items-center gap-3">
+            <span class="px-3 py-1.5 font-mono text-xs" style="border: 1px solid var(--t-border);">{{ $allProducts->count() }} MODULES</span>
+            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary !min-h-[40px] text-xs font-mono uppercase">Browse All</a>
+        </div>
+    </div>
+</section>
+<section class="w-full py-8 sm:py-10">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-8">
+        <div data-k71-stagger-grid class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            @foreach($allProducts->take(12) as $idx => $product)
+                @php
+                    $pImg = $product->images?->first()?->url ?? $fallbackArt;
+                    $pLink = $prodUrl($product);
+                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                @endphp
+                <article data-k71-card-item class="p-4 flex gap-4 items-center" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+                    <a href="{{ $pLink }}" class="w-24 h-24 sm:w-28 sm:h-28 shrink-0 overflow-hidden" style="background-color: var(--t-surface-alt); border: 1px solid var(--t-border);">
+                        <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
+                    </a>
+                    <div class="flex-1 min-w-0 space-y-2">
+                        <div class="flex items-center justify-between gap-2 font-mono text-[10px] uppercase" style="color: var(--t-muted);">
+                            <span>REF-{{ str_pad((string)($idx + 1), 3, '0', STR_PAD_LEFT) }}</span>
+                            <span>{{ $product->category?->name ?? 'SPEC' }}</span>
+                        </div>
+                        <h2 class="k71-heading text-base sm:text-lg truncate"><a href="{{ $pLink }}">{{ $product->title }}</a></h2>
+                        <div class="flex items-center justify-between gap-3 pt-1">
+                            <span class="font-mono text-base font-extrabold">₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}</span>
+                            @if($hasVariants)
+                                <a href="{{ $pLink }}" class="px-3 py-1.5 text-[11px] font-mono uppercase font-bold" style="border: 1px solid var(--t-text);">Specs &rarr;</a>
+                            @else
+                                <form action="{{ route('cart.add') }}" method="POST" data-k71-cart-form>
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="px-3.5 py-1.5 text-[11px] font-mono uppercase font-bold cursor-pointer" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">+ Procure</button>
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+                </article>
+            @endforeach
+        </div>
+    </div>
+</section>
+@elseif($sv === 'C')
+{{-- VARIANT C (The Specialist): 2-PANE TECHNICAL WORKBENCH (LEFT STICKY INDEX + RIGHT SPEC MATRIX) --}}
+<section data-k71-hero-stage class="w-full py-8">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <aside class="lg:col-span-3">
+            <div class="lg:sticky lg:top-24 p-6 space-y-5" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+                <div>
+                    <p data-k71-hero-meta class="text-[10px] font-mono uppercase tracking-[0.22em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Specialist</p>
+                    <h1 data-k71-hero-title class="k71-heading text-2xl sm:text-3xl mt-1">{{ $heroHeadline }}</h1>
+                    <p class="text-xs mt-2 leading-relaxed" style="color: var(--t-muted);">{{ $heroSub }}</p>
+                </div>
+                <div class="pt-4 space-y-2 text-xs font-mono" style="border-top: 1px solid var(--t-border);">
+                    <p class="uppercase text-[10px]" style="color: var(--t-muted);">Category Index</p>
+                    <a href="{{ $storeCollectionUrl }}" class="flex justify-between font-bold" style="color: var(--t-accent);"><span>ALL SPECS</span><span>{{ $allProducts->count() }}</span></a>
+                    @foreach(($vendorCategories ?? collect())->take(8) as $cat)
+                        <a href="{{ $storeCollectionUrl }}{{ str_contains($storeCollectionUrl, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}" class="flex justify-between hover:opacity-70">
+                            <span class="truncate">{{ $cat->name }}</span>
+                            <span style="color: var(--t-muted);">{{ $cat->products_count ?? '' }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </aside>
+        <div class="lg:col-span-9 space-y-4">
+            <div class="flex items-center justify-between pb-3" style="border-bottom: 2px solid var(--t-text);">
+                <span class="font-mono text-xs uppercase tracking-[0.2em] font-bold">Technical Equipment Ledger</span>
+                <a href="{{ $storeCollectionUrl }}" class="font-mono text-xs uppercase font-bold" style="color: var(--t-accent);">Full Matrix &rarr;</a>
+            </div>
+            <div data-k71-stagger-grid class="space-y-3">
+                @foreach($allProducts->take(10) as $idx => $product)
+                    @php
+                        $pImg = $product->images?->first()?->url ?? $fallbackArt;
+                        $pLink = $prodUrl($product);
+                    @endphp
+                    <article data-k71-card-item class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+                        <div class="flex items-center gap-4 min-w-0">
+                            <span class="font-mono text-xs font-bold shrink-0" style="color: var(--t-accent);">{{ str_pad((string)($idx + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                            <a href="{{ $pLink }}" class="w-16 h-16 shrink-0 overflow-hidden" style="background-color: var(--t-surface-alt);">
+                                <img src="{{ $pImg }}" alt="{{ $product->title }}" class="w-full h-full object-cover">
+                            </a>
+                            <div class="min-w-0">
+                                <h2 class="k71-heading text-sm sm:text-base font-bold truncate"><a href="{{ $pLink }}">{{ $product->title }}</a></h2>
+                                <p class="text-[11px] font-mono truncate" style="color: var(--t-muted);">{{ $product->category?->name ?? 'Specialist Line' }} · {{ $product->sku ?? 'IN-STOCK' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                            <span class="font-mono text-base font-extrabold">₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}</span>
+                            <a href="{{ $pLink }}" class="px-3.5 py-2 text-[11px] font-mono font-bold uppercase" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">Inspect</a>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Denim District): FULL-WIDTH SPECIFICATION TABLE WITH INLINE QTY + ADD --}}
 <section data-k71-hero-stage class="w-full py-8 sm:py-10" style="background-color: var(--t-surface); border-bottom: 2px solid var(--t-border);">
     <div class="max-w-[1480px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
         <div class="lg:col-span-8 space-y-2.5">
@@ -120,3 +229,4 @@
         </div>
     </div>
 </section>
+@endif

@@ -9,12 +9,63 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Modular precision flagship combining live specs, rapid discovery, and modern industrial clarity.')), 130);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $lead = $allProducts->first();
     $second = $allProducts->get(1);
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. 12-COLUMN MODULAR BENTO BOX FLAGSHIP HERO --}}
+@if($sv === 'B')
+{{-- VARIANT B (Habitat Studio): TOP 3-COLUMN EQUAL MODULAR ROOM CARDS --}}
+<section data-k71-hero-stage class="w-full py-8 sm:py-12">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 space-y-6">
+        <div class="rounded-2xl p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+            <div>
+                <span class="text-[10px] font-mono uppercase tracking-[0.22em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Modular Spaces</span>
+                <h1 data-k71-hero-title class="k71-heading text-3xl sm:text-5xl mt-1">{{ $heroHeadline }}</h1>
+            </div>
+            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary shrink-0">Browse All Modules</a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            @foreach($allProducts->take(3) as $bIdx => $bItem)
+                @php $bImg = $bItem->images?->first()?->url ?? $heroImg; @endphp
+                <a href="{{ $prodUrl($bItem) }}" data-k71-hero-media data-k71-3d-card class="rounded-2xl overflow-hidden relative min-h-[340px] flex items-end p-6 group" style="border: 1px solid var(--t-border);">
+                    <img src="{{ $bImg }}" alt="{{ $bItem->title }}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                    <div class="relative z-10 text-white w-full flex items-end justify-between gap-3">
+                        <div><p class="text-[10px] font-mono text-white/75">MODULE 0{{ $bIdx + 1 }}</p><h2 class="k71-heading text-xl text-white">{{ $bItem->title }}</h2></div>
+                        <span class="font-mono text-sm font-bold shrink-0">₹{{ number_format(($bItem->base_price ?? 0) / 100, 0) }}</span>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </div>
+</section>
+@elseif($sv === 'C')
+{{-- VARIANT C (Neo Commerce): INVERTED LEFT-METRIC-STACK / RIGHT-7-COL CAMPAIGN BENTO --}}
+<section data-k71-hero-stage class="w-full py-6 sm:py-10">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-5 flex flex-col justify-between gap-4">
+            <div class="rounded-2xl p-6 sm:p-8 flex-1 flex flex-col justify-between" style="background-color: var(--t-surface); border: 1px solid var(--t-border);">
+                <div class="space-y-3">
+                    <span class="text-[10px] font-mono uppercase tracking-[0.2em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Direct Flagship</span>
+                    <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-5xl leading-[0.98]">{{ $heroHeadline }}</h1>
+                    <p class="text-xs sm:text-sm" style="color: var(--t-muted);">{{ $heroSub }}</p>
+                </div>
+                <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary mt-6 w-fit">Shop Collection &rarr;</a>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="rounded-2xl p-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);"><p class="text-[10px] font-mono" style="color: var(--t-muted);">ACTIVE SKUs</p><p class="k71-heading text-3xl font-extrabold mt-1">{{ $allProducts->count() }}</p></div>
+                <div class="rounded-2xl p-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);"><p class="text-[10px] font-mono" style="color: var(--t-muted);">DEPARTMENTS</p><p class="k71-heading text-3xl font-extrabold mt-1">{{ ($vendorCategories ?? collect())->count() }}</p></div>
+            </div>
+        </div>
+        <div class="lg:col-span-7 rounded-2xl overflow-hidden min-h-[460px] relative" style="border: 1px solid var(--t-border);">
+            <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" data-k71-hero-media class="w-full h-full object-cover">
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Circuit): 12-COLUMN MODULAR BENTO BOX FLAGSHIP HERO --}}
 <section data-k71-hero-stage class="w-full py-6 sm:py-10">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
@@ -110,6 +161,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 2. MODULAR SPEC-MATRIX PRODUCT SHOWCASE --}}
 <section class="w-full py-10 sm:py-14">

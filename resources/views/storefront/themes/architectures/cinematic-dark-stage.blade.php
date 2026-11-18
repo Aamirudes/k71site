@@ -9,11 +9,72 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Engineered for dramatic contrast, precision optics, and nocturnal authority.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $lead = $allProducts->first();
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. NOCTURNAL SPOTLIGHT THEATER HERO + REAL PROCEDURAL WEBGL ATMOSPHERIC SHADER --}}
+@if($sv === 'B')
+{{-- VARIANT B (Velocity): FULL-BLEED ACTION SPLIT WITH OVERSIZED LOWER TYPOGRAPHY BAR --}}
+<section data-k71-hero-stage class="relative w-full min-h-[82vh] flex flex-col justify-between overflow-hidden" style="background-color: #06070a; color: #f4f4f5;">
+    <canvas data-k71-shader="velocity" aria-hidden="true" class="pointer-events-none absolute inset-0 w-full h-full opacity-80"></canvas>
+    <div class="relative z-10 max-w-[1440px] mx-auto w-full px-5 sm:px-10 pt-10 flex items-center justify-between text-xs font-mono text-zinc-400">
+        <span>// {{ strtoupper($manifest['name']) }} PERFORMANCE DIVISION</span>
+        <span>{{ $allProducts->count() }} ACTIVE EDITIONS</span>
+    </div>
+    <div class="relative z-10 max-w-[1440px] mx-auto w-full px-5 sm:px-10 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+        <div class="lg:col-span-7" data-k71-hero-media data-k71-3d-card>
+            <div class="aspect-[16/9] rounded-xl overflow-hidden border border-white/15 bg-zinc-950">
+                <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+        <div class="lg:col-span-5 space-y-5">
+            <h1 data-k71-hero-title class="k71-heading text-5xl sm:text-7xl uppercase italic leading-[0.88] text-white">{{ $heroHeadline }}</h1>
+            <p class="text-sm text-zinc-400">{{ $heroSub }}</p>
+            <a href="{{ $storeCollectionUrl }}" data-k71-magnetic class="k71-btn k71-btn-primary">Shop Releases &rarr;</a>
+        </div>
+    </div>
+</section>
+@elseif($sv === 'C')
+{{-- VARIANT C (Chronograph): CENTERED MACRO HOROLOGY SHOWCASE + 3-COL TELEMETRY STRIP --}}
+<section data-k71-hero-stage class="relative w-full py-12 sm:py-16 overflow-hidden k71-cinema-glow" style="background-color: #07090d; color: #f4f4f5;">
+    <canvas data-k71-shader="horology" aria-hidden="true" class="pointer-events-none absolute inset-0 w-full h-full opacity-85"></canvas>
+    <div class="relative z-10 max-w-5xl mx-auto px-5 sm:px-8 text-center space-y-6">
+        <p data-k71-hero-meta class="text-[11px] font-mono uppercase tracking-[0.3em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Calibre Showroom</p>
+        <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl text-white">{{ $heroHeadline }}</h1>
+        <div data-k71-hero-media data-k71-3d-card class="max-w-3xl mx-auto aspect-[16/10] overflow-hidden border border-white/15 bg-zinc-950 shadow-2xl">
+            <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+        </div>
+        <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto pt-4 border-t border-white/10 text-xs font-mono">
+            <div><span class="block text-zinc-500">CATALOGUE</span><strong class="text-white">{{ $allProducts->count() }} PIECES</strong></div>
+            <div><span class="block text-zinc-500">SPOTLIGHT</span><strong style="color: var(--t-accent);">₹{{ number_format(($lead?->base_price ?? 0) / 100, 0) }}</strong></div>
+            <div><a href="{{ $storeCollectionUrl }}" class="inline-block px-4 py-2 font-bold" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">EXPLORE &rarr;</a></div>
+        </div>
+    </div>
+</section>
+@elseif($sv === 'D')
+{{-- VARIANT D (Audio Atelier): INVERTED LEFT-HARDWARE / RIGHT-ACOUSTIC MANIFESTO --}}
+<section data-k71-hero-stage class="relative w-full py-14 sm:py-20 overflow-hidden" style="background-color: #0c0b0a; color: #f4f4f5;">
+    <canvas data-k71-shader="audio" aria-hidden="true" class="pointer-events-none absolute inset-0 w-full h-full opacity-75"></canvas>
+    <div class="relative z-10 max-w-[1440px] mx-auto px-5 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+        <div class="lg:col-span-7" data-k71-hero-media data-k71-3d-card>
+            <div class="aspect-[4/3] overflow-hidden border border-white/10 bg-zinc-950">
+                <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+        <div class="lg:col-span-5 space-y-6">
+            <p class="text-[11px] font-mono uppercase tracking-[0.26em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Acoustic Studio</p>
+            <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl leading-[0.98] text-white">{{ $heroHeadline }}</h1>
+            <p class="text-sm text-zinc-400 leading-relaxed">{{ $heroSub }}</p>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary">Explore Systems</a>
+                @if($lead)<a href="{{ $prodUrl($lead) }}" class="px-5 py-3 text-xs font-mono uppercase border border-zinc-700 text-zinc-200 hover:border-white">Specs &rarr;</a>@endif
+            </div>
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Obsidian): NOCTURNAL SPOTLIGHT THEATER HERO + REAL PROCEDURAL WEBGL ATMOSPHERIC SHADER --}}
 <section data-k71-hero-stage class="relative w-full min-h-[82vh] flex items-center overflow-hidden k71-cinema-glow" style="background-color: #070709; color: #f4f4f5;">
     <canvas data-k71-shader="obsidian" aria-hidden="true" class="pointer-events-none absolute inset-0 w-full h-full opacity-90"></canvas>
     <div class="max-w-[1440px] mx-auto w-full px-5 sm:px-10 lg:px-14 py-16 lg:py-20 grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
@@ -60,6 +121,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 2. HORIZONTAL SCROLL-DRIVEN CINEMA REEL (GSAP Scrubbed on Desktop, Touch Swipe on Mobile) --}}
 @if($allProducts->isNotEmpty())

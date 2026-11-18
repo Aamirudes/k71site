@@ -9,11 +9,66 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Strict typographic hierarchy, disciplined Swiss grid proportions, and immediate pricing clarity.')), 150);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $lead = $allProducts->first();
     $heroImg = trim((string) ($heroCfg['image_url'] ?? '')) ?: ($lead?->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg'));
 @endphp
 
-{{-- 1. SWISS INTERNATIONAL TYPOGRAPHIC HEADER GRID --}}
+@if($sv === 'C')
+{{-- VARIANT C (Mono Tech): COMPACT INDUSTRIAL BLUEPRINT HEADER + IMMEDIATE 4-COL NUMBERED MATRIX --}}
+<section data-k71-hero-stage class="w-full py-6 sm:py-8" style="border-bottom: 1px solid var(--t-border); background-color: var(--t-surface);">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <p class="text-[10px] font-mono uppercase tracking-[0.24em] mb-1" style="color: var(--t-accent);">[ INDUSTRIAL INDEX // {{ strtoupper($manifest['name']) }} ]</p>
+            <h1 data-k71-hero-title class="k71-heading text-3xl sm:text-5xl leading-none">{{ $heroHeadline }}</h1>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-mono">
+            <span style="color: var(--t-muted);">UNITS: {{ $allProducts->count() }}</span>
+            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary">Full Blueprint &rarr;</a>
+        </div>
+    </div>
+</section>
+@elseif($sv === 'B')
+{{-- VARIANT B (Sartorial): INVERTED LEFT-IMAGE / RIGHT-TAILORING DOSSIER --}}
+<section data-k71-hero-stage class="w-full" style="border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12">
+        <div class="lg:col-span-5 py-8 lg:pr-8 lg:border-r" style="border-color: var(--t-border);">
+            <div data-k71-hero-media class="aspect-[4/4] overflow-hidden" style="background-color: var(--t-surface-alt);">
+                <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+        <div class="lg:col-span-7 py-10 lg:pl-10 flex flex-col justify-between gap-8">
+            <div class="space-y-4">
+                <p class="text-[11px] font-mono uppercase tracking-[0.22em]" style="color: var(--t-accent);">TAILORING LEDGER · {{ strtoupper($manifest['name']) }}</p>
+                <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl leading-[0.96]">{{ $heroHeadline }}</h1>
+                <p class="text-sm max-w-lg leading-relaxed" style="color: var(--t-muted);">{{ $heroSub }}</p>
+            </div>
+            <div><a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary">Commission / Browse &rarr;</a></div>
+        </div>
+    </div>
+</section>
+@elseif($sv === 'D')
+{{-- VARIANT D (Pure Science): CLINICAL 6/6 FORMULATION SPEC TABLE HERO --}}
+<section data-k71-hero-stage class="w-full py-10" style="border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-6 space-y-5">
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase font-bold" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">CLINICAL FORMULATION INDEX</span>
+            <h1 data-k71-hero-title class="k71-heading text-4xl sm:text-6xl leading-[0.98]">{{ $heroHeadline }}</h1>
+            <dl class="divide-y text-xs font-mono" style="border-top: 1px solid var(--t-border); border-bottom: 1px solid var(--t-border);">
+                <div class="py-2 flex justify-between"><dt style="color: var(--t-muted);">ACTIVE FORMULATIONS</dt><dd class="font-bold">{{ $allProducts->count() }}</dd></div>
+                <div class="py-2 flex justify-between"><dt style="color: var(--t-muted);">CATEGORY LINES</dt><dd class="font-bold">{{ ($vendorCategories ?? collect())->count() }}</dd></div>
+            </dl>
+            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary">Inspect Formulations</a>
+        </div>
+        <div class="lg:col-span-6">
+            <div data-k71-hero-media class="aspect-[16/10] overflow-hidden" style="border: 1px solid var(--t-border);">
+                <img src="{{ $heroImg }}" alt="{{ $heroHeadline }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (The Curator): SWISS INTERNATIONAL TYPOGRAPHIC HEADER GRID --}}
 <section data-k71-hero-stage class="w-full" style="border-bottom: 1px solid var(--t-border);">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-10">
         <div data-k71-hairline class="grid grid-cols-2 sm:grid-cols-4 py-3 text-[11px] font-mono uppercase tracking-[0.16em]" style="border-bottom: 1px solid var(--t-border); color: var(--t-muted);">
@@ -53,6 +108,7 @@
         </div>
     </div>
 </section>
+@endif
 
 {{-- 2. STICKY LEFT SWISS INDEX + RIGHT HAIRLINE-BORDERED NUMBERED PRODUCT MATRIX --}}
 <section class="w-full">

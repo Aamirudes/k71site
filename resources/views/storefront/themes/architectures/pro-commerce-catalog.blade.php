@@ -9,10 +9,46 @@
     $heroHeadline = trim((string) ($heroCfg['headline'] ?? '')) ?: $storeName;
     $heroSub = trim((string) ($heroCfg['subheadline'] ?? '')) ?: \Illuminate\Support\Str::limit(strip_tags((string) ($vendor->description ?? 'Fast department discovery, transparent pricing, and direct checkout across every SKU.')), 140);
     $allProducts = (isset($products) && method_exists($products, 'items')) ? collect($products->items())->values() : collect($products ?? [])->values();
+    $sv = $manifest['layout']['structural_variant'] ?? 'A';
     $actionBase = explode('?', $storeCollectionUrl)[0];
 @endphp
 
-{{-- 1. HIGH-EFFICIENCY PRO-COMMERCE BANNER + INTEGRATED INSTANT SEARCH --}}
+@if($sv === 'B')
+{{-- VARIANT B (Market Studio): VISUAL DEPARTMENT TILES TOP + FULL-WIDTH 5-COLUMN FAST MATRIX (NO SIDEBAR) --}}
+<section data-k71-hero-stage class="w-full py-6 sm:py-8" style="background-color: var(--t-surface); border-bottom: 1px solid var(--t-border);">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6 space-y-5">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <span class="text-[10px] font-mono uppercase tracking-[0.22em]" style="color: var(--t-accent);">{{ $manifest['name'] }} · Department Flagship</span>
+                <h1 data-k71-hero-title class="k71-heading text-3xl sm:text-5xl">{{ $heroHeadline }}</h1>
+            </div>
+            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-primary">All {{ $allProducts->count() }} Items &rarr;</a>
+        </div>
+        @if(($vendorCategories ?? collect())->isNotEmpty())
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                @foreach($vendorCategories->take(6) as $cat)
+                    <a href="{{ $storeCollectionUrl }}{{ str_contains($storeCollectionUrl, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}"
+                       class="p-3.5 rounded-xl flex items-center justify-between text-xs font-bold hover:opacity-80 transition"
+                       style="background-color: var(--t-bg); border: 1px solid var(--t-border);">
+                        <span class="truncate">{{ $cat->name }}</span>
+                        <span class="font-mono text-[10px]" style="color: var(--t-accent);">{{ $cat->products_count ?? '' }}</span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</section>
+<section class="w-full py-8">
+    <div class="max-w-[1480px] mx-auto px-4 sm:px-6">
+        <div data-k71-stagger-grid class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            @foreach($allProducts->take(15) as $product)
+                <div data-k71-card-item>@include('storefront.themes.partials.card', ['product' => $product])</div>
+            @endforeach
+        </div>
+    </div>
+</section>
+@else
+{{-- VARIANT A (Fresh Market): HIGH-EFFICIENCY PRO-COMMERCE BANNER + STICKY LEFT DEPARTMENT RAIL --}}
 <section data-k71-hero-stage class="w-full py-6 sm:py-8" style="background-color: var(--t-surface); border-bottom: 1px solid var(--t-border);">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div class="space-y-2 max-w-2xl">
@@ -124,3 +160,4 @@
         </div>
     </div>
 </section>
+@endif
