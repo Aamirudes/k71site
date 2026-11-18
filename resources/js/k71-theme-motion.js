@@ -69,10 +69,20 @@ function initK71ThemeEngine() {
         gsapCtx = gsap.context(() => {
             const mm = gsap.matchMedia();
 
-            // A. Hero Entrance Timeline (Tailored per choreography)
+            // A. Hero Entrance Timeline (Masked Word-Curtain Reveal + Tailored Choreography)
             const heroRoot = root.querySelector('[data-k71-hero-stage]');
             if (heroRoot) {
-                const heroTitles = heroRoot.querySelectorAll('[data-k71-hero-title]');
+                const rawHeroTitles = heroRoot.querySelectorAll('[data-k71-hero-title]');
+                const heroWords = [];
+                rawHeroTitles.forEach((h) => {
+                    if (h.children.length === 0 && h.textContent.trim().length > 0 && h.textContent.trim().length < 90) {
+                        const orig = h.textContent.trim();
+                        h.setAttribute('aria-label', orig);
+                        h.innerHTML = orig.split(/\s+/).map((w) => `<span class="k71-word-mask"><span class="k71-word-inner">${w.replace(/</g, '&lt;')}</span></span>`).join(' ');
+                        h.querySelectorAll('.k71-word-inner').forEach((wEl) => heroWords.push(wEl));
+                    }
+                });
+                const heroTitles = heroWords.length ? heroWords : rawHeroTitles;
                 const heroMeta = heroRoot.querySelectorAll('[data-k71-hero-meta]');
                 const heroMedia = heroRoot.querySelectorAll('[data-k71-hero-media]');
                 const heroLines = heroRoot.querySelectorAll('[data-k71-hairline]');
@@ -340,21 +350,87 @@ function initK71ThemeEngine() {
         }
     }
 
+    // ── 3B. Desktop Ambient Cursor Spotlight Aura on Hero Stages ──────────────
+    if (!reduced && !isTouch && window.innerWidth >= 1024) {
+        root.querySelectorAll('[data-k71-hero-stage]').forEach((stage) => {
+            let rafAura = 0;
+            const onStageMove = (e) => {
+                if (rafAura) return;
+                rafAura = requestAnimationFrame(() => {
+                    const r = stage.getBoundingClientRect();
+                    stage.style.setProperty('--aura-x', `${((e.clientX - r.left) / Math.max(1, r.width) * 100).toFixed(1)}%`);
+                    stage.style.setProperty('--aura-y', `${((e.clientY - r.top) / Math.max(1, r.height) * 100).toFixed(1)}%`);
+                    rafAura = 0;
+                });
+            };
+            stage.addEventListener('mousemove', onStageMove, { passive: true });
+            pointerCleanups.push(() => stage.removeEventListener('mousemove', onStageMove));
+        });
+    }
+
+    // ── 3C. Sticky PDP Bottom Buy Bar Observer ────────────────────────────────
+    const stickyPdpBar = document.getElementById('k71-sticky-pdp-bar');
+    const stickyAddBtn = document.getElementById('k71-sticky-add-btn');
+    let pdpScrollHandler = null;
+    if (stickyPdpBar) {
+        pdpScrollHandler = () => {
+            stickyPdpBar.classList.toggle('is-visible', (window.scrollY || 0) > 460);
+        };
+        window.addEventListener('scroll', pdpScrollHandler, { passive: true });
+        pdpScrollHandler();
+        if (stickyAddBtn) {
+            const onStickyAdd = () => {
+                const form = root.querySelector('form[data-k71-cart-form]');
+                if (form) form.requestSubmit();
+            };
+            stickyAddBtn.addEventListener('click', onStickyAdd);
+            pointerCleanups.push(() => stickyAddBtn.removeEventListener('click', onStickyAdd));
+        }
+        pointerCleanups.push(() => window.removeEventListener('scroll', pdpScrollHandler));
+    }
+
     // ── 4. Accessible Dialogs, GSAP Animated Drawers, Wishlist & Quick-View ───
     const wishKey = 'k71_wishlist_' + (root.dataset.k71Theme || 'store');
-    let wishSet = new Set();
+    let wishMap = {};
     try {
-        wishSet = new Set(JSON.parse(localStorage.getItem(wishKey) || '[]').map(String));
+        const parsed = JSON.parse(localStorage.getItem(wishKey) || '{}');
+        if (Array.isArray(parsed)) {
+            parsed.forEach((id) => { wishMap[String(id)] = { id: String(id), title: 'Saved Piece' }; });
+        } else if (parsed && typeof parsed === 'object') {
+            wishMap = parsed;
+        }
     } catch {
-        wishSet = new Set();
+        wishMap = {};
     }
+    const renderShortlistDrawer = () => {
+        const ids = Object.keys(wishMap);
+        document.querySelectorAll('[data-k71-wish-count]').forEach((el) => { el.textContent = String(ids.length); });
+        const box = document.getElementById('k71-shortlist-drawer-items');
+        if (!box) return;
+        if (ids.length === 0) {
+            box.innerHTML = `<p class="text-xs py-4" style="color: var(--t-muted);">Tap the heart icon on any piece to save it to your personal shortlist.</p>`;
+            return;
+        }
+        box.innerHTML = '';
+        ids.forEach((id) => {
+            const item = wishMap[id] || { id, title: 'Saved Piece' };
+            const row = document.createElement('div');
+            row.className = 'p-3 rounded-lg flex items-center justify-between gap-3';
+            row.style.border = '1px solid var(--t-border)';
+            row.style.backgroundColor = 'var(--t-bg)';
+            row.innerHTML = `<div class="min-w-0"><p class="text-xs font-bold truncate"></p><p class="text-[10px] opacity-65">Saved in shortlist</p></div><button type="button" data-k71-wish-remove="${id}" class="text-[11px] font-bold uppercase cursor-pointer hover:opacity-70" style="color: var(--t-accent);">Remove</button>`;
+            row.querySelector('p').textContent = item.title || 'Saved Piece';
+            box.appendChild(row);
+        });
+    };
     const syncWishUI = () => {
         root.querySelectorAll('[data-k71-wish-btn]').forEach((btn) => {
             const id = String(btn.dataset.wishId || '');
-            const active = wishSet.has(id);
+            const active = Boolean(wishMap[id]);
             btn.dataset.wished = active ? 'true' : 'false';
             btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
+        renderShortlistDrawer();
     };
     syncWishUI();
 
@@ -393,6 +469,79 @@ function initK71ThemeEngine() {
     }
 
     const onDocClick = (e) => {
+        const wishRemove = e.target.closest('[data-k71-wish-remove]');
+        if (wishRemove) {
+            e.preventDefault();
+            const id = String(wishRemove.dataset.k71WishRemove || '');
+            delete wishMap[id];
+            try { localStorage.setItem(wishKey, JSON.stringify(wishMap)); } catch {}
+            syncWishUI();
+            return;
+        }
+
+        const drawerTab = e.target.closest('[data-k71-drawer-tab]');
+        if (drawerTab) {
+            e.preventDefault();
+            const mode = drawerTab.dataset.k71DrawerTab;
+            document.querySelectorAll('[data-k71-drawer-tab]').forEach((t) => {
+                const isActive = t.dataset.k71DrawerTab === mode;
+                t.style.backgroundColor = isActive ? 'var(--t-accent)' : 'transparent';
+                t.style.color = isActive ? 'var(--t-accent-contrast)' : 'var(--t-muted)';
+            });
+            document.getElementById('k71-cart-drawer-items')?.classList.toggle('hidden', mode !== 'bag');
+            document.getElementById('k71-shortlist-drawer-items')?.classList.toggle('hidden', mode !== 'shortlist');
+            return;
+        }
+
+        const shareBtn = e.target.closest('[data-k71-share-btn]');
+        if (shareBtn) {
+            e.preventDefault();
+            const url = window.location.href;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => showToast('Storefront link copied to clipboard.', false)).catch(() => showToast('Link ready to share.', false));
+            } else {
+                showToast('Link ready to share.', false);
+            }
+            return;
+        }
+
+        const gridColBtn = e.target.closest('[data-k71-grid-cols]');
+        if (gridColBtn) {
+            e.preventDefault();
+            const cols = parseInt(gridColBtn.dataset.k71GridCols || '4', 10);
+            const grid = document.getElementById('k71-collection-grid');
+            if (grid) {
+                grid.classList.remove('grid-cols-1', 'sm:grid-cols-2', 'grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-3', 'lg:grid-cols-4');
+                if (cols === 2) grid.classList.add('grid-cols-1', 'sm:grid-cols-2');
+                else if (cols === 3) grid.classList.add('grid-cols-2', 'lg:grid-cols-3');
+                else grid.classList.add('grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4');
+                document.querySelectorAll('[data-k71-grid-cols]').forEach((b) => {
+                    const active = parseInt(b.dataset.k71GridCols || '4', 10) === cols;
+                    b.style.backgroundColor = active ? 'var(--t-accent)' : 'transparent';
+                    b.style.color = active ? 'var(--t-accent-contrast)' : 'var(--t-muted)';
+                });
+            }
+            return;
+        }
+
+        const savedFilterBtn = e.target.closest('#k71-filter-saved-btn');
+        if (savedFilterBtn) {
+            e.preventDefault();
+            const next = savedFilterBtn.getAttribute('aria-pressed') !== 'true';
+            savedFilterBtn.setAttribute('aria-pressed', next ? 'true' : 'false');
+            savedFilterBtn.style.backgroundColor = next ? 'var(--t-accent)' : 'transparent';
+            savedFilterBtn.style.color = next ? 'var(--t-accent-contrast)' : 'var(--t-text)';
+            const items = document.querySelectorAll('#k71-collection-grid [data-product-id]');
+            items.forEach((el) => {
+                const pid = String(el.dataset.productId || '');
+                el.classList.toggle('hidden', next && !wishMap[pid]);
+            });
+            if (next && Object.keys(wishMap).length === 0) {
+                showToast('No saved pieces yet — tap the heart icon on any card.', false);
+            }
+            return;
+        }
+
         const wishBtn = e.target.closest('[data-k71-wish-btn]');
         if (wishBtn) {
             e.preventDefault();
@@ -400,18 +549,18 @@ function initK71ThemeEngine() {
             const id = String(wishBtn.dataset.wishId || '');
             if (!id) return;
             const title = wishBtn.dataset.wishTitle || 'Item';
-            if (wishSet.has(id)) {
-                wishSet.delete(id);
+            if (wishMap[id]) {
+                delete wishMap[id];
                 showToast(`Removed "${title}" from shortlist.`, false);
             } else {
-                wishSet.add(id);
+                wishMap[id] = { id, title };
                 showToast(`Saved "${title}" to your shortlist.`, false);
                 if (!reduced) {
                     gsap.fromTo(wishBtn, { scale: 0.8 }, { scale: 1.15, duration: 0.24, ease: 'back.out(2.5)', yoyo: true, repeat: 1, clearProps: 'transform' });
                 }
             }
             try {
-                localStorage.setItem(wishKey, JSON.stringify(Array.from(wishSet)));
+                localStorage.setItem(wishKey, JSON.stringify(wishMap));
             } catch {}
             syncWishUI();
             return;

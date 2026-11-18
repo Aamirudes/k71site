@@ -63,4 +63,52 @@
             <a href="{{ route('product.show', $product->slug) }}" class="k71-btn k71-btn-primary flex-1 {{ $ctaClass ?? '' }}">View Full Listing</a>
         @endif
     </div>
+
+    {{-- Secondary Tactile Actions: Shortlist Heart + Share Link --}}
+    <div class="flex items-center gap-2.5 pt-1">
+        <button type="button"
+                data-k71-wish-btn
+                data-wish-id="{{ $product->id }}"
+                data-wish-title="{{ e($product->title) }}"
+                class="flex-1 min-h-[40px] px-3.5 text-xs font-semibold inline-flex items-center justify-center gap-2 cursor-pointer transition hover:opacity-80 {{ $qtyBoxClass ?? 'rounded-lg' }}"
+                style="border: 1px solid var(--t-border); color: var(--t-text);">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <span>Save to Shortlist</span>
+        </button>
+        <button type="button"
+                data-k71-share-btn
+                data-share-title="{{ e($product->title) }}"
+                class="min-h-[40px] px-3.5 text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer transition hover:opacity-80 {{ $qtyBoxClass ?? 'rounded-lg' }}"
+                style="border: 1px solid var(--t-border); color: var(--t-text);">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            <span>Share</span>
+        </button>
+    </div>
+
+    {{-- Luxury Collapsible Merchant Care & Fulfillment Accordion --}}
+    <div class="divide-y pt-2 text-xs" style="border-top: 1px solid var(--t-border); border-color: var(--t-border);">
+        <details class="group py-3">
+            <summary class="flex items-center justify-between font-semibold cursor-pointer list-none select-none">
+                <span>Fulfillment &amp; Dispatch</span>
+                <span class="font-mono text-sm transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <p class="pt-2 leading-relaxed" style="color: var(--t-muted);">
+                Dispatched directly by {{ $vendor->shop_name ?? 'this verified K71 merchant' }}{{ !empty($vendor->city) ? (' from ' . $vendor->city) : '' }}.
+                @if(!empty($processingDays)) Standard dispatch preparation within {{ $processingDays }} {{ \Illuminate\Support\Str::plural('day', $processingDays) }}. @endif
+            </p>
+        </details>
+        <details class="group py-3">
+            <summary class="flex items-center justify-between font-semibold cursor-pointer list-none select-none">
+                <span>Returns &amp; Buyer Protection</span>
+                <span class="font-mono text-sm transition-transform group-open:rotate-45">+</span>
+            </summary>
+            <p class="pt-2 leading-relaxed" style="color: var(--t-muted);">
+                @if(!empty($isReturnable) && !empty($returnDays))
+                    Eligible for {{ $returnDays }}-day merchant return window under K71 Marketplace guidelines.
+                @else
+                    Backed by K71 verified merchant order protection and secure checkout.
+                @endif
+            </p>
+        </details>
+    </div>
 </form>

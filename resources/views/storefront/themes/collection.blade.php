@@ -72,23 +72,43 @@
                 </form>
             </div>
 
-            {{-- Category Filter Pills --}}
-            @if(($vendorCategories ?? collect())->isNotEmpty())
-                <div class="flex items-center gap-2 overflow-x-auto k71-no-scrollbar pt-2" style="border-top: 1px solid var(--t-border);">
+            {{-- Category Filter Pills + Live Grid Density Switcher & Shortlist Filter --}}
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3" style="border-top: 1px solid var(--t-border);">
+                <div class="flex items-center gap-2 overflow-x-auto k71-no-scrollbar">
                     <a href="{{ $collectionLinkBase }}"
-                       class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-semibold flex items-center"
+                       class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-semibold flex items-center transition hover:opacity-80"
                        style="{{ $currentCategory === '' ? 'background-color: var(--t-accent); color: var(--t-accent-contrast);' : 'border: 1px solid var(--t-border); color: var(--t-text);' }}">
                         All
                     </a>
-                    @foreach($vendorCategories as $cat)
+                    @foreach(($vendorCategories ?? collect()) as $cat)
                         <a href="{{ $collectionLinkBase }}{{ str_contains($collectionLinkBase, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}{{ $currentSort !== 'newest' ? '&sort=' . urlencode($currentSort) : '' }}"
-                           class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-medium flex items-center"
+                           class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-medium flex items-center transition hover:opacity-80"
                            style="{{ $currentCategory === $cat->slug ? 'background-color: var(--t-accent); color: var(--t-accent-contrast);' : 'border: 1px solid var(--t-border); color: var(--t-text);' }}">
                             {{ $cat->name }}
                         </a>
                     @endforeach
                 </div>
-            @endif
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" id="k71-filter-saved-btn"
+                            class="min-h-[36px] px-3 rounded-full text-[11px] font-bold inline-flex items-center gap-1.5 cursor-pointer transition hover:opacity-80"
+                            style="border: 1px solid var(--t-border); color: var(--t-text);"
+                            aria-pressed="false">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                        <span>Saved Only</span>
+                    </button>
+
+                    <div class="hidden lg:inline-flex items-center p-0.5 rounded-lg" style="border: 1px solid var(--t-border); background-color: var(--t-bg);" role="group" aria-label="Grid density">
+                        @foreach([2 => '2-Col', 3 => '3-Col', 4 => '4-Col'] as $colNum => $colLbl)
+                            <button type="button" data-k71-grid-cols="{{ $colNum }}"
+                                    class="px-2.5 py-1.5 rounded-md text-[11px] font-mono font-bold cursor-pointer transition"
+                                    style="{{ $gridCols === $colNum ? 'background-color: var(--t-accent); color: var(--t-accent-contrast);' : 'color: var(--t-muted);' }}">
+                                {{ $colLbl }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
 
             {{-- Active Filter Reset --}}
             @if($currentCategory !== '' || $currentSearch !== '')
@@ -113,9 +133,11 @@
                 <a href="{{ $baseAction }}" class="k71-btn k71-btn-primary">View All Store Items</a>
             </div>
         @else
-            <div class="grid {{ $colsClass }} gap-4 sm:gap-6">
+            <div id="k71-collection-grid" data-k71-stagger-grid class="grid {{ $colsClass }} gap-4 sm:gap-6">
                 @foreach($products as $product)
-                    @include('storefront.themes.partials.card', ['product' => $product])
+                    <div data-k71-card-item data-product-id="{{ $product->id }}">
+                        @include('storefront.themes.partials.card', ['product' => $product])
+                    </div>
                 @endforeach
             </div>
 

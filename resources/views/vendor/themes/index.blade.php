@@ -182,7 +182,60 @@
                 @endphp
                 <article class="rounded-2xl border transition-all overflow-hidden flex flex-col justify-between bg-white {{ $entry['is_live'] ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'border-slate-200 hover:border-slate-300 hover:shadow-lg' }}">
 
-                    {{-- Photorealistic Architectural Theme Thumbnail Preview --}}
+                    {{-- Real Live-Captured Studio Preview Showcase (All 50 Bespoke Themes) --}}
+                    @php
+                        $realPreviewPath = public_path('images/theme-previews/' . $t->id . '.jpg');
+                        $hasRealPreview = !$t->is_legacy && file_exists($realPreviewPath);
+                        $realPreviewUrl = $hasRealPreview ? asset('images/theme-previews/' . $t->id . '.jpg') . '?v=4' : null;
+                    @endphp
+                    @if($hasRealPreview)
+                        <div class="relative aspect-[16/10] w-full overflow-hidden group bg-zinc-950" style="border-bottom: 1px solid rgba(0,0,0,0.08);">
+                            <img src="{{ $realPreviewUrl }}" alt="{{ $t->name }} live storefront preview" loading="lazy"
+                                 class="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]">
+                            <div class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/55 to-transparent"></div>
+                            <div class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 via-black/25 to-transparent opacity-85 group-hover:opacity-100 transition-opacity"></div>
+
+                            {{-- Top Floating Status & Edition Pills --}}
+                            <div class="absolute top-3 left-3 right-3 z-10 flex items-center justify-between gap-2">
+                                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-white text-[10px] font-mono uppercase tracking-wider border border-white/15">
+                                    <span class="w-2 h-2 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
+                                    <span>#{{ str_pad((string)($m['number'] ?? ''), 2, '0', STR_PAD_LEFT) }}</span>
+                                    @if($t->is_featured)
+                                        <span class="text-amber-300 font-sans font-bold">★</span>
+                                    @endif
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    @if($entry['is_live'])
+                                        <span class="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider shadow">Live</span>
+                                    @elseif($state === 'granted')
+                                        <span class="px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[9px] font-black uppercase tracking-wider shadow">Owned</span>
+                                    @elseif($state === 'pending')
+                                        <span class="px-2.5 py-1 rounded-full bg-amber-400 text-zinc-950 text-[9px] font-black uppercase tracking-wider shadow">Pending</span>
+                                    @elseif($state === 'revoked')
+                                        <span class="px-2.5 py-1 rounded-full bg-rose-600 text-white text-[9px] font-black uppercase tracking-wider shadow">Revoked</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Floating Hover Fullscreen Preview CTA --}}
+                            <div class="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/25 backdrop-blur-[2px]">
+                                <a href="{{ route('vendor.themes.preview', $t->id) }}" target="_blank" rel="noopener"
+                                   class="px-4 py-2 rounded-full bg-white text-zinc-950 text-xs font-extrabold shadow-xl inline-flex items-center gap-1.5 hover:scale-105 transition-transform">
+                                    <span>Live Fullscreen Preview</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6M10 14L20 4"/></svg>
+                                </a>
+                            </div>
+
+                            {{-- Bottom Palette & Price Strip --}}
+                            <div class="absolute bottom-2.5 left-3 right-3 z-10 flex items-center justify-between text-[10px] text-white">
+                                <span class="px-2 py-0.5 rounded bg-black/60 backdrop-blur-md font-medium truncate">{{ $categories[$t->category] ?? ucfirst($t->category) }} · {{ strtoupper($lay['structural_variant'] ?? 'A') }}</span>
+                                <span class="font-extrabold px-2.5 py-0.5 rounded-full shadow shrink-0" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">
+                                    {{ $t->formatted_price }}
+                                </span>
+                            </div>
+                        </div>
+                    @else
+                    {{-- Classic 11 Fallback Miniature Thumbnail --}}
                     <div class="relative p-3.5 h-56 flex flex-col justify-between overflow-hidden group"
                          style="background-color: {{ $pal['bg'] }}; color: {{ $pal['text'] }}; border-bottom: 1px solid rgba(0,0,0,0.08);">
                         @if($thumbPhoto)
@@ -427,6 +480,7 @@
                             </span>
                         </div>
                     </div>
+                    @endif
 
                     {{-- Metadata, Attributes & Direct Actions --}}
                     <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-4">

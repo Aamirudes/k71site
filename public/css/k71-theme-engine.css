@@ -676,3 +676,39 @@
   border-color: var(--t-accent);
   transform: translateY(-2px);
 }
+
+/* 9. Awwwards Masked Word-Curtain Reveal + Ambient Cursor Hero Aura + Sticky PDP Buy Bar */
+.k71-sf-theme .k71-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.06em;
+  margin-bottom: -0.06em;
+}
+
+.k71-sf-theme .k71-word-inner {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .k71-sf-theme [data-k71-hero-stage]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 400ms ease;
+    background: radial-gradient(560px circle at var(--aura-x, 50%) var(--aura-y, 35%), color-mix(in srgb, var(--t-accent) 11%, transparent), transparent 65%);
+  }
+  .k71-sf-theme [data-k71-hero-stage]:hover::after {
+    opacity: 1;
+  }
+}
+
+.k71-sf-theme #k71-sticky-pdp-bar.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}

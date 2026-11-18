@@ -105,8 +105,19 @@
                     @include('storefront.themes.partials.icon', ['name' => 'close', 'class' => 'w-5 h-5'])
                 </button>
             </div>
+            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-lg text-xs font-bold" style="background-color: var(--t-bg); border: 1px solid var(--t-border);">
+                <button type="button" data-k71-drawer-tab="bag" class="py-2 rounded-md cursor-pointer transition" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
+                    Bag (<span data-k71-cart-count>{{ $cartCount }}</span>)
+                </button>
+                <button type="button" data-k71-drawer-tab="shortlist" class="py-2 rounded-md cursor-pointer transition" style="color: var(--t-muted);">
+                    Shortlist (<span data-k71-wish-count>0</span>)
+                </button>
+            </div>
             <div id="k71-cart-drawer-items" class="space-y-3 text-sm">
                 <p class="text-xs py-4" style="color: var(--t-muted);">Items added to your K71 bag appear here with live inventory verification.</p>
+            </div>
+            <div id="k71-shortlist-drawer-items" class="hidden space-y-2.5 text-sm">
+                <p class="text-xs py-4" style="color: var(--t-muted);">Tap the heart icon on any piece to save it to your personal shortlist.</p>
             </div>
         </div>
         <div class="pt-5 space-y-3" style="border-top: 1px solid var(--t-border);">
