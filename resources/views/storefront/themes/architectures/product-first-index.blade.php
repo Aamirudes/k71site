@@ -119,12 +119,22 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? $fallbackArt;
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item class="group flex flex-col">
-                    <a href="{{ $pLink }}" class="block aspect-[3/4] w-full overflow-hidden mb-3" style="background-color: var(--t-surface-alt);">
-                        <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
-                    </a>
+                <article data-k71-card-item class="k71-product-card group flex flex-col">
+                    <div class="relative mb-3">
+                        <a href="{{ $pLink }}" class="k71-card-media block aspect-[3/4] w-full overflow-hidden" style="background-color: var(--t-surface-alt);">
+                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]">
+                        </a>
+                        @include('storefront.themes.partials._card_media_controls')
+                    </div>
                     <div class="space-y-1 flex-1">
                         <p class="text-[10px] uppercase tracking-[0.16em]" style="color: var(--t-muted);">{{ $product->category?->name ?? $storeName }}</p>
                         <h2 class="text-xs sm:text-sm font-medium leading-snug line-clamp-2">

@@ -57,12 +57,28 @@
     <aside x-show="!dockHidden" x-transition
            class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 max-w-[96vw] flex flex-wrap items-center justify-center gap-2 px-3 py-2 rounded-2xl bg-zinc-950/92 backdrop-blur-xl border border-white/15 shadow-[0_18px_50px_rgba(0,0,0,0.55)] text-zinc-100">
 
-        {{-- Draft Badge & Theme Identity --}}
-        <div class="flex items-center gap-2 pr-2 border-r border-white/10">
+        {{-- Draft Badge, Instant Prev/Next Studio Theme Switcher & Quick-Jump --}}
+        <div class="flex items-center gap-1.5 pr-2 border-r border-white/10">
             <span class="px-2 py-0.5 rounded bg-amber-400 text-zinc-950 text-[10px] font-black uppercase tracking-wider shrink-0">
                 DRAFT PREVIEW — NOT LIVE
             </span>
-            <span class="text-xs font-extrabold text-white truncate max-w-[140px]">{{ $theme->name }}</span>
+            @if(!empty($switcherThemes) && !empty($prevPreviewUrl) && !empty($nextPreviewUrl))
+                <a href="{{ $prevPreviewUrl }}" title="Previous theme (Shortcut: [)"
+                   class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold inline-flex items-center justify-center transition">&larr;</a>
+                <select aria-label="Switch preview theme"
+                        onchange="if(this.value) window.location.href=this.value;"
+                        class="bg-zinc-900 text-white text-xs font-extrabold rounded-lg px-2 py-1 border border-white/15 max-w-[165px] cursor-pointer focus:outline-none">
+                    @foreach($switcherThemes as $sw)
+                        <option value="{{ $sw['url'] }}" {{ $sw['id'] === $theme->theme_id ? 'selected' : '' }}>
+                            #{{ $sw['num'] }} {{ $sw['name'] }}
+                        </option>
+                    @endforeach
+                </select>
+                <a href="{{ $nextPreviewUrl }}" title="Next theme (Shortcut: ])"
+                   class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold inline-flex items-center justify-center transition">&rarr;</a>
+            @else
+                <span class="text-xs font-extrabold text-white truncate max-w-[140px]">{{ $theme->name }}</span>
+            @endif
         </div>
 
         {{-- Page Switcher (Home / Collection / Product) --}}
@@ -130,5 +146,15 @@
         <button type="button" @click="dockHidden = false" class="px-2 py-0.5 rounded-full bg-white text-zinc-950 font-extrabold cursor-pointer">Controls</button>
         <a href="{{ $returnUrl }}" class="text-zinc-300 hover:text-white font-semibold">Exit</a>
     </div>
+
+    @if(!empty($prevPreviewUrl) && !empty($nextPreviewUrl))
+        <script>
+            document.addEventListener('keydown', function (e) {
+                if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+                if (e.key === '[') window.location.href = @json($prevPreviewUrl);
+                if (e.key === ']') window.location.href = @json($nextPreviewUrl);
+            });
+        </script>
+    @endif
 </body>
 </html>

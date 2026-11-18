@@ -135,21 +135,31 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item data-k71-3d-card class="k71-brutal-shadow flex flex-col justify-between overflow-hidden" style="background-color: var(--t-surface);">
+                <article data-k71-card-item data-k71-3d-card class="k71-product-card k71-brutal-shadow flex flex-col justify-between overflow-hidden" style="background-color: var(--t-surface);">
                     <div>
                         <div class="px-3.5 py-2 flex items-center justify-between text-[10px] font-mono font-black uppercase" style="border-bottom: 2px solid var(--t-text);">
                             <span>LOT #{{ str_pad((string)($pIdx + 1), 3, '0', STR_PAD_LEFT) }}</span>
                             <span class="truncate max-w-[120px]">{{ $product->category?->name ?? 'DROP' }}</span>
                         </div>
-                        <a href="{{ $pLink }}" class="block aspect-square overflow-hidden relative" style="background-color: var(--t-surface-alt);">
-                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
-                            <span class="absolute bottom-2.5 left-2.5 px-2.5 py-1 text-sm font-mono font-black"
-                                  style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
-                                ₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}
-                            </span>
-                        </a>
+                        <div class="relative">
+                            <a href="{{ $pLink }}" class="k71-card-media block aspect-square overflow-hidden relative" style="background-color: var(--t-surface-alt);">
+                                <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
+                                <span class="absolute top-2.5 left-2.5 px-2.5 py-1 text-xs font-mono font-black"
+                                      style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
+                                    ₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}
+                                </span>
+                            </a>
+                            @include('storefront.themes.partials._card_media_controls')
+                        </div>
                         <div class="p-4">
                             <h3 class="k71-heading text-lg font-black uppercase leading-tight line-clamp-2">
                                 <a href="{{ $pLink }}">{{ $product->title }}</a>

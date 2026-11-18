@@ -219,6 +219,30 @@ class ThemeMarketplaceController extends Controller
 
         $signedFrameBase = $this->makeSignedPreviewUrl('vendor.themes.preview_frame', $cleanId, (int) $vendor->id);
 
+        // Build instant Prev / Next / Quick-Jump Studio Theme Switcher list (50 bespoke themes)
+        $switcherThemes = [];
+        $currentIdx = null;
+        $seq = 1;
+        foreach ($this->registry->getNewThemes() as $swId => $swManifest) {
+            if ($swId === $cleanId) {
+                $currentIdx = count($switcherThemes);
+            }
+            $switcherThemes[] = [
+                'id' => $swId,
+                'num' => str_pad((string) $seq, 2, '0', STR_PAD_LEFT),
+                'name' => $swManifest['name'] ?? $swId,
+                'url' => route('vendor.themes.preview', ['themeId' => $swId]),
+            ];
+            $seq++;
+        }
+        $prevPreviewUrl = null;
+        $nextPreviewUrl = null;
+        if ($currentIdx !== null && count($switcherThemes) > 1) {
+            $totalSw = count($switcherThemes);
+            $prevPreviewUrl = $switcherThemes[($currentIdx - 1 + $totalSw) % $totalSw]['url'];
+            $nextPreviewUrl = $switcherThemes[($currentIdx + 1) % $totalSw]['url'];
+        }
+
         return response()
             ->view('vendor.themes.preview', [
                 'vendor' => $vendor,
@@ -232,6 +256,9 @@ class ThemeMarketplaceController extends Controller
                 'isAdminPreview' => false,
                 'returnUrl' => route('vendor.themes.index'),
                 'initialPage' => in_array($request->input('page'), ['home', 'collection', 'product'], true) ? $request->input('page') : 'home',
+                'switcherThemes' => $switcherThemes,
+                'prevPreviewUrl' => $prevPreviewUrl,
+                'nextPreviewUrl' => $nextPreviewUrl,
             ])
             ->header('X-Robots-Tag', 'noindex, nofollow')
             ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');

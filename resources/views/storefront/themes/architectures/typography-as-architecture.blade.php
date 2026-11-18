@@ -168,13 +168,23 @@
                     $aspect = ($idx % 3 === 0) ? 'aspect-[16/10]' : 'aspect-[3/4]';
                     $pImg = $product->images?->first()?->url ?? $fallbackArt;
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item class="{{ $span }} flex flex-col justify-between group">
+                <article data-k71-card-item class="k71-product-card {{ $span }} flex flex-col justify-between group">
                     <div>
-                        <a href="{{ $pLink }}" class="block {{ $aspect }} overflow-hidden mb-3.5" style="background-color: var(--t-surface-alt);">
-                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                        </a>
+                        <div class="relative mb-3.5">
+                            <a href="{{ $pLink }}" class="k71-card-media block {{ $aspect }} overflow-hidden" style="background-color: var(--t-surface-alt);">
+                                <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                            </a>
+                            @include('storefront.themes.partials._card_media_controls')
+                        </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <h3 class="k71-heading text-lg sm:text-xl leading-snug"><a href="{{ $pLink }}">{{ $product->title }}</a></h3>
                             <span class="font-mono text-sm font-bold shrink-0">₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}</span>

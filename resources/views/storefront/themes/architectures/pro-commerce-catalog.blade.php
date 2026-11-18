@@ -123,13 +123,23 @@
                     @php
                         $pImg = $product->images?->first()?->url ?? asset('images/theme-editorial/' . ($manifest['layout']['sample_art'] ?? 'fashion-editorial') . '.jpg');
                         $pLink = $prodUrl($product);
-                        $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                        $variants = $product->variants ?? collect();
+                        $hasVariants = $variants->isNotEmpty();
+                        $pricePaise = (int) ($product->base_price ?? 0);
+                        $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                        $isSoldOut = $totalStock <= 0;
+                        $firstVariant = $variants->first();
+                        $primaryImg = $pImg;
+                        $productUrl = $pLink;
                     @endphp
-                    <article data-k71-card-item class="flex flex-col justify-between overflow-hidden" style="background-color: var(--t-surface); border: 1px solid var(--t-border); border-radius: var(--t-radius);">
+                    <article data-k71-card-item class="k71-product-card flex flex-col justify-between overflow-hidden" style="background-color: var(--t-surface); border: 1px solid var(--t-border); border-radius: var(--t-radius);">
                         <div>
-                            <a href="{{ $pLink }}" class="block aspect-[4/3] overflow-hidden" style="background-color: var(--t-surface-alt);">
-                                <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
-                            </a>
+                            <div class="relative">
+                                <a href="{{ $pLink }}" class="k71-card-media block aspect-[4/3] overflow-hidden" style="background-color: var(--t-surface-alt);">
+                                    <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
+                                </a>
+                                @include('storefront.themes.partials._card_media_controls')
+                            </div>
                             <div class="p-3.5 space-y-1">
                                 <p class="text-[10px] font-mono uppercase tracking-wider truncate" style="color: var(--t-muted);">
                                     {{ $product->sku ?? ($product->category?->name ?? 'IN STOCK') }}

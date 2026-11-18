@@ -144,12 +144,22 @@
                 @php
                     $pImg = $product->images?->first()?->url ?? $fallbackArt;
                     $pLink = $prodUrl($product);
-                    $hasVariants = ($product->variants ?? collect())->isNotEmpty();
+                    $variants = $product->variants ?? collect();
+                    $hasVariants = $variants->isNotEmpty();
+                    $pricePaise = (int) ($product->base_price ?? 0);
+                    $totalStock = $variants->isNotEmpty() ? (int) $variants->sum('stock') : (int) ($product->total_stock ?? 1);
+                    $isSoldOut = $totalStock <= 0;
+                    $firstVariant = $variants->first();
+                    $primaryImg = $pImg;
+                    $productUrl = $pLink;
                 @endphp
-                <article data-k71-card-item class="group text-center flex flex-col items-center">
-                    <a href="{{ $pLink }}" class="block w-full aspect-[4/5] rounded-t-[3rem] rounded-b-xl overflow-hidden mb-4" style="background-color: var(--t-surface-alt); border: 1px solid var(--t-border);">
-                        <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
-                    </a>
+                <article data-k71-card-item class="k71-product-card group text-center flex flex-col items-center">
+                    <div class="relative w-full mb-4">
+                        <a href="{{ $pLink }}" class="k71-card-media block w-full aspect-[4/5] rounded-t-[3rem] rounded-b-xl overflow-hidden" style="background-color: var(--t-surface-alt); border: 1px solid var(--t-border);">
+                            <img src="{{ $pImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105">
+                        </a>
+                        @include('storefront.themes.partials._card_media_controls')
+                    </div>
                     <h3 class="k71-heading text-base sm:text-lg leading-snug"><a href="{{ $pLink }}">{{ $product->title }}</a></h3>
                     <p class="text-sm font-semibold mt-1 mb-3">₹{{ number_format(($product->base_price ?? 0) / 100, 0) }}</p>
                     @if($hasVariants)

@@ -28,24 +28,41 @@
     </div>
 </div>
 
-{{-- Search Modal --}}
+{{-- Search Modal (Cmd+K / Ctrl+K Spotlight with Quick-Category Chips) --}}
 <div id="k71-search-modal" data-k71-modal aria-hidden="true" role="dialog" aria-modal="true" aria-label="Search store"
      class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 pt-16 sm:pt-24">
-    <div class="fixed inset-0 bg-black/60" data-k71-close="k71-search-modal"></div>
-    <div class="relative z-10 w-full max-w-xl p-6 shadow-2xl k71-glass" style="border-radius: var(--t-radius);">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="k71-heading text-lg">Search {{ $storeName }}</h2>
-            <button type="button" data-k71-close="k71-search-modal" class="min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Close search">✕</button>
+    <div class="fixed inset-0 bg-black/65 backdrop-blur-xs" data-k71-close="k71-search-modal"></div>
+    <div class="k71-modal-panel relative z-10 w-full max-w-xl p-6 shadow-2xl k71-glass space-y-4" style="border-radius: var(--t-radius);">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <h2 class="k71-heading text-lg">Search {{ $storeName }}</h2>
+                <kbd class="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-mono rounded" style="border: 1px solid var(--t-border); color: var(--t-muted);">ESC</kbd>
+            </div>
+            <button type="button" data-k71-close="k71-search-modal" class="min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer hover:opacity-70" aria-label="Close search">✕</button>
         </div>
         <form action="{{ $storeCollectionUrl }}" method="GET" class="flex flex-col sm:flex-row gap-2.5">
             @if(!empty($isCataloguePreview))
                 <input type="hidden" name="page" value="collection">
             @endif
-            <input type="search" name="search" value="{{ request('search') }}" placeholder="Search products, materials, categories..."
-                   class="flex-1 min-h-[44px] px-4 text-sm rounded-lg"
+            <input type="search" name="search" value="{{ request('search') }}" placeholder="Search products, materials, SKU, categories..."
+                   class="flex-1 min-h-[46px] px-4 text-sm rounded-lg"
                    style="background-color: var(--t-bg); color: var(--t-text); border: 1px solid var(--t-border);">
             <button type="submit" class="k71-btn k71-btn-primary shrink-0">Search</button>
         </form>
+        @if(($vendorCategories ?? collect())->isNotEmpty())
+            <div class="pt-2 space-y-2" style="border-top: 1px solid var(--t-border);">
+                <p class="text-[10px] font-mono uppercase tracking-[0.2em]" style="color: var(--t-muted);">Quick Jump Departments</p>
+                <div class="flex flex-wrap gap-1.5">
+                    @foreach($vendorCategories->take(6) as $sCat)
+                        <a href="{{ $storeCollectionUrl }}{{ str_contains($storeCollectionUrl, '?') ? '&' : '?' }}category={{ urlencode($sCat->slug) }}"
+                           class="px-3 py-1.5 rounded-full text-xs font-semibold hover:opacity-75 transition"
+                           style="background-color: var(--t-bg); border: 1px solid var(--t-border);">
+                            {{ $sCat->name }}
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 

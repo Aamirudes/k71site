@@ -713,3 +713,7 @@
   opacity: 1 !important;
   pointer-events: auto !important;
 }
+
+.k71-sf-theme:has(#k71-sticky-pdp-bar.is-visible) #k71-back-to-top {
+  bottom: 5.25rem;
+}

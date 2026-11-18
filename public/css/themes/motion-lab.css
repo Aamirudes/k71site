@@ -1,8 +1,69 @@
-/* K71 Bespoke Storefront Theme: Motion Lab (motion-lab) | Category: footwear_performance | v2.0.0 */
+/* ============================================================================
+   K71 Bespoke Storefront Theme: Motion Lab (motion-lab)
+   Category: footwear_performance | Architecture: typography-as-architecture:B | Choreography: horizontal-cinema | v4.5.0
+   ============================================================================ */
+
 .k71-sf-theme[data-k71-theme="motion-lab"] {
-  --theme-accent-soft: color-mix(in srgb, #0284c7 12%, transparent);
-  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+  --theme-accent-soft: color-mix(in srgb, #0284c7 14%, transparent);
+  --theme-accent-ring: color-mix(in srgb, #0284c7 34%, transparent);
+  --theme-card-shadow: 0 18px 44px -20px rgba(0, 0, 0, 0.28);
+  scrollbar-color: #0284c7 #f6f8fb;
 }
-.k71-sf-theme[data-k71-theme="motion-lab"] .k71-diagonal-stage { clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%); }
-.k71-sf-theme[data-k71-theme="motion-lab"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }
-.k71-sf-theme[data-k71-theme="motion-lab"].k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] { transform: translateX(-16px); }
+
+.k71-sf-theme[data-k71-theme="motion-lab"] ::selection {
+  background-color: #0284c7;
+  color: #ffffff;
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] {
+  background-image: linear-gradient(180deg, color-mix(in srgb, #0284c7 5%, #f6f8fb) 0%, #f6f8fb 38%);
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-heading {
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+}
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-product-card h2 a,
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-product-card h3 a {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0% 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 1px;
+  transition: background-size 320ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease;
+}
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-product-card:hover h2 a,
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-product-card:hover h3 a {
+  background-size: 100% 1px;
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-card-shell {
+  border: 1.5px solid #0f172a;
+  background: #ffffff;
+  box-shadow: 4px 4px 0 color-mix(in srgb, #0f172a 85%, transparent);
+}
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-card-shell:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 7px 7px 0 #0284c7;
+  border-color: #0f172a;
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-btn-primary {
+  border: 2px solid #0f172a;
+  box-shadow: 3px 3px 0 #0f172a;
+}
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-btn-primary:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #0f172a;
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-card-media {
+  border-radius: calc(8px * 0.65);
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] footer a {
+  transition: color 200ms ease, opacity 200ms ease;
+}
+
+.k71-sf-theme[data-k71-theme="motion-lab"] footer a:hover {
+  color: #0284c7;
+}

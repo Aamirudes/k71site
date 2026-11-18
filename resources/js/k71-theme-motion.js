@@ -389,6 +389,32 @@ function initK71ThemeEngine() {
         pointerCleanups.push(() => window.removeEventListener('scroll', pdpScrollHandler));
     }
 
+    // ── 3D. Interactive Desktop PDP Image Magnify Zoom Pan ────────────────────
+    if (!reduced && !isTouch && window.innerWidth >= 1024) {
+        const zoomTrigger = document.getElementById('k71-pdp-main-trigger');
+        const zoomImg = document.getElementById('k71-pdp-main-img');
+        if (zoomTrigger && zoomImg) {
+            zoomImg.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)';
+            const onZoomMove = (e) => {
+                const r = zoomTrigger.getBoundingClientRect();
+                const ox = Math.max(0, Math.min(100, ((e.clientX - r.left) / Math.max(1, r.width)) * 100));
+                const oy = Math.max(0, Math.min(100, ((e.clientY - r.top) / Math.max(1, r.height)) * 100));
+                zoomImg.style.transformOrigin = `${ox.toFixed(1)}% ${oy.toFixed(1)}%`;
+                zoomImg.style.transform = 'scale(1.65)';
+            };
+            const onZoomLeave = () => {
+                zoomImg.style.transformOrigin = '50% 50%';
+                zoomImg.style.transform = 'scale(1)';
+            };
+            zoomTrigger.addEventListener('mousemove', onZoomMove, { passive: true });
+            zoomTrigger.addEventListener('mouseleave', onZoomLeave);
+            pointerCleanups.push(() => {
+                zoomTrigger.removeEventListener('mousemove', onZoomMove);
+                zoomTrigger.removeEventListener('mouseleave', onZoomLeave);
+            });
+        }
+    }
+
     // ── 4. Accessible Dialogs, GSAP Animated Drawers, Wishlist & Quick-View ───
     const wishKey = 'k71_wishlist_' + (root.dataset.k71Theme || 'store');
     let wishMap = {};
@@ -632,6 +658,19 @@ function initK71ThemeEngine() {
     const onDocKeydown = (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('[data-k71-modal]:not(.hidden)').forEach((m) => closeModal(m));
+            return;
+        }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            openModal('k71-search-modal', document.activeElement);
+            return;
+        }
+        if (e.key === '/' && !(e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName))) {
+            const modal = document.getElementById('k71-search-modal');
+            if (modal && modal.classList.contains('hidden')) {
+                e.preventDefault();
+                openModal('k71-search-modal', document.activeElement);
+            }
         }
     };
 
