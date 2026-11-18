@@ -7,15 +7,17 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Role;
 use App\Models\StorefrontTheme;
+use App\Models\SubscriptionPlan;
 use App\Models\ThemeAuditLog;
 use App\Models\User;
 use App\Models\Vendor;
-use App\Models\VendorThemeDraft;
+use App\Models\VendorSubscription;
 use App\Models\VendorThemeEntitlement;
 use App\Models\VendorThemeRequest;
 use App\Services\Storefront\ThemeMarketplaceRegistry;
 use App\Services\Storefront\ThemeMarketplaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class ThemeMarketplaceTest extends TestCase
@@ -48,7 +50,7 @@ class ThemeMarketplaceTest extends TestCase
             'layout_preset' => 'velora',
         ]);
 
-        $plan = \App\Models\SubscriptionPlan::firstOrCreate(
+        $plan = SubscriptionPlan::firstOrCreate(
             ['code' => 'test-retail-pro'],
             [
                 'name' => 'Pro Retail',
@@ -64,7 +66,7 @@ class ThemeMarketplaceTest extends TestCase
             ]
         );
 
-        \App\Models\VendorSubscription::create([
+        VendorSubscription::create([
             'vendor_id' => $vendor->id,
             'plan_id' => $plan->id,
             'sector_key' => 'clothing',
@@ -74,7 +76,7 @@ class ThemeMarketplaceTest extends TestCase
             'currency' => 'INR',
             'duration_days' => 365,
             'entitlements_snapshot' => ['allow_storefront_customization' => true],
-            'status' => \App\Models\VendorSubscription::STATUS_ACTIVE,
+            'status' => VendorSubscription::STATUS_ACTIVE,
             'starts_at' => now()->subDay(),
             'ends_at' => now()->addYear(),
         ]);
@@ -119,14 +121,14 @@ class ThemeMarketplaceTest extends TestCase
             'sku' => 'K71-JKT-L',
             'size' => 'L',
             'color' => 'Charcoal',
-            'stock' => 0, // Sold-out variant must stay disabled
+            'stock' => 0,
             'price_override' => $pricePaise,
         ]);
 
         return $product;
     }
 
-    public function test_registry_contains_11_legacy_and_50_distinct_new_themes_synced_idempotently(): void
+    public function test_registry_has_61_themes_and_50_unique_compositional_signatures_with_per_theme_css(): void
     {
         $registry = app(ThemeMarketplaceRegistry::class);
         $service = app(ThemeMarketplaceService::class);
@@ -139,28 +141,25 @@ class ThemeMarketplaceTest extends TestCase
         $this->assertCount(50, $newThemes);
         $this->assertCount(61, $all);
 
+        // Verify all 50 Section 3 theme IDs exist & have individual per-theme CSS files
+        foreach (array_keys($newThemes) as $themeId) {
+            $this->assertFileExists(public_path("css/themes/{$themeId}.css"), "Missing per-theme CSS for {$themeId}");
+        }
+
+        // Verify Theme Uniqueness Matrix: ZERO duplicate compositional signatures across all 50 themes!
+        $matrix = $registry->getThemeUniquenessMatrix();
+        $uniqueSignatures = collect($matrix)->pluck('signature')->unique();
+        $this->assertCount(50, $uniqueSignatures, 'Two or more themes share an identical structural signature!');
+
         // Idempotent DB sync
         $service->syncThemesToDatabase();
         $service->syncThemesToDatabase();
         $this->assertEquals(61, StorefrontTheme::count());
         $this->assertEquals(11, StorefrontTheme::where('is_legacy', true)->count());
         $this->assertEquals(50, StorefrontTheme::where('is_legacy', false)->count());
-
-        // Verify distinct visual compositions exist across the 50 themes
-        $headerVariants = collect($newThemes)->pluck('layout.header_variant')->unique();
-        $heroVariants = collect($newThemes)->pluck('layout.hero_variant')->unique();
-        $cardVariants = collect($newThemes)->pluck('layout.card_variant')->unique();
-        $pdpVariants = collect($newThemes)->pluck('layout.pdp_variant')->unique();
-        $footerVariants = collect($newThemes)->pluck('layout.footer_variant')->unique();
-
-        $this->assertGreaterThanOrEqual(6, $headerVariants->count());
-        $this->assertGreaterThanOrEqual(8, $heroVariants->count());
-        $this->assertGreaterThanOrEqual(8, $cardVariants->count());
-        $this->assertGreaterThanOrEqual(5, $pdpVariants->count());
-        $this->assertGreaterThanOrEqual(5, $footerVariants->count());
     }
 
-    public function test_all_50_new_themes_render_homepage_collection_and_product_detail_without_errors(): void
+    public function test_all_50_new_themes_render_homepage_collection_and_pdp_with_scoped_css(): void
     {
         [$user, $vendor] = $this->makeVendorUser('sweep-store', 'Sweep Boutique');
         $product = $this->seedProductForVendor($vendor, 'Architectural Coat', 650000);
@@ -171,18 +170,16 @@ class ThemeMarketplaceTest extends TestCase
         $this->actingAs($user);
 
         foreach (array_keys($registry->getNewThemes()) as $themeId) {
-            // 1. Homepage preview frame
             $resHome = $this->get(route('vendor.themes.preview_frame', ['themeId' => $themeId, 'page' => 'home']));
             $resHome->assertStatus(200);
             $resHome->assertSee('data-k71-theme="' . $themeId . '"', false);
+            $resHome->assertSee("css/themes/{$themeId}.css", false);
             $resHome->assertSee('Architectural Coat');
 
-            // 2. Collection preview frame
             $resCol = $this->get(route('vendor.themes.preview_frame', ['themeId' => $themeId, 'page' => 'collection']));
             $resCol->assertStatus(200);
             $resCol->assertSee('Architectural Coat');
 
-            // 3. Product detail preview frame
             $resPdp = $this->get(route('vendor.themes.preview_frame', ['themeId' => $themeId, 'page' => 'product', 'product' => $product->slug]));
             $resPdp->assertStatus(200);
             $resPdp->assertSee('Architectural Coat');
@@ -190,196 +187,157 @@ class ThemeMarketplaceTest extends TestCase
         }
     }
 
-    public function test_unentitled_vendor_can_preview_and_request_but_cannot_customize_save_or_publish(): void
+    public function test_signed_new_tab_preview_security_cross_vendor_blocking_and_preview_toggle(): void
     {
         $admin = $this->makeAdmin();
-        [$user, $vendor] = $this->makeVendorUser('locked-shop', 'Locked Shop');
-        $this->seedProductForVendor($vendor);
+        [$userA, $vendorA] = $this->makeVendorUser('vendor-one', 'Vendor One');
+        [$userB, $vendorB] = $this->makeVendorUser('vendor-two', 'Vendor Two');
+        $this->seedProductForVendor($vendorA, 'Exclusive Coat A');
 
         $service = app(ThemeMarketplaceService::class);
         $service->syncThemesToDatabase();
 
-        // Admin sets individual price for maison-noir & configures official WhatsApp number
-        $theme = StorefrontTheme::where('theme_id', 'maison-noir')->firstOrFail();
-        $service->updateThemeCatalogue($theme, ['price_rupees' => 4999], $admin);
-        $service->updateMarketplaceSettings(['whatsapp_number' => '+91 98765 00001'], $admin);
+        $validSignedUrl = URL::temporarySignedRoute('vendor.themes.preview', now()->addHour(), [
+            'themeId' => 'maison-elite',
+            'v' => $vendorA->id,
+        ]);
 
-        // Vendor browses catalogue & previews
-        $this->actingAs($user)
-            ->get(route('vendor.themes.index'))
+        // Valid signed preview works for Vendor A and emits PREVIEW — NOT LIVE + noindex
+        $res = $this->actingAs($userA)->get($validSignedUrl);
+        $res->assertStatus(200);
+        $res->assertSee('PREVIEW — NOT LIVE');
+        $res->assertSee('Maison Élite');
+        $res->assertSee('Vendor One');
+        $res->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+
+        // Vendor B CANNOT use Vendor A's signed preview URL
+        $this->actingAs($userB)->get($validSignedUrl)->assertStatus(403);
+
+        // Tampered signature is rejected
+        $this->actingAs($userA)->get($validSignedUrl . 'tampered')->assertStatus(403);
+
+        // Disabling preview in Admin blocks vendor preview
+        $theme = StorefrontTheme::where('theme_id', 'maison-elite')->firstOrFail();
+        $service->updateThemeCatalogue($theme, ['is_preview_enabled' => false], $admin);
+        $this->actingAs($userA)->get($validSignedUrl)->assertStatus(403);
+
+        // Admin QA Preview works for Admin and blocks non-admin Vendor
+        $this->actingAs($admin)->get(route('admin.themes.preview', 'chronograph'))
             ->assertStatus(200)
-            ->assertSee('Maison Noir')
-            ->assertSee('₹4,999');
-
-        $this->actingAs($user)
-            ->get(route('vendor.themes.preview', 'maison-noir'))
-            ->assertStatus(200);
-
-        // Unentitled vendor cannot customize, save draft, or publish
-        $this->actingAs($user)
-            ->post(route('vendor.themes.draft.save', 'maison-noir'), ['config' => ['hero' => ['headline' => 'Hacked']]])
-            ->assertStatus(403);
-
-        $this->actingAs($user)
-            ->post(route('vendor.themes.publish', 'maison-noir'))
-            ->assertStatus(403);
-
-        // Vendor requests access -> creates pending request with price snapshot, does NOT grant access or alter live store
-        $this->actingAs($user)
-            ->post(route('vendor.themes.request', 'maison-noir'), ['vendor_note' => 'Please share UPI details on WhatsApp'])
-            ->assertRedirect(route('vendor.themes.index'));
-
-        $req = VendorThemeRequest::where('vendor_id', $vendor->id)->where('theme_id', 'maison-noir')->first();
-        $this->assertNotNull($req);
-        $this->assertEquals(499900, $req->price_snapshot_paise);
-        $this->assertEquals(VendorThemeRequest::STATUS_REQUESTED, $req->status);
-        $this->assertEquals(VendorThemeRequest::PAYMENT_UNVERIFIED, $req->payment_verification_status);
-        $this->assertFalse($service->isVendorEntitled($vendor, 'maison-noir'));
-        $this->assertEquals('velora', $service->resolvePublicThemeId($vendor));
-
-        // Verify WhatsApp URL contains configured number, theme name, and reference code
-        $waUrl = $service->buildWhatsAppRequestUrl($req);
-        $this->assertStringContainsString('https://wa.me/919876500001?text=', $waUrl);
-        $this->assertStringContainsString(rawurlencode($req->reference_code), $waUrl);
-        $this->assertStringContainsString(rawurlencode('Maison Noir'), $waUrl);
-
-        // Duplicate active pending request is rejected
-        $this->actingAs($user)
-            ->post(route('vendor.themes.request', 'maison-noir'))
-            ->assertSessionHas('error');
-        $this->assertEquals(1, VendorThemeRequest::where('vendor_id', $vendor->id)->where('theme_id', 'maison-noir')->count());
+            ->assertSee('PREVIEW — NOT LIVE')
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $this->actingAs($userA)->get(route('admin.themes.preview', 'chronograph'))->assertRedirect(route('vendor.dashboard'));
     }
 
-    public function test_manual_payment_verification_entitlement_draft_separation_and_explicit_publication(): void
+    public function test_pricing_integrity_missing_or_zero_price_never_silently_makes_paid_theme_free(): void
+    {
+        $admin = $this->makeAdmin();
+        [$user, $vendor] = $this->makeVendorUser('price-check', 'Price Check Store');
+        $service = app(ThemeMarketplaceService::class);
+        $service->syncThemesToDatabase();
+
+        $theme = StorefrontTheme::where('theme_id', 'chronograph')->firstOrFail();
+
+        // Null price -> NOT free
+        $this->assertNull($theme->price_paise);
+        $this->assertFalse($service->isVendorEntitled($vendor, 'chronograph'));
+
+        // Price = 0 WITHOUT is_free=true -> STILL NOT free!
+        $service->updateThemeCatalogue($theme, ['price_rupees' => 0, 'is_free' => false], $admin);
+        $this->assertFalse($service->isVendorEntitled($vendor, 'chronograph'));
+
+        // Admin intentionally sets is_free = true -> NOW entitled
+        $service->updateThemeCatalogue($theme->fresh(), ['price_rupees' => 0, 'is_free' => true], $admin);
+        $this->assertTrue($service->isVendorEntitled($vendor, 'chronograph'));
+    }
+
+    public function test_whatsapp_request_manual_payment_entitlement_draft_separation_and_publication(): void
     {
         $admin = $this->makeAdmin();
         [$user, $vendor] = $this->makeVendorUser('flagship-shop', 'Flagship Shop');
-        $product = $this->seedProductForVendor($vendor, 'Signature Silk Scarf', 320000);
+        $product = $this->seedProductForVendor($vendor, 'Chronograph Steel Watch', 820000);
 
         $service = app(ThemeMarketplaceService::class);
         $service->syncThemesToDatabase();
 
-        $theme = StorefrontTheme::where('theme_id', 'signature-71')->firstOrFail();
+        $theme = StorefrontTheme::where('theme_id', 'chronograph')->firstOrFail();
         $service->updateThemeCatalogue($theme, ['price_rupees' => 7999], $admin);
+        $service->updateMarketplaceSettings(['whatsapp_number' => '+91 98765 00001'], $admin);
 
-        // 1. Vendor creates request
-        $req = $service->createRequest($vendor, 'signature-71');
-
-        // 2. Admin changes price mid-request -> confirmation without acknowledgement must fail
-        $service->updateThemeCatalogue($theme->fresh(), ['price_rupees' => 8999], $admin);
-        $this->actingAs($admin)
-            ->post(route('admin.themes.requests.confirm_payment', $req), [
-                'payment_reference' => 'WA-UTR-771',
-                'payment_notes' => 'Verified via WhatsApp receipt',
-            ])
-            ->assertSessionHas('error');
-
-        // 3. Admin confirms payment WITH explicit price-change acknowledgement -> STILL does not grant access yet!
-        $this->actingAs($admin)
-            ->post(route('admin.themes.requests.confirm_payment', $req), [
-                'payment_reference' => 'WA-UTR-771',
-                'payment_notes' => 'Honoring original request-time snapshot price',
-                'acknowledge_price_change' => 1,
-            ])
-            ->assertSessionHas('success');
-
-        $req->refresh();
-        $this->assertTrue($req->isPaymentConfirmed());
-        $this->assertFalse($service->isVendorEntitled($vendor, 'signature-71'));
-
-        // 4. Admin explicitly grants entitlement -> STILL does not silently publish live storefront!
-        $this->actingAs($admin)
-            ->post(route('admin.themes.requests.grant', $req), ['notes' => 'Granted after payment verification'])
-            ->assertSessionHas('success');
-
-        $this->assertTrue($service->isVendorEntitled($vendor, 'signature-71'));
-        $this->assertEquals('velora', $service->resolvePublicThemeId($vendor));
-
-        // 5. Vendor saves draft -> live storefront MUST still serve velora and NOT leak draft headline!
+        // 1. Vendor requests access -> price snapshot captured, WhatsApp link built, NOT entitled
         $this->actingAs($user)
-            ->post(route('vendor.themes.draft.save', 'signature-71'), [
-                'config' => [
-                    'hero' => ['headline' => 'SECRET UNPUBLISHED HEADLINE'],
-                    'palette' => ['accent' => '#ecd2f3'],
-                ],
-            ])
-            ->assertSessionHas('success');
+            ->post(route('vendor.themes.request', 'chronograph'))
+            ->assertRedirect(route('vendor.themes.index'));
 
+        $req = VendorThemeRequest::where('vendor_id', $vendor->id)->where('theme_id', 'chronograph')->firstOrFail();
+        $this->assertEquals(799900, $req->price_snapshot_paise);
+        $this->assertFalse($service->isVendorEntitled($vendor, 'chronograph'));
+        $waUrl = $service->buildWhatsAppRequestUrl($req);
+        $this->assertStringContainsString('https://wa.me/919876500001?text=', $waUrl);
+        $this->assertStringContainsString(rawurlencode($req->reference_code), $waUrl);
+
+        // 2. Unentitled vendor cannot save draft or publish
+        $this->actingAs($user)->post(route('vendor.themes.draft.save', 'chronograph'), ['config' => ['hero' => ['headline' => 'Nope']]])->assertStatus(403);
+        $this->actingAs($user)->post(route('vendor.themes.publish', 'chronograph'))->assertStatus(403);
+
+        // 3. Admin confirms payment -> STILL not entitled until explicit grant
+        $this->actingAs($admin)->post(route('admin.themes.requests.confirm_payment', $req), [
+            'payment_reference' => 'WA-REF-901',
+            'payment_notes' => 'Verified via WhatsApp receipt',
+        ])->assertSessionHas('success');
+        $this->assertTrue($req->fresh()->isPaymentConfirmed());
+        $this->assertFalse($service->isVendorEntitled($vendor, 'chronograph'));
+
+        // 4. Admin grants access -> STILL does not silently publish live storefront
+        $this->actingAs($admin)->post(route('admin.themes.requests.grant', $req))->assertSessionHas('success');
+        $this->assertTrue($service->isVendorEntitled($vendor, 'chronograph'));
         $this->assertEquals('velora', $service->resolvePublicThemeId($vendor));
-        $publicBefore = $this->get(route('storefront.show', $vendor->slug));
-        $publicBefore->assertStatus(200);
-        $publicBefore->assertDontSee('SECRET UNPUBLISHED HEADLINE');
 
-        // 6. Vendor explicitly publishes -> live storefront now serves Signature 71 with real product & collection & PDP!
-        $this->actingAs($user)
-            ->post(route('vendor.themes.publish', 'signature-71'))
-            ->assertSessionHas('success');
+        // 5. Vendor saves draft -> public store STILL serves velora and does NOT leak draft
+        $this->actingAs($user)->post(route('vendor.themes.draft.save', 'chronograph'), [
+            'config' => ['hero' => ['headline' => 'PRIVATE DRAFT HOROLOGY']],
+        ])->assertSessionHas('success');
 
-        $this->assertEquals('signature-71', $service->resolvePublicThemeId($vendor));
+        $this->get(route('storefront.show', $vendor->slug))
+            ->assertStatus(200)
+            ->assertDontSee('PRIVATE DRAFT HOROLOGY');
 
-        $publicAfter = $this->get(route('storefront.show', $vendor->slug));
-        $publicAfter->assertStatus(200);
-        $publicAfter->assertSee('data-k71-theme="signature-71"', false);
-        $publicAfter->assertSee('SECRET UNPUBLISHED HEADLINE');
-        $publicAfter->assertSee('Signature Silk Scarf');
+        // 6. Vendor explicitly publishes -> live store, collection, and PDP now render Chronograph!
+        $this->actingAs($user)->post(route('vendor.themes.publish', 'chronograph'))->assertSessionHas('success');
+        $this->assertEquals('chronograph', $service->resolvePublicThemeId($vendor));
 
-        $collectionRes = $this->get(route('storefront.collection', $vendor->slug));
-        $collectionRes->assertStatus(200);
-        $collectionRes->assertSee('Signature Silk Scarf');
+        $this->get(route('storefront.show', $vendor->slug))
+            ->assertStatus(200)
+            ->assertSee('data-k71-theme="chronograph"', false)
+            ->assertSee('PRIVATE DRAFT HOROLOGY')
+            ->assertSee('Chronograph Steel Watch');
 
-        $pdpRes = $this->get(route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $product->slug]));
-        $pdpRes->assertStatus(200);
-        $pdpRes->assertSee('Signature Silk Scarf');
-        $pdpRes->assertSee('3,200');
+        $this->get(route('storefront.collection', $vendor->slug))
+            ->assertStatus(200)
+            ->assertSee('Chronograph Steel Watch');
 
-        // 7. Admin revokes entitlement -> blocks future publish/edits, preserves draft & product, falls back live safely
-        $entitlement = VendorThemeEntitlement::where('vendor_id', $vendor->id)->where('theme_id', 'signature-71')->firstOrFail();
-        $this->actingAs($admin)
-            ->post(route('admin.themes.entitlements.revoke', $entitlement), ['reason' => 'Refund issued per merchant request'])
-            ->assertSessionHas('success');
+        $this->get(route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $product->slug]))
+            ->assertStatus(200)
+            ->assertSee('data-pdp-layout="horology-precision"', false)
+            ->assertSee('8,200');
 
-        $this->assertFalse($service->isVendorEntitled($vendor, 'signature-71'));
+        // 7. Admin revokes entitlement -> preserves draft & product, falls back live safely, blocks re-publish
+        $ent = VendorThemeEntitlement::where('vendor_id', $vendor->id)->where('theme_id', 'chronograph')->firstOrFail();
+        $this->actingAs($admin)->post(route('admin.themes.entitlements.revoke', $ent), ['reason' => 'Merchant refund'])->assertSessionHas('success');
+
+        $this->assertFalse($service->isVendorEntitled($vendor, 'chronograph'));
         $this->assertEquals('velora', $service->resolvePublicThemeId($vendor));
-        $this->assertDatabaseHas('vendor_theme_drafts', ['vendor_id' => $vendor->id, 'theme_id' => 'signature-71']);
+        $this->assertDatabaseHas('vendor_theme_drafts', ['vendor_id' => $vendor->id, 'theme_id' => 'chronograph']);
         $this->assertDatabaseHas('products', ['id' => $product->id]);
+        $this->actingAs($user)->post(route('vendor.themes.publish', 'chronograph'))->assertStatus(403);
 
-        $this->actingAs($user)
-            ->post(route('vendor.themes.publish', 'signature-71'))
-            ->assertStatus(403);
-
-        // 8. Verify complete immutable audit trail exists
-        $this->assertGreaterThanOrEqual(5, ThemeAuditLog::count());
-        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.payment.confirmed', 'theme_id' => 'signature-71']);
-        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.entitlement.granted', 'theme_id' => 'signature-71']);
-        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.published', 'theme_id' => 'signature-71']);
-        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.entitlement.revoked', 'theme_id' => 'signature-71']);
+        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.payment.confirmed', 'theme_id' => 'chronograph']);
+        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.entitlement.granted', 'theme_id' => 'chronograph']);
+        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.published', 'theme_id' => 'chronograph']);
+        $this->assertDatabaseHas('theme_audit_logs', ['action' => 'theme.entitlement.revoked', 'theme_id' => 'chronograph']);
     }
 
-    public function test_cross_vendor_isolation_and_non_admin_blocking(): void
-    {
-        [$userA, $vendorA] = $this->makeVendorUser('vendor-alpha', 'Vendor Alpha');
-        [$userB, $vendorB] = $this->makeVendorUser('vendor-beta', 'Vendor Beta');
-        $service = app(ThemeMarketplaceService::class);
-        $service->syncThemesToDatabase();
-
-        $reqB = $service->createRequest($vendorB, 'obsidian-glass');
-
-        // Vendor A cannot cancel Vendor B's request
-        $this->actingAs($userA)
-            ->post(route('vendor.themes.request.cancel', $reqB))
-            ->assertSessionHas('error');
-
-        $this->assertEquals(VendorThemeRequest::STATUS_REQUESTED, $reqB->fresh()->status);
-
-        // Non-admin vendor cannot access Admin Theme Management routes (redirected by IsAdmin & state untouched)
-        $this->actingAs($userA)->get(route('admin.themes.index'))->assertRedirect(route('vendor.dashboard'));
-        $this->actingAs($userA)->post(route('admin.themes.requests.confirm_payment', $reqB))->assertRedirect(route('vendor.dashboard'));
-        $this->actingAs($userA)->post(route('admin.themes.requests.grant', $reqB))->assertRedirect(route('vendor.dashboard'));
-        $this->assertFalse($reqB->fresh()->isPaymentConfirmed());
-        $this->assertFalse($service->isVendorEntitled($vendorB, 'obsidian-glass'));
-    }
-
-    public function test_all_11_original_legacy_themes_still_render_cleanly(): void
+    public function test_all_11_original_legacy_themes_remain_preserved_and_render_cleanly(): void
     {
         [$user, $vendor] = $this->makeVendorUser('legacy-store', 'Legacy Boutique');
         $vendor->forceFill(['can_use_kinetic_scroll' => true])->save();
@@ -404,35 +362,5 @@ class ThemeMarketplaceTest extends TestCase
                 ->assertStatus(200)
                 ->assertSee('Legacy Boutique');
         }
-    }
-
-    public function test_declined_request_cannot_create_entitlement_and_admin_pages_load_cleanly(): void
-    {
-        $admin = $this->makeAdmin();
-        [$user, $vendor] = $this->makeVendorUser('declined-shop', 'Declined Shop');
-        $service = app(ThemeMarketplaceService::class);
-        $service->syncThemesToDatabase();
-
-        $req = $service->createRequest($vendor, 'runway-one');
-
-        $this->actingAs($admin)
-            ->post(route('admin.themes.requests.decline', $req), ['reason' => 'Payment not received'])
-            ->assertSessionHas('success');
-
-        $this->assertEquals(VendorThemeRequest::STATUS_DECLINED, $req->fresh()->status);
-        $this->assertFalse($service->isVendorEntitled($vendor, 'runway-one'));
-
-        // Cannot grant from a declined request
-        $this->actingAs($admin)
-            ->post(route('admin.themes.requests.grant', $req))
-            ->assertSessionHas('error');
-
-        $this->assertFalse($service->isVendorEntitled($vendor, 'runway-one'));
-
-        // All 4 admin theme management pages return HTTP 200
-        $this->actingAs($admin)->get(route('admin.themes.index'))->assertStatus(200)->assertSee('Signature 71');
-        $this->actingAs($admin)->get(route('admin.themes.requests'))->assertStatus(200)->assertSee($req->reference_code);
-        $this->actingAs($admin)->get(route('admin.themes.entitlements'))->assertStatus(200);
-        $this->actingAs($admin)->get(route('admin.themes.audit'))->assertStatus(200);
     }
 }

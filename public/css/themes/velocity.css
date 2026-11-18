@@ -1,0 +1,8 @@
+/* K71 Bespoke Storefront Theme: Velocity (velocity) | Category: footwear_performance | v2.0.0 */
+.k71-sf-theme[data-k71-theme="velocity"] {
+  --theme-accent-soft: color-mix(in srgb, #10b981 12%, transparent);
+  --theme-card-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+}
+.k71-sf-theme[data-k71-theme="velocity"] .k71-diagonal-stage { clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%); }
+.k71-sf-theme[data-k71-theme="velocity"] .k71-card-shell { border: 1px solid var(--t-border); background: linear-gradient(180deg, var(--t-surface) 0%, var(--t-bg) 100%); transition: border-color 240ms ease, box-shadow 240ms ease; }
+.k71-sf-theme[data-k71-theme="velocity"] .k71-card-shell:hover { border-color: var(--t-accent); box-shadow: var(--theme-card-shadow); }

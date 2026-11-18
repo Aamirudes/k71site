@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Color Theory (color-theory) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="color-theory"] {
+  --theme-accent-soft: color-mix(in srgb, #1d4ed8 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="color-theory"] .k71-card-shell { border: 1.5px solid var(--t-text); background: var(--t-surface); box-shadow: 4px 4px 0 var(--t-text); transition: transform 220ms ease, box-shadow 220ms ease; }
+.k71-sf-theme[data-k71-theme="color-theory"] .k71-card-shell:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--t-accent); }

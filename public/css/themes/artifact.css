@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Artifact (artifact) | Category: watches_jewelry | v2.0.0 */
+.k71-sf-theme[data-k71-theme="artifact"] {
+  --theme-accent-soft: color-mix(in srgb, #594a3c 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="artifact"] .k71-card-shell { border: none; background: transparent; }
+.k71-sf-theme[data-k71-theme="artifact"] .k71-card-frame { border: 1px solid var(--t-border); background: var(--t-surface); padding: 0.75rem; }

@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Runway 01 (runway-01) | Category: luxury_fashion | v2.0.0 */
+.k71-sf-theme[data-k71-theme="runway-01"] {
+  --theme-accent-soft: color-mix(in srgb, #0e0e10 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="runway-01"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }
+.k71-sf-theme[data-k71-theme="runway-01"].k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] { transform: translateX(-16px); }

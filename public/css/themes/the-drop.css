@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: The Drop (the-drop) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="the-drop"] {
+  --theme-accent-soft: color-mix(in srgb, #22c55e 12%, transparent);
+  --theme-card-shadow: 0 18px 42px rgba(0, 0, 0, 0.45);
+}
+.k71-sf-theme[data-k71-theme="the-drop"] .k71-card-shell { border: 1px solid var(--t-border); background: linear-gradient(180deg, var(--t-surface) 0%, var(--t-bg) 100%); transition: border-color 240ms ease, box-shadow 240ms ease; }
+.k71-sf-theme[data-k71-theme="the-drop"] .k71-card-shell:hover { border-color: var(--t-accent); box-shadow: var(--theme-card-shadow); }

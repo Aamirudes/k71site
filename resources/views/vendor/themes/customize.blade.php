@@ -16,9 +16,9 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('vendor.themes.preview', $theme->theme_id) }}" target="_blank"
+            <a href="{{ $previewUrl ?? route('vendor.themes.preview', $theme->theme_id) }}" target="_blank" rel="noopener"
                class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50">
-                Preview Draft &rarr;
+                Preview Draft &nearr;
             </a>
 
             <form action="{{ route('vendor.themes.draft.reset', $theme->theme_id) }}" method="POST" onsubmit="return confirm('Reset draft to {{ $theme->name }} theme defaults? Your live storefront will not change until you publish.');">

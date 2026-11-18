@@ -3,11 +3,13 @@
 @section('theme_content')
 @php
     $storeName = $storeName ?? ($vendor->shop_name ?? 'K71 Store');
+    $frameBase = $previewFrameBaseUrl ?? route('vendor.themes.preview_frame', ['themeId' => $manifest['id']]);
+    $frameGlue = str_contains($frameBase, '?') ? '&' : '?';
     $storeHomeUrl = $storeHomeUrl ?? (!empty($isCataloguePreview)
-        ? route('vendor.themes.preview_frame', ['themeId' => $manifest['id'], 'page' => 'home'])
+        ? ($frameBase . $frameGlue . 'page=home')
         : ($vendor->storefront_url . (!empty($isPreview) ? '?preview=1' : '')));
     $storeCollectionUrl = $storeCollectionUrl ?? (!empty($isCataloguePreview)
-        ? route('vendor.themes.preview_frame', ['themeId' => $manifest['id'], 'page' => 'collection'])
+        ? ($frameBase . $frameGlue . 'page=collection')
         : route('storefront.collection', ['slug' => $vendor->slug]) . (!empty($isPreview) ? '?preview=1' : ''));
     $glassStrength = $glassStrength ?? ($themeConfig['motion']['glass_strength'] ?? (($manifest['glass']['mode'] ?? 'none') === 'none' ? 'off' : 'normal'));
     $gridCols = (int) ($themeConfig['grid']['columns'] ?? ($manifest['layout']['default_columns'] ?? 4));
@@ -21,7 +23,8 @@
     $currentSort = trim((string) request('sort', 'newest'));
     $activeCatObj = ($vendorCategories ?? collect())->firstWhere('slug', $currentCategory);
     $collectionTitle = $activeCatObj?->name ?? ($currentSearch !== '' ? 'Search: "' . $currentSearch . '"' : 'All Products');
-    $baseAction = $storeCollectionUrl;
+    $baseAction = !empty($isCataloguePreview) ? $frameBase : $storeCollectionUrl;
+    $collectionLinkBase = $storeCollectionUrl;
 @endphp
 
 <section class="w-full py-8 sm:py-12">
@@ -43,9 +46,14 @@
                 </div>
 
                 {{-- Search + Sort Controls --}}
-                <form action="{{ $baseAction }}" method="GET" class="flex flex-wrap items-center gap-2.5">
+                <form action="{{ explode('?', $baseAction)[0] }}" method="GET" class="flex flex-wrap items-center gap-2.5">
                     @if(!empty($isCataloguePreview))
                         <input type="hidden" name="page" value="collection">
+                        @foreach(['v', 'expires', 'signature'] as $signedParam)
+                            @if(request()->filled($signedParam))
+                                <input type="hidden" name="{{ $signedParam }}" value="{{ request($signedParam) }}">
+                            @endif
+                        @endforeach
                     @endif
                     @if($currentCategory !== '')
                         <input type="hidden" name="category" value="{{ $currentCategory }}">
@@ -67,13 +75,13 @@
             {{-- Category Filter Pills --}}
             @if(($vendorCategories ?? collect())->isNotEmpty())
                 <div class="flex items-center gap-2 overflow-x-auto k71-no-scrollbar pt-2" style="border-top: 1px solid var(--t-border);">
-                    <a href="{{ $baseAction }}"
+                    <a href="{{ $collectionLinkBase }}"
                        class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-semibold flex items-center"
                        style="{{ $currentCategory === '' ? 'background-color: var(--t-accent); color: var(--t-accent-contrast);' : 'border: 1px solid var(--t-border); color: var(--t-text);' }}">
                         All
                     </a>
                     @foreach($vendorCategories as $cat)
-                        <a href="{{ $baseAction }}{{ str_contains($baseAction, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}{{ $currentSort !== 'newest' ? '&sort=' . urlencode($currentSort) : '' }}"
+                        <a href="{{ $collectionLinkBase }}{{ str_contains($collectionLinkBase, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}{{ $currentSort !== 'newest' ? '&sort=' . urlencode($currentSort) : '' }}"
                            class="shrink-0 min-h-[38px] px-3.5 rounded-full text-xs font-medium flex items-center"
                            style="{{ $currentCategory === $cat->slug ? 'background-color: var(--t-accent); color: var(--t-accent-contrast);' : 'border: 1px solid var(--t-border); color: var(--t-text);' }}">
                             {{ $cat->name }}
@@ -92,7 +100,7 @@
                     @if($currentSearch !== '')
                         <span class="px-2.5 py-1 rounded-full font-semibold" style="background-color: var(--t-surface-alt);">Search: "{{ $currentSearch }}"</span>
                     @endif
-                    <a href="{{ $baseAction }}" class="underline underline-offset-4 font-semibold ml-1" style="color: var(--t-accent);">Clear all</a>
+                    <a href="{{ $collectionLinkBase }}" class="underline underline-offset-4 font-semibold ml-1" style="color: var(--t-accent);">Clear all</a>
                 </div>
             @endif
         </div>

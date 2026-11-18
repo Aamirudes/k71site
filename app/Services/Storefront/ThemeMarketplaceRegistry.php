@@ -2,23 +2,24 @@
 
 namespace App\Services\Storefront;
 
-use App\Services\Storefront\ThemeDefinitions\BeautyLifestyleThemes;
-use App\Services\Storefront\ThemeDefinitions\FashionThemes;
-use App\Services\Storefront\ThemeDefinitions\LuxuryThemes;
-use App\Services\Storefront\ThemeDefinitions\SpatialFlagshipThemes;
-use App\Services\Storefront\ThemeDefinitions\TechUtilityThemes;
+use App\Services\Storefront\ThemeDefinitions\CategoryALuxuryFashionThemes;
+use App\Services\Storefront\ThemeDefinitions\CategoryBCFootwearJewelryThemes;
+use App\Services\Storefront\ThemeDefinitions\CategoryDETechFurnitureThemes;
+use App\Services\Storefront\ThemeDefinitions\CategoryFGBeautyFoodThemes;
+use App\Services\Storefront\ThemeDefinitions\CategoryHContemporaryConceptsThemes;
 
 class ThemeMarketplaceRegistry
 {
     public const CATEGORY_LABELS = [
         'legacy' => 'Classic K71 (Original 11)',
-        'luxury' => 'Luxury, Editorial & Gallery',
-        'fashion' => 'Fashion, Footwear & Street',
-        'beauty' => 'Beauty, Fragrance & Skincare',
-        'lifestyle' => 'Wellness, Home & Living',
-        'tech' => 'Tech, Electronics & Utility',
-        'spatial' => 'Spatial, Liquid Glass & Flagship',
-        'conversion' => 'Bold, Pop & Conversion',
+        'luxury_fashion' => 'A · Luxury, Fashion & Editorial',
+        'footwear_performance' => 'B · Sneakers, Footwear & Performance',
+        'watches_jewelry' => 'C · Watches, Jewelry & Objects',
+        'tech_electronics' => 'D · Technology & Electronics',
+        'furniture_home' => 'E · Furniture, Home & Interiors',
+        'beauty_skincare' => 'F · Beauty, Skincare & Personal Care',
+        'food_artisan' => 'G · Food, Specialty & Artisan',
+        'contemporary_concepts' => 'H · Contemporary Commerce & Concepts',
     ];
 
     public const ALLOWED_HEADING_FONTS = [
@@ -57,7 +58,7 @@ class ThemeMarketplaceRegistry
     protected ?array $cachedNewThemes = null;
 
     /**
-     * All 50 new individually art-directed storefront themes.
+     * All 50 bespoke individually art-directed storefront themes (Categories A–H).
      */
     public function getNewThemes(): array
     {
@@ -66,11 +67,11 @@ class ThemeMarketplaceRegistry
         }
 
         $this->cachedNewThemes = array_merge(
-            LuxuryThemes::definitions(),
-            FashionThemes::definitions(),
-            BeautyLifestyleThemes::definitions(),
-            TechUtilityThemes::definitions(),
-            SpatialFlagshipThemes::definitions()
+            CategoryALuxuryFashionThemes::definitions(),
+            CategoryBCFootwearJewelryThemes::definitions(),
+            CategoryDETechFurnitureThemes::definitions(),
+            CategoryFGBeautyFoodThemes::definitions(),
+            CategoryHContemporaryConceptsThemes::definitions()
         );
 
         return $this->cachedNewThemes;
@@ -91,11 +92,14 @@ class ThemeMarketplaceRegistry
                 'number' => $num++,
                 'name' => $preset['name'],
                 'category' => 'legacy',
+                'compatible_categories' => $preset['recommended_for_types'] ?? ['general'],
+                'design_attributes' => ['Preserved K71 Classic', $preset['badge'] ?? 'Classic Preset'],
                 'tagline' => $preset['tagline'] ?? '',
                 'description' => $preset['description'] ?? '',
                 'version' => '2.0.0',
                 'is_legacy' => true,
                 'is_free' => $key !== 'kinetic',
+                'is_featured' => false,
                 'palette' => [
                     'bg' => $preset['preview_bg'] ?? '#fafaf9',
                     'surface' => $preset['preview_card_bg'] ?? '#ffffff',
@@ -106,30 +110,25 @@ class ThemeMarketplaceRegistry
                     'accent_contrast' => '#ffffff',
                     'border' => 'rgba(24, 24, 27, 0.12)',
                     'is_dark' => in_array($key, ['noire', 'orbit', 'nexus', 'elysium', 'kinetic'], true),
-                    'glass_surface' => 'rgba(255, 255, 255, 0.8)',
-                    'glass_border' => 'rgba(24, 24, 27, 0.1)',
                 ],
                 'typography' => [
                     'heading_font' => $preset['display_font'] ?? 'Playfair Display',
                     'body_font' => $preset['body_font'] ?? 'Inter',
-                    'google_fonts' => '',
                     'heading_weight' => '700',
                     'heading_tracking' => '-0.02em',
                     'label_style' => 'uppercase-spaced',
                 ],
-                'glass' => ['mode' => 'subtle', 'blur_px' => 10, 'header_glass' => true, 'card_glass' => false, 'panel_glass' => false],
-                'motion' => ['profile' => 'calm-fade', 'duration_ms' => 450, 'easing' => 'ease-out', 'enable_tilt' => false, 'enable_parallax' => false, 'stagger_ms' => 40],
+                'motion' => ['profile' => 'quiet-gallery', 'duration_ms' => 450, 'easing' => 'ease-out', 'enable_parallax' => false, 'stagger_ms' => 40],
                 'layout' => [
-                    'header_variant' => 'legacy',
-                    'hero_variant' => 'legacy',
-                    'card_variant' => 'legacy',
-                    'pdp_variant' => 'two-thirds-gallery',
-                    'collection_variant' => 'clean-4col',
-                    'footer_variant' => 'legacy',
+                    'header_template' => 'legacy',
+                    'hero_template' => 'legacy',
+                    'card_template' => 'legacy',
+                    'pdp_template' => 'luxury-lookbook',
+                    'footer_template' => 'legacy',
+                    'collection_layout' => 'clean-4col',
                     'card_aspect' => '3/4',
                     'default_columns' => 4,
                     'radius' => '12px',
-                    'hero_height' => 'min-h-[70vh]',
                 ],
                 'default_sections' => [],
             ];
@@ -138,7 +137,7 @@ class ThemeMarketplaceRegistry
     }
 
     /**
-     * Complete allowlisted registry: 11 legacy + 50 new = 61 total themes.
+     * Complete trusted allowlisted registry: 11 legacy + 50 bespoke = 61 total themes.
      */
     public function getAllThemes(): array
     {
@@ -179,13 +178,51 @@ class ThemeMarketplaceRegistry
     }
 
     /**
+     * Build a compositional uniqueness matrix across all 50 new themes.
+     * Proves no two themes share an identical structural layout + typography + section order.
+     */
+    public function getThemeUniquenessMatrix(): array
+    {
+        $matrix = [];
+        foreach ($this->getNewThemes() as $id => $m) {
+            $layout = $m['layout'];
+            $typo = $m['typography'];
+            $sectionOrder = implode('>', array_map(fn ($s) => ($s['type'] ?? '') . ':' . ($s['style'] ?? 'std'), $m['default_sections'] ?? []));
+            $signature = implode('|', [
+                $layout['header_template'],
+                $layout['hero_template'],
+                $layout['card_template'],
+                $layout['pdp_template'],
+                $layout['footer_template'],
+                $typo['heading_font'],
+                $sectionOrder,
+            ]);
+            $matrix[$id] = [
+                'id' => $id,
+                'name' => $m['name'],
+                'category' => $m['category'],
+                'header' => $layout['header_template'],
+                'hero' => $layout['hero_template'],
+                'card' => $layout['card_template'],
+                'pdp' => $layout['pdp_template'],
+                'footer' => $layout['footer_template'],
+                'font' => $typo['heading_font'] . ' / ' . $typo['body_font'],
+                'motion' => $m['motion']['profile'],
+                'section_order' => $sectionOrder,
+                'signature' => hash('sha256', $signature),
+            ];
+        }
+        return $matrix;
+    }
+
+    /**
      * Build a safe default customization configuration for any of the 50 new themes.
      */
     public function getDefaultConfig(string $themeId, ?\App\Models\Vendor $vendor = null): array
     {
         $manifest = $this->getManifest($themeId);
         if (!$manifest) {
-            $manifest = $this->getNewThemes()['maison-noir'];
+            $manifest = $this->getNewThemes()['maison-elite'];
         }
 
         if (!empty($manifest['is_legacy'])) {
@@ -211,7 +248,7 @@ class ThemeMarketplaceRegistry
                 'body_font' => $typo['body_font'],
             ],
             'header' => [
-                'logo_size' => 'md', // sm, md, lg
+                'logo_size' => 'md',
                 'sticky' => true,
                 'show_search' => true,
                 'announcement_enabled' => false,
@@ -239,12 +276,11 @@ class ThemeMarketplaceRegistry
             'grid' => [
                 'columns' => (int) ($layout['default_columns'] ?? 4),
                 'card_aspect' => (string) ($layout['card_aspect'] ?? '3/4'),
-                'spacing' => 'normal', // compact, normal, spacious
-                'content_align' => 'left', // left, center
+                'spacing' => 'normal',
+                'content_align' => 'left',
             ],
             'motion' => [
-                'intensity' => 'normal', // normal, subtle, reduced
-                'glass_strength' => $manifest['glass']['mode'] === 'none' ? 'off' : 'normal', // off, subtle, normal
+                'intensity' => 'normal',
             ],
             'popup' => [
                 'enabled' => false,
@@ -266,7 +302,6 @@ class ThemeMarketplaceRegistry
 
     /**
      * Validate and sanitize vendor customization payload for a theme.
-     * Falls back safely to theme defaults for invalid optional values.
      */
     public function sanitizeConfig(string $themeId, array $input, ?\App\Models\Vendor $vendor = null): array
     {
@@ -283,7 +318,6 @@ class ThemeMarketplaceRegistry
         $defaults = $this->getDefaultConfig($themeId, $vendor);
         $clean = $defaults;
 
-        // 1. Palette (strict hex validation only)
         if (isset($input['palette']) && is_array($input['palette'])) {
             foreach (['accent', 'bg', 'surface', 'text'] as $colorKey) {
                 $val = trim((string) ($input['palette'][$colorKey] ?? ''));
@@ -293,7 +327,6 @@ class ThemeMarketplaceRegistry
             }
         }
 
-        // 2. Typography (strict allowlist)
         if (isset($input['typography']) && is_array($input['typography'])) {
             $hf = trim((string) ($input['typography']['heading_font'] ?? ''));
             if (in_array($hf, self::ALLOWED_HEADING_FONTS, true)) {
@@ -305,7 +338,6 @@ class ThemeMarketplaceRegistry
             }
         }
 
-        // 3. Header
         if (isset($input['header']) && is_array($input['header'])) {
             $logoSize = (string) ($input['header']['logo_size'] ?? 'md');
             $clean['header']['logo_size'] = in_array($logoSize, ['sm', 'md', 'lg'], true) ? $logoSize : 'md';
@@ -316,7 +348,6 @@ class ThemeMarketplaceRegistry
             $clean['header']['announcement_link'] = $this->sanitizeSafeUrl((string) ($input['header']['announcement_link'] ?? ''));
         }
 
-        // 4. Hero
         if (isset($input['hero']) && is_array($input['hero'])) {
             $clean['hero']['eyebrow'] = mb_substr(trim(strip_tags((string) ($input['hero']['eyebrow'] ?? ''))), 0, 60);
             $headline = mb_substr(trim(strip_tags((string) ($input['hero']['headline'] ?? ''))), 0, 120);
@@ -333,7 +364,6 @@ class ThemeMarketplaceRegistry
             $clean['hero']['release_deadline'] = ($deadline !== '' && strtotime($deadline) !== false) ? date('c', strtotime($deadline)) : '';
         }
 
-        // 5. Editorial optional block
         if (isset($input['editorial']) && is_array($input['editorial'])) {
             $clean['editorial']['eyebrow'] = mb_substr(trim(strip_tags((string) ($input['editorial']['eyebrow'] ?? ''))), 0, 60);
             $clean['editorial']['heading'] = mb_substr(trim(strip_tags((string) ($input['editorial']['heading'] ?? ''))), 0, 120);
@@ -341,7 +371,6 @@ class ThemeMarketplaceRegistry
             $clean['editorial']['image_url'] = $this->sanitizeSafeMediaUrl((string) ($input['editorial']['image_url'] ?? ''));
         }
 
-        // 6. Grid
         if (isset($input['grid']) && is_array($input['grid'])) {
             $cols = (int) ($input['grid']['columns'] ?? $defaults['grid']['columns']);
             $clean['grid']['columns'] = in_array($cols, [2, 3, 4], true) ? $cols : $defaults['grid']['columns'];
@@ -353,26 +382,20 @@ class ThemeMarketplaceRegistry
             $clean['grid']['content_align'] = in_array($align, ['left', 'center'], true) ? $align : 'left';
         }
 
-        // 7. Motion & Glass
         if (isset($input['motion']) && is_array($input['motion'])) {
             $intensity = (string) ($input['motion']['intensity'] ?? 'normal');
             $clean['motion']['intensity'] = in_array($intensity, ['normal', 'subtle', 'reduced'], true) ? $intensity : 'normal';
-            $glassStr = (string) ($input['motion']['glass_strength'] ?? $defaults['motion']['glass_strength']);
-            $clean['motion']['glass_strength'] = in_array($glassStr, ['off', 'subtle', 'normal'], true) ? $glassStr : $defaults['motion']['glass_strength'];
         }
 
-        // 8. Optional Vendor-Controlled Popup (strictly off by default)
         if (isset($input['popup']) && is_array($input['popup'])) {
             $clean['popup']['enabled'] = !empty($input['popup']['enabled']);
             $clean['popup']['heading'] = mb_substr(trim(strip_tags((string) ($input['popup']['heading'] ?? ''))), 0, 100);
             $clean['popup']['body'] = mb_substr(trim(strip_tags((string) ($input['popup']['body'] ?? ''))), 0, 260);
             $clean['popup']['cta_label'] = mb_substr(trim(strip_tags((string) ($input['popup']['cta_label'] ?? ''))), 0, 40);
             $clean['popup']['cta_url'] = $this->sanitizeSafeUrl((string) ($input['popup']['cta_url'] ?? ''));
-            $delay = (int) ($input['popup']['delay_seconds'] ?? 8);
-            $clean['popup']['delay_seconds'] = max(4, min(60, $delay));
+            $clean['popup']['delay_seconds'] = max(4, min(60, (int) ($input['popup']['delay_seconds'] ?? 8)));
         }
 
-        // 9. Footer
         if (isset($input['footer']) && is_array($input['footer'])) {
             $clean['footer']['about_text'] = mb_substr(trim(strip_tags((string) ($input['footer']['about_text'] ?? ''))), 0, 320);
             $clean['footer']['show_policies'] = array_key_exists('show_policies', $input['footer']) ? (bool) $input['footer']['show_policies'] : true;
@@ -380,7 +403,6 @@ class ThemeMarketplaceRegistry
             $clean['footer']['copyright_text'] = mb_substr(trim(strip_tags((string) ($input['footer']['copyright_text'] ?? ''))), 0, 160);
         }
 
-        // 10. Sections (allowlist + preserve order)
         if (isset($input['sections']) && is_array($input['sections'])) {
             $validatedSections = [];
             $seenTypes = [];
@@ -417,9 +439,6 @@ class ThemeMarketplaceRegistry
         return $clean;
     }
 
-    /**
-     * Merge saved config safely with current theme defaults (non-destructive version compatibility).
-     */
     public function resolveEffectiveConfig(string $themeId, ?array $savedConfig, ?\App\Models\Vendor $vendor = null): array
     {
         $defaults = $this->getDefaultConfig($themeId, $vendor);

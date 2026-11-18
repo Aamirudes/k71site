@@ -60,12 +60,14 @@ class ThemeMarketplaceService
     ) {}
 
     /**
-     * Idempotently sync all 61 themes into storefront_themes table.
-     * NEVER overwrites admin-configured prices, visibility, availability, or overrides on existing rows.
+     * Idempotently sync all 61 themes (11 Classic + 50 Bespoke) into storefront_themes table.
+     * Preserves admin-configured prices, visibility, availability, and featured status on existing rows.
+     * Safely removes obsolete unreferenced V1 theme slugs that have zero entitlements or requests.
      */
     public function syncThemesToDatabase(): void
     {
         $all = $this->registry->getAllThemes();
+        $validIds = array_keys($all);
         $existingIds = StorefrontTheme::pluck('theme_id')->flip()->all();
 
         $sort = 1;
@@ -76,35 +78,52 @@ class ThemeMarketplaceService
                     'slug' => $def['slug'],
                     'name' => $def['name'],
                     'category' => $def['category'],
+                    'compatible_categories' => $def['compatible_categories'] ?? ['general'],
+                    'design_attributes' => $def['design_attributes'] ?? [],
                     'tagline' => $def['tagline'] ?? '',
                     'description' => $def['description'] ?? '',
-                    'version' => $def['version'] ?? '1.0.0',
+                    'version' => $def['version'] ?? '2.0.0',
                     'is_legacy' => !empty($def['is_legacy']),
                     'is_free' => !empty($def['is_free']),
                     'implementation_status' => 'ready',
+                    'qa_verified' => true,
                     'is_visible_in_catalogue' => true,
                     'is_available_for_request' => empty($def['is_free']),
-                    'price_paise' => null, // Admin configures individual price in Admin Theme Center
+                    'is_featured' => !empty($def['is_featured']),
+                    'is_preview_enabled' => true,
+                    'price_paise' => null, // Admin sets individual price in Admin Theme Center
                     'currency' => 'INR',
                     'sort_order' => $sort,
                 ]);
             } else {
-                // Only update code-controlled version if changed, preserving all admin settings
                 StorefrontTheme::where('theme_id', $id)->update([
-                    'version' => $def['version'] ?? '1.0.0',
+                    'version' => $def['version'] ?? '2.0.0',
                     'is_legacy' => !empty($def['is_legacy']),
+                    'sort_order' => $sort,
+                    'design_attributes' => $def['design_attributes'] ?? [],
                 ]);
             }
             $sort++;
         }
+
+        // Clean up any deprecated V1 slugs that are not in the 61 registry and have zero entitlements/requests
+        $obsoleteIds = array_diff(array_keys($existingIds), $validIds);
+        if (!empty($obsoleteIds)) {
+            $inUseEnt = VendorThemeEntitlement::whereIn('theme_id', $obsoleteIds)->pluck('theme_id')->all();
+            $inUseReq = VendorThemeRequest::whereIn('theme_id', $obsoleteIds)->pluck('theme_id')->all();
+            $removable = array_diff($obsoleteIds, $inUseEnt, $inUseReq);
+            if (!empty($removable)) {
+                StorefrontTheme::whereIn('theme_id', $removable)->delete();
+            }
+        }
     }
 
     /**
-     * Ensure catalogue is populated on first load.
+     * Ensure catalogue is populated with all 61 themes.
      */
     public function ensureSynced(): void
     {
-        if (StorefrontTheme::count() < 61) {
+        if (StorefrontTheme::where('theme_id', 'maison-elite')->doesntExist() || StorefrontTheme::count() !== 61) {
             $this->syncThemesToDatabase();
         }
     }
@@ -909,10 +928,14 @@ class ThemeMarketplaceService
             'name' => $theme->name,
             'category' => $theme->category,
             'price_paise' => $theme->price_paise,
+            'currency' => $theme->currency,
             'is_free' => $theme->is_free,
             'implementation_status' => $theme->implementation_status,
+            'qa_verified' => $theme->qa_verified,
             'is_visible_in_catalogue' => $theme->is_visible_in_catalogue,
             'is_available_for_request' => $theme->is_available_for_request,
+            'is_featured' => $theme->is_featured,
+            'is_preview_enabled' => $theme->is_preview_enabled,
         ];
 
         $updates = [];
@@ -929,17 +952,35 @@ class ThemeMarketplaceService
             $raw = trim((string) $data['price_rupees']);
             $updates['price_paise'] = ($raw === '' || !is_numeric($raw)) ? null : max(0, (int) round(((float) $raw) * 100));
         }
+        if (isset($data['currency']) && in_array(strtoupper((string) $data['currency']), ['INR', 'USD'], true)) {
+            $updates['currency'] = strtoupper((string) $data['currency']);
+        }
         if (array_key_exists('is_free', $data)) {
             $updates['is_free'] = (bool) $data['is_free'];
         }
         if (isset($data['implementation_status']) && in_array($data['implementation_status'], ['ready', 'qa_pending', 'draft', 'deprecated'], true)) {
             $updates['implementation_status'] = $data['implementation_status'];
         }
+        if (array_key_exists('qa_verified', $data)) {
+            $updates['qa_verified'] = (bool) $data['qa_verified'];
+        }
         if (array_key_exists('is_visible_in_catalogue', $data)) {
             $updates['is_visible_in_catalogue'] = (bool) $data['is_visible_in_catalogue'];
         }
         if (array_key_exists('is_available_for_request', $data)) {
             $updates['is_available_for_request'] = (bool) $data['is_available_for_request'];
+        }
+        if (array_key_exists('is_featured', $data)) {
+            $updates['is_featured'] = (bool) $data['is_featured'];
+        }
+        if (array_key_exists('is_preview_enabled', $data)) {
+            $updates['is_preview_enabled'] = (bool) $data['is_preview_enabled'];
+        }
+        if (array_key_exists('compatible_categories', $data)) {
+            $rawCats = is_array($data['compatible_categories'])
+                ? $data['compatible_categories']
+                : array_filter(array_map('trim', explode(',', (string) $data['compatible_categories'])));
+            $updates['compatible_categories'] = array_values(array_map(fn ($c) => strtolower(preg_replace('/[^a-zA-Z0-9_\-]/', '', (string) $c)), $rawCats));
         }
 
         // Prevent marking an unfinished theme as available for purchase/request
@@ -955,10 +996,14 @@ class ThemeMarketplaceService
             'name' => $theme->name,
             'category' => $theme->category,
             'price_paise' => $theme->price_paise,
+            'currency' => $theme->currency,
             'is_free' => $theme->is_free,
             'implementation_status' => $theme->implementation_status,
+            'qa_verified' => $theme->qa_verified,
             'is_visible_in_catalogue' => $theme->is_visible_in_catalogue,
             'is_available_for_request' => $theme->is_available_for_request,
+            'is_featured' => $theme->is_featured,
+            'is_preview_enabled' => $theme->is_preview_enabled,
         ];
 
         $this->recordAudit(

@@ -14,7 +14,7 @@ use App\Models\VendorThemeRequest;
 use App\Services\Storefront\ThemeMarketplaceRegistry;
 use App\Services\Storefront\ThemeMarketplaceService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class ThemeMarketplaceController extends Controller
@@ -25,7 +25,7 @@ class ThemeMarketplaceController extends Controller
     ) {}
 
     /**
-     * Vendor Theme Marketplace Catalogue (All 61 themes: 11 Classic + 50 New).
+     * Dedicated Vendor Theme Marketplace Page (61 themes: 11 Classic + 50 Bespoke Studio Themes).
      */
     public function index(Request $request)
     {
@@ -60,6 +60,12 @@ class ThemeMarketplaceController extends Controller
 
         if ($priceFilter === 'free') {
             $query->where('is_free', true);
+        } elseif ($priceFilter === 'under_2500') {
+            $query->where('is_free', false)->whereNotNull('price_paise')->where('price_paise', '<=', 250000);
+        } elseif ($priceFilter === '2500_7500') {
+            $query->where('is_free', false)->whereBetween('price_paise', [250000, 750000]);
+        } elseif ($priceFilter === 'above_7500') {
+            $query->where('is_free', false)->where('price_paise', '>', 750000);
         } elseif ($priceFilter === 'paid') {
             $query->where('is_free', false);
         }
@@ -68,13 +74,12 @@ class ThemeMarketplaceController extends Controller
             'name' => $query->orderBy('name', 'asc'),
             'price_low' => $query->orderByRaw('CASE WHEN price_paise IS NULL THEN 1 ELSE 0 END, price_paise ASC, sort_order ASC'),
             'price_high' => $query->orderByRaw('CASE WHEN price_paise IS NULL THEN 1 ELSE 0 END, price_paise DESC, sort_order ASC'),
-            'newest' => $query->orderByDesc('is_legacy')->orderByDesc('id'),
-            default => $query->orderBy('sort_order', 'asc'),
+            'newest' => $query->orderBy('is_legacy', 'asc')->orderByDesc('id'),
+            default => $query->orderByDesc('is_featured')->orderBy('sort_order', 'asc'),
         };
 
         $themes = $query->get();
 
-        // Load vendor-specific entitlements, active requests, and drafts strictly scoped to this vendor
         $entitlements = VendorThemeEntitlement::where('vendor_id', $vendor->id)
             ->get()
             ->keyBy('theme_id');
@@ -89,7 +94,6 @@ class ThemeMarketplaceController extends Controller
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
         $manifests = $this->registry->getAllThemes();
 
-        // Annotate each theme with strict vendor-scoped state
         $enriched = $themes->map(function (StorefrontTheme $theme) use ($vendor, $entitlements, $latestRequestByTheme, $draftThemeIds, $liveThemeId, $manifests) {
             $id = $theme->theme_id;
             $ent = $entitlements->get($id);
@@ -113,12 +117,21 @@ class ThemeMarketplaceController extends Controller
                 $state = 'pending';
             }
 
+            // Expiring server-signed vendor-scoped preview URL (safe to open in a new tab directly on click)
+            $previewUrl = $theme->canBePreviewed()
+                ? URL::temporarySignedRoute('vendor.themes.preview', now()->addHours(2), [
+                    'themeId' => $id,
+                    'v' => $vendor->id,
+                ])
+                : null;
+
             return [
                 'theme' => $theme,
                 'manifest' => $manifests[$id] ?? null,
                 'entitlement' => $ent,
                 'request' => $req,
                 'whatsapp_url' => $req ? $this->service->buildWhatsAppRequestUrl($req) : null,
+                'preview_url' => $previewUrl,
                 'is_entitled' => $isEntitled,
                 'is_revoked' => $isRevoked,
                 'is_pending' => $isPendingReq,
@@ -136,28 +149,25 @@ class ThemeMarketplaceController extends Controller
             };
         })->values();
 
-        $adminWhatsAppConfigured = $this->service->getAdminWhatsAppNumber() !== null;
-        $categories = ThemeMarketplaceRegistry::CATEGORY_LABELS;
-
         return view('vendor.themes.index', [
             'vendor' => $vendor,
             'items' => $enriched,
             'vendorRequests' => $requests->take(10),
             'liveThemeId' => $liveThemeId,
-            'categories' => $categories,
+            'categories' => ThemeMarketplaceRegistry::CATEGORY_LABELS,
             'search' => $search,
             'category' => $category,
             'accessFilter' => $accessFilter,
             'priceFilter' => $priceFilter,
             'sort' => $sort,
-            'adminWhatsAppConfigured' => $adminWhatsAppConfigured,
+            'adminWhatsAppConfigured' => $this->service->getAdminWhatsAppNumber() !== null,
             'service' => $this->service,
         ]);
     }
 
     /**
-     * Isolated Responsive Preview Shell (Desktop / Tablet / Mobile + Home / Collection / PDP switcher).
-     * Never modifies live storefront or grants access.
+     * Standalone New-Tab Preview Workspace ("PREVIEW — NOT LIVE" toolbar + Desktop/Tablet/Mobile/Full-Screen controls).
+     * Strictly server-authorized, vendor-bound, expiring-signature checked, read-only, noindex.
      */
     public function preview(Request $request, string $themeId)
     {
@@ -166,14 +176,26 @@ class ThemeMarketplaceController extends Controller
             return redirect()->route('vendor.register');
         }
 
-        $this->service->ensureSynced();
-        $cleanId = strtolower(trim($themeId));
-        $theme = StorefrontTheme::where('theme_id', $cleanId)->firstOrFail();
-        $manifest = $this->registry->getManifest($cleanId);
-        if (!$manifest) {
-            abort(404);
+        // Enforce vendor binding & signature validity whenever scoped params are provided
+        if ($request->filled('v') && (int) $request->input('v') !== (int) $vendor->id) {
+            abort(403, 'Unauthorized preview scope: you may only preview themes against your own storefront.');
+        }
+        if ($request->has('signature') && !$request->hasValidSignature()) {
+            abort(403, 'This theme preview session has expired. Please reopen Preview from the Theme Marketplace.');
         }
 
+        $this->service->ensureSynced();
+        $cleanId = strtolower(trim($themeId));
+        if (!$this->registry->isValidThemeId($cleanId)) {
+            abort(404, 'Requested theme does not exist in the K71 registry.');
+        }
+
+        $theme = StorefrontTheme::where('theme_id', $cleanId)->firstOrFail();
+        if (!$theme->canBePreviewed()) {
+            abort(403, 'Preview is currently disabled for this theme by K71 administration.');
+        }
+
+        $manifest = $this->registry->getManifest($cleanId);
         $isEntitled = $this->service->isVendorEntitled($vendor, $cleanId);
         $activeRequest = VendorThemeRequest::where('vendor_id', $vendor->id)
             ->where('theme_id', $cleanId)
@@ -182,21 +204,31 @@ class ThemeMarketplaceController extends Controller
         $whatsappUrl = $activeRequest ? $this->service->buildWhatsAppRequestUrl($activeRequest) : null;
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
 
-        return view('vendor.themes.preview', [
-            'vendor' => $vendor,
-            'theme' => $theme,
-            'manifest' => $manifest,
-            'isEntitled' => $isEntitled,
-            'isLive' => $liveThemeId === $cleanId,
-            'activeRequest' => $activeRequest,
-            'whatsappUrl' => $whatsappUrl,
-            'initialPage' => in_array($request->input('page'), ['home', 'collection', 'product'], true) ? $request->input('page') : 'home',
+        $signedFrameBase = URL::temporarySignedRoute('vendor.themes.preview_frame', now()->addHours(2), [
+            'themeId' => $cleanId,
+            'v' => $vendor->id,
         ]);
+
+        return response()
+            ->view('vendor.themes.preview', [
+                'vendor' => $vendor,
+                'theme' => $theme,
+                'manifest' => $manifest,
+                'isEntitled' => $isEntitled,
+                'isLive' => $liveThemeId === $cleanId,
+                'activeRequest' => $activeRequest,
+                'whatsappUrl' => $whatsappUrl,
+                'signedFrameBase' => $signedFrameBase,
+                'isAdminPreview' => false,
+                'returnUrl' => route('vendor.themes.index'),
+                'initialPage' => in_array($request->input('page'), ['home', 'collection', 'product'], true) ? $request->input('page') : 'home',
+            ])
+            ->header('X-Robots-Tag', 'noindex, nofollow')
+            ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
     }
 
     /**
-     * Isolated Preview Iframe Renderer (Vendor-only authenticated endpoint, noindex, no-store).
-     * Uses vendor's draft if entitled, otherwise safe defaults. Never modifies database.
+     * Isolated Preview Iframe Renderer (Strictly Read-Only, Vendor-Bound, Never Mutates Live Store).
      */
     public function previewFrame(Request $request, string $themeId)
     {
@@ -205,16 +237,40 @@ class ThemeMarketplaceController extends Controller
             abort(403);
         }
 
+        if ($request->filled('v') && (int) $request->input('v') !== (int) $vendor->id) {
+            abort(403, 'Cross-vendor preview access denied.');
+        }
+        if ($request->has('signature') && !$request->hasValidSignature()) {
+            abort(403, 'Preview session expired.');
+        }
+
         $cleanId = strtolower(trim($themeId));
         $manifest = $this->registry->getManifest($cleanId);
         if (!$manifest) {
             abort(404);
         }
 
-        $isEntitled = $this->service->isVendorEntitled($vendor, $cleanId);
+        $theme = StorefrontTheme::where('theme_id', $cleanId)->first();
+        if ($theme && !$theme->canBePreviewed()) {
+            abort(403, 'Preview disabled for this theme.');
+        }
+
+        $frameBase = URL::temporarySignedRoute('vendor.themes.preview_frame', now()->addHours(2), [
+            'themeId' => $cleanId,
+            'v' => $vendor->id,
+        ]);
+
+        return $this->renderIsolatedPreviewFrame($request, $vendor, $manifest, $frameBase, $this->service->isVendorEntitled($vendor, $cleanId));
+    }
+
+    /**
+     * Shared read-only preview frame renderer (used by both Vendor Preview and Admin QA Preview).
+     */
+    public function renderIsolatedPreviewFrame(Request $request, Vendor $vendor, array $manifest, string $frameBaseUrl, bool $useVendorDraft = false)
+    {
+        $cleanId = $manifest['id'];
         $page = (string) $request->input('page', 'home');
 
-        // Legacy 11 theme preview delegates cleanly to storefront.show in isolated preview mode
         if (!empty($manifest['is_legacy'])) {
             $presetService = app(\App\Services\Storefront\StorefrontPresetService::class);
             $config = $presetService->getDefaultConfig($cleanId, $vendor);
@@ -236,14 +292,15 @@ class ThemeMarketplaceController extends Controller
                     'isPreview', 'isServiceWebsite', 'providerSite'
                 ))
                 ->header('X-Robots-Tag', 'noindex, nofollow')
-                ->header('Cache-Control', 'no-store, no-cache, must-revalidate');
+                ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
         }
 
-        $themeConfig = $isEntitled
+        $themeConfig = $useVendorDraft
             ? $this->service->getDraftConfigForTheme($vendor, $cleanId)
             : $this->registry->getDefaultConfig($cleanId, $vendor);
 
         $realProducts = Product::with(['images', 'category', 'variants'])
+            ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
             ->where('vendor_id', $vendor->id)
             ->where('status', 'active')
             ->latest()
@@ -280,6 +337,7 @@ class ThemeMarketplaceController extends Controller
             'vendorReviews' => $vendorReviews,
             'isCataloguePreview' => true,
             'usingSampleProducts' => $usingSampleProducts,
+            'previewFrameBaseUrl' => $frameBaseUrl,
             'isPreview' => true,
         ];
 
@@ -306,20 +364,16 @@ class ThemeMarketplaceController extends Controller
         } else {
             $view = view('storefront.themes.home', array_merge($shared, [
                 'products' => $productsCollection,
-                'featuredProducts' => $productsCollection->take(4),
+                'featuredProducts' => $productsCollection->take(6),
                 'pageTitle' => $manifest['name'] . ' Preview',
             ]));
         }
 
         return response($view)
             ->header('X-Robots-Tag', 'noindex, nofollow')
-            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+            ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
     }
 
-    /**
-     * Vendor requests access to a paid theme (creates persistent request with price snapshot).
-     * NEVER confirms payment or activates theme.
-     */
     public function requestAccess(Request $request, string $themeId)
     {
         $vendor = auth()->user()?->vendor;
@@ -337,7 +391,7 @@ class ThemeMarketplaceController extends Controller
 
             return redirect()
                 ->route('vendor.themes.index')
-                ->with('success', "Theme access request {$themeRequest->reference_code} created (Price snapshot: {$themeRequest->formatted_price_snapshot}). Coordinate payment via WhatsApp — access unlocks once an administrator verifies payment and grants entitlement.")
+                ->with('success', "Theme purchase request {$themeRequest->reference_code} created (Price snapshot: {$themeRequest->formatted_price_snapshot}). Click Continue on WhatsApp to coordinate manual payment verification with K71 Admin.")
                 ->with('recent_request_id', $themeRequest->id)
                 ->with('recent_whatsapp_url', $waUrl);
         } catch (\Throwable $e) {
@@ -345,9 +399,6 @@ class ThemeMarketplaceController extends Controller
         }
     }
 
-    /**
-     * Vendor cancels their own pending request.
-     */
     public function cancelRequest(VendorThemeRequest $themeRequest)
     {
         $vendor = auth()->user()?->vendor;
@@ -357,16 +408,12 @@ class ThemeMarketplaceController extends Controller
 
         try {
             $this->service->cancelVendorRequest($vendor, $themeRequest);
-            return back()->with('success', "Request {$themeRequest->reference_code} has been cancelled.");
+            return back()->with('success', "Request {$themeRequest->reference_code} cancelled.");
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-    /**
-     * Curated Theme Customizer for an entitled theme.
-     * Strictly blocks unentitled vendors with HTTP 403.
-     */
     public function customize(string $themeId)
     {
         $vendor = auth()->user()?->vendor;
@@ -384,33 +431,33 @@ class ThemeMarketplaceController extends Controller
 
         if (!$this->service->isVendorEntitled($vendor, $cleanId)) {
             return redirect()
-                ->route('vendor.themes.preview', $cleanId)
-                ->with('error', 'Active theme access is required before customizing this theme. Preview it or request access via WhatsApp.');
+                ->route('vendor.themes.index')
+                ->with('error', 'Active theme entitlement is required before customizing this theme. Open Preview or Request Access via WhatsApp.');
         }
 
-        // Legacy themes redirect to the existing Store Design Studio editor
         if (!empty($manifest['is_legacy'])) {
             return redirect()->route('vendor.design.editor');
         }
 
         $draftConfig = $this->service->getDraftConfigForTheme($vendor, $cleanId);
         $liveThemeId = $this->service->resolvePublicThemeId($vendor);
-        $isLive = ($liveThemeId === $cleanId);
+        $previewUrl = URL::temporarySignedRoute('vendor.themes.preview', now()->addHours(2), [
+            'themeId' => $cleanId,
+            'v' => $vendor->id,
+        ]);
 
         return view('vendor.themes.customize', [
             'vendor' => $vendor,
             'theme' => $theme,
             'manifest' => $manifest,
             'draftConfig' => $draftConfig,
-            'isLive' => $isLive,
+            'isLive' => ($liveThemeId === $cleanId),
+            'previewUrl' => $previewUrl,
             'headingFonts' => ThemeMarketplaceRegistry::ALLOWED_HEADING_FONTS,
             'bodyFonts' => ThemeMarketplaceRegistry::ALLOWED_BODY_FONTS,
         ]);
     }
 
-    /**
-     * Save Draft Configuration ONLY (never alters live storefront).
-     */
     public function saveDraft(Request $request, string $themeId)
     {
         $vendor = auth()->user()?->vendor;
@@ -428,7 +475,6 @@ class ThemeMarketplaceController extends Controller
             return back()->with('error', 'Invalid configuration submitted.');
         }
 
-        // Handle optional hero or editorial image upload safely
         if ($request->hasFile('hero_image_file')) {
             $request->validate(['hero_image_file' => 'image|mimes:jpeg,jpg,png,webp,avif|max:8192']);
             $path = $request->file('hero_image_file')->store("storefronts/{$vendor->id}/themes/{$cleanId}", 'public');
@@ -449,15 +495,12 @@ class ThemeMarketplaceController extends Controller
 
         try {
             $this->service->saveDraft($vendor, $cleanId, $payload);
-            return back()->with('success', 'Draft saved! Your live storefront has not changed — preview your draft or click Publish when ready.');
+            return back()->with('success', 'Draft saved! Your live storefront has not changed — open Preview to inspect your draft or click Publish when ready.');
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
     }
 
-    /**
-     * Reset draft back to theme defaults (does not touch live storefront).
-     */
     public function resetDraft(string $themeId)
     {
         $vendor = auth()->user()?->vendor;
@@ -478,9 +521,6 @@ class ThemeMarketplaceController extends Controller
         }
     }
 
-    /**
-     * Explicit Publish Action (requires active entitlement + ready theme + valid draft).
-     */
     public function publish(string $themeId)
     {
         $vendor = auth()->user()?->vendor;
@@ -501,19 +541,16 @@ class ThemeMarketplaceController extends Controller
         }
     }
 
-    /**
-     * Safe in-memory sample showcase items used ONLY during catalogue preview if a vendor has 0 products yet.
-     */
     protected function buildSampleShowcaseProducts(Vendor $vendor)
     {
         $placeholder = asset('images/product-placeholder.svg');
         $items = [
-            ['slug' => 'sample-piece-1', 'title' => 'Sample Showcase Item 01', 'price' => 249900, 'compare' => 299900, 'cat' => 'Featured', 'sku' => 'SMP-01'],
-            ['slug' => 'sample-piece-2', 'title' => 'Sample Showcase Item 02', 'price' => 389900, 'compare' => 0, 'cat' => 'New Arrivals', 'sku' => 'SMP-02'],
-            ['slug' => 'sample-piece-3', 'title' => 'Sample Showcase Item 03', 'price' => 179900, 'compare' => 219900, 'cat' => 'Essentials', 'sku' => 'SMP-03'],
-            ['slug' => 'sample-piece-4', 'title' => 'Sample Showcase Item 04', 'price' => 549900, 'compare' => 0, 'cat' => 'Featured', 'sku' => 'SMP-04'],
-            ['slug' => 'sample-piece-5', 'title' => 'Sample Showcase Item 05', 'price' => 129900, 'compare' => 0, 'cat' => 'Essentials', 'sku' => 'SMP-05'],
-            ['slug' => 'sample-piece-6', 'title' => 'Sample Showcase Item 06', 'price' => 429900, 'compare' => 499900, 'cat' => 'New Arrivals', 'sku' => 'SMP-06'],
+            ['slug' => 'preview-item-1', 'title' => 'Preview Showcase Piece 01', 'price' => 249900, 'compare' => 299900, 'cat' => 'Featured', 'sku' => 'PRV-01'],
+            ['slug' => 'preview-item-2', 'title' => 'Preview Showcase Piece 02', 'price' => 389900, 'compare' => 0, 'cat' => 'New Arrivals', 'sku' => 'PRV-02'],
+            ['slug' => 'preview-item-3', 'title' => 'Preview Showcase Piece 03', 'price' => 179900, 'compare' => 219900, 'cat' => 'Essentials', 'sku' => 'PRV-03'],
+            ['slug' => 'preview-item-4', 'title' => 'Preview Showcase Piece 04', 'price' => 549900, 'compare' => 0, 'cat' => 'Featured', 'sku' => 'PRV-04'],
+            ['slug' => 'preview-item-5', 'title' => 'Preview Showcase Piece 05', 'price' => 129900, 'compare' => 0, 'cat' => 'Essentials', 'sku' => 'PRV-05'],
+            ['slug' => 'preview-item-6', 'title' => 'Preview Showcase Piece 06', 'price' => 429900, 'compare' => 499900, 'cat' => 'New Arrivals', 'sku' => 'PRV-06'],
         ];
 
         return collect($items)->map(function ($it, $idx) use ($placeholder) {
@@ -521,11 +558,12 @@ class ThemeMarketplaceController extends Controller
             $p->id = 99000 + $idx;
             $p->slug = $it['slug'];
             $p->title = $it['title'];
-            $p->description = 'Sample preview item displayed because your store has no active products yet. Your real products will appear automatically once listed.';
+            $p->description = 'Preview placeholder shown because this store has no active products yet. Your real catalog items will automatically populate this layout.';
             $p->base_price = $it['price'];
             $p->compare_at_price = $it['compare'];
             $p->total_stock = 10;
             $p->sku = $it['sku'];
+            $p->material = 'Sample Material';
             $p->listing_type = 'purchase';
             $p->setRelation('images', collect([(object) ['url' => $placeholder]]));
             $p->setRelation('category', (object) ['slug' => Str::slug($it['cat']), 'name' => $it['cat']]);

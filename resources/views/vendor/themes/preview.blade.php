@@ -1,84 +1,114 @@
-<x-layouts.vendor title="Preview: {{ $theme->name }}">
-<div class="h-[calc(100vh-4rem)] flex flex-col bg-slate-100"
-     x-data="{
-        viewport: 'desktop',
-        page: '{{ $initialPage }}',
-        get frameUrl() {
-            return '{{ route('vendor.themes.preview_frame', $theme->theme_id) }}?page=' + this.page;
-        },
-        get frameWidthClass() {
-            if (this.viewport === 'mobile') return 'w-[390px] max-w-full';
-            if (this.viewport === 'tablet') return 'w-[768px] max-w-full';
-            return 'w-full';
-        }
-     }">
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>PREVIEW — {{ $theme->name }} · {{ $vendor->shop_name }}</title>
+    @vite(['resources/css/app.css'])
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>[x-cloak] { display: none !important; }</style>
+</head>
+<body class="m-0 p-0 bg-zinc-950 text-zinc-100 h-screen overflow-hidden antialiased"
+      x-data="{
+          viewport: 'desktop',
+          page: '{{ $initialPage }}',
+          fullscreen: false,
+          base: '{{ $signedFrameBase }}',
+          get frameUrl() {
+              const sep = this.base.includes('?') ? '&' : '?';
+              return this.base + sep + 'page=' + this.page;
+          },
+          get frameContainerClass() {
+              if (this.fullscreen || this.viewport === 'desktop') return 'w-full h-full rounded-none border-0';
+              if (this.viewport === 'tablet') return 'w-[768px] max-w-full h-full rounded-2xl border border-zinc-700 shadow-2xl';
+              return 'w-[390px] max-w-full h-full rounded-[2rem] border-4 border-zinc-800 shadow-2xl';
+          }
+      }">
 
-    {{-- Top Isolated Preview Control Bar --}}
-    <div class="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div class="flex items-center gap-3 min-w-0">
-            <a href="{{ route('vendor.themes.index') }}" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                &larr; Catalogue
-            </a>
-            <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                    <h1 class="text-sm font-extrabold text-slate-900 truncate">{{ $theme->name }}</h1>
-                    <span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">{{ $theme->formatted_price }}</span>
-                    @if($isLive)
-                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Live</span>
-                    @elseif($isEntitled)
-                        <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-bold">Entitled</span>
-                    @else
-                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[10px] font-bold">Preview Only</span>
-                    @endif
+    <div class="h-screen flex flex-col">
+
+        {{-- Sleek Top Preview Bar (Hidden cleanly in Full-Screen Mode) --}}
+        <header x-show="!fullscreen" x-transition
+                class="bg-zinc-950/95 border-b border-zinc-800 px-3 sm:px-5 py-2.5 flex flex-wrap items-center justify-between gap-2.5 shrink-0 z-50">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="px-2.5 py-1 rounded-md bg-amber-400 text-zinc-950 text-[10px] font-black uppercase tracking-wider shrink-0">
+                    PREVIEW — NOT LIVE
+                </span>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs sm:text-sm font-extrabold text-white truncate">{{ $theme->name }}</span>
+                        <span class="hidden sm:inline text-[11px] text-zinc-400 truncate">for {{ $vendor->shop_name }}</span>
+                    </div>
                 </div>
-                <p class="text-[11px] text-slate-500 truncate">Isolated preview · Your live storefront is completely untouched.</p>
             </div>
-        </div>
 
-        {{-- Page Switcher (Home / Collection / Product Detail) --}}
-        @if(!$theme->is_legacy)
-            <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold">
-                <button type="button" @click="page = 'home'" :class="page === 'home' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Homepage</button>
-                <button type="button" @click="page = 'collection'" :class="page === 'collection' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Collection</button>
-                <button type="button" @click="page = 'product'" :class="page === 'product' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Product Page</button>
-            </div>
-        @endif
-
-        {{-- Viewport Switcher (Desktop / Tablet / Mobile) --}}
-        <div class="inline-flex rounded-xl bg-slate-100 p-1 text-xs font-bold">
-            <button type="button" @click="viewport = 'desktop'" :class="viewport === 'desktop' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Desktop</button>
-            <button type="button" @click="viewport = 'tablet'" :class="viewport === 'tablet' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Tablet</button>
-            <button type="button" @click="viewport = 'mobile'" :class="viewport === 'mobile' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500'" class="px-3 py-1.5 rounded-lg transition cursor-pointer">Mobile</button>
-        </div>
-
-        {{-- Context Action --}}
-        <div class="flex items-center gap-2">
-            @if($isEntitled)
-                @if($theme->is_legacy)
-                    <a href="{{ route('vendor.design.index') }}" class="px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800">Open Classic Studio</a>
-                @else
-                    <a href="{{ route('vendor.themes.customize', $theme->theme_id) }}" class="px-4 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800">Customize Draft</a>
-                @endif
-            @elseif($activeRequest && $activeRequest->isPending())
-                @if($whatsappUrl)
-                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700">WhatsApp Admin ({{ $activeRequest->reference_code }})</a>
-                @else
-                    <span class="px-3 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold">Pending: {{ $activeRequest->reference_code }}</span>
-                @endif
-            @elseif($theme->canBeRequested())
-                <form action="{{ route('vendor.themes.request', $theme->theme_id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 cursor-pointer">Request Access ({{ $theme->formatted_price }})</button>
-                </form>
+            {{-- Page Switcher --}}
+            @if(!$theme->is_legacy)
+                <div class="inline-flex rounded-lg bg-zinc-900 border border-zinc-800 p-0.5 text-[11px] font-bold">
+                    <button type="button" @click="page = 'home'" :class="page === 'home' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer">Home</button>
+                    <button type="button" @click="page = 'collection'" :class="page === 'collection' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer">Collection</button>
+                    <button type="button" @click="page = 'product'" :class="page === 'product' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer">Product</button>
+                </div>
             @endif
-        </div>
-    </div>
 
-    {{-- Responsive Isolated Iframe Stage --}}
-    <div class="flex-1 overflow-auto p-3 sm:p-5 flex justify-center">
-        <div :class="frameWidthClass" class="h-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden transition-all duration-300">
-            <iframe :src="frameUrl" title="Isolated theme preview of {{ $theme->name }}" class="w-full h-full border-0"></iframe>
+            {{-- Responsive Viewport Controls + Full-Screen --}}
+            <div class="inline-flex items-center rounded-lg bg-zinc-900 border border-zinc-800 p-0.5 text-[11px] font-bold">
+                <button type="button" @click="viewport = 'desktop'" :class="viewport === 'desktop' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer" title="Desktop viewport">Desktop</button>
+                <button type="button" @click="viewport = 'tablet'" :class="viewport === 'tablet' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer" title="Tablet 768px viewport">Tablet</button>
+                <button type="button" @click="viewport = 'mobile'" :class="viewport === 'mobile' ? 'bg-white text-zinc-950' : 'text-zinc-400 hover:text-white'" class="px-2.5 py-1.5 rounded-md transition cursor-pointer" title="Mobile 390px viewport">Mobile</button>
+                <button type="button" @click="fullscreen = true; viewport = 'desktop'" class="px-2.5 py-1.5 rounded-md text-zinc-300 hover:text-white transition cursor-pointer border-l border-zinc-800 ml-0.5" title="Full-screen preview">Full-Screen</button>
+            </div>
+
+            {{-- Return / Action Controls --}}
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="{{ $returnUrl }}" class="px-3 py-1.5 rounded-lg border border-zinc-700 text-[11px] font-bold text-zinc-200 hover:bg-zinc-800 transition">
+                    {{ !empty($isAdminPreview) ? 'Back to Admin' : 'Marketplace' }}
+                </a>
+                @if(empty($isAdminPreview))
+                    @if($isEntitled)
+                        <a href="{{ $theme->is_legacy ? route('vendor.design.index') : route('vendor.themes.customize', $theme->theme_id) }}"
+                           class="px-3.5 py-1.5 rounded-lg bg-white text-zinc-950 text-[11px] font-extrabold hover:bg-zinc-200 transition">
+                            Customize Draft
+                        </a>
+                    @elseif($activeRequest && $activeRequest->isPending())
+                        @if($whatsappUrl)
+                            <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 text-zinc-950 text-[11px] font-extrabold hover:bg-emerald-400 transition">
+                                WhatsApp ({{ $activeRequest->reference_code }})
+                            </a>
+                        @else
+                            <span class="px-3 py-1.5 rounded-lg bg-amber-400/15 text-amber-300 border border-amber-400/30 text-[11px] font-bold">Pending: {{ $activeRequest->reference_code }}</span>
+                        @endif
+                    @elseif($theme->canBeRequested())
+                        <form action="{{ route('vendor.themes.request', $theme->theme_id) }}" method="POST" class="inline">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 text-zinc-950 text-[11px] font-extrabold hover:bg-emerald-400 transition cursor-pointer">
+                                Request Access · {{ $theme->formatted_price }}
+                            </button>
+                        </form>
+                    @endif
+                @endif
+            </div>
+        </header>
+
+        {{-- Discreet Full-Screen Exit Pill --}}
+        <div x-show="fullscreen" x-cloak class="fixed bottom-4 left-4 z-50 flex items-center gap-2 px-3.5 py-2 rounded-full bg-zinc-950/90 border border-zinc-700 shadow-2xl text-xs">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span class="font-bold text-amber-300">PREVIEW — NOT LIVE</span>
+            <button type="button" @click="fullscreen = false" class="ml-1 px-2.5 py-1 rounded-full bg-white text-zinc-950 font-extrabold text-[11px] cursor-pointer hover:bg-zinc-200">
+                Exit Full-Screen
+            </button>
         </div>
+
+        {{-- Isolated Responsive Preview Canvas --}}
+        <main class="flex-1 overflow-auto flex justify-center transition-all duration-300" :class="(!fullscreen && viewport !== 'desktop') ? 'p-4 sm:p-6 bg-zinc-900' : 'p-0 bg-white'">
+            <div :class="frameContainerClass" class="bg-white overflow-hidden transition-all duration-300">
+                <iframe :src="frameUrl"
+                        title="Isolated theme preview: {{ $theme->name }}"
+                        class="w-full h-full border-0 bg-white"></iframe>
+            </div>
+        </main>
     </div>
-</div>
-</x-layouts.vendor>
+</body>
+</html>

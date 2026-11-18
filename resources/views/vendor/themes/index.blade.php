@@ -1,17 +1,17 @@
-<x-layouts.vendor title="Storefront Theme Marketplace">
+<x-layouts.vendor title="Theme Marketplace">
 <div class="py-6 sm:py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
 
-    {{-- Header Banner --}}
+    {{-- Header --}}
     <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div>
-            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-wider mb-2">
-                <span>61 Storefront Themes</span>
-                <span class="opacity-60">·</span>
-                <span>11 Classic + 50 Studio Editions</span>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-950 text-white text-[10px] font-bold uppercase tracking-widest mb-2.5">
+                <span>K71 Storefront Theme Marketplace</span>
+                <span class="opacity-50">|</span>
+                <span>61 Themes · 50 Bespoke Studio Editions</span>
             </div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Storefront Theme Marketplace</h1>
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">Theme Marketplace</h1>
             <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-                Preview any theme safely across desktop, tablet, and mobile without changing your live store. Paid themes are unlocked by K71 Admin after WhatsApp payment coordination and verification.
+                Every studio theme features its own layout architecture, typography system, product cards, and product detail page. Click <strong>Preview</strong> on any theme to inspect your actual store in a new tab without altering your live storefront.
             </p>
         </div>
         <div class="flex flex-wrap items-center gap-2.5">
@@ -19,27 +19,29 @@
                 Classic 11 Studio
             </a>
             @if($vendor->storefront_url)
-                <a href="{{ $vendor->storefront_url }}" target="_blank" class="px-4 py-2.5 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition">
-                    Open Live Storefront &rarr;
+                <a href="{{ $vendor->storefront_url }}" target="_blank" rel="noopener" class="px-4 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition inline-flex items-center gap-1.5">
+                    <span>Live Storefront</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6M10 14L20 4M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>
                 </a>
             @endif
         </div>
     </div>
 
-    {{-- Flash Notifications & Instant WhatsApp Link Banner --}}
+    {{-- Flash Feedback + WhatsApp Coordination Banner --}}
     @if(session('success'))
-        <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm space-y-2.5">
+        <div class="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs sm:text-sm space-y-2.5">
             <p class="font-semibold">{{ session('success') }}</p>
             @if(session('recent_whatsapp_url'))
                 <div class="flex flex-wrap items-center gap-3 pt-1">
                     <a href="{{ session('recent_whatsapp_url') }}" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition">
-                        Open WhatsApp to Coordinate Payment &rarr;
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition">
+                        <span>Continue on WhatsApp</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6l6 6-6 6"/></svg>
                     </a>
-                    <span class="text-[11px] text-emerald-700">Note: Sending a WhatsApp message does not automatically activate the theme; K71 Admin unlocks it after verifying payment.</span>
+                    <span class="text-[11px] text-emerald-800">Manual verification required: clicking WhatsApp does not mark payment confirmed or unlock the theme until K71 Admin grants access.</span>
                 </div>
             @elseif(!$adminWhatsAppConfigured)
-                <p class="text-[11px] text-amber-800 font-medium">Official admin WhatsApp number is not yet configured in Admin Theme Settings. Your request reference is saved in the admin queue.</p>
+                <p class="text-[11px] text-amber-800 font-medium">Business WhatsApp number is not yet configured in Admin Theme Settings. Your purchase request reference is safely recorded in the admin queue.</p>
             @endif
         </div>
     @endif
@@ -50,12 +52,12 @@
         </div>
     @endif
 
-    {{-- Active / Recent Vendor Requests Strip --}}
+    {{-- Vendor's Active / Recent Purchase Requests --}}
     @if($vendorRequests->isNotEmpty())
         <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-sm font-bold text-slate-900">Your Theme Access Requests</h2>
-                <span class="text-[11px] text-slate-500">Payment verification &amp; access grants are managed separately by K71 Admin</span>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-sm font-extrabold text-slate-900">Your Theme Access Requests</h2>
+                <span class="text-[11px] text-slate-500">Payment verification &amp; entitlement grants are performed manually by K71 Admin</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -66,14 +68,14 @@
                             <th class="py-2 pr-3">Price Snapshot</th>
                             <th class="py-2 pr-3">Payment Status</th>
                             <th class="py-2 pr-3">Request Status</th>
-                            <th class="py-2 text-right">Actions</th>
+                            <th class="py-2 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach($vendorRequests as $req)
                             @php $waHref = $service->buildWhatsAppRequestUrl($req); @endphp
                             <tr>
-                                <td class="py-2.5 pr-3 font-mono font-bold text-slate-800">{{ $req->reference_code }}</td>
+                                <td class="py-2.5 pr-3 font-mono font-bold text-slate-900">{{ $req->reference_code }}</td>
                                 <td class="py-2.5 pr-3 font-semibold text-slate-900">{{ $req->theme?->name ?? $req->theme_id }}</td>
                                 <td class="py-2.5 pr-3 font-semibold text-slate-700">{{ $req->formatted_price_snapshot }}</td>
                                 <td class="py-2.5 pr-3">
@@ -82,20 +84,16 @@
                                     </span>
                                 </td>
                                 <td class="py-2.5 pr-3">
-                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">
-                                        {{ $req->status_label }}
-                                    </span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">{{ $req->status_label }}</span>
                                 </td>
                                 <td class="py-2.5 text-right whitespace-nowrap space-x-1.5">
                                     @if($req->isPending() && $waHref)
-                                        <a href="{{ $waHref }}" target="_blank" rel="noopener" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700">
-                                            WhatsApp Admin
-                                        </a>
+                                        <a href="{{ $waHref }}" target="_blank" rel="noopener" class="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold hover:bg-emerald-700">Continue on WhatsApp</a>
                                     @endif
                                     @if(in_array($req->status, ['requested', 'pending_review', 'payment_awaiting_confirmation'], true))
-                                        <form action="{{ route('vendor.themes.request.cancel', $req) }}" method="POST" class="inline" onsubmit="return confirm('Cancel this pending theme request?');">
+                                        <form action="{{ route('vendor.themes.request.cancel', $req) }}" method="POST" class="inline" onsubmit="return confirm('Cancel this pending request?');">
                                             @csrf
-                                            <button type="submit" class="px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                                            <button type="submit" class="px-2.5 py-1 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
                                         </form>
                                     @endif
                                 </td>
@@ -107,11 +105,11 @@
         </div>
     @endif
 
-    {{-- Search, Category, Access & Price Filters --}}
+    {{-- Search, Category, Price Range, Access & Sort Controls --}}
     <form action="{{ route('vendor.themes.index') }}" method="GET" class="rounded-2xl border border-slate-200 bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-        <div class="lg:col-span-4">
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Search Themes</label>
-            <input type="search" name="q" value="{{ $search }}" placeholder="Search by name, style, or keyword..."
+        <div class="lg:col-span-3">
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Search</label>
+            <input type="search" name="q" value="{{ $search }}" placeholder="Theme name or design style..."
                    class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-900 focus:border-zinc-900 focus:outline-none">
         </div>
         <div class="lg:col-span-3">
@@ -124,143 +122,219 @@
             </select>
         </div>
         <div class="lg:col-span-2">
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Access Status</label>
-            <select name="access" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-900">
-                <option value="all" {{ $accessFilter === 'all' ? 'selected' : '' }}>All Themes</option>
-                <option value="entitled" {{ $accessFilter === 'entitled' ? 'selected' : '' }}>Unlocked / Included</option>
-                <option value="available" {{ $accessFilter === 'available' ? 'selected' : '' }}>Available to Request</option>
-                <option value="pending" {{ $accessFilter === 'pending' ? 'selected' : '' }}>Request Pending</option>
-                <option value="live" {{ $accessFilter === 'live' ? 'selected' : '' }}>Currently Live</option>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Price Range</label>
+            <select name="price" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-900">
+                <option value="all" {{ $priceFilter === 'all' ? 'selected' : '' }}>Any Price</option>
+                <option value="free" {{ $priceFilter === 'free' ? 'selected' : '' }}>Included / Free</option>
+                <option value="under_2500" {{ $priceFilter === 'under_2500' ? 'selected' : '' }}>Up to ₹2,500</option>
+                <option value="2500_7500" {{ $priceFilter === '2500_7500' ? 'selected' : '' }}>₹2,500 – ₹7,500</option>
+                <option value="above_7500" {{ $priceFilter === 'above_7500' ? 'selected' : '' }}>₹7,500+</option>
             </select>
         </div>
         <div class="lg:col-span-2">
-            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Sort By</label>
-            <select name="sort" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-900">
-                <option value="featured" {{ $sort === 'featured' ? 'selected' : '' }}>Featured Order</option>
-                <option value="name" {{ $sort === 'name' ? 'selected' : '' }}>Name (A–Z)</option>
-                <option value="price_low" {{ $sort === 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
-                <option value="price_high" {{ $sort === 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Access</label>
+            <select name="access" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-900">
+                <option value="all" {{ $accessFilter === 'all' ? 'selected' : '' }}>All Themes</option>
+                <option value="entitled" {{ $accessFilter === 'entitled' ? 'selected' : '' }}>Accessible / Owned</option>
+                <option value="available" {{ $accessFilter === 'available' ? 'selected' : '' }}>Requires Approval</option>
+                <option value="pending" {{ $accessFilter === 'pending' ? 'selected' : '' }}>Pending Request</option>
+                <option value="live" {{ $accessFilter === 'live' ? 'selected' : '' }}>Currently Live</option>
             </select>
         </div>
-        <div class="lg:col-span-1 flex gap-1.5">
-            <button type="submit" class="w-full px-3 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition">Filter</button>
+        <div class="lg:col-span-2 flex gap-2">
+            <select name="sort" aria-label="Sort themes" class="flex-1 rounded-xl border border-slate-200 px-2.5 py-2 text-xs font-medium text-slate-900">
+                <option value="featured" {{ $sort === 'featured' ? 'selected' : '' }}>Featured</option>
+                <option value="newest" {{ $sort === 'newest' ? 'selected' : '' }}>Newest</option>
+                <option value="name" {{ $sort === 'name' ? 'selected' : '' }}>Name A–Z</option>
+                <option value="price_low" {{ $sort === 'price_low' ? 'selected' : '' }}>Price Low</option>
+                <option value="price_high" {{ $sort === 'price_high' ? 'selected' : '' }}>Price High</option>
+            </select>
+            <button type="submit" class="px-3.5 py-2 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 cursor-pointer shrink-0">Go</button>
         </div>
     </form>
 
-    {{-- Theme Catalogue Grid (Lightweight Art-Directed Miniature Previews) --}}
+    {{-- Theme Marketplace Cards --}}
     @if($items->isEmpty())
-        <div class="rounded-2xl border border-slate-200 bg-white p-12 text-center space-y-2">
-            <p class="text-sm font-bold text-slate-900">No themes matched your filter</p>
-            <a href="{{ route('vendor.themes.index') }}" class="inline-block text-xs font-bold text-indigo-600 hover:underline">Reset filters</a>
+        <div class="rounded-2xl border border-slate-200 bg-white p-14 text-center space-y-2.5">
+            <p class="text-base font-extrabold text-slate-900">No themes match your current filters</p>
+            <p class="text-xs text-slate-500">Try clearing your search keyword or switching category/price filters.</p>
+            <a href="{{ route('vendor.themes.index') }}" class="inline-block mt-2 px-4 py-2 rounded-xl bg-zinc-950 text-white text-xs font-bold">Reset All Filters</a>
         </div>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             @foreach($items as $entry)
                 @php
                     $t = $entry['theme'];
                     $m = $entry['manifest'];
-                    $pal = $m['palette'] ?? ['bg' => '#fafaf9', 'surface' => '#ffffff', 'text' => '#18181b', 'accent' => '#18181b'];
+                    $pal = $m['palette'] ?? ['bg' => '#fafaf9', 'surface' => '#ffffff', 'surface_alt' => '#ececec', 'text' => '#18181b', 'accent' => '#18181b', 'accent_contrast' => '#ffffff'];
+                    $lay = $m['layout'] ?? ['hero_template' => 'asymmetric-campaign', 'header_template' => 'couture-centered'];
+                    $heroT = $lay['hero_template'] ?? 'asymmetric-campaign';
                     $state = $entry['state'];
                     $req = $entry['request'];
+                    $attrs = is_array($t->design_attributes) && !empty($t->design_attributes) ? $t->design_attributes : ($m['design_attributes'] ?? []);
+                    $compat = is_array($t->compatible_categories) && !empty($t->compatible_categories) ? $t->compatible_categories : ($m['compatible_categories'] ?? []);
                 @endphp
-                <article class="rounded-2xl border transition-all overflow-hidden flex flex-col justify-between bg-white {{ $entry['is_live'] ? 'border-emerald-500 ring-2 ring-emerald-500/20' : 'border-slate-200 hover:border-slate-300 hover:shadow-md' }}">
+                <article class="rounded-2xl border transition-all overflow-hidden flex flex-col justify-between bg-white {{ $entry['is_live'] ? 'border-emerald-500 ring-2 ring-emerald-500/20 shadow-md' : 'border-slate-200 hover:border-slate-300 hover:shadow-lg' }}">
 
-                    {{-- Lightweight Visual Miniature Thumbnail (No heavy iframe instantiation) --}}
-                    <div class="relative p-4 h-44 flex flex-col justify-between overflow-hidden"
-                         style="background-color: {{ $pal['bg'] }}; color: {{ $pal['text'] }}; border-bottom: 1px solid rgba(0,0,0,0.06);">
-                        <div class="flex items-center justify-between gap-2 text-[10px] font-bold">
-                            <span class="px-2 py-0.5 rounded-full" style="background-color: {{ $pal['surface'] }}; color: {{ $pal['text'] }}; border: 1px solid {{ $pal['accent'] }}44;">
-                                {{ $t->is_legacy ? 'Classic 11' : ('#' . str_pad((string)($m['number'] ?? ''), 2, '0', STR_PAD_LEFT) . ' · ' . ucfirst($t->category)) }}
-                            </span>
-                            @if($entry['is_live'])
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">Live Now</span>
-                            @elseif($state === 'granted')
-                                <span class="px-2 py-0.5 rounded-full bg-indigo-600 text-white uppercase tracking-wider">Access Granted</span>
-                            @elseif($state === 'pending')
-                                <span class="px-2 py-0.5 rounded-full bg-amber-500 text-black uppercase tracking-wider">Pending Review</span>
-                            @elseif($state === 'revoked')
-                                <span class="px-2 py-0.5 rounded-full bg-rose-600 text-white uppercase tracking-wider">Revoked</span>
-                            @elseif($state === 'unavailable')
-                                <span class="px-2 py-0.5 rounded-full bg-zinc-700 text-white uppercase tracking-wider">Unavailable</span>
-                            @endif
-                        </div>
-
-                        {{-- Art-Directed Mini Layout Wireframe Preview --}}
-                        <div class="my-auto py-2 grid grid-cols-12 gap-2 items-center">
-                            <div class="col-span-7 space-y-1.5">
-                                <div class="h-1.5 w-10 rounded-full" style="background-color: {{ $pal['accent'] }};"></div>
-                                <div class="text-base font-extrabold leading-tight truncate">{{ $t->name }}</div>
-                                <div class="text-[10px] opacity-75 line-clamp-1">{{ $m['typography']['heading_font'] ?? 'Editorial' }} · {{ $m['layout']['hero_variant'] ?? 'Storefront' }}</div>
+                    {{-- Bespoke Miniature Architectural Theme Preview (Unique per Hero/Header/Palette) --}}
+                    <div class="relative p-4 h-52 flex flex-col justify-between overflow-hidden"
+                         style="background-color: {{ $pal['bg'] }}; color: {{ $pal['text'] }}; border-bottom: 1px solid rgba(0,0,0,0.08);">
+                        {{-- Mini Header Bar reflecting theme header architecture --}}
+                        <div class="flex items-center justify-between gap-2 pb-2" style="border-bottom: 1px solid {{ $pal['text'] }}18;">
+                            <div class="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-wider opacity-85">
+                                <span class="w-2 h-2 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
+                                <span>{{ $t->is_legacy ? 'Classic 11' : ('#' . str_pad((string)($m['number'] ?? ''), 2, '0', STR_PAD_LEFT)) }}</span>
+                                @if($t->is_featured)
+                                    <span class="px-1.5 py-0.5 rounded font-sans font-bold" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">Featured</span>
+                                @endif
                             </div>
-                            <div class="col-span-5 grid grid-cols-2 gap-1.5">
-                                <div class="h-14 rounded-lg" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['accent'] }}33;"></div>
-                                <div class="h-14 rounded-lg" style="background-color: {{ $pal['accent'] }}22; border: 1px solid {{ $pal['accent'] }}44;"></div>
+                            <div class="flex items-center gap-1.5">
+                                @if($entry['is_live'])
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black uppercase">Live</span>
+                                @elseif($state === 'granted')
+                                    <span class="px-2 py-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-black uppercase">Owned</span>
+                                @elseif($state === 'pending')
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-400 text-zinc-950 text-[9px] font-black uppercase">Pending</span>
+                                @elseif($state === 'revoked')
+                                    <span class="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black uppercase">Revoked</span>
+                                @endif
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between text-[10px] opacity-80">
-                            <span>v{{ $t->version }}</span>
-                            <span class="font-bold px-2 py-0.5 rounded" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#ffffff' }};">
+                        {{-- Mini Architectural Wireframe reflecting THIS theme's exact hero composition --}}
+                        @if($heroT === 'bento-modular-hero')
+                            <div class="grid grid-cols-12 gap-1.5 my-2 flex-1">
+                                <div class="col-span-7 rounded-lg p-2.5 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}14;">
+                                    <span class="text-[8px] font-mono uppercase opacity-60">Bento Modular</span>
+                                    <span class="text-sm font-extrabold leading-tight">{{ $t->name }}</span>
+                                    <span class="inline-block w-12 h-2 rounded-full" style="background-color: {{ $pal['accent'] }};"></span>
+                                </div>
+                                <div class="col-span-5 grid grid-cols-2 gap-1.5">
+                                    <div class="col-span-2 rounded-lg" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                    <div class="rounded-lg" style="background-color: {{ $pal['accent'] }}33;"></div>
+                                    <div class="rounded-lg" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}15;"></div>
+                                </div>
+                            </div>
+                        @elseif($heroT === 'color-block-duet')
+                            <div class="grid grid-cols-12 rounded-lg overflow-hidden my-2 flex-1" style="border: 1.5px solid {{ $pal['text'] }};">
+                                <div class="col-span-6 p-2.5 flex flex-col justify-between" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">
+                                    <span class="text-[8px] uppercase font-bold opacity-80">Color Block</span>
+                                    <span class="text-sm font-black leading-tight">{{ $t->name }}</span>
+                                </div>
+                                <div class="col-span-6 p-2 flex items-end justify-end" style="background-color: {{ $pal['surface'] }};">
+                                    <div class="w-10 h-14 rounded" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                </div>
+                            </div>
+                        @elseif($heroT === 'diagonal-performance')
+                            <div class="relative rounded-lg overflow-hidden my-2 flex-1 p-3 flex items-center justify-between" style="background-color: {{ $pal['surface_alt'] }}; color: #ffffff;">
+                                <div class="space-y-1 z-10">
+                                    <span class="text-[8px] font-mono uppercase" style="color: {{ $pal['accent'] }};">Performance Spec</span>
+                                    <div class="text-sm font-black uppercase leading-none">{{ $t->name }}</div>
+                                </div>
+                                <div class="w-14 h-14 rounded-md rotate-3" style="background-color: {{ $pal['accent'] }}44; border: 1px solid {{ $pal['accent'] }};"></div>
+                            </div>
+                        @elseif($heroT === 'compact-catalog-banner')
+                            <div class="my-2 flex-1 flex flex-col justify-between gap-1.5">
+                                <div class="rounded px-2.5 py-1.5 flex items-center justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}18;">
+                                    <span class="text-xs font-extrabold">{{ $t->name }}</span>
+                                    <span class="px-2 py-0.5 rounded text-[8px] font-bold" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">Search</span>
+                                </div>
+                                <div class="grid grid-cols-4 gap-1.5 flex-1">
+                                    @for($k = 0; $k < 4; $k++)
+                                        <div class="rounded p-1 flex flex-col justify-between" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}12;">
+                                            <div class="h-7 rounded-xs" style="background-color: {{ $pal['surface_alt'] }};"></div>
+                                            <div class="h-1.5 w-3/4 rounded-full" style="background-color: {{ $pal['accent'] }}88;"></div>
+                                        </div>
+                                    @endfor
+                                </div>
+                            </div>
+                        @elseif(in_array($heroT, ['white-plinth-gallery', 'tech-product-centerpiece'], true))
+                            <div class="my-2 flex-1 flex flex-col items-center justify-center text-center gap-1.5">
+                                <span class="text-[8px] uppercase tracking-[0.22em] opacity-65">{{ $m['typography']['heading_font'] ?? 'Gallery' }}</span>
+                                <div class="text-base font-semibold leading-none">{{ $t->name }}</div>
+                                <div class="w-28 h-12 rounded mt-1" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}22;"></div>
+                            </div>
+                        @else
+                            <div class="grid grid-cols-12 gap-2 items-center my-2 flex-1">
+                                <div class="col-span-6 space-y-1.5">
+                                    <span class="inline-block w-8 h-0.5" style="background-color: {{ $pal['accent'] }};"></span>
+                                    <div class="text-base font-bold leading-tight">{{ $t->name }}</div>
+                                    <div class="text-[9px] opacity-70 truncate">{{ $m['typography']['heading_font'] ?? 'Editorial' }} · {{ str_replace('-', ' ', $lay['pdp_template'] ?? 'Bespoke') }}</div>
+                                </div>
+                                <div class="col-span-6 grid grid-cols-3 gap-1.5 h-20">
+                                    <div class="col-span-2 rounded" style="background-color: {{ $pal['surface'] }}; border: 1px solid {{ $pal['text'] }}1a;"></div>
+                                    <div class="rounded mt-3" style="background-color: {{ $pal['accent'] }}33; border: 1px solid {{ $pal['accent'] }}55;"></div>
+                                </div>
+                            </div>
+                        @endif
+
+                        <div class="flex items-center justify-between text-[10px] pt-1 opacity-85">
+                            <span class="truncate">{{ $categories[$t->category] ?? ucfirst($t->category) }}</span>
+                            <span class="font-extrabold px-2 py-0.5 rounded shrink-0" style="background-color: {{ $pal['accent'] }}; color: {{ $pal['accent_contrast'] ?? '#fff' }};">
                                 {{ $t->formatted_price }}
                             </span>
                         </div>
                     </div>
 
-                    {{-- Card Metadata & Strict State-Driven Actions --}}
-                    <div class="p-4 flex-1 flex flex-col justify-between gap-4">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <h3 class="text-sm font-extrabold text-slate-900">{{ $t->name }}</h3>
-                                <span class="text-xs font-extrabold text-slate-900">{{ $t->formatted_price }}</span>
+                    {{-- Metadata, Attributes & Direct Actions --}}
+                    <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-4">
+                        <div class="space-y-2.5">
+                            <div class="flex items-baseline justify-between gap-2">
+                                <h3 class="text-base font-extrabold text-slate-900">{{ $t->name }}</h3>
+                                <span class="text-xs font-extrabold text-slate-900 shrink-0">{{ $t->formatted_price }}</span>
                             </div>
                             <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">{{ $t->description ?: $t->tagline }}</p>
-                            @if($entry['has_draft'] && !$entry['is_live'])
-                                <p class="text-[11px] font-semibold text-indigo-600">Unpublished draft saved</p>
+
+                            @if(!empty($attrs))
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach(array_slice($attrs, 0, 3) as $attr)
+                                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold">{{ $attr }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            @if(!empty($compat))
+                                <p class="text-[10px] text-slate-400">
+                                    Best for: <span class="text-slate-600 font-medium">{{ implode(', ', array_map(fn ($c) => ucwords(str_replace('_', ' ', (string) $c)), array_slice($compat, 0, 4))) }}</span>
+                                </p>
                             @endif
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                            <a href="{{ route('vendor.themes.preview', $t->theme_id) }}"
-                               class="flex-1 text-center px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                                Live Preview
-                            </a>
+                        <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+                            @if($entry['preview_url'])
+                                <a href="{{ $entry['preview_url'] }}" target="_blank" rel="noopener"
+                                   class="flex-1 text-center px-3 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-50 transition inline-flex items-center justify-center gap-1.5">
+                                    <span>Preview</span>
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 4h6v6M10 14L20 4M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></svg>
+                                </a>
+                            @else
+                                <span class="flex-1 text-center px-3 py-2.5 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold">Preview Off</span>
+                            @endif
 
                             @if($entry['is_entitled'])
                                 @if($t->is_legacy)
-                                    <a href="{{ route('vendor.design.index') }}"
-                                       class="flex-1 text-center px-3 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition">
-                                        Open Classic Studio
-                                    </a>
+                                    <a href="{{ route('vendor.design.index') }}" class="flex-1 text-center px-3 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition">Classic Studio</a>
                                 @else
-                                    <a href="{{ route('vendor.themes.customize', $t->theme_id) }}"
-                                       class="flex-1 text-center px-3 py-2 rounded-xl bg-zinc-900 text-white text-xs font-bold hover:bg-zinc-800 transition">
-                                        {{ $entry['is_live'] ? 'Customize Live' : 'Customize & Publish' }}
+                                    <a href="{{ route('vendor.themes.customize', $t->theme_id) }}" class="flex-1 text-center px-3 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-bold hover:bg-zinc-800 transition">
+                                        {{ $entry['is_live'] ? 'Customize Live' : 'Select & Draft' }}
                                     </a>
                                 @endif
                             @elseif($state === 'pending' && $req)
                                 @if($entry['whatsapp_url'])
-                                    <a href="{{ $entry['whatsapp_url'] }}" target="_blank" rel="noopener"
-                                       class="flex-1 text-center px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition">
-                                        WhatsApp ({{ $req->reference_code }})
+                                    <a href="{{ $entry['whatsapp_url'] }}" target="_blank" rel="noopener" class="flex-1 text-center px-3 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition">
+                                        WhatsApp · {{ $req->reference_code }}
                                     </a>
                                 @else
-                                    <span class="flex-1 text-center px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">
-                                        Pending: {{ $req->reference_code }}
-                                    </span>
+                                    <span class="flex-1 text-center px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">Pending: {{ $req->reference_code }}</span>
                                 @endif
                             @elseif($state === 'revoked')
-                                <span class="flex-1 text-center px-3 py-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">
-                                    Access Revoked
-                                </span>
+                                <span class="flex-1 text-center px-3 py-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-bold">Access Revoked</span>
                             @elseif($state === 'unavailable')
-                                <span class="flex-1 text-center px-3 py-2 rounded-xl bg-slate-100 text-slate-500 text-[11px] font-bold">
-                                    Unavailable
-                                </span>
+                                <span class="flex-1 text-center px-3 py-2.5 rounded-xl bg-slate-100 text-slate-500 text-[11px] font-bold">Unavailable</span>
                             @else
                                 <form action="{{ route('vendor.themes.request', $t->theme_id) }}" method="POST" class="flex-1">
                                     @csrf
-                                    <button type="submit"
-                                            class="w-full px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition cursor-pointer">
+                                    <button type="submit" class="w-full px-3 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition cursor-pointer">
                                         Request Access
                                     </button>
                                 </form>

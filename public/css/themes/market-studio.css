@@ -1,0 +1,6 @@
+/* K71 Bespoke Storefront Theme: Market Studio (market-studio) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="market-studio"] {
+  --theme-accent-soft: color-mix(in srgb, #0f766e 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="market-studio"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }

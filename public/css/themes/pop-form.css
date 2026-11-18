@@ -1,0 +1,8 @@
+/* K71 Bespoke Storefront Theme: Pop Form (pop-form) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="pop-form"] {
+  --theme-accent-soft: color-mix(in srgb, #ea580c 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="pop-form"] .k71-card-shell { border: 1.5px solid var(--t-text); background: var(--t-surface); box-shadow: 4px 4px 0 var(--t-text); transition: transform 220ms ease, box-shadow 220ms ease; }
+.k71-sf-theme[data-k71-theme="pop-form"] .k71-card-shell:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--t-accent); }
+.k71-sf-theme[data-k71-theme="pop-form"].k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] { transform: scale(0.95) translateY(14px); }

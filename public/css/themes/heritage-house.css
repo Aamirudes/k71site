@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Heritage House (heritage-house) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="heritage-house"] {
+  --theme-accent-soft: color-mix(in srgb, #264636 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="heritage-house"] .k71-editorial-rule { border-top: 3px double var(--t-border); border-bottom: 1px solid var(--t-border); }
+.k71-sf-theme[data-k71-theme="heritage-house"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }

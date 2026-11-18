@@ -14,14 +14,19 @@ class StorefrontTheme extends Model
         'slug',
         'name',
         'category',
+        'compatible_categories',
+        'design_attributes',
         'tagline',
         'description',
         'version',
         'is_legacy',
         'is_free',
         'implementation_status',
+        'qa_verified',
         'is_visible_in_catalogue',
         'is_available_for_request',
+        'is_featured',
+        'is_preview_enabled',
         'price_paise',
         'currency',
         'preview_thumbnail',
@@ -32,10 +37,15 @@ class StorefrontTheme extends Model
     protected $casts = [
         'is_legacy' => 'boolean',
         'is_free' => 'boolean',
+        'qa_verified' => 'boolean',
         'is_visible_in_catalogue' => 'boolean',
         'is_available_for_request' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_preview_enabled' => 'boolean',
         'price_paise' => 'integer',
         'sort_order' => 'integer',
+        'compatible_categories' => 'array',
+        'design_attributes' => 'array',
         'manifest_overrides' => 'array',
     ];
 
@@ -49,18 +59,25 @@ class StorefrontTheme extends Model
         return $this->hasMany(VendorThemeRequest::class, 'theme_id', 'theme_id');
     }
 
+    /**
+     * Pricing rule: A missing or invalid price NEVER silently makes a theme free.
+     * A price of 0 is free ONLY when is_free is intentionally enabled by an administrator.
+     */
+    public function isIntentionallyFree(): bool
+    {
+        return (bool) $this->is_free;
+    }
+
     public function getFormattedPriceAttribute(): string
     {
-        if ($this->is_free) {
+        if ($this->isIntentionallyFree()) {
             return 'Included';
         }
         if ($this->price_paise === null) {
             return 'Price on Request';
         }
-        if ($this->price_paise === 0) {
-            return '₹0';
-        }
-        return '₹' . number_format($this->price_paise / 100, $this->price_paise % 100 === 0 ? 0 : 2);
+        $symbol = ($this->currency === 'USD') ? '$' : '₹';
+        return $symbol . number_format($this->price_paise / 100, $this->price_paise % 100 === 0 ? 0 : 2);
     }
 
     public function isReady(): bool
@@ -68,11 +85,16 @@ class StorefrontTheme extends Model
         return $this->implementation_status === 'ready';
     }
 
+    public function canBePreviewed(): bool
+    {
+        return $this->is_preview_enabled && $this->implementation_status !== 'deprecated';
+    }
+
     public function canBeRequested(): bool
     {
         return $this->isReady()
             && $this->is_visible_in_catalogue
             && $this->is_available_for_request
-            && !$this->is_free;
+            && !$this->isIntentionallyFree();
     }
 }

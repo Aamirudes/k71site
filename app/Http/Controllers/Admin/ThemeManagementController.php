@@ -96,10 +96,15 @@ class ThemeManagementController extends Controller
             'category' => 'required|string|max:60',
             'description' => 'nullable|string|max:1000',
             'price_rupees' => 'nullable|numeric|min:0|max:9999999',
+            'currency' => 'nullable|in:INR,USD',
+            'compatible_categories' => 'nullable|string|max:300',
             'implementation_status' => 'required|in:ready,qa_pending,draft,deprecated',
             'is_free' => 'nullable|boolean',
+            'qa_verified' => 'nullable|boolean',
             'is_visible_in_catalogue' => 'nullable|boolean',
             'is_available_for_request' => 'nullable|boolean',
+            'is_featured' => 'nullable|boolean',
+            'is_preview_enabled' => 'nullable|boolean',
         ]);
 
         $this->service->updateThemeCatalogue($theme, [
@@ -107,13 +112,69 @@ class ThemeManagementController extends Controller
             'category' => $validated['category'],
             'description' => $validated['description'] ?? '',
             'price_rupees' => $request->input('price_rupees'),
+            'currency' => $validated['currency'] ?? $theme->currency,
+            'compatible_categories' => $validated['compatible_categories'] ?? '',
             'implementation_status' => $validated['implementation_status'],
             'is_free' => $request->boolean('is_free'),
+            'qa_verified' => $request->boolean('qa_verified'),
             'is_visible_in_catalogue' => $request->boolean('is_visible_in_catalogue'),
             'is_available_for_request' => $request->boolean('is_available_for_request'),
+            'is_featured' => $request->boolean('is_featured'),
+            'is_preview_enabled' => $request->boolean('is_preview_enabled'),
         ], auth()->user());
 
         return back()->with('success', "Updated catalogue settings & pricing for \"{$theme->name}\".");
+    }
+
+    /**
+     * Admin Theme QA Preview in a New Tab (strictly admin-protected, noindex, read-only).
+     */
+    public function previewTheme(Request $request, string $themeId)
+    {
+        $this->service->ensureSynced();
+        $cleanId = strtolower(trim($themeId));
+        $theme = StorefrontTheme::where('theme_id', $cleanId)->firstOrFail();
+        $manifest = $this->registry->getManifest($cleanId);
+        if (!$manifest) {
+            abort(404);
+        }
+
+        $sampleVendor = Vendor::whereIn('status', ['approved', 'active'])->latest('id')->first()
+            ?? Vendor::first()
+            ?? new Vendor(['shop_name' => 'K71 Preview Store', 'slug' => 'preview', 'city' => 'Mumbai', 'description' => 'Admin Quality Control Preview Store']);
+
+        return response()
+            ->view('vendor.themes.preview', [
+                'vendor' => $sampleVendor,
+                'theme' => $theme,
+                'manifest' => $manifest,
+                'isEntitled' => true,
+                'isLive' => false,
+                'activeRequest' => null,
+                'whatsappUrl' => null,
+                'signedFrameBase' => route('admin.themes.preview_frame', $cleanId),
+                'isAdminPreview' => true,
+                'returnUrl' => route('admin.themes.index'),
+                'initialPage' => in_array($request->input('page'), ['home', 'collection', 'product'], true) ? $request->input('page') : 'home',
+            ])
+            ->header('X-Robots-Tag', 'noindex, nofollow')
+            ->header('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+    }
+
+    public function previewThemeFrame(Request $request, string $themeId)
+    {
+        $cleanId = strtolower(trim($themeId));
+        $manifest = $this->registry->getManifest($cleanId);
+        if (!$manifest) {
+            abort(404);
+        }
+
+        $sampleVendor = Vendor::whereIn('status', ['approved', 'active'])->latest('id')->first()
+            ?? Vendor::first()
+            ?? new Vendor(['id' => 0, 'shop_name' => 'K71 Preview Store', 'slug' => 'preview', 'city' => 'Mumbai']);
+
+        return app(\App\Http\Controllers\Vendor\ThemeMarketplaceController::class)
+            ->renderIsolatedPreviewFrame($request, $sampleVendor, $manifest, route('admin.themes.preview_frame', $cleanId), false);
     }
 
     /**

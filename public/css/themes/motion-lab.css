@@ -1,0 +1,8 @@
+/* K71 Bespoke Storefront Theme: Motion Lab (motion-lab) | Category: footwear_performance | v2.0.0 */
+.k71-sf-theme[data-k71-theme="motion-lab"] {
+  --theme-accent-soft: color-mix(in srgb, #0284c7 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-diagonal-stage { clip-path: polygon(0 0, 100% 0, 100% 93%, 0 100%); }
+.k71-sf-theme[data-k71-theme="motion-lab"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }
+.k71-sf-theme[data-k71-theme="motion-lab"].k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] { transform: translateX(-16px); }

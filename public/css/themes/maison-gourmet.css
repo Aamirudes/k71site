@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Maison Gourmet (maison-gourmet) | Category: food_artisan | v2.0.0 */
+.k71-sf-theme[data-k71-theme="maison-gourmet"] {
+  --theme-accent-soft: color-mix(in srgb, #2e4a38 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="maison-gourmet"] .k71-editorial-rule { border-top: 3px double var(--t-border); border-bottom: 1px solid var(--t-border); }
+.k71-sf-theme[data-k71-theme="maison-gourmet"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); box-shadow: var(--theme-card-shadow); }

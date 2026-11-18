@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: The Specialist (the-specialist) | Category: contemporary_concepts | v2.0.0 */
+.k71-sf-theme[data-k71-theme="the-specialist"] {
+  --theme-accent-soft: color-mix(in srgb, #0f4c81 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="the-specialist"] .k71-card-shell { border: 1px solid var(--t-border); background: var(--t-surface); }
+.k71-sf-theme[data-k71-theme="the-specialist"].k71-js-ready:not([data-motion-intensity="reduced"]) [data-k71-reveal] { transform: translateY(6px); }

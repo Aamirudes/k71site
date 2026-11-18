@@ -1,11 +1,9 @@
 @php
     $palette = array_merge($manifest['palette'], $themeConfig['palette'] ?? []);
     $typo = array_merge($manifest['typography'], $themeConfig['typography'] ?? []);
-    $glass = $manifest['glass'];
     $motion = $manifest['motion'];
     $layout = $manifest['layout'];
     $motionIntensity = $themeConfig['motion']['intensity'] ?? 'normal';
-    $glassStrength = $themeConfig['motion']['glass_strength'] ?? ($glass['mode'] === 'none' ? 'off' : 'normal');
 
     $headingFont = $typo['heading_font'] ?? 'Playfair Display';
     $bodyFont = $typo['body_font'] ?? 'Inter';
@@ -13,11 +11,10 @@
     if ($bodyFont !== $headingFont) {
         $googleFontsParam .= '&family=' . urlencode($bodyFont) . ':wght@400;500;600;700';
     }
-    $storeName = $vendor->shop_name ?? 'K71 Store';
+    $storeName = $storeName ?? ($vendor->shop_name ?? 'K71 Store');
     $pageTitle = ($pageTitle ?? null) ? ($pageTitle . ' · ' . $storeName) : $storeName;
     $isDark = !empty($palette['is_dark']);
 
-    // Build real cart count safely
     $cartCount = 0;
     try {
         if (auth()->check()) {
@@ -31,13 +28,13 @@
         $cartCount = 0;
     }
 
-    $storeHomeUrl = !empty($isCataloguePreview)
-        ? route('vendor.themes.preview_frame', ['themeId' => $manifest['id'], 'page' => 'home'])
-        : ($vendor->storefront_url . (!empty($isPreview) ? '?preview=1' : ''));
+    $storeHomeUrl = $storeHomeUrl ?? (!empty($previewFrameBaseUrl)
+        ? ($previewFrameBaseUrl . (str_contains($previewFrameBaseUrl, '?') ? '&' : '?') . 'page=home')
+        : ($vendor->storefront_url . (!empty($isPreview) ? '?preview=1' : '')));
 
-    $storeCollectionUrl = !empty($isCataloguePreview)
-        ? route('vendor.themes.preview_frame', ['themeId' => $manifest['id'], 'page' => 'collection'])
-        : route('storefront.collection', ['slug' => $vendor->slug]) . (!empty($isPreview) ? '?preview=1' : '');
+    $storeCollectionUrl = $storeCollectionUrl ?? (!empty($previewFrameBaseUrl)
+        ? ($previewFrameBaseUrl . (str_contains($previewFrameBaseUrl, '?') ? '&' : '?') . 'page=collection')
+        : route('storefront.collection', ['slug' => $vendor->slug]) . (!empty($isPreview) ? '?preview=1' : ''));
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ $isDark ? 'dark' : 'light' }}">
@@ -59,19 +56,23 @@
     <link href="https://fonts.googleapis.com/css2?family={{ $googleFontsParam }}&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css'])
-    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v={{ $manifest['version'] ?? '1.0.0' }}">
+    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v={{ $manifest['version'] ?? '2.0.0' }}">
+    {{-- Per-theme scoped stylesheet: ONLY loads the active theme's CSS --}}
+    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v={{ $manifest['version'] ?? '2.0.0' }}">
 </head>
 <body class="m-0 p-0 antialiased">
 <div class="k71-sf-theme flex flex-col min-h-screen"
      data-k71-theme="{{ $manifest['id'] }}"
-     data-glass-mode="{{ $glass['mode'] ?? 'none' }}"
-     data-glass-strength="{{ $glassStrength }}"
+     data-k71-category="{{ $manifest['category'] ?? 'general' }}"
+     data-k71-header="{{ $layout['header_template'] ?? 'couture-centered' }}"
+     data-k71-hero="{{ $layout['hero_template'] ?? 'asymmetric-campaign' }}"
+     data-k71-card="{{ $layout['card_template'] ?? 'luxury-atelier' }}"
+     data-k71-pdp="{{ $layout['pdp_template'] ?? 'luxury-lookbook' }}"
      data-label-style="{{ $typo['label_style'] ?? 'clean' }}"
-     data-motion-profile="{{ $motion['profile'] ?? 'calm-fade' }}"
+     data-motion-profile="{{ $motion['profile'] ?? 'quiet-gallery' }}"
      data-motion-intensity="{{ $motionIntensity }}"
      data-motion-stagger="{{ $motion['stagger_ms'] ?? 45 }}"
      data-enable-parallax="{{ !empty($motion['enable_parallax']) ? 'true' : 'false' }}"
-     data-enable-tilt="{{ !empty($motion['enable_tilt']) ? 'true' : 'false' }}"
      style="
         --t-bg: {{ $palette['bg'] }};
         --t-surface: {{ $palette['surface'] }};
@@ -81,34 +82,14 @@
         --t-accent: {{ $palette['accent'] }};
         --t-accent-contrast: {{ $palette['accent_contrast'] }};
         --t-border: {{ $palette['border'] }};
-        --t-radius: {{ $layout['radius'] ?? '12px' }};
+        --t-radius: {{ $layout['radius'] ?? '8px' }};
         --t-font-heading: '{{ $headingFont }}', Georgia, serif;
         --t-font-body: '{{ $bodyFont }}', system-ui, -apple-system, sans-serif;
         --t-heading-weight: {{ $typo['heading_weight'] ?? '600' }};
         --t-heading-tracking: {{ $typo['heading_tracking'] ?? '-0.02em' }};
-        --t-glass-bg: {{ $palette['glass_surface'] ?? $palette['surface'] }};
-        --t-glass-border: {{ $palette['glass_border'] ?? $palette['border'] }};
-        --t-glass-blur: {{ (int) ($glass['blur_px'] ?? 12) }}px;
         --t-motion-duration: {{ (int) ($motion['duration_ms'] ?? 480) }}ms;
         --t-motion-ease: {{ $motion['easing'] ?? 'cubic-bezier(0.22, 1, 0.36, 1)' }};
      ">
-
-    @if(!empty($isCataloguePreview))
-        <div class="w-full px-4 py-2 text-center text-xs font-semibold flex flex-wrap items-center justify-center gap-3 z-50"
-             style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
-            <span>Isolated Theme Preview: <strong>{{ $manifest['name'] }}</strong> (v{{ $manifest['version'] }})</span>
-            @if(!empty($usingSampleProducts))
-                <span class="opacity-85">· Displaying sample showcase items (your live store is untouched)</span>
-            @else
-                <span class="opacity-85">· Previewing with your store catalogue (live storefront untouched)</span>
-            @endif
-        </div>
-    @elseif(!empty($isPreview))
-        <div class="w-full px-4 py-2 text-center text-xs font-semibold z-50"
-             style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
-            Draft Preview Mode — Changes shown here are not public until explicitly published.
-        </div>
-    @endif
 
     @include('storefront.themes.partials.header')
 
@@ -120,6 +101,6 @@
     @include('storefront.themes.partials.overlays')
 </div>
 
-<script src="{{ asset('js/k71-theme-motion.js') }}?v={{ $manifest['version'] ?? '1.0.0' }}" defer></script>
+<script src="{{ asset('js/k71-theme-motion.js') }}?v={{ $manifest['version'] ?? '2.0.0' }}" defer></script>
 </body>
 </html>

@@ -1,0 +1,7 @@
+/* K71 Bespoke Storefront Theme: Forma Gallery (forma-gallery) | Category: furniture_home | v2.0.0 */
+.k71-sf-theme[data-k71-theme="forma-gallery"] {
+  --theme-accent-soft: color-mix(in srgb, #2b2b28 12%, transparent);
+  --theme-card-shadow: 0 10px 28px rgba(0, 0, 0, 0.05);
+}
+.k71-sf-theme[data-k71-theme="forma-gallery"] .k71-card-shell { border: none; background: transparent; }
+.k71-sf-theme[data-k71-theme="forma-gallery"] .k71-card-frame { border: 1px solid var(--t-border); background: var(--t-surface); padding: 0.75rem; }
