@@ -636,6 +636,69 @@ try {
         }
     } catch (\Throwable $e) {}
 
+    // Gifting personalization columns
+    try {
+        if (Schema::hasTable('products') && !Schema::hasColumn('products', 'gift_customization_config')) {
+            try { DB::statement("ALTER TABLE `products` ADD COLUMN `gift_customization_config` JSON NULL AFTER `specifications_json`"); } catch (\Throwable $e) {}
+        }
+        if (Schema::hasTable('cart_items') && !Schema::hasColumn('cart_items', 'customization_data')) {
+            try { DB::statement("ALTER TABLE `cart_items` ADD COLUMN `customization_data` JSON NULL AFTER `option_selections_json`"); } catch (\Throwable $e) {}
+        }
+        if (Schema::hasTable('order_items') && !Schema::hasColumn('order_items', 'customization_data')) {
+            try { DB::statement("ALTER TABLE `order_items` ADD COLUMN `customization_data` JSON NULL AFTER `snapshot`"); } catch (\Throwable $e) {}
+        }
+    } catch (\Throwable $e) {}
+
+    // Convert taj-empire to Gift Store
+    try {
+        if (Schema::hasTable('vendors')) {
+            $taj = \App\Models\Vendor::where('slug', 'taj-empire')->first();
+            if ($taj) {
+                $taj->update([
+                    'vendor_type' => 'gift_store',
+                    'operating_sectors' => ['products'],
+                ]);
+
+                if (Schema::hasTable('subscription_plans') && Schema::hasTable('vendor_subscriptions')) {
+                    $plan = \App\Models\SubscriptionPlan::firstOrCreate(
+                        ['code' => 'gift-store-pro'],
+                        [
+                            'name' => 'Pro Gift Store',
+                            'slug' => 'gift-store-pro',
+                            'sector_key' => 'products',
+                            'tier_key' => 'pro',
+                            'is_free' => true,
+                            'is_active' => true,
+                            'price_paise' => 0,
+                            'billing_interval' => 'monthly',
+                            'features' => [
+                                'themes_allowed' => ['*'],
+                                'max_products' => 1000,
+                                'max_active_products' => 1000,
+                                'custom_domain' => true,
+                            ],
+                        ]
+                    );
+
+                    \App\Models\VendorSubscription::firstOrCreate(
+                        ['vendor_id' => $taj->id, 'plan_id' => $plan->id],
+                        [
+                            'sector_key' => 'products',
+                            'plan_name_snapshot' => 'Pro Gift Store',
+                            'price_amount_snapshot' => 0,
+                            'status' => 'active',
+                            'starts_at' => now(),
+                            'current_period_end' => now()->addYear(),
+                        ]
+                    );
+                }
+                echo "<div class='step'><div class='step-title'>🎁 Gift Store Transition:</div><pre class='success'>Successfully converted taj-empire vendor to 'gift_store' with active physical products subscription and personalization engine.</pre></div>";
+            }
+        }
+    } catch (\Throwable $e) {
+        echo "<div class='step'><div class='step-title'>🎁 Gift Store Transition Notice:</div><pre class='error'>" . htmlspecialchars($e->getMessage()) . "</pre></div>";
+    }
+
     // Orders integrity auto-repair (heal any orphaned vendor_id from legacy deletions)
     try {
         if (Schema::hasTable('orders') && Schema::hasTable('vendors')) {
