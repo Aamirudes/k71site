@@ -61,7 +61,7 @@ class GiftCustomizationService
         $cardMessage = trim((string) ($input['greeting_card_message'] ?? ''));
 
         // If no customization option was engaged at all, treat as standard purchase if text is optional
-        $hasCustomizationEngagement = $customText !== '' || !empty($photoFile) || $giftWrap || $greetingCard;
+        $hasCustomizationEngagement = $customText !== '' || !empty($photoFile) || !empty($input['existing_photo_url']) || $giftWrap || $greetingCard;
 
         if (!$hasCustomizationEngagement) {
             // Check if text customization is mandatory

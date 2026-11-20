@@ -1,6 +1,7 @@
 <x-layouts.vendor title="Edit Product">
     @php
         $vendorType = $vendorType ?? ($vendor?->vendor_type ?? 'clothing');
+        $isGiftStore = ($vendor?->isGiftStore() || in_array($vendorType, ['gift_store', 'gifts']));
         $sec = $sectorConfig ?? ($vendor ? $vendor->getSectorConfig() : []);
         $resolvedVerticalType = old('vertical_type', $product->category?->vertical_type ?? match ($targetVertical) {
             'marketplace' => 'fashion_matrix',
@@ -200,6 +201,7 @@
 
                         @php
                             $vBadges = [
+                                'gift_store' => ['icon' => '🎁', 'name' => 'Personalized Gifts & Keepsakes Studio', 'badge' => 'Custom Gifts', 'desc' => 'Laser engraving, bespoke typography, photo uploads, wax-sealed greeting cards, and luxury gift wrapping.'],
                                 'food' => ['icon' => '🍽️', 'name' => 'Cloud Kitchen & Digital Menu', 'badge' => 'Food & Dining', 'desc' => 'Dish menus, kitchen orders, tamper-proof packaging, pure veg/non-veg, and fast local dispatch.'],
                                 'feasto' => ['icon' => '⚡', 'name' => 'Feasto Instant Grocery & Daily Needs', 'badge' => 'Express Mart', 'desc' => 'Rapid 15-minute neighborhood grocery, dairy, snacks, and household essentials.'],
                                 'services' => ['icon' => '🛠️', 'name' => 'Doorstep Services & Repairs', 'badge' => 'Home & Commercial', 'desc' => 'Doorstep appointments, hourly & BHK service tiers, verified technicians, and satisfaction guarantees.'],
@@ -208,7 +210,7 @@
                                 'enquiry' => ['icon' => '📋', 'name' => 'Custom Enquiry & Quote Showcase', 'badge' => 'Enquiry / Quote', 'desc' => 'Custom project specifications and direct buyer quote requests.'],
                                 'marketplace' => ['icon' => '🛍️', 'name' => 'Retail, Apparel & Multi-Category Store', 'badge' => 'Curated Retail', 'desc' => 'Variant matrices, structured specifications, media galleries, and nationwide delivery.'],
                             ];
-                            $currV = $vBadges[$targetVertical] ?? $vBadges['marketplace'];
+                            $currV = $isGiftStore ? $vBadges['gift_store'] : ($vBadges[$targetVertical] ?? $vBadges['marketplace']);
                         @endphp
 
                         <div class="p-4 rounded-xl border-2 border-stone-800 bg-stone-900 text-white flex items-center justify-between gap-4 shadow-sm">
@@ -239,16 +241,18 @@
                         <input type="hidden" name="listing_type" :value="listingType">
                         <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
                             <template x-for="(ltInfo, ltKey) in listingTypesList" :key="ltKey">
-                                <button type="button" @click="listingType = ltKey"
-                                        :class="listingType === ltKey ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600/20 font-bold' : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'"
-                                        class="p-2.5 rounded-xl text-left transition-all cursor-pointer">
-                                    <div class="flex items-center justify-between gap-1 mb-1">
-                                        <span class="text-xs font-bold" x-text="ltInfo.title"></span>
-                                        <span class="text-[8px] uppercase font-black px-1.5 py-0.5 rounded"
-                                              :class="listingType === ltKey ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-600'" x-text="ltInfo.badge"></span>
-                                    </div>
-                                    <div class="text-[9px] opacity-80 leading-tight" x-text="ltInfo.description"></div>
-                                </button>
+                                <template x-if="!@js($isGiftStore) || ltKey === 'standard_retail' || ltKey === 'standard'">
+                                    <button type="button" @click="listingType = ltKey"
+                                            :class="listingType === ltKey ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600/20 font-bold' : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200'"
+                                            class="p-2.5 rounded-xl text-left transition-all cursor-pointer w-full">
+                                        <div class="flex items-center justify-between gap-1 mb-1">
+                                            <span class="text-xs font-bold" x-text="ltInfo.title"></span>
+                                            <span class="text-[8px] uppercase font-black px-1.5 py-0.5 rounded"
+                                                  :class="listingType === ltKey ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-600'" x-text="ltInfo.badge"></span>
+                                        </div>
+                                        <div class="text-[9px] opacity-80 leading-tight" x-text="ltInfo.description"></div>
+                                    </button>
+                                </template>
                             </template>
                         </div>
                     </div>
@@ -346,7 +350,7 @@
                     </div>
                 </div>
 
-                @if($targetVertical === 'food')
+                @if(!$isGiftStore && $targetVertical === 'food')
                 <!-- 1.5 Food Dish Menu Settings & Kitchen Availability -->
                 <div class="bg-white rounded-2xl shadow-sm border border-orange-200/80 p-6 sm:p-8 space-y-5">
                     <input type="hidden" name="food_settings_present" value="1">
@@ -425,7 +429,7 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
                     <div class="flex items-center gap-2 mb-6">
                         <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
-                            @if($targetVertical === 'food')
+                            @if(!$isGiftStore && $targetVertical === 'food')
                                 <span class="text-base">🍽️</span>
                             @elseif($targetVertical === 'services')
                                 <span class="text-base">🛠️</span>
@@ -437,7 +441,7 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold text-gray-900">
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     Culinary Profile, Dietary & Ingredients
                                 @elseif($targetVertical === 'services')
                                     Service Scope, Tools & Client Prerequisites
@@ -448,7 +452,7 @@
                                 @endif
                             </h2>
                             <p class="text-xs text-gray-500">
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     Ingredients, dietary profile, and freshness guidance for customers.
                                 @elseif($targetVertical === 'services')
                                     Tools, technician qualifications, and preparation advice.
@@ -464,7 +468,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     Key Ingredients & Dietary Profile
                                 @elseif($targetVertical === 'services')
                                     Tools & Equipment Deployed
@@ -480,7 +484,7 @@
                             <p class="text-[11px] text-gray-400 mt-1">Displays in product specification accordions.</p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
                                 <span class="text-[10px] uppercase font-bold text-gray-400 block w-full">Quick Pick:</span>
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     @foreach(['Pure Desi Ghee', 'Farm Fresh Paneer', 'Aged Basmati Rice', 'Saffron Aroma', 'Low Oil / Healthy', 'Zero Preservatives'] as $fp)
                                         <button type="button" onclick="document.getElementById('edit_material').value = '{{ $fp }}'" class="text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">{{ $fp }}</button>
                                     @endforeach
@@ -502,7 +506,7 @@
 
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     Storage, Shelf Life & Serving Advice
                                 @elseif($targetVertical === 'services')
                                     Client Prerequisites & Advice
@@ -518,7 +522,7 @@
                             <p class="text-[11px] text-gray-400 mt-1">Customer guidance and recommendations.</p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
                                 <span class="text-[10px] uppercase font-bold text-gray-400 block w-full">Quick Pick:</span>
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     @foreach(['Best served hot', 'Consume within 4 hours', 'Keep refrigerated', 'Microwave safe bowl', 'Tamper evident seal'] as $cp)
                                         <button type="button" onclick="document.getElementById('edit_care').value = '{{ $cp }}'" class="text-[11px] px-2 py-0.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors">{{ $cp }}</button>
                                     @endforeach
@@ -1153,7 +1157,7 @@
                 <!-- Logistics & Shipping -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">
-                        @if($targetVertical === 'food')
+                        @if(!$isGiftStore && $targetVertical === 'food')
                             Packaging & Fresh Dispatch
                         @elseif($targetVertical === 'services')
                             Service Logistics & Assurance
@@ -1168,7 +1172,7 @@
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <label class="block text-xs font-bold text-gray-700">
-                                    @if($targetVertical === 'food')
+                                    @if(!$isGiftStore && $targetVertical === 'food')
                                         Net Serving / Dish Weight
                                     @elseif($targetVertical === 'services')
                                         Tools / Materials Weight (Optional)
@@ -1179,7 +1183,7 @@
                                     @endif
                                 </label>
                                 <span class="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">
-                                    @if($targetVertical === 'food')
+                                    @if(!$isGiftStore && $targetVertical === 'food')
                                         Portion Size
                                     @elseif($targetVertical === 'services')
                                         Equipment
@@ -1197,7 +1201,7 @@
                                 </div>
                             </div>
                             <p class="text-[11px] text-gray-400 mt-1">
-                                @if($targetVertical === 'food')
+                                @if(!$isGiftStore && $targetVertical === 'food')
                                     Approximate fresh portion weight (e.g. 500g). Delivered via direct local hot runner.
                                 @elseif($targetVertical === 'services')
                                     Estimated weight of diagnostic tools or replacement spares carried by technician.
@@ -1209,7 +1213,7 @@
                             </p>
                         </div>
                         
-                        @if($targetVertical === 'food')
+                        @if(!$isGiftStore && $targetVertical === 'food')
                             <div class="p-3 bg-amber-50/70 border border-amber-200/60 rounded-xl text-xs space-y-1">
                                 <div class="font-bold text-amber-900 flex items-center gap-1.5">
                                     <span>🛡️</span> Fresh Food Quality Guarantee

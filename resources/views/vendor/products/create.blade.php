@@ -2,6 +2,7 @@
 @php
     $curVendor = auth()->user()?->vendor;
     $vendorType = $vendorType ?? ($curVendor?->vendor_type ?? 'clothing');
+    $isGiftStore = ($curVendor?->isGiftStore() || in_array($vendorType, ['gift_store', 'gifts']));
     $sec = $sectorConfig ?? ($curVendor ? $curVendor->getSectorConfig() : [
         'icon' => '🛍️',
         'name' => 'Marketplace Product',
@@ -121,6 +122,11 @@
                         :class="selectedPresetCategory === 'all' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
                         class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
                     All Categories
+                </button>
+                <button type="button" @click="selectedPresetCategory = 'gift_store'"
+                        :class="selectedPresetCategory === 'gift_store' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
+                        class="px-3 py-1 rounded-full text-xs whitespace-nowrap transition cursor-pointer">
+                    🎁 Personalized Gifts
                 </button>
                 <button type="button" @click="selectedPresetCategory = 'clothing'"
                         :class="selectedPresetCategory === 'clothing' ? 'bg-white text-zinc-950 font-bold' : 'bg-white/10 text-zinc-300 hover:bg-white/15'"
@@ -298,7 +304,7 @@
                 </div>
 
                 <!-- 1.5 Food Dish Settings (Only for Food / Restaurant Catalogs) -->
-                <template x-if="form.vertical === 'food' || activeVariantTab === 'food'">
+                <template x-if="!@js($isGiftStore) && (form.vertical === 'food' || activeVariantTab === 'food')">
                     <div class="p-5 sm:p-7 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border border-orange-200/70 dark:border-orange-800/30 shadow-xl space-y-4">
                         <input type="hidden" name="food_settings_present" value="1">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-orange-100 dark:border-white/10">
@@ -424,15 +430,26 @@
                         </div>
 
                         <!-- Category Selector Pills -->
-                        <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-x-auto text-[11px] font-bold">
-                            <button type="button" @click="activeVariantTab = 'clothing'" :class="activeVariantTab === 'clothing' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👗 Clothing</button>
-                            <button type="button" @click="activeVariantTab = 'footwear'" :class="activeVariantTab === 'footwear' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👟 Footwear</button>
-                            <button type="button" @click="activeVariantTab = 'kirana'" :class="activeVariantTab === 'kirana' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🛒 Kirana</button>
-                            <button type="button" @click="activeVariantTab = 'electronics'" :class="activeVariantTab === 'electronics' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📱 Electronics</button>
-                            <button type="button" @click="activeVariantTab = 'food'" :class="activeVariantTab === 'food' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🍽️ Food</button>
-                            <button type="button" @click="activeVariantTab = 'enquiry'" :class="activeVariantTab === 'enquiry' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📋 Marble / B2B</button>
-                            <button type="button" @click="activeVariantTab = 'gifts'" :class="activeVariantTab === 'gifts' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🎁 Custom Gifts</button>
-                        </div>
+                        @if($isGiftStore)
+                            <div class="flex items-center gap-1.5 p-1 bg-purple-50/60 dark:bg-purple-950/30 rounded-xl border border-purple-200/60 dark:border-purple-800/40 text-[11px] font-bold">
+                                <button type="button" @click="activeVariantTab = 'gifts'" :class="activeVariantTab === 'gifts' ? 'bg-purple-600 text-white shadow-sm' : 'text-purple-700 dark:text-purple-300 hover:text-purple-900'" class="px-3.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">
+                                    🎁 Custom Gift Personalization &amp; Engraving
+                                </button>
+                                <button type="button" @click="activeVariantTab = 'clothing'" :class="activeVariantTab === 'clothing' ? 'bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">
+                                    🏷️ Product Options &amp; Finishes (Variants)
+                                </button>
+                            </div>
+                        @else
+                            <div class="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl overflow-x-auto text-[11px] font-bold">
+                                <button type="button" @click="activeVariantTab = 'clothing'" :class="activeVariantTab === 'clothing' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👗 Clothing</button>
+                                <button type="button" @click="activeVariantTab = 'footwear'" :class="activeVariantTab === 'footwear' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">👟 Footwear</button>
+                                <button type="button" @click="activeVariantTab = 'kirana'" :class="activeVariantTab === 'kirana' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🛒 Kirana</button>
+                                <button type="button" @click="activeVariantTab = 'electronics'" :class="activeVariantTab === 'electronics' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📱 Electronics</button>
+                                <button type="button" @click="activeVariantTab = 'food'" :class="activeVariantTab === 'food' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🍽️ Food</button>
+                                <button type="button" @click="activeVariantTab = 'enquiry'" :class="activeVariantTab === 'enquiry' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📋 Marble / B2B</button>
+                                <button type="button" @click="activeVariantTab = 'gifts'" :class="activeVariantTab === 'gifts' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🎁 Custom Gifts</button>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- 1. CLOTHING VARIATIONS (Sizes XS-3XL & Colors) -->
@@ -1768,6 +1785,79 @@ function liquidProductUploader() {
                     specs: [
                         { key: 'Pack Contents', value: '400ml Cleaner + 400ml Synthetic Lube' },
                         { key: 'Compatibility', value: 'Safe on O-Ring, X-Ring and Z-Ring Chains' },
+                    ]
+                }
+            ],
+            gift_store: [
+                {
+                    icon: '🎁',
+                    title: 'Royal Makrana Marble Keepsake Box with Brass Inlay',
+                    brand: 'Artisan Heritage',
+                    base_price: '2499.00',
+                    compare_at_price: '3999.00',
+                    gst_rate: '12',
+                    hsn_code: '68029100',
+                    total_stock: '50',
+                    sku: 'GIFT-MRBL-BOX-01',
+                    description: 'Handcrafted white Makrana marble keepsake box with floral brass inlay and plush velvet interior. Features precision laser monogram engraving on the lid.',
+                    specs: [
+                        { key: 'Material', value: '100% Makrana White Marble & Brass' },
+                        { key: 'Personalization', value: 'Complimentary Laser Name/Monogram Engraving' },
+                        { key: 'Interior', value: 'Plush Burgundy Velvet Lining' },
+                        { key: 'Turnaround', value: '2 Business Days Hand-Crafting' },
+                        { key: 'Packaging', value: 'Luxury Ribbon Keepsake Gift Box Included' },
+                    ]
+                },
+                {
+                    icon: '✒️',
+                    title: 'Handcrafted Teak Wood & Brass Personalized Desk Organizer',
+                    brand: 'MemoryLane Studio',
+                    base_price: '1899.00',
+                    compare_at_price: '2999.00',
+                    gst_rate: '12',
+                    hsn_code: '44209090',
+                    total_stock: '40',
+                    sku: 'GIFT-TEAK-ORG-01',
+                    description: 'Solid seasoned Burma teak wood desk station with phone dock, fountain pen groove, and brass nameplate personalized with recipient’s name and title.',
+                    specs: [
+                        { key: 'Wood Species', value: 'Seasoned Solid Burma Teak' },
+                        { key: 'Finish', value: 'Hand-Rubbed Beeswax Matte Polish' },
+                        { key: 'Engraving Area', 'value': 'Front Brass Plate & Top Surface' },
+                        { key: 'Dimensions', value: '28cm x 14cm x 4cm' },
+                    ]
+                },
+                {
+                    icon: '💼',
+                    title: 'Bespoke Monogram Full-Grain Leather Travel Wallet',
+                    brand: 'Crown & Hide',
+                    base_price: '1499.00',
+                    compare_at_price: '2499.00',
+                    gst_rate: '12',
+                    hsn_code: '42023120',
+                    total_stock: '60',
+                    sku: 'GIFT-LTHR-PASSPORT',
+                    description: 'Vegetable-tanned full-grain leather travel wallet and passport holder with 24K gold-foil stamped initials. Fits 2 passports and 8 cards.',
+                    specs: [
+                        { key: 'Leather', value: '100% Full-Grain Vegetable-Tanned Hide' },
+                        { key: 'Personalization', value: '24K Gold Foil Stamped Initials' },
+                        { key: 'Capacity', value: '2 Passports, 8 Cards, Boarding Pass Slot' },
+                    ]
+                },
+                {
+                    icon: '☕',
+                    title: 'Artisan Ceramic Couple Coffee Mug Set with Gold Calligraphy',
+                    brand: 'Clay & Kiln',
+                    base_price: '999.00',
+                    compare_at_price: '1599.00',
+                    gst_rate: '12',
+                    hsn_code: '69120010',
+                    total_stock: '80',
+                    sku: 'GIFT-MUG-COUPLE-01',
+                    description: 'Wheel-thrown stoneware ivory couple mugs with 12K real gold luster rim and hand-calligraphed names and anniversary date.',
+                    specs: [
+                        { key: 'Material', value: 'High-Fire Stoneware & 12K Gold Luster' },
+                        { key: 'Volume', value: '350ml Per Mug (Set of 2)' },
+                        { key: 'Packaging', value: 'Padded Magnetic Satin Gift Box' },
                     ]
                 }
             ],

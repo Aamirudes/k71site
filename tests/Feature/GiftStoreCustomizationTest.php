@@ -576,4 +576,140 @@ class GiftStoreCustomizationTest extends TestCase
         $this->assertCount(1, $cart->items()->get());
         $this->assertEquals(2, $cart->items()->first()->quantity);
     }
+
+    /**
+     * Test 8: In-Cart Customization Update Before Checkout.
+     * Customers can configure or update their gift engraving, wrap, and card directly from the cart.
+     */
+    public function test_customer_can_update_customization_before_checkout_via_cart_update(): void
+    {
+        [$vendorUser, $vendor] = $this->createGiftVendor('cart-gift-studio');
+        $category = $this->createCategory();
+
+        $product = Product::create([
+            'vendor_id' => $vendor->id,
+            'category_id' => $category->id,
+            'title' => 'Custom Leather Keychain',
+            'slug' => 'custom-leather-keychain',
+            'description' => 'Personalized embossed leather keychain.',
+            'base_price' => 49900, // ₹499
+            'total_stock' => 50,
+            'status' => 'active',
+            'gift_customization_config' => [
+                'is_customizable' => true,
+                'allow_custom_text' => true,
+                'text_prompt' => 'Initials or Name',
+                'text_char_limit' => 20,
+                'text_price_paise' => 0,
+                'is_text_required' => false,
+                'allow_font_selection' => true,
+                'available_fonts' => ['Classic Serif', 'Modern Script'],
+                'allow_color_selection' => true,
+                'available_colors' => ['Gold Foil', 'Silver Shimmer'],
+                'allow_photo_upload' => false,
+                'allow_gift_wrap' => true,
+                'gift_wrap_price_paise' => 4900,
+                'allow_greeting_card' => true,
+                'greeting_card_price_paise' => 2900,
+                'production_days' => 2,
+            ],
+        ]);
+
+        $customer = User::factory()->create(['email' => 'gifteditor@k71test.local']);
+        $this->actingAs($customer);
+
+        // 1. Initially add item without customization
+        $this->postJson(route('cart.add'), [
+            'product_id' => $product->id,
+            'quantity' => 1,
+        ])->assertStatus(200);
+
+        $cart = Cart::where('user_id', $customer->id)->firstOrFail();
+        $item = $cart->items()->firstOrFail();
+        $this->assertNull($item->customization_data);
+        $this->assertEquals(49900, $item->price_at_add);
+
+        // 2. Customer updates customization from the in-cart modal before checkout
+        $updateResponse = $this->putJson(route('cart.update', $item), [
+            'customization' => [
+                'custom_text' => 'EMMA & LIAM',
+                'font' => 'Modern Script',
+                'color' => 'Gold Foil',
+                'gift_wrap' => '1',
+                'greeting_card' => '1',
+                'greeting_card_message' => 'Happy 5th Anniversary!',
+            ],
+        ]);
+
+        $updateResponse->assertStatus(200);
+
+        $item->refresh();
+        $this->assertNotNull($item->customization_data);
+        $this->assertEquals('EMMA & LIAM', $item->customization_data['custom_text']);
+        $this->assertEquals('Modern Script', $item->customization_data['font']);
+        $this->assertEquals('Gold Foil', $item->customization_data['color']);
+        $this->assertTrue($item->customization_data['gift_wrap']);
+        $this->assertTrue($item->customization_data['greeting_card']);
+        $this->assertEquals('Happy 5th Anniversary!', $item->customization_data['greeting_card_message']);
+
+        // Base 49900 + 4900 (wrap) + 2900 (card) = 57700
+        $this->assertEquals(57700, $item->price_at_add);
+    }
+
+    /**
+     * Test 9: Taj Empire Transition and Product Personalization.
+     */
+    public function test_taj_empire_transition_and_products_customization_enabled(): void
+    {
+        $role = Role::firstOrCreate(['name' => 'vendor'], ['display_name' => 'Vendor']);
+        $user = User::factory()->create(['email' => 'taj@k71test.local', 'username' => 'taj_empire_user']);
+        $user->roles()->syncWithoutDetaching([$role->id]);
+
+        $taj = Vendor::create([
+            'user_id' => $user->id,
+            'shop_name' => 'Taj Empire',
+            'slug' => 'taj-empire',
+            'vendor_type' => 'home_living',
+            'operating_sectors' => ['products'],
+            'layout_preset' => 'velora',
+            'status' => 'approved',
+            'verification_status' => 'verified',
+            'is_active' => true,
+        ]);
+
+        $category = $this->createCategory();
+
+        $legacyProduct = Product::create([
+            'vendor_id' => $taj->id,
+            'category_id' => $category->id,
+            'title' => 'Handcrafted Marble Coaster Set',
+            'slug' => 'handcrafted-marble-coaster-set',
+            'description' => 'White marble coasters.',
+            'base_price' => 89900,
+            'total_stock' => 20,
+            'status' => 'active',
+            'gift_customization_config' => null,
+        ]);
+
+        $this->assertFalse($taj->isGiftStore());
+        $this->assertFalse($legacyProduct->isGiftCustomizable());
+
+        // Execute actual migration file for Taj Empire transition
+        $migration = require database_path('migrations/2026_11_20_140000_enable_personalization_on_taj_empire_products.php');
+        $migration->up();
+
+        $taj->refresh();
+        $legacyProduct->refresh();
+
+        $this->assertTrue($taj->isGiftStore());
+        $this->assertTrue($legacyProduct->isGiftCustomizable());
+        $this->assertEquals(45, $legacyProduct->getGiftCustomizationConfig()['text_char_limit']);
+
+        // Also check showcase products were created
+        $this->assertGreaterThanOrEqual(4, $taj->products()->count());
+        $showcaseBox = Product::where('slug', 'royal-makrana-marble-keepsake-box-brass-inlay')->first();
+        $this->assertNotNull($showcaseBox);
+        $this->assertTrue($showcaseBox->isGiftCustomizable());
+        $this->assertEquals($taj->id, $showcaseBox->vendor_id);
+    }
 }

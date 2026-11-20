@@ -147,41 +147,209 @@
                                                         @endforeach
                                                     @endif
 
-                                                    @if($item->hasGiftCustomization())
-                                                        @php $cust = $item->customization_data; @endphp
-                                                        <div class="w-full mt-2 p-3 bg-purple-50/75 border border-purple-200/80 rounded-2xl text-xs space-y-1.5 shadow-2xs">
-                                                            <div class="font-bold text-purple-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
-                                                                <span>🎁 Custom Gift Personalization</span>
+                                                    @if($product && $product->isGiftCustomizable())
+                                                        @php
+                                                            $cust = $item->customization_data ?? [];
+                                                            $cfg = $product->getGiftCustomizationConfig();
+                                                            $isMissingRequired = !empty($cfg['is_text_required']) && empty($cust['custom_text']);
+                                                            $textLimit = (int) ($cfg['text_char_limit'] ?? 40);
+                                                            $fonts = (array) ($cfg['available_fonts'] ?? ['Classic Serif', 'Modern Script', 'Bold Minimal', 'Vintage Engraving']);
+                                                            $colors = (array) ($cfg['available_colors'] ?? ['Gold Foil', 'Silver Shimmer', 'Midnight Black', 'Rose Gold', 'Emerald Green']);
+                                                            $defaultFont = $cust['font'] ?? ($fonts[0] ?? 'Classic Serif');
+                                                            $defaultColor = $cust['color'] ?? ($colors[0] ?? 'Gold Foil');
+                                                        @endphp
+
+                                                        <div x-data="{
+                                                            isModalOpen: false,
+                                                            customText: @js($cust['custom_text'] ?? ''),
+                                                            selectedFont: @js($defaultFont),
+                                                            selectedColor: @js($defaultColor),
+                                                            giftWrap: @js(!empty($cust['gift_wrap'])),
+                                                            greetingCard: @js(!empty($cust['greeting_card'])),
+                                                            greetingCardMessage: @js($cust['greeting_card_message'] ?? ''),
+                                                            existingPhotoUrl: @js($cust['photo_url'] ?? ''),
+                                                            openModal() { this.isModalOpen = true; },
+                                                            closeModal() { this.isModalOpen = false; }
+                                                        }" class="w-full mt-2.5">
+
+                                                            <!-- In-Cart Personalization Summary & Trigger -->
+                                                            <div class="p-3 bg-purple-50/70 border border-purple-200/80 rounded-2xl text-xs space-y-2 shadow-2xs">
+                                                                <div class="flex items-center justify-between gap-2">
+                                                                    <div class="flex items-center gap-1.5 font-bold text-purple-950 text-[11px] uppercase tracking-wider">
+                                                                        <span>🎁 Custom Gift Personalization</span>
+                                                                        @if($isMissingRequired)
+                                                                            <span class="text-[9px] bg-rose-500/10 text-rose-600 border border-rose-500/20 px-1.5 py-0.5 rounded-md">
+                                                                                ⚠️ Text Required
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <button type="button"
+                                                                            @click="openModal()"
+                                                                            class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition shadow-2xs cursor-pointer flex items-center gap-1 {{ !empty($cust) ? 'bg-white text-purple-700 border border-purple-200 hover:bg-purple-100' : 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20' }}">
+                                                                        <span>{{ !empty($cust) ? '✏️ Edit Specs' : '✨ Personalize Gift' }}</span>
+                                                                    </button>
+                                                                </div>
+
+                                                                @if(!empty($cust['custom_text']))
+                                                                    <div class="text-[#1A1018]">
+                                                                        <span class="text-[#1A1018]/60 font-medium">Text:</span>
+                                                                        <strong class="text-purple-950 font-serif text-sm">"{{ $cust['custom_text'] }}"</strong>
+                                                                    </div>
+                                                                @endif
+
+                                                                <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-[#1A1018]/75">
+                                                                    @if(!empty($cust['font']))
+                                                                        <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Font: <strong>{{ $cust['font'] }}</strong></span>
+                                                                    @endif
+                                                                    @if(!empty($cust['color']))
+                                                                        <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Color: <strong>{{ $cust['color'] }}</strong></span>
+                                                                    @endif
+                                                                    @if(!empty($cust['gift_wrap']))
+                                                                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">🎀 Gift Wrap</span>
+                                                                    @endif
+                                                                    @if(!empty($cust['photo_url']))
+                                                                        <span class="px-2 py-0.5 rounded-md bg-cyan-50 text-cyan-800 border border-cyan-200 font-semibold">📸 Photo Attached</span>
+                                                                    @endif
+                                                                </div>
+
+                                                                @if(!empty($cust['greeting_card']) && !empty($cust['greeting_card_message']))
+                                                                    <div class="text-[11px] text-[#1A1018] pt-0.5 italic">
+                                                                        💌 "{{ $cust['greeting_card_message'] }}"
+                                                                    </div>
+                                                                @endif
                                                             </div>
-                                                            @if(!empty($cust['custom_text']))
-                                                                <div class="text-[#1A1018]">
-                                                                    <span class="text-[#1A1018]/60 font-medium">Text:</span>
-                                                                    <strong class="text-purple-950 font-serif text-sm">"{{ $cust['custom_text'] }}"</strong>
+
+                                                            <!-- In-Cart Teleported Modal Popup (Before Checkout) -->
+                                                            <template x-teleport="body">
+                                                                <div x-show="isModalOpen"
+                                                                     x-cloak
+                                                                     @keydown.escape.window="closeModal()"
+                                                                     class="fixed inset-0 z-[9999] overflow-y-auto flex items-center justify-center p-3 sm:p-5"
+                                                                     style="display: none;">
+                                                                    
+                                                                    <div class="fixed inset-0 bg-black/75 backdrop-blur-md" @click="closeModal()"></div>
+
+                                                                    <div class="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh] z-10 text-slate-900 dark:text-white">
+                                                                        <form action="{{ route('cart.update', $item) }}" method="POST" enctype="multipart/form-data" class="flex flex-col h-full overflow-hidden">
+                                                                            @csrf
+                                                                            @method('PUT')
+                                                                            <input type="hidden" name="customization[existing_photo_url]" :value="existingPhotoUrl">
+
+                                                                            <!-- Header -->
+                                                                            <div class="px-5 py-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40">
+                                                                                <div class="flex items-center gap-2.5">
+                                                                                    <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-base">🎁</span>
+                                                                                    <div>
+                                                                                        <h3 class="text-sm font-bold uppercase tracking-wider">Personalize Before Checkout</h3>
+                                                                                        <p class="text-[11px] text-slate-500">{{ $product->title }}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <button type="button" @click="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center text-sm cursor-pointer">✕</button>
+                                                                            </div>
+
+                                                                            <!-- Body -->
+                                                                            <div class="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+                                                                                <!-- Custom Text -->
+                                                                                @if(!empty($cfg['allow_custom_text']))
+                                                                                    <div class="space-y-1.5">
+                                                                                        <div class="flex items-center justify-between">
+                                                                                            <label class="font-bold text-slate-800 dark:text-slate-200">
+                                                                                                {{ $cfg['text_prompt'] ?? 'Personalized Text / Engraving' }}
+                                                                                                @if(!empty($cfg['is_text_required'])) <span class="text-rose-500">*</span> @endif
+                                                                                            </label>
+                                                                                            <span class="font-mono text-[11px] text-slate-400">Max {{ $textLimit }} chars</span>
+                                                                                        </div>
+                                                                                        <input type="text"
+                                                                                               name="customization[custom_text]"
+                                                                                               x-model="customText"
+                                                                                               maxlength="{{ $textLimit }}"
+                                                                                               placeholder="e.g. For My Beloved"
+                                                                                               class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-medium focus:ring-2 focus:ring-purple-500">
+                                                                                    </div>
+                                                                                @endif
+
+                                                                                <!-- Fonts -->
+                                                                                @if(!empty($cfg['allow_font_selection']))
+                                                                                    <div class="space-y-1.5">
+                                                                                        <label class="font-bold text-slate-800 dark:text-slate-200 block">Typography / Script</label>
+                                                                                        <input type="hidden" name="customization[font]" :value="selectedFont">
+                                                                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                                                            @foreach($fonts as $f)
+                                                                                                <button type="button"
+                                                                                                        @click="selectedFont = '{{ addslashes($f) }}'"
+                                                                                                        class="p-2 rounded-xl border text-center transition cursor-pointer text-xs"
+                                                                                                        :class="selectedFont === '{{ addslashes($f) }}' ? 'border-purple-600 bg-purple-50 dark:bg-purple-950/60 font-bold text-purple-700 dark:text-purple-300 ring-1 ring-purple-500' : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950/40 text-slate-700 dark:text-slate-300'">
+                                                                                                    {{ $f }}
+                                                                                                </button>
+                                                                                            @endforeach
+                                                                                        </div>
+                                                                                    </div>
+                                                                                @endif
+
+                                                                                <!-- Foil Color -->
+                                                                                @if(!empty($cfg['allow_color_selection']))
+                                                                                    <div class="space-y-1.5">
+                                                                                        <label class="font-bold text-slate-800 dark:text-slate-200 block">Foil / Engraving Color</label>
+                                                                                        <input type="hidden" name="customization[color]" :value="selectedColor">
+                                                                                        <div class="flex flex-wrap gap-2">
+                                                                                            @foreach($colors as $c)
+                                                                                                <button type="button"
+                                                                                                        @click="selectedColor = '{{ addslashes($c) }}'"
+                                                                                                        class="px-2.5 py-1 rounded-lg border text-xs cursor-pointer transition"
+                                                                                                        :class="selectedColor === '{{ addslashes($c) }}' ? 'border-purple-600 bg-purple-50 text-purple-800 font-bold ring-1 ring-purple-500' : 'border-slate-200 text-slate-600'">
+                                                                                                    {{ $c }}
+                                                                                                </button>
+                                                                                            @endforeach
+                                                                                        </div>
+                                                                                    </div>
+                                                                                @endif
+
+                                                                                <!-- Photo Upload -->
+                                                                                @if(!empty($cfg['allow_photo_upload']))
+                                                                                    <div class="pt-2 border-t border-slate-100 dark:border-white/10 space-y-1.5">
+                                                                                        <label class="font-bold text-slate-800 dark:text-slate-200 block">Replace / Upload Photo (JPEG, PNG, WEBP)</label>
+                                                                                        <input type="file" name="customization_photo" accept="image/*" class="w-full text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                                                                                    </div>
+                                                                                @endif
+
+                                                                                <!-- Wrap & Card -->
+                                                                                <div class="pt-2 border-t border-slate-100 dark:border-white/10 space-y-2">
+                                                                                    @if(!empty($cfg['allow_gift_wrap']))
+                                                                                        <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 cursor-pointer">
+                                                                                            <span class="flex items-center gap-2">
+                                                                                                <input type="checkbox" name="customization[gift_wrap]" value="1" x-model="giftWrap" class="rounded text-purple-600">
+                                                                                                <span>🎀 Luxury Ribbon Gift Wrapping</span>
+                                                                                            </span>
+                                                                                            <span class="font-mono font-bold">+₹{{ number_format(($cfg['gift_wrap_price_paise'] ?? 4900) / 100, 0) }}</span>
+                                                                                        </label>
+                                                                                    @endif
+
+                                                                                    @if(!empty($cfg['allow_greeting_card']))
+                                                                                        <div class="space-y-1.5">
+                                                                                            <label class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 cursor-pointer">
+                                                                                                <span class="flex items-center gap-2">
+                                                                                                    <input type="checkbox" name="customization[greeting_card]" value="1" x-model="greetingCard" class="rounded text-purple-600">
+                                                                                                    <span>💌 Wax-Sealed Greeting Card</span>
+                                                                                                </span>
+                                                                                                <span class="font-mono font-bold">+₹{{ number_format(($cfg['greeting_card_price_paise'] ?? 2900) / 100, 0) }}</span>
+                                                                                            </label>
+                                                                                            <div x-show="greetingCard" x-collapse>
+                                                                                                <textarea name="customization[greeting_card_message]" x-model="greetingCardMessage" rows="2" maxlength="300" placeholder="Dedication card message..." class="w-full p-2.5 text-xs rounded-xl border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-900"></textarea>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <!-- Footer -->
+                                                                            <div class="px-5 py-3 border-t border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-slate-950/40 flex items-center justify-end gap-2">
+                                                                                <button type="button" @click="closeModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 transition cursor-pointer">Cancel</button>
+                                                                                <button type="submit" class="px-5 py-2 rounded-xl text-xs font-black bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20 active:scale-95 transition cursor-pointer">✓ Save &amp; Apply to Cart</button>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
                                                                 </div>
-                                                            @endif
-                                                            <div class="flex flex-wrap items-center gap-2 text-[11px] text-[#1A1018]/75">
-                                                                @if(!empty($cust['font']))
-                                                                    <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Font: <strong>{{ $cust['font'] }}</strong></span>
-                                                                @endif
-                                                                @if(!empty($cust['color']))
-                                                                    <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Color: <strong>{{ $cust['color'] }}</strong></span>
-                                                                @endif
-                                                                @if(!empty($cust['gift_wrap']))
-                                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">🎀 Gift Wrap</span>
-                                                                @endif
-                                                            </div>
-                                                            @if(!empty($cust['photo_url']))
-                                                                <div class="pt-1 flex items-center gap-2">
-                                                                    <img src="{{ $cust['photo_url'] }}" alt="Custom Photo" class="w-8 h-8 rounded-lg object-cover border border-purple-300 shadow-2xs">
-                                                                    <span class="text-[11px] text-purple-800 font-semibold">Attached Customer Photo</span>
-                                                                </div>
-                                                            @endif
-                                                            @if(!empty($cust['greeting_card']))
-                                                                <div class="text-[11px] text-[#1A1018] pt-0.5">
-                                                                    <span class="text-[#1A1018]/60 font-medium">💌 Card Message:</span>
-                                                                    <span class="italic text-[#1A1018]/90">"{{ $cust['greeting_card_message'] ?? '' }}"</span>
-                                                                </div>
-                                                            @endif
+                                                            </template>
                                                         </div>
                                                     @endif
 

@@ -583,6 +583,42 @@
                                     @if(!empty($item->special_instructions))
                                         <p class="text-[11px] text-stone-500 mt-0.5 italic">Note: {{ $item->special_instructions }}</p>
                                     @endif
+                                    @if($item->hasGiftCustomization())
+                                        @php $cust = $item->customization_data; @endphp
+                                        <div class="mt-2 p-2.5 bg-purple-50/80 rounded-xl border border-purple-200/80 text-[11px] space-y-1">
+                                            <div class="font-bold text-purple-900 flex items-center gap-1.5 text-[10px] uppercase tracking-wider">
+                                                <span>🎁 Custom Personalization</span>
+                                            </div>
+                                            @if(!empty($cust['custom_text']))
+                                                <div class="text-[#1A1018]">
+                                                    <span class="text-[#1A1018]/60">Engraved Text:</span>
+                                                    <strong class="text-purple-950 font-serif">"{{ $cust['custom_text'] }}"</strong>
+                                                </div>
+                                            @endif
+                                            <div class="flex flex-wrap items-center gap-1.5 text-[10px] text-[#1A1018]/70">
+                                                @if(!empty($cust['font']))
+                                                    <span class="px-1.5 py-0.5 rounded bg-white border border-purple-200 font-medium">Font: {{ $cust['font'] }}</span>
+                                                @endif
+                                                @if(!empty($cust['color']))
+                                                    <span class="px-1.5 py-0.5 rounded bg-white border border-purple-200 font-medium">Color: {{ $cust['color'] }}</span>
+                                                @endif
+                                                @if(!empty($cust['gift_wrap']))
+                                                    <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">🎀 Gift Wrap</span>
+                                                @endif
+                                            </div>
+                                            @if(!empty($cust['photo_url']))
+                                                <div class="flex items-center gap-1.5 pt-0.5">
+                                                    <img src="{{ $cust['photo_url'] }}" alt="Photo" class="w-6 h-6 rounded object-cover border border-purple-300">
+                                                    <span class="text-[10px] text-purple-800 font-semibold">Photo Attached</span>
+                                                </div>
+                                            @endif
+                                            @if(!empty($cust['greeting_card']) && !empty($cust['greeting_card_message']))
+                                                <div class="text-[10px] text-[#1A1018] italic pt-0.5">
+                                                    💌 "{{ $cust['greeting_card_message'] }}"
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
                                     <p class="font-semibold mt-1 text-[#1A1018] tabular-nums">₹{{ number_format(($price * $item->quantity) / 100, 2) }}</p>
                                 </div>
                             </li>

@@ -62,9 +62,13 @@
                 Out of Stock
             </button>
         @elseif($product->isPurchase())
-            <button type="submit" class="k71-btn k71-btn-primary flex-1 cursor-pointer {{ $ctaClass ?? '' }}">
+            <button type="submit"
+                    @if($product->isGiftCustomizable())
+                        onclick="const t = this.form.querySelector('input[name=\'customization[custom_text]\']'); if ({{ !empty($product->getGiftCustomizationConfig()['is_text_required']) ? 'true' : 'false' }} && (!t || !t.value.trim())) { event.preventDefault(); window.dispatchEvent(new CustomEvent('k71-open-gift-modal')); return false; }"
+                    @endif
+                    class="k71-btn k71-btn-primary flex-1 cursor-pointer {{ $ctaClass ?? '' }}">
                 @include('storefront.themes.partials.icon', ['name' => 'bag', 'class' => 'w-4 h-4'])
-                <span>{{ $ctaLabel ?? 'Add to Bag' }}</span>
+                <span>{{ $ctaLabel ?? ($product->isGiftCustomizable() ? 'Personalize & Add to Bag' : 'Add to Bag') }}</span>
             </button>
         @else
             <a href="{{ route('product.show', $product->slug) }}" class="k71-btn k71-btn-primary flex-1 {{ $ctaClass ?? '' }}">View Full Listing</a>

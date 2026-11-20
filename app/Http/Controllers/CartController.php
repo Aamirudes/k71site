@@ -361,11 +361,15 @@ class CartController extends Controller
         }
 
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'sometimes|integer|min:1',
+            'customization' => 'nullable|array',
+            'customization_photo' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
+        $targetQty = (int) ($validated['quantity'] ?? $item->quantity);
+
         if ($item->gig_package_id) {
-            $item->update(['quantity' => $validated['quantity']]);
+            $item->update(['quantity' => $targetQty]);
             if ($request->expectsJson() || $request->wantsJson()) {
                 return $this->data();
             }
@@ -428,23 +432,52 @@ class CartController extends Controller
             return back()->with('error', 'This item is now out of stock.');
         }
 
-        if ($validated['quantity'] > $availableStock) {
+        if ($targetQty > $availableStock) {
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => "Only {$availableStock} items available in stock."], 400);
             }
             return back()->with('error', "Only {$availableStock} items available in stock.");
         }
 
-        $updatePayload = ['quantity' => $validated['quantity']];
+        $updatePayload = ['quantity' => $targetQty];
         $product = $item->product ?? Product::withoutGlobalScopes()->with('vendor.settings')->find($item->product_id);
-        if ($product && $product->vertical !== 'food' && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
+
+        if ($request->has('customization') || $request->hasFile('customization_photo')) {
+            if ($product && $product->isGiftCustomizable()) {
+                $giftService = app(\App\Services\GiftCustomizationService::class);
+                try {
+                    $customizationCalc = $giftService->validateAndCalculate(
+                        $product,
+                        $request->input('customization'),
+                        $request->file('customization_photo')
+                    );
+                    $variant = $item->variant_id ? ProductVariant::withoutGlobalScopes()->find($item->variant_id) : null;
+                    $baseUnitPaise = $variant?->price_override
+                        ?? (int) round(((float) ($variant?->price ?? 0)) * 100)
+                        ?: $product->base_price;
+
+                    if ($customizationCalc['is_customized']) {
+                        $updatePayload['customization_data'] = $customizationCalc['snapshot'];
+                        $updatePayload['price_at_add'] = $baseUnitPaise + $customizationCalc['additional_paise'];
+                    } else {
+                        $updatePayload['customization_data'] = null;
+                        $updatePayload['price_at_add'] = $baseUnitPaise;
+                    }
+                } catch (\DomainException $e) {
+                    if ($request->expectsJson() || $request->wantsJson()) {
+                        return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+                    }
+                    return back()->with('error', $e->getMessage());
+                }
+            }
+        } elseif ($product && $product->vertical !== 'food' && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
             $variant = $item->variant_id ? ProductVariant::withoutGlobalScopes()->find($item->variant_id) : null;
             $recomputedBase = $variant?->price_override
                 ?? (int) round(((float) ($variant?->price ?? 0)) * 100)
                 ?: $product->base_price;
             $tiers = collect($product->b2b_tiers_json)->sortByDesc(fn ($t) => (int) ($t['min_qty'] ?? 1));
             foreach ($tiers as $tier) {
-                if ($validated['quantity'] >= (int) ($tier['min_qty'] ?? 1) && !empty($tier['price'])) {
+                if ($targetQty >= (int) ($tier['min_qty'] ?? 1) && !empty($tier['price'])) {
                     $recomputedBase = (int) round(((float) $tier['price']) * 100);
                     break;
                 }
