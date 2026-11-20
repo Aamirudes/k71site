@@ -67,3 +67,19 @@
 .k71-sf-theme[data-k71-theme="sneaker-vault"] footer a:hover {
   color: #ea580c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Sneaker Vault (sneaker-vault) === */
+.k71-sf-theme[data-k71-theme="sneaker-vault"] {
+  background-color: #09090b !important;
+  color: #fafafa !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="sneaker-vault"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .k71-sf-theme[data-k71-theme="sneaker-vault"] .k71-card-shell {
+    background: #18181b !important;
+    border: 1px solid #27272a !important;
+  }
+}

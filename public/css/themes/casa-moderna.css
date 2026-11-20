@@ -63,3 +63,17 @@
 .k71-sf-theme[data-k71-theme="casa-moderna"] footer a:hover {
   color: #8c5332;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Casa Moderna (casa-moderna) === */
+.k71-sf-theme[data-k71-theme="casa-moderna"] {
+  background-color: #f7f4ed !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="casa-moderna"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .k71-sf-theme[data-k71-theme="casa-moderna"] .k71-card-shell {
+    border: 1px solid #e8e0d0 !important;
+  }
+}

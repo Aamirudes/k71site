@@ -65,3 +65,20 @@
 .k71-sf-theme[data-k71-theme="future-form"] footer a:hover {
   color: #0066cc;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Future Form (future-form) === */
+.k71-sf-theme[data-k71-theme="future-form"] {
+  background-color: #070913 !important;
+  color: #e0e7ff !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="future-form"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  .k71-sf-theme[data-k71-theme="future-form"] .k71-card-shell {
+    background: rgba(15, 23, 42, 0.8) !important;
+    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+    backdrop-filter: blur(12px) !important;
+  }
+}

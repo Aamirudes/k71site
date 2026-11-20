@@ -45,7 +45,7 @@
                         <p class="text-xs sm:text-sm leading-relaxed max-w-lg" style="color: {{ $footerMuted }};">{{ $aboutText }}</p>
                     @endif
                 </div>
-                <div class="md:col-span-6 grid grid-cols-2 gap-6 text-xs">
+                <div class="md:col-span-6 grid grid-cols-2 gap-6 text-xs font-mono">
                     <div class="space-y-2">
                         <p class="k71-eyebrow" style="color: {{ $footerMuted }};">Archive</p>
                         <ul class="space-y-1.5">
@@ -160,8 +160,53 @@
                 </div>
             </div>
 
+        @elseif($footerTemplate === 'utility-directory')
+            {{-- Pro Commercial Department Directory Footer --}}
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 pb-8 mb-6" style="border-bottom: 1px solid {{ $footerBorder }};">
+                <div class="space-y-3 col-span-2 sm:col-span-1">
+                    <span class="text-[10px] font-mono uppercase tracking-widest font-bold" style="color: var(--t-accent);">COMMERCIAL CATALOGUE</span>
+                    <a href="{{ $storeHomeUrl }}" class="k71-heading text-xl font-bold block">{{ $storeName }}</a>
+                    @if($aboutText)
+                        <p class="text-xs leading-relaxed" style="color: {{ $footerMuted }};">{{ $aboutText }}</p>
+                    @endif
+                </div>
+                <div class="space-y-2">
+                    <h3 class="k71-eyebrow" style="color: {{ $footerMuted }};">Catalogue Index</h3>
+                    <ul class="space-y-1.5 text-xs">
+                        <li><a href="{{ $storeHomeUrl }}" class="hover:opacity-75">Overview</a></li>
+                        <li><a href="{{ $storeCollectionUrl }}" class="hover:opacity-75">All Departments</a></li>
+                        @foreach(($vendorCategories ?? collect())->take(4) as $cat)
+                            <li><a href="{{ $storeCollectionUrl }}{{ str_contains($storeCollectionUrl, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}" class="hover:opacity-75 truncate block">{{ $cat->name }}</a></li>
+                        @endforeach
+                    </ul>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="k71-eyebrow" style="color: {{ $footerMuted }};">Buyer Protection</h3>
+                    <ul class="space-y-1.5 text-xs" style="color: {{ $footerMuted }};">
+                        <li>Verified Merchant</li>
+                        <li>Encrypted Checkout</li>
+                        @if($showPolicies && $vendor->settings?->return_window_days)
+                            <li>{{ $vendor->settings->return_window_days }}-Day Return Window</li>
+                        @endif
+                        <li>GST / Tax Invoice Ready</li>
+                    </ul>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="k71-eyebrow" style="color: {{ $footerMuted }};">Trade Dispatch</h3>
+                    <ul class="space-y-1.5 text-xs" style="color: {{ $footerMuted }};">
+                        @if($vendor->city)
+                            <li>Hub: {{ $vendor->city }}</li>
+                        @endif
+                        @if($showContact && $vendor->contact_email)
+                            <li>{{ $vendor->contact_email }}</li>
+                        @endif
+                        <li><a href="{{ route('cart.index') }}" class="underline underline-offset-4" style="color: {{ $footerFg }};">Order Summary</a></li>
+                    </ul>
+                </div>
+            </div>
+
         @else
-            {{-- Structured Studio / Warm Editorial / Utility Directory Footer --}}
+            {{-- Structured Studio / Warm Editorial Footer --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-8">
                 <div class="space-y-3 lg:col-span-2">
                     <a href="{{ $storeHomeUrl }}" class="k71-heading text-xl sm:text-2xl inline-block">{{ $storeName }}</a>

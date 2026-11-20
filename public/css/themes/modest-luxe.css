@@ -63,3 +63,18 @@
 .k71-sf-theme[data-k71-theme="modest-luxe"] footer a:hover {
   color: #6d4c3d;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Modest Luxe (modest-luxe) === */
+.k71-sf-theme[data-k71-theme="modest-luxe"] {
+  background-color: #faf7f2 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="modest-luxe"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  .k71-sf-theme[data-k71-theme="modest-luxe"] .k71-card-shell {
+    border: 1px solid #ede4d6 !important;
+    background: #ffffff !important;
+  }
+}

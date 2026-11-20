@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="sole-archive"] footer a:hover {
   color: #3f4a3c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Sole Archive (sole-archive) === */
+.k71-sf-theme[data-k71-theme="sole-archive"] {
+  background-color: #f4f1ea !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="sole-archive"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 36px !important;
+  }
+}

@@ -717,3 +717,64 @@
 .k71-sf-theme:has(#k71-sticky-pdp-bar.is-visible) #k71-back-to-top {
   bottom: 5.25rem;
 }
+
+
+/* ============================================================================
+   10. MOBILE-FIRST 50-THEME RESPONSIVE ARCHITECTURE (320px, 360px, 375px, 390px, 430px)
+   ============================================================================ */
+
+/* Touch-optimized smooth momentum scrolling */
+.k71-sf-theme [data-k71-hscroll-wrap],
+.k71-sf-theme .k71-mobile-reel,
+.k71-sf-theme .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Safe area padding for iPhone notch / dynamic island / home indicator */
+.k71-sf-theme .k71-safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
+}
+
+@media (max-width: 640px) {
+  /* Prevent horizontal layout blowout across all mobile phone viewports */
+  .k71-sf-theme {
+    overflow-x: clip;
+  }
+
+  /* Responsive clamp for hero titles on small screens */
+  .k71-sf-theme [data-k71-hero-title] {
+    word-break: break-word;
+    font-size: clamp(2rem, 8.5vw, 3.75rem) !important;
+    line-height: 1.02 !important;
+  }
+
+  /* Fluid spacing for mobile cards */
+  .k71-sf-theme .k71-product-card {
+    min-width: 0;
+  }
+
+  /* Touch accessibility target minimums */
+  .k71-sf-theme button,
+  .k71-sf-theme a.k71-btn,
+  .k71-sf-theme [data-k71-open],
+  .k71-sf-theme [data-k71-close] {
+    min-height: 44px;
+  }
+
+  /* Sticky bottom purchase bar mobile layout */
+  .k71-sf-theme #k71-sticky-pdp-bar {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0.75rem));
+  }
+}
+
+@media (max-width: 380px) {
+  /* Extra-compact viewport adjustments (320px - 360px small screens) */
+  .k71-sf-theme .k71-header {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+  .k71-sf-theme [data-k71-hero-title] {
+    font-size: clamp(1.75rem, 8vw, 2.5rem) !important;
+  }
+}

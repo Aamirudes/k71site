@@ -61,3 +61,18 @@
 .k71-sf-theme[data-k71-theme="sartorial"] footer a:hover {
   color: #1b2b44;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Sartorial (sartorial) === */
+.k71-sf-theme[data-k71-theme="sartorial"] {
+  background-color: #f7f5f0 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="sartorial"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  .k71-sf-theme[data-k71-theme="sartorial"] .k71-card-shell {
+    border: 1px solid #d4c5b2 !important;
+    background: #ffffff !important;
+  }
+}

@@ -67,3 +67,20 @@
 .k71-sf-theme[data-k71-theme="runway-01"] footer a:hover {
   color: #0e0e10;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Runway 01 (runway-01) === */
+.k71-sf-theme[data-k71-theme="runway-01"] {
+  background-color: #0c0b0a !important;
+  color: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="runway-01"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .k71-sf-theme[data-k71-theme="runway-01"] .k71-card-shell {
+    background: #141312 !important;
+    border: 1px solid #2a2825 !important;
+    border-radius: 0 !important;
+  }
+}

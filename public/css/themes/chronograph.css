@@ -67,3 +67,19 @@
 .k71-sf-theme[data-k71-theme="chronograph"] footer a:hover {
   color: #c5a467;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Chronograph (chronograph) === */
+.k71-sf-theme[data-k71-theme="chronograph"] {
+  background-color: #07090d !important;
+  color: #f4f4f5 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="chronograph"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .k71-sf-theme[data-k71-theme="chronograph"] .k71-card-shell {
+    background: #0f131a !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  }
+}

@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="artifact"] footer a:hover {
   color: #594a3c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Artifact (artifact) === */
+.k71-sf-theme[data-k71-theme="artifact"] {
+  background-color: #f5f2eb !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="artifact"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+}

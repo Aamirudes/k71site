@@ -65,3 +65,14 @@
 .k71-sf-theme[data-k71-theme="earth-and-grain"] footer a:hover {
   color: #964b2c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Earth & Grain (earth-and-grain) === */
+.k71-sf-theme[data-k71-theme="earth-and-grain"] {
+  background-color: #f6f0e6 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="earth-and-grain"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}

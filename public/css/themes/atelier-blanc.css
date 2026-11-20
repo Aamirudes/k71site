@@ -63,3 +63,26 @@
 .k71-sf-theme[data-k71-theme="atelier-blanc"] footer a:hover {
   color: #27272a;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Atelier Blanc (atelier-blanc) === */
+.k71-sf-theme[data-k71-theme="atelier-blanc"] {
+  background-color: #ffffff !important;
+}
+.k71-sf-theme[data-k71-theme="atelier-blanc"] .k71-heading {
+  font-family: "Inter", system-ui, sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.03em;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="atelier-blanc"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 48px !important;
+    padding: 0 16px !important;
+  }
+  .k71-sf-theme[data-k71-theme="atelier-blanc"] .k71-card-shell {
+    border: none !important;
+    background: #fafaf9 !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03) !important;
+  }
+}

@@ -63,3 +63,15 @@
 .k71-sf-theme[data-k71-theme="field-and-found"] footer a:hover {
   color: #9a4d1c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Field & Found (field-and-found) === */
+.k71-sf-theme[data-k71-theme="field-and-found"] {
+  background-color: #0e1610 !important;
+  color: #edf2ee !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="field-and-found"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+}

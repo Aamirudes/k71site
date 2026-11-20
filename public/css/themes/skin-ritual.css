@@ -65,3 +65,14 @@
 .k71-sf-theme[data-k71-theme="skin-ritual"] footer a:hover {
   color: #9b6b56;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Skin Ritual (skin-ritual) === */
+.k71-sf-theme[data-k71-theme="skin-ritual"] {
+  background-color: #fdfbf9 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="skin-ritual"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}

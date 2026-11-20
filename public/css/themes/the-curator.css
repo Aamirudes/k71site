@@ -61,3 +61,23 @@
 .k71-sf-theme[data-k71-theme="the-curator"] footer a:hover {
   color: #a12d2d;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: The Curator (the-curator) === */
+.k71-sf-theme[data-k71-theme="the-curator"] .k71-heading {
+  font-family: "Space Grotesk", sans-serif !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="the-curator"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    border-top: 1px solid var(--t-border) !important;
+  }
+  .k71-sf-theme[data-k71-theme="the-curator"] .k71-card-shell {
+    border: none !important;
+    border-bottom: 1px solid var(--t-border) !important;
+    border-radius: 0 !important;
+    padding: 20px 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}

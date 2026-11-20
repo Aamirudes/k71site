@@ -28,7 +28,7 @@
 
 @if($cardTpl === 'fresh-dense-market')
     {{-- ULTRA-SCANNABLE HIGH-DENSITY MARKET CARD (Fresh Market, Market Studio) --}}
-    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius);" data-k71-reveal>
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal>
         <div class="relative">
             <a href="{{ $productUrl }}" class="k71-card-media relative block w-full aspect-square overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover {{ $isSoldOut ? 'opacity-55' : '' }}">
@@ -40,7 +40,7 @@
             </a>
             @include('storefront.themes.partials._card_media_controls')
         </div>
-        <div class="p-3 flex-1 flex flex-col justify-between gap-2">
+        <div class="p-3 sm:p-3.5 flex-1 flex flex-col justify-between gap-2">
             <div>
                 <h3 class="text-xs sm:text-sm font-bold leading-snug line-clamp-2"><a href="{{ $productUrl }}" class="hover:opacity-75">{{ $product->title }}</a></h3>
                 @if(!empty($product->weight_grams))
@@ -69,11 +69,53 @@
         </div>
     </article>
 
-@elseif($cardTpl === 'gallery-plinth')
-    {{-- MUSEUM GALLERY PLINTH CARD (Atelier Blanc, Sole Archive, Artifact, Mono Tech, Forma Gallery) --}}
-    <article class="k71-product-card k71-card-shell flex flex-col h-full gap-3" data-k71-reveal data-k71-3d-card>
+@elseif($cardTpl === 'drop-kinetic-poster')
+    {{-- RAW 2PX BRUTALIST POSTER CARD (Street Culture, The Drop, Pop Form) --}}
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border: 2px solid var(--t-text); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
         <div class="relative">
-            <a href="{{ $productUrl }}" class="k71-card-frame k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden">
+            <a href="{{ $productUrl }}" class="k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt); border-bottom: 2px solid var(--t-text);">
+                <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover {{ $isSoldOut ? 'opacity-60' : '' }}">
+                <div class="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                    <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-widest" style="background-color: var(--t-text); color: var(--t-bg);">
+                        NO. {{ $cardIdx }}
+                    </span>
+                    @if($isSoldOut)
+                        <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-widest bg-red-600 text-white">SOLD OUT</span>
+                    @elseif($hasDiscount)
+                        <span class="px-2 py-0.5 text-[9px] font-mono font-black uppercase tracking-widest" style="background-color: var(--t-accent); color: var(--t-accent-contrast);">
+                            -{{ $discountPct }}%
+                        </span>
+                    @endif
+                </div>
+            </a>
+            @include('storefront.themes.partials._card_media_controls')
+        </div>
+        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between gap-3">
+            <div class="space-y-1.5">
+                <p class="text-[9px] font-mono font-black uppercase tracking-widest" style="color: var(--t-accent);">
+                    {{ $product->category?->name ?? 'RELEASE' }} // {{ $product->sku ?: 'LTD' }}
+                </p>
+                <h3 class="k71-heading text-sm sm:text-base uppercase font-black leading-snug line-clamp-2">
+                    <a href="{{ $productUrl }}" class="hover:underline underline-offset-2">{{ $product->title }}</a>
+                </h3>
+                <div class="flex items-baseline gap-2 pt-1 font-mono">
+                    <span class="text-base sm:text-lg font-black tabular-nums">₹{{ number_format($pricePaise / 100, 0) }}</span>
+                    @if($hasDiscount)
+                        <span class="text-xs line-through opacity-60">₹{{ number_format($comparePaise / 100, 0) }}</span>
+                    @endif
+                </div>
+            </div>
+            <a href="{{ $productUrl }}" class="k71-btn k71-btn-primary w-full !min-h-[40px] !py-2 !rounded-none !font-mono !font-black !uppercase !tracking-widest !text-xs">
+                {{ $isSoldOut ? 'VIEW ARCHIVE' : 'LOCK IN' }}
+            </a>
+        </div>
+    </article>
+
+@elseif($cardTpl === 'gallery-plinth')
+    {{-- MUSEUM GALLERY PLINTH CARD (Atelier Blanc, Sole Archive, Artifact, Forma Gallery) --}}
+    <article class="k71-product-card k71-card-shell flex flex-col h-full gap-3 p-3 sm:p-4" style="background-color: var(--t-surface); border: 1px solid var(--t-border);" data-k71-reveal data-k71-3d-card>
+        <div class="relative">
+            <a href="{{ $productUrl }}" class="k71-card-frame k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover {{ $isSoldOut ? 'opacity-60' : '' }}">
                 @if($secondaryImg)
                     <img src="{{ $secondaryImg }}" alt="{{ $product->title }}" loading="lazy" class="k71-img-secondary absolute inset-0 w-full h-full object-cover">
@@ -81,18 +123,21 @@
             </a>
             @include('storefront.themes.partials._card_media_controls')
         </div>
-        <div class="space-y-1">
-            <div class="flex items-center justify-between text-[10px] font-mono uppercase tracking-widest" style="color: var(--t-muted);">
-                <span>NO. {{ $cardIdx }}</span>
+        <div class="space-y-1.5 pt-1">
+            <div class="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em]" style="color: var(--t-muted);">
+                <span>EXHIBIT NO. {{ $cardIdx }}</span>
                 <span>{{ $isSoldOut ? 'ARCHIVED' : '₹' . number_format($pricePaise / 100, 0) }}</span>
             </div>
             <h3 class="text-sm font-medium leading-snug"><a href="{{ $productUrl }}" class="hover:opacity-65">{{ $product->title }}</a></h3>
+            @if(!empty($product->material))
+                <p class="text-[11px] italic" style="color: var(--t-muted);">{{ $product->material }}</p>
+            @endif
         </div>
     </article>
 
 @elseif($cardTpl === 'sneaker-vault')
     {{-- SNEAKER COLLECTOR SIZE-FORWARD CARD (Sneaker Vault, Motion Lab, Minimal Sole) --}}
-    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius);" data-k71-reveal data-k71-3d-card>
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
         <div class="relative">
             <a href="{{ $productUrl }}" class="k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
@@ -125,8 +170,8 @@
     </article>
 
 @elseif($cardTpl === 'tech-spec-matrix' || $cardTpl === 'horology-spec')
-    {{-- PRECISION SPECIFICATION CARD (Circuit, Future Form, Chronograph, Jewelle, Goldline, Sartorial, Pixel Foundry, The Specialist) --}}
-    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius);" data-k71-reveal data-k71-3d-card>
+    {{-- PRECISION SPECIFICATION CARD (Circuit, Future Form, Chronograph, Jewelle, Goldline, Sartorial, The Specialist) --}}
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
         <div class="relative">
             <a href="{{ $productUrl }}" class="k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
@@ -136,7 +181,7 @@
             </a>
             @include('storefront.themes.partials._card_media_controls')
         </div>
-        <div class="p-4 flex-1 flex flex-col justify-between gap-3">
+        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between gap-3">
             <div class="space-y-1.5">
                 @if($product->category)
                     <p class="text-[10px] font-mono uppercase tracking-wider" style="color: var(--t-accent);">{{ $product->category->name }}</p>
@@ -162,9 +207,37 @@
         </div>
     </article>
 
+@elseif($cardTpl === 'apothecary-ritual')
+    {{-- BOTANICAL APOTHECARY CARD (Botanical Lab, Skin Ritual, Pure Science, Daily Ritual) --}}
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden rounded-2xl" style="border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
+        <div class="relative">
+            <a href="{{ $productUrl }}" class="k71-card-media relative block w-full aspect-[4/5] overflow-hidden" style="background-color: var(--t-surface-alt);">
+                <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
+                @if(!empty($product->gender))
+                    <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-white/85 text-zinc-900 shadow-xs">
+                        {{ ucfirst($product->gender) }}
+                    </span>
+                @endif
+            </a>
+            @include('storefront.themes.partials._card_media_controls')
+        </div>
+        <div class="p-4 flex-1 flex flex-col justify-between gap-3 text-center items-center">
+            <div class="space-y-1 w-full">
+                <span class="text-[10px] uppercase tracking-[0.24em]" style="color: var(--t-accent);">{{ $product->category?->name ?? 'Formula' }}</span>
+                <h3 class="k71-heading text-sm sm:text-base font-semibold leading-snug line-clamp-2">
+                    <a href="{{ $productUrl }}" class="hover:opacity-70">{{ $product->title }}</a>
+                </h3>
+                <p class="text-sm font-bold tabular-nums pt-0.5">₹{{ number_format($pricePaise / 100, 0) }}</p>
+            </div>
+            <a href="{{ $productUrl }}" class="k71-btn k71-btn-outline w-full !rounded-full !min-h-[38px] !py-1.5 !text-xs">
+                Explore Formula
+            </a>
+        </div>
+    </article>
+
 @elseif($cardTpl === 'interior-architectural')
-    {{-- ARCHITECTURAL INTERIOR / FURNITURE CARD (Casa Moderna, Nordic Living, Earth & Grain, Habitat Studio, Luxe Objects, Neo Commerce, Heritage House) --}}
-    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius);" data-k71-reveal data-k71-3d-card>
+    {{-- ARCHITECTURAL INTERIOR / FURNITURE CARD (Casa Moderna, Nordic Living, Earth & Grain, Habitat Studio, Luxe Objects) --}}
+    <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
         <div class="relative">
             <a href="{{ $productUrl }}" class="k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover">
@@ -177,7 +250,7 @@
         <div class="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3">
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    <h3 class="k71-heading text-base leading-snug line-clamp-2"><a href="{{ $productUrl }}" class="hover:opacity-75">{{ $product->title }}</a></h3>
+                    <h3 class="k71-heading text-sm sm:text-base leading-snug line-clamp-2"><a href="{{ $productUrl }}" class="hover:opacity-75">{{ $product->title }}</a></h3>
                     @if(!empty($product->material))
                         <p class="text-xs mt-1 truncate" style="color: var(--t-muted);">{{ $product->material }}</p>
                     @endif
@@ -185,15 +258,15 @@
                 <span class="text-sm font-bold tabular-nums shrink-0">₹{{ number_format($pricePaise / 100, 0) }}</span>
             </div>
             <div class="pt-2.5 flex items-center justify-between text-[11px]" style="border-top: 1px solid var(--t-border); color: var(--t-muted);">
-                <span>{{ $variants->count() > 1 ? $variants->count() . ' finishes / options' : ($isSoldOut ? 'Unavailable' : 'Available') }}</span>
+                <span>{{ $variants->count() > 1 ? $variants->count() . ' finishes' : ($isSoldOut ? 'Unavailable' : 'Available') }}</span>
                 <a href="{{ $productUrl }}" class="font-semibold hover:opacity-75" style="color: var(--t-text);">Details &rarr;</a>
             </div>
         </div>
     </article>
 
 @else
-    {{-- LUXURY ATELIER / OBSIDIAN MONOLITH / EDITORIAL SPREAD / APOTHECARY / GOURMET / DROP POSTER --}}
-    <article class="k71-product-card k71-card-shell group flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius);" data-k71-reveal data-k71-3d-card>
+    {{-- LUXURY ATELIER / OBSIDIAN MONOLITH / EDITORIAL SPREAD / GOURMET --}}
+    <article class="k71-product-card k71-card-shell group flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal data-k71-3d-card>
         <div class="relative">
             <a href="{{ $productUrl }}" class="k71-card-media relative block w-full {{ $ratioClass }} overflow-hidden" style="background-color: var(--t-surface-alt);">
                 <img src="{{ $primaryImg }}" alt="{{ $product->title }}" loading="lazy" class="w-full h-full object-cover {{ $isSoldOut ? 'opacity-60' : '' }}">
@@ -208,7 +281,7 @@
             </a>
             @include('storefront.themes.partials._card_media_controls')
         </div>
-        <div class="p-4 flex-1 flex flex-col justify-between gap-3 {{ $contentAlign === 'center' ? 'text-center items-center' : 'text-left' }}">
+        <div class="p-3.5 sm:p-4 flex-1 flex flex-col justify-between gap-3 {{ $contentAlign === 'center' ? 'text-center items-center' : 'text-left' }}">
             <div class="space-y-1 w-full">
                 @if($product->category)
                     <p class="k71-eyebrow truncate" style="color: var(--t-muted);">{{ $product->category->name }}</p>

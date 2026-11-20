@@ -61,3 +61,14 @@
 .k71-sf-theme[data-k71-theme="pure-science"] footer a:hover {
   color: #0f766e;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Pure Science (pure-science) === */
+.k71-sf-theme[data-k71-theme="pure-science"] {
+  background-color: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="pure-science"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}

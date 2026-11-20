@@ -67,3 +67,19 @@
 .k71-sf-theme[data-k71-theme="pixel-foundry"] footer a:hover {
   color: #38bdf8;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: (pixel-foundry) === */
+.k71-sf-theme[data-k71-theme="pixel-foundry"] {
+  background-color: #0d0f14 !important;
+  color: #f1f5f9 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="pixel-foundry"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .k71-sf-theme[data-k71-theme="pixel-foundry"] .k71-card-shell {
+    background: #161a24 !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  }
+}

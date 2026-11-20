@@ -65,3 +65,22 @@
 .k71-sf-theme[data-k71-theme="soft-form"] footer a:hover {
   color: #7c5f48;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Soft Form (soft-form) === */
+.k71-sf-theme[data-k71-theme="soft-form"] {
+  --t-radius: 24px !important;
+  background-color: #fcf9f5 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="soft-form"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+    padding: 0 12px !important;
+  }
+  .k71-sf-theme[data-k71-theme="soft-form"] .k71-card-shell {
+    border-radius: 28px !important;
+    border: none !important;
+    background: #ffffff !important;
+    box-shadow: 0 14px 34px -10px rgba(180, 160, 140, 0.22) !important;
+  }
+}

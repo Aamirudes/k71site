@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="luxe-objects"] footer a:hover {
   color: #3730a3;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Luxe Objects (luxe-objects) === */
+.k71-sf-theme[data-k71-theme="luxe-objects"] {
+  background-color: #f8f6f0 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="luxe-objects"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}

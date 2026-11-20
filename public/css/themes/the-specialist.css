@@ -61,3 +61,19 @@
 .k71-sf-theme[data-k71-theme="the-specialist"] footer a:hover {
   color: #0f4c81;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: The Specialist (the-specialist) === */
+.k71-sf-theme[data-k71-theme="the-specialist"] {
+  background-color: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="the-specialist"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .k71-sf-theme[data-k71-theme="the-specialist"] .k71-card-shell {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+  }
+}

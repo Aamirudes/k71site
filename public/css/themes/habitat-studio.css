@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="habitat-studio"] footer a:hover {
   color: #3f624c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Habitat Studio (habitat-studio) === */
+.k71-sf-theme[data-k71-theme="habitat-studio"] {
+  background-color: #f2f3f5 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="habitat-studio"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}

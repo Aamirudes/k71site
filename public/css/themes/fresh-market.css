@@ -61,3 +61,19 @@
 .k71-sf-theme[data-k71-theme="fresh-market"] footer a:hover {
   color: #15803d;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Fresh Market (fresh-market) === */
+.k71-sf-theme[data-k71-theme="fresh-market"] {
+  background-color: #f6fbf6 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="fresh-market"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .k71-sf-theme[data-k71-theme="fresh-market"] .k71-card-shell {
+    border-radius: 10px !important;
+    border: 1px solid #dcfce7 !important;
+    background: #ffffff !important;
+  }
+}

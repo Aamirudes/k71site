@@ -63,3 +63,15 @@
 .k71-sf-theme[data-k71-theme="velvet-beauty"] footer a:hover {
   color: #7a1f4b;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Velvet Beauty (velvet-beauty) === */
+.k71-sf-theme[data-k71-theme="velvet-beauty"] {
+  background-color: #1a080f !important;
+  color: #fce7f3 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="velvet-beauty"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}

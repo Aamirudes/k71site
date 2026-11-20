@@ -61,3 +61,14 @@
 .k71-sf-theme[data-k71-theme="market-studio"] footer a:hover {
   color: #0f766e;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Market Studio (market-studio) === */
+.k71-sf-theme[data-k71-theme="market-studio"] {
+  background-color: #f8fafc !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="market-studio"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}

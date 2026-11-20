@@ -67,3 +67,15 @@
 .k71-sf-theme[data-k71-theme="coffee-culture"] footer a:hover {
   color: #d48c46;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Coffee Culture (coffee-culture) === */
+.k71-sf-theme[data-k71-theme="coffee-culture"] {
+  background-color: #120e0b !important;
+  color: #f5f0eb !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="coffee-culture"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+}

@@ -63,3 +63,17 @@
 .k71-sf-theme[data-k71-theme="goldline"] footer a:hover {
   color: #8f651d;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Goldline (goldline) === */
+.k71-sf-theme[data-k71-theme="goldline"] {
+  background-color: #fcf9f2 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="goldline"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+  .k71-sf-theme[data-k71-theme="goldline"] .k71-card-shell {
+    border: 1px solid #e8dbbe !important;
+  }
+}

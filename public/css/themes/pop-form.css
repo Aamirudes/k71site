@@ -63,3 +63,18 @@
 .k71-sf-theme[data-k71-theme="pop-form"] footer a:hover {
   color: #ea580c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Pop Form (pop-form) === */
+.k71-sf-theme[data-k71-theme="pop-form"] {
+  background-color: #fffbeb !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="pop-form"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .k71-sf-theme[data-k71-theme="pop-form"] .k71-card-shell {
+    border: 2px solid #000000 !important;
+    box-shadow: 4px 4px 0px #f59e0b !important;
+  }
+}

@@ -67,3 +67,23 @@
 .k71-sf-theme[data-k71-theme="obsidian"] footer a:hover {
   color: #c9a96e;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Obsidian (obsidian) === */
+.k71-sf-theme[data-k71-theme="obsidian"] {
+  background-color: #070709 !important;
+  color: #f4f4f5 !important;
+}
+.k71-sf-theme[data-k71-theme="obsidian"] .k71-card-shell {
+  background: #0d0d12 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 12px 36px -12px rgba(0, 0, 0, 0.7) !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="obsidian"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .k71-sf-theme[data-k71-theme="obsidian"] .k71-card-shell:hover {
+    border-color: var(--t-accent) !important;
+  }
+}

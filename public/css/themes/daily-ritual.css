@@ -65,3 +65,14 @@
 .k71-sf-theme[data-k71-theme="daily-ritual"] footer a:hover {
   color: #2f6f55;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Daily Ritual (daily-ritual) === */
+.k71-sf-theme[data-k71-theme="daily-ritual"] {
+  background-color: #f8f6f2 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="daily-ritual"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+}

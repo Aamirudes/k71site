@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="maison-gourmet"] footer a:hover {
   color: #2e4a38;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Maison Gourmet (maison-gourmet) === */
+.k71-sf-theme[data-k71-theme="maison-gourmet"] {
+  background-color: #fbf7ee !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="maison-gourmet"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}

@@ -63,3 +63,19 @@
 .k71-sf-theme[data-k71-theme="circuit"] footer a:hover {
   color: #2563eb;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: (circuit) === */
+.k71-sf-theme[data-k71-theme="circuit"] {
+  background-color: #f3f5f8 !important;
+  color: #0f172a !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="circuit"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .k71-sf-theme[data-k71-theme="circuit"] .k71-card-shell {
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+  }
+}

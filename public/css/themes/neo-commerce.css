@@ -63,3 +63,15 @@
 .k71-sf-theme[data-k71-theme="neo-commerce"] footer a:hover {
   color: #4338ca;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Neo Commerce (neo-commerce) === */
+.k71-sf-theme[data-k71-theme="neo-commerce"] {
+  background-color: #08090d !important;
+  color: #f1f5f9 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="neo-commerce"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}

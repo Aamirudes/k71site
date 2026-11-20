@@ -65,3 +65,15 @@
 .k71-sf-theme[data-k71-theme="jewelle"] footer a:hover {
   color: #9a7b4f;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Jewelle (jewelle) === */
+.k71-sf-theme[data-k71-theme="jewelle"] {
+  background-color: #0c080b !important;
+  color: #fdf2f8 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="jewelle"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+}

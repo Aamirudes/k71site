@@ -63,3 +63,17 @@
 .k71-sf-theme[data-k71-theme="heritage-house"] footer a:hover {
   color: #264636;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Heritage House (heritage-house) === */
+.k71-sf-theme[data-k71-theme="heritage-house"] {
+  background-color: #f7f3ec !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="heritage-house"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .k71-sf-theme[data-k71-theme="heritage-house"] .k71-card-shell {
+    border: 1px solid #d5c8b5 !important;
+  }
+}

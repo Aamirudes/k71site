@@ -67,3 +67,20 @@
 .k71-sf-theme[data-k71-theme="the-drop"] footer a:hover {
   color: #22c55e;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: The Drop (the-drop) === */
+.k71-sf-theme[data-k71-theme="the-drop"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  --t-radius: 0px !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="the-drop"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  .k71-sf-theme[data-k71-theme="the-drop"] .k71-card-shell {
+    border: 2px solid #ffffff !important;
+    border-radius: 0 !important;
+  }
+}

@@ -67,3 +67,15 @@
 .k71-sf-theme[data-k71-theme="velocity"] footer a:hover {
   color: #10b981;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Velocity (velocity) === */
+.k71-sf-theme[data-k71-theme="velocity"] {
+  background-color: #050608 !important;
+  color: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="velocity"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+}

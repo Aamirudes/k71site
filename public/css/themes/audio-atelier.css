@@ -67,3 +67,19 @@
 .k71-sf-theme[data-k71-theme="audio-atelier"] footer a:hover {
   color: #d97706;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: (audio-atelier) === */
+.k71-sf-theme[data-k71-theme="audio-atelier"] {
+  background-color: #121214 !important;
+  color: #f4f4f6 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="audio-atelier"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+  .k71-sf-theme[data-k71-theme="audio-atelier"] .k71-card-shell {
+    background: #1b1b1f !important;
+    border: 1px solid rgba(244, 244, 246, 0.12) !important;
+  }
+}

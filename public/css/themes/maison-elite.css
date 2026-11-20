@@ -63,3 +63,31 @@
 .k71-sf-theme[data-k71-theme="maison-elite"] footer a:hover {
   color: #141311;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Maison Élite (maison-elite) === */
+.k71-sf-theme[data-k71-theme="maison-elite"] {
+  --theme-accent-soft: rgba(20, 19, 17, 0.12);
+  --theme-accent-ring: rgba(20, 19, 17, 0.32);
+}
+.k71-sf-theme[data-k71-theme="maison-elite"] .k71-heading {
+  font-family: "Cormorant Garamond", Georgia, serif !important;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="maison-elite"] .k71-header {
+    border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+  }
+  .k71-sf-theme[data-k71-theme="maison-elite"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+    padding: 0 4px !important;
+  }
+  .k71-sf-theme[data-k71-theme="maison-elite"] .k71-card-shell {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .k71-sf-theme[data-k71-theme="maison-elite"] .k71-card-media {
+    aspect-ratio: 4/5 !important;
+  }
+}

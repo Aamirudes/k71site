@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="minimal-sole"] footer a:hover {
   color: #171717;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Minimal Sole (minimal-sole) === */
+.k71-sf-theme[data-k71-theme="minimal-sole"] {
+  background-color: #ffffff !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="minimal-sole"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}

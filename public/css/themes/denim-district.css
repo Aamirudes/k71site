@@ -61,3 +61,19 @@
 .k71-sf-theme[data-k71-theme="denim-district"] footer a:hover {
   color: #1e3a5f;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Denim District (denim-district) === */
+.k71-sf-theme[data-k71-theme="denim-district"] {
+  background-color: #0b111e !important;
+  color: #e2e8f0 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="denim-district"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .k71-sf-theme[data-k71-theme="denim-district"] .k71-card-shell {
+    background: #111a2d !important;
+    border: 1px solid #1e293b !important;
+  }
+}

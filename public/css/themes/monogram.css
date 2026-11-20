@@ -63,3 +63,24 @@
 .k71-sf-theme[data-k71-theme="monogram"] footer a:hover {
   color: #6b222c;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Monogram (monogram) === */
+.k71-sf-theme[data-k71-theme="monogram"] {
+  background-color: #f6f1e7 !important;
+}
+.k71-sf-theme[data-k71-theme="monogram"] .k71-card-shell {
+  border: 1px solid #d9cbba !important;
+  background: #fbf8f2 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="monogram"] .k71-header {
+    border-bottom: 2px solid #231b14 !important;
+  }
+  .k71-sf-theme[data-k71-theme="monogram"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  .k71-sf-theme[data-k71-theme="monogram"] .k71-card-shell {
+    padding: 8px !important;
+  }
+}

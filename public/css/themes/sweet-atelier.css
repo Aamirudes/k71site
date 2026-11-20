@@ -63,3 +63,14 @@
 .k71-sf-theme[data-k71-theme="sweet-atelier"] footer a:hover {
   color: #9f3548;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Sweet Atelier (sweet-atelier) === */
+.k71-sf-theme[data-k71-theme="sweet-atelier"] {
+  background-color: #fdf5f5 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="sweet-atelier"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 14px !important;
+  }
+}

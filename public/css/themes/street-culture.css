@@ -67,3 +67,19 @@
 .k71-sf-theme[data-k71-theme="street-culture"] footer a:hover {
   color: #d9381e;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Street Culture (street-culture) === */
+.k71-sf-theme[data-k71-theme="street-culture"] {
+  --t-radius: 0px !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="street-culture"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+  .k71-sf-theme[data-k71-theme="street-culture"] .k71-card-shell {
+    border: 2px solid #000000 !important;
+    border-radius: 0 !important;
+    box-shadow: 4px 4px 0px #000000 !important;
+  }
+}

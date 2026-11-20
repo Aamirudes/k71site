@@ -63,3 +63,15 @@
 .k71-sf-theme[data-k71-theme="color-theory"] footer a:hover {
   color: #1d4ed8;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Color Theory (color-theory) === */
+.k71-sf-theme[data-k71-theme="color-theory"] {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="color-theory"] [data-k71-stagger-grid] {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}

@@ -63,3 +63,19 @@
 .k71-sf-theme[data-k71-theme="studio-label"] footer a:hover {
   color: #1f2937;
 }
+
+/* === BESPOKE THEME IDENTITY & MOBILE ART DIRECTION: Studio Label (studio-label) === */
+.k71-sf-theme[data-k71-theme="studio-label"] {
+  background-color: #f7f6f2 !important;
+}
+@media (max-width: 640px) {
+  .k71-sf-theme[data-k71-theme="studio-label"] [data-k71-stagger-grid] {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .k71-sf-theme[data-k71-theme="studio-label"] .k71-card-shell {
+    border: 1px dashed var(--t-border) !important;
+    background: #ffffff !important;
+    padding: 6px !important;
+  }
+}
