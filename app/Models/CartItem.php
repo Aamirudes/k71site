@@ -14,6 +14,7 @@ class CartItem extends Model
         'gig_package_id',
         'selected_modifiers_json',
         'option_selections_json',
+        'customization_data',
         'booking_date_time',
         'special_instructions',
         'vendor_id',
@@ -24,8 +25,14 @@ class CartItem extends Model
     protected $casts = [
         'selected_modifiers_json' => 'array',
         'option_selections_json' => 'array',
+        'customization_data' => 'array',
         'booking_date_time' => 'datetime',
     ];
+
+    public function hasGiftCustomization(): bool
+    {
+        return !empty($this->customization_data) && is_array($this->customization_data);
+    }
 
     public function cart(): BelongsTo
     {

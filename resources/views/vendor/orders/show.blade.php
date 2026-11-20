@@ -216,6 +216,68 @@
                                             </span>
                                         </div>
                                     @endif
+
+                                    @php
+                                        $customData = $item->customization_data ?? $item->meta_json['gift_customization'] ?? $item->snapshot['gift_customization'] ?? null;
+                                    @endphp
+                                    @if(!empty($customData) && is_array($customData))
+                                        <div class="mt-2.5 p-3.5 bg-purple-50/90 border border-purple-200 rounded-xl text-xs space-y-2 shadow-xs">
+                                            <div class="font-bold text-purple-900 flex items-center justify-between">
+                                                <span class="flex items-center gap-1.5">
+                                                    <span>🎁</span>
+                                                    <span class="uppercase tracking-wider text-[11px]">Production Personalization Specs</span>
+                                                </span>
+                                                <span class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-mono">Customized</span>
+                                            </div>
+
+                                            @if(!empty($customData['custom_text']))
+                                                <div class="p-2 bg-white rounded-lg border border-purple-200">
+                                                    <span class="text-slate-500 text-[11px] block font-medium">Customer Requested Engraving / Text:</span>
+                                                    <strong class="text-purple-950 font-serif text-sm block mt-0.5">"{{ $customData['custom_text'] }}"</strong>
+                                                </div>
+                                            @endif
+
+                                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                                                @if(!empty($customData['font']))
+                                                    <span class="px-2 py-1 rounded bg-white border border-purple-200 text-slate-800">
+                                                        Font Style: <strong>{{ $customData['font'] }}</strong>
+                                                    </span>
+                                                @endif
+                                                @if(!empty($customData['color']))
+                                                    <span class="px-2 py-1 rounded bg-white border border-purple-200 text-slate-800">
+                                                        Foil / Color: <strong>{{ $customData['color'] }}</strong>
+                                                    </span>
+                                                @endif
+                                                @if(!empty($customData['gift_wrap']))
+                                                    <span class="px-2 py-1 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold">
+                                                        🎀 Luxury Gift Wrap Required
+                                                    </span>
+                                                @endif
+                                            </div>
+
+                                            @if(!empty($customData['photo_url']))
+                                                <div class="pt-1.5 flex items-center justify-between p-2 bg-white rounded-lg border border-purple-200">
+                                                    <div class="flex items-center gap-2">
+                                                        <img src="{{ $customData['photo_url'] }}" alt="Customer Upload" class="w-10 h-10 rounded-md object-cover border border-purple-300">
+                                                        <div>
+                                                            <p class="font-semibold text-slate-900 text-xs">Customer Photo Attached</p>
+                                                            <p class="text-[10px] text-slate-500">High-resolution customer upload</p>
+                                                        </div>
+                                                    </div>
+                                                    <a href="{{ $customData['photo_url'] }}" target="_blank" download class="px-2.5 py-1 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors inline-flex items-center gap-1 shadow-2xs">
+                                                        <span>⬇️ Download Photo</span>
+                                                    </a>
+                                                </div>
+                                            @endif
+
+                                            @if(!empty($customData['greeting_card']))
+                                                <div class="p-2 bg-white rounded-lg border border-purple-200">
+                                                    <span class="text-slate-500 text-[11px] block font-medium">💌 Handwritten Greeting Card Message:</span>
+                                                    <p class="italic text-slate-800 mt-0.5">"{{ $customData['greeting_card_message'] ?? 'Best Wishes!' }}"</p>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
                                     <div class="flex justify-between items-center mt-2">
                                         <p class="text-sm text-gray-900 font-medium">₹{{ number_format($item->unit_price / 100, 2) }} x {{ $item->quantity }}</p>
                                         <p class="text-sm font-bold text-gray-900">₹{{ number_format($item->total_price / 100, 2) }}</p>

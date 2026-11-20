@@ -784,6 +784,144 @@
                 <!-- 3. Universal Dynamic Variant & Attribute Engine -->
                 @include('vendor.products.partials.dynamic_variant_engine')
 
+                @php
+                    $giftCfg = $product->getGiftCustomizationConfig();
+                    $isGiftCustomizable = $product->isGiftCustomizable();
+                @endphp
+                <!-- Gift Store Personalization Configuration Card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 p-6 sm:p-8 space-y-4" x-data="{
+                    isCustomizable: @js($isGiftCustomizable),
+                    allowCustomText: @js(!empty($giftCfg['allow_custom_text'])),
+                    allowFontSelection: @js(!empty($giftCfg['allow_font_selection'])),
+                    allowColorSelection: @js(!empty($giftCfg['allow_color_selection'])),
+                    allowPhotoUpload: @js(!empty($giftCfg['allow_photo_upload'])),
+                    allowGiftWrap: @js(!empty($giftCfg['allow_gift_wrap'])),
+                    allowGreetingCard: @js(!empty($giftCfg['allow_greeting_card']))
+                }">
+                    <div class="flex items-center justify-between pb-4 border-b border-purple-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl shadow-xs">
+                                🎁
+                            </div>
+                            <div>
+                                <h3 class="text-base font-bold text-gray-900">Custom Gift Personalization &amp; Engraving</h3>
+                                <p class="text-xs text-gray-500">Enable custom text, font selection, photo uploads, gift wrap, and greeting cards for this item</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="gift_customization[is_customizable]" value="1" x-model="isCustomizable" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+
+                    <div x-show="isCustomizable" class="space-y-4 pt-2">
+                        <!-- Custom Text -->
+                        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800">1. Personalized Text / Name Engraving:</span>
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[allow_custom_text]" value="1" x-model="allowCustomText" class="rounded text-purple-600">
+                                    <span>Allow Text</span>
+                                </label>
+                            </div>
+                            <div x-show="allowCustomText" class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                <div class="sm:col-span-2 space-y-1">
+                                    <label class="text-[11px] font-semibold text-slate-600">Prompt / Field Label:</label>
+                                    <input type="text" name="gift_customization[text_prompt]" value="{{ old('gift_customization.text_prompt', $giftCfg['text_prompt'] ?? 'Enter Recipient Name or Custom Message') }}" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-medium">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-slate-600">Max Characters:</label>
+                                    <input type="number" name="gift_customization[text_char_limit]" value="{{ old('gift_customization.text_char_limit', $giftCfg['text_char_limit'] ?? 40) }}" min="5" max="200" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-mono">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-slate-600">Extra Fee (₹, 0 for free):</label>
+                                    <input type="number" step="0.01" name="gift_customization[text_extra_price]" value="{{ old('gift_customization.text_extra_price', ($giftCfg['text_price_paise'] ?? 0) / 100) }}" min="0" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-bold">
+                                </div>
+                                <div class="sm:col-span-2 flex items-center gap-2 pt-1">
+                                    <label class="inline-flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                                        <input type="checkbox" name="gift_customization[is_text_required]" value="1" {{ !empty($giftCfg['is_text_required']) ? 'checked' : '' }} class="rounded text-purple-600">
+                                        <span>Mandatory (customer cannot checkout without entering text)</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Font Selection -->
+                        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800">2. Font &amp; Script Selection:</span>
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[allow_font_selection]" value="1" x-model="allowFontSelection" class="rounded text-purple-600">
+                                    <span>Allow Font Choice</span>
+                                </label>
+                            </div>
+                            <div x-show="allowFontSelection" class="pt-1">
+                                @php
+                                    $curFonts = is_array($giftCfg['available_fonts'] ?? null) ? implode(', ', $giftCfg['available_fonts']) : ($giftCfg['available_fonts'] ?? 'Classic Serif, Modern Script, Bold Minimal, Vintage Engraving');
+                                @endphp
+                                <input type="text" name="gift_customization[available_fonts]" value="{{ old('gift_customization.available_fonts', $curFonts) }}" placeholder="Comma-separated fonts" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white">
+                                <p class="text-[10px] text-slate-400 mt-1">Preset curated engraving scripts rendered on the customer PDP.</p>
+                            </div>
+                        </div>
+
+                        <!-- Photo Upload -->
+                        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-slate-800">3. Customer Photo Upload (Mugs, Frames, Canvas):</span>
+                                <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[allow_photo_upload]" value="1" x-model="allowPhotoUpload" class="rounded text-purple-600">
+                                    <span>Enable Photo Upload</span>
+                                </label>
+                            </div>
+                            <div x-show="allowPhotoUpload" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-slate-600">Photo Upload Prompt:</label>
+                                    <input type="text" name="gift_customization[photo_prompt]" value="{{ old('gift_customization.photo_prompt', $giftCfg['photo_prompt'] ?? 'Upload High-Resolution Photo for Custom Print') }}" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-medium">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[11px] font-semibold text-slate-600">Extra Photo Printing Fee (₹):</label>
+                                    <input type="number" step="0.01" name="gift_customization[photo_extra_price]" value="{{ old('gift_customization.photo_extra_price', ($giftCfg['photo_price_paise'] ?? 0) / 100) }}" min="0" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 bg-white font-bold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Packaging, Greeting Cards & Production Lead Time -->
+                        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[allow_gift_wrap]" value="1" x-model="allowGiftWrap" class="rounded text-purple-600">
+                                    <span>🎀 Luxury Gift Wrap</span>
+                                </label>
+                                <div x-show="allowGiftWrap" class="flex items-center gap-1">
+                                    <span class="text-xs text-slate-400">₹</span>
+                                    <input type="number" step="0.01" name="gift_customization[gift_wrap_price]" value="{{ old('gift_customization.gift_wrap_price', ($giftCfg['gift_wrap_price_paise'] ?? 4900) / 100) }}" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 font-bold bg-white">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[allow_greeting_card]" value="1" x-model="allowGreetingCard" class="rounded text-purple-600">
+                                    <span>💌 Greeting Card</span>
+                                </label>
+                                <div x-show="allowGreetingCard" class="flex items-center gap-1">
+                                    <span class="text-xs text-slate-400">₹</span>
+                                    <input type="number" step="0.01" name="gift_customization[greeting_card_price]" value="{{ old('gift_customization.greeting_card_price', ($giftCfg['greeting_card_price_paise'] ?? 2900) / 100) }}" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 font-bold bg-white">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="text-xs font-bold text-slate-800 block">
+                                    ⏳ Crafting Lead Time:
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" name="gift_customization[production_days]" value="{{ old('gift_customization.production_days', $giftCfg['production_days'] ?? 2) }}" min="1" max="30" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 font-mono font-bold bg-white">
+                                    <span class="text-xs text-slate-400">Days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
 
                 @if($targetVertical === 'marketplace')
                 <!-- 4. Garment Fit & Size Guide Builder -->

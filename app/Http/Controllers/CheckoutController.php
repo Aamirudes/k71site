@@ -601,6 +601,7 @@ class CheckoutController extends Controller
                         'revisions' => $item->gigPackage->revisions,
                     ] : null,
                     'modifiers' => $item->selected_modifiers_json ?? null,
+                    'gift_customization' => $item->customization_data ?? null,
                     'booking_date_time' => $item->booking_date_time?->toIso8601String(),
                 ];
 
@@ -619,11 +620,23 @@ class CheckoutController extends Controller
                     }
                 }
 
+                $giftCustom = $item->customization_data;
+                if (!empty($giftCustom) && is_array($giftCustom)) {
+                    if (!empty($giftCustom['custom_text'])) {
+                        $variantLabel .= ' (Personalized: "' . $giftCustom['custom_text'] . '")';
+                    }
+                    if (!empty($giftCustom['gift_wrap'])) {
+                        $variantLabel .= ' + Gift Wrap';
+                    }
+                    $addonAmount += (int) ($giftCustom['total_customization_paise'] ?? 0);
+                }
+
                 $orderItems[] = [
                     'product_id' => $product?->id ?? $lockedVariant?->product_id,
                     'variant_id' => $lockedVariant?->id ?? $item->variant_id,
                     'gig_package_id' => $item->gig_package_id,
                     'selected_modifiers_json' => $item->selected_modifiers_json,
+                    'customization_data' => $giftCustom,
                     'special_instructions' => $item->special_instructions ?? null,
                     'booking_date_time' => $item->booking_date_time,
                     'quantity' => $item->quantity,
@@ -637,6 +650,7 @@ class CheckoutController extends Controller
                         'title' => $product?->title ?? 'Item',
                         'variant_sku' => $variantLabel,
                         'image' => $product?->images->first()?->path ?? null,
+                        'gift_customization' => $giftCustom,
                     ],
                     'meta_json' => $metaJson,
                 ];

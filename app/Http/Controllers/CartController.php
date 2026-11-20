@@ -48,6 +48,8 @@ class CartController extends Controller
             'selected_modifiers.*' => 'integer|exists:product_modifiers,id',
             'special_instructions' => 'nullable|string|max:500',
             'instructions' => 'nullable|string|max:500',
+            'customization' => 'nullable|array',
+            'customization_photo' => 'nullable|file|mimes:jpeg,png,jpg,webp|max:10240',
             'clear_existing' => 'nullable|boolean',
             'booking_date_time' => 'nullable|date',
         ]);
@@ -194,6 +196,28 @@ class CartController extends Controller
             }
         }
 
+        // Server-side gift store personalization validation and pricing
+        $giftCustomizationSnapshot = null;
+        if ($product->isGiftCustomizable()) {
+            $giftService = app(\App\Services\GiftCustomizationService::class);
+            try {
+                $customizationCalc = $giftService->validateAndCalculate(
+                    $product,
+                    $request->input('customization'),
+                    $request->file('customization_photo')
+                );
+                if ($customizationCalc['is_customized']) {
+                    $giftCustomizationSnapshot = $customizationCalc['snapshot'];
+                    $unitPricePaise += $customizationCalc['additional_paise'];
+                }
+            } catch (\DomainException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        }
+
         $cart = $this->getOrCreateCart();
 
         // Enforce single-restaurant food bag rule (while leaving retail multi-vendor bags untouched)
@@ -244,13 +268,15 @@ class CartController extends Controller
                 ? collect($modifiersSnapshot)->pluck('id')->sort()->values()->all()
                 : (!empty($validated['selected_modifiers']) ? collect($validated['selected_modifiers'])->map(fn ($id) => (int) $id)->sort()->values()->all() : []);
 
+            $giftService = app(\App\Services\GiftCustomizationService::class);
             foreach ($existingVariantItems as $existing) {
                 $existingIds = !empty($existing->selected_modifiers_json)
                     ? collect($existing->selected_modifiers_json)->pluck('id')->map(fn ($id) => (int) $id)->sort()->values()->all()
                     : [];
                 $existingInstr = trim((string) ($existing->special_instructions ?? '')) ?: null;
+                $isCustomizationMatch = $giftService->areCustomizationsEqual($giftCustomizationSnapshot, $existing->customization_data);
 
-                if ($incomingIds === $existingIds && $existingInstr === $specialInstructions) {
+                if ($incomingIds === $existingIds && $existingInstr === $specialInstructions && $isCustomizationMatch) {
                     $cartItem = $existing;
                     break;
                 }
@@ -271,7 +297,7 @@ class CartController extends Controller
 
             // Recompute B2B volume discount unit price on cumulative quantity for standard products
             $updatePayload = ['quantity' => $newQuantity];
-            if (!$gigPackage && !$isFoodProduct && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
+            if (!$gigPackage && !$isFoodProduct && empty($giftCustomizationSnapshot) && !empty($product->b2b_tiers_json) && is_array($product->b2b_tiers_json)) {
                 $recomputedBase = $variant?->price_override
                     ?? (int) round(((float) ($variant?->price ?? 0)) * 100)
                     ?: $product->base_price;
@@ -297,7 +323,8 @@ class CartController extends Controller
                 'vendor_id' => $product->vendor_id,
                 'gig_package_id' => $gigPackage?->id,
                 'selected_modifiers_json' => $modifiersSnapshot,
-                'option_selections_json' => $optionSelectionsSnapshot,
+                'option_selections_json' => $optionSelectionsSnapshot ?: ($giftCustomizationSnapshot ? [$giftCustomizationSnapshot] : null),
+                'customization_data' => $giftCustomizationSnapshot,
                 'special_instructions' => $specialInstructions,
                 'booking_date_time' => !empty($validated['booking_date_time']) ? $validated['booking_date_time'] : null,
                 'quantity' => $validated['quantity'],

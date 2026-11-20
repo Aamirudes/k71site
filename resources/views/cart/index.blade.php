@@ -147,6 +147,44 @@
                                                         @endforeach
                                                     @endif
 
+                                                    @if($item->hasGiftCustomization())
+                                                        @php $cust = $item->customization_data; @endphp
+                                                        <div class="w-full mt-2 p-3 bg-purple-50/75 border border-purple-200/80 rounded-2xl text-xs space-y-1.5 shadow-2xs">
+                                                            <div class="font-bold text-purple-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                                                                <span>🎁 Custom Gift Personalization</span>
+                                                            </div>
+                                                            @if(!empty($cust['custom_text']))
+                                                                <div class="text-[#1A1018]">
+                                                                    <span class="text-[#1A1018]/60 font-medium">Text:</span>
+                                                                    <strong class="text-purple-950 font-serif text-sm">"{{ $cust['custom_text'] }}"</strong>
+                                                                </div>
+                                                            @endif
+                                                            <div class="flex flex-wrap items-center gap-2 text-[11px] text-[#1A1018]/75">
+                                                                @if(!empty($cust['font']))
+                                                                    <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Font: <strong>{{ $cust['font'] }}</strong></span>
+                                                                @endif
+                                                                @if(!empty($cust['color']))
+                                                                    <span class="px-2 py-0.5 rounded-md bg-white border border-purple-200">Color: <strong>{{ $cust['color'] }}</strong></span>
+                                                                @endif
+                                                                @if(!empty($cust['gift_wrap']))
+                                                                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">🎀 Gift Wrap</span>
+                                                                @endif
+                                                            </div>
+                                                            @if(!empty($cust['photo_url']))
+                                                                <div class="pt-1 flex items-center gap-2">
+                                                                    <img src="{{ $cust['photo_url'] }}" alt="Custom Photo" class="w-8 h-8 rounded-lg object-cover border border-purple-300 shadow-2xs">
+                                                                    <span class="text-[11px] text-purple-800 font-semibold">Attached Customer Photo</span>
+                                                                </div>
+                                                            @endif
+                                                            @if(!empty($cust['greeting_card']))
+                                                                <div class="text-[11px] text-[#1A1018] pt-0.5">
+                                                                    <span class="text-[#1A1018]/60 font-medium">💌 Card Message:</span>
+                                                                    <span class="italic text-[#1A1018]/90">"{{ $cust['greeting_card_message'] ?? '' }}"</span>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
                                                     @if($isItemOutOfStock)
                                                         <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>

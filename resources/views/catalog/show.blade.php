@@ -338,22 +338,25 @@
             }
             this.adding = true;
             this.message = '';
-            const payload = {
-                product_id: {{ $product->id }},
-                variant_id: this.selectedVariant,
-                quantity: this.quantity,
-                selected_modifiers: this.selectedFoodModifiers.map(m => m.id)
-            };
+
+            const formEl = document.querySelector('form.k71-catalog-buy-form') || (window.event?.target?.closest ? window.event.target.closest('form') : null);
+            const formData = formEl ? new FormData(formEl) : new FormData();
+            formData.set('product_id', '{{ $product->id }}');
+            if (this.selectedVariant) formData.set('variant_id', this.selectedVariant);
+            formData.set('quantity', this.quantity);
+            if (this.selectedFoodModifiers && this.selectedFoodModifiers.length) {
+                this.selectedFoodModifiers.forEach(m => formData.append('selected_modifiers[]', m.id));
+            }
+
             fetch('/cart/add', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
                     'X-Requested-With': 'XMLHttpRequest',
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: formData
             }).then(r => r.json()).then(data => {
                 this.adding = false;
                 if(data.success) {
@@ -672,7 +675,7 @@
                     @endif
 
                     <!-- Purchasing Form -->
-                    <form @submit.prevent="submitAddToCart()" class="mt-5">
+                    <form @submit.prevent="submitAddToCart($event)" enctype="multipart/form-data" class="mt-5 k71-catalog-buy-form">
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <input type="hidden" name="variant_id" :value="selectedVariant">
@@ -697,6 +700,15 @@
                                 @include('catalog.partials.variant_fashion')
                             @endif
                         </div>
+
+                        @if($product->isGiftCustomizable())
+                            <div class="mb-5">
+                                @include('storefront.themes.pdp._gift_customizer', [
+                                    'product' => $product,
+                                    'pricePaise' => $product->base_price,
+                                ])
+                            </div>
+                        @endif
 
                         <!-- Vertical Context Action CTAs -->
                         @if(!$isEnquiryBased && $product->isPurchase())

@@ -212,7 +212,7 @@ class RegisterController extends Controller
         $rules = [
             'shop_name' => ['required', 'string', 'max:100'],
             'slug' => ['required', 'string', 'min:3', 'max:30', 'regex:/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/', 'unique:vendors,slug', 'unique:reserved_slugs,slug'],
-            'vendor_type' => ['required', 'string', 'in:clothing,mens,food,feasto,services,service,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,kirana,footwear,marble,toys_sports,shorts,b2b'],
+            'vendor_type' => ['required', 'string', 'in:clothing,mens,food,feasto,services,service,used,machinery,electronics,automotive,digital_services,local_services,real_estate,home_living,beauty,groceries,kirana,footwear,marble,toys_sports,shorts,b2b,gift_store,gifts'],
         ];
 
         if (!$isLoggedIn) {

@@ -24,15 +24,22 @@ class OrderItem extends Model
         'hsn_code',
         'snapshot',
         'meta_json',
+        'customization_data',
     ];
 
     protected $casts = [
         'snapshot' => 'json',
         'meta_json' => 'json',
+        'customization_data' => 'array',
         'selected_modifiers_json' => 'array',
         'booking_date_time' => 'datetime',
         'addon_amount' => 'integer',
     ];
+
+    public function hasGiftCustomization(): bool
+    {
+        return !empty($this->customization_data) && is_array($this->customization_data);
+    }
 
     public function order(): BelongsTo
     {

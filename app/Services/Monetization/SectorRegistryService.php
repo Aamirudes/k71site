@@ -100,7 +100,7 @@ class SectorRegistryService
             'services' => ['services', 'service', 'digital_services', 'local_services'],
             'used' => ['used'],
             'enquiry' => ['enquiry', 'b2b', 'machinery', 'real_estate', 'wholesale', 'industrial', 'manufacturer'],
-            default => ['marketplace', 'ecommerce', 'retail', 'clothing', 'fashion', 'footwear', 'electronics', 'home_living', 'beauty', 'automotive', 'marble', 'groceries', 'toys_sports', 'mens'],
+            default => ['marketplace', 'ecommerce', 'retail', 'clothing', 'fashion', 'footwear', 'electronics', 'home_living', 'beauty', 'automotive', 'marble', 'groceries', 'toys_sports', 'mens', 'gift_store', 'gifts'],
         };
     }
 

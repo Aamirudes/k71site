@@ -470,6 +470,20 @@ class ProductController extends Controller
                        ->orWhere('vertical', 'services');
                 });
                 break;
+            case 'gift_store':
+            case 'gifts':
+                $q->where(function($sq) {
+                    $sq->where('slug', 'LIKE', '%gift%')
+                       ->orWhere('slug', 'LIKE', '%craft%')
+                       ->orWhere('slug', 'LIKE', '%personalized%')
+                       ->orWhere('slug', 'LIKE', '%custom%')
+                       ->orWhere('slug', 'LIKE', '%accessories%')
+                       ->orWhere('name', 'LIKE', '%Gift%')
+                       ->orWhere('name', 'LIKE', '%Personalized%')
+                       ->orWhere('name', 'LIKE', '%Craft%')
+                       ->orWhere('vertical', 'marketplace');
+                });
+                break;
             case 'food':
                 $q->where(function($sq) {
                     $sq->where('slug', 'LIKE', '%food%')
@@ -571,6 +585,7 @@ class ProductController extends Controller
             'b2b_tiers' => ['nullable', 'array'],
             'service_config' => ['nullable', 'array'],
             'specifications' => ['nullable', 'array'],
+            'gift_customization' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:15360'],
             'cover_image_index' => ['nullable', 'integer', 'min:0'],
@@ -645,6 +660,30 @@ class ProductController extends Controller
 
         if ($request->has('service_config') && is_array($request->service_config)) {
             $validated['service_config_json'] = $request->service_config;
+        }
+
+        if ($request->has('gift_customization') && is_array($request->gift_customization)) {
+            $gc = $request->gift_customization;
+            $validated['gift_customization_config'] = [
+                'is_customizable' => filter_var($gc['is_customizable'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'allow_custom_text' => filter_var($gc['allow_custom_text'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'is_text_required' => filter_var($gc['is_text_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'text_prompt' => mb_substr(trim((string) ($gc['text_prompt'] ?? 'Enter Recipient Name or Custom Message')), 0, 150),
+                'text_char_limit' => max(5, min(200, (int) ($gc['text_char_limit'] ?? 40))),
+                'text_price_paise' => (int) round(((float) ($gc['text_price'] ?? $gc['text_extra_price'] ?? 0)) * 100),
+                'allow_font_selection' => filter_var($gc['allow_font_selection'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'available_fonts' => !empty($gc['available_fonts']) ? (is_array($gc['available_fonts']) ? $gc['available_fonts'] : array_values(array_filter(array_map('trim', explode(',', $gc['available_fonts']))))) : ['Classic Serif', 'Modern Script', 'Bold Minimal', 'Vintage Engraving'],
+                'allow_color_selection' => filter_var($gc['allow_color_selection'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'available_colors' => !empty($gc['available_colors']) ? (is_array($gc['available_colors']) ? $gc['available_colors'] : array_values(array_filter(array_map('trim', explode(',', $gc['available_colors']))))) : ['Gold Foil', 'Silver Shimmer', 'Midnight Black', 'Rose Gold', 'Emerald Green'],
+                'allow_photo_upload' => filter_var($gc['allow_photo_upload'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'photo_prompt' => mb_substr(trim((string) ($gc['photo_prompt'] ?? 'Upload High-Resolution Photo for Custom Print')), 0, 150),
+                'photo_price_paise' => (int) round(((float) ($gc['photo_price'] ?? $gc['photo_extra_price'] ?? 0)) * 100),
+                'allow_gift_wrap' => filter_var($gc['allow_gift_wrap'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'gift_wrap_price_paise' => (int) round(((float) ($gc['gift_wrap_price'] ?? 49)) * 100),
+                'allow_greeting_card' => filter_var($gc['allow_greeting_card'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'greeting_card_price_paise' => (int) round(((float) ($gc['greeting_card_price'] ?? 29)) * 100),
+                'production_days' => max(1, min(30, (int) ($gc['production_days'] ?? 2))),
+            ];
         }
 
         $baseSlug = Str::slug($validated['title']) ?: 'product';
@@ -736,6 +775,7 @@ class ProductController extends Controller
             'b2b_tiers',
             'service_config',
             'specifications',
+            'gift_customization',
             'enable_rfq',
         ])->toArray();
 
@@ -1071,6 +1111,7 @@ class ProductController extends Controller
             'b2b_tiers' => ['nullable', 'array'],
             'service_config' => ['nullable', 'array'],
             'specifications' => ['nullable', 'array'],
+            'gift_customization' => ['nullable', 'array'],
             'enable_rfq' => ['nullable'],
             'images.*' => ['image', 'mimes:jpeg,png,jpg,webp,gif,avif', 'max:15360'],
             'cover_image_index' => ['nullable', 'integer', 'min:0'],
@@ -1149,6 +1190,30 @@ class ProductController extends Controller
 
         if ($request->has('service_config') && is_array($request->service_config)) {
             $validated['service_config_json'] = $request->service_config;
+        }
+
+        if ($request->has('gift_customization') && is_array($request->gift_customization)) {
+            $gc = $request->gift_customization;
+            $validated['gift_customization_config'] = [
+                'is_customizable' => filter_var($gc['is_customizable'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'allow_custom_text' => filter_var($gc['allow_custom_text'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'is_text_required' => filter_var($gc['is_text_required'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'text_prompt' => mb_substr(trim((string) ($gc['text_prompt'] ?? 'Enter Recipient Name or Custom Message')), 0, 150),
+                'text_char_limit' => max(5, min(200, (int) ($gc['text_char_limit'] ?? 40))),
+                'text_price_paise' => (int) round(((float) ($gc['text_price'] ?? $gc['text_extra_price'] ?? 0)) * 100),
+                'allow_font_selection' => filter_var($gc['allow_font_selection'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'available_fonts' => !empty($gc['available_fonts']) ? (is_array($gc['available_fonts']) ? $gc['available_fonts'] : array_values(array_filter(array_map('trim', explode(',', $gc['available_fonts']))))) : ['Classic Serif', 'Modern Script', 'Bold Minimal', 'Vintage Engraving'],
+                'allow_color_selection' => filter_var($gc['allow_color_selection'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'available_colors' => !empty($gc['available_colors']) ? (is_array($gc['available_colors']) ? $gc['available_colors'] : array_values(array_filter(array_map('trim', explode(',', $gc['available_colors']))))) : ['Gold Foil', 'Silver Shimmer', 'Midnight Black', 'Rose Gold', 'Emerald Green'],
+                'allow_photo_upload' => filter_var($gc['allow_photo_upload'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                'photo_prompt' => mb_substr(trim((string) ($gc['photo_prompt'] ?? 'Upload High-Resolution Photo for Custom Print')), 0, 150),
+                'photo_price_paise' => (int) round(((float) ($gc['photo_price'] ?? $gc['photo_extra_price'] ?? 0)) * 100),
+                'allow_gift_wrap' => filter_var($gc['allow_gift_wrap'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'gift_wrap_price_paise' => (int) round(((float) ($gc['gift_wrap_price'] ?? 49)) * 100),
+                'allow_greeting_card' => filter_var($gc['allow_greeting_card'] ?? true, FILTER_VALIDATE_BOOLEAN),
+                'greeting_card_price_paise' => (int) round(((float) ($gc['greeting_card_price'] ?? 29)) * 100),
+                'production_days' => max(1, min(30, (int) ($gc['production_days'] ?? 2))),
+            ];
         }
 
         // Server-side monetization & entitlement check for updates
@@ -1248,6 +1313,7 @@ class ProductController extends Controller
             'b2b_tiers',
             'service_config',
             'specifications',
+            'gift_customization',
             'enable_rfq',
         ])->toArray();
 

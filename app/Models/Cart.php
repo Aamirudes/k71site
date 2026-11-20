@@ -95,6 +95,9 @@ class Cart extends Model
                     if (json_encode($candidate->option_selections_json ?? []) !== $incomingOpts) {
                         return false;
                     }
+                    if (json_encode($candidate->customization_data ?? []) !== json_encode($item->customization_data ?? [])) {
+                        return false;
+                    }
                     if ($candidate->booking_date_time?->toIso8601String() !== $incomingBooking) {
                         return false;
                     }

@@ -97,6 +97,7 @@ class Product extends Model
         'faqs_json',
         'requirements_prompt',
         'addons_json',
+        'gift_customization_config',
         'reserve_price',
         'bid_increment',
         'auction_starts_at',
@@ -120,6 +121,7 @@ class Product extends Model
         'service_config_json' => 'array',
         'faqs_json' => 'array',
         'addons_json' => 'array',
+        'gift_customization_config' => 'array',
         'tags' => 'json',
         'size_chart' => 'array',
         'custom_fields' => 'array',
@@ -215,6 +217,44 @@ class Product extends Model
         }
 
         return false;
+    }
+
+    /**
+     * Check if product supports custom gift personalization (names, photo, font, wrap, greeting cards).
+     */
+    public function isGiftCustomizable(): bool
+    {
+        $cfg = $this->gift_customization_config;
+        return is_array($cfg) && !empty($cfg['is_customizable']);
+    }
+
+    /**
+     * Get validated gift customization options with clean defaults.
+     */
+    public function getGiftCustomizationConfig(): array
+    {
+        $cfg = is_array($this->gift_customization_config) ? $this->gift_customization_config : [];
+
+        return array_merge([
+            'is_customizable' => false,
+            'allow_custom_text' => true,
+            'is_text_required' => false,
+            'text_prompt' => 'Enter Recipient Name or Custom Message',
+            'text_char_limit' => 40,
+            'text_price_paise' => 0,
+            'allow_font_selection' => true,
+            'available_fonts' => ['Classic Serif', 'Modern Script', 'Bold Minimal', 'Vintage Engraving'],
+            'allow_color_selection' => true,
+            'available_colors' => ['Gold Foil', 'Silver Shimmer', 'Midnight Black', 'Rose Gold', 'Emerald Green'],
+            'allow_photo_upload' => false,
+            'photo_prompt' => 'Upload High-Resolution Photo for Custom Print',
+            'photo_price_paise' => 0,
+            'allow_gift_wrap' => true,
+            'gift_wrap_price_paise' => 4900,
+            'allow_greeting_card' => true,
+            'greeting_card_price_paise' => 2900,
+            'production_days' => 2,
+        ], $cfg);
     }
 
     /**

@@ -1,5 +1,5 @@
 {{-- Shared Layer A Real Commerce Purchase Engine (Preserves K71 Variants, Stock, Quantity, AJAX Cart) --}}
-<form action="{{ route('cart.add') }}" method="POST" data-k71-cart-form data-k71-checkout-url="{{ route('checkout.index') }}" class="space-y-4">
+<form action="{{ route('cart.add') }}" method="POST" enctype="multipart/form-data" data-k71-cart-form data-k71-checkout-url="{{ route('checkout.index') }}" class="space-y-4">
     @csrf
     <input type="hidden" name="product_id" value="{{ $product->id }}">
     <input type="hidden" name="variant_id" id="k71-selected-variant-id" value="{{ $firstAvailableVariant?->id }}">
@@ -36,6 +36,13 @@
                 @endforeach
             </div>
         </div>
+    @endif
+
+    @if($product->isGiftCustomizable())
+        @include('storefront.themes.pdp._gift_customizer', [
+            'product' => $product,
+            'pricePaise' => $pricePaise ?? ($firstAvailableVariant?->price_override ?: $product->base_price),
+        ])
     @endif
 
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">

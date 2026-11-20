@@ -430,6 +430,11 @@ class Vendor extends Model
         return $this->vendor_type === 'real_estate';
     }
 
+    public function isGiftStore(): bool
+    {
+        return in_array($this->vendor_type, ['gift_store', 'gifts', 'custom_gifts'], true);
+    }
+
     public function getSectorConfig(): array
     {
         $type = $this->vendor_type;
@@ -900,6 +905,33 @@ class Vendor extends Model
                     ['key' => 'Storage Condition', 'value' => 'Store in cool and dry place'],
                 ],
             ],
+            'gift_store' => [
+                'key' => 'gift_store',
+                'label' => 'Custom Gifts & Personalization',
+                'icon' => '🎁',
+                'color' => 'from-purple-600 to-pink-600',
+                'badge_css' => 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+                'catalog_name' => 'Custom Gifts & Keepsakes Catalog',
+                'item_singular' => 'Personalized Gift',
+                'add_btn' => 'Add Gift Product',
+                'specs_label' => 'Gift Crafting & Personalization Details',
+                'title_placeholder' => 'e.g. Personalized Engraved Wooden Keepsake Box',
+                'brand_placeholder' => 'e.g. Artisan Studio, MemoryLane, Handcrafted',
+                'brand_label' => 'Artisan / Studio Name',
+                'price_label' => 'Base Price (₹)',
+                'price_placeholder' => '899.00',
+                'unit_label' => 'Product Weight (Grams)',
+                'stock_label' => 'Available Stock Units',
+                'gst_default' => '12',
+                'desc_placeholder' => 'Describe your handcrafted gift, personalizable areas, material quality, packaging...',
+                'orders_name' => 'Personalized Gift Orders & Production Queue',
+                'default_specs' => [
+                    ['key' => 'Personalization Method', 'value' => 'Laser Engraving / Precision Print'],
+                    ['key' => 'Material Quality', 'value' => 'Premium Solid Beechwood / Ceramic'],
+                    ['key' => 'Production Time', 'value' => '1–2 Business Days'],
+                    ['key' => 'Gift Packaging', 'value' => 'Luxury Satin Ribbon Gift Box Included'],
+                ],
+            ],
         ];
 
         // Aliases
@@ -907,6 +939,8 @@ class Vendor extends Model
             $type = 'kirana';
         } elseif ($type === 'service') {
             $type = 'services';
+        } elseif ($type === 'gifts' || $type === 'custom_gifts') {
+            $type = 'gift_store';
         }
 
         $config = $sectors[$type] ?? $sectors['clothing'];
@@ -916,6 +950,7 @@ class Vendor extends Model
             'food' => 'Kitchen Orders & Live Delivery Stream',
             'feasto' => '10-Min Flash Orders & Fleet Dispatch Stream',
             'groceries' => 'Customer Grocery Orders & Pickups',
+            'gift_store' => 'Personalized Gift Orders & Production Queue',
             'services' => 'Service Appointments & Bookings',
             'real_estate' => 'Client Inquiries & Property Visits',
             'marble', 'machinery' => 'Quotation Requests & B2B Leads',
@@ -967,7 +1002,7 @@ class Vendor extends Model
     public function isRestaurant(): bool
     {
         // Grocery and physical stores are strictly NOT restaurants
-        if (in_array($this->vendor_type, ['kirana', 'groceries', 'grocery', 'clothing', 'footwear', 'electronics', 'marble', 'machinery'])) {
+        if (in_array($this->vendor_type, ['kirana', 'groceries', 'grocery', 'clothing', 'footwear', 'electronics', 'marble', 'machinery', 'gift_store', 'gifts'])) {
             return false;
         }
         return $this->vendor_type === 'food' 

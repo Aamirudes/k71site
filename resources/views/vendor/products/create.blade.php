@@ -12,6 +12,7 @@
     ]);
     $targetVertical = $targetVertical ?? ($curVendor ? $curVendor->getVerticalKey() : 'marketplace');
     $defaultVariantTab = match (true) {
+        in_array($vendorType, ['gift_store', 'gifts']) => 'gifts',
         in_array($vendorType, ['clothing']) => 'clothing',
         in_array($vendorType, ['footwear']) => 'footwear',
         in_array($vendorType, ['kirana', 'groceries']) => 'kirana',
@@ -430,6 +431,7 @@
                             <button type="button" @click="activeVariantTab = 'electronics'" :class="activeVariantTab === 'electronics' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📱 Electronics</button>
                             <button type="button" @click="activeVariantTab = 'food'" :class="activeVariantTab === 'food' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🍽️ Food</button>
                             <button type="button" @click="activeVariantTab = 'enquiry'" :class="activeVariantTab === 'enquiry' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">📋 Marble / B2B</button>
+                            <button type="button" @click="activeVariantTab = 'gifts'" :class="activeVariantTab === 'gifts' ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm' : 'text-slate-500 hover:text-slate-800'" class="px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer">🎁 Custom Gifts</button>
                         </div>
                     </div>
 
@@ -958,6 +960,139 @@
                                 <button type="button" @click="insertSpec('Motor Power', '10 HP (7.5 kW) 1440 RPM 3-Phase')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Motor Power (10 HP)</button>
                                 <button type="button" @click="insertSpec('Operating Voltage', '415V Three Phase 50Hz Industrial')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ 415V 3-Phase</button>
                                 <button type="button" @click="insertSpec('Automation Grade', 'Automatic CNC Control')" class="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 font-medium hover:border-blue-400 cursor-pointer">+ Automatic CNC</button>
+                            </div>
+                        </div>
+                    </div>
+                    </template>
+
+                    <!-- 7. CUSTOM GIFTS & PERSONALIZATION ENGINE -->
+                    <template x-if="activeVariantTab === 'gifts'">
+                    <div class="space-y-4" x-data="{
+                        isCustomizable: true,
+                        allowCustomText: true,
+                        allowFontSelection: true,
+                        allowColorSelection: true,
+                        allowPhotoUpload: false,
+                        allowGiftWrap: true,
+                        allowGreetingCard: true
+                    }">
+                        <div class="p-4 rounded-2xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-800/30 space-y-4">
+                            <!-- Master Toggle -->
+                            <div class="flex items-center justify-between pb-3 border-b border-purple-200/50">
+                                <div>
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                                        <span>🎁 Enable Gift Personalization &amp; Custom Options</span>
+                                    </h3>
+                                    <p class="text-[11px] text-purple-700/80 dark:text-purple-400 mt-0.5">Allows customers to add custom engravings, names, upload personal photos, and pick gift wrapping.</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="gift_customization[is_customizable]" value="1" x-model="isCustomizable" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                </label>
+                            </div>
+
+                            <div x-show="isCustomizable" class="space-y-4">
+                                <!-- 1. Custom Text Configuration -->
+                                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-purple-100 dark:border-white/10 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">1. Personalized Text / Name Engraving:</span>
+                                        <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                            <input type="checkbox" name="gift_customization[allow_custom_text]" value="1" x-model="allowCustomText" class="rounded text-purple-600">
+                                            <span>Allow Text</span>
+                                        </label>
+                                    </div>
+                                    <div x-show="allowCustomText" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                                        <div class="sm:col-span-2 space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Prompt / Field Label:</label>
+                                            <input type="text" name="gift_customization[text_prompt]" value="{{ old('gift_customization.text_prompt', 'Enter Recipient Name or Custom Message') }}" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 font-medium">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Max Characters:</label>
+                                            <input type="number" name="gift_customization[text_char_limit]" value="{{ old('gift_customization.text_char_limit', 40) }}" min="5" max="200" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 font-mono">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Extra Fee (₹, 0 for free):</label>
+                                            <input type="number" step="0.01" name="gift_customization[text_extra_price]" value="{{ old('gift_customization.text_extra_price', 0) }}" min="0" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 font-bold">
+                                        </div>
+                                        <div class="sm:col-span-2 flex items-center gap-2 pt-1">
+                                            <label class="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                                                <input type="checkbox" name="gift_customization[is_text_required]" value="1" class="rounded text-purple-600">
+                                                <span>Mandatory (customer cannot checkout without entering text)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Font & Style Selector -->
+                                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-purple-100 dark:border-white/10 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">2. Font &amp; Script Selection:</span>
+                                        <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                            <input type="checkbox" name="gift_customization[allow_font_selection]" value="1" x-model="allowFontSelection" class="rounded text-purple-600">
+                                            <span>Allow Font Choice</span>
+                                        </label>
+                                    </div>
+                                    <div x-show="allowFontSelection" class="pt-1">
+                                        <input type="text" name="gift_customization[available_fonts]" value="{{ old('gift_customization.available_fonts', 'Classic Serif, Modern Script, Bold Minimal, Vintage Engraving') }}" placeholder="Comma-separated fonts" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950">
+                                        <p class="text-[10px] text-slate-400 mt-1">Preset curated engraving scripts rendered on the customer PDP.</p>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Photo Upload Configuration -->
+                                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-purple-100 dark:border-white/10 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-slate-800 dark:text-slate-200">3. Customer Photo Upload (Mugs, Frames, Canvas):</span>
+                                        <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                                            <input type="checkbox" name="gift_customization[allow_photo_upload]" value="1" x-model="allowPhotoUpload" class="rounded text-purple-600">
+                                            <span>Enable Photo Upload</span>
+                                        </label>
+                                    </div>
+                                    <div x-show="allowPhotoUpload" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Photo Upload Prompt:</label>
+                                            <input type="text" name="gift_customization[photo_prompt]" value="{{ old('gift_customization.photo_prompt', 'Upload High-Resolution Photo for Custom Print') }}" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 font-medium">
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Extra Photo Printing Fee (₹):</label>
+                                            <input type="number" step="0.01" name="gift_customization[photo_extra_price]" value="{{ old('gift_customization.photo_extra_price', 99) }}" min="0" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-950 font-bold">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Packaging, Greeting Cards & Production Lead Time -->
+                                <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-purple-100 dark:border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div class="space-y-1.5">
+                                        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                                            <input type="checkbox" name="gift_customization[allow_gift_wrap]" value="1" x-model="allowGiftWrap" class="rounded text-purple-600">
+                                            <span>🎀 Luxury Gift Wrap</span>
+                                        </label>
+                                        <div x-show="allowGiftWrap" class="flex items-center gap-1">
+                                            <span class="text-xs text-slate-400">₹</span>
+                                            <input type="number" step="0.01" name="gift_customization[gift_wrap_price]" value="{{ old('gift_customization.gift_wrap_price', 49) }}" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 font-bold">
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                                            <input type="checkbox" name="gift_customization[allow_greeting_card]" value="1" x-model="allowGreetingCard" class="rounded text-purple-600">
+                                            <span>💌 Greeting Card</span>
+                                        </label>
+                                        <div x-show="allowGreetingCard" class="flex items-center gap-1">
+                                            <span class="text-xs text-slate-400">₹</span>
+                                            <input type="number" step="0.01" name="gift_customization[greeting_card_price]" value="{{ old('gift_customization.greeting_card_price', 29) }}" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 font-bold">
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <label class="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                                            ⏳ Crafting Lead Time:
+                                        </label>
+                                        <div class="flex items-center gap-1">
+                                            <input type="number" name="gift_customization[production_days]" value="{{ old('gift_customization.production_days', 2) }}" min="1" max="30" class="w-full px-2 py-1 text-xs rounded-lg border border-slate-200 dark:border-white/10 font-mono font-bold">
+                                            <span class="text-xs text-slate-400">Days</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

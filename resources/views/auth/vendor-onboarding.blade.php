@@ -212,6 +212,20 @@
                                 </div>
                             </label>
 
+                            <!-- 14. Custom Gifts & Personalization -->
+                            <label :class="selectedType === 'gift_store' ? 'ring-2 ring-[#1A1018] border-[#1A1018] bg-[#F8EFFA]/65' : 'border-black/10 bg-[#FAFAF8] hover:border-black/25'"
+                                   class="relative flex items-start p-3.5 rounded-2xl border cursor-pointer transition-all shadow-xs group">
+                                <input type="radio" name="vendor_type" value="gift_store" x-model="selectedType" class="sr-only" required>
+                                <div class="text-2xl mr-3 shrink-0 group-hover:scale-110 transition-transform">🎁</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-xs font-black text-[#1A1018]">Custom Gifts &amp; Keepsakes</div>
+                                        <span x-show="selectedType === 'gift_store'" class="text-[#623562] text-xs font-black">✓</span>
+                                    </div>
+                                    <div class="text-[11px] text-[#7A6B78] mt-0.5 leading-snug">Personalized names, photo gifts, engravings, wrap &amp; greeting cards</div>
+                                </div>
+                            </label>
+
                         </div>
                         @error('vendor_type')<p class="mt-2 text-xs font-bold text-rose-600">{{ $message }}</p>@enderror
                     </div>
