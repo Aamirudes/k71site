@@ -185,6 +185,21 @@ class StorefrontPresetService
             unset($presets['kinetic']);
         }
 
+        // Respect admin permanent theme removals (never removing core fallback 'velora')
+        try {
+            $removed = \App\Models\Setting::get(ThemeMarketplaceRegistry::SETTING_REMOVED_THEMES, []);
+            if (is_array($removed)) {
+                foreach ($removed as $remId) {
+                    $k = strtolower(trim((string) $remId));
+                    if ($k !== '' && $k !== 'velora') {
+                        unset($presets[$k]);
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // Safe fallback during fresh migrations / early boot
+        }
+
         return $presets;
     }
 

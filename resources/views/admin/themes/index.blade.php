@@ -51,9 +51,9 @@
     <form action="{{ route('admin.themes.index') }}" method="GET" class="rounded-2xl bg-white border border-zinc-200 p-4 flex flex-wrap items-center gap-3">
         <input type="search" name="q" value="{{ $search }}" placeholder="Search theme name or ID..." class="flex-1 min-w-[200px] rounded-xl border border-zinc-200 px-3.5 py-2 text-xs">
         <select name="group" class="rounded-xl border border-zinc-200 px-3 py-2 text-xs">
-            <option value="all" {{ $group === 'all' ? 'selected' : '' }}>All Groups (61)</option>
-            <option value="new" {{ $group === 'new' ? 'selected' : '' }}>50 New Bespoke Themes</option>
-            <option value="legacy" {{ $group === 'legacy' ? 'selected' : '' }}>11 Classic Themes</option>
+            <option value="all" {{ $group === 'all' ? 'selected' : '' }}>All Groups ({{ $stats['total_themes'] }})</option>
+            <option value="new" {{ $group === 'new' ? 'selected' : '' }}>New Bespoke Themes ({{ $stats['new_themes'] }})</option>
+            <option value="legacy" {{ $group === 'legacy' ? 'selected' : '' }}>Classic Themes ({{ $stats['legacy_themes'] }})</option>
         </select>
         <select name="category" class="rounded-xl border border-zinc-200 px-3 py-2 text-xs">
             <option value="all">All Categories</option>
@@ -167,6 +167,16 @@
                                     <button type="submit" class="w-full px-3.5 py-1.5 rounded-lg bg-zinc-950 text-white text-[11px] font-bold hover:bg-zinc-800 cursor-pointer">
                                         Save
                                     </button>
+                                    @if($t->theme_id !== 'velora')
+                                        <button type="submit"
+                                                form="delete-theme-form-{{ $t->id }}"
+                                                onclick="return confirm('PERMANENTLY REMOVE &quot;{{ addslashes($t->name) }}&quot; ({{ $t->theme_id }}) from your database, all vendor entitlements/requests/drafts, and theme files? Any live vendor using it will safely fall back to Classic Velora. This cannot be undone.');"
+                                                class="w-full px-3 py-1.5 rounded-lg bg-rose-600 text-white text-[11px] font-bold hover:bg-rose-700 cursor-pointer transition">
+                                            Remove Theme
+                                        </button>
+                                    @else
+                                        <span class="block text-center text-[10px] font-mono text-zinc-400 pt-0.5">Core Fallback</span>
+                                    @endif
                                 </td>
                             </form>
                         </tr>
@@ -175,5 +185,15 @@
             </table>
         </div>
     </div>
+
+    {{-- Non-nested permanent deletion forms linked via HTML5 form="..." attribute --}}
+    @foreach($themes as $t)
+        @if($t->theme_id !== 'velora')
+            <form id="delete-theme-form-{{ $t->id }}" action="{{ route('admin.themes.catalogue.destroy', $t) }}" method="POST" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endif
+    @endforeach
 </div>
 </x-layouts.admin>

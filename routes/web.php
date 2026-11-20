@@ -472,6 +472,7 @@ Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
     Route::prefix('themes')->name('themes.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'index'])->name('index');
         Route::put('/catalogue/{theme}', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'updateTheme'])->name('catalogue.update');
+        Route::delete('/catalogue/{theme}', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'destroyTheme'])->name('catalogue.destroy');
         Route::get('/{themeId}/preview', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'previewTheme'])->name('preview');
         Route::get('/{themeId}/preview-frame', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'previewThemeFrame'])->name('preview_frame');
         Route::post('/settings', [\App\Http\Controllers\Admin\ThemeManagementController::class, 'updateSettings'])->name('settings.update');

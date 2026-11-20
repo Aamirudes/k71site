@@ -127,6 +127,24 @@ class ThemeManagementController extends Controller
     }
 
     /**
+     * Permanently remove a theme from the database, vendor storefronts, registry, and static theme files.
+     */
+    public function destroyTheme(StorefrontTheme $theme)
+    {
+        try {
+            $stats = $this->service->permanentlyRemoveTheme($theme, auth()->user());
+            $msg = "Permanently removed theme \"{$stats['theme_name']}\" ({$stats['theme_id']}) from database & site"
+                . " (entitlements cleared: {$stats['entitlements_deleted']}, requests cleared: {$stats['requests_deleted']}, drafts cleared: {$stats['drafts_deleted']}, files removed: {$stats['files_deleted']}"
+                . ($stats['vendors_fallback'] > 0 ? ", {$stats['vendors_fallback']} vendor(s) safely reset to Classic Velora" : '')
+                . ').';
+
+            return back()->with('success', $msg);
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
      * Admin Theme QA Preview in a New Tab (strictly admin-protected, noindex, read-only).
      */
     public function previewTheme(Request $request, string $themeId)

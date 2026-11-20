@@ -382,4 +382,89 @@ class ThemeMarketplaceTest extends TestCase
                 ->assertSee('Legacy Boutique');
         }
     }
+
+    public function test_admin_can_permanently_remove_a_theme_from_database_and_everywhere(): void
+    {
+        $admin = $this->makeAdmin();
+        [$user, $vendor] = $this->makeVendorUser('removal-check-shop', 'Removal Check Shop');
+        $this->seedProductForVendor($vendor, 'Test Ceramic Vase', 150000);
+
+        $service = app(ThemeMarketplaceService::class);
+        $registry = app(ThemeMarketplaceRegistry::class);
+        $service->syncThemesToDatabase();
+
+        $themeId = 'pop-form';
+        $theme = StorefrontTheme::where('theme_id', $themeId)->firstOrFail();
+
+        // Seed entitlement, request, draft, and live publication for this theme
+        $service->updateThemeCatalogue($theme, ['price_rupees' => 2999], $admin);
+        $req = $service->createRequest($vendor, $themeId);
+        $service->grantEntitlement($vendor, $themeId, $admin, null, 'QA grant');
+        $service->saveDraft($vendor, $themeId, ['hero' => ['headline' => 'Custom Pop']]);
+        $service->publishTheme($vendor, $themeId);
+
+        $this->assertEquals($themeId, $service->resolvePublicThemeId($vendor->fresh()));
+
+        // Backup real static files so we verify REAL disk deletion without losing repo files
+        $cssPath = public_path("css/themes/{$themeId}.css");
+        $prevPath = public_path("images/theme-previews/{$themeId}.jpg");
+        $cssBackup = is_file($cssPath) ? file_get_contents($cssPath) : null;
+        $prevBackup = is_file($prevPath) ? file_get_contents($prevPath) : null;
+
+        try {
+            // Admin page shows Remove Theme button for removable themes
+            $this->actingAs($admin)
+                ->get(route('admin.themes.index'))
+                ->assertStatus(200)
+                ->assertSee('Remove Theme')
+                ->assertSee('delete-theme-form-' . $theme->id);
+
+            // Admin executes 1-click permanent removal
+            $this->actingAs($admin)
+                ->delete(route('admin.themes.catalogue.destroy', $theme))
+                ->assertSessionHas('success');
+
+            // 1. Deleted from every DB table
+            $this->assertDatabaseMissing('storefront_themes', ['theme_id' => $themeId]);
+            $this->assertDatabaseMissing('vendor_theme_entitlements', ['theme_id' => $themeId]);
+            $this->assertDatabaseMissing('vendor_theme_requests', ['theme_id' => $themeId]);
+            $this->assertDatabaseMissing('vendor_theme_drafts', ['theme_id' => $themeId]);
+            $this->assertDatabaseMissing('theme_audit_logs', ['theme_id' => $themeId]);
+
+            // 2. Deleted from disk
+            $this->assertFileDoesNotExist($cssPath);
+            $this->assertFileDoesNotExist($prevPath);
+
+            // 3. Registry & ensureSynced() NEVER resurrect it
+            $service->ensureSynced();
+            $this->assertDatabaseMissing('storefront_themes', ['theme_id' => $themeId]);
+            $this->assertFalse($registry->isValidThemeId($themeId));
+            $this->assertNull($registry->getManifest($themeId));
+
+            // 4. Live vendor safely fell back to velora and still renders 200 OK
+            $vendor->unsetRelation('storefrontConfig');
+            $this->assertEquals('velora', $service->resolvePublicThemeId($vendor->fresh()));
+            $this->get(route('storefront.show', $vendor->slug))->assertStatus(200);
+
+            // 5. Previewing removed theme returns 404
+            $this->actingAs($user)
+                ->get(route('vendor.themes.preview', $themeId))
+                ->assertStatus(404);
+
+            // 6. Core fallback 'velora' is protected from removal
+            $velora = StorefrontTheme::where('theme_id', 'velora')->firstOrFail();
+            $this->actingAs($admin)
+                ->delete(route('admin.themes.catalogue.destroy', $velora))
+                ->assertSessionHas('error');
+            $this->assertDatabaseHas('storefront_themes', ['theme_id' => 'velora']);
+        } finally {
+            if ($cssBackup !== null) {
+                file_put_contents($cssPath, $cssBackup);
+            }
+            if ($prevBackup !== null) {
+                file_put_contents($prevPath, $prevBackup);
+            }
+            $registry->clearRemovedCache();
+        }
+    }
 }

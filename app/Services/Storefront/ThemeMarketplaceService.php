@@ -66,12 +66,17 @@ class ThemeMarketplaceService
      */
     public function syncThemesToDatabase(): void
     {
+        $this->registry->clearRemovedCache();
+        $removed = array_flip($this->registry->getRemovedThemeIds());
         $all = $this->registry->getAllThemes();
         $validIds = array_keys($all);
         $existingIds = StorefrontTheme::pluck('theme_id')->flip()->all();
 
         $sort = 1;
         foreach ($all as $id => $def) {
+            if (isset($removed[$id])) {
+                continue;
+            }
             if (!isset($existingIds[$id])) {
                 StorefrontTheme::create([
                     'theme_id' => $id,
@@ -119,13 +124,121 @@ class ThemeMarketplaceService
     }
 
     /**
-     * Ensure catalogue is populated with all 61 themes.
+     * Ensure catalogue is populated with all active (non-removed) registry themes.
      */
     public function ensureSynced(): void
     {
-        if (StorefrontTheme::where('theme_id', 'maison-elite')->doesntExist() || StorefrontTheme::count() !== 61) {
+        $this->registry->clearRemovedCache();
+        $expectedCount = count($this->registry->getAllThemes());
+        if (StorefrontTheme::count() !== $expectedCount) {
             $this->syncThemesToDatabase();
         }
+    }
+
+    /**
+     * Permanently remove a theme from the entire site: database tables, vendor configs (safely falling back to velora),
+     * registry blocklist (so it never re-syncs), and per-theme static CSS & preview thumbnail files on disk.
+     */
+    public function permanentlyRemoveTheme(StorefrontTheme $theme, ?User $admin = null): array
+    {
+        $themeId = strtolower(trim((string) $theme->theme_id));
+        $themeName = (string) $theme->name;
+
+        if ($themeId === 'velora') {
+            throw new \RuntimeException('Classic Velora is the core system fallback storefront and cannot be removed.');
+        }
+
+        $stats = [
+            'theme_id' => $themeId,
+            'theme_name' => $themeName,
+            'vendors_fallback' => 0,
+            'entitlements_deleted' => 0,
+            'requests_deleted' => 0,
+            'drafts_deleted' => 0,
+            'files_deleted' => 0,
+        ];
+
+        DB::transaction(function () use ($theme, $themeId, &$stats) {
+            // 1. Add to permanent blocklist so syncThemesToDatabase() never resurrects it
+            $removed = Setting::get(ThemeMarketplaceRegistry::SETTING_REMOVED_THEMES, []);
+            if (!is_array($removed)) {
+                $removed = [];
+            }
+            if (!in_array($themeId, $removed, true)) {
+                $removed[] = $themeId;
+            }
+            Setting::set(ThemeMarketplaceRegistry::SETTING_REMOVED_THEMES, array_values(array_unique($removed)), 'theme_marketplace', 'json');
+
+            // 2. Safely fall back any live vendor storefront configs using this theme to 'velora'
+            $configs = VendorStorefrontConfig::where('published_theme_id', $themeId)
+                ->orWhere('preset_key', $themeId)
+                ->get();
+
+            foreach ($configs as $cfg) {
+                $pub = is_array($cfg->published_config) ? $cfg->published_config : [];
+                if (($pub['theme_id'] ?? null) === $themeId) {
+                    $pub['theme_id'] = 'velora';
+                }
+                if (($pub['preset'] ?? null) === $themeId) {
+                    $pub['preset'] = 'velora';
+                }
+                $cfg->update([
+                    'published_theme_id' => ($cfg->published_theme_id === $themeId) ? 'velora' : $cfg->published_theme_id,
+                    'preset_key' => ($cfg->preset_key === $themeId) ? 'velora' : $cfg->preset_key,
+                    'published_config' => $pub,
+                ]);
+                $stats['vendors_fallback']++;
+            }
+
+            // Reset vendor layout_preset column if referencing the removed theme
+            Vendor::where('layout_preset', $themeId)->update(['layout_preset' => 'velora']);
+
+            // 3. Delete all related theme database rows completely
+            $stats['drafts_deleted'] = VendorThemeDraft::where('theme_id', $themeId)->delete();
+            $stats['entitlements_deleted'] = VendorThemeEntitlement::where('theme_id', $themeId)->delete();
+            $stats['requests_deleted'] = VendorThemeRequest::where('theme_id', $themeId)->delete();
+            ThemeAuditLog::where('theme_id', $themeId)->delete();
+
+            // 4. Delete the catalogue theme record itself
+            $theme->delete();
+        });
+
+        // Clear registry in-memory cache immediately
+        $this->registry->clearRemovedCache();
+
+        // 5. Remove physical theme-specific CSS and preview image files safely (strict slug validation)
+        if (preg_match('/^[a-z0-9_-]+$/', $themeId)) {
+            $candidateFiles = [
+                public_path("css/themes/{$themeId}.css"),
+                public_path("images/theme-previews/{$themeId}.jpg"),
+                base_path("css/themes/{$themeId}.css"),
+                base_path("images/theme-previews/{$themeId}.jpg"),
+            ];
+            foreach (array_unique($candidateFiles) as $filePath) {
+                if (is_file($filePath) && @unlink($filePath)) {
+                    $stats['files_deleted']++;
+                }
+            }
+        }
+
+        // Record platform-level audit trail (outside theme_audit_logs which was wiped for this theme)
+        try {
+            if (class_exists(AuditLog::class) && $admin) {
+                AuditLog::create([
+                    'user_id' => $admin->id,
+                    'action' => 'theme.permanently_removed',
+                    'auditable_type' => StorefrontTheme::class,
+                    'auditable_id' => 0,
+                    'old_values' => ['theme_id' => $themeId, 'name' => $themeName],
+                    'new_values' => $stats,
+                    'ip_address' => request()?->ip(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Non-blocking audit log fallback
+        }
+
+        return $stats;
     }
 
     /**

@@ -55,16 +55,53 @@ class ThemeMarketplaceRegistry
         'trust_policies',
     ];
 
+    public const SETTING_REMOVED_THEMES = 'theme_marketplace_removed_ids';
+
     protected ?array $cachedNewThemes = null;
+    protected ?array $cachedRemovedIds = null;
+
+    public function getRemovedThemeIds(): array
+    {
+        if ($this->cachedRemovedIds !== null) {
+            return $this->cachedRemovedIds;
+        }
+
+        try {
+            $raw = \App\Models\Setting::get(self::SETTING_REMOVED_THEMES, []);
+            if (!is_array($raw)) {
+                $raw = [];
+            }
+            $clean = [];
+            foreach ($raw as $id) {
+                $norm = strtolower(trim((string) $id));
+                if ($norm !== '' && $norm !== 'velora') {
+                    $clean[$norm] = true;
+                }
+            }
+            $this->cachedRemovedIds = array_keys($clean);
+        } catch (\Throwable $e) {
+            $this->cachedRemovedIds = [];
+        }
+
+        return $this->cachedRemovedIds;
+    }
+
+    public function clearRemovedCache(): void
+    {
+        $this->cachedRemovedIds = null;
+        $this->cachedNewThemes = null;
+    }
 
     /**
-     * All 50 bespoke individually art-directed storefront themes (Categories A–H).
+     * All bespoke individually art-directed storefront themes (Categories A–H), excluding permanently removed themes.
      */
     public function getNewThemes(): array
     {
         if ($this->cachedNewThemes !== null) {
             return $this->cachedNewThemes;
         }
+
+        $removed = array_flip($this->getRemovedThemeIds());
 
         $raw = array_merge(
             CategoryALuxuryFashionThemes::definitions(),
@@ -76,6 +113,9 @@ class ThemeMarketplaceRegistry
 
         $enriched = [];
         foreach ($raw as $id => $def) {
+            if (isset($removed[$id])) {
+                continue;
+            }
             $arch = ThemeArchitectureMap::forTheme($id);
             $def['layout']['page_architecture'] = $arch['page_architecture'];
             $def['layout']['structural_variant'] = $arch['structural_variant'];
