@@ -177,7 +177,7 @@ class Product extends Model
         }
 
         return empty($this->listing_type) 
-            || in_array($this->listing_type, ['purchase', 'food', 'grocery']);
+            || in_array($this->listing_type, ['purchase', 'food', 'grocery', 'standard_retail', 'product', 'retail', 'gift']);
     }
 
     /**

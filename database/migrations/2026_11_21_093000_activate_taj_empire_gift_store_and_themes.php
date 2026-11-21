@@ -98,7 +98,7 @@ return new class extends Migration
                 Product::where('vendor_id', $taj->id)->update([
                     'gift_customization_config' => json_encode($giftConfig),
                     'vertical' => 'marketplace',
-                    'listing_type' => 'standard_retail',
+                    'listing_type' => 'purchase',
                 ]);
             }
         }

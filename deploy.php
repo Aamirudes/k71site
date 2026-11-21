@@ -766,11 +766,15 @@ try {
                     $p->update([
                         'gift_customization_config' => $defaultGiftConfig,
                         'vertical' => 'marketplace',
-                        'listing_type' => 'standard_retail',
+                        'listing_type' => 'purchase',
                         'is_active' => true,
                     ]);
                     $updatedCount++;
                 }
+
+                try {
+                    DB::statement("UPDATE `products` SET `listing_type` = 'purchase' WHERE `vendor_id` = {$taj->id}");
+                } catch (\Throwable $e) {}
 
                 // Ensure showcase products
                 if ($updatedCount < 4) {
@@ -869,7 +873,7 @@ try {
                                 'gift_customization_config' => $defaultGiftConfig,
                                 'is_active' => true,
                                 'vertical' => 'marketplace',
-                                'listing_type' => 'standard_retail',
+                                'listing_type' => 'purchase',
                             ]
                         );
                         $p->update([
@@ -877,7 +881,7 @@ try {
                             'gift_customization_config' => $defaultGiftConfig,
                             'is_active' => true,
                             'vertical' => 'marketplace',
-                            'listing_type' => 'standard_retail',
+                            'listing_type' => 'purchase',
                         ]);
                         foreach ($item['variants'] as $v) {
                             \App\Models\ProductVariant::firstOrCreate(
