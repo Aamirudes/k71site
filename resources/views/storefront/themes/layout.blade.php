@@ -115,13 +115,7 @@
      ">
     <div id="k71-scroll-progress" aria-hidden="true"></div>
 
-    @php
-        $bespokeLayout = 'storefront.themes.bespoke.' . ($manifest['id'] ?? '') . '.layout';
-    @endphp
-
-    @if(view()->exists($bespokeLayout))
-        @include($bespokeLayout)
-    @elseif($pageArchitecture === 'left-rail-gallery')
+    @if($pageArchitecture === 'left-rail-gallery')
         {{-- Persistent Left Gallery Rail Architecture (Desktop Vertical Sidebar + Mobile Top Bar) --}}
         <div class="lg:hidden">
             @include('storefront.themes.partials.header')

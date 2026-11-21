@@ -1,1 +1,0 @@
-@include('storefront.themes.bespoke.atelier-noir.home')

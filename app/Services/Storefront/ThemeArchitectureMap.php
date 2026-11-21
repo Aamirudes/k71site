@@ -525,26 +525,6 @@ class ThemeArchitectureMap
 
     public static function forTheme(string $themeId): array
     {
-        $aliases = [
-            'atelier-noir' => 'maison-elite',
-            'object-gallery' => 'atelier-blanc',
-            'wholesale-command' => 'the-specialist',
-        ];
-        if (isset($aliases[$themeId])) {
-            $baseCfg = self::forTheme($aliases[$themeId]);
-            if ($themeId === 'atelier-noir') {
-                $baseCfg['signature_moment'] = 'Nocturnal haute couture lookbook with dramatic typography and asymmetric curtain reveal';
-                $baseCfg['band_colors'] = ['#08080a', '#121216', '#ede6dc'];
-            } elseif ($themeId === 'object-gallery') {
-                $baseCfg['signature_moment'] = 'Museum-grade white exhibition plinths with generous architectural negative space and accession numbering';
-                $baseCfg['band_colors'] = ['#ffffff', '#f8f8f6', '#111111'];
-            } elseif ($themeId === 'wholesale-command') {
-                $baseCfg['signature_moment'] = 'High-density B2B wholesale trade terminal with tabular specimen ledger, volume pricing tiers, and rapid line-item ordering';
-                $baseCfg['band_colors'] = ['#0b0f19', '#111827', '#0284c7'];
-            }
-            return $baseCfg;
-        }
-
         $all = self::all();
         if (!isset($all[$themeId])) {
             return [
