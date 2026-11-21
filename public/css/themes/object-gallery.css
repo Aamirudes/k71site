@@ -1,0 +1,45 @@
+/* ============================================================================
+   K71 Bespoke Storefront Theme: Object Gallery (object-gallery)
+   Category: art_design | Architecture: left-rail-gallery | Choreography: japanese-ma
+   ============================================================================ */
+
+.k71-sf-theme[data-k71-theme="object-gallery"] {
+  --theme-accent-soft: rgba(0, 0, 0, 0.04);
+  --theme-accent-ring: rgba(0, 0, 0, 0.2);
+  --theme-card-shadow: 0 12px 32px -16px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+  color: #111111;
+}
+
+.k71-sf-theme[data-k71-theme="object-gallery"] ::selection {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+.k71-sf-theme[data-k71-theme="object-gallery"] .k71-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+}
+
+.k71-sf-theme[data-k71-theme="object-gallery"] .k71-card-shell {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fbfbfa;
+  transition: border-color 300ms ease, box-shadow 300ms ease;
+}
+
+.k71-sf-theme[data-k71-theme="object-gallery"] .k71-card-shell:hover {
+  border-color: #111111;
+  box-shadow: 0 16px 40px -20px rgba(0, 0, 0, 0.15);
+}
+
+.k71-sf-theme[data-k71-theme="object-gallery"] .k71-btn-primary {
+  background-color: #111111;
+  color: #ffffff;
+  border: 1px solid #111111;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+}

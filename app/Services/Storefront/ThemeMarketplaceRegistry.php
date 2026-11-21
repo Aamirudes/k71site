@@ -209,15 +209,27 @@ class ThemeMarketplaceRegistry
         return $all;
     }
 
+    public const THEME_ALIASES = [
+        'atelier-noir' => 'maison-elite',
+        'object-gallery' => 'atelier-blanc',
+        'wholesale-command' => 'the-specialist',
+    ];
+
     public function isValidThemeId(string $themeId): bool
     {
         $clean = strtolower(trim($themeId));
+        if (isset(self::THEME_ALIASES[$clean])) {
+            return true;
+        }
         return isset($this->getAllThemes()[$clean]);
     }
 
     public function isNewTheme(string $themeId): bool
     {
         $clean = strtolower(trim($themeId));
+        if (isset(self::THEME_ALIASES[$clean])) {
+            return true;
+        }
         return isset($this->getNewThemes()[$clean]);
     }
 
@@ -230,6 +242,52 @@ class ThemeMarketplaceRegistry
     public function getManifest(string $themeId): ?array
     {
         $clean = strtolower(trim($themeId));
+        if (isset(self::THEME_ALIASES[$clean])) {
+            $baseId = self::THEME_ALIASES[$clean];
+            $manifest = $this->getAllThemes()[$baseId] ?? null;
+            if ($manifest) {
+                $manifest['id'] = $clean;
+                $manifest['slug'] = $clean;
+                if ($clean === 'atelier-noir') {
+                    $manifest['name'] = 'Atelier Noir';
+                    $manifest['tagline'] = 'High-fashion art direction, dramatic typography, cinematic photography, asymmetric editorial layouts, restrained dark surfaces';
+                    $manifest['palette'] = [
+                        'bg' => '#08080a', 'surface' => '#121216', 'surface_alt' => '#1a1a20',
+                        'text' => '#f5f2eb', 'muted' => '#8a857e', 'accent' => '#f5f2eb',
+                        'accent_contrast' => '#08080a', 'border' => 'rgba(218, 197, 163, 0.18)', 'is_dark' => true,
+                    ];
+                    $manifest['typography'] = [
+                        'heading_font' => 'Cormorant Garamond', 'body_font' => 'Inter',
+                        'heading_weight' => '400', 'heading_tracking' => '-0.02em', 'label_style' => 'uppercase-spaced',
+                    ];
+                } elseif ($clean === 'object-gallery') {
+                    $manifest['name'] = 'Object Gallery';
+                    $manifest['tagline'] = 'Museum-like product presentation, generous negative space, gallery navigation, oversized product imagery, deliberate pacing';
+                    $manifest['palette'] = [
+                        'bg' => '#ffffff', 'surface' => '#f8f8f6', 'surface_alt' => '#f2f2ef',
+                        'text' => '#111111', 'muted' => '#767676', 'accent' => '#111111',
+                        'accent_contrast' => '#ffffff', 'border' => 'rgba(0, 0, 0, 0.08)', 'is_dark' => false,
+                    ];
+                    $manifest['typography'] = [
+                        'heading_font' => 'Playfair Display', 'body_font' => 'DM Sans',
+                        'heading_weight' => '400', 'heading_tracking' => '-0.01em', 'label_style' => 'uppercase-spaced',
+                    ];
+                } elseif ($clean === 'wholesale-command') {
+                    $manifest['name'] = 'Wholesale Command';
+                    $manifest['tagline'] = 'High-density wholesale discovery, quantity-based purchasing, tier pricing, fast reorder workflows and structured data tables';
+                    $manifest['palette'] = [
+                        'bg' => '#0b0f19', 'surface' => '#111827', 'surface_alt' => '#1f2937',
+                        'text' => '#f9fafb', 'muted' => '#9ca3af', 'accent' => '#0284c7',
+                        'accent_contrast' => '#ffffff', 'border' => '#374151', 'is_dark' => true,
+                    ];
+                    $manifest['typography'] = [
+                        'heading_font' => 'JetBrains Mono', 'body_font' => 'Inter',
+                        'heading_weight' => '700', 'heading_tracking' => '-0.03em', 'label_style' => 'mono-uppercase',
+                    ];
+                }
+                return $manifest;
+            }
+        }
         return $this->getAllThemes()[$clean] ?? null;
     }
 

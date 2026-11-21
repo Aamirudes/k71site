@@ -1,0 +1,1 @@
+@include('storefront.themes.bespoke.wholesale-command.card', ['product' => $product])

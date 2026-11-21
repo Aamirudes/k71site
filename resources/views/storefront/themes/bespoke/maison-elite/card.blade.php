@@ -1,0 +1,1 @@
+@include('storefront.themes.bespoke.atelier-noir.card', ['product' => $product])

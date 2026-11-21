@@ -1,0 +1,1 @@
+@include('storefront.themes.bespoke.object-gallery.card', ['product' => $product])
