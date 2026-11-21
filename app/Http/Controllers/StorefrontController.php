@@ -303,6 +303,10 @@ class StorefrontController extends Controller
             $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
         }
 
+        if ($isPreview && $themeRegistry->isNewTheme($resolvedThemeId) && !$themeService->isVendorEntitled($vendor, $resolvedThemeId)) {
+            $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
+        }
+
         // Dispatch to the 50-Theme Engine if vendor's active theme is a new marketplace theme (non-service retail stores)
         if (!$isServiceWebsite && $themeRegistry->isNewTheme($resolvedThemeId)) {
             $manifest = $themeRegistry->getManifest($resolvedThemeId);
@@ -398,7 +402,7 @@ class StorefrontController extends Controller
         $queryTheme = strtolower(trim((string) $request->input('theme', '')));
         if ($queryTheme !== '' && $themeRegistry->isValidThemeId($queryTheme)) {
             $resolvedThemeId = $queryTheme;
-        } elseif ($isPreview && $vendor->storefrontConfig?->draft_theme_id) {
+        } elseif ($isPreview && $vendor->storefrontConfig?->draft_theme_id && $themeService->isVendorEntitled($vendor, $vendor->storefrontConfig->draft_theme_id)) {
             $resolvedThemeId = $vendor->storefrontConfig->draft_theme_id;
         } else {
             $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);
@@ -524,7 +528,7 @@ class StorefrontController extends Controller
         $queryTheme = strtolower(trim((string) $request->input('theme', '')));
         if ($queryTheme !== '' && $themeRegistry->isValidThemeId($queryTheme)) {
             $resolvedThemeId = $queryTheme;
-        } elseif ($isPreview && $vendor->storefrontConfig?->draft_theme_id) {
+        } elseif ($isPreview && $vendor->storefrontConfig?->draft_theme_id && $themeService->isVendorEntitled($vendor, $vendor->storefrontConfig->draft_theme_id)) {
             $resolvedThemeId = $vendor->storefrontConfig->draft_theme_id;
         } else {
             $resolvedThemeId = $themeService->resolvePublicThemeId($vendor);

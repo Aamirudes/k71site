@@ -484,35 +484,30 @@ function k71GiftCustomizer(params) {
             }
             this.syncToInputs();
             this.isModalOpen = false;
-
             if (andSubmit) {
                 this.$nextTick(() => {
                     this.syncToInputs();
 
-                    // 1. Check if on catalog.show with Alpine fashionVariantSelector / submitAddToCart
-                    const buyForm = document.querySelector('form.k71-catalog-buy-form');
-                    if (buyForm && window.Alpine) {
-                        const alpineScope = window.Alpine.$data(buyForm) || window.Alpine.$data(document.querySelector('[x-data*="fashionVariantSelector"]'));
-                        if (alpineScope && typeof alpineScope.submitAddToCart === 'function') {
-                            alpineScope.submitAddToCart();
+                    // 1. Catalog buy form (main marketplace product page)
+                    const catalogBuyForm = document.querySelector('form.k71-catalog-buy-form');
+                    if (catalogBuyForm) {
+                        const submitBtn = catalogBuyForm.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.click();
                             return;
                         }
                     }
 
-                    // 2. Find any cart form on the page
-                    const form = document.querySelector('form[data-k71-cart-form]')
-                        || document.querySelector('form.k71-catalog-buy-form')
-                        || document.querySelector('form[action*="/cart/add"]')
+                    // 2. Theme purchase form
+                    const themeForm = document.getElementById('k71-pdp-purchase-form')
+                        || this.$el?.closest('form')
+                        || document.querySelector('form[data-k71-cart-form]')
                         || document.getElementById('k71-custom-text-input')?.closest('form');
-
-                    if (form) {
-                        if (typeof form.requestSubmit === 'function') {
-                            form.requestSubmit();
-                        } else {
-                            const btn = form.querySelector('button[type="submit"]');
-                            if (btn) btn.click();
-                            else form.submit();
-                        }
+                    if (themeForm) {
+                        const btn = themeForm.querySelector('button[type="submit"]');
+                        if (btn) btn.click();
+                        else if (typeof themeForm.requestSubmit === 'function') themeForm.requestSubmit();
+                        else themeForm.submit();
                     }
                 });
             }
