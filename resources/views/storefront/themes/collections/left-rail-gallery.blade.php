@@ -39,24 +39,54 @@
         </form>
     </div>
 
-    {{-- Museum Plinth Grid --}}
-    @if(is_countable($products) && count($products) > 0)
-        <div data-k71-stagger-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-            @foreach($products as $product)
-                <div data-k71-card-item class="h-full">
-                    @include('storefront.themes.partials.card', ['product' => $product])
-                </div>
-            @endforeach
-        </div>
+    {{-- Architectural Left-Rail & Museum Plinth Layout --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+        {{-- Persistent Left Exhibition Rail (Desktop Aside, Mobile Compact Index) --}}
+        <aside class="lg:col-span-3 lg:sticky lg:top-28 space-y-8" style="color: var(--t-text);">
+            <div class="space-y-3 pb-6" style="border-bottom: 1px solid var(--t-border);">
+                <p class="text-[10px] font-mono uppercase tracking-[0.24em]" style="color: var(--t-accent);">Exhibition Navigation</p>
+                <nav class="flex flex-col gap-2 font-mono text-xs">
+                    <a href="{{ $storeCollectionUrl }}" class="flex items-center justify-between py-1.5 transition-opacity hover:opacity-75 {{ $currentCategory === '' ? 'font-bold underline underline-offset-4' : 'opacity-70' }}">
+                        <span>00 · All Exhibits</span>
+                        <span>{{ $totalCount }}</span>
+                    </a>
+                    @foreach(($vendorCategories ?? collect()) as $cIdx => $cat)
+                        <a href="{{ $storeCollectionUrl }}{{ str_contains($storeCollectionUrl, '?') ? '&' : '?' }}category={{ urlencode($cat->slug) }}"
+                           class="flex items-center justify-between py-1.5 transition-opacity hover:opacity-75 {{ $currentCategory === $cat->slug ? 'font-bold underline underline-offset-4' : 'opacity-70' }}">
+                            <span class="truncate">{{ str_pad((string)($cIdx + 1), 2, '0', STR_PAD_LEFT) }} · {{ $cat->name }}</span>
+                            <span class="text-[10px]">{{ $cat->products_count ?? '' }}</span>
+                        </a>
+                    @endforeach
+                </nav>
+            </div>
 
-        @if(method_exists($products, 'links'))
-            <div class="pt-8 flex justify-center font-mono text-xs">{{ $products->links() }}</div>
-        @endif
-    @else
-        <div class="py-24 text-center space-y-3" style="border: 1px solid var(--t-border);">
-            <p class="text-xs font-mono uppercase tracking-widest" style="color: var(--t-muted);">Archive State</p>
-            <h3 class="k71-heading text-xl">No curated objects catalogued in this pavilion</h3>
-            <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-outline !text-xs font-mono">Reset Catalog Index</a>
+            <div class="hidden lg:block space-y-2 text-xs" style="color: var(--t-muted);">
+                <p class="font-mono text-[10px] uppercase tracking-widest text-[var(--t-text)] font-bold">Curatorial Note</p>
+                <p class="leading-relaxed font-serif italic">{{ strip_tags((string)($vendor->description ?: 'Each specimen is preserved with archival clarity, celebrating form, silhouette, and craft.')) }}</p>
+            </div>
+        </aside>
+
+        {{-- Right Museum Plinth Wall --}}
+        <div class="lg:col-span-9 space-y-8">
+            @if(is_countable($products) && count($products) > 0)
+                <div data-k71-stagger-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    @foreach($products as $product)
+                        <div data-k71-card-item class="h-full">
+                            @include('storefront.themes.partials.card', ['product' => $product])
+                        </div>
+                    @endforeach
+                </div>
+
+                @if(method_exists($products, 'links'))
+                    <div class="pt-8 flex justify-center font-mono text-xs">{{ $products->links() }}</div>
+                @endif
+            @else
+                <div class="py-24 text-center space-y-3" style="border: 1px solid var(--t-border);">
+                    <p class="text-xs font-mono uppercase tracking-widest" style="color: var(--t-muted);">Archive State</p>
+                    <h3 class="k71-heading text-xl">No curated objects catalogued in this pavilion</h3>
+                    <a href="{{ $storeCollectionUrl }}" class="k71-btn k71-btn-outline !text-xs font-mono">Reset Catalog Index</a>
+                </div>
+            @endif
         </div>
-    @endif
+    </div>
 </section>
