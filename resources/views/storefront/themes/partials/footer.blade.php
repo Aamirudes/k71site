@@ -16,7 +16,13 @@
         style="border-top: 1px solid {{ $footerBorder }}; background-color: {{ $footerBg }}; color: {{ $footerFg }};">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
 
-        @if(in_array($footerTemplate, ['maison-minimal', 'editorial-minimal'], true))
+        @php
+            $customFooter = 'storefront.themes.bespoke.' . ($manifest['id'] ?? '') . '.footer';
+        @endphp
+
+        @if(view()->exists($customFooter))
+            @include($customFooter)
+        @elseif(in_array($footerTemplate, ['maison-minimal', 'editorial-minimal'], true))
             {{-- Minimalist Luxury Maison Footer: Oversized wordmark + slim balanced columns --}}
             <div class="pb-10 mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6" style="border-bottom: 1px solid {{ $footerBorder }};">
                 <div class="space-y-2.5 max-w-xl">

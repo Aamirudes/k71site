@@ -26,7 +26,13 @@
         : route('storefront.product', ['slug' => $vendor->slug, 'productSlug' => $product->slug]) . (!empty($isPreview) ? '?preview=1' : '');
 @endphp
 
-@if($cardTpl === 'fresh-dense-market')
+@php
+    $customCard = 'storefront.themes.bespoke.' . ($manifest['id'] ?? '') . '.card';
+@endphp
+
+@if(view()->exists($customCard))
+    @include($customCard, ['product' => $product])
+@elseif($cardTpl === 'fresh-dense-market')
     {{-- ULTRA-SCANNABLE HIGH-DENSITY MARKET CARD (Fresh Market, Market Studio) --}}
     <article class="k71-product-card k71-card-shell flex flex-col h-full overflow-hidden" style="border-radius: var(--t-radius); border: 1px solid var(--t-border); background-color: var(--t-surface);" data-k71-reveal>
         <div class="relative">

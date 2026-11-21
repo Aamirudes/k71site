@@ -19,7 +19,13 @@
     </aside>
 @endif
 
-@if($headerTpl === 'magazine-masthead')
+@php
+    $customHeader = 'storefront.themes.bespoke.' . ($manifest['id'] ?? '') . '.header';
+@endphp
+
+@if(view()->exists($customHeader))
+    @include($customHeader)
+@elseif($headerTpl === 'magazine-masthead')
     {{-- MAGAZINE MASTHEAD (The Curator, Artisan Pantry, etc.) --}}
     <header class="k71-header {{ $stickyClass }} w-full" style="background-color: var(--t-bg); border-bottom: 1px solid var(--t-border);">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

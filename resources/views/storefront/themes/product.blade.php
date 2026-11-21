@@ -49,7 +49,8 @@
         }
     }
 
-    $pdpView = 'storefront.themes.pdp.' . $pdpArch;
+    $customThemePdp = 'storefront.themes.bespoke.' . ($manifest['id'] ?? '') . '.product';
+    $pdpView = view()->exists($customThemePdp) ? $customThemePdp : ('storefront.themes.pdp.' . $pdpArch);
     if (!view()->exists($pdpView)) {
         $pdpView = 'storefront.themes.pdp.editorial-fullbleed';
     }
