@@ -115,12 +115,12 @@
     </div>
 
     <!-- Hidden Inputs Bound to Form for Direct Submission -->
-    <input type="hidden" name="customization[custom_text]" :value="customText">
-    <input type="hidden" name="customization[font]" :value="selectedFont">
-    <input type="hidden" name="customization[color]" :value="selectedColor">
-    <input type="hidden" name="customization[gift_wrap]" :value="giftWrap ? '1' : ''">
-    <input type="hidden" name="customization[greeting_card]" :value="greetingCard ? '1' : ''">
-    <input type="hidden" name="customization[greeting_card_message]" :value="greetingCardMessage">
+    <input type="hidden" id="k71-custom-text-input" name="customization[custom_text]" :value="customText">
+    <input type="hidden" id="k71-custom-font-input" name="customization[font]" :value="selectedFont">
+    <input type="hidden" id="k71-custom-color-input" name="customization[color]" :value="selectedColor">
+    <input type="hidden" id="k71-custom-wrap-input" name="customization[gift_wrap]" :value="giftWrap ? '1' : ''">
+    <input type="hidden" id="k71-custom-card-input" name="customization[greeting_card]" :value="greetingCard ? '1' : ''">
+    <input type="hidden" id="k71-custom-card-msg-input" name="customization[greeting_card_message]" :value="greetingCardMessage">
     <input type="file"
            id="k71-gift-photo-input"
            name="customization_photo"
@@ -439,6 +439,34 @@ function k71GiftCustomizer(params) {
             return '₹' + rupees.toLocaleString('en-IN');
         },
 
+        syncToInputs() {
+            const setVal = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = val;
+                    el.setAttribute('value', val);
+                }
+            };
+            setVal('k71-custom-text-input', (this.customText || '').trim());
+            setVal('k71-custom-font-input', this.selectedFont || '');
+            setVal('k71-custom-color-input', this.selectedColor || '');
+            setVal('k71-custom-wrap-input', this.giftWrap ? '1' : '');
+            setVal('k71-custom-card-input', this.greetingCard ? '1' : '');
+            setVal('k71-custom-card-msg-input', this.greetingCardMessage || '');
+        },
+
+        init() {
+            this.syncToInputs();
+            if (this.$watch) {
+                this.$watch('customText', () => this.syncToInputs());
+                this.$watch('selectedFont', () => this.syncToInputs());
+                this.$watch('selectedColor', () => this.syncToInputs());
+                this.$watch('giftWrap', () => this.syncToInputs());
+                this.$watch('greetingCard', () => this.syncToInputs());
+                this.$watch('greetingCardMessage', () => this.syncToInputs());
+            }
+        },
+
         openModal() {
             this.isModalOpen = true;
         },
@@ -450,16 +478,41 @@ function k71GiftCustomizer(params) {
         confirmCustomization(andSubmit = false) {
             if (this.isTextRequired && this.customText.trim() === '') {
                 alert('Please enter your personalized text before saving.');
+                const tInput = document.getElementById('modal-k71-text');
+                if (tInput) tInput.focus();
                 return;
             }
+            this.syncToInputs();
             this.isModalOpen = false;
+
             if (andSubmit) {
                 this.$nextTick(() => {
-                    const form = this.$el.closest('form') || document.querySelector('form[data-k71-cart-form]');
+                    this.syncToInputs();
+
+                    // 1. Check if on catalog.show with Alpine fashionVariantSelector / submitAddToCart
+                    const buyForm = document.querySelector('form.k71-catalog-buy-form');
+                    if (buyForm && window.Alpine) {
+                        const alpineScope = window.Alpine.$data(buyForm) || window.Alpine.$data(document.querySelector('[x-data*="fashionVariantSelector"]'));
+                        if (alpineScope && typeof alpineScope.submitAddToCart === 'function') {
+                            alpineScope.submitAddToCart();
+                            return;
+                        }
+                    }
+
+                    // 2. Find any cart form on the page
+                    const form = document.querySelector('form[data-k71-cart-form]')
+                        || document.querySelector('form.k71-catalog-buy-form')
+                        || document.querySelector('form[action*="/cart/add"]')
+                        || document.getElementById('k71-custom-text-input')?.closest('form');
+
                     if (form) {
-                        const btn = form.querySelector('button[type="submit"]');
-                        if (btn) btn.click();
-                        else form.submit();
+                        if (typeof form.requestSubmit === 'function') {
+                            form.requestSubmit();
+                        } else {
+                            const btn = form.querySelector('button[type="submit"]');
+                            if (btn) btn.click();
+                            else form.submit();
+                        }
                     }
                 });
             }

@@ -656,8 +656,54 @@ try {
             if ($taj) {
                 $taj->update([
                     'vendor_type' => 'gift_store',
+                    'layout_preset' => 'monogram',
                     'operating_sectors' => ['products'],
                 ]);
+
+                if (Schema::hasTable('vendor_storefront_configs')) {
+                    \App\Models\VendorStorefrontConfig::updateOrCreate(
+                        ['vendor_id' => $taj->id],
+                        [
+                            'published_theme_id' => 'monogram',
+                            'preset_key' => 'monogram',
+                            'draft_theme_id' => 'monogram',
+                            'published_config' => [
+                                'theme_id' => 'monogram',
+                                'preset' => 'monogram',
+                                'layout' => [
+                                    'page_architecture' => 'horizontal-gallery-wall',
+                                    'header_template' => 'heritage-framed',
+                                    'card_template' => 'luxury-atelier',
+                                    'pdp_template' => 'gallery-plinth-museum',
+                                    'footer_template' => 'heritage-seal',
+                                ],
+                            ],
+                        ]
+                    );
+                }
+
+                if (Schema::hasTable('storefront_themes')) {
+                    DB::table('storefront_themes')->update([
+                        'qa_verified' => true,
+                        'implementation_status' => 'ready',
+                        'is_preview_enabled' => true,
+                        'is_visible_in_catalogue' => true,
+                    ]);
+                }
+
+                if (Schema::hasTable('vendor_theme_entitlements')) {
+                    $reg = app(\App\Services\Storefront\ThemeMarketplaceRegistry::class);
+                    foreach (array_keys($reg->getAllThemes()) as $thmId) {
+                        \App\Models\VendorThemeEntitlement::updateOrCreate(
+                            ['vendor_id' => $taj->id, 'theme_id' => $thmId],
+                            [
+                                'status' => 'granted',
+                                'source' => 'system',
+                                'granted_at' => now(),
+                            ]
+                        );
+                    }
+                }
 
                 if (Schema::hasTable('subscription_plans') && Schema::hasTable('vendor_subscriptions')) {
                     $plan = \App\Models\SubscriptionPlan::firstOrCreate(

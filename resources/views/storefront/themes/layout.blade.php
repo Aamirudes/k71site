@@ -70,10 +70,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family={{ $googleFontsParam }}&display=swap" rel="stylesheet">
 
+    {{-- Alpine.js for Interactive Components, Personalization Modals & Drawers --}}
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     @vite(['resources/css/app.css', 'resources/js/k71-theme-motion.js'])
-    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v=4.5.0">
-    {{-- Per-theme scoped stylesheet: ONLY loads the active theme's CSS --}}
-    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v=4.5.0">
+    <link rel="stylesheet" href="{{ asset('css/k71-theme-engine.css') }}?v={{ @filemtime(public_path('css/k71-theme-engine.css')) ?: '5.2.0' }}">
+    {{-- Per-theme scoped stylesheet: ONLY loads the active theme's CSS with atomic filemtime cache busting --}}
+    <link rel="stylesheet" href="{{ asset('css/themes/' . $manifest['id'] . '.css') }}?v={{ @filemtime(public_path('css/themes/' . $manifest['id'] . '.css')) ?: '5.2.0' }}">
 </head>
 <body class="m-0 p-0 antialiased">
 <div class="k71-sf-theme flex flex-col min-h-screen"

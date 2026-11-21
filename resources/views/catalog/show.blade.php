@@ -340,10 +340,39 @@
             this.message = '';
 
             const formEl = document.querySelector('form.k71-catalog-buy-form') || (window.event?.target?.closest ? window.event.target.closest('form') : null);
+
+            @if($product->isGiftCustomizable())
+                const customTextInput = formEl?.querySelector('input[name="customization[custom_text]"]');
+                const isTextReq = {{ !empty($product->getGiftCustomizationConfig()['is_text_required']) ? 'true' : 'false' }};
+                if (isTextReq && (!customTextInput || !customTextInput.value.trim())) {
+                    this.adding = false;
+                    window.dispatchEvent(new CustomEvent('k71-open-gift-modal'));
+                    return;
+                }
+            @endif
+
             const formData = formEl ? new FormData(formEl) : new FormData();
             formData.set('product_id', '{{ $product->id }}');
             if (this.selectedVariant) formData.set('variant_id', this.selectedVariant);
             formData.set('quantity', this.quantity);
+
+            @if($product->isGiftCustomizable())
+                const syncField = (name) => {
+                    const el = formEl?.querySelector(`input[name="${name}"]`);
+                    if (el && el.value !== '') formData.set(name, el.value);
+                };
+                syncField('customization[custom_text]');
+                syncField('customization[font]');
+                syncField('customization[color]');
+                syncField('customization[gift_wrap]');
+                syncField('customization[greeting_card]');
+                syncField('customization[greeting_card_message]');
+                const photoInput = document.getElementById('k71-gift-photo-input');
+                if (photoInput && photoInput.files && photoInput.files[0]) {
+                    formData.set('customization_photo', photoInput.files[0]);
+                }
+            @endif
+
             if (this.selectedFoodModifiers && this.selectedFoodModifiers.length) {
                 this.selectedFoodModifiers.forEach(m => formData.append('selected_modifiers[]', m.id));
             }
@@ -675,7 +704,7 @@
                     @endif
 
                     <!-- Purchasing Form -->
-                    <form @submit.prevent="submitAddToCart($event)" enctype="multipart/form-data" class="mt-5 k71-catalog-buy-form">
+                    <form @submit.prevent="submitAddToCart($event)" enctype="multipart/form-data" class="mt-5 k71-catalog-buy-form" data-k71-cart-form>
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <input type="hidden" name="variant_id" :value="selectedVariant">
